@@ -21,6 +21,10 @@
 
    ChangeLog
 
+   2000/02/04   Joseph Kain     <joseph@3dfx.com>
+   
+   * Updated Carlo Woord's email address.
+
    1999/12/22   Joseph Kain     <joseph@3dfx.com>
    
    * Support for new VMA structure in Kernels 2.3.14 and higher.
@@ -30,7 +34,7 @@
    
    * Made cards static to remove conflict with hisax ISDN driver.
 
-   1998/10/30	Carlo Wood	<carlo@runaway.xs4all.nl>
+   1998/10/30	Carlo Wood	<carlo@alinoe.com>
 
    * Re-included module versions (this source was based on the
      source by Jon Taylor which was based on an older version
@@ -39,18 +43,18 @@
    * Use pci_find_device for 2.1/2.2 kernels instead of the old
      pcibios_find_device.  Idem pci_present().
 
-   1998/10/21   Carlo Wood      <carlo@runaway.xs4all.nl>
+   1998/10/21   Carlo Wood      <carlo@alinoe.com>
 
    * Fixed compile bugs related to 2.0 kernels.
 
-   1998/10/21   Carlo Wood      <carlo@runaway.xs4all.nl>
+   1998/10/21   Carlo Wood      <carlo@alinoe.com>
 
    * `struct file_operations' was changed as of kernel 2.1.118,
      fixed this module to also work with versions > 2.1.117.
 
    * Machines that don't have mtrr still need <asm/uaccess.h>.
 
-   1998/10/20   Carlo Wood      <carlo@runaway.xs4all.nl>
+   1998/10/20   Carlo Wood      <carlo@alinoe.com>
 
    * Finally fixed in init_module() the right way.  This time I tested
      it too (it now really works).
@@ -61,13 +65,13 @@
      method WITHOUT MTRR, without being confused by sticky MTRR settings
      for instance.
 
-   1998/10/18   Carlo Wood      <carlo@runaway.xs4all.nl>
+   1998/10/18   Carlo Wood      <carlo@alinoe.com>
 
    * Forgot the '== -EBUSY' in init_module(), causing the registration of
      character device to always fail.  You need to reboot if you tried
      the previous version (if there is junk in `cat /proc/devices' major 107).
 
-   1998/10/18   Carlo Wood      <carlo@runaway.xs4all.nl>
+   1998/10/18   Carlo Wood      <carlo@alinoe.com>
 
    * struct file_operations fops_3dfx was initialized wrong:
      `release_3dfx' was put on the place of `fsync', causing weird
