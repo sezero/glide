@@ -38,7 +38,7 @@ main (int argc, char **argv)
 
     /* See if grep found anything */
 
-    fscanf (p, "%s" temp);
+    fscanf (p, "%s", temp);
     printf ("temp = %d\n", temp);
 
     if (!feof (p))
