@@ -104,7 +104,7 @@ void main( int argc, char **argv) {
     assert( hwconfig = tlVoodooType() );
 
     grSstSelect( 0 );
-    assert( grSstWinOpen( 0,
+    assert( grSstWinOpen( tlGethWnd(),
                       resolution,
                       GR_REFRESH_60Hz,
                       GR_COLORFORMAT_ABGR,

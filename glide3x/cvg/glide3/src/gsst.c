@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.2  2004/02/16 07:42:15  dborca
+** grSetNumPendingBuffers visible with grGetProcAddress
+**
 ** Revision 1.1.1.1.8.1  2003/11/03 13:34:29  dborca
 ** Voodoo2 happiness (DJGPP & Linux)
 **
@@ -434,7 +437,7 @@ GR_ENTRY(grSstWinOpen, GrContext_t, (
     goto BAILOUT;
   }
 
-#ifndef __linux__
+#if !defined(__linux__) && !(GLIDE_PLATFORM & GLIDE_OS_DOS32)
   if (!hWnd)
     GrErrorCallback("grSstWinOpen: need to use a valid window handle",
                     FXTRUE);
