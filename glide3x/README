@@ -4,16 +4,23 @@ The Glide source trees are branced by platform and the platform names are
 internal names used at 3dfx.  Since these name may not make sense to others
 here is a quick list.
 
-SST1:  Voodoo Graphics
-SST96: Voodoo Rush
-CVG:   Voodoo 2
-H3:    Voodoo Banshee/Voodoo 3
+sst1:  Voodoo Graphics
+sst96: Voodoo Rush
+cvg:   Voodoo 2
+h3:    Voodoo Banshee/Voodoo 3
 
 There is a single toplevel makefile for glide3x.  To select a build for
 either cvg or h3 set FX_GLIDE_HW to either cvg or h3.  The default is to
-build for h3.
+build for h3.  There is no Glide3x project for sst1 or sst96.
 
-All glide source trees use a common set of libraries kept in the swlibs branch.
-In order to build any glide library the swlibs branch must be moved inside
-the glide3x directory.  The swlibs branch is not stored here within the cvs
-tree because it is also shared with the glide2x branch. 
+All glide source trees use a common set of libraries kept in the
+swlibs branch.  In order to build any glide library the swlibs branch
+must be moved inside the glide3x directory.  The swlibs branch is not
+stored here within the glide3x cvs tree because it is also shared with
+the glide2x branch.
+
+A special note about H3:
+Currently the Glide3 H3 source is setup to build as a DRI client.  It is
+possible to compile Glide3 for H3 as a standalone library.  At this time
+the sources are not setup to do this.
+
