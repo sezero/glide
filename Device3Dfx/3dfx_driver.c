@@ -112,16 +112,23 @@
 #endif
 
 #ifdef MODULE
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
 #if defined(CONFIG_MODVERSIONS) && !defined(MODVERSIONS)
 #define MODVERSIONS
 #endif
 #ifdef MODVERSIONS
 #include <linux/modversions.h>
 #endif
+#define mod_inc_use_count MOD_INC_USE_COUNT
+#define mod_dec_use_count MOD_DEC_USE_COUNT
+#else
+#define mod_inc_use_count
+#define mod_dec_use_count
+#endif
 #include <linux/module.h>
 #else
-#define MOD_INC_USE_COUNT
-#define MOD_DEC_USE_COUNT
+#define mod_inc_use_count
+#define mod_dec_use_count
 #endif
 
 #include <linux/types.h>
@@ -218,6 +225,14 @@ static struct pci_card {
 #define VM_OFFSET(vma) (vma->vm_pgoff << PAGE_SHIFT)
 #endif
 
+#if KERNEL_MIN_VER(2,6,0)
+#define my_remap_page_range(vma, start, ofs, len, prot) \
+        remap_page_range(vma, start, ofs, len, prot)
+#else
+#define my_remap_page_range(vma, start, ofs, len, prot) \
+        remap_page_range(start, ofs, len, prot)
+#endif
+
 struct pioData_t {
 	short port;
 	short size;
@@ -251,7 +266,7 @@ void cleanup_module(void);
 
 static cardInfo cards[MAXCARDS];
 static int numCards = 0;
-#if KERNEL_MIN_VER(2,3,46) || defined(DEVFS_SUPPORT)
+#if KERNEL_MIN_VER(2,3,46) && LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0) || defined(DEVFS_SUPPORT)
 static devfs_handle_t devfs_handle;
 #endif
 
@@ -296,7 +311,7 @@ static int open_3dfx(struct inode *inode, struct file *file)
 		printk("3dfx: No 3Dfx cards found\n");
 		return -ENODEV;
 	}
-	MOD_INC_USE_COUNT;
+	mod_inc_use_count;
 	return 0;
 }
 
@@ -308,7 +323,7 @@ static int release_3dfx(struct inode *inode, struct file *file)
 	for (i = 0; i < numCards; ++i)
 		if (cards[i].curFile == file)
 			cards[i].curFile = 0;
-	MOD_DEC_USE_COUNT;
+	mod_dec_use_count;
 
 	return 0;
 }
@@ -349,7 +364,7 @@ static int mmap_3dfx(struct file *file, struct vm_area_struct *vma)
 #if defined(__i386__)
 	pgprot_val(vma->vm_page_prot) |= _PAGE_PCD;
 #endif
-	if (remap_page_range(vma->vm_start, VM_OFFSET(vma), len, 
+	if (my_remap_page_range(vma, vma->vm_start, VM_OFFSET(vma), len, 
 			     vma->vm_page_prot)) {
 		DEBUGMSG(("3dfx: Page remap failed\n"));
 		return -EAGAIN;
@@ -783,22 +798,22 @@ int init_module(void)
 	int ret;
 	DEBUGMSG(("3dfx: Entering init_module()\n"));
 
-#if KERNEL_MIN_VER(2,3,46) || defined(DEVFS_SUPPORT)
-	if ((ret = devfs_register_chrdev(MAJOR_3DFX, "3dfx", &fops_3dfx)) < 0) {
-		printk("3dfx: Unable to register character device with major %d\n", MAJOR_3DFX);
-		return ret;
-	}
-
-	devfs_handle = devfs_register(NULL, "3dfx", DEVFS_FL_NONE,
-		MAJOR_3DFX, DEVICE_VOODOO,
-		S_IFCHR | S_IROTH | S_IWOTH | S_IRGRP | S_IWGRP,
-		&fops_3dfx, NULL);
-#else
 	if ((ret = register_chrdev(MAJOR_3DFX, "3dfx", &fops_3dfx)) < 0) {
 		printk("3dfx: Unable to register character device with major %d\n", MAJOR_3DFX);
 		return ret;
 	}
+
+#if KERNEL_MIN_VER(2,6,0)
+	devfs_mk_cdev(MKDEV(MAJOR_3DFX, DEVICE_VOODOO),
+		      S_IFCHR | S_IROTH | S_IWOTH | S_IRGRP | S_IWGRP,
+		      "3dfx");
+#elif KERNEL_MIN_VER(2,3,46) || defined(DEVFS_SUPPORT)
+	devfs_handle = devfs_register(NULL, "3dfx", DEVFS_FL_NONE,
+		MAJOR_3DFX, DEVICE_VOODOO,
+		S_IFCHR | S_IROTH | S_IWOTH | S_IRGRP | S_IWGRP,
+		&fops_3dfx, NULL);
 #endif
+
 	DEBUGMSG(("3dfx: Successfully registered device 3dfx\n"));
 	findCards();
 
@@ -824,21 +839,17 @@ void cleanup_module(void)
 #ifdef HAVE_MTRR
 	resetmtrr_3dfx();
 #endif
-#if KERNEL_MIN_VER(2,3,46) || defined(DEVFS_SUPPORT)
+#if KERNEL_MIN_VER(2,6,0)
+	devfs_remove("3dfx");
+#elif KERNEL_MIN_VER(2,3,46) || defined(DEVFS_SUPPORT)
 	devfs_unregister(devfs_handle);
+#endif
 
-	if (devfs_unregister_chrdev(MAJOR_3DFX, "3dfx"))
-	{
-	  DEBUGMSG(("3dfx: devfs_unregister_chrdev failed\n"));
-	  return;
-	}
-#else
 	if (unregister_chrdev(MAJOR_3DFX, "3dfx"))
 	{
 	  DEBUGMSG(("3dfx: unregister_chrdev failed\n"));
 	  return;
 	}
-#endif
 }
 #else /* !MODULE */
 
