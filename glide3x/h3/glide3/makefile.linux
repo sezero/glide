@@ -22,7 +22,7 @@
 #
 
 THISDIR	= glide
-SUBDIRS = src
+SUBDIRS = src tests
 
 include $(BUILD_ROOT_SWLIBS)/include/make/3dfx.mak
 
