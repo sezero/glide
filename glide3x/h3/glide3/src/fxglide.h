@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.2.4.1  2003/05/05 07:12:46  dborca
+** no message
+**
 ** Revision 1.2  2000/11/24 18:36:48  alanh
 ** Add new grStippleMode and grStipplePattern functions for both Voodoo3 and
 ** Voodoo5 hardware.
@@ -1512,7 +1515,7 @@ extern GrGCFuncs _curGCFuncs;
 
 #ifdef GLIDE3
 #define GR_STATE_ENTRY(name, type, args) \
-   type _##name## args
+   type _ ## name args
 #else
 #define GR_STATE_ENTRY(name, type, args) \
    GR_ENTRY(name, type, args)
@@ -1837,7 +1840,7 @@ extern FxU32 threadValueDJGPP;
 #define CUR_TRI_PROC(__checkValidP, __cullP) \
   (*gc->archDispatchProcs.coorModeTriVector)[__checkValidP][__cullP]
 #define INVALIDATE(regset) {\
-  gc->state.invalid |= ##regset##BIT; \
+  gc->state.invalid |= regset ## BIT; \
   gc->triSetupProc = CUR_TRI_PROC(FXTRUE, (gc->state.cull_mode != GR_CULL_DISABLE)); \
 }
 

@@ -19,6 +19,9 @@
  **
  ** $Header$
  ** $Log$
+ ** Revision 1.1.1.1  1999/12/07 21:42:31  joseph
+ ** Initial checkin into SourceForge.
+ **
 ** 
 ** 1     10/08/98 11:30a Brent
 ** 
@@ -163,25 +166,25 @@
  */
 
 #define STOREARG(function, arg) \
-gc->state.stateArgs.##function##Args.arg = arg
+gc->state.stateArgs.function ## Args.arg = arg
 
 #define LOADARG(function, arg) \
-gc->state.stateArgs.##function##Args.arg
+gc->state.stateArgs.function ## Args.arg
 
 #define INVALIDATE(regset) \
-gc->state.invalid |= ##regset##BIT
+gc->state.invalid |= regset ## BIT
 
 #define NOTVALID(regset) \
-(gc->state.invalid & ##regset##BIT)
+(gc->state.invalid & regset ## BIT)
 
 #define SETVALID(regset) \
-(gc->state.invalid &= ~(##regset##BIT))
+(gc->state.invalid &= ~(regset ## BIT))
 
 #define ENABLEMODE(mode) \
-gc->state.grEnableArgs.##mode## = GR_MODE_ENABLE;
+gc->state.grEnableArgs.mode = GR_MODE_ENABLE;
 
 #define DISABLEMODE(mode) \
-gc->state.grEnableArgs.##mode## = GR_MODE_DISABLE;
+gc->state.grEnableArgs.mode = GR_MODE_DISABLE;
 
 /*-------------------------------------------------------------------
   Function: grAlphaBlendFunction

@@ -2220,7 +2220,7 @@ extern GrGCFuncs _curGCFuncs;
 
 #ifdef GLIDE3
 #define GR_STATE_ENTRY(name, type, args) \
-   type _##name## args
+   type _ ## name args
 #else
 #define GR_STATE_ENTRY(name, type, args) \
    GR_ENTRY(name, type, args)
@@ -2734,13 +2734,13 @@ extern FxU32 threadValueDJGPP;
 #define CUR_TRI_PROC(__checkValidP, __cullP) \
   (*gc->archDispatchProcs.coorModeTriVector)[__checkValidP][__cullP]
 #define INVALIDATE(regset) {\
-  gc->state.invalid |= ##regset##BIT; \
+  gc->state.invalid |= regset ## BIT; \
   gc->triSetupProc = CUR_TRI_PROC(FXTRUE, (gc->state.cull_mode != GR_CULL_DISABLE)); \
 }
 
 #define INVALIDATE_TMU(tmu, regset) {\
   INVALIDATE(tmuConfig); \
-  gc->state.tmuInvalid[tmu] |= ##regset##BIT; \
+  gc->state.tmuInvalid[tmu] |= regset ## BIT; \
 }
   
 void 

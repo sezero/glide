@@ -19,6 +19,10 @@
  **
  ** $Header$
  ** $Log$
+ ** Revision 1.2  2000/11/24 18:36:48  alanh
+ ** Add new grStippleMode and grStipplePattern functions for both Voodoo3 and
+ ** Voodoo5 hardware.
+ **
  ** Revision 1.1.1.1  1999/11/24 21:44:54  joseph
  ** Initial checkin for SourceForge
  **
@@ -199,23 +203,23 @@
  */
 
 #define STOREARG(function, arg) \
-gc->state.stateArgs.##function##Args.arg = arg
+gc->state.stateArgs.function ## Args.arg = arg
 
 #define LOADARG(function, arg) \
-gc->state.stateArgs.##function##Args.arg
+gc->state.stateArgs.function ## Args.arg
 
 
 #define NOTVALID(regset) \
-(gc->state.invalid & ##regset##BIT)
+(gc->state.invalid & regset ## BIT)
 
 #define SETVALID(regset) \
-(gc->state.invalid &= ~(##regset##BIT))
+(gc->state.invalid &= ~(regset ## BIT))
 
 #define ENABLEMODE(mode) \
-gc->state.grEnableArgs.##mode## = GR_MODE_ENABLE;
+gc->state.grEnableArgs.mode = GR_MODE_ENABLE;
 
 #define DISABLEMODE(mode) \
-gc->state.grEnableArgs.##mode## = GR_MODE_DISABLE;
+gc->state.grEnableArgs.mode = GR_MODE_DISABLE;
 
 /*-------------------------------------------------------------------
   Function: grAlphaBlendFunction

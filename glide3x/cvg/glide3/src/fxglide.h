@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/12/07 21:42:31  joseph
+** Initial checkin into SourceForge.
+**
 ** 
 ** 2     10/08/98 3:04p Atai
 ** added clip coords tri cull version
@@ -1414,7 +1417,7 @@ extern GrGCFuncs _curGCFuncs;
 
 #ifdef GLIDE3
 #define GR_STATE_ENTRY(name, type, args) \
-   type _##name## args
+   type _ ## name args
 #else
 #define GR_STATE_ENTRY(name, type, args) \
    GR_ENTRY(name, type, args)
