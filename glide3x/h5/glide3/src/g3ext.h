@@ -30,6 +30,9 @@
 **            __WIN32__         Defined for 32-bit Windows applications
 **            __sparc__         Defined for Sun Solaris/SunOS
 **            __linux__         Defined for Linux applications
+**            __FreeBSD__       Defined for FreeBSD applications
+**            __NetBSD__        Defined for NetBSD applications
+**            __OpenBSD__       Defined for OpenBSD applications
 **            __IRIX__          Defined for SGI Irix applications
 **
 */

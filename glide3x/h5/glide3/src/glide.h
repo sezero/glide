@@ -30,6 +30,9 @@
 **            __WIN32__         Defined for 32-bit Windows applications
 **            __sparc__         Defined for Sun Solaris/SunOS
 **            __linux__         Defined for Linux applications
+**            __FreeBSD__       Defined for FreeBSD applications
+**            __NetBSD__        Defined for NetBSD applications
+**            __OpenBSD__       Defined for OpenBSD applications
 **            __IRIX__          Defined for SGI Irix applications
 **
 */
@@ -52,9 +55,9 @@ extern "C" {
 typedef FxU32 GrColor_t;
 typedef FxU8  GrAlpha_t;
 typedef FxU32 GrMipMapId_t;
-#if defined(__linux__) || defined(__WIN32__)
+#if (GLIDE_PLATFORM & GLIDE_OS_UNIX) || defined(__WIN32__)
 typedef FxU32 GrStipplePattern_t;
-#endif /* __linux__ __WIN32__ */
+#endif /* (GLIDE_PLATFORM & GLIDE_OS_UNIX) || defined(__WIN32__) */
 typedef FxU8  GrFog_t;
 typedef FxU32 GrContext_t;
 typedef int (FX_CALL *GrProc)();
@@ -243,12 +246,12 @@ typedef FxI32 GrDitherMode_t;
 #define GR_DITHER_2x2           0x1
 #define GR_DITHER_4x4           0x2
 
-#if defined(__linux__) || defined(__WIN32__)
+#if (GLIDE_PLATFORM & GLIDE_OS_UNIX) || defined(__WIN32__)
 typedef FxI32 GrStippleMode_t;
 #define GR_STIPPLE_DISABLE	0x0
 #define GR_STIPPLE_PATTERN	0x1
 #define GR_STIPPLE_ROTATE	0x2
-#endif /* __linux__ __WIN32__ */
+#endif /* (GLIDE_PLATFORM & GLIDE_OS_UNIX) || defined(__WIN32__) */
 
 typedef FxI32 GrFogMode_t;
 #define GR_FOG_DISABLE                     0x0
@@ -750,13 +753,13 @@ grCoordinateSpace( GrCoordinateSpaceMode_t mode );
 FX_ENTRY void FX_CALL 
 grDepthRange( FxFloat n, FxFloat f );
 
-#if defined(__linux__) || defined(__WIN32__)
+#if (GLIDE_PLATFORM & GLIDE_OS_UNIX) || defined(__WIN32__)
 FX_ENTRY void FX_CALL 
 grStippleMode( GrStippleMode_t mode );
 
 FX_ENTRY void FX_CALL 
 grStipplePattern( GrStipplePattern_t mode );
-#endif /* __linux__ __WIN32__ */
+#endif /* (GLIDE_PLATFORM & GLIDE_OS_UNIX) || defined(__WIN32__) */
 
 FX_ENTRY void FX_CALL 
 grViewport( FxI32 x, FxI32 y, FxI32 width, FxI32 height );

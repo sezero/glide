@@ -1868,7 +1868,7 @@ GR_DIENTRY(grTexMinAddress, FxU32, ( GrChipID_t tmu ))
      
   FXUNUSED(hw); 
   
-#ifndef __linux__  
+#ifndef DRI_BUILD  
   if (!gc->lostContext)  
     return 0; 
   
@@ -1877,7 +1877,7 @@ GR_DIENTRY(grTexMinAddress, FxU32, ( GrChipID_t tmu ))
       return 0;
     }
   }     
-#endif  /* defined(__linux__) */
+#endif  /* defined(DRI_BUILD) */
 
   GDBG_INFO_MORE(gc->myLevel,"(%d)\n",tmu);
   GR_CHECK_TMU(FN_NAME, tmu);
@@ -1934,7 +1934,7 @@ GR_DIENTRY(grTexMaxAddress, FxU32, ( GrChipID_t tmu ))
      
   FXUNUSED(hw); 
   
-#ifndef __linux__  
+#ifndef DRI_BUILD  
   if (!gc->lostContext)  
     return 0; 
   
@@ -1943,7 +1943,7 @@ GR_DIENTRY(grTexMaxAddress, FxU32, ( GrChipID_t tmu ))
       return 0;
     }
   }     
-#endif /* defined(__linux__) */
+#endif /* defined(DRI_BUILD) */
 
   GDBG_INFO_MORE(gc->myLevel,"(%d)\n",tmu);
   GR_CHECK_TMU(FN_NAME, tmu );

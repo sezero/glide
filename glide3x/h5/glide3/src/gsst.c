@@ -835,7 +835,7 @@ static FxU32 lostcontext_csim;
 #endif
 #endif /* (GLIDE_PLATFORM & GLIDE_SST_SIM) */
 
-#ifdef __linux__
+#ifdef DRI_BUILD
 #include <lindri.h>
 #endif
 
@@ -847,7 +847,7 @@ static FxU32 lostcontext_csim;
 static void _grSstSetColumnsOfNWidth(FxU32 width);
 #endif /* FX_GLIDE_NAPALM */
 
-#if !defined(__DJGPP__) && !defined(__linux__)
+#if !defined(__DJGPP__) && !(GLIDE_PLATFORM & GLIDE_OS_UNIX)
 WINUSERAPI
 BOOL
 WINAPI
@@ -1046,7 +1046,7 @@ assertDefaultState( void )
   gc->state.mode2ppcTMU = 0xFFFFFFFF;
 } /* assertDefaultState */
 
-#ifndef	__linux__
+#ifndef	DRI_BUILD
 static void 
 clearBuffers( GrGC *gc ) 
 {
@@ -1066,7 +1066,7 @@ clearBuffers( GrGC *gc )
     grRenderBuffer( GR_BUFFER_FRONTBUFFER );
   }
 } /* clearBuffers */
-#else	/* defined(__linux__) */
+#else	/* defined(DRI_BUILD) */
 static void 
 clearBuffers( GrGC *gc ) 
 {
@@ -1086,7 +1086,7 @@ clearBuffers( GrGC *gc )
     grRenderBuffer( GR_BUFFER_FRONTBUFFER );
   }
 } /* clearBuffers */
-#endif	/* defined(__linux__) */
+#endif	/* defined(DRI_BUILD) */
 
 static void 
 doSplash( void ) 
@@ -1205,13 +1205,13 @@ initGC ( GrGC *gc )
 #endif
 
   /* Setup the indices of the logical buffers */
-#ifdef __linux__
+#ifdef DRI_BUILD
   gc->curBuffer   = (gc->grColBuf > 1) ? 1 : 0;
   gc->frontBuffer = 0;
-#else	/* defined(__linux__) */
+#else	/* defined(DRI_BUILD) */
   gc->curBuffer   = 0;
   gc->frontBuffer = ((gc->grColBuf > 1) ? 1 : 0);
-#endif	/* defined(__linux__) */
+#endif	/* defined(DRI_BUILD) */
   gc->backBuffer  = (gc->grColBuf > 2) ? 2 : gc->curBuffer;
   
   for (t = 0; t < 7; t++) {
@@ -1419,7 +1419,7 @@ GR_ENTRY(grSstWinOpen, GrContext_t, ( FxU32                   hWnd,
   struct cmdTransportInfo *gcFifo = 0;
   GrContext_t retVal = 0;
 
-#if !defined(__linux__) && !defined(__DJGPP__)
+#if !defined(DRI_BUILD) && !defined(__DJGPP__)
   if (!hWnd) hWnd = (FxU32) GetActiveWindow();
   if (!hWnd)
     GrErrorCallback("grSstWinOpen: need to use a valid window handle",
@@ -1428,7 +1428,7 @@ GR_ENTRY(grSstWinOpen, GrContext_t, ( FxU32                   hWnd,
   GDBG_INFO(80, "Setting hwnd to foreground.\n");
   SetForegroundWindow((HWND)hWnd);
 */
-#endif	/* defined(__linux__) || defined(__DJGPP__) */
+#endif	/* defined(DRI_BUILD) || defined(__DJGPP__) */
 
   /* NB: TLS must be setup before the 'declaration' which grabs the
    * current gc. This gc is valid for all threads in the fullscreen
@@ -1582,7 +1582,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
   GrContext_t retVal = 0;
   FxU32 tramShift, tmu1Offset;
 
-#if !defined(__linux__) && !defined(__DJGPP__)
+#if !(GLIDE_PLATFORM & GLIDE_OS_UNIX) && !defined(__DJGPP__)
   if (!hWnd) hWnd = (FxU32) GetActiveWindow();
   if (!hWnd)
     GrErrorCallback("grSstWinOpen: need to use a valid window handle",
@@ -1603,7 +1603,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
 
 	 return _grCreateWindowSurface(hWnd, format, origin, pixelformat, nAuxBuffers);
   }
-#endif	/* defined(__linux__) || defined(__DJGPP__) */
+#endif	/* (GLIDE_PLATFORM & GLIDE_OS_UNIX) || defined(__DJGPP__) */
   
   /* NB: TLS must be setup before the 'declaration' which grabs the
    * current gc. This gc is valid for all threads in the fullscreen
@@ -1639,10 +1639,10 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
           : resolution;
 
 
-#ifdef	__linux__
+#ifdef	DRI_BUILD
     gc->state.screen_width = driInfo.screenWidth;
     gc->state.screen_height = driInfo.screenHeight;
-#else	/* defined(__linux__) */
+#else	/* defined(DRI_BUILD) */
     gc->state.screen_width  = _resTable[resolution].xres;
     gc->state.screen_height = _resTable[resolution].yres;
     GR_CHECK_F( FN_NAME, 
@@ -1653,7 +1653,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
       gc->state.screen_width  = gc->vidTimings->xDimension;
       gc->state.screen_height = gc->vidTimings->yDimension;
     }
-#endif	/* defined(__linux__) */
+#endif	/* defined(DRI_BUILD) */
     
     /* this is a stupid hack but... */
     gc->chipCount = 1;
@@ -1747,7 +1747,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
       }  
     }
 
-#ifdef __linux__
+#ifdef DRI_BUILD
     /* The DRI knows how the framebuffer should be configured */
     if (driInfo.cpp==3 || driInfo.cpp==4) { /* 24 or 32bpp modes */
       /* XXX Check for AA flags here too */
@@ -2282,13 +2282,13 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
     }
 #endif
 
-#ifdef	__linux__
+#ifdef	DRI_BUILD
     vInfo->xRes              = driInfo.w;
     vInfo->yRes              = driInfo.h;
-#else	/* defined(__linux__) */
+#else	/* defined(DRI_BUILD) */
     vInfo->xRes              = gc->state.screen_width;
     vInfo->yRes              = gc->state.screen_height;
-#endif	/* defined(__linux__) */
+#endif	/* defined(DRI_BUILD) */
     vInfo->refresh           = gc->grSstRefresh;
     vInfo->tiled             = FXTRUE;
     vInfo->initialized       = FXTRUE;
@@ -2357,7 +2357,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
     /* This actually gets taken in hwcInitVideo */
     gc->contextP = FXTRUE;
 
-#ifndef		__linux__
+#ifndef		DRI_BUILD
     /* CSR - Set up flag for display driver to tell us that context was lost */
     if ( !gc->open )  /* If we already have a context open, then lets not
                          re-initialize the pointers                          */                                             
@@ -2369,7 +2369,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
     /* This actually gets taken in hwcInitVideo */
     gc->contextP = FXTRUE;
     *gc->lostContext = FXFALSE;
-#endif	/* defined(__linux__) */
+#endif	/* defined(DRI_BUILD) */
 
     if (_GlideRoot.environment.gammaR != 1.3f &&
         _GlideRoot.environment.gammaG != 1.3f &&
@@ -2635,7 +2635,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
                                   gc->buffers0[gc->curBuffer], /* board address of beginning of OS  */
                                   gc->strideInTiles );        /* distance between scanlines of the OS, in*/
 
-#ifndef	__linux__
+#ifndef	DRI_BUILD
     /*
     ** initialize context checking
     */
@@ -2644,7 +2644,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
       *gc->lostContext = FXFALSE;
       gc->contextP = 1;
     }
-#endif	/* defined(__linux__) */
+#endif	/* defined(DRI_BUILD) */
 
 #endif /*  defined( GLIDE_INIT_HAL )  */
 #else  /* !defined( USE_PACKET_FIFO ) */
@@ -2756,7 +2756,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
                                   gc->buffers0[gc->curBuffer], /* board address of beginning of OS  */
                                   gc->strideInTiles );        /* distance between scanlines of the OS, in*/
     _grReCacheFifo(0);
-#ifndef	__linux__
+#ifndef	DRI_BUILD
     /*
     ** initialize context checking
     */
@@ -2765,7 +2765,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
       *gc->lostContext = FXFALSE;
       gc->contextP = 1;
     }
-#endif /* defined(__linux__) */
+#endif /* defined(DRI_BUILD) */
 
 #endif /* !defined( USE_PACKET_FIFO ) */
   
@@ -2801,7 +2801,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
     gcFifo->fifoRead = HW_FIFO_PTR( FXTRUE );
 #endif /* USE_PACKET_FIFO */
     
-#ifndef	__linux__
+#ifndef	DRI_BUILD
     if ( (void*)gcFifo->fifoPtr != (void*)gcFifo->fifoRead ) {
 #ifdef GLIDE_INIT_HWC
       hwcRestoreVideo( bInfo );
@@ -2809,7 +2809,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
       GDBG_INFO( gc->myLevel, "Initial fifo state is incorrect\n" );
       return 0;
     }
-#endif	/* __linux__ */
+#endif	/* DRI_BUILD */
     
 #if __POWERPC__ && PCI_BUMP_N_GRIND
     enableCopyBackCache((FxU32)gcFifo->fifoStart,gcFifo->fifoSize);
@@ -2851,7 +2851,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
               gcFifo->fifoSize,
               gcFifo->fifoPtr ); 
     
-#ifdef __linux__
+#ifdef DRI_BUILD
     _grImportFifo(*driInfo.fifoPtr, *driInfo.fifoRead);
 #endif
 
@@ -2909,7 +2909,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
     REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 4, 0xf);
     {
       REG_GROUP_SET(hw, colBufferAddr, gc->state.shadow.colBufferAddr);
-#ifdef __linux__
+#ifdef DRI_BUILD
       REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride : 
 		    gc->state.shadow.colBufferStride );
 #else
@@ -2925,7 +2925,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
         REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 4, 0xf);
         {
             REG_GROUP_SET(hw, colBufferAddr, gc->buffers1[gc->curBuffer] | SST_BUFFER_BASE_SELECT);
-#ifdef __linux__
+#ifdef DRI_BUILD
 	    REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride : 
 			  gc->state.shadow.colBufferStride );
 #else
@@ -2994,7 +2994,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
       REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 4, 0xf);
       {
         REG_GROUP_SET(hw, colBufferAddr, gc->state.shadow.colBufferAddr);
-#ifdef __linux__
+#ifdef DRI_BUILD
 	REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride : 
 		      gc->state.shadow.colBufferStride );
 #else
@@ -3008,11 +3008,11 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
         REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 4, 0xf);
         {
           REG_GROUP_SET(hw, colBufferAddr, gc->buffers1[gc->curBuffer] | SST_BUFFER_BASE_SELECT);
-#ifdef __linux__
-  REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride : 
+#ifdef DRI_BUILD
+          REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride : 
 			gc->state.shadow.colBufferStride );
 #else
-  REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride );
+          REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride );
 #endif
           REG_GROUP_SET(hw, auxBufferAddr, gc->buffers1[nColBuffers] | SST_BUFFER_BASE_SELECT);
           REG_GROUP_SET(hw, auxBufferStride, gc->state.shadow.auxBufferStride); 
@@ -3049,15 +3049,15 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
 
     GDBG_INFO( gc->myLevel, "  Setting all Glide state\n" );
     assertDefaultState();
-#ifdef __linux__
+#ifdef DRI_BUILD
     if (nColBuffers>1)
 	grRenderBuffer(GR_BUFFER_BACKBUFFER);
     else
 	grRenderBuffer(GR_BUFFER_FRONTBUFFER);
     grClipWindow(0, 0, gc->state.screen_width, gc->state.screen_height);
-#else	/* defined(__linux__) */
+#else	/* defined(DRI_BUILD) */
     clearBuffers( gc );
-#endif	/* defined(__linux__) */
+#endif	/* defined(DRI_BUILD) */
     gc->state.color_format = format;
 
     /* --------------------------------------------------------
@@ -3124,7 +3124,7 @@ GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
   if (!gc)
     return 0;
 
-#if !defined(__linux__) && !defined(__DJGPP__)
+#if !defined(DRI_BUILD) && !defined(__DJGPP__)
   /* We are in Windowed Mode */
   if (gc->windowed)
   {
@@ -3146,7 +3146,7 @@ GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
   }
 #endif
 
-#ifndef	__linux__
+#ifndef	DRI_BUILD
   if (gc->lostContext) {
     if (*gc->lostContext) {
 #if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
@@ -3159,7 +3159,7 @@ GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
       return 0;
     }
   }
-#endif	/* defined(__linux__) */
+#endif	/* defined(DRI_BUILD) */
 
   /* NB: The gc that is being closed is the passed gc not the
    * currently selected gc. This must be setup before the
@@ -3213,7 +3213,7 @@ GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
        * safe everywhere.
        */
       GDBG_INFO(gc->myLevel, "  Restore Video\n");
-#ifndef	__linux__
+#ifndef	DRI_BUILD
       if (!*gc->lostContext) {
       /* disable SLI and AA */
 #ifdef FX_GLIDE_NAPALM
@@ -3233,7 +3233,7 @@ GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
 #endif            
         hwcRestoreVideo(gc->bInfo);
       }
-#endif	/* defined(__linux__) */
+#endif	/* defined(DRI_BUILD) */
 #endif /* !GLIDE_INIT_HAL */
 
       /*--------------------------
@@ -3528,14 +3528,14 @@ GR_ENTRY(grFinish, void, (void))
 
   grFlush();
   if ( gc->windowed ) {
-#if defined(GLIDE_INIT_HWC) && !defined(__linux__) && !defined(__DJGPP__)
+#if defined(GLIDE_INIT_HWC) && !defined(DRI_BUILD) && !defined(__DJGPP__)
     struct cmdTransportInfo*
       gcFifo = &gc->cmdTransportInfo;
     
     hwcIdleWinFifo(gc->bInfo,
                    &gcFifo->hwcFifoInfo,
                    gcFifo->issuedSerialNumber);
-#endif	/* defined(GLIDE_INIT_HWC) && !defined(__linux__) */
+#endif	/* defined(GLIDE_INIT_HWC) && !defined(DRI_BUILD) */
   } else {
     /*while((_grSstStatus() & SST_BUSY) != 0) */
       /* Do Nothing */; 

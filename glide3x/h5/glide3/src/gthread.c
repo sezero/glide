@@ -28,8 +28,6 @@
 /* NOTE: This file is compiled to naught if we aren't
    running under Win32 */
 
-#if defined( __WIN32__ )
-
 #include <3dfx.h>
 #include <glidesys.h>
 
@@ -39,6 +37,8 @@
 
 #include "fxglide.h"
 #include "fxcmd.h"
+
+#if defined( __WIN32__ )
 
 #if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
 #include <windows.h>
@@ -119,16 +119,6 @@ void endCriticalSection( void ) {
 
 #elif defined(macintosh)
 
-#include <3dfx.h>
-#include <glidesys.h>
-
-#define FX_DLL_DEFINITION
-#include <fxdll.h>
-#include <glide.h>
-
-#include "fxglide.h"
-#include "fxcmd.h"
-
 FxU32 _threadValueMacOS;
 
 void initThreadStorage(void)
@@ -161,17 +151,7 @@ void endCriticalSection(void)
 {
 }
 
-#elif defined(__linux__)
-
-#include <3dfx.h>
-#include <glidesys.h>
-
-#define FX_DLL_DEFINITION
-#include <fxdll.h>
-#include <glide.h>
-
-#include "fxglide.h"
-#include "fxcmd.h"
+#elif (GLIDE_PLATFORM & GLIDE_OS_UNIX)
 
 FxU32 threadValueLinux;
 
@@ -204,16 +184,6 @@ void endCriticalSection(void)
 }
 
 #elif defined(__DJGPP__)
-
-#include <3dfx.h>
-#include <glidesys.h>
-
-#define FX_DLL_DEFINITION
-#include <fxdll.h>
-#include <glide.h>
-
-#include "fxglide.h"
-#include "fxcmd.h"
 
 FxU32 threadValueDJGPP;
 

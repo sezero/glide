@@ -61,7 +61,7 @@
 
 #else	/* !NASM */
 
-#if !defined(__linux__) && !defined(__DJGPP__)
+#if !(GLIDE_PLATFORM & GLIDE_OS_UNIX) && !defined(__DJGPP__)
 #define NEWLINE printf("\n")
 #define COMMENT printf(";----------------------------------------------------------------------\n")
 
@@ -81,7 +81,7 @@
         printf("SIZEOF_%s\t= %08xh\n",pname,sizeof(p)); \
     else printf("SIZEOF_%s\t= %10d\n",pname,sizeof(p))
 
-#else	/* defined(__linux__) || defined (__DJGPP__) */
+#else	/* (GLIDE_PLATFORM & GLIDE_OS_UNIX) || defined (__DJGPP__) */
 
 #define NEWLINE printf("\n");
 #define COMMENT printf("/*----------------------------------------------------------------------*/\n")
@@ -101,7 +101,7 @@
 #define SIZEOF(p,pname) if (hex) \
         printf("#define SIZEOF_%s 0x%08x\n",pname,sizeof(p)); \
     else printf("#define SIZEOF_%s %10d\n",pname,sizeof(p))
-#endif	/* defined(__linux__) || defined (__DJGPP__) */
+#endif	/* (GLIDE_PLATFORM & GLIDE_OS_UNIX) || defined (__DJGPP__) */
 
 #endif  /* defined(NASM)*/
 

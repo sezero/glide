@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.7.4.12  2003/07/10 12:26:27  dborca
+** no message
+**
 ** Revision 1.7.4.11  2003/07/08 18:43:37  koolsmoky
 ** removed unused local variables
 **
@@ -300,9 +303,9 @@
 #include "fxglide.h"
 #include "fxcmd.h"
 
-#ifdef	__linux__
+#ifdef	DRI_BUILD
 #include <lindri.h>
-#endif	/* defined(__linux__) */
+#endif	/* defined(DRI_BUILD) */
 
 /*---------------------------------------------------------------------------
 ** MMX specializations
@@ -1308,19 +1311,19 @@ static FxBool _grLfbLock (GrLock_t type, GrBuffer_t buffer,
 
       if (rv) 
 	  {
-#ifdef	__linux__
+#ifdef	DRI_BUILD
         if (!colBufferIndex) {
           info->strideInBytes = driInfo.stride;
         } else {
           info->strideInBytes     = gc->bInfo->buffInfo.bufLfbStride;
         }
-#else	/* defined(__linux__) */
+#else	/* defined(DRI_BUILD) */
        /*
         * This is the default for 3D LFBs,
         * which are always 2048 pixels wide.
         */
         info->strideInBytes     = 0x1000;
-#endif	/* defined(__linux__) */
+#endif	/* defined(DRI_BUILD) */
         info->origin            = origin;
 
         /* tbext. Kind of ugly. Kind of duplicate / unfolded code
@@ -1368,17 +1371,17 @@ static FxBool _grLfbLock (GrLock_t type, GrBuffer_t buffer,
 #endif          
           else 
 		  {
-#ifdef __linux__
+#ifdef DRI_BUILD
            /*
             * For Linux, we just return the correct address and
             * stride.
             */
 	        info->strideInBytes   = gc->bInfo->buffInfo.bufLfbStride;
             info->lfbPtr          = (void *)gc->lfbBuffers[colBufferIndex];
-#else	/* defined(__linux__) */
+#else	/* defined(DRI_BUILD) */
             info->lfbPtr          = (void *)gc->lfb_ptr;
-#endif	/* defined(__linux__) */
-#ifndef	__linux__
+#endif	/* defined(DRI_BUILD) */
+#ifndef	DRI_BUILD
             switch (writeMode) 
 			{
 			case GR_LFBWRITEMODE_565_DEPTH:
@@ -1390,7 +1393,7 @@ static FxBool _grLfbLock (GrLock_t type, GrBuffer_t buffer,
               info->strideInBytes <<= 1;
               break;
             }
-#endif	/* defined(__linux__) */
+#endif	/* defined(DRI_BUILD) */
           }
           REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 2, 0x3);
           REG_GROUP_SET(hw, colBufferAddr, gc->textureBuffer.addr );
@@ -1402,15 +1405,15 @@ static FxBool _grLfbLock (GrLock_t type, GrBuffer_t buffer,
           if (type == GR_LFB_READ_ONLY) 
 		  {
             info->lfbPtr        = (void *)gc->lfbBuffers[colBufferIndex];
-#if	defined(__linux__)
+#if	defined(DRI_BUILD)
             if (colBufferIndex == 0) {
                 info->strideInBytes = driInfo.stride;
             } else {
                 info->strideInBytes     = gc->bInfo->buffInfo.bufLfbStride;
             }
-#else	/* defined(__linux__) */
+#else	/* defined(DRI_BUILD) */
             info->strideInBytes     = gc->bInfo->buffInfo.bufLfbStride;
-#endif	/* defined(__linux__) */
+#endif	/* defined(DRI_BUILD) */
 #if __POWERPC__
             if(IS_NAPALM(gc->bInfo->pciInfo.deviceID)) {
               if(gc->grPixelSize == 2) {
@@ -1465,18 +1468,18 @@ static FxBool _grLfbLock (GrLock_t type, GrBuffer_t buffer,
             /* Make sure dither rotation is disabled for 3D LFBs. */
             _3dlfb = FXTRUE;
             
-#if	defined(__linux__)
+#if	defined(DRI_BUILD)
            /*
             * For Linux, we just return the correct address and
             * stride.
             */
 	        info->strideInBytes   = gc->bInfo->buffInfo.bufLfbStride;
             info->lfbPtr          = (void *)gc->lfbBuffers[colBufferIndex];
-#else	/* defined(__linux__) */
+#else	/* defined(DRI_BUILD) */
             info->lfbPtr          = (void *)gc->lfb_ptr;
-#endif	/* defined(__linux__) */
+#endif	/* defined(DRI_BUILD) */
 
-#ifndef	__linux__
+#ifndef	DRI_BUILD
             switch (writeMode) 
 			{
             case GR_LFBWRITEMODE_565_DEPTH:
@@ -1488,7 +1491,7 @@ static FxBool _grLfbLock (GrLock_t type, GrBuffer_t buffer,
               info->strideInBytes <<= 1;
               break;
             }
-#endif	/* defined(__linux__) */
+#endif	/* defined(DRI_BUILD) */
           }
         }
         
@@ -2244,7 +2247,7 @@ static FxBool grLfbReadRegionOrigin (GrBuffer_t src_buffer, GrOriginLocation_t o
    info.size = sizeof(info);
    rv=FXFALSE;
 
-#ifndef __linux__ /* [dBorca] fixme :D */
+#ifndef DRI_BUILD /* [dBorca] fixme :D */
    /* We want to read using HWC if we using FSAA with 4 chips or want dithering */
    /* or we are using forced 32 bit mode and want dithering */
    wantHwc = (_GlideRoot.environment.useHwcAAforLfbRead & 1) &&

@@ -255,13 +255,6 @@ int _guHeapCheck( void )
 }
 #endif
 
-#if !__POWERPC__ && !defined(__linux__)
-void
-i3(void) 
-{
-  __asm int 3;
-} 
-#endif /* !__POWERPC__ && !defined(__linux__) */
 #endif
 
 void

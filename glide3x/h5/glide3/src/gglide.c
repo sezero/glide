@@ -651,7 +651,7 @@
 #endif /* !HAL_CSIM */
 #endif /* (GLIDE_PLATFORM & GLIDE_SST_SIM) */
 
-#ifdef __linux__
+#ifdef DRI_BUILD
 #include <lindri.h>
 #endif
 
@@ -1834,12 +1834,12 @@ GR_ENTRY(grBufferClear, void, (GrColor_t color, GrAlpha_t alpha, FxU32 depth))
             /* tbext */
             REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 2, 0x3);
             REG_GROUP_SET(hw, colBufferAddr, gc->state.shadow.auxBufferAddr );
-#ifdef __linux__
+#ifdef DRI_BUILD
             REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer)? driInfo.stride :
                           gc->state.shadow.auxBufferStride);
-#else	/* defined(__linux__) */
+#else	/* defined(DRI_BUILD) */
             REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.auxBufferStride );
-#endif	/* defined(__linux__) */
+#endif	/* defined(DRI_BUILD) */
             REG_GROUP_END();
 #ifdef FX_GLIDE_NAPALM
             if (IS_NAPALM(gc->bInfo->pciInfo.deviceID)) 
@@ -1885,7 +1885,7 @@ GR_ENTRY(grBufferClear, void, (GrColor_t color, GrAlpha_t alpha, FxU32 depth))
           } else {
             REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 2, 0x3);
             REG_GROUP_SET(hw, colBufferAddr, gc->buffers0[gc->windowed ? 0 : gc->curBuffer]);
-#ifdef __linux__
+#ifdef DRI_BUILD
             REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride : 
                           gc->state.shadow.colBufferStride );
 #else
@@ -2375,7 +2375,7 @@ GR_EXT_ENTRY(grBufferClearExt, void, (GrColor_t color, GrAlpha_t alpha, FxU32 de
             /* tbext */
             REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 2, 0x3) ;
             REG_GROUP_SET(hw, colBufferAddr, gc->state.shadow.auxBufferAddr) ;
-#ifdef __linux__
+#ifdef DRI_BUILD
 	    REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride : 
 			  gc->state.shadow.auxBufferStride );
 #else
@@ -2425,7 +2425,7 @@ GR_EXT_ENTRY(grBufferClearExt, void, (GrColor_t color, GrAlpha_t alpha, FxU32 de
           } else {
             REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 2, 0x3) ;
             REG_GROUP_SET(hw, colBufferAddr, gc->buffers0[gc->windowed ? 0 : gc->curBuffer]) ;
-#ifdef __linux__
+#ifdef DRI_BUILD
 	    REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride : 
 			  gc->state.shadow.colBufferStride );
 #else
@@ -2590,7 +2590,7 @@ GR_ENTRY(grBufferClear, void, (GrColor_t color, GrAlpha_t alpha, FxU32 depth))
 } /* grBufferClear */
 #endif
 
-#ifndef __linux__
+#ifndef DRI_BUILD
 /*---------------------------------------------------------------------------
 ** grBufferSwap
 **
@@ -2877,7 +2877,7 @@ GR_ENTRY(grBufferSwap, void, (FxU32 swapInterval))
   GR_END();
 #undef FN_NAME  
 } /* grBufferSwap */
-#else	/* defined(__linux__) */
+#else	/* defined(DRI_BUILD) */
 /*---------------------------------------------------------------------------
 ** grBufferSwap
 **
@@ -3019,7 +3019,7 @@ GR_ENTRY(grDRIBufferSwap, void, (FxU32 swapInterval))
   GR_END();
 #undef FN_NAME  
 } /* grBufferSwap */
-#endif	/* defined(__linux__) */
+#endif	/* defined(DRI_BUILD) */
 
 /*---------------------------------------------------------------------------
 ** grBufferNumPending
@@ -3742,7 +3742,7 @@ GR_ENTRY(grDisableAllEffects, void, (void))
 ** grStippleMode
 */
 
-#if defined(__linux__) || defined(__WIN32__)
+#if defined(DRI_BUILD) || defined(__WIN32__)
 GR_STATE_ENTRY(grStippleMode, void, (GrStippleMode_t mode))
 {
 #define FN_NAME "_grStippleMode"
@@ -3776,7 +3776,7 @@ GR_STATE_ENTRY(grStippleMode, void, (GrStippleMode_t mode))
 #endif /* !GLIDE3 */
 #undef FN_NAME
 } /* grStippleMode */
-#endif /* __linux__ __WIN32__ */
+#endif /* defined(DRI_BUILD) || defined(__WIN32__) */
 
 /*---------------------------------------------------------------------------
 ** grDitherMode
@@ -4255,7 +4255,7 @@ GR_ENTRY(grGlideSetState, void, (const void *state))
 **  and the only drawbuffer modes supported by the fbzMode register are 0
 **  (back) and 1 (front)
 */
-#ifndef __linux__
+#ifndef DRI_BUILD
 GR_STATE_ENTRY(grRenderBuffer, void, (GrBuffer_t buffer))
 {
 #define FN_NAME "_grRenderBuffer"
@@ -4294,7 +4294,7 @@ GR_STATE_ENTRY(grRenderBuffer, void, (GrBuffer_t buffer))
   GR_END();
 #undef FN_NAME
 } /* grRenderBuffer */
-#else /* __linux__ */
+#else /* DRI_BUILD */
 GR_STATE_ENTRY(grRenderBuffer, void, (GrBuffer_t buffer))
 {
 #define FN_NAME "_grRenderBuffer"
@@ -4330,7 +4330,7 @@ GR_STATE_ENTRY(grRenderBuffer, void, (GrBuffer_t buffer))
   GR_END();
 #undef FN_NAME
 } /* grRenderBuffer */
-#endif /* __linux__ */
+#endif /* DRI_BUILD */
 
 
 GR_ENTRY(grCheckForRoom, void, (FxI32 n))
@@ -5324,7 +5324,7 @@ GR_EXT_ENTRY(grTBufferWriteMaskExt, void , (FxU32 tmask) )
       REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 4, 0xf);
       {
         REG_GROUP_SET(hw, colBufferAddr, gc->state.shadow.colBufferAddr);
-#ifdef __linux__
+#ifdef DRI_BUILD
 	REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride : 
 		      gc->state.shadow.colBufferStride );
 #else
@@ -5351,7 +5351,7 @@ GR_EXT_ENTRY(grTBufferWriteMaskExt, void , (FxU32 tmask) )
       REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 4, 0xf);
       {
         REG_GROUP_SET(hw, colBufferAddr, gc->state.shadow.colBufferAddr);
-#ifdef __linux__
+#ifdef DRI_BUILD
 	REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride : 
 		      gc->state.shadow.colBufferStride );
 #else
@@ -5376,7 +5376,7 @@ GR_EXT_ENTRY(grTBufferWriteMaskExt, void , (FxU32 tmask) )
       REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 4, 0xf);
       {
         REG_GROUP_SET(hw, colBufferAddr, gc->state.shadow.colBufferAddr);
-#ifdef __linux__
+#ifdef DRI_BUILD
 	REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride : 
 		      gc->state.shadow.colBufferStride );
 #else
@@ -5389,7 +5389,7 @@ GR_EXT_ENTRY(grTBufferWriteMaskExt, void , (FxU32 tmask) )
       REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 4, 0xf);
       {
         REG_GROUP_SET(hw, colBufferAddr, gc->buffers1[gc->curBuffer] | SST_BUFFER_BASE_SELECT);
-#ifdef __linux__
+#ifdef DRI_BUILD
 	REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride : 
 		      gc->state.shadow.colBufferStride );
 #else
@@ -6225,11 +6225,11 @@ GR_DDFUNC(_grInitializeGCFuncs, void, (GrGC *gc))
   gc->gcFuncs.grBufferClear = (void *) GR_DDNAME(grBufferClear); 
   gc->gcFuncs.grBufferNumPending = (void *)
     GR_DDNAME(grBufferNumPending); 
-#ifdef	__linux__
+#ifdef	DRI_BUILD
   gc->gcFuncs.grBufferSwap = (void *) GR_DDNAME(grDRIBufferSwap); 
-#else	/* defined(__linux__) */
+#else	/* defined(DRI_BUILD) */
   gc->gcFuncs.grBufferSwap = (void *) GR_DDNAME(grBufferSwap); 
-#endif	/* defined(__linux__) */
+#endif	/* defined(DRI_BUILD) */
   gc->gcFuncs.grChromakeyMode = (void *) GR_DDNAME(grChromakeyMode); 
   gc->gcFuncs.grChromakeyValue = (void *) GR_DDNAME(grChromakeyValue); 
   gc->gcFuncs.grClipWindow = (void *) GR_DDNAME(grClipWindow); 

@@ -234,7 +234,7 @@ GR_ENTRY(grDrawPoint, void, (const void *p))
   GR_BEGIN_NOFIFOCHECK(FN_NAME, 90);
   GDBG_INFO_MORE(gc->myLevel, "(p = 0x%x)\n", p);
 
-#if defined(__linux__) || defined(__DJGPP__)
+#if (GLIDE_PLATFORM & GLIDE_OS_UNIX) || defined(__DJGPP__)
   if (gc->state.grEnableArgs.primitive_smooth_mode & GR_AA_ORDERED_POINTS_MASK)
 	  _grAADrawPoints(GR_VTX_PTR_ARRAY, 1, (void *)&p);
   else
@@ -290,17 +290,17 @@ GR_ENTRY(grDrawLine, void, (const void *a, const void *b))
             _grDrawLineStrip(GR_VTX_PTR_ARRAY, GR_LINES, 2, verts);
   }
 #else
-#if defined(__linux__) || defined(__DJGPP__)
+#if (GLIDE_PLATFORM & GLIDE_OS_UNIX) || defined(__DJGPP__)
   if (gc->state.grEnableArgs.primitive_smooth_mode & GR_AA_ORDERED_LINES_MASK)
     _grAADrawLineStrip(GR_VTX_PTR_ARRAY, GR_LINES, 2, (void *)&a);
   else
     _grDrawLineStrip(GR_VTX_PTR_ARRAY, GR_LINES, 2, (void *)&a);
-#else	/* defined(__linux__) */
+#else	/* (GLIDE_PLATFORM & GLIDE_OS_UNIX) || defined(__DJGPP__) */
   if (gc->state.grEnableArgs.primitive_smooth_mode & GR_AA_ORDERED_LINES_MASK)
     _grAADrawLineStrip(GR_VTX_PTR_ARRAY, GR_LINES, 2, &(void *)a);
   else
     _grDrawLineStrip(GR_VTX_PTR_ARRAY, GR_LINES, 2, &(void *)a);
-#endif	/* defined(__linux__) */
+#endif	/* (GLIDE_PLATFORM & GLIDE_OS_UNIX) || defined(__DJGPP__) */
 #endif
     
 #undef FN_NAME
@@ -311,11 +311,11 @@ GR_ENTRY(grDrawLine, void, (const void *a, const void *b))
  */
 
 #if !defined(__POWERPC__) || GLIDE_USE_C_TRISETUP
-#if !defined(GLIDE_DEBUG) && !defined(__linux__) && !defined(__DJGPP__)
+#if !defined(GLIDE_DEBUG) && !(GLIDE_PLATFORM & GLIDE_OS_UNIX) && !defined(__DJGPP__)
 #if !(GLIDE_USE_C_TRISETUP)
 __declspec( naked )
 #endif
-#endif	/* !defined(GLIDE_DEBUG) && !defined(__linux__) && !defined(__DJGPP__) */
+#endif	/* !defined(GLIDE_DEBUG) && !(GLIDE_PLATFORM & GLIDE_OS_UNIX) && !defined(__DJGPP__) */
 GR_ENTRY(grDrawTriangle, void, (const void *a, const void *b, const void *c))
 {
 #define FN_NAME "grDrawTriangle"
@@ -364,14 +364,14 @@ GR_ENTRY(grDrawTriangle, void, (const void *a, const void *b, const void *c))
     }
     lostContext: ; /* <-- my, that's odd, but MSVC was insistent  */
   }
-#elif defined(__linux__) || defined(__DJGPP__)
+#elif (GLIDE_PLATFORM & GLIDE_OS_UNIX) || defined(__DJGPP__)
   {
     GR_BEGIN_NOFIFOCHECK("grDrawTriangle",92);
     TRISETUP(a, b, c);
     GR_END();
   }
   
-#else /* defined(__linux__) */
+#else /* (GLIDE_PLATFORM & GLIDE_OS_UNIX) || defined(__DJGPP__) */
 #error "Write triangle proc dispatch for this compiler"
 #endif /* Triangle proc dispatch routine */
 #undef FN_NAME

@@ -600,7 +600,7 @@ const void *fxSplashPlug (FxU32* w, FxU32* h,
    Code Macros
    ----------------------------------------------------------------------- */
 #undef  GETENV
-#if defined(__linux__) || defined(__DJGPP__)
+#if defined(DRI_BUILD) || defined(__DJGPP__)
 #define GETENV(a, b) hwcGetenv(a)
 #else
 #define GETENV(a, b) hwcGetenvEx(a, b)
@@ -1156,14 +1156,14 @@ typedef struct {
     struct {
       GrDitherMode_t mode;
     } grDitherModeArgs;
-#if defined(__linux__) || defined(__WIN32__)
+#if defined(DRI_BUILD) || defined(__WIN32__)
     struct {
       GrStippleMode_t mode;
     } grStippleModeArgs;
     struct {
       GrStipplePattern_t stipple;
     } grStipplePatternArgs;
-#endif /* __linux__ __WIN32__ */
+#endif /* DRI_BUILD __WIN32__ */
     struct {
       GrBuffer_t buffer;
     } grRenderBufferArgs;
@@ -1376,11 +1376,11 @@ void FX_CSTYLE _grDrawVertexList_SSE_Window(FxU32 pktype, FxU32 type, FxI32 mode
 void FX_CSTYLE _grDrawVertexList_SSE_Clip(FxU32 pktype, FxU32 type, FxI32 mode, FxI32 count, void *pointers);
 #endif /* GL_SSE */
 
-#if defined(__linux__) || defined(__DJGPP__)
+#if (GLIDE_PLATFORM & GLIDE_OS_UNIX) || defined(__DJGPP__)
 /* Define this structure otherwise it assumes the structure only exists
    within the function */
 struct GrGC_s;
-#endif	/* defined(__linux__) || defined(__DJGPP__) */
+#endif	/* (GLIDE_PLATFORM & GLIDE_OS_UNIX) || defined(__DJGPP__) */
 
 /* _GlideRoot.curTexProcs is an array of (possibly specialized)
  * function pointers indexed by texture format size (8/16 bits for
@@ -2355,14 +2355,14 @@ _trisetup_noclip_valid(const void *va, const void *vb, const void *vc );
 #elif defined(__POWERPC__)
 #define TRISETUP(_a, _b, _c) \
   ((FxI32 (*)(const void *va, const void *vb, const void *vc, GrGC *gc))*gc->triSetupProc)(_a, _b, _c, gc)
-#elif defined( __linux__ ) || defined(__DJGPP__)
+#elif (GLIDE_PLATFORM & GLIDE_OS_UNIX) || defined(__DJGPP__)
 #define TRISETUP \
   __asm(""::"d"(gc)); \
   (*gc->triSetupProc)
-#else /* defined(__linux__) */
+#else /* (GLIDE_PLATFORM & GLIDE_OS_UNIX) */
 #define TRISETUP \
   (*gc->triSetupProc)
-#endif	/* defined(__linux__) */
+#endif
 void
 _grValidateState();
 
@@ -2431,11 +2431,11 @@ grStencilFunc(GrCmpFnc_t fnc, GrStencil_t ref, GrStencil_t mask);
 void FX_CALL 
 grStencilMask(GrStencil_t write_mask);
 
-#if defined(__linux__) || defined(__WIN32__)
+#if defined(DRI_BUILD) || defined(__WIN32__)
 void FX_CALL
 grStipplePattern(
             GrStipplePattern_t stipple);
-#endif /* __linux__ __WIN32__ */
+#endif /* DRI_BUILD __WIN32__ */
 
 void FX_CALL 
 grStencilOp(
@@ -2611,10 +2611,10 @@ _grDepthBufferMode( GrDepthBufferMode_t mode );
 void
 _grDitherMode( GrDitherMode_t mode );
 
-#if defined(__linux__) || defined(__WIN32__)
+#if defined(DRI_BUILD) || defined(__WIN32__)
 void
 _grStippleMode( GrStippleMode_t mode );
-#endif /* __linux__  __WIN32__ */
+#endif /* DRI_BUILD  __WIN32__ */
 
 void
 _grRenderBuffer( GrBuffer_t buffer );
@@ -2722,10 +2722,10 @@ getThreadValueFast() {
 }
 #endif
 
-#ifdef __linux__
+#ifdef DRI_BUILD
 extern FxU32 threadValueLinux;
 #define getThreadValueFast() threadValueLinux
-#endif /* defined(__linux__) */
+#endif /* defined(DRI_BUILD) */
 
 #ifdef __DJGPP__
 extern FxU32 threadValueDJGPP;
@@ -3129,8 +3129,6 @@ assertDefaultState( void );
 
 void
 _grAssert(char *, char *, int);
-
-void i3(void);
 
 #if ASSERT_FAULT
 #define ASSERT_FAULT_IMMED(__x) if (!(__x)) { \

@@ -357,7 +357,7 @@ GR_DIENTRY(grGlideInit, void, (void))
   /* Hack alert:
    * dBorca - Linux/DRI failed the above call, so bypass the next one
    */
-#ifndef __linux__
+#ifndef DRI_BUILD
 #ifdef GLIDE_INIT_HWC
     GrErrorCallback( hwcGetErrorString(), FXTRUE );
 #endif
