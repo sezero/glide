@@ -43,10 +43,14 @@ else
     else
       ifeq ($(FX_GLIDE_HW),h3)
         SUBDIRS	+= h3
-      else
-        FX_GLIDE_HW = h3
-        SUBDIRS += h3
-      endif
+      else 
+	ifeq ($(FX_GLIDE_HW),h5)
+	  SUBDIRS += h5	  
+        else
+          FX_GLIDE_HW = h3
+          SUBDIRS += h3
+	endif
+       endif
     endif
   endif
 endif
