@@ -73,7 +73,7 @@ int     txGCD(int a, int b);
 int             txAspectRatio(int w, int h);
 void    txPanic(char *);
 void    txError(char *);
-void    txYABtoPal256(int *palette, const int* yabTable);
+void    txYABtoPal256(FxU32 *palette, const FxU32* yabTable);
 void    txRectCopy(FxU8 *dst, int dstStride, const FxU8 *src, int srcStride,
                         int width, int height);
 FxBool  txMipAlloc(TxMip *txMip);

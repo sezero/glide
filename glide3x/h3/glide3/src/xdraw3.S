@@ -90,15 +90,13 @@ _grDrawTriangles_3DNow:
 #define dlpStart edx	/*  Pointer to start of offset list */
 
 	push %edi	/*  save caller's register variable */
-	movl (0x18) , %eax	/*  get thread local storage base pointer */
 
 	push %esi	/*  save caller's register variable */
-	mov (_GlideRoot+tlsOffset) , %edx	/*  offset of GC into tls */
 
 	push %ebx	/*  save caller's register variable */
 	mov _count-4(%esp) , %vertexCount	/*  number of vertices in triangles */
 
-	mov (%eax,%edx) , %gc	/*  get GC for current thread  */
+	movl (threadValueLinux) , %gc
 	mov _pointers-4(%esp) , %vertexPtr	/*  get current vertex pointer (deref mode) */
 
 	push %ebp	/*  save frame pointer */
@@ -1118,20 +1116,18 @@ _grDrawTriangles_3DNow:
 _grDrawVertexList_3DNow_Window:
 /*  132  : { */
 
-	movl (0x18) , %edx	/*  get thread local storage base pointer         */
 	push %edi	/*  save caller's register variable */
 
 	push %esi	/*  save caller's register variable */
 	mov _count-8(%esp) , %vertexCount	/*  number of vertices in strip/fan */
 
 	push %ebp	/*  save frame pointer */
-	mov (_GlideRoot+tlsOffset) , %ebp	/*  GC position relative to tls base     */
 
 	push %ebx	/*  save caller's register variable         */
 	mov _pointers(%esp) , %vertexPtr	/*  get current vertex pointer (deref mode) */
 /*  get current vertex (non-deref mode) */
 
-	mov (%edx,%ebp) , %gc	/*  get current graphics context from tls */
+	movl (threadValueLinux) , %gc
 	test %vertexCount , %vertexCount	/*  number of vertices <= 0 ? */
 
 	nop 	/*  filler */
@@ -1709,20 +1705,18 @@ _grDrawVertexList_3DNow_Clip:
 
 .align 32
 
-	movl (0x18) , %edx	/*  get thread local storage base pointer         */
 	push %edi	/*  save caller's register variable */
 
 	push %esi	/*  save caller's register variable */
 	mov _count-8(%esp) , %vertexCount	/*  number of vertices in strip/fan */
 
 	push %ebp	/*  save frame pointer */
-	mov (_GlideRoot+tlsOffset) , %ebp	/*  GC position relative to tls base     */
 
 	push %ebx	/*  save caller's register variable         */
 	mov _pointers(%esp) , %vertexPtr	/*  get current vertex pointer (deref mode) */
 /*  get current vertex (non-deref mode) */
 
-	mov (%edx,%ebp) , %gc	/*  get current graphics context from tls */
+	movl (threadValueLinux) , %gc
 	test %vertexCount , %vertexCount	/*  number of vertices <= 0 ? */
 
 	jle .L_grDrawVertexList_3DNow_Clip_strip_done	/*  yup, the strip/fan is done */
@@ -2271,7 +2265,7 @@ _drawvertexlist:
 	push %esi
 	push %edi
 	push %ebx
-	movl (threadValueLinux), %gc			
+	movl (threadValueLinux) , %gc			
 #endif
 	
 /*      GR_DCL_GC */
@@ -2476,14 +2470,12 @@ _drawvertexlist:
 .type _vpdrawvertexlist,@function
 _vpdrawvertexlist:
 
-	movl (0x18) , %eax	/*  tls base pointer */
 	push %esi
 
-	mov (_GlideRoot+tlsOffset) , %esi	/*  gc position relative to tls base */
 	push %edi
 
 	push %ebx
-	mov (%eax,%esi) , %gc
+	movl (threadValueLinux) , %gc
 
 	push %ebp
 	movl _mode(%esp) , %ecx

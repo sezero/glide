@@ -268,7 +268,7 @@ txMapPal256toYAB(FxU32 *YAB, FxU8 *map, int nsamples, FxU32 *samples)
     int         bstR, bstG, bstB, bstMax;
     int         iterations;                     // track how many inputs have been fed to NN
     int         drySpells;                      // how many inputs since last best case.
-    int         yab2pal[256];
+    FxU32         yab2pal[256];
 
     _nn_initTables();
     /* 
@@ -385,7 +385,7 @@ txMipNccNNet(TxMip *pxMip, TxMip *txMip, int format, FxU32 dither, FxU32 comp)
     int         i, w, h;
     int         ncolors;
     int         pixsize = (pxMip->format == GR_TEXFMT_YIQ_422) ? 1 : 2;
-    int         yabTable[16+12+12];
+    FxU32         yabTable[16+12+12];
     FxU8        map[256];
 
 

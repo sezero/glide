@@ -29,10 +29,10 @@
 #include "texusint.h"
 
 static int 
-dithmat[4][4] = {      { 0,  8,  2, 10,    },
-                       {    12,  4, 14,  6 },
-                       {     3, 11,  1,  9 },
-                       {    15,  7, 13,  5 }  };
+dithmat[4][4] = { {  0,  8,  2, 10 }, 
+                  { 12,  4, 14,  6 }, 
+                  {  3, 11,  1,  9 }, 
+                  { 15,  7, 13,  5 }};
 
 static struct   {
     int yhist[256], ihist[256], qhist[256];

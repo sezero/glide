@@ -43,7 +43,7 @@ _txReadHeader( FILE *stream, TxMip *info )
     FxU32       cookie;
     int         c;
         int             fformat;                // format of the image file.
-        int             status;
+        int             status = 0;
 
     if ( stream == NULL ) {
                 txError("Bad file handle.");

@@ -1,13 +1,13 @@
 #!/bin/sh -f
-function do_nothing() {
+do_nothing() {
     return 0;
 }
 
-function device () {
+device () {
     df -k $1 | grep -v '^Filesystem' | awk '{print $1;}'
 }
 
-function inumber () {
+inumber () {
     ls -id "$1" | awk '{print $1;}'
 }
 
@@ -18,7 +18,7 @@ function inumber () {
 #  101 if either of the parameters does not name a directory
 #  102 if both parameters name different directories.
 #
-function files_are_equal() {
+files_are_equal() {
     local inode1 inode2 dev1 dev2
     if [ -z "$1" ] || [ -z "$2" ] ; then
         return 100;

@@ -156,14 +156,14 @@ txGCD(int a, int b)
 }
 
 void
-txYABtoPal256(int *palette, const int* yabTable)
+txYABtoPal256(FxU32 *palette, const FxU32* yabTable)
 {
         // Convert YAB table to a 256 color palette 
         // Assume yabTable[] has first 16Y's, 12 A's, 12 B's
 
-        const   int    *Y = yabTable;
-        const   int    *A = yabTable + 16;
-        const   int    *B = yabTable + 16 + 12;
+        const   FxU32    *Y = yabTable;
+        const   FxU32    *A = yabTable + 16;
+        const   FxU32    *B = yabTable + 16 + 12;
         int             i;
 
         for (i=0; i<256; i++) {

@@ -35,7 +35,7 @@ static struct   {
     int yhist[256], ihist[256], qhist[256];
     int ymin, ymax, imin, imax, qmin, qmax;
     int npixels;
-    int y[16], a[3*4], b[3*4];          // please leave these contiguous
+    FxU32 y[16], a[3*4], b[3*4];          // please leave these contiguous
 } ncc;
 
 static int

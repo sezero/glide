@@ -23,6 +23,16 @@
 /*  $Header$ *
 /*  $Revision$ *
 /*  $Log$
+/*  Revision 1.3  2000/10/20 19:07:00  billwhite
+/*  1.) Added changes for AMD 3DNow instructions in h5/glide3 and
+/*      h3/glide3.
+/*  2.) Fixed a typographical error in configure.in.  The default
+/*      texture utility library is texus2, not texus.
+/*
+/*  Revision 1.2  2000/06/27 19:59:34  joseph
+/*  Previous checkin of asm files were already preprocessed.
+/*  Fixed build rules for 3DNow optimized assembly.
+/*
 /*  Revision 1.1  2000/06/15 00:27:43  joseph
 /*  Initial checkin into SourceForge.
 /
@@ -143,7 +153,7 @@
 	push %esi	/*  save caller's register variable */
 	push %ebx	/*  save caller's register variable  */
 
-	mov _gc(%esp), gc
+	mov _gc-4(%esp) , gc
 	mov _vb-4(%esp) , fb	/*  get base address of vertex B */
 	push %ebp	/*  save frame pointer */
 

@@ -52,9 +52,12 @@
 unsigned char inverse_pal[1<<INVERSE_PAL_TOTAL_BITS];
 #endif
 
+/* At least the GNU libc declares these.. */
+#ifndef __GNUC__
 typedef unsigned long   ulong;
-typedef unsigned char   uchar;
 typedef unsigned short  ushort;
+#endif
+typedef unsigned char   uchar;
 
 #ifdef  HUGE
 #undef  HUGE

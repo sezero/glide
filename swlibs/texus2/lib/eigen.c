@@ -286,7 +286,7 @@ eigenSpace(int n, float *data, float mean[3], float evectors[3][3], float evalue
     float   cov[3][3];
 
     covariance(n, (float (*)[3]) data, mean, cov); 
-    eigenVectors(cov, evectors, evalues);
+    eigenVectors((const float (*)[3])cov, evectors, evalues);
 }
 
 /*
