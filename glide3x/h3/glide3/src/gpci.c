@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.2.2.1  2004/02/16 07:42:16  dborca
+** grSetNumPendingBuffers visible with grGetProcAddress
+**
 ** Revision 1.2  2001/03/05 15:02:18  alanh
 ** Set FX_GLIDE_SWAPINTERVAL to 0 by default
 **
@@ -892,7 +895,7 @@ _GlideInitEnvironment(void)
   GDBG_INFO(80,"        nAuxBuffer: %d\n",_GlideRoot.environment.nAuxBuffer);
   _GlideRoot.environment.swFifoLWM         = GLIDE_GETENV("FX_GLIDE_LWM", -1L);
   GDBG_INFO(80,"         swFifoLWM: %d\n",_GlideRoot.environment.swFifoLWM);
-  _GlideRoot.environment.swapInterval      = GLIDE_GETENV("FX_GLIDE_SWAPINTERVAL", 0);
+  _GlideRoot.environment.swapInterval      = GLIDE_GETENV("FX_GLIDE_SWAPINTERVAL", -1L);
   GDBG_INFO(80,"      swapInterval: %d\n",_GlideRoot.environment.swapInterval);
   _GlideRoot.environment.snapshot          = GLIDE_GETENV("FX_SNAPSHOT", -1L);
   GDBG_INFO(80,"          snapshot: %d\n",_GlideRoot.environment.snapshot);
