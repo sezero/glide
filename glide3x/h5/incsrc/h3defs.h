@@ -5,20 +5,21 @@
 ** THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONLY
 ** PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGHT
 ** TO USE THE GLIDE TRADEMARK WITHOUT PRIOR WRITTEN PERMISSION OF 3DFX
-** INTERACTIVE, INC. A COPY OF THIS LICENSE MAY BE OBTAINED FROM THE 
-** DISTRIBUTOR OR BY CONTACTING 3DFX INTERACTIVE INC(info@3dfx.com). 
-** THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER 
+** INTERACTIVE, INC. A COPY OF THIS LICENSE MAY BE OBTAINED FROM THE
+** DISTRIBUTOR OR BY CONTACTING 3DFX INTERACTIVE INC(info@3dfx.com).
+** THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER
 ** EXPRESSED OR IMPLIED. SEE THE 3DFX GLIDE GENERAL PUBLIC LICENSE FOR A
-** FULL TEXT OF THE NON-WARRANTY PROVISIONS.  
-** 
+** FULL TEXT OF THE NON-WARRANTY PROVISIONS. 
+**
 ** USE, DUPLICATION OR DISCLOSURE BY THE GOVERNMENT IS SUBJECT TO
 ** RESTRICTIONS AS SET FORTH IN SUBDIVISION (C)(1)(II) OF THE RIGHTS IN
 ** TECHNICAL DATA AND COMPUTER SOFTWARE CLAUSE AT DFARS 252.227-7013,
 ** AND/OR IN SIMILAR OR SUCCESSOR CLAUSES IN THE FAR, DOD OR NASA FAR
 ** SUPPLEMENT. UNPUBLISHED RIGHTS RESERVED UNDER THE COPYRIGHT LAWS OF
-** THE UNITED STATES.  
-** 
+** THE UNITED STATES. 
+**
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
+**
 **
 ** $Revision$
 ** $Date$
@@ -563,43 +564,43 @@
 // 10/16 = 0.625, 12/16 = 0.750, 14/16 = 0.875, 16/16 = 1.000
 #define SST_AA_CONTROL_PRIMARY_X_OFFSET_SHIFT          0
 #define SST_AA_CONTROL_PRIMARY_X_OFFSET                (0x7F << SST_AA_CONTROL_PRIMARY_X_OFFSET_SHIFT)
-        #define PRIBUFVTXOFFX_2SMPL_DEF           "-0.250"
+        #define PRIBUFVTXOFFX_2SMPL_DEF           "-0.750"
+        #define PRIBUFVTXOFFX_4SMPL_CHP0_DEF      "-0.625"
+        #define PRIBUFVTXOFFX_4SMPL_CHP1_DEF      "-0.875"
+// Note: Glide uses the binary values, and these are still the *original* values that ar
+//       centered around the pixel center, rather than offset by -0.5
         #define PRIBUFVTXOFFX_2SMPL_DEF_VAL       0x7c
-//        #define PRIBUFVTXOFFX_4SMPL_CHP0_DEF      "0.375"
-//        #define PRIBUFVTXOFFX_4SMPL_CHP1_DEF      "0.125"
-        #define PRIBUFVTXOFFX_4SMPL_CHP0_DEF      "-0.125"
         #define PRIBUFVTXOFFX_4SMPL_CHP0_DEF_VAL  0x7e
-        #define PRIBUFVTXOFFX_4SMPL_CHP1_DEF      "-0.375"
         #define PRIBUFVTXOFFX_4SMPL_CHP1_DEF_VAL  0x7a
 #define SST_AA_CONTROL_PRIMARY_Y_OFFSET_SHIFT          7
 #define SST_AA_CONTROL_PRIMARY_Y_OFFSET                (0x7F << SST_AA_CONTROL_PRIMARY_Y_OFFSET_SHIFT)
-        #define PRIBUFVTXOFFY_2SMPL_DEF           "-0.250"
+        #define PRIBUFVTXOFFY_2SMPL_DEF           "-0.750"
+        #define PRIBUFVTXOFFY_4SMPL_CHP0_DEF      "-0.875"
+        #define PRIBUFVTXOFFY_4SMPL_CHP1_DEF      "-0.375"
+// Note: Glide uses the binary values, and these are still the *original* values that ar
+//       centered around the pixel center, rather than offset by -0.5
         #define PRIBUFVTXOFFY_2SMPL_DEF_VAL       0x7c
-//        #define PRIBUFVTXOFFY_4SMPL_CHP0_DEF      "0.125"
-//        #define PRIBUFVTXOFFY_4SMPL_CHP1_DEF      "0.625"
-        #define PRIBUFVTXOFFY_4SMPL_CHP0_DEF      "-0.375"
         #define PRIBUFVTXOFFY_4SMPL_CHP0_DEF_VAL  0x7a
-        #define PRIBUFVTXOFFY_4SMPL_CHP1_DEF      "0.125"
         #define PRIBUFVTXOFFY_4SMPL_CHP1_DEF_VAL  0x02
 #define SST_AA_CONTROL_SECONDARY_X_OFFSET_SHIFT        14
 #define SST_AA_CONTROL_SECONDARY_X_OFFSET              (0x7F << SST_AA_CONTROL_SECONDARY_X_OFFSET_SHIFT)
-        #define SECBUFVTXOFFX_2SMPL_DEF           "0.250"
+        #define SECBUFVTXOFFX_2SMPL_DEF           "-0.250"
+        #define SECBUFVTXOFFX_4SMPL_CHP0_DEF      "-0.125"
+        #define SECBUFVTXOFFX_4SMPL_CHP1_DEF      "-0.375"
+// Note: Glide uses the binary values, and these are still the *original* values that ar
+//       centered around the pixel center, rather than offset by -0.5
         #define SECBUFVTXOFFX_2SMPL_DEF_VAL       0x04
-//        #define SECBUFVTXOFFX_4SMPL_CHP0_DEF      "0.875"
-//        #define SECBUFVTXOFFX_4SMPL_CHP1_DEF      "0.625"
-        #define SECBUFVTXOFFX_4SMPL_CHP0_DEF      "0.375"
         #define SECBUFVTXOFFX_4SMPL_CHP0_DEF_VAL  0x06
-        #define SECBUFVTXOFFX_4SMPL_CHP1_DEF      "0.125"
         #define SECBUFVTXOFFX_4SMPL_CHP1_DEF_VAL  0x02
 #define SST_AA_CONTROL_SECONDARY_Y_OFFSET_SHIFT        21
 #define SST_AA_CONTROL_SECONDARY_Y_OFFSET              (0x7F << SST_AA_CONTROL_SECONDARY_Y_OFFSET_SHIFT)
-        #define SECBUFVTXOFFY_2SMPL_DEF           "0.250"
+        #define SECBUFVTXOFFY_2SMPL_DEF           "-0.250"
+        #define SECBUFVTXOFFY_4SMPL_CHP0_DEF      "-0.625"
+        #define SECBUFVTXOFFY_4SMPL_CHP1_DEF      "-0.125"
+// Note: Glide uses the binary values, and these are still the *original* values that ar
+//       centered around the pixel center, rather than offset by -0.5
         #define SECBUFVTXOFFY_2SMPL_DEF_VAL       0x04
-//        #define SECBUFVTXOFFY_4SMPL_CHP0_DEF      "0.375"
-//        #define SECBUFVTXOFFY_4SMPL_CHP1_DEF      "0.875"
-        #define SECBUFVTXOFFY_4SMPL_CHP0_DEF      "-0.125"
         #define SECBUFVTXOFFY_4SMPL_CHP0_DEF_VAL  0x7e
-        #define SECBUFVTXOFFY_4SMPL_CHP1_DEF      "0.375"
         #define SECBUFVTXOFFY_4SMPL_CHP1_DEF_VAL  0x06
 #define SST_AA_CONTROL_AA_ENABLE                       BIT(28)
 #define SST_AA_CONTROL_AA_DISABLE_FIRST                BIT(30)

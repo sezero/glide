@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log: 
+**  6    3dfx      1.4.1.0     06/20/00 Joseph Kain     Changes to support the
+**       Napalm Glide open source release.  Changes include cleaned up offensive
+**       comments and new legal headers.
 **  5    3dfx      1.4         12/10/99 Leo Galway      Removed previous hi-res
 **       mode information for Glide3. These modes were only necessary for
 **       Cornerstone (or future hi-res) support in RT4.2 source branch and
