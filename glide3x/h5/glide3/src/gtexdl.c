@@ -348,7 +348,7 @@ GR_DDFUNC(_grTexDownloadNccTableExt,
   gc->stats.palDownloads++;
   gc->stats.palBytes += (end-start+1)<<2;
 
-  if (gc->tmu_state[tmu].ncc_table[which] != table) {
+  /*if (gc->tmu_state[tmu].ncc_table[which] != table)*/ {
     SstRegs* texHW;
     int i;
 #ifdef GLIDE_POINTCAST_PALETTE
@@ -652,7 +652,7 @@ GR_DDFUNC(_grTexDownloadPaletteExt,
   Return:
     none
   -------------------------------------------------------------------*/
-GR_ENTRY(grTexDownloadTableExt,
+GR_EXT_ENTRY(grTexDownloadTableExt,
          void,
          (GrChipID_t tmu, GrTexTable_t type,  void *data))
 {
@@ -664,10 +664,10 @@ GR_ENTRY(grTexDownloadTableExt,
   switch(type) {
   case GR_TEXTABLE_PALETTE:
   case GR_TEXTABLE_PALETTE_6666_EXT:
-    _grTexDownloadPalette(tmu, type, (GuTexPalette *)data, 0, 255);
+    _grTexDownloadPaletteExt(tmu, type, (GuTexPalette *)data, 0, 255);
     break;
   default: /* Type is an ncc table */
-    _grTexDownloadNccTable(tmu, type, (GuNccTable*)data, 0, 11);
+    _grTexDownloadNccTableExt(tmu, type, (GuNccTable*)data, 0, 11);
     break;
   }
 
@@ -705,7 +705,7 @@ GR_DDFUNC(_grTexDownloadNccTable,
   gc->stats.palDownloads++;
   gc->stats.palBytes += (end-start+1)<<2;
 
-  if (gc->tmu_state[tmu].ncc_table[which] != table) {
+  /*if (gc->tmu_state[tmu].ncc_table[which] != table)*/ {
     SstRegs* texHW;
     int i;
 #ifdef GLIDE_POINTCAST_PALETTE
