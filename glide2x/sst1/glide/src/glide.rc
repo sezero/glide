@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/12/07 21:48:52  joseph
+** Initial checkin into SourceForge.
+**
 */
 
 #define OFFICIAL   1 
@@ -26,7 +29,8 @@
 
 #include <fxver.h>
 #include "rcver.h"
-#include "fxbldno.h"
+/*#include "fxbldno.h"*/
+#define BUILD_NUMBER 0001
 
 /////////////////////////////////////////////////////////////////////////////
 //

@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/12/07 21:48:52  joseph
+** Initial checkin into SourceForge.
+**
  * 
  * 6     3/09/97 10:31a Dow
  * Added GR_DIENTRY for di glide functions
@@ -57,15 +60,6 @@ typedef struct
   GrTextureFormat_t  fmt;
   FxBool             valid;
 } CfTableEntry;
-
-#ifdef __linux__
-static void strupr(char *str) {
-  while (*str) {
-    if (islower(*str)) *str=toupper(*str);
-    str++;
-  }
-}
-#endif
 
 /*---------------------------------------------------------------------------
 ** gu3dfGetInfo
@@ -254,7 +248,13 @@ GR_DIENTRY(gu3dfGetInfo, FxBool,
   /*
   ** determine the color format of the input image
   */
-  strupr( color_format );
+  {
+    char *tempStr = (char*)color_format;
+    while (*tempStr != '\0') {
+          *tempStr = toupper(*tempStr);
+          tempStr++;
+    }
+  }
 
   i = 0;
   format_found = FXFALSE;

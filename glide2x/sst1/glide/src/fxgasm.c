@@ -44,22 +44,22 @@
                         COMMENT; NEWLINE
 
 #define OFFSET(p,o,pname) if (hex) \
-        printf("%s\t= %08xh\n",pname,((int)&p.o)-(int)&p); \
-    else printf("%s\t= %10d\n",pname,((int)&p.o)-(int)&p)
+        printf("%s\tequ %08xh\n",pname,((int)&p.o)-(int)&p); \
+    else printf("%s\tequ %10d\n",pname,((int)&p.o)-(int)&p)
 
 #if (GLIDE_PLATFORM & GLIDE_HW_SST96)
 #define HWOFFSET(p, o, pname) if (hex) \
-        printf("%s\t= %08xh\n",pname,(((int) &p.o)-(int)&p)>>2);\
-    else printf("%s\t= %10d\n",pname,(((int)&p.o)-(int)&p))
+        printf("%s\tequ %08xh\n",pname,(((int) &p.o)-(int)&p)>>2);\
+    else printf("%s\tequ %10d\n",pname,(((int)&p.o)-(int)&p))
 #endif /* (GLIDE_PLATFORM & GLIDE_HW_SST96) */
 
 #define OFFSET2(p,o,pname) if (hex) \
-        printf("%s\t= %08xh\n",pname,((int)&o)-(int)&p); \
-    else printf("%s\t= %10d\n",pname,((int)&o)-(int)&p)
+        printf("%s\tequ %08xh\n",pname,((int)&o)-(int)&p); \
+    else printf("%s\tequ %10d\n",pname,((int)&o)-(int)&p)
 
 #define SIZEOF(p,pname) if (hex) \
-        printf("SIZEOF_%s\t= %08xh\n",pname,sizeof(p)); \
-    else printf("SIZEOF_%s\t= %10d\n",pname,sizeof(p))
+        printf("SIZEOF_%s\tequ %08lxh\n",pname,sizeof(p)); \
+    else printf("SIZEOF_%s\tequ %10ld\n",pname,sizeof(p))
 #else
 #define NEWLINE printf("\n");
 #define COMMENT printf("#----------------------------------------------------------------------\n")
@@ -98,7 +98,7 @@ main (int argc, char **argv)
 
     if (argc > 1) {
       if (strcmp("-inline", argv[1]) == 0) {
-        Sstregs dummyRegs;
+        Sstregs dummyRegs = { 0x00UL };
 
         printf("#ifndef __FX_INLINE_H__\n");
         printf("#define __FX_INLINE_H__\n");
@@ -118,7 +118,7 @@ main (int argc, char **argv)
     }
 
 #ifndef __linux__
-    printf("SST_CHIP_MASK = 0%xh\n",SST_CHIP_MASK);
+    printf("SST_CHIP_MASK equ 0%xh\n",SST_CHIP_MASK);
 #else
     printf("SST_CHIP_MASK .EQU 0x%x\n", SST_CHIP_MASK);
 #endif
