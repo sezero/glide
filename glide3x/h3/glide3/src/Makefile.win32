@@ -187,11 +187,6 @@ endif
 
 GLIDE_OBJECTS += \
 	gthread.obj \
-	$(FX_GLIDE_SW)/newpci/pcilib/fxpci.obj \
-	$(FX_GLIDE_SW)/newpci/pcilib/fxw32.obj \
-	$(FX_GLIDE_SW)/newpci/pcilib/fxvxd.obj \
-	$(FX_GLIDE_SW)/newpci/pcilib/fxnt.obj \
-	$(FX_GLIDE_SW)/newpci/pcilib/fxmsr.obj \
 	../../minihwc/hwcio.obj \
 	../../minihwc/gdebug.obj \
 	../../minihwc/minihwc.obj \
