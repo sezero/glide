@@ -362,7 +362,7 @@ unsigned long gpio_output_clock (hwcBoardInfo *bInfo,
  b3 |= BUILD_BYTE(r, 0x7F, 0);
 
  /* Use the bus number embedded at deviceNum[5:12]. */
- if (gpio_init(&GpioMask, /*pDev->dwBus*//*2*//*666*/(bInfo->deviceNum >> 5) & 0xFF))
+ if (gpio_init(&GpioMask, (bInfo->deviceNum >> 5) & 0xFF))
     gpio_send_byte(&GpioMask, b1, b2, b3);
 
  return 0;
