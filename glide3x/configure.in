@@ -21,12 +21,15 @@ dnl Process this file with autoconf to produce a configure script.
 # $Revision$
 # $Date$
 #
-AC_INIT(h5/glide3/src/glfb.c)
-AC_CANONICAL_TARGET
-AM_INIT_AUTOMAKE(glide, 3.0)
-AM_CONFIG_HEADER(swlibs/include/config.h)
+AC_INIT([glide], [3.0])
+AC_PREREQ(2.53)
+AC_CONFIG_SRCDIR([h5/glide3/src/glfb.c])
 AC_PREFIX_DEFAULT([/usr])
+AC_CANONICAL_TARGET([])
 includedir='${prefix}/include/glide3'
+AM_INIT_AUTOMAKE([foreign 1.7])
+AM_MAINTAINER_MODE
+AM_CONFIG_HEADER([swlibs/include/config.h])
 #
 # Variables local to the build.
 #
@@ -277,7 +280,7 @@ AM_CONDITIONAL(DRI_BUILD,dnl
 dnl Checks for programs.
 AC_PROG_CC
 AC_PROG_CPP
-AC_CHECK_TOOL(AS, as, false)
+AM_PROG_AS
 AC_CHECK_TOOL(OBJDUMP, objdump, false)
 AC_CHECK_TOOL(DLLTOOL, dlltool, false)
 AC_CHECK_TOOL(CP, cp, false)
@@ -316,7 +319,7 @@ dnl     o $makefile.in
 dnl     o swlibs/include/make/makefile.autoconf.bottom
 dnl where $makefile is the makefile name.
 dnl
-AC_OUTPUT(build.3dfx
+AC_CONFIG_FILES([build.3dfx
           makefile.autoconf:makefile.autoconf.in:swlibs/include/make/makefile.autoconf.bottom
           cvg/makefile.autoconf:cvg/makefile.autoconf.in:swlibs/include/make/makefile.autoconf.bottom
           cvg/incsrc/makefile.autoconf:cvg/incsrc/makefile.autoconf.in:swlibs/include/make/makefile.autoconf.bottom
@@ -341,6 +344,7 @@ AC_OUTPUT(build.3dfx
           swlibs/texus/lib/makefile.autoconf:swlibs/texus/lib/makefile.autoconf.in:swlibs/include/make/makefile.autoconf.bottom
           swlibs/texus2/makefile.autoconf:swlibs/texus2/makefile.autoconf.in:swlibs/include/make/makefile.autoconf.bottom
           swlibs/texus2/lib/makefile.autoconf:swlibs/texus2/lib/makefile.autoconf.in:swlibs/include/make/makefile.autoconf.bottom
-          swlibs/texus2/cmd/makefile.autoconf:swlibs/texus2/cmd/makefile.autoconf.in:swlibs/include/make/makefile.autoconf.bottom,
-	  [chmod +x build.3dfx]
-          )
+          swlibs/texus2/cmd/makefile.autoconf:swlibs/texus2/cmd/makefile.autoconf.in:swlibs/include/make/makefile.autoconf.bottom
+          ], [chmod +x build.3dfx])
+AC_OUTPUT
+
