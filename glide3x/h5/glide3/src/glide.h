@@ -52,6 +52,9 @@ extern "C" {
 typedef FxU32 GrColor_t;
 typedef FxU8  GrAlpha_t;
 typedef FxU32 GrMipMapId_t;
+#ifdef __linux__
+typedef FxU32 GrStipplePattern_t;
+#endif /* __linux__ */
 typedef FxU8  GrFog_t;
 typedef FxU32 GrContext_t;
 typedef int (FX_CALL *GrProc)();
@@ -239,6 +242,13 @@ typedef FxI32 GrDitherMode_t;
 #define GR_DITHER_DISABLE       0x0
 #define GR_DITHER_2x2           0x1
 #define GR_DITHER_4x4           0x2
+
+#ifdef __linux__
+typedef FxI32 GrStippleMode_t;
+#define GR_STIPPLE_DISABLE	0x0
+#define GR_STIPPLE_PATTERN	0x1
+#define GR_STIPPLE_ROTATE	0x2
+#endif /* __linux__ */
 
 typedef FxI32 GrFogMode_t;
 #define GR_FOG_DISABLE                     0x0
@@ -733,6 +743,14 @@ grCoordinateSpace( GrCoordinateSpaceMode_t mode );
 
 FX_ENTRY void FX_CALL 
 grDepthRange( FxFloat n, FxFloat f );
+
+#ifdef __linux__ 
+FX_ENTRY void FX_CALL 
+grStippleMode( GrStippleMode_t mode );
+
+FX_ENTRY void FX_CALL 
+grStipplePattern( GrStipplePattern_t mode );
+#endif /* __linux__ */
 
 FX_ENTRY void FX_CALL 
 grViewport( FxI32 x, FxI32 y, FxI32 width, FxI32 height );

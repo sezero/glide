@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/11/24 21:44:56  joseph
+** Initial checkin for SourceForge
+**
 ** 
 ** 9     5/24/99 2:48p Jamesb
 ** Added ptrLostContext to exported cmdTransport struct.
@@ -270,6 +273,7 @@
 
 /* local */
 #define GR_CDECL
+#include "g3ext.h"
 #include "fxcmd.h"
 #include "gsfc.h"
 
@@ -464,6 +468,7 @@ typedef struct  {
 #define lfbModeBIT              FXBIT(8)
 #define c0c1BIT                 FXBIT(9)
 #define chromaRangeBIT          FXBIT(10)
+#define stippleBIT              FXBIT(11)
 /*
 ** lazy evaluate vertexlayout.
 ** it is not part of the registers so we add the bit in MSB
@@ -764,6 +769,14 @@ typedef struct {
     struct {
       GrDitherMode_t mode;
     } grDitherModeArgs;
+#ifdef __linux__
+    struct {
+      GrStippleMode_t mode;
+    } grStippleModeArgs;
+    struct {
+      GrStipplePattern_t stipple;
+    } grStipplePatternArgs;
+#endif /* __linux__ */
     struct {
       GrBuffer_t buffer;
     } grRenderBufferArgs;
@@ -1646,6 +1659,13 @@ _grColorCombine(
                GrCombineLocal_t local, GrCombineOther_t other,
                FxBool invert );
 
+
+#ifdef __linux__
+void FX_CALL
+grStipplePattern(
+            GrStipplePattern_t stipple);
+#endif /* __linux__ */
+
 void FX_CALL 
 grChromaRangeMode(GrChromaRangeMode_t mode);
 
@@ -1687,6 +1707,11 @@ _grDepthBufferMode( GrDepthBufferMode_t mode );
 
 void
 _grDitherMode( GrDitherMode_t mode );
+
+#ifdef __linux__ 
+void
+_grStippleMode( GrStippleMode_t mode );
+#endif /* __linux__ */
 
 void
 _grRenderBuffer( GrBuffer_t buffer );
