@@ -303,7 +303,7 @@ AR   = lib
 AS   = nasmw
 
 CFLAGS  = -Ox -G6 -W3 -WX -c -D__MSC__=1 -D_X86_=1 -DNULL=0 -D_MBCS -D_LIBS -D_WIN32 -DWIN32=1 -D__WIN32__=1 -DSTRICT
-LFLAGS  = -nologo /DLL /SUBSYSTEM:WINDOWS,4.00 /OPT:WIN98 /MACHINE:IX86
+LFLAGS  = -nologo /DLL /SUBSYSTEM:WINDOWS,4.00 /OPT:WIN98 /MACHINE:IX86 /NODEFAULTLIB
 ARFLAGS = -nologo
 ASFLAGS = -O2 -fwin32 -D__WIN32__ --prefix _
 
@@ -409,9 +409,15 @@ INCS =\
 	-I$(FX_GLIDE_HW)\incsrc\
 	-I$(FX_GLIDE_HW)\$(FX_HW_PROJECTS)\src\
 	
-DX_LIB = dxguid.lib ddraw.lib
+DX_LIB = ddraw.lib dxguid.lib
 
-DEP_LIB = advapi32.lib shell32.lib comdlg32.lib comctl32.lib ctl3d32.lib user32.lib gdi32.lib winspool.lib winmm.lib
+DEP_LIB = user32.lib gdi32.lib advapi32.lib kernel32.lib
+
+!if "$(DEBUG)" == "1"
+STD_LIB = libcmtd.lib
+!else
+STD_LIB = libcmt.lib
+!endif
 
 #################################
 # build rules
@@ -455,7 +461,7 @@ fxbldno.h: $(FX_GLIDE_HW)\glide3\src\fxbldno.exe
 	$(FX_GLIDE_HW)\glide3\src\fxbldno.exe > $(FX_GLIDE_HW)\glide3\src\$@
 
 glide3x.dll: $(FX_GLIDE_HW)\lib\minihwc.lib $(GLIDE3_OBJ) $(GLIDE3_RES)
-	$(LINK) -out:$(FX_GLIDE_HW)\lib\$@ $(LFLAGS) $(FX_GLIDE_HW)\lib\minihwc.lib $(GLIDE3_OBJ) $(DEP_LIB) $(GLIDE3_RES)
+	$(LINK) -out:$(FX_GLIDE_HW)\lib\$@ $(LFLAGS) $(FX_GLIDE_HW)\lib\minihwc.lib $(GLIDE3_OBJ) $(DEP_LIB) $(STD_LIB) $(GLIDE3_RES)
 	$(MV) $(FX_GLIDE_HW)\lib\glide3x.dll $(FX_GLIDE_HW)\bin\glide3x.dll
 
 $(FX_GLIDE_HW)\glide3\src\xdraw2_def.obj: $(FX_GLIDE_HW)\glide3\src\xdraw2.asm
