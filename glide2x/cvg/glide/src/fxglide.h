@@ -19,6 +19,10 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.2  2003/06/28 19:31:06  guillemj
+** Fix compilation warnings.
+** Removed some trailing spaces.
+**
 ** Revision 1.1.1.1  1999/12/07 21:49:09  joseph
 ** Initial checkin into SourceForge.
 **
@@ -275,6 +279,7 @@
 #include <3dfx.h>
 #include <glidesys.h>
 #include <gdebug.h>
+#include <cpuid.h>
 
 #if (GLIDE_PLATFORM & GLIDE_HW_H3)
 #include <h3.h>
@@ -421,7 +426,7 @@ do { \
 **
 */
 
-struct _GrState_s 
+struct _GrState_s
 {
   GrCullMode_t                 /* these go in front for cache hits */
     cull_mode;                 /* cull neg, cull pos, don't cull   */
@@ -719,7 +724,7 @@ typedef struct GrGC_s
 struct _GlideRoot_s {
   int p6Fencer;                 /* xchg to here to keep this in cache!!! */
   int current_sst;
-  FxU32 CPUType;
+  _p_info CPUType;              /* CPUID */
   GrGC *curGC;                  /* point to the current GC      */
   FxU32 packerFixAddress;       /* address to write packer fix to */
   FxBool    windowsInit;        /* Is the Windows part of glide initialized? */
