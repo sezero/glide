@@ -7,56 +7,55 @@
 # library source sets FX_DLL_DEFINITION before including fxdll.h to indicate
 # next header is interface file
 #
-!if "$(FX_TARGET)" == "WIN32" && "$(FX_DLL_BUILD)"=="1" && "$(FX_DLL_LIBRARY)"=="1"
+!if "$(FX_DLL_BUILD)"=="1"
+
+!if "$(FX_DLL_LIBRARY)"=="1"
 FX_DLL_COMPILE  = 1
 LINK_DLL        = 1
 !endif
 
-!if "$(FX_TARGET)" == "WIN32" && "$(FX_DLL_BUILD)"=="1" && "$(FX_DLL_COMPILE)"=="1"
+!if "$(FX_DLL_COMPILE)"=="1"
 COMPILE_DLL     = 1
+!endif
+
 !endif
 
 #
 # compiler flags:
 #
-!if "$(FX_COMPILER)" == "MICROSOFT"
-
-!if "$(CC)"==""
+!if "$(CC)"=="" 
 CC             = cl
-CPLUSPLUS      = cl
+!endif
+!if "$(CPP)"==""
+CPP            = $(CC)
+!endif
+!if "$(CPLUSPLUS)"==""
+CPLUSPLUS      = $(CPP)
 !endif
 CDEBUG         = -Z7
 CNODEBUG       = /Ox
-LDEBUG         = -Z7
+LDEBUG         = $(CDEBUG)
+LNODEBUG       = $(CNODEBUG)
 LINK           = $(CC)
 GCOPTS         = /nologo /G6 /W3 /c
 GCDEFS         = -D__MSC__=1 -D_X86_=1 -DNULL=0
-!if "$(FX_TARGET_MINOR)" == "WIN95"
-GLDOPTS        = -nologo /link /map -subsystem:windows,4.0 -debugtype:none -pdb:none -incremental:no -release
+!ifdef DEBUG
+GLDOPTS        = -link -debugtype:both
 !else
-!if "$(DEBUG)"=="1"
-GLDOPTS        = -nologo /link -subsystem:console -debugtype:both -pdb:none
-!else
-GLDOPTS        = -link -pdb:none -incremental:no -release
+GLDOPTS        = -link -incremental:no -release
 !endif
-!endif
-CPP            = $(CC) -E /c
-LNODEBUG       = $(CDEBUG)
 GCINCS         = -I$(BUILD_ROOT_SWLIBS)\include 
-
-!endif
 
 #
 # assembler flags:
 #
-AOPTS          = /coff
-ASM_LIST_FLAGS = /FAsc
-AR             = lib -nologo
 !if "$(AS)"==""
 AS             = ml
 !endif
+AR             = lib -nologo
+AOPTS          = /coff /I. /c /Cp
+ASM_LIST_FLAGS = /FAsc
 ADEBUG         = /Zi
-AOPTS          = $(AOPTS) /I. /c /Cp 
 ANODEBUG       = 
 
 # if we are not debugging then replace debug flags with nodebug flags
@@ -69,7 +68,6 @@ ADEBUG   = $(ANODEBUG)
 #
 # target environment configs:
 #
-!if "$(FX_TARGET)" == "WIN32"
 GCDEFS     = $(GCDEFS) -D_WIN32 -DWIN32=1 -D__WIN32__=1
 
 !ifdef COMPILE_DLL
@@ -80,13 +78,9 @@ baselibs   = $(optlibs) advapi32.lib #kernel32.lib
 uilibs     = shell32.lib comdlg32.lib comctl32.lib ctl3d32.lib 
 winlibs    = $(baselibs) $(uilibs) user32.lib gdi32.lib winspool.lib winmm.lib
 
-!if "$(FX_COMPILER)" == "MICROSOFT"
 libcdll    = /MT
-!endif
 
 guilibsdll = $(libcdll) $(winlibs)
-
-!endif
 
 #
 # CFLAGS, we make sure we use both global and local flags:
@@ -115,13 +109,10 @@ AFLAGS = $(LADEFS) $(ADEBUG) $(LAINCS) $(AOPTS) $(LAOPTS) $(AINCLUDES)
 #
 # OS commands:
 #
-!if "$(FX_HOST)" == "WIN32"
-XCOPY=@xcopy
-CALL=@call
-!endif
-
+XCOPY   = @xcopy
+CALL    = @call
 CHMODWR = attrib -r
-RM      = del /Q
+RM      = del /q
 INSTALL = $(XCOPY) /d /k /r /i /s /q
 
 #
@@ -165,15 +156,11 @@ LIBPARTS = $(OBJECTS) $(SUBLIBRARIES)
 
 !ifdef LINK_DLL
 
-!if "$(FX_TARGET)" == "WIN32"
 DLLS = $(LIBRARIES:.lib=.dll)
 EXPS = $(LIBRARIES:.lib=.exp)
-!endif
 
-!if "$(FX_COMPILER)"=="MICROSOFT"
 $(LIBRARIES) : $(LIBPARTS)
     $(LINK) /o $* /LD $(LIBPARTS) $(LDLIBS) $(LDFLAGS)
-!endif
 
 $(DLLS) : $(LIBRARIES)
 
@@ -270,67 +257,49 @@ bins: $(PROGRAM) $(PROGRAMS) $(BATS) $(DATAFILES) $(DIAGS)
 bins:
 !endif
 
-TARGETS = $(TARGETS) $(LIBRARIES) $(DLLS) $(EXPS) $(PROGRAM) $(PROGRAMS) $(DEPDATA) $(DIAGS)
-
-
-#
-# dependency:
-#
-MKDEPFILE = makedep
-
 #
 # make clean:
 #
+OBJECTS = $(OBJECTS)
+TARGETS = $(TARGETS) $(LIBRARIES) $(DLLS) $(EXPS) $(PROGRAM) $(PROGRAMS) $(DEPDATA) $(DIAGS)
 GDIRT   = *.cod *.bak *.pdb *.ilk *.map *.sym *.err *.i stderr.out tmp.opt *.evt
 DIRT    = $(GDIRT) $(LDIRT)
 JUNK    = __junk__
 
-OBJECTS = $(OBJECTS)
-
 clean:
-!if EXISTS ($(MKDEPFILE))
-    FOR %i IN ($(MKDEPFILE) $(JUNK)) DO $(CHMODWR) %i > NUL
-    FOR %i IN ($(MKDEPFILE) $(JUNK)) DO $(RM) %i > NUL
-!endif
-    FOR %i IN ($(OBJECTS) $(JUNK)) DO $(CHMODWR) %i > NUL
-    FOR %i IN ($(OBJECTS) $(JUNK)) DO $(RM) %i > NUL
-    FOR %i IN ($(DIRT) $(JUNK)) DO $(CHMODWR) %i > NUL
-    FOR %i IN ($(DIRT) $(JUNK)) DO $(RM) %i > NUL
-    FOR %i IN ($(TARGETS) $(JUNK)) DO $(CHMODWR) %i > NUL
-    FOR %i IN ($(TARGETS) $(JUNK)) DO $(RM) %i > NUL
+    FOR %i IN ($(OBJECTS) $(DIRT) $(TARGETS)) DO $(CHMODWR) %i > NUL
+    FOR %i IN ($(OBJECTS) $(DIRT) $(TARGETS)) DO $(RM) %i > NUL
 
+#
+# compile:
+#
 .SUFFIXES: .cod .i
 
 .c.obj:
-        $(CC) $(CFLAGS) $<
+    $(CC) $(CFLAGS) $<
 
 .cpp.obj:
-        $(CPLUSPLUS) $(CFLAGS) $<
+    $(CPLUSPLUS) $(CFLAGS) $<
 
 .rc.res:
     rc $(GCINCS) $(LCINCS) $(VCINCS) $(GCDEFS) $(LCDEFS) $(VCDEFS) $<
 
 .c.cod:
-        $(CC) $(CFLAGS) $(ASM_LIST_FLAGS) $<
+    $(CC) $(CFLAGS) $(ASM_LIST_FLAGS) $<
 
 .c.i:
-        $(CPP) $(CFLAGS) $< > $@
+    $(CPP) $(CFLAGS) $< > $@
 
 .asm.obj:
-        $(AS) $(AFLAGS) $<
+    $(AS) $(AFLAGS) $<
 
 .asm.o:
     $(AS) $(AFLAGS) $<
     rename $*.obj $@
 
-
 #
 # makedepend rules:
 #
-!if EXISTS ($(MKDEPFILE))
-!include $(MKDEPFILE)
-!endif
-
 !ifndef MAKEFILE
 MAKEFILE = makefile
 !endif
