@@ -686,10 +686,16 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t type, GrBuffer_t buffer,
           } 
 #endif          
             else {
-            info->lfbPtr          = (void *)gc->lfb_ptr;
 #ifdef __linux__
+           /*
+            * For Linux, we just return the correct address and
+            * stride.
+            */
 	    info->strideInBytes   = gc->bInfo->buffInfo.bufLfbStride;
-#endif /* defined(__linux__) */
+            info->lfbPtr          = (void *)gc->lfbBuffers[colBufferIndex];
+#else	/* defined(__linux__) */
+            info->lfbPtr          = (void *)gc->lfb_ptr;
+#endif	/* defined(__linux__) */
             switch (writeMode) {
             case GR_LFBWRITEMODE_565_DEPTH:
             case GR_LFBWRITEMODE_555_DEPTH:
@@ -776,7 +782,16 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t type, GrBuffer_t buffer,
             /* Make sure dither rotation is disabled for 3D LFBs. */
             _3dlfb = FXTRUE;
             
+#if	defined(__linux__)
+           /*
+            * For Linux, we just return the correct address and
+            * stride.
+            */
+	    info->strideInBytes   = gc->bInfo->buffInfo.bufLfbStride;
+            info->lfbPtr          = (void *)gc->lfbBuffers[colBufferIndex];
+#else	/* defined(__linux__) */
             info->lfbPtr          = (void *)gc->lfb_ptr;
+#endif	/* defined(__linux__) */
 
             switch (writeMode) {
             case GR_LFBWRITEMODE_565_DEPTH:
