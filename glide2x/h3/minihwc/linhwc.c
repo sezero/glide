@@ -690,6 +690,10 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo
       vidProcCfg, vidScreenSize, vidOverlayEndScreenCoord;
   int i, numModes;
 
+  if (!dpy) {
+    if (!initX(0)) /* Should be the index of the card */
+      return FXFALSE;
+  }
   if (!GETENV ("SSTH3_DESKTOP_OVERLAY"))
   {
     if (XF86DGADirectVideo(dpy, DefaultScreen(dpy), XF86DGADirectGraphics)) {
