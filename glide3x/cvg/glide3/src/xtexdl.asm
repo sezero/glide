@@ -19,6 +19,9 @@
 ;; $Header$
 ;; $Revision$
 ;; $Log$
+;; Revision 1.1.1.1.8.1  2003/11/03 13:34:30  dborca
+;; Voodoo2 happiness (DJGPP & Linux)
+;;
 ;; Revision 1.1.8.7  2003/09/12 05:08:35  koolsmoky
 ;; preparing for graphic context checks
 ;;
@@ -172,24 +175,27 @@ proc _grTexDownload_MMX, 24
     mov       [esp + _maxS$], curS      ; save scan line width (in bytes)
     shl       edx, 3                    ; packetHdr<21:3> = maxS = scanline width in DWORDs
 
-    imul      eax, curS                 ; TEX_ROW_ADDR_INCR(minT) = minT * TEX_ROW_ADDR_INCR(1)
+    shl       eax, 9                    ; TEX_ROW_ADDR_INCR(minT) = minT << 9
 
-    movd      mm2, curS                 ; 0 | TEX_ROW_ADDR_INCR(1)
-    or        edx, 00000005h            ; packetHdr<31:30> = lfb port
+    or        edx, 0xc0000005           ; packetHdr<31:30> = texture port
                                         ; packetHdr<21:3>  = maxS
-                                        ; packetHdr<2:0>   = packetType 5 
+                                        ; packetHdr<2:0>   = packetType 5
 
     movd      mm1, edx                  ; 0 | packetHdr
-    movd      mm4, eax                  ; 0 | TEX_ROW_ADDR_INCR(minT)
+    movd      mm2, eax                  ; 0 | TEX_ROW_ADDR_INCR(minT)
 
+    paddd     mm3, mm2                  ; 0 | texAddr = texBaseAddr + TEX_ROW_ADDR_INCR(minT)
+    movd      mm2, [gc + tex_ptr]       ; 0 | gc->tex_ptr
+    psubd     mm3, mm2                  ; 0 | texAddr - gc->tex_ptr
+    mov       eax, 0x200                ; TEX_ROW_ADDR_INCR(1) = 1 << 9
+    movd      mm2, eax                  ; 0 | TEX_ROW_ADDR_INCR(1)
     psllq     mm2, 32                   ; TEX_ROW_ADDR_INCR(1) | 0
-    paddd     mm3, mm4                  ; 0 | texAddr = texBaseAddr + TEX_ROW_ADDR_INCR(minT)
 
     mov       fRoom, [gc + fifoRoom]    ; get available fifoRoom (in bytes)
-    punpckldq mm1, mm3                  ; hdr2 = texAddr | hdr1 = packetHdr
+    punpckldq mm1, mm3                  ; hdr2 = texAddr - gc->tex_ptr | hdr1 = packetHdr
 
     ;; ebx = curT, edi = dataPtr, esi = gc, ebp = fifo, ecx = curS = maxS
-    ;; edx = fifoRoom, mm1 = texAddr|packetHdr, mm2 = TEX_ROW_ADDR_INCR(1)|0
+    ;; edx = fifoRoom, mm1 = texAddr-gc->tex_ptr|packetHdr, mm2 = TEX_ROW_ADDR_INCR(1)|0
 
     test      fifo, 4                   ; is fifo QWORD aligned ?
     jz        .startDownload            ; yup, start texture download
@@ -227,7 +233,7 @@ proc _grTexDownload_MMX, 24
     align 32
 
     ;; ebx = curT, edi = dataPtr, esi = gc, ebp = fifo, ecx = maxS = curS
-    ;; edx=fifoRoom, mm1 = texAddr|packetHdr, mm2 = TEX_ROW_ADDR_INCR(1)|0
+    ;; edx=fifoRoom, mm1 = texAddr-gc->tex_ptr|packetHdr, mm2 = TEX_ROW_ADDR_INCR(1)|0
 
 .loopT:
 
