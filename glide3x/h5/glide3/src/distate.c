@@ -1893,7 +1893,7 @@ _grValidateTMUState()
   it calls this routine.  grValidateState then goes through valid
   markers and flushes all invalid state.
   -------------------------------------------------------------------*/
-void
+void GR_CDECL
 _grValidateState()
 {
 #define FN_NAME "_grValidateState"
