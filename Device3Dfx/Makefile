@@ -1,13 +1,28 @@
 ###############################################################################
-# Makefile by Carlo Wood
+# Makefile by Carlo Wood (and others)
 
 ifeq ($(OPT_CFLAGS),)
-# People without rpm.  Guess something reasonable (that they have an ix86).
-OPT_CFLAGS = -O2 -m486 -fomit-frame-pointer
+
+# Determine the machine type
+ARCH := $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/)
+
+# Setup machine dependant compiler flags
+ifeq ($(ARCH), i386)
+OPT_CFLAGS = -O2 -m486 -fomit-frame-pointer \
+                 -fno-strength-reduce \
+                 -malign-loops=2 -malign-jumps=2 -malign-functions=2
 endif
 
-CFLAGS = $(OPT_CFLAGS) -DMODULE -D__KERNEL__ -I/usr/src/linux/include -pipe -fno-strength-reduce -malign-loops=2 -malign-jumps=2 -malign-functions=2
-CC=gcc
+ifeq ($(ARCH), alpha)
+OPT_CFLAGS = -O2 -mno-fp-regs -mcpu=ev4 \
+                 -ffixed-8 \
+                 -Wa,-mev6 \
+                 -fomit-frame-pointer -fno-strict-aliasing
+endif
+
+endif	# ifeq ($OPT_CFLAGS),)
+
+CFLAGS := -DMODULE -D__KERNEL__ -I/usr/src/linux/include $(OPT_CFLAGS)
 
 ###############################################################################
 # You should never need to change anything below.
@@ -106,5 +121,7 @@ clean:
 tar:
 	tar czf ../../SOURCES/Dev3Dfx-2.5.tar.gz 3dfx_driver.c mtrrs.c Makefile
 
+
 debug:
 	make OPT_CFLAGS="-g -Wall -Wstrict-prototypes -DDEBUG"
+
