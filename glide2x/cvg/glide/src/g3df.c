@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/12/07 21:49:09  joseph
+** Initial checkin into SourceForge.
+**
 ** 
 ** 17    2/20/98 11:00a Peter
 ** removed glide3 from glid2 tree
@@ -297,16 +300,16 @@ GR_DIENTRY(gu3dfGetInfo, FxBool,
   /*
   ** determine the color format of the input image
   */
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__MSC__)
   /* This function is not found in libgcc.a */
   {
     char* tempStr = (char*)color_format;
     while(*tempStr != '\0') *tempStr++ = toupper(*tempStr);
   }
 #else
-        {
-                extern char* strupr(char*);
-        strupr(color_format);
+  {
+    extern char* strupr(char*);
+    strupr(color_format);
   }
 #endif /* __GNUC__ */
 
