@@ -87,7 +87,8 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitSli(FxU32 *sstbase0, FxU32 *sstbase1)
     if(/* (sst1M->fbiMemSize != sst1S->fbiMemSize) || */
        /*(sst1M->tmuMemSize[0] != sst1S->tmuMemSize[0]) || */
        (sst1M->numberTmus != sst1S->numberTmus) ||
-       (sst1M->fbiBoardID != sst1S->fbiBoardID) ||
+        /* [koolsmoky] mismatched SLI support */
+       (!GETENV(("SSTV2_MISMATCHED_SLI")) && (sst1M->fbiBoardID != sst1S->fbiBoardID)) ||
        /* (sst1M->fbiRevision != sst1S->fbiRevision) || */
        /* (sst1M->tmuRevision != sst1S->tmuRevision) || */
        (sst1M->fbiVideoStruct != sst1S->fbiVideoStruct)) {
