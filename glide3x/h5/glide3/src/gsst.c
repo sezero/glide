@@ -1143,6 +1143,38 @@ doSplash( void )
     /* Clear all the info if we could not load for some reason */
     if (!didLoad) memset(&gc->pluginInfo, 0, sizeof(gc->pluginInfo));
   }
+#else
+  {
+    FxBool
+      didLoad;
+
+      gc->pluginInfo.initProc = fxSplashInit;
+      gc->pluginInfo.shutdownProc = fxSplashShutdown;
+      gc->pluginInfo.splashProc = fxSplash;
+      gc->pluginInfo.plugProc = fxSplashPlug;
+
+      didLoad = ((gc->pluginInfo.initProc != NULL) &&
+                 (gc->pluginInfo.splashProc != NULL) &&
+                 (gc->pluginInfo.plugProc != NULL) &&
+                 (gc->pluginInfo.shutdownProc != NULL));
+      if (didLoad) {
+        GrState glideState;
+
+        /* Protect ourselves from the splash screen */
+        grGlideGetState(&glideState);
+        {
+          didLoad = (*gc->pluginInfo.initProc)(gc->grHwnd,
+                                               gc->state.screen_width, gc->state.screen_height,
+                                               gc->grColBuf, gc->grAuxBuf,
+                                               gc->state.color_format);
+          if (!didLoad) (*gc->pluginInfo.shutdownProc)();
+        }
+        grGlideSetState((const void*)&glideState);
+      }
+
+    /* Clear all the info if we could not load for some reason */
+    if (!didLoad) memset(&gc->pluginInfo, 0, sizeof(gc->pluginInfo));
+  }
 #endif /* (GLIDE_PLATFORM & GLIDE_OS_WIN32) */
 
     grSplash(0.0f, 0.0f, 
