@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/12/07 21:49:10  joseph
+** Initial checkin into SourceForge.
+**
 */
 
 #define OFFICIAL   1 
@@ -26,7 +29,7 @@
 
 #include <fxver.h>
 #include "rcver.h"
-#include "fxbldno.h"
+//#include "fxbldno.h"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -56,7 +59,7 @@ BEGIN
             VALUE "FileDescription", "3Dfx Interactive, Inc. Glide DLL\0"
             VALUE "FileVersion", VERSIONSTR
             VALUE "InternalName", VERSIONNAME
-            VALUE "LegalCopyright", "Copyright \251 3Dfx Interactive, Inc. 1997\0"
+            VALUE "LegalCopyright", "Copyright \251 3Dfx Interactive, Inc. 2004\0"
             VALUE "OriginalFilename", VERSIONNAME
             VALUE "ProductName", PRODNAME
             VALUE "ProductVersion", VERSIONSTR
