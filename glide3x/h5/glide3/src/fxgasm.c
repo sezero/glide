@@ -57,8 +57,8 @@
     else printf("%s\tequ %10d\n",pname,((int)&o)-(int)&p)
 
 #define SIZEOF(p,pname) if (hex) \
-        printf("SIZEOF_%s\tequ %08xh\n",pname,sizeof(p)); \
-    else printf("SIZEOF_%s\tequ %10d\n",pname,sizeof(p))
+        printf("SIZEOF_%s\tequ %08lxh\n",pname,sizeof(p)); \
+    else printf("SIZEOF_%s\tequ %10ld\n",pname,sizeof(p))
 
 #else	/* !NASM */
 
@@ -126,17 +126,17 @@ main (int argc, char **argv)
         printf("#define __FX_INLINE_H__\n");
         printf("\n");
 
-        printf("#define kTriProcOffset 0x%XUL\n",
+        printf("#define kTriProcOffset 0x%lXUL\n",
                offsetof(struct GrGC_s, triSetupProc));
         
         printf("/* The # of 2-byte entries in the hw fog table */\n");
-        printf("#define kInternalFogTableEntryCount 0x%XUL\n",
+        printf("#define kInternalFogTableEntryCount 0x%lXUL\n",
                sizeof(dummyRegs.fogTable) >> 1);
 
-        printf("#define kTLSOffset 0x%XUL\n",
+        printf("#define kTLSOffset 0x%lXUL\n",
                offsetof(struct _GlideRoot_s, tlsOffset));
 
-        printf("#define kLostContextOffset 0x%xUL\n",
+        printf("#define kLostContextOffset 0x%lxUL\n",
                offsetof(GrGC, lostContext));
 
         printf("\n");

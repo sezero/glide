@@ -44,11 +44,11 @@
 #endif
 
 // if debug info turned on then GDBG_INFO does something
-#if defined(GDBG_INFO_ON)
+#ifdef GDBG_INFO_ON
 
-#define GDBG_INFO(level, format, ...) gdbg_info(level, format, __VA_ARGS__)
-#define GDBG_INFO_MORE(level, format, ...) gdbg_info_more(level, format, __VA_ARGS__)
-#define GDBG_PRINTF(format, ...) gdbg_printf(format, __VA_ARGS__)
+#define GDBG_INFO(level, format, ...) gdbg_info(level, format, ## __VA_ARGS__)
+#define GDBG_INFO_MORE(level, format, ...) gdbg_info_more(level, format, ## __VA_ARGS__)
+#define GDBG_PRINTF(format, ...) gdbg_printf(format, ## __VA_ARGS__)
 
 #define GDBG_ERROR_SET_CALLBACK(p)   gdbg_error_set_callback(p)
 #define GDBG_ERROR_CLEAR_CALLBACK(p) gdbg_error_clear_callback(p)

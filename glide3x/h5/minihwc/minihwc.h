@@ -712,10 +712,10 @@ FxBool
 hwcResolutionSupported(hwcBoardInfo *bInfo, GrScreenResolution_t res, GrScreenRefresh_t ref);
 
 char *
-hwcGetenv(char *a);
+hwcGetenv(const char *a);
 
 char *
-hwcGetenvEx(char *a, char *b);
+hwcGetenvEx(const char *a, char *b);
 
 FxU32
 hwcQueryContext(hwcBoardInfo *bInfo);
@@ -773,7 +773,6 @@ extern void hwcAAReadRegion(hwcBoardInfo *bInfo, FxU32 colBufNum,
 
 void hwcCalcSipValue(hwcBoardInfo *bInfo, FxU32 chipNum, FxU32 *nandChain, FxU32 *norChain);
 
-#endif                          /* MINIHWC_H not defined */
+void hwcSetCPUInfo (_p_info *CPUInfo_);
 
-void
-hwcSetCPUInfo(_p_info *CPUInfo_);
+#endif                          /* MINIHWC_H not defined */

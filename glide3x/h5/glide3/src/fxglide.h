@@ -3251,9 +3251,11 @@ extern GrChipID_t MultitextureAndTrilinear(void);
 #define _grTexFloatLODToFixedLOD(value) \
   (FxU16)((( int )(( value + .125F ) / .25F)) & 0x003F)
 
+#if 0 /* [dBorca] moved to `gtex.c' */
 static GrLOD_t g3LodXlat_base[2] = { GR_LOD_LOG2_256, GR_LOD_LOG2_2048 };
 #define _g3LodXlat(someLOD, tBig) \
   (g3LodXlat_base[tBig] - someLOD)
+#endif
 
 #endif /* __FXGLIDE_H__ */
 

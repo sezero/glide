@@ -235,7 +235,7 @@ hwcMapBoard(hwcBoardInfo *bInfo, FxU32 bAddrMask) {
   }
 
   bInfo->linearInfo.initialized = FXTRUE;
-  bInfo->osNT = FXFALSE;
+  /*bInfo->osNT = FXFALSE;*/
   bInfo->procHandle = getpid();
   bInfo->linearInfo.linearAddress[0]=(FxU32)driInfo.pRegs;
   bInfo->linearInfo.linearAddress[1]=(FxU32)driInfo.pFB;

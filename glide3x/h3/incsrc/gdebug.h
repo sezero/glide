@@ -1,3 +1,7 @@
+/*-*-c++-*-*/
+#ifndef __GDEBUG_H__
+#define __GDEBUG_H__
+
 /*
 ** THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONLY
 ** PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGHT
@@ -21,10 +25,6 @@
 ** $Date$
 */
 
-/*-*-c++-*-*/
-#ifndef __GDEBUG_H__
-#define __GDEBUG_H__
-
 #include <stdarg.h>
 
 #if defined(FX_DLL_ENABLE)
@@ -42,9 +42,9 @@
 // if debug info turned on then GDBG_INFO does something
 #ifdef GDBG_INFO_ON
 
-#define GDBG_INFO(level, format, ...) gdbg_info(level, format, __VA_ARGS__)
-#define GDBG_INFO_MORE(level, format, ...) gdbg_info_more(level, format, __VA_AR
-#define GDBG_PRINTF(format, ...) gdbg_printf(format, __VA_ARGS__)
+#define GDBG_INFO(level, format, ...) gdbg_info(level, format, ## __VA_ARGS__)
+#define GDBG_INFO_MORE(level, format, ...) gdbg_info_more(level, format, ## __VA_ARGS__)
+#define GDBG_PRINTF(format, ...) gdbg_printf(format, ## __VA_ARGS__)
 
 #define GDBG_ERROR_SET_CALLBACK(p)   gdbg_error_set_callback(p)
 #define GDBG_ERROR_CLEAR_CALLBACK(p) gdbg_error_clear_callback(p)

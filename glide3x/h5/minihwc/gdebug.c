@@ -74,9 +74,8 @@ static char gdbg_debuglevel[GDBG_MAX_LEVELS];   // array of debuglevel controls
 
 static long gdbg_errors = 0;
 
-#ifdef HWC_EXT_INIT
-char *
-hwcGetenv(char *a);
+#if defined(HWC_EXT_INIT) || defined(__DJGPP__)
+char *hwcGetenv (const char *a);
 /*#ifdef GETENV
 #undef GETENV
 #endif

@@ -435,6 +435,10 @@
 #include "minihwc.h"
 #endif
 
+static GrLOD_t g3LodXlat_base[2] = { GR_LOD_LOG2_256, GR_LOD_LOG2_2048 };
+#define _g3LodXlat(someLOD, tBig) \
+  (g3LodXlat_base[tBig] - someLOD)
+
 /*-------------------------------------------------------------------
   Function: _grTexCalcBaseAddressTiled
   Date: 12-Dec-98
