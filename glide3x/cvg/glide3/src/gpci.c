@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.2  2004/11/25 19:03:53  koolsmoky
+** Always allow user to override swapInterval (vsync) but force vsync on with swapbuffer interval set to 0x0 when triple buffering is enabled.
+**
 ** Revision 1.1.1.1.8.1  2004/02/16 07:42:15  dborca
 ** grSetNumPendingBuffers visible with grGetProcAddress
 **
@@ -678,8 +681,7 @@ _GlideInitEnvironment(void)
     /* wait until there's 6 or fewer buffer swaps pending */
     /* the hardware counter is only 3 bits so we don't want it to overflow */
     /* also the latency gets too long */
-    /*_GlideRoot.environment.swapPendingCount  = 4;*/
-    _GlideRoot.environment.swapPendingCount  = GLIDE_GETENV("FX_GLIDE_SWAPPENDINGCOUNT", 1L);
+    _GlideRoot.environment.swapPendingCount  = GLIDE_GETENV("FX_GLIDE_SWAPPENDINGCOUNT", 4L);
     if (_GlideRoot.environment.swapPendingCount > 6)
       _GlideRoot.environment.swapPendingCount = 6;
     if (_GlideRoot.environment.swapPendingCount < 0)
