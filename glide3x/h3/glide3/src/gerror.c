@@ -20,6 +20,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.2  2000/02/15 22:35:58  joseph
+** Changes to support FreeBSD (patch submitted by Doug Rabson)
+**
 ** Revision 1.1.1.1  1999/11/24 21:44:56  joseph
 ** Initial checkin for SourceForge
 **
@@ -277,7 +280,7 @@ _grAssert(char *exp, char *fileName, int lineNo)
     
     gdbg_printf("Command Fifo:\n");
     gdbg_printf("\tSoftware:\n");
-    gdbg_printf("\t\tfifoPtr:           0x%X\n", (FxU32)gc->cmdTransportInfo.fifoPtr - (FxU32) gc->rawLfb);
+    gdbg_printf("\t\tfifoPtr:           0x%X\n", (AnyPtr)gc->cmdTransportInfo.fifoPtr - (AnyPtr) gc->rawLfb);
     gdbg_printf("\t\tfifoOffset:        0x%X\n", gc->cmdTransportInfo.fifoOffset); 
     gdbg_printf("\t\tfifoEnd:           0x%X\n", gc->cmdTransportInfo.fifoEnd - gc->rawLfb);
     gdbg_printf("\t\tfifoSize:          0x%X\n", gc->cmdTransportInfo.fifoSize); 
@@ -287,7 +290,7 @@ _grAssert(char *exp, char *fileName, int lineNo)
 
     if ( !gc->windowed ) {
       gdbg_printf("\tHardware:\n");
-      gdbg_printf("\t\treadPtrL:          0x%X\n", HW_FIFO_PTR(FXTRUE) - (FxU32)gc->rawLfb);
+      gdbg_printf("\t\treadPtrL:          0x%X\n", HW_FIFO_PTR(FXTRUE) - (AnyPtr)gc->rawLfb);
       gdbg_printf("\t\tdepth:             0x%X\n", GR_CAGP_GET(depth));
       gdbg_printf("\t\tholeCount:         0x%X\n", GR_CAGP_GET(holeCount));
       gdbg_printf("\t\tbaseAddrL:         0x%X\n", GR_CAGP_GET(baseAddrL));

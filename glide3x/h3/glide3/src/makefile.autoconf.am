@@ -210,6 +210,8 @@ noinst_HEADERS         = fxglide.h gsstdef.h gsfc.h \
                          macglide3.h
 fxgasm_SOURCES         = fxgasm.c gthread.c
 
+CPUSOURCES             = cpudtect.c
+
 lib_LTLIBRARIES        = libglide3.la
 libglide3_la_SOURCES   = fxinline.h fxgasm.h \
                          gsplash.c g3df.c  gu.c gthread.c \
@@ -217,7 +219,7 @@ libglide3_la_SOURCES   = fxinline.h fxgasm.h \
                          gbanner.c gerror.c gaa.c gdraw.c \
                          gglide.c distate.c gstrip.c distrip.c \
                          diget.c glfb.c gsst.c gtex.c gtexdl.c \
-                         fifo.c xtexdl_def.c cpudtect.S \
+                         fifo.c xtexdl_def.c $(CPUSOURCES) \
                          $(VGLIDE_SRC) $(ASMTRISETUP) $(GL_AMD3D_SRC)
 
 libglide3_la_LDFLAGS    = -version-info 13:0:10

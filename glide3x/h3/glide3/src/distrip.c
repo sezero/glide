@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/11/24 21:44:54  joseph
+** Initial checkin for SourceForge
+**
 ** 
 ** 4     4/06/99 3:54p Dow
 ** Alt tab again.
@@ -541,10 +544,10 @@ GR_DIENTRY(grDrawVertexArrayContiguous, void , (FxU32 mode, FxU32 Count, void *p
     else {
       void *b_ptr, *c_ptr;
       while ((int)Count >= 3) {
-        b_ptr = (void *)((FxU32)pointers + stride);
-        c_ptr = (void *)((FxU32)pointers + stride*2);
+        b_ptr = (void *)((AnyPtr)pointers + stride);
+        c_ptr = (void *)((AnyPtr)pointers + stride*2);
         TRISETUP(pointers, b_ptr, c_ptr);
-        pointers = (void *)((FxU32)c_ptr + stride);
+        pointers = (void *)((AnyPtr)c_ptr + stride);
         Count -= 3;
       }
     }

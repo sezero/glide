@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/11/24 21:45:04  joseph
+** Initial checkin for SourceForge
+**
 ** 
 ** 3     4/06/99 3:36p Dow
 ** Alt tab stuff
@@ -38,46 +41,57 @@ extern char *cmdAGPRegNames[];
 extern char *waxRegNames[];
 extern char *sstRegNames[];
 
+#ifdef __alpha__
+extern unsigned int _fxget32(unsigned int *);
+#define GET(s) _fxget32((unsigned int *)&s);
+#define SET(d,s) d = s
+#endif
+
+#ifndef GET
+#define GET(s) s
+#define SET(d,s) d = s
+#endif
+
 /*
 **  I/O Macros
 */
 #define HWC_IO_STORE(regInfo, reg, val)\
 GDBG_INFO(120, "Storing 0x%x to IO Register %s\n", val,\
   ioRegNames[(offsetof(SstIORegs, reg)) >> 2]);\
-((SstIORegs *) regInfo.ioMemBase)->reg = val
+SET(((SstIORegs *) regInfo.ioMemBase)->reg,val)
 
 #define HWC_IO_LOAD(regInfo, reg, val)\
-val = ((SstIORegs *) regInfo.ioMemBase)->reg;\
+val = GET(((SstIORegs *) regInfo.ioMemBase)->reg);\
 GDBG_INFO(120, "Loaded 0x%x from IO Register %s\n", val,\
   ioRegNames[(offsetof(SstIORegs, reg)) >> 2]);
 
 #define HWC_CAGP_STORE(regInfo, reg, val)\
 GDBG_INFO(120, "Storing 0x%x to CAGP Register %s\n", val,\
   cmdAGPRegNames[(offsetof(SstCRegs, reg)) >> 2]);\
-((SstCRegs *) (regInfo.cmdAGPBase))->reg = val
+SET(((SstCRegs *) (regInfo.cmdAGPBase))->reg,val)
 
 #define HWC_CAGP_LOAD(regInfo, reg, val)\
-val = ((SstCRegs *) (regInfo).cmdAGPBase)->reg;\
+val = GET(((SstCRegs *) (regInfo).cmdAGPBase)->reg);\
 GDBG_INFO(120, "Loaded 0x%x from CAGP Register %s\n", val,\
   cmdAGPRegNames[(offsetof(SstCRegs, reg)) >> 2]);
   
 #define HWC_WAX_STORE(regInfo, reg, val)\
 GDBG_INFO(120, "Storing 0x%x to WAX Register %s\n", val,\
   waxRegnames[(offsetof(SstGRegs, reg)) >> 2]);\
-((SstGRegs *) regInfo.waxBase)->reg = val
+SET(((SstGRegs *) regInfo.waxBase)->reg,val)
 
 #define HWC_WAX_LOAD(regInfo, reg, val)\
-val = ((SstGRegs *) regInfo.waxBase)->reg;\
+val = GET(((SstGRegs *) regInfo.waxBase)->reg);\
 GDBG_INFO(120, "Loaded 0x%x from WAX Register %s\n", val,\
   waxRegnames[(offsetof(SstGRegs, reg)) >> 2]);
 
 #define HWC_SST_STORE(regInfo, reg, val)\
 GDBG_INFO(120, "Storing 0x%x to 3D Register %s\n", val,\
  sstRegNames[(offsetof(SstRegs, reg)) >> 2]);\
-((SstRegs *) regInfo.sstBase)->reg = val
+SET(((SstRegs *) regInfo.sstBase)->reg,val)
 
 #define HWC_SST_LOAD(regInfo, reg, val)\
-val = ((SstRegs *) regInfo.sstBase)->reg;\
+val = GET(((SstRegs *) regInfo.sstBase)->reg);\
 GDBG_INFO(120, "Loaded 0x%x from WAX Register %s\n", val,\
  sstRegNames[(offsetof(SstRegs, reg)) >> 2]);
 

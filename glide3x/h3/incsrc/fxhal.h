@@ -147,9 +147,18 @@ fxHalInitVideoOverlaySurface(
 extern int DRIlock;
 
 // Here are the macro defines for talking to hardware
+#ifdef __alpha__
+extern unsigned char _fxget8(unsigned char *);
+extern unsigned short _fxget16(unsigned short *);
+extern unsigned int _fxget32(unsigned int *);
+	#define GET8(s) _fxget8((unsigned byte *)&s);
+	#define GET16(s) _fxget16((unsigned short *)&s);
+	#define GET(s) _fxget32((unsigned int *)&s);
+#else	
         #define GET8(s) s
         #define GET16(s) s
         #define GET(s) s
+#endif
         #define SET8(d,s) d = s
         #define SET16(d,s) d = s
         #define SET(d,s) d = s

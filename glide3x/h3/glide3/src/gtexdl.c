@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/11/24 21:44:57  joseph
+** Initial checkin for SourceForge
+**
 ** 
 ** 5     5/26/99 9:22a Stb_acampbel
 ** Removed an extra string format parameter from a debug output statement
@@ -414,7 +417,7 @@ GR_DDFUNC(_grTexDownloadPalette,
         while(i < start + slopCount) {
           FxU32 entry;
           
-          entry = (0x80000000 | ((i & 0xFE) << 23) | pal->data[i] & 0xFFFFFF);
+          entry = (0x80000000 | ((i & 0xFE) << 23) | (pal->data[i] & 0xFFFFFF));
           
           gc->state.shadow.paletteRow[i>>3].data[i&7] = entry;
           REG_GROUP_SET(hw, nccTable0[4 + (i & 0x07)], entry );
@@ -432,7 +435,7 @@ GR_DDFUNC(_grTexDownloadPalette,
         while(i < endIndex) {
           FxU32 entry;
           
-          entry = (0x80000000 | ((i & 0xFE) << 23) | pal->data[i] & 0xFFFFFF);
+          entry = (0x80000000 | ((i & 0xFE) << 23) | (pal->data[i] & 0xFFFFFF));
           
           gc->state.shadow.paletteRow[i>>3].data[i&7] = entry;
           REG_GROUP_SET(hw, nccTable0[4 + (i & 0x07)], entry );
@@ -451,7 +454,7 @@ GR_DDFUNC(_grTexDownloadPalette,
         while(i <= end) {
           FxU32 entry;
           
-          entry = (0x80000000 | ((i & 0xFE) << 23) | pal->data[i] & 0xFFFFFF);
+          entry = (0x80000000 | ((i & 0xFE) << 23) | (pal->data[i] & 0xFFFFFF));
           
           gc->state.shadow.paletteRow[i>>3].data[i&7] = entry;
           REG_GROUP_SET(hw, nccTable0[4 + (i & 0x07)], entry );

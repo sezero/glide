@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/11/24 21:45:01  joseph
+** Initial checkin for SourceForge
+**
 ** 
 ** 6     5/12/99 10:39p Stb_gkincade
 ** Adding user support for turning on/off dither substraction
@@ -1074,8 +1077,8 @@ GR_ENTRY(grBufferSwap, void, (FxU32 swapInterval))
     for ( i = 0; i < MAX_BUFF_PENDING && j == -1; i++) {
       if (gc->bufferSwaps[i] == 0xffffffff) {
         gc->bufferSwaps[i] =
-          (FxU32) gc->cmdTransportInfo.fifoPtr -
-          (FxU32) gc->cmdTransportInfo.fifoStart; 
+          (AnyPtr) gc->cmdTransportInfo.fifoPtr -
+          (AnyPtr) gc->cmdTransportInfo.fifoStart; 
         j = i;
       }
     }
@@ -1176,8 +1179,8 @@ GR_ENTRY(grDRIBufferSwap, void, (FxU32 swapInterval))
     for ( i = 0; i < MAX_BUFF_PENDING && j == -1; i++) {
       if (gc->bufferSwaps[i] == 0xffffffff) {
         gc->bufferSwaps[i] =
-          (FxU32) gc->cmdTransportInfo.fifoPtr -
-          (FxU32) gc->cmdTransportInfo.fifoStart; 
+          (AnyPtr) gc->cmdTransportInfo.fifoPtr -
+          (AnyPtr) gc->cmdTransportInfo.fifoStart; 
         j = i;
       }
     }
@@ -1219,7 +1222,7 @@ GR_ENTRY(grDRIBufferSwap, void, (FxU32 swapInterval))
       REG_GROUP_SET_WAX(hw, srcXY, x | ((driInfo.y+(y-driInfo.y))<<16));
       REG_GROUP_SET_WAX(hw, dstSize, (w&0x1FFF)|((h&0x1FFF)<<16));
       REG_GROUP_SET_WAX(hw, dstXY, (x&0x1FFF) | ((y&0x1FFF)<<16));
-      REG_GROUP_SET_WAX(hw, command, (0xCC<<24) | 0x1 | BIT(8));
+      REG_GROUP_SET_WAX(hw, command, (0xCCu<<24) | 0x1 | BIT(8));
       REG_GROUP_END();
     } while (cnt);
 
@@ -1312,7 +1315,7 @@ _grBufferNumPending(void)
     do {
       depth0 = GET(gc->cRegs->cmdFifo0.depth);
       depth1 = GET(gc->cRegs->cmdFifo0.depth);
-    } while (readPtr0 != readPtr1);
+    } while (depth0 != depth1);
 
     if (depth0 == 0) {
       for (i = 0; i < MAX_BUFF_PENDING; i++)
@@ -2111,7 +2114,7 @@ GR_ENTRY(grGlideShutdown, void, (void))
            * continuing so that any internal glide calls have a valid
            * gc from tls via GR_DCL_GC. F*ck this up at your own peril.
            */
-          setThreadValue((FxU32)gc);
+          setThreadValue((AnyPtr)gc);
 #if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
           /* Flush any remaining commands and cleanup any per gc state */
           grSurfaceReleaseContext((GrContext_t)gc);

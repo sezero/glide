@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/11/24 21:44:54  joseph
+** Initial checkin for SourceForge
+**
 ** 
 ** 5     5/24/99 2:48p Jamesb
 ** Added ptrLostContext to exported cmdTransport struct.
@@ -612,10 +615,10 @@ GR_DIENTRY(grGet, FxU32, (FxU32 pname, FxU32 plength, FxI32 *params))
     break;
 
   case GR_SURFACE_TEXTURE:
-    if (plength == 4) {
+    if (plength == sizeof(long)) {
       GR_DCL_GC;
 
-      *params = (FxU32) &gc->tBuffer;
+      *params = (AnyPtr) &gc->tBuffer;
       retVal = plength;
     }
     break;

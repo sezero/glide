@@ -67,7 +67,15 @@ hwcCheckMemSize(hwcBoardInfo *bInfo, FxU32 xres, FxU32 yres, FxU32 nColBuffers,
 #include "lindri.h"
 
 static FxU32 fenceVar;
+#ifdef __ia64__
+#define P6FENCE asm volatile("mf.a" ::: "memory");
+#elif __alpha__
+#define P6FENCE
+#elif __i386__
 #define P6FENCE asm("xchg %%eax, %0" : : "m" (fenceVar) : "eax");
+#elif
+Error Need to Define P6FENCE for this architecture
+#endif
 
 #define MAXFIFOSIZE     0x40000
 #define FIFOPAD         0x0000
@@ -144,7 +152,7 @@ static void loadEnvFile() {
   char data[128];
   char *env, *val;
   envitem *item;
-  int first=1;
+  int is_first=1;
 
   if (envinit) return;
   envinit=1;
@@ -156,9 +164,9 @@ static void loadEnvFile() {
     if (*data=='\n') continue;
     val=strchr(data, '=');
     if (!val) {
-      if (first) {
+      if (is_first) {
 	fprintf(stderr, "In config file /etc/conf.3dfx/voodoo3:\n");
-	first=0;
+	is_first=0;
       }
       fprintf(stderr, "Malformed line: %s\n", data);
       continue;
@@ -231,8 +239,8 @@ hwcMapBoard(hwcBoardInfo *bInfo, FxU32 bAddrMask) {
   }
 
   bInfo->linearInfo.initialized = FXTRUE;
-  bInfo->linearInfo.linearAddress[0]=(FxU32)driInfo.pRegs;
-  bInfo->linearInfo.linearAddress[1]=(FxU32)driInfo.pFB;
+  bInfo->linearInfo.linearAddress[0]=(AnyPtr)driInfo.pRegs;
+  bInfo->linearInfo.linearAddress[1]=(AnyPtr)driInfo.pFB;
   return FXTRUE;
 }
 
@@ -767,7 +775,11 @@ hwcResolutionSupported(hwcBoardInfo *bInfo, GrScreenResolution_t res)
 #undef FN_NAME
 } /* hwcResolutionSupported */
 
-void grDRIImportFifo(int fifoPtr, int fifoRead)
+extern void _grDRIImportFifo(FxU32 fifoPtr, FxU32 fifoRead);
+extern void _grDRIInvalidateAll(void);
+extern void _grDRIExportFifo(FxU32 *fifoPtr, FxU32 *fifoRead);
+
+void grDRIImportFifo(FxU32 fifoPtr, FxU32 fifoRead)
 {
   _grImportFifo(fifoPtr, fifoRead);
 }
@@ -778,5 +790,5 @@ void grDRIInvalidateAll() {
 
 void grDRIResetSAREA()
 {
-  _grExportFifo(driInfo.fifoPtr, driInfo.fifoRead);
+  _grExportFifo((FxU32*)driInfo.fifoPtr, (FxU32*)driInfo.fifoRead);
 }

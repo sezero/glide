@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/11/24 21:44:56  joseph
+** Initial checkin for SourceForge
+**
 ** 
 ** 9     5/24/99 2:48p Jamesb
 ** Added ptrLostContext to exported cmdTransport struct.
@@ -1036,7 +1039,7 @@ typedef struct GrGC_s
           SET(*curFifoPtr++, *curPktData++); \
         } \
         GR_INC_SIZE((__writeCount) * sizeof(FxU32)); \
-        gc->cmdTransportInfo.fifoRoom -= ((FxU32)curFifoPtr - (FxU32)gc->cmdTransportInfo.fifoPtr); \
+        gc->cmdTransportInfo.fifoRoom -= ((AnyPtr)curFifoPtr - (AnyPtr)gc->cmdTransportInfo.fifoPtr); \
         gc->cmdTransportInfo.fifoPtr = curFifoPtr; \
       } \
       GR_CHECK_SIZE(); \
@@ -1155,7 +1158,7 @@ typedef struct GrGC_s
                           */
     
     FxU32* fifoPtr;      /* Current write pointer into fifo */
-    FxU32  fifoRead;     /* Last known hw read ptr. 
+    AnyPtr fifoRead;     /* Last known hw read ptr. 
                           * If on an sli enabled system this will be
                           * the 'closest' hw read ptr of the sli
                           * master and slave.
@@ -1240,12 +1243,13 @@ typedef struct GrGC_s
     nBuffers,
     curBuffer,
     frontBuffer,
-    backBuffer,
+    backBuffer;
+  AnyPtr
     buffers[4],
     lfbBuffers[4];              /* Tile relative addresses of the color/aux
                                  * buffers for lfbReads.
                                  */  
-  FxU32 lockPtrs[2];        /* pointers to locked buffers */
+  AnyPtr lockPtrs[2];        /* pointers to locked buffers */
   FxU32 fbStride;
 
   struct {
@@ -1280,7 +1284,7 @@ typedef struct GrGC_s
   FxI32 expected_counter;       /* the number of bytes expected to be sent */
 
   FxU32 checkCounter;
-  FxU32 checkPtr;
+  AnyPtr checkPtr;
    
   FxVideoTimingInfo* vidTimings;/* init code overrides */
 
@@ -1472,6 +1476,10 @@ extern GrGCFuncs _curGCFuncs;
 #  define P6FENCE __eieio()
 #elif defined(__GNUC__) && defined(__i386__)
 #define P6FENCE asm("xchg %%eax, %0" : : "m" (_GlideRoot.p6Fencer) : "eax");
+#elif defined(__GNUC__) && defined(__ia64__)
+#define P6FENCE asm volatile("mf.a" ::: "memory")
+#elif defined(__GNUC__) && defined(__alpha__)
+#define P6FENCE
 #else  /* !defined ( P6FENCE ) */
 #  error "P6 Fencing code needs to be added for this compiler"
 #endif /* !defined ( P6FENCE ) */
@@ -1795,7 +1803,7 @@ getThreadValueFast() {
 #endif
 
 #ifdef __linux__
-extern FxU32 threadValueLinux;
+extern AnyPtr threadValueLinux;
 #define getThreadValueFast() threadValueLinux
 #endif
 
@@ -1810,9 +1818,9 @@ void
 initThreadStorage( void );
 
 void 
-setThreadValue( FxU32 value );
+setThreadValue( AnyPtr value );
 
-FxU32
+AnyPtr
 getThreadValueSLOW( void );
 
 void 
@@ -2160,7 +2168,7 @@ void i3(void);
 #define HW_TEX_PTR(__b)        ((FxU32*)(((FxU32)(__b)) + HW_TEXTURE_OFFSET))   
 
 /* access a floating point array with a byte index */
-#define FARRAY(p,i)    (*(float *)((i)+(int)(p)))
+#define FARRAY(p,i)    (*(float *)((i)+(long)(p)))
 #define ArraySize(__a) (sizeof(__a) / sizeof((__a)[0]))
 
 #if GDBG_INFO_ON

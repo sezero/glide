@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/11/24 21:45:07  joseph
+** Initial checkin for SourceForge
+**
 ** 
 ** 27    6/24/99 12:45a Stb_mmcclure
 ** Modifications to fix PRS 6627. Added hwcUnmapMemory9x for revised 9x
@@ -1075,7 +1078,7 @@ hwcMapBoard(hwcBoardInfo *bInfo, FxU32 bAddrMask)
     for (bAddr = 0; bAddr < 2; bAddr++) {
       if ((bAddrMask & (0x01UL << bAddr)) != 0x00UL) {
         bInfo->linearInfo.linearAddress[bAddr] = 
-          (FxU32)pciMapCardMulti(bInfo->pciInfo.vendorID, bInfo->pciInfo.deviceID,
+          (AnyPtr)pciMapCardMulti(bInfo->pciInfo.vendorID, bInfo->pciInfo.deviceID,
                                  0x1000000, &bInfo->deviceNum, bInfo->boardNum, bAddr);
       }
     }
@@ -1084,13 +1087,13 @@ hwcMapBoard(hwcBoardInfo *bInfo, FxU32 bAddrMask)
      * unconditionally
      */
     bInfo->linearInfo.linearAddress[2] = 
-      (FxU32)pciMapCardMulti(bInfo->pciInfo.vendorID, bInfo->pciInfo.deviceID,
+      (AnyPtr)pciMapCardMulti(bInfo->pciInfo.vendorID, bInfo->pciInfo.deviceID,
                              0x1000000, &bInfo->deviceNum, bInfo->boardNum, 2);
 
     /* Does the caller want the rom bios? */
     if ((bAddrMask & 0x08UL) != 0x00UL) {
       bInfo->linearInfo.linearAddress[3] = 
-        (FxU32)pciMapCardMulti(bInfo->pciInfo.vendorID, bInfo->pciInfo.deviceID,
+        (AnyPtr)pciMapCardMulti(bInfo->pciInfo.vendorID, bInfo->pciInfo.deviceID,
                                0x1000000, &bInfo->deviceNum, bInfo->boardNum, 3);
     }
   }

@@ -20,7 +20,10 @@
 */
 
 /*  $Header$ */
-/*  $Log$ */
+/*  $Log$
+/*  Revision 1.1.1.1  1999/11/24 21:44:53  joseph
+/*  Initial checkin for SourceForge
+/* */
 /*   */
 /*  4     4/06/99 3:54p Dow */
 /*  Alt tab again. */
@@ -45,7 +48,19 @@
 /*  2     3/04/97 9:10p Dow */
 /*  Neutered mutiplatform multiheaded monster. */
 
+#ifdef __ia64__
 
+	.align 32
+	.global _cpu_detect_asm
+	.proc _cpu_detect_asm
+
+_cpu_detect_asm:
+	mov ret0=0
+	br.ret.sptk.few b0
+
+	.end _cpu_detect_asm
+
+#else /* !__ia64__ */
 
 .file "cpudtect.asm"
 
@@ -321,3 +336,4 @@ double_precision_asm:
 .size double_precision_asm,.L_END_double_precision_asm-double_precision_asm
 
 .end
+#endif
