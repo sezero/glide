@@ -111,6 +111,8 @@ main (int argc, char **argv)
 
         printf("#define kTriProcOffset 0x%XUL\n",
                offsetof(struct GrGC_s, cmdTransportInfo.triSetupProc));
+	printf("#define kTriProcOffsetClean %d\n", 
+	       offsetof(struct GrGC_s, cmdTransportInfo.triSetupProc));
 #endif /* GLIDE_DISPATCH_SETUP */
         
         printf("/* The # of 2-byte entries in the hw fog table */\n");
