@@ -11,17 +11,31 @@ function inumber () {
     ls -id "$1" | awk '{print $1;}'
 }
 
+#
+# This function returns:
+#    0 if the files are identical,
+#  100 if either of the parameters are the empty string.
+#  101 if either of the parameters does not name a directory
+#  102 if both parameters name different directories.
+#
 function files_are_equal() {
     local inode1 inode2 dev1 dev2
     if [ -z "$1" ] || [ -z "$2" ] ; then
         return 100;
+    fi
+    #
+    # For the purposes of this script, if either directory
+    # does not exist, then they are not equal.
+    #
+    if [ ! -d "$1" ] || [ ! -d "$2" ] ; then
+        return 101
     fi
     inode1=`inumber $1`
     inode2=`inumber $2`
     dev1=`device $1`
     dev2=`device $2`
     [ "$dev1" = "$dev2" ] && [ "$inode1" = "$inode2" ] && return 0
-    return 100
+    return 102
 }
 
 rm="/bin/rm -rf"
