@@ -367,17 +367,27 @@ GR_DIENTRY(grGlideInit, void, (void))
 #endif
 #endif
   }
-  
+
+  /* KoolSmoky - if we have multiple sst devices, they will all use the 
+   * same environment values. Win32 will use device 0's registry.
+   */
+  _GlideInitEnvironment(0); /* the main init code */
+  FXUNUSED(*glideIdent);
+
 #if GDBG_INFO_ON
   GDBG_ERROR_SET_CALLBACK(_grErrorCallback);
 #endif
 
-  /* NB: We need to select the default device here so that grGetXXX
-   * routines work before grSstWinOpen or the surface attachment
-   * routines are called.  
-   */
-  grSstSelect(0);
-  FXUNUSED(*glideIdent);
+  if (_GlideRoot.initialized) {
+    initThreadStorage();
+    initCriticalSection();
+    
+    /* NB: We need to select the default device here so that grGetXXX
+     * routines work before grSstWinOpen or the surface attachment
+     * routines are called.  
+     */
+    grSstSelect(0);
+  }
 
   _grResetTriStats();
   GDBG_INFO(281,"grGlideInit --done---------------------------------------\n");
