@@ -308,12 +308,13 @@ ARFLAGS = -nologo
 ASFLAGS = -O2 -fwin32 -D__WIN32__ --prefix _
 
 !if "$(DEBUG)"== "1"
-CFLAGS  = $(CFLAGS) -Od -LDd -MLd -DDEBUG=1 -D_DEBUG -Z7
+CFLAGS  = $(CFLAGS) -Od -MDd -DDEBUG=1 -D_DEBUG -D_MT -D_DLL -Zi
 LFLAGS  = $(LFLAGS) -debugtype:both /DEBUG
 ARFLAGS = $(ARFLAGS) -debugtype:both
-ASFLAGS = $(ASFLAGS) -g -DDEBUG=1
+ASFLAGS = $(ASFLAGS) -Od -DDEBUG=1
 !else
-CFLAGS  = $(CFLAGS) -Ox -LD -ML
+CFLAGS  = $(CFLAGS) -Ox -MD -D_MT -D_DLL
+ASFLAGS = $(ASFLAGS) -O2
 !endif
 
 # So that we can get reasonable stuff from SoftIce etc even
@@ -416,9 +417,9 @@ DX_LIB = ddraw.lib dxguid.lib
 DEP_LIB = user32.lib gdi32.lib advapi32.lib kernel32.lib
 
 !if "$(DEBUG)" == "1"
-STD_LIB = libcd.lib
+STD_LIB = MSVCRTD.lib
 !else
-STD_LIB = libc.lib
+STD_LIB = MSVCRT.lib
 !endif
 
 #################################
@@ -521,7 +522,5 @@ clean::
 	$(RM) $(FX_GLIDE_HW)\$(FX_HW_PROJECTS)\src\fxbldno.h
 	
 clobber::
-	$(RM) $(FX_GLIDE_HW)\lib\*.lib
-	$(RM) $(FX_GLIDE_HW)\lib\*.exp
-	$(RM) $(FX_GLIDE_HW)\bin\*.dll
-	$(RM) $(FX_GLIDE_HW)\bin\*.exe
+	$(RM) $(FX_GLIDE_HW)\lib\$(FX_HW_PROJECTS)x.*
+	$(RM) $(FX_GLIDE_HW)\bin\$(FX_HW_PROJECTS)x.*
