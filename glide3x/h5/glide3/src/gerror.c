@@ -205,7 +205,7 @@ void _doGrErrorCallback( const char *name, const char *msg, FxBool fatal )
 GR_DIENTRY(grErrorSetCallback, void,
            ( void (*function) ( const char *string, FxBool fatal ) ))
 {
-  GDBG_INFO(80,"grErrorSetCallback(0x%x)",function);
+  GDBG_INFO(80,"grErrorSetCallback(0x%x)\n",function);
   GrErrorCallback = function;
 }
 

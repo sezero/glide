@@ -179,10 +179,10 @@ _grShamelessPlug(void)
 static FxU32 fxPlugWidth;
 static FxU32 fxPlugHeight;
 static FxU32 fxPlugStride;
-static GrLfbWriteMode_t fxPlugFormat;
 #else
 #include "banner.inc"
 #endif
+static GrLfbWriteMode_t fxPlugFormat = GR_LFBWRITEMODE_565;
 static FxU16 *fxPlugData;
 #endif /* GLIDE_PLUG */
 
@@ -227,7 +227,6 @@ FxBool fxSplashInit (FxU32 hWnd,
        fxPlugWidth = ((unsigned short *)header)[6];
        fxPlugHeight = ((unsigned short *)header)[7];
        fxPlugStride = fxPlugWidth * 2;
-       fxPlugFormat = GR_LFBWRITEMODE_565;
 
        /* compute bits/pixel, then bytes/pixel; also check TGA type */
        bpp = header[16];
@@ -271,9 +270,7 @@ FxBool fxSplashInit (FxU32 hWnd,
                    switch (bpp) {
                           case 2:
                                decoded = *(unsigned short *)&b1[0];
-                               decoded = ((decoded & 0x7c00) << 1)
-                                       | ((decoded & 0x03e0) << 1)
-                                       |  (decoded & 0x001f);
+                               decoded = ((decoded & 0x7fe0) << 1) | (decoded & 0x001f);
                                break;
                           case 3:
                           case 4:
@@ -294,9 +291,7 @@ FxBool fxSplashInit (FxU32 hWnd,
                        switch (bpp) {
                               case 2:
                                    decoded = *(unsigned short *)&b1[0];
-                                   decoded = ((decoded & 0x7c00) << 1)
-                                           | ((decoded & 0x03e0) << 1)
-                                           |  (decoded & 0x001f);
+                                   decoded = ((decoded & 0x7fe0) << 1) | (decoded & 0x001f);
                                    break;
                               case 3:
                               case 4:
@@ -333,9 +328,7 @@ FxBool fxSplashInit (FxU32 hWnd,
                   switch (bpp) {
                          case 2:
                               decoded = *(unsigned short *)&b1[0];
-                              decoded = ((decoded & 0x7c00) << 1)
-                                      | ((decoded & 0x03e0) << 1)
-                                      |  (decoded & 0x001f);
+                              decoded = ((decoded & 0x7fe0) << 1) | (decoded & 0x001f);
                               break;
                          case 3:
                          case 4:

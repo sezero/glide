@@ -3193,12 +3193,12 @@ GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
       /*--------------------------
         3D Idle
         --------------------------*/
-      GDBG_INFO(gc->myLevel, "  3D Idle");
+      GDBG_INFO(gc->myLevel, "  3D Idle\n");
 
       /*--------------------------
         Command Transport Disable
         --------------------------*/
-      GDBG_INFO(gc->myLevel, "  Command Transport Disable");
+      GDBG_INFO(gc->myLevel, "  Command Transport Disable\n");
     
 #if __POWERPC__ && PCI_BUMP_N_GRIND
       restoreCacheSettings();
@@ -3212,7 +3212,7 @@ GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
        * we use grSstWinOpen we need to re-map the board etc just to be
        * safe everywhere.
        */
-      GDBG_INFO(gc->myLevel, "  Restore Video");
+      GDBG_INFO(gc->myLevel, "  Restore Video\n");
 #ifndef	__linux__
       if (!*gc->lostContext) {
       /* disable SLI and AA */
@@ -3239,7 +3239,7 @@ GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
       /*--------------------------
         GC Reset
         --------------------------*/
-      GDBG_INFO(gc->myLevel, "  GC Reset");
+      GDBG_INFO(gc->myLevel, "  GC Reset\n");
 
       /* These are really two different things.  
        *
