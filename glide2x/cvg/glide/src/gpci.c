@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.2.3  2004/12/27 20:46:37  koolsmoky
+** added dll entry point to call grGlideShutdown when a process is detached
+**
 ** Revision 1.1.1.1.2.2  2004/12/23 20:45:56  koolsmoky
 ** converted to nasm syntax
 ** added x86 asm, 3dnow! triangle and mmx, 3dnow! texture download optimizations
@@ -443,9 +446,9 @@ _grSstDetectResources(void)
            * pair then we don't want to waste mtrr's that we're never
            * really going to write to.  
            */
-          /*if (!inSliPairP && (_GlideRoot.CPUType.family >= 6)) {*/
+          if (!inSliPairP/* && (_GlideRoot.CPUType.family >= 6)*/) {
 		sst1InitCaching((FxU32*)devRegs, FXTRUE);
-	  /*}*/
+	  }
 
           if (!sst1InitRegisters((FxU32*)devRegs) ||
               !sst1InitGetDeviceInfo((FxU32*)devRegs, &dummyDevInfo)) goto __errRegFailure;
