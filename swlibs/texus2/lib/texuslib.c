@@ -16,10 +16,9 @@
 **
 ** $Id$
 */
+#include <stdlib.h>
 #include <string.h>
 #include "texus.h"
-
-#include <malloc.h>
 
 #include "texusint.h"
 
