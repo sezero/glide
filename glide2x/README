@@ -21,8 +21,8 @@ DEBUG=1:               Turn on debugging information, note this disables
 FX_GLIDE_PIC=1:        Enable PIC in shared libraries.
 FX_GLIDE_CTRISETUP=1:  Use C versions as opposed to ASM versions of triangle
                        setup code.
-GL_AMD3D=1:            Enable AMD 3DNow! optimizations.  Note this is broken
-                       on several platforms.
+GL_AMD3D=1:            Enable AMD 3DNow! optimizations.  Note this is 
+                       currently broken on several platforms.
 
 All glide source trees use a common set of libraries kept in the
 swlibs branch.  In order to build any glide library the swlibs branch
