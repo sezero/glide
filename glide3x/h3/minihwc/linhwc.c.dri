@@ -83,8 +83,6 @@ static FxU32 calcBufferStride(FxU32 xres, FxBool tiled);
 static FxU32 calcBufferSize(FxU32 xres, FxU32 yres, FxBool tiled);
 static FxU32 calcBufferSizeInTiles(FxU32 xres, FxU32 yres);
 static FxU32 calcBufferHeightInTiles(FxU32 yres);
-static FxU32 hwcBufferLfbAddr(FxU32 bufNum, const hwcBoardInfo* bInfo,
-			      FxBool colBufAlignP);
 
 typedef struct envitem_t {
   char *env;
@@ -354,9 +352,8 @@ hwcAllocBuffers(hwcBoardInfo *bInfo, FxU32 nColBuffers, FxU32 nAuxBuffers)
   bInfo->buffInfo.lfbBuffAddr[0] = bInfo->buffInfo.colBuffStart[0];
   bInfo->buffInfo.lfbBuffAddr[1] = bInfo->buffInfo.colBuffStart[1];
   if (bInfo->vidInfo.tiled) {
-    bInfo->buffInfo.lfbBuffAddr[2] = bInfo->buffInfo.colBuffStart[1] +
-      pow2Round(driInfo.screenHeight*HWC_TILED_BUFFER_BYTES, 
-		HWC_TILED_BUFFER_Y_ALIGN);
+    bInfo->buffInfo.lfbBuffAddr[2] = 
+		hwcBufferLfbAddr(bInfo, bInfo->buffInfo.auxBuffStart);
   } else {
     bInfo->buffInfo.lfbBuffAddr[2] = bInfo->buffInfo.auxBuffStart;
   }
@@ -582,26 +579,91 @@ hwcCheckMemSize(hwcBoardInfo *bInfo, FxU32 xres, FxU32 yres, FxU32 nColBuffers,
 } /* hwcCheckMemSize */
 
 static FxU32
-hwcBufferLfbAddr(FxU32 bufNum, 
-                 const hwcBoardInfo* bInfo,
-                 FxBool colBufAlignP)
+calculateLfbStride(FxU32 screenWidth)
+{
+#if	1
+    int TileAperturePitch;
+    for (TileAperturePitch = 1024;
+         (TileAperturePitch < (16 << 10)) && (TileAperturePitch < screenWidth);
+         TileAperturePitch <<= 1);
+    return(TileAperturePitch);
+#else
+    return(0x1000);
+#endif
+}
+
+/* How the hw treats lfb accesses are dependent on the 'type' of
+ * memory (tiled/linear) that the color/aux buffers are in. We
+ * pre-compute the actual lfb address here while we know about the
+ * memory space and if we adjusted the page alignment above.
+ *
+ * NB: If we are in tiled mode then the fact that we align the color
+ * buffers on page boundaries means that the y offset of the buffers
+ * may not actually be on a boundary for the tile addressing scheme.
+ * The 'rounding' done to HWC_TILED_BUFFER_Y_ALIGN adjust for this.
+ *
+ * NB: The memory optimization of aligning color buffers on even page
+ * boundaries will cause the tiled lfb access to be off by a page so
+ * we add in the width of a page (HWC_TILED_BUFFER_X_ADJUST) here.
+ */
+static FxU32
+hwcBufferLfbAddr(const hwcBoardInfo *bInfo, FxU32 physAddress)
 {
   FxU32 retVal = 0x00UL;
 
-  if (bInfo->vidInfo.tiled) {
-    retVal = (bInfo->fbOffset + 
-              pow2Round(bufNum * bInfo->vidInfo.yRes * HWC_TILED_BUFFER_BYTES, 
-                        HWC_TILED_BUFFER_Y_ALIGN) +
-              (colBufAlignP ? HWC_TILED_BUFFER_X_ADJUST : 0));
-  } else if (bufNum < bInfo->buffInfo.nColBuffers) {
-    retVal = bInfo->buffInfo.colBuffStart[bufNum];
-  } else if (bufNum == bInfo->buffInfo.nColBuffers) {
-    retVal = bInfo->buffInfo.auxBuffStart;
-  }
+  FxU32 tileAddress;
+  FxU32 tileNumber;
+  FxU32 tileOffset;
+  FxU32 tileXOffset;
+  FxU32 tileScanline;
+  FxU32 tileRow;
+  FxU32 lfbAddress;
+  FxU32 lfbYOffset;
+  /*
+   * This is the tile aperture stride.  It is always 4096 for V3.
+   */
+  FxU32 lfbBufferStride = 0x1000;
 
+  if (bInfo->vidInfo.tiled) {    
+    GDBG_INFO(80, "\tphysAddress: 0x%08lx\n",physAddress);
+
+    /* Compute address in tile space */
+    tileAddress = physAddress - driInfo.backOffset;
+    GDBG_INFO(80, "\ttileAddress: 0x%08lx\n",tileAddress);
+
+    /* Compute tile number we're in (each tile is 4K bytes) */
+    tileNumber = tileAddress >> 12;
+    GDBG_INFO(80, "\ttileNumber: 0x%08lx (%d)\n",tileNumber,tileNumber);
+
+    /* Compute base tile row we're in */
+    tileRow = tileNumber / bInfo->buffInfo.bufStrideInTiles;
+    GDBG_INFO(80, "\ttileRow: %d  (stride = %d)\n",tileNumber,bInfo->buffInfo.bufStrideInTiles);
+
+    /* Compute offset within the tile */
+    tileOffset = tileAddress - (tileNumber << 12);
+    GDBG_INFO(80, "\ttileOffset: 0x%08lx\n",tileOffset);
+
+    /* Compute scanline within the tile */
+    tileScanline = tileOffset >> 7;
+    GDBG_INFO(80, "\ttileScanline: 0x%08lx\n",tileScanline);
+
+    /* Compute tile X offset within the row */
+    tileXOffset = tileNumber - (tileRow * bInfo->buffInfo.bufStrideInTiles);
+    GDBG_INFO(80, "\ttileXOffset: %d\n",tileXOffset);
+
+    /* Compute Y offset in LFB space */
+    lfbYOffset = (tileRow * 32 + tileScanline);
+
+    /* Compute LFB address of tile start */
+    lfbAddress =  driInfo.backOffset + lfbYOffset * lfbBufferStride + tileXOffset * 128;
+
+    GDBG_INFO(80, "\tlfbAddress: %08lx\n", lfbAddress);
+    retVal = lfbAddress;
+  } else {
+    retVal = physAddress;
+  }
   return retVal;
 }
-
 FxU32 
 hwcInitAGPFifo(hwcBoardInfo *bInfo, FxBool enableHoleCounting) 
 {
