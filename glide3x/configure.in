@@ -112,7 +112,7 @@ AC_ARG_ENABLE([amd3d],
                esac],[enable_amd3d=false])
 AM_CONDITIONAL(GL_AMD3D,     test x$enable_amd3d = xtrue)
 #
-# --enable-fx-texus2 enables new texus library.
+# --enable-fx-texlib=texus2 enables new texus library.
 #
 AC_ARG_ENABLE([fx-texlib],
               [dnl
@@ -127,7 +127,7 @@ AC_ARG_ENABLE([fx-texlib],
                *)
                    AC_MSG_ERROR([Illegal value (${enableval}) for --enable-fx-texus])
                    ;;
-               esac],[TEXTURE_UTILITIES_DIR=texus])
+               esac],[TEXTURE_UTILITIES_DIR=texus2])
 AC_SUBST(TEXTURE_UTILITIES_DIR)
 #
 # These are conditional variables whose value is set by

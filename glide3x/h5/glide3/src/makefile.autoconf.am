@@ -206,6 +206,7 @@ VGLIDE_SRC=$(FX_GLIDE_CTRISETUP_SRC)
 
 WHOLE_LIBS = $(top_builddir)/swlibs/fxmisc/libfxmisc.la \
              $(top_builddir)/swlibs/newpci/pcilib/libfxpci.la \
+			 $(top_builddir)/swlibs/$(TEXTURE_UTILITIES_DIR)/lib/libtexus.la \
              $(top_builddir)/@FX_GLIDE_HW@/minihwc/libminihwc.la
 LINK_LIBS  = -L/usr/X11R6/lib -lX11 -lXext -lXxf86dga -lXxf86vm -lm
 

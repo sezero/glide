@@ -40,11 +40,11 @@ int txBitsPerPixel(GrTextureFormat_t format);
 
 #define TX_MAX_LEVEL       16
 typedef struct  _TxMip {
-        int             format;                         // GR_TEXFMT_...
-        int             width;                          // pixels
-        int             height;                         // pixels
-        int             depth;                          // mipmap levels
-        int             size;                           // bytes
+    int             format;                         /* GR_TEXFMT_... */
+    int             width;                          /* pixels */
+    int             height;                         /* pixels */
+    int             depth;                          /* mipmap levels */
+    int             size;                           /* bytes */
         void    *data[TX_MAX_LEVEL];
         FxU32   pal[256];
 } TxMip;
@@ -128,18 +128,18 @@ extern TxErrorCallbackFnc_t _txErrorCallback;
 extern  char *Format_Name[];
 
 
-// General read functions for 3DF/TXS files
+/* General read functions for 3DF/TXS files */
 
 
-//FxBool _txRead3DFNCCTable (FILE* stream, FxI32* ncc_table);
-//FxBool _txRead3DFPalTable (FILE* stream, FxI32* pal);
+/*FxBool _txRead3DFNCCTable (FILE* stream, FxI32* ncc_table); */
+/*FxBool _txRead3DFPalTable (FILE* stream, FxI32* pal); */
 
-// General write functions for 3DF/TXS files
+/* General write functions for 3DF/TXS files */
 
-//FxBool _txWrite3dfNCCTable (FILE *stream, FxU32 *yab);
-//FxBool _txWrite3dfPalTable (FILE *stream, FxU32 *pal);
+/*FxBool _txWrite3dfNCCTable (FILE *stream, FxU32 *yab); */
+/*FxBool _txWrite3dfPalTable (FILE *stream, FxU32 *pal); */
 
-// TXS constants
+/* TXS constants */
 
 #define TXS_COOKIE             "TXSF"
 #define TXS_COOKIE_SIZE        5
@@ -176,7 +176,7 @@ typedef struct
 	FxU16 width;
 	FxU16 height;
 	FxU16 mipmap_levels;
-	FxU32 data_offset;  // in bytes
+    FxU32 data_offset;  /* in bytes */
 } TXSHeader;
 
 /* TXS info structure

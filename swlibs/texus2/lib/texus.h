@@ -72,7 +72,7 @@ typedef FxU32 GrTextureFormat_t;
 #define GR_TEXFMT_AP_88                 0xe
 #define GR_TEXFMT_RSVD4                 0xf
 
-// sst2 formats 
+/* sst2 formats */
 #define GR_TEXFMT_ARGB_CMP_FXT1        0x11
 #define GR_TEXFMT_ARGB_8888            0x12
 #define GR_TEXFMT_YUYV_422             0x13
@@ -165,13 +165,13 @@ typedef struct
   FxU32        mem_required;    /* memory required for mip map in bytes. */
 } Gu3dfInfo;
 
-#endif          // __GLIDE_H__
+#endif          /* __GLIDE_H__*/
 
 #define GR_TEXFMT_32BIT                                 0x12
 #define GR_TEXFMT_RGB_888                               0xff
 #define GR_TEXFMT_ANY                                   0x7fffffff
 
-// Save typing fingers
+/* Save typing fingers*/
 #define GR_TEXFMT_A_8                                   GR_TEXFMT_ALPHA_8
 #define GR_TEXFMT_I_8                                   GR_TEXFMT_INTENSITY_8
 #define GR_TEXFMT_AI_44                                 GR_TEXFMT_ALPHA_INTENSITY_44
@@ -274,9 +274,9 @@ FxBool txWrite( Gu3dfInfo *info, FILE *fp, FxU32 flags );
 /*
  * Conversion of a single mip level
  */
-void txImgQuantize( char *dst, char *src, 
-                    int w, int h, 
-                    FxU32 format, FxU32 dither);
+extern void txImgQuantize( char *dst, char *src, 
+                           int w, int h, 
+                           FxU32 format, FxU32 dither);
 
 /*
  * Error handling.
