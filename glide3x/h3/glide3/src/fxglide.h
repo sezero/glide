@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.2.4.2  2003/06/29 18:45:55  guillemj
+** Fixed preprocessor invalid token errors.
+**
 ** Revision 1.2.4.1  2003/05/05 07:12:46  dborca
 ** no message
 **
@@ -1901,9 +1904,6 @@ extern void
 
 void GR_CDECL
 _grFence(void);
-
-int
-_guHeapCheck(void);
 
 void FX_CSTYLE
 _grRebuildDataList(void);

@@ -20,6 +20,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.2.6.1  2003/05/05 07:12:46  dborca
+** no message
+**
 ** Revision 1.2  2000/02/15 22:35:58  joseph
 ** Changes to support FreeBSD (patch submitted by Doug Rabson)
 **
@@ -225,20 +228,6 @@ _grErrorDefaultCallback( const char *s, FxBool fatal )
                 }
 #endif /* (GLIDE_PLATFORM * GLIDE_OS_MACOS) */
   }
-}
-#endif
-
-/* [dBorca] */
-#ifndef __DJGPP__
-#ifdef __DOS__
-int _guHeapCheck( void )
-{
-  int i = _heapchk();
-
-  if ( i != _HEAPOK )
-    printf( "heapchk: %d\n", i );
-
-  return ( i == 0 );
 }
 #endif
 

@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.1  2003/06/29 18:45:55  guillemj
+** Fixed preprocessor invalid token errors.
+**
 ** Revision 1.1.1.1  1999/12/07 21:42:31  joseph
 ** Initial checkin into SourceForge.
 **
@@ -1715,9 +1718,6 @@ extern void
 
 void GR_CDECL
 _grFence(void);
-
-int
-_guHeapCheck(void);
 
 void FX_CSTYLE
 _grRebuildDataList(void);

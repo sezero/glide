@@ -600,7 +600,7 @@ const void *fxSplashPlug (FxU32* w, FxU32* h,
    Code Macros
    ----------------------------------------------------------------------- */
 #undef  GETENV
-#if defined(DRI_BUILD) || defined(__DJGPP__)
+#if (GLIDE_PLATFORM & GLIDE_OS_UNIX) || defined(__DJGPP__)
 #define GETENV(a, b) hwcGetenv(a)
 #else
 #define GETENV(a, b) hwcGetenvEx(a, b)
@@ -1156,14 +1156,12 @@ typedef struct {
     struct {
       GrDitherMode_t mode;
     } grDitherModeArgs;
-#if defined(DRI_BUILD) || defined(__WIN32__)
     struct {
       GrStippleMode_t mode;
     } grStippleModeArgs;
     struct {
       GrStipplePattern_t stipple;
     } grStipplePatternArgs;
-#endif /* DRI_BUILD __WIN32__ */
     struct {
       GrBuffer_t buffer;
     } grRenderBufferArgs;
@@ -2431,11 +2429,9 @@ grStencilFunc(GrCmpFnc_t fnc, GrStencil_t ref, GrStencil_t mask);
 void FX_CALL 
 grStencilMask(GrStencil_t write_mask);
 
-#if defined(DRI_BUILD) || defined(__WIN32__)
 void FX_CALL
 grStipplePattern(
             GrStipplePattern_t stipple);
-#endif /* DRI_BUILD __WIN32__ */
 
 void FX_CALL 
 grStencilOp(
@@ -2611,10 +2607,8 @@ _grDepthBufferMode( GrDepthBufferMode_t mode );
 void
 _grDitherMode( GrDitherMode_t mode );
 
-#if defined(DRI_BUILD) || defined(__WIN32__)
 void
 _grStippleMode( GrStippleMode_t mode );
-#endif /* DRI_BUILD  __WIN32__ */
 
 void
 _grRenderBuffer( GrBuffer_t buffer );
@@ -2722,10 +2716,10 @@ getThreadValueFast() {
 }
 #endif
 
-#ifdef DRI_BUILD
+#if (GLIDE_PLATFORM & GLIDE_OS_UNIX)
 extern FxU32 threadValueLinux;
 #define getThreadValueFast() threadValueLinux
-#endif /* defined(DRI_BUILD) */
+#endif /* defined(GLIDE_PLATFORM & GLIDE_OS_UNIX) */
 
 #ifdef __DJGPP__
 extern FxU32 threadValueDJGPP;
@@ -2804,9 +2798,6 @@ extern void
 
 void GR_CDECL
 _grFence(void);
-
-int
-_guHeapCheck(void);
 
 void FX_CSTYLE
 _grCCExtfbzColorPath(GrCCUColor_t     a,

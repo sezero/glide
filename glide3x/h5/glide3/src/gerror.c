@@ -242,21 +242,6 @@ _grErrorDefaultCallback( const char *s, FxBool fatal )
 }
 #endif
 
-#ifndef __DJGPP__
-#ifdef __DOS__
-int _guHeapCheck( void )
-{
-  int i = _heapchk();
-
-  if ( i != _HEAPOK )
-    printf( "heapchk: %d\n", i );
-
-  return ( i == 0 );
-}
-#endif
-
-#endif
-
 void
 _grAssert(char *exp, char *fileName, int lineNo)
 {

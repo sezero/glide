@@ -20,6 +20,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/12/07 21:42:32  joseph
+** Initial checkin into SourceForge.
+**
 ** 
 ** 1     10/08/98 11:30a Brent
 ** 
@@ -186,18 +189,6 @@ _grErrorDefaultCallback( const char *s, FxBool fatal )
 #endif /* (GLIDE_PLATFORM * GLIDE_OS_MACOS) */
   }
 }
-
-#ifdef __DOS__
-int _guHeapCheck( void )
-{
-  int i = _heapchk();
-
-  if ( i != _HEAPOK )
-    printf( "heapchk: %d\n", i );
-
-  return ( i == 0 );
-}
-#endif
 
 void
 _grAssert(char *exp, char *fileName, int lineNo)
