@@ -68,8 +68,6 @@
 #undef ATOF
 #undef SSCANF
 #undef POW
-#define INIT_PRINTF(A)
-#define INIT_INFO(A)
 #define GETENV(A) sst1InitGetenv(A)
 #define ATOI(A) atoi(A)
 #define ATOF(A) atof(A)
