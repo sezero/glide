@@ -19,6 +19,9 @@
  **
  ** $Header$
  ** $Log$
+ ** Revision 1.1.1.1.6.2  2003/11/07 13:38:38  dborca
+ ** unite the clans
+ **
  ** Revision 1.1.1.1.6.1  2003/05/05 07:12:46  dborca
  ** no message
  **
@@ -697,7 +700,7 @@ _grCommandTransportMakeRoom(const FxI32 blockSize, const char* fName, const int 
   GR_BEGIN_NOFIFOCHECK(FN_NAME, 400);
 
   if ( gc->windowed ) {
-#if defined( GLIDE_INIT_HWC ) && !defined(__linux__) && !defined(__DJGPP__) /* [dBorca] */
+#if defined( GLIDE_INIT_HWC ) && !defined(__linux__) && !defined(__DJGPP__) && !defined(__WATCOMC__) /* [dBorca] */
     struct cmdTransportInfo*
       gcFifo = &gc->cmdTransportInfo;
     HwcWinFifo 

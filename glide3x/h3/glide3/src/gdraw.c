@@ -19,6 +19,9 @@
  **
  ** $Header$
  ** $Log$
+ ** Revision 1.2.6.2  2004/09/27 08:58:15  dborca
+ ** type-punning warning
+ **
  ** Revision 1.2.6.1  2003/05/05 07:12:46  dborca
  ** no message
  **
@@ -291,7 +294,7 @@ GR_ENTRY(grDrawTriangle, void, (const void *a, const void *b, const void *c))
     }
     lostContext: ; /* <-- my, that's odd, but MSVC was insistent  */
   }
-#elif defined( __linux__ ) || defined(__FreeBSD__) || defined(__DJGPP__) /* [dBorca] */
+#elif defined( __linux__ ) || defined(__FreeBSD__) || defined(__DJGPP__) || defined(__WATCOMC__) /* [dBorca] */
   {
     GR_BEGIN_NOFIFOCHECK("grDrawTriangle",92);
     TRISETUP(a, b, c);
@@ -901,9 +904,6 @@ _grDrawTriangles_Default(FxI32 mode, FxI32 count, void *pointers)
 #define FN_NAME "_grDrawTriangles_Default"
 
   FxI32
-#ifdef GLIDE_DEBUG
-    vSize,
-#endif
     k;
   FxI32 stride = mode;
   float *vPtr;
@@ -916,7 +916,7 @@ _grDrawTriangles_Default(FxI32 mode, FxI32 count, void *pointers)
   GR_FLUSH_STATE();
 
 #ifdef GLIDE_DEBUG
-  GDBG_INFO(110, "%s:  vSize = %d\n", FN_NAME, vSize);
+  GDBG_INFO(110, "%s:  vSize = %d\n", FN_NAME, gc->state.vData.vSize);
 
   GDBG_INFO(110, "%s:  paramMask = 0x%x\n", FN_NAME, gc->cmdTransportInfo.paramMask);
 #endif

@@ -19,6 +19,9 @@
  **
  ** $Header$
  ** $Log$
+ ** Revision 1.2.4.2  2003/11/07 13:38:38  dborca
+ ** unite the clans
+ **
  ** Revision 1.2.4.1  2003/06/29 18:45:55  guillemj
  ** Fixed preprocessor invalid token errors.
  **
@@ -875,7 +878,7 @@ GR_DIENTRY(grConstantColorValue, void , (GrColor_t color) )
   it calls this routine.  grValidateState then goes through valid
   markers and flushes all invalid state.
   -------------------------------------------------------------------*/
-void
+void GR_CDECL
 _grValidateState()
 {
 #define FN_NAME "_grValidateState"

@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/11/24 21:44:56  joseph
+** Initial checkin for SourceForge
+**
 ** 
 ** 5     5/12/99 10:22a Atai
 ** fixed PRS 5815
@@ -577,7 +580,7 @@ _grAADrawPoints(FxI32 mode, FxI32 count, void *pointers)
   FxI32 stride = mode;
   FxU32 tmp_cullStripHdr;
 
-  GDBG_INFO(94,"_grAADrawPoints(0x%x)\n",e);
+  GDBG_INFO(94,"_grAADrawPoints(0x%x)\n",pointers);
 
   GDBG_INFO_MORE(gc->myLevel, "(count = %d, pointers = 0x%x)\n",
                  count, pointers);

@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.2  2004/02/16 07:42:16  dborca
+** grSetNumPendingBuffers visible with grGetProcAddress
+**
 ** Revision 1.1.2.1  2003/11/07 13:38:38  dborca
 ** unite the clans
 **
@@ -1660,7 +1663,7 @@ GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
   }
   _GlideRoot.windowsInit--;
 
-#if !defined(__linux__) && !defined (__DJGPP__)
+#if !defined(__linux__) && !defined (__DJGPP__) && !defined (__WATCOMC__)
   if ( gc->bInfo->osNT )
     hwcUnmapMemory();
   else
@@ -1902,7 +1905,7 @@ GR_ENTRY(grFinish, void, (void))
 
   grFlush();
   if ( gc->windowed ) {
-#if defined( GLIDE_INIT_HWC ) && !defined( __linux__ ) && !defined( __DJGPP__ )
+#if defined( GLIDE_INIT_HWC ) && !defined( __linux__ ) && !defined( __DJGPP__ ) && !defined( __WATCOMC__ )
     struct cmdTransportInfo*
       gcFifo = &gc->cmdTransportInfo;
     

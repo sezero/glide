@@ -186,7 +186,7 @@ void endCriticalSection(void)
 }
 
 /* [dBorca] */
-#elif defined(__DJGPP__)
+#elif defined(__DJGPP__) || defined(__WATCOMC__)
 
 
 #include <3dfx.h>
@@ -199,7 +199,7 @@ void endCriticalSection(void)
 #include "fxglide.h"
 #include "fxcmd.h"
 
-FxU32 threadValueDJGPP;
+FxU32 GR_CDECL threadValueDJGPP;
 
 void initThreadStorage(void)
 {

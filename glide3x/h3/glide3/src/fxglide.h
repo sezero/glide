@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.2.4.5  2004/02/16 07:42:16  dborca
+** grSetNumPendingBuffers visible with grGetProcAddress
+**
 ** Revision 1.2.4.4  2003/11/07 13:38:38  dborca
 ** unite the clans
 **
@@ -288,7 +291,11 @@
 #include <h3.h>
 
 /* local */
+#ifdef __WATCOMC__
+#define GR_CDECL __cdecl
+#else
 #define GR_CDECL
+#endif
 #include "g3ext.h"
 #include "fxcmd.h"
 #include "gsfc.h"
@@ -1493,6 +1500,14 @@ extern GrGCFuncs _curGCFuncs;
 #  define P6FENCE __eieio()
 #elif defined(__GNUC__) && defined(__i386__)
 #define P6FENCE asm("xchg %%eax, %0" : : "m" (_GlideRoot.p6Fencer) : "eax");
+#elif defined(__WATCOMC__)
+void 
+p6Fence(void);
+#pragma aux p6Fence = \
+  "xchg eax, dword ptr _GlideRoot" \
+  modify [eax];
+
+#define P6FENCE p6Fence()
 #else  /* !defined ( P6FENCE ) */
 #  error "P6 Fencing code needs to be added for this compiler"
 #endif /* !defined ( P6FENCE ) */
@@ -1622,21 +1637,32 @@ _trisetup_noclip_valid(TRISETUPARGS);
   __asm { mov edx, gc }; \
   (*gc->triSetupProc)
 
-#else
-
-#if defined( __linux__ ) || defined(__DJGPP__) /* [dBorca] */
+#elif defined( __linux__ ) || defined(__DJGPP__) /* [dBorca] */
 
 #define TRISETUP \
   __asm(""::"d"(gc)); \
   (*gc->triSetupProc)
 
+#elif defined( __WATCOMC__ )
+
+extern void wat_trisetup (void *gc, void *a, void *b, void *c);
+#pragma aux wat_trisetup = \
+	"push ecx" \
+	"push ebx" \
+	"push eax" \
+	parm [edx] [eax] [ebx] [ecx];
+#define TRISETUP(_a, _b, _c) \
+        do { \
+           wat_trisetup(gc, _a, _b, _c); \
+           ((FxI32 (*)(void))*gc->triSetupProc)(); \
+        } while (0)
+
 #else
 #define TRISETUP \
   (*gc->triSetupProc)
 #endif
-#endif
 
-void
+void GR_CDECL
 _grValidateState();
 
 void FX_CSTYLE
@@ -1831,8 +1857,8 @@ extern FxU32 threadValueLinux;
 #endif
 
 /* [dBorca] */
-#ifdef __DJGPP__
-extern FxU32 threadValueDJGPP;
+#if defined(__DJGPP__) || defined(__WATCOMC__)
+extern FxU32 GR_CDECL threadValueDJGPP;
 #define getThreadValueFast() threadValueDJGPP
 #endif
 
