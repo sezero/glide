@@ -1,0 +1,134 @@
+# Win32 Makefile for 3dfx Glide3x test files
+# 
+# Copyright (c) 2003 - Hiroshi Morii
+# Email: koolsmoky@3dfxzone.it
+# URL  : http://www.3dfxzone.it/koolsmoky
+#
+# Build test files           : nmake -f Makefile.win32
+# Remove objects             : nmake -f Makefile.win32 clean
+# Remove files in bin, lib   : nmake -f Makefile.win32 clobber
+# Remove all generated files : nmake -f Makefile.win32 realclean
+#
+
+##################################
+# general flags
+##################################
+FX_GLIDE_HW     = h5
+FX_GLIDE_SWLIBS = swlibs
+FX_HW_PROJECTS  = glide3
+GLIDE_ROOT      = ..\..\..
+
+##################################
+# build flags
+##################################
+FLAGS  = -DH3=1
+
+!if "$(FX_GLIDE_HW)"=="h5"
+FLAGS  = $(FLAGS) -DFX_GLIDE_NAPALM=1 -DH4=1 -DFX_GLIDE_H5_CSIM=1
+!endif
+
+##################################
+# compiler setup
+##################################
+CC   = cl
+LINK = link
+
+CFLAGS  = -Ox -G6 -W3 -WX -c -D__WIN32__ -DSTRICT
+LFLAGS  = -nologo /SUBSYSTEM:CONSOLE /OPT:WIN98 /MACHINE:IX86
+
+#################################
+# OS commands
+#################################
+RM = @del /f
+MV = mv
+
+#################################
+# objects, path, dependency
+#################################
+TESTFILE_OBJ =\
+	test00.obj\
+	test01.obj\
+	test02.obj\
+	test03.obj\
+	test04.obj\
+	test05.obj\
+	test06.obj\
+	test07.obj\
+	test08.obj\
+	test09.obj\
+	test10.obj\
+	test11.obj\
+	test12.obj\
+	test13.obj\
+	test14.obj\
+	test15.obj\
+	test16.obj\
+	test17.obj\
+	test18.obj\
+	test19.obj\
+	test20.obj\
+	test21.obj\
+	test22.obj\
+	test23.obj\
+	test24.obj\
+	test25.obj\
+	test26.obj\
+	test27.obj\
+	test28.obj\
+	test29.obj\
+	test30.obj\
+	test31.obj\
+	test32.obj\
+	test33.obj\
+	test34.obj\
+	test35.obj\
+	test36.obj\
+	test37.obj\
+	test38.obj\
+	test39.obj\
+	test40.obj\
+	test41.obj\
+	test42.obj\
+	test43.obj\
+	test44.obj\
+	test45.obj\
+	test46.obj\
+	test47.obj\
+	test48.obj\
+	test49.obj\
+	display.obj
+
+SUB_OBJ = tlib.obj
+
+INCS =\
+	-I$(GLIDE_ROOT)\$(FX_GLIDE_HW)\$(FX_HW_PROJECTS)\src\
+	-I$(GLIDE_ROOT)\$(FX_GLIDE_HW)\incsrc\
+	-I$(GLIDE_ROOT)\$(FX_GLIDE_SWLIBS)\fxmisc
+
+GLIDE_LIB = $(GLIDE_ROOT)\$(FX_GLIDE_HW)\lib\$(FX_HW_PROJECTS)x.lib
+
+DEP_LIB = user32.lib gdi32.lib
+
+#################################
+# build rules
+#################################
+default:: all
+
+all: $(SUB_OBJ) $(TESTFILE_OBJ) $(TESTFILE_OBJ:.obj=.exe)
+
+.c.obj:
+	$(CC) -o $@ $(INCS) $(FLAGS) $(CFLAGS) $<
+
+.obj.exe:
+	$(LINK) -out:$@ $(LFLAGS) $< $(SUB_OBJ) $(DEP_LIB) $(GLIDE_LIB)
+
+#################################
+# cleanup rules
+#################################
+realclean: clean clobber
+
+clean::
+	$(RM) *.obj
+	
+clobber::
+	$(RM) *.exe
