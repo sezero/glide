@@ -417,7 +417,7 @@ main(int argc, char **argv)
       tlMultMatrix(tlXRotation(-20.0f));
       tlMultMatrix(tlTranslation(0.0f, -0.3f, distance));
 
-      tlTransformVertices(xfVerts, srcVerts, 4);
+      tlTransformVertices(xfVerts, (TlVertex3D *)srcVerts, 4);
       tlProjectVertices(prjVerts, xfVerts, 4);
 
       vtxA.x = tlScaleX(prjVerts[0].x);

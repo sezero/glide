@@ -1910,6 +1910,7 @@ tlGetCH( void )
   /* Should never get here!! */
   /* printf("Bad exit..\n"); */
   /* fflush(stdout); */
+  return -1;
 }
 
 void
