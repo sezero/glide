@@ -42,8 +42,8 @@ export PATH := $(PATH):.
 #	general defines (user settable?)
 ###############################################################################
 
-GLIDE_LIB = libglide3.a
-GLIDE_SO  = libglide3.so
+GLIDE_LIB = libglide3x.a
+GLIDE_SO  = libglide3x.so
 TEXUS_EXE = texus2
 
 FX_GLIDE_HW ?= sst1
@@ -245,7 +245,7 @@ $(GLIDE_LIBDIR)/$(GLIDE_SO): $(GLIDE_OBJECTS:.o=.lo)
 
 $(TEXUS_EXEDIR)/$(TEXUS_EXE): $(FX_GLIDE_SW)/texus2/cmd/cmd.c $(GLIDE_LIBDIR)/$(GLIDE_LIB)
 ifeq ($(TEXUS2),1)
-	$(CC) -o $@ -s $(CFLAGS) -L$(GLIDE_LIBDIR) $< -lglide3 -lm
+	$(CC) -o $@ -s $(CFLAGS) -L$(GLIDE_LIBDIR) $< -lglide3x -lm
 else
 	$(warning Texus2 not enabled... Skipping $(TEXUS_EXE))
 endif

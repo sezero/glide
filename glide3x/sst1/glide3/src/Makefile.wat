@@ -13,7 +13,7 @@
 #  Available options:
 #
 #    Environment variables:
-#	FX_GLIDE_HW	build for the given ASIC (cvg).
+#	FX_GLIDE_HW	build for the given ASIC (sst1, sst96).
 #			default = sst1
 #	CPU		optimize for the given processor.
 #			default = 5s (Pentium, stack)
