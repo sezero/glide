@@ -42,7 +42,7 @@ int fxGethostname(char *name, int n)
 #else
 #include <fxos.h>
 #endif
-
+#if !macintosh
 /* return current time in seconds (floating point)      */
 float fxTime(void)
 {
@@ -59,7 +59,7 @@ float fxTime(void)
     return (tb.time - once) + tb.millitm * .001;
     
 #else
-#if defined ( WIN32 ) || ( __DOS__ ) || defined(__FreeBSD__)
+#if defined ( WIN32 ) || ( __DOS__ )
 #   include <time.h>
 #   define times(a) clock()
 #   define HZ   CLOCKS_PER_SEC
@@ -84,7 +84,8 @@ float timer(int flag)
         endtime = fxTime();
     return endtime - starttime;
 }
-
+#endif
+
 //----------------------------------------------------------------------
 // open a file thru a search path, first search in the current directory
 // and then go thru the semicolon separated search path

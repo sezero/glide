@@ -18,9 +18,9 @@
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
 ** $Header$
-** $Log$
-** 
-** 1     3/16/99 8:00p Sapphire
+** $Log: 
+**  1    3dfx      1.0         09/12/99 StarTeam VTS Administrator 
+** $
 */
 
 #ifndef __FXVER_H__

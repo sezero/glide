@@ -1,4 +1,4 @@
-/*
+/* 
 ** THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONLY
 ** PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGHT
 ** TO USE THE GLIDE TRADEMARK WITHOUT PRIOR WRITTEN PERMISSION OF 3DFX
@@ -25,7 +25,6 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
-#include <string.h>
 #include "linutil.h"
 
 static init_done=0;

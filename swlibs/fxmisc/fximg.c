@@ -1836,6 +1836,76 @@ FxBool imgWriteImage( FILE *stream, const ImgInfo *info, const ImgType type, con
 	return FXFALSE;
 }
 
+/* imgWriteImageFromWideBuffer
+**
+** Summary: Write out an image file in the format specified by *type give a pointer
+**          to an oversized buffer and a scanline width.  This is in here strictly for
+**          the c-simulator, and isn't published in the header file.
+**
+** Parameters: stream - a writeable file stream
+** 		       type - pointer to image desired image type to write
+** 		       info - pointer to initialized image info struct appropriate
+**                       to type described in *type
+** 		       data - pointer to 32BPP xRGB data in linear memory storage
+**             scanlineWidth - width of scanline in long-words.
+**
+** Returns: FXTRUE if data was written sucessfully
+**          FXFALSE if an error occured, reason may be
+**          obtained with imgGetErrorString().
+*/
+
+
+FxBool imgWriteImageFromWideBuffer( FILE *stream, const ImgInfo *info, 
+									const ImgData *data, FxU32 scanlineWidth )
+{
+	// Try to catch obvious bugs.
+	if ( stream == NULL )
+	{
+		imgErrorString = "Bad file handle.";
+		return FXFALSE;
+	}
+
+	_fixStream( stream );
+
+	if ( data == NULL )
+	{
+		imgErrorString = "Bad data pointer.";
+		return FXFALSE;
+	}
+
+	if ( scanlineWidth < info->any.width )
+	{
+		imgErrorString = "Output buffer is too small.";
+		return FXFALSE;
+	}
+
+	switch( info->any.type )
+	{
+		case IMG_SBI:
+			if ( !_imgWriteSbiHeader( stream, &(info->sbiInfo) ) )
+			{
+				imgErrorString = "Couldn't write SBI info.";
+				return FXFALSE;
+			}
+			return _imgWriteSbiDataWide( stream, &(info->sbiInfo), data, scanlineWidth );
+		case IMG_P6:
+			imgErrorString = "P6 writes unimplemented.";
+			break;
+		case IMG_RGT:
+			imgErrorString = "RGT writes unimplemented.";
+			break;
+		case IMG_TGA32:
+			imgErrorString = "TGA32 writes unimplemented.";
+			break;
+		case IMG_UNKNOWN:
+		default:
+			imgErrorString = "Can't write unknown format.";
+			break;
+	}
+	
+	return FXFALSE;
+}
+
 // returns a 3-letter abbreviation for the image type
 const char *imgTypeName( const ImgInfo *info )
 {

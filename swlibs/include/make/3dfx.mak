@@ -21,18 +21,44 @@
 # $Date$
 
 #
-# Set the important directories in the environment
+# If we call make recursively, we may want to print the subdirectory to which
+# we are changing.  This helps track down make errors.  However, this can also
+# make the make output noisy.  If the envariable NOISY_RECURSION is
+# set to "YES", we will print the directory when we recurse into it.
+# Otherwise we will not.  The default is to not print the directory.
 #
-export BUILD_ROOT = $(TOPDIR)
-export BUILD_ROOT_SWLIBS = $(TOPDIR)/swlibs
-export BUILD_ROOT_HW = $(TOPDIR)/$(FX_GLIDE_HW)
-
+ifneq ($(NOISY_RECURSION),YES)
+	MAKE_PRINT_DIRECTORY=--no-print-directory
+endif
+#
+# Check to see that certain variables are actually set, and set them
+# to reasonable values.
+#
+ifeq ($(BUILD_ROOT),)
+ifeq ($(TOPDIR),)
+	export TOPDIR = $(shell pwd)
+endif
+	export BUILD_ROOT = $(TOPDIR)
+endif
+ifeq ($(BUILD_ROOT_SWLIBS),)
+	export BUILD_ROOT_SWLIBS = $(TOPDIR)/swlibs
+endif
+ifeq ($(BUILD_ROOT_HW),)
+	export BUILD_ROOT_HW = $(TOPDIR)/$(FX_GLIDE_HW)
+endif
 #
 # determine the OS type
 #
-OS=$(shell $(BUILD_ROOT_SWLIBS)/include/make/ostype)
+ifeq ($(SCRIPTDIR),)
+SCRIPTDIR=/home/tools/scripts
+endif
+OS=$(shell $(SCRIPTDIR)/ostype)
 ifeq ($(OS),) 
-        echo "$OS not defined"
+	echo "$OS not defined"
+endif
+
+ifeq ($(GCC_INCLUDE),)
+GCC_INCLUDE=/usr/local/include/gcc
 endif
 
 #
@@ -49,36 +75,46 @@ endif
 #	FX_COMPILER must be set to either MICROSOFT or WATCOM
 #	DEBUG must be set to enable debugging flags for cc and link
 #
+ifeq ($(CC),)
+CC             = gcc
+endif
 CPP            = $(CC) -E -c
 ASM_LIST_FLAGS = -s
 CDEBUG         = -g
 CNODEBUG       = -O
 LDEBUG         = -g
 LNODEBUG       =
-DEBUGDEFS      = -DGDBG_INFO_ON -DGLIDE_DEBUG
-GCDEFS         = -DENDB -DX11 -D__linux__
 GLDOPTS	       = -L$(BUILD_ROOT_SWLIBS)/lib -L$(BUILD_ROOT_HW)/lib
 LINK           = $(CC)
 
 ifeq "$(OS)" "sunos"
-GCINCS         = -I -I- -I/usr/local/include/gcc -I$(BUILD_ROOT_SWLIBS)/include -I/usr/include
+GCINCS         = -I -I- -I$(GCC_INCLUDE) -I/usr/local/include -I$(BUILD_ROOT_SWLIBS)/include
 GCOPTS         = -ansi -Wall
+GCDEFS         = -DENDB -DX11 -DGDBG_INFO_ON
+DEBUGDEFS      = 
 endif
 ifeq "$(OS)" "solaris"
-GCINCS         = -I -I- -I/usr/local/include/gcc -I$(BUILD_ROOT_SWLIBS)/include
+GCINCS         = -I -I- -I$(GCC_INCLUDE) -I/usr/local/include -I$(BUILD_ROOT_SWLIBS)/include
 GCOPTS         = -Wall
+GCDEFS         = -DENDB -DX11 -DGDBG_INFO_ON
+DEBUGDEFS      = 
 endif
 ifeq "$(OS)" "hpux"
 GCINCS         = -I -I- -I/usr/local/include/gcc -I$(BUILD_ROOT_SWLIBS)/include
 GCOPTS         = -Wall
+GCDEFS         = -DENDB -DX11 -DGDBG_INFO_ON
+DEBUGDEFS      = 
 endif
 
 ifeq "$(OS)" "Linux"
+DEBUGDEFS      = -DGDBG_INFO_ON -DGLIDE_DEBUG
+GCDEFS         = -DENDB -DX11
 GCINCS	       = -I. -I$(BUILD_ROOT_SWLIBS)/include -I$(BUILD_ROOT_HW)/include
 GCOPTS	       = -Wall
 ifeq "$(FX_GLIDE_PIC)" "1"
 GCOPTS	       := $(GCOPTS) -fPIC -DPIC
 endif
+
 # 
 # BIG_OPT Indicates O3(?) or better is being used. It changes the
 # assembly language in grDrawTriangle. Larger optimization removes
@@ -88,6 +124,7 @@ CNODEBUG       = -O6 -m486 -fomit-frame-pointer -funroll-loops \
 	-fexpensive-optimizations -ffast-math -DBIG_OPT
 
 CDEBUG	       = -g -O
+GLDOPTS	       = -L$(BUILD_ROOT_SWLIBS)/lib -L/usr/lib
 # Profiling
 #CDEBUG	       = -pg -g -O
 #GCDEFS	       =
@@ -112,13 +149,13 @@ endif
 
 # if we are not debugging then replace debug flags with nodebug flags
 
-# DEBUG = xx
+DEBUG = xx
 
-ifdef DEBUG
-CDEBUG   += $(DEBUGDEFS)
-else
+ifndef DEBUG
 CDEBUG   = $(CNODEBUG)
 LDEBUG   = $(LNODEBUG)
+else
+CDEBUG   += $(DEBUGDEFS)
 endif
 
 #--------------------------------------------------------------------------
@@ -163,11 +200,6 @@ AR      = /usr/bin/ar crsl
 ECHO	= /bin/echo
 INSTALL = /usr/bin/install
 endif
-ifeq "$(OS)" "FreeBSD"
-AR      = /usr/bin/ar crsl
-ECHO	= /bin/echo
-INSTALL = /usr/bin/install -c
-endif
 
 DATE	= date
 RM      = rm
@@ -187,8 +219,10 @@ default: all
 
 all: incs libs bins
 
-OBJECTS	= $(CFILES:.c=.o) $(CPPFILES:.cpp=.o) $(LIBOBJS) $(AFILES:.S=.o)
-
+OBJECTS	= $(CFILES:.c=.o) $(CPPFILES:.cpp=.o)
+ifeq ($(OS),Linux)
+OBJECTS +=  $(LIBOBJS) $(AFILES:.S=.o)
+endif
 #--------------------------------------------------------------------------
 # rules for INCS, LIBS, and BINS , the three major targets
 #
@@ -207,25 +241,31 @@ endif
 # rules for LIBRARIES
 #	NOTE: we supply a default rule for making a library
 ifdef LIBRARIES
-LIBPARTS = $(OBJECTS)
+LIBPARTS = $(OBJECTS) $(SUBLIBRARIES)
 
 $(LIBRARIES): $(LIBPARTS)
+ifeq ($(OS),Linux)
 	/bin/rm -f $*.a
+	$(AR) $*.a $(OBJECTS)
+else
 	$(AR) $*.a $(LIBPARTS)
+endif
 
 # We need to glean the soname from the name of the library, this
-# is pretty good as long as shared library names are reasonable.
+# is pretty good as long as shared library nams are reasonable
 ifneq "$(SHARED_LIBRARY)" ""
 SONAME := $(shell echo $(SHARED_LIBRARY) | cut -d "." -f 1-3)
 BASENAME := $(shell echo $(SHARED_LIBRARY) | cut -d "." -f 1-2)
 endif
 
+ifneq ($(SHARED_LIBRARY),)
 $(SHARED_LIBRARY): $(LIBPARTS) $(SUBLIBRARIES)
 	$(LINK) $(LDFLAGS) -shared -Wl,-soname,$(SONAME) -o $(SHARED_LIBRARY) \
 		-Xlinker --whole-archive \
 		$(LIBRARIES) $(SUBLIBRARIES) \
 		-Xlinker --no-whole-archive \
 		$(LINKLIBRARIES)
+endif
 
 $(THISDIR)libs: $(LIBRARIES) $(SHARED_LIBRARY)
 ifdef INSTALL_DESTINATION
@@ -247,14 +287,20 @@ endif
 # rules for BINS
 #	NOTE: calling makefile must define rules for making programs
 #	or define SIMPLE_EXE or MULTI_EXE
+ifeq ($(OS),Linux)
+PROGRAM_LLDOBJECTS=
+else
+PROGRAM_LLDOBJECTS=$(LLDLIBS)
+endif
+
 ifdef PROGRAM
-$(PROGRAM): $(OBJECTS)
-	$(LINK) $(CFLAGS) -o $@ $(OBJECTS) $(LDLIBS) $(LDFLAGS)
+$(PROGRAM): $(OBJECTS) $(PROGRAM_LLDOBJECTS)
+	$(LINK) -o $@ $(OBJECTS) $(LDLIBS) $(LDFLAGS)
 endif
 
 ifdef PROGRAMS
-$(PROGRAMS): % : %.o $(LIBOBJS)
-	$(LINK) $(CFLAGS) -o $@ $@.o $(LDFLAGS) $(LDLIBS)
+$(PROGRAMS): % : %.o $(PROGRAM_LLDOBJECTS)
+	$(LINK) -o $@ $@.o $(LDLIBS) $(LDFLAGS)
 endif
 
 INSTALL_TARGETS = $(PROGRAM) $(PROGRAMS) $(BATS) $(DIAGS)
@@ -287,7 +333,11 @@ MKDEPFILE = makedep
 #--------------------------------------------------------------------------
 # DIRT definitions
 #
-GDIRT	= *.cod *.bak *.pdb *.ilk *.map *.sym *.err *.i stderr.out core
+GDIRT	= *.cod *.bak *.pdb *.ilk *.map *.sym *.err *.i stderr.out
+ifeq ($(OS),Linux)
+GDIRT   += core
+endif
+
 DIRT	= $(GDIRT) $(LDIRT)
 JUNK	= __junk__
 
@@ -324,7 +374,11 @@ $(THISDIR)rmtargets:
 #endif
 
 ifndef MAKEFILE
+ifeq ($(OS),Linux)
 MAKEFILE = makefile.linux
+else
+MAKEFILE = makefile.unix
+endif
 endif
 
 ifdef CFILES
@@ -375,7 +429,7 @@ RETARGETS= clobber clean neat rmtargets depend incs libs bins rtags
 $(RETARGETS): % : $(THISDIR)%
 	@for d in ${SUBDIRS} ;\
 	do \
-		${MAKE} -f $(MAKEFILE) -C $$d $@;\
+		echo "====recursing into "$$d" (make $@) ============================"; \
+		${MAKE} -f $(MAKEFILE) -C $$d $(MAKE_PRINT_DIRECTORY) $@ || exit 1;\
 	done
 endif
-

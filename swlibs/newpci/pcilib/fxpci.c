@@ -23,6 +23,7 @@
  **
  */
 
+#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <3dfx.h>
@@ -31,9 +32,9 @@
 #include <fxmemmap.h>
 #include "fxpci.h"
 #include "pcilib.h"
-#ifdef __linux__
+#ifdef 	__linux__
 #include "fxlinux.h"
-#endif
+#endif	/* defined(__linux__) */
 
 /* PRIVATE DATA (within the library) */
 FxU32   pciVxdVer = 0;
@@ -43,21 +44,32 @@ PciHwcCallbacks pciHwcCallbacks = { 1 };
 
 const FxPlatformIOProcs* gCurPlatformIO = NULL;
 
-/* 
- * linear Address Map List
- *
- * This is the new way we keep track of boards which are already mapped 
+/*
+ * A singly linked list keeps track of
+ * the pci devices
  */
-static struct {
-  FxU32
-    device_bus_func_number;
-  struct {
-    FxBool
-    mapped;
-    FxU32 
-    addr;
-  } addrList[MAX_PCI_BASEADDRESSES];
-} linearAddressMapList[MAX_PCI_DEVICES];
+typedef struct _pciDeviceNode
+{
+  FxU32 bus;
+  FxU32 slot;
+  FxU32 function;
+
+  FxU32 vendorID;
+  FxU32 deviceID;
+  
+  struct 
+  {
+    FxBool mapped;
+    FxU32  virtualAddress;
+  } addresses[MAX_PCI_BASEADDRESSES];
+
+  struct _pciDeviceNode *next;
+} pciDeviceNode;
+static pciDeviceNode *pciDeviceList=NULL;
+static pciDeviceNode* pciDeviceListAppend(pciDeviceNode **list, FxU32 bus,
+					  FxU32 slot, FxU32 function,
+					  FxU32 vendorID, FxU32 deviceID);
+static void printDeviceList(pciDeviceNode *head);
 
 typedef struct _PCIErr {
   FxU32 code;
@@ -160,12 +172,94 @@ pioOutLong ( unsigned short port, FxU32 data )
 }
 
 static PciRegister    baseAddresses[MAX_PCI_BASEADDRESSES];
-static FxU32          vendorIDs[MAX_PCI_DEVICES];
 static FxU32          configMechanism     = 0;
 static FxBool         busDetected         = FXFALSE;
-static FxBool         deviceExists[MAX_PCI_DEVICES];
 
 /* PRIVATE FUNCTIONS */
+
+static pciDeviceNode* pciDeviceListAppend(pciDeviceNode **list, FxU32 bus,
+					  FxU32 slot, FxU32 function,
+					  FxU32 vendorID, FxU32 deviceID)
+{
+  pciDeviceNode **next;
+  int i;
+
+  assert(list);
+  assert(bus < 256);
+  assert(slot < 32);
+  assert(function < 8);
+
+  if(*list == NULL)
+    next = list;
+  else
+    {
+      /* Walk to the end of the list*/
+      pciDeviceNode *current = *list;
+      assert(current);
+
+      while(current->next)
+	current = current->next;
+      
+      next = &((*current).next);
+    }
+
+  //Build the new pci device node
+  assert(next);
+  *next = (pciDeviceNode *)malloc(sizeof(pciDeviceNode));
+  assert(*next);
+  
+  (*next)->bus = bus;
+  (*next)->slot = slot;
+  (*next)->function = function;
+  (*next)->vendorID = vendorID;
+  (*next)->deviceID = deviceID;
+  (*next)->next = NULL;
+
+  for(i=0; i<MAX_PCI_BASEADDRESSES; i++)
+    {
+      (*next)->addresses[i].mapped = FXFALSE;
+      (*next)->addresses[i].virtualAddress = 0;
+    }
+
+  return(*next);
+}
+
+FX_EXPORT void FX_CSTYLE pciPrintDeviceList(void)
+{
+  if (!pciOpen())
+    {
+      printf("Couldn't open the pci bus\n");
+      printf("Please smash computer with luxury SUV\n");
+    }
+
+  printDeviceList(pciDeviceList);
+}
+
+static void printDeviceList(pciDeviceNode *head)
+{
+  int index;
+  static char *baseName[] = {"baseAddress0", 
+			     "baseAddress1",
+			     "ioBase",
+			     "romBase"};
+
+  while(head)
+    {      
+      printf("bus %d  slot %d  function %d  vendorID 0x%x  deviceID 0x%x\n",
+	    head->bus, head->slot, head->function, head->vendorID,
+	     head->deviceID);
+      
+      for(index=0; index<MAX_PCI_BASEADDRESSES; index++)
+	{
+	  if(head->addresses[index].mapped)
+	    printf("   %s  virtual address: 0x%x\n", baseName[index],
+		   head->addresses[index].virtualAddress);
+	}
+      
+      head = head->next;
+    }
+}
+
 FxU32
 _pciCreateConfigAddress( FxU32 bus_number, FxU32 device_number,  
                          FxU32 function_number, FxU32 register_offset )
@@ -200,13 +294,14 @@ _pciFetchRegister( FxU32 offset, FxU32 size_in_bytes,
                    FxU32 device_number, FxU32 config_mechanism  )
 { 
   FxU32 retval;
-  FxU32 slot, bus;
+  FxU32 slot, bus, function;
   
-  bus  = device_number >> 5;
+  bus  = (device_number >> 5) & 0xFF;
   slot = device_number & 0x1f;
+  function = (device_number >> 13) & 7;
   
   if ( config_mechanism == 1 ) {
-    pioOutLong( CONFIG_ADDRESS_PORT, _pciCreateConfigAddress( bus, slot, 0, offset ) );
+    pioOutLong( CONFIG_ADDRESS_PORT, _pciCreateConfigAddress( bus, slot, function, offset ) );
     retval = pioInLong( CONFIG_DATA_PORT );
     retval >>= 8 * ( offset & 0x3 );
   } else {                      /* config mechanism 2 */
@@ -240,10 +335,11 @@ _pciUpdateRegister( FxU32 offset, FxU32 data, FxU32 size_in_bytes,
     regval =  _pciFetchRegister( offset & ( ~0x3 ), 4,
                                  device_number, config_mechanism );
   FxU32 mask = (FxU32) ~0l;
-  FxU32 bus, slot;
+  FxU32 bus, slot, function;
   
-  bus  = device_number >> 5;
+  bus  = (device_number >> 5) & 0xff;
   slot = device_number & 0x1f;
+  function = (device_number >> 13) & 7;
   
   switch( size_in_bytes ) {
   case 1:
@@ -265,7 +361,7 @@ _pciUpdateRegister( FxU32 offset, FxU32 data, FxU32 size_in_bytes,
   regval = ( regval & ~mask ) | data;
   
   if ( config_mechanism == 1 ) {
-    pioOutLong( CONFIG_ADDRESS_PORT, _pciCreateConfigAddress( bus, slot, 0, offset ) );
+    pioOutLong( CONFIG_ADDRESS_PORT, _pciCreateConfigAddress( bus, slot, function, offset ) );
     pioOutLong( CONFIG_DATA_PORT, regval );
   } else {                      /* config mechanism 2 */
     pioOutByte( CONFIG_ADDRESS_PORT, CONFIG_MAPPING_ENABLE_BYTE );
@@ -279,17 +375,32 @@ _pciUpdateRegister( FxU32 offset, FxU32 data, FxU32 size_in_bytes,
 static FxU32 
 find_mapped_address(FxU32 device_bus_func_number, FxU32 addrNum) 
 {
-  FxU32 
-    i,
-    retVal = 0x00UL;
+  FxU32 retVal = 0x00UL;
 
-  for(i = 0; i < MAX_PCI_DEVICES; i++) {
-    if (linearAddressMapList[i].device_bus_func_number == device_bus_func_number) {
-      retVal = linearAddressMapList[i].addrList[addrNum].addr;
+  FxU32 bus, slot, function;
+  pciDeviceNode *current = pciDeviceList;
 
-      break;
+  assert(addrNum < MAX_PCI_BASEADDRESSES);
+
+  bus = (device_bus_func_number >> 5) & 0xFF;
+  slot = device_bus_func_number & 0x1F;
+  function = (device_bus_func_number >> 13) & 0x7;
+
+  //Scan through pci devices for a match
+  while(current)
+    {
+      if(current->bus == bus &&
+	 current->slot == slot &&
+	 current->function == function)
+	{
+	  if(current->addresses[addrNum].mapped)
+	    retVal = current->addresses[addrNum].virtualAddress;
+	  
+	  break;
+	}
+
+      current = current->next;
     }
-  }
 
   return retVal;
 }
@@ -297,35 +408,30 @@ find_mapped_address(FxU32 device_bus_func_number, FxU32 addrNum)
 static void 
 set_mapped_address(FxU32 device_bus_func_number, FxU32 addrNum, FxU32 value) 
 {
-  FxU32 i;
-  
-  for(i = 0; i < MAX_PCI_DEVICES; i++) {
-    if (linearAddressMapList[i].device_bus_func_number == device_bus_func_number) {
-      FxU32 j;
+  FxU32 bus, slot, function;
+  pciDeviceNode *current = pciDeviceList;
 
-      linearAddressMapList[i].addrList[addrNum].mapped = (value != 0x00UL);
-      linearAddressMapList[i].addrList[addrNum].addr = value;
+  assert(addrNum < MAX_PCI_BASEADDRESSES);
 
-      for(j = 0; j < MAX_PCI_BASEADDRESSES; j++) {
-        if (linearAddressMapList[i].addrList[j].mapped) break;
-      }
-      if (j == MAX_PCI_BASEADDRESSES) linearAddressMapList[i].device_bus_func_number = 0x00UL;
+  bus = (device_bus_func_number >> 5) & 0xFF;
+  slot = device_bus_func_number & 0x1F;
+  function = (device_bus_func_number >> 13) & 0x7;
 
-      break;
+  //Scan through pci devices for a match
+  while(current)
+    {
+      if(current->bus == bus &&
+	 current->slot == slot &&
+	 current->function == function)
+	{
+	  current->addresses[addrNum].mapped = (value != 0);
+	  current->addresses[addrNum].virtualAddress = value;
+
+	  break;
+	}
+
+      current = current->next;
     }
-  }
-  if (i != MAX_PCI_DEVICES) return;
-
-  for(i = 0; i < MAX_PCI_DEVICES; i++) {
-    if (linearAddressMapList[i].device_bus_func_number == 0) {
-      linearAddressMapList[i].device_bus_func_number = device_bus_func_number;
-
-      linearAddressMapList[i].addrList[addrNum].mapped = (value != 0x00UL);
-      linearAddressMapList[i].addrList[addrNum].addr = value;
-
-      break;
-    }
-  }
 }
 
 /* PUBLIC DATA  */
@@ -410,44 +516,47 @@ sampleVendorID(int deviceNumber, int configMode)
                               deviceNumber, configMode );
   regVal &= 0xFFFF;
 
-  if ( regVal != 0xFFFF ) {
+  if ( regVal != 0xFFFF )
     busDetected = FXTRUE;
-    vendorIDs[deviceNumber] = regVal;
-  } else {
-    vendorIDs[deviceNumber] = 0;
-  }
 }
 
-#ifdef __linux__
+#if	defined(__linux__) && 0
 FxBool
 pciOpenLinux(void)
 {
-  int numDevices, deviceNumber;
-
-  numDevices=getNumDevicesLinux();
-  for (deviceNumber=0; deviceNumber < MAX_PCI_DEVICES; deviceNumber++) {
-    if (deviceNumber<numDevices) {
-      busDetected=FXTRUE;
-      configMechanism=1;
-      deviceExists[deviceNumber] = FXTRUE;
-      vendorIDs[deviceNumber] = 0x121a;
+    int numDevices, deviceNumber;
+    FxU32 regVal, vendorID, deviceID;
+    FxU32 slot;
+    FxU32 bus;
+    FxU32 functions;
+    FxU32 headerType;    //PCI config register that determines multi-functioness (a new word)
+    
+    
+    //Determine if there is a PCI device here
+    numDevices=getNumDevicesLinux();
+    for (deviceNumber=0; deviceNumber < MAX_PCI_DEVICES; deviceNumber++) {
+	if (deviceNumber<numDevices) {
+	    busDetected=FXTRUE;
+	    configMechanism=1;
+	    deviceExists[deviceNumber] = FXTRUE;
+	    vendorIDs[deviceNumber] = 0x121a;
+	}
+	else deviceExists[deviceNumber] = FXFALSE;
     }
-    else deviceExists[deviceNumber] = FXFALSE;
-  }
-  if (numDevices) {
-    pciLibraryInitialized=FXTRUE;
-  } else {
-    pciLibraryInitialized=FXFALSE;
-  }      
-  return pciLibraryInitialized;
+    if (numDevices) {
+	pciLibraryInitialized=FXTRUE;
+    } else {
+	pciLibraryInitialized=FXFALSE;
+    }      
+    return pciLibraryInitialized;
 }
-#endif
+#endif	/* defined(__linux__) */
 
 FX_EXPORT FxBool FX_CSTYLE
 pciOpen( void )
 {
   int deviceNumber;
-  
+
   if ( pciLibraryInitialized ) return FXTRUE;
   
   baseAddresses[0] = PCI_BASE_ADDRESS_0;
@@ -461,43 +570,73 @@ pciOpen( void )
         (gCurPlatformIO == NULL) ||
         !pciInitializeDDio()) return FXFALSE;
   }
+  
   /*
   **      Scan All PCI device numbers
-  */ 
-
-#ifdef __linux__
-  if (hasDev3DfxLinux()) return pciOpenLinux();
-#endif
-  
+  */   
+#if	defined(__linux__) && 00
+  if (hasDev3DfxLinux) return pciOpenLinux();
+#endif	/* defined(__linux__) */
   for ( deviceNumber = 0; deviceNumber < MAX_PCI_DEVICES; deviceNumber++ ) {
-    FxU32 regVal;
+    FxU32 regVal, vendorID, deviceID;
     FxU32 slot;
     FxU32 bus;
-        
-    sampleVendorID(deviceNumber,1);
-
-    bus =   deviceNumber >> 5;
+    FxU32 functions;
+    FxU32 headerType;    //PCI config register that determines multi-functioness (a new word)
+    
+    bus =   (deviceNumber >> 5) & 0xFF;
     slot = (deviceNumber & 0x1f);
-
+    
+    //Determine if there is a PCI device here
     pioOutLong( CONFIG_ADDRESS_PORT, 
-                _pciCreateConfigAddress( bus, slot, 0, 0x0 ) );
+		_pciCreateConfigAddress( bus, slot, 0x0, 0x0 ) );
     regVal = pioInLong( CONFIG_DATA_PORT );
+    vendorID = regVal & 0xFFFF;
+    deviceID = regVal >> 16;
 
-    if ( ( regVal & 0xFFFF ) != 0xFFFF ) {
-      busDetected = FXTRUE;
-      configMechanism = 1;
-      deviceExists[deviceNumber] = FXTRUE;
-      vendorIDs[deviceNumber] = regVal & 0xffff;
-    } else {
-      deviceExists[deviceNumber] = FXFALSE;
+    if(vendorID != 0xFFFF)
+      {
+	busDetected = FXTRUE;
+	configMechanism = 1;
+	
+	//Add this device to the list of pci devices
+	pciDeviceListAppend(&pciDeviceList, bus, slot, 0,
+			    vendorID, deviceID);
+      }
+    else
+      continue;
+    
+    //Determine if this device is multi-function
+    //The information about this stuff is in the PCI spec 2.1
+    //on page 188
+    pioOutLong(CONFIG_ADDRESS_PORT,
+	       _pciCreateConfigAddress(bus, slot, 0x0, 0xC));
+    headerType = (pioInLong(CONFIG_DATA_PORT) >> 16) & 0xFF;
+    
+    //If not a multi-function device then skip function scan
+    if((headerType & (1<<7)) == 0)
+      continue;
+
+    //Determine which functions this device implements
+    for (functions = 1; functions < MAX_DEVICES_FUNCTIONS; functions++) {      
+      pioOutLong( CONFIG_ADDRESS_PORT, 
+                  _pciCreateConfigAddress( bus, slot, functions, 0x0 ) );
+      regVal = pioInLong( CONFIG_DATA_PORT );
+      vendorID = regVal & 0xFFFF;
+      
+      //If this function exists, add this device function to the list of pci devices
+      if(vendorID != 0xFFFF)
+	pciDeviceListAppend(&pciDeviceList, bus, slot, functions,
+			    vendorID, deviceID);
     }
-
   }
   
   if ( !busDetected )  { 
     /* Try Configuration Mechanism 2 (only 16 devices) */
     /* Since Configuration Mech#2 is obsolete this does not
        support multiple busses */
+
+    assert(0); //This stuff looks scary and probably shouldn't be used
 
     for ( deviceNumber = 0; deviceNumber < 16; deviceNumber++ ) {
       sampleVendorID(deviceNumber,2);
@@ -510,31 +649,64 @@ pciOpen( void )
     pciErrorCode = PCI_ERR_NO_BUS;
     return FXFALSE;
   }    
-  
+
   return FXTRUE;
 } /* pciOpen */
 
 FX_EXPORT FxBool FX_CSTYLE
 pciClose( void )
 {
+  pciDeviceNode *current, *next;
+  
   if ( !pciLibraryInitialized ) {
     pciErrorCode = PCI_ERR_NOTOPEN2;
     return FXFALSE;
   }
   pciLibraryInitialized = FXFALSE;
 
-  return pciCloseDDio();
+  //Delete the linked list of PCI devices
+  current = pciDeviceList;
+  while(current)
+    {
+      next = current->next;
+      free(current);
+      current = next;
+    }
+  pciDeviceList=NULL;
+
+  if (gCurPlatformIO)
+    return pciCloseDDio();
+
+  return FXTRUE;
 }
 
 
 FX_EXPORT FxBool FX_CSTYLE
 pciDeviceExists( FxU32 device_number ) {
+  FxU32 bus, slot, function;
+  pciDeviceNode *current = pciDeviceList;
+
+  bus = (device_number >> 5) & 0xFF;
+  slot = device_number & 0x1F;
+  function = (device_number >> 13) & 0x7;  
+
   if ( !pciLibraryInitialized ) {
     pciErrorCode = PCI_ERR_NOTOPEN;
     return FXFALSE;
   }
-  if ( device_number >= MAX_PCI_DEVICES ) return FXFALSE;
-  return vendorIDs[device_number];
+
+  //Scan through pci devices for a match
+  while(current)
+    {
+      if(current->bus == bus &&
+	 current->slot == slot &&
+	 current->function == function)
+	return(current->vendorID);
+	
+      current = current->next;
+    }
+  
+  return(FXFALSE);
 } /* pciDeviceExists */
 
 
@@ -543,6 +715,13 @@ FX_EXPORT FxBool FX_CSTYLE
 pciGetConfigData( PciRegister reg, FxU32 device_bus_func_number, FxU32 *data ) 
 {
   int device_number = (device_bus_func_number) & 0xFFF;
+
+  FxU32 bus, slot, function;
+  pciDeviceNode *current = pciDeviceList;
+
+  bus = (device_bus_func_number >> 5) & 0xFF;
+  slot = device_bus_func_number & 0x1F;
+  function = (device_bus_func_number >> 13) & 0x7;  
   
   if ( !pciLibraryInitialized ) {
     pciErrorCode = PCI_ERR_NOTOPEN3;
@@ -552,17 +731,29 @@ pciGetConfigData( PciRegister reg, FxU32 device_bus_func_number, FxU32 *data )
     pciErrorCode = PCI_ERR_OUTOFRANGE;
     return FXFALSE;
   }
+
+  //Scan through pci devices for a match
+  while(current)
+    {
+      if(current->bus == bus &&
+	 current->slot == slot &&
+	 current->function == function)
+	break;
+      
+      current = current->next;
+    }
   
-  if ( !vendorIDs[device_number] ) {
-    pciErrorCode = PCI_ERR_NODEV;
-    return FXFALSE;
-  }
+  if(current == NULL)
+    {
+      pciErrorCode = PCI_ERR_NODEV;
+      return FXFALSE;
+    }
   
   if ( reg.rwFlag == WRITE_ONLY ) {
     pciErrorCode = PCI_ERR_WRITEONLY;
     return FXFALSE;
   }
-
+  
 #ifdef __linux__  
   if (hasDev3DfxLinux()) {
     *data = pciFetchRegisterLinux(reg.regAddress, reg.sizeInBytes,
@@ -570,18 +761,43 @@ pciGetConfigData( PciRegister reg, FxU32 device_bus_func_number, FxU32 *data )
     return FXTRUE;
   }
 #endif
+
   *data = _pciFetchRegister( reg.regAddress, reg.sizeInBytes,
                              device_bus_func_number, configMechanism );
   
   return FXTRUE;
 } /* pciGetConfigData */
 
-
+FX_EXPORT FxBool FX_CSTYLE
+pciGetConfigDataRaw( PciRegister reg, FxU32 device_bus_func_number, FxU32 *data ) {
+  int device_number = (device_bus_func_number) & 0xFFF;
+  
+  if ( !pciLibraryInitialized ) {
+    pciErrorCode = PCI_ERR_NOTOPEN3;
+    return FXFALSE;
+  }
+  if ( device_number > MAX_PCI_DEVICES ) {
+    pciErrorCode = PCI_ERR_OUTOFRANGE;
+    return FXFALSE;
+  }
+  
+  *data = _pciFetchRegister( reg.regAddress, reg.sizeInBytes, 
+          device_bus_func_number, configMechanism );
+  
+  return FXTRUE;
+} /* pciGetConfigData32 */
 
 FX_EXPORT FxBool FX_CSTYLE
 pciSetConfigData( PciRegister reg, FxU32 device_bus_func_number, FxU32 *data ) 
 {
   int device_number = (device_bus_func_number) & 0xFFF;
+
+  FxU32 bus, slot, function;
+  pciDeviceNode *current = pciDeviceList;
+
+  bus = (device_bus_func_number >> 5) & 0xFF;
+  slot = device_bus_func_number & 0x1F;
+  function = (device_bus_func_number >> 13) & 0x7;  
   
   if ( !pciLibraryInitialized ) {
     pciErrorCode = PCI_ERR_NOTOPEN3;
@@ -591,84 +807,138 @@ pciSetConfigData( PciRegister reg, FxU32 device_bus_func_number, FxU32 *data )
     pciErrorCode = PCI_ERR_OUTOFRANGE;
     return FXFALSE;
   }
+
+  //Scan through pci devices for a match
+  while(current)
+    {
+      if(current->bus == bus &&
+	 current->slot == slot &&
+	 current->function == function)
+	break;
+      
+      current = current->next;
+    }
   
-  if ( !vendorIDs[device_number] ) {
-    pciErrorCode = PCI_ERR_NODEV2;
-    return FXFALSE;
-  }       
-  
+  if(current == NULL)
+    {
+      pciErrorCode = PCI_ERR_NODEV;
+      return FXFALSE;
+    }
+    
   if ( reg.rwFlag == READ_ONLY ) {
     pciErrorCode = PCI_ERR_READONLY;
     return FXFALSE;
   }
-
+  
 #ifdef __linux__
   if (hasDev3DfxLinux()) {
-    pciUpdateRegisterLinux(reg.regAddress, *data, reg.sizeInBytes,
+    return pciUpdateRegisterLinux(reg.regAddress, *data, reg.sizeInBytes,
 				  device_bus_func_number);
-    return FXTRUE;
     
   }
-#endif
+#endif	/* defined(__linux__) */
   _pciUpdateRegister( reg.regAddress, *data, reg.sizeInBytes,
                       device_bus_func_number, configMechanism );
   
   return FXTRUE;
 } /* pciSetConfigData */
 
+FX_EXPORT FxBool FX_CSTYLE
+pciSetConfigDataRaw( PciRegister reg, FxU32 device_bus_func_number, FxU32 *data ) {
+  int device_number = (device_bus_func_number) & 0xFFF;
+  
+  if ( !pciLibraryInitialized ) {
+    pciErrorCode = PCI_ERR_NOTOPEN3;
+    return FXFALSE;
+  }
+  if ( device_number > MAX_PCI_DEVICES ) {
+    pciErrorCode = PCI_ERR_OUTOFRANGE;
+    return FXFALSE;
+  }
+  
+  _pciUpdateRegister( reg.regAddress, *data, reg.sizeInBytes, 
+         device_bus_func_number, configMechanism );
+  
+  return FXTRUE;
+} /* pciSetConfigData32 */
 
 FX_EXPORT FxBool FX_CSTYLE
 pciFindCardMulti(FxU32 vendorID, FxU32 deviceID, 
                  FxU32 *devNum, FxU32 cardNum) 
 {
-  FxU32 deviceNumber;
+  pciDeviceNode *current;
   
-  /*      1) open the PCI device and scan it for devices */
+  /*      1) open the PCI bus and scan it for devices */
   if (!pciOpen()) return FXFALSE;
   
+
   /*      2) scan the existing devices for a match */
-  for ( deviceNumber = 0; deviceNumber < MAX_PCI_DEVICES; deviceNumber++ ) {
-    if (pciDeviceExists(deviceNumber)) {
-      FxU32 
-        vID, dID;
-      FxBool
-        matchP = FXFALSE;
+  current = pciDeviceList;
+  while(current)
+    {
+      //Check if this device matches the deviceID and vendorID
+      //Accept any deviceID if the desired deviceID is 0xFFFF
+      //Only accept function 0 becayse this function goes card
+      //by card and not function by function
 
-      pciGetConfigData( PCI_VENDOR_ID, deviceNumber, &vID );
-      pciGetConfigData( PCI_DEVICE_ID, deviceNumber, &dID );
+      if(((current->deviceID == deviceID) || (deviceID == 0xFFFF)) &&
+	 (current->vendorID == vendorID) &&
+	 (current->function == 0))  
+	{
+	  if(cardNum == 0)
+	    {
+	      //The function is always 0 here so it isn't included
+	      *devNum = ((current->bus & 0xFF) << 5) | (current->slot & 0x1F);		
+		
+	      return(FXTRUE);
+	    }
 
-      if (deviceID == 0xFFFF)   /* if special value */
-        dID = deviceID;         /* then force a match */
-
-      matchP = ((vID == vendorID) && (dID == deviceID));
-      if (matchP) {
-        if (cardNum == 0) {
-          *devNum = deviceNumber;
-          return FXTRUE;
-        }
-      }
-
-      /* single board SLI hack! - jeske */
-      if ((vID == _3DFX_PCI_ID) && (dID == 0x0002)) {
-        pciGetConfigData( PCI_VENDOR_ID, deviceNumber | (1 << 13), &vID);
-        pciGetConfigData( PCI_DEVICE_ID, deviceNumber | (1 << 13), &dID);
-        
-        if ((vID == vendorID) && (dID == deviceID)) {
-          matchP = FXTRUE;
-          if (cardNum == 0) {
-            *devNum = deviceNumber | (1 << 13); /* stuff in function 1 */
-            return FXTRUE;
-          }
-        }
-      }
-      /* end of single board SLI hack! - jeske */
-
-      if (matchP) cardNum--;
+	  cardNum--;	  	  
+	}
+      
+      current = current->next;
     }
-  }
+
   return FXFALSE;         /* didn't find the card, return false */
 } /* pciFindCardMulti */
 
+//This mo' freaka finds the Nth (N = functionIndex) pci function.
+//functionIndex == 0  =>  Returns the first function
+FX_EXPORT FxBool FX_CSTYLE
+pciFindCardMultiFunc(FxU32 vendorID, FxU32 deviceID, 
+                 FxU32 *devNum, FxU32 *funcNum, FxU32 functionIndex) 
+{
+  pciDeviceNode *current;
+  
+  /*      1) open the PCI bus and scan it for devices */
+  if (!pciOpen()) return FXFALSE;
+  
+  /*      2) scan the existing devices for a match */
+  current = pciDeviceList;
+  while(current)
+    {
+      //Check if this device matches the deviceID and vendorID
+      //Accept any deviceID if the desired deviceID is 0xFFFF
+      if(((current->deviceID == deviceID) || (deviceID == 0xFFFF)) &&
+	 (current->vendorID == vendorID))
+	{
+	  if(functionIndex == 0)
+	    {
+	      *devNum = ((current->bus & 0xFF) << 5) | (current->slot & 0x1F)
+		| ((current->function & 0x7) << 13);
+	      *funcNum = current->function;	      
+		
+	      return(FXTRUE);
+	    }
+
+	  functionIndex--;	 
+	}
+      
+      current = current->next;
+    }
+
+  return FXFALSE;         /* didn't find the card, return false */
+} /* pciFindCardMulti */
 
 
 FX_EXPORT FxBool FX_CSTYLE
@@ -733,7 +1003,7 @@ pciMapCardMulti(FxU32 vendorID, FxU32 deviceID,
      *   device_number[13:15] = function 
      */
     if (!pciMapPhysicalDeviceToLinear(&virtAddress, 
-                                      ((*devNum >> 5UL) & 0xFFUL), physAddress,                                     
+                                      ((*devNum >> 5UL) & 0xFFUL), physAddress,
                                       (FxU32*) &length)) {
       
       virtAddress = 0x00UL;
@@ -744,6 +1014,76 @@ pciMapCardMulti(FxU32 vendorID, FxU32 deviceID,
   return (FxU32*)virtAddress;
 } /* pciMapCardMulti */
 
+
+/*----------------------------------------------------------------------
+  find and map a PCI card into virtual memory using the following 4
+  steps: 
+      1) open the PCI device and scan it for devices 
+      2) scan the existing devices for a vendorId, deviceId, cardNum match
+      3) find the current physcial address of the card
+      4) map the physical memory to virtual memory
+      ----------------------------------------------------------------------*/
+FX_EXPORT FxU32 * FX_CSTYLE
+pciMapCardMultiFunc(FxU32 vendorID, FxU32 deviceID, 
+		    FxI32 length, 
+		    FxU32 *devNum,
+		    FxU32 cardNum, FxU32 addressNum)
+{
+  FxU32 
+    physAddress, 
+    virtAddress;
+  FxU32 functionNumber;
+  
+  /*This differs from pciMapCardMulti in that it goes function by
+    function instead of card by card*/
+
+  /* 1) open the PCI device and scan it for devices
+   * 2) scan the existing devices for a match
+   */
+  if (!pciFindCardMultiFunc(vendorID, deviceID, devNum, &functionNumber, cardNum)) return NULL;
+  if (addressNum > MAX_PCI_BASEADDRESSES) return NULL;
+
+  /* 3) find the current physcial address of the card */
+  pciGetConfigData( baseAddresses[addressNum], *devNum, &physAddress );
+  if (length <= 0) return (FxU32*)length;
+
+  /* Mask the memory type information bits off.
+   *   [0]: Memory type indicator (0 memory/1 i/o)
+   *  [12]: Type
+   *    00: 32 bits wide and mapable anywhere
+   *    01: 32 bits wide, mapped < 1meg
+   *    10: 64 bits wide and mappable anywhere
+   *    11: reserved
+   *   [3]: Prefetcable
+   */
+  physAddress &= ~0xF;
+
+  /* 4) have we mapped this device before? */
+  virtAddress = find_mapped_address(*devNum, addressNum);
+  if (virtAddress == 0x00UL) {
+    /* 5) map the physical memory to virtual memory 
+     *
+     * NB: Some systems (notably nt) require a bus # in addition to the
+     * physical address in order to map a device. pciMapPhysicalToLinear
+     * has an implicit bus0 which works most of the time, but fails
+     * across pci bridges and to agp devices. Anyway, recall that the
+     * deviceNumber is a tuple w/ the following internal structure:
+     *
+     *   device_number[0:4]   = slot
+     *   device_number[5:12]  = bus
+     *   device_number[13:15] = function 
+     */
+    if (!pciMapPhysicalDeviceToLinear(&virtAddress, 
+                                      ((*devNum >> 5UL) & 0xFFUL), physAddress,
+                                      (FxU32*) &length)) {
+      
+      virtAddress = 0x00UL;
+    }
+    set_mapped_address(*devNum, addressNum, virtAddress);
+  }
+
+  return (FxU32*)virtAddress;
+} /* pciMapCardMulti */
 
 FX_EXPORT FxU32 * FX_CSTYLE
 pciMapCard(FxU32 vendorID, FxU32 deviceID,
@@ -774,19 +1114,26 @@ pciMapPhysicalDeviceToLinear(FxU32 *linear_addr,
 FX_EXPORT void FX_CSTYLE
 pciUnmapPhysical( FxU32 linear_addr, FxU32 length ) 
 {
-  int i,j;
-  
-  for (i = 0; i < MAX_PCI_DEVICES; i++) {
-    for (j = 0; j < MAX_PCI_BASEADDRESSES; j++) {
-      if(linearAddressMapList[i].addrList[j].addr == linear_addr) { 
-        linearAddressMapList[i].addrList[j].addr = 0x00UL;
-        linearAddressMapList[i].addrList[j].mapped = FXFALSE;
-	
-	pciUnmapLinearDD(linear_addr, length);
-	return;
-      }
+  int baseAddressIndex;
+  pciDeviceNode *current = pciDeviceList;
+
+  while(current)
+    {
+      for(baseAddressIndex=0; baseAddressIndex<MAX_PCI_BASEADDRESSES; baseAddressIndex++)
+	{
+	  if(current->addresses[baseAddressIndex].virtualAddress == linear_addr)
+	    {
+	      assert(current->addresses[baseAddressIndex].mapped);
+	      current->addresses[baseAddressIndex].virtualAddress = 0;
+	      current->addresses[baseAddressIndex].mapped = FXFALSE;
+	      
+	      pciUnmapLinearDD(linear_addr, length);
+	      return;  //Only unmap one at a time; this matches the old operation
+	    }
+	}
+
+      current = current->next;
     }
-  }
 }
 
 FX_EXPORT FxBool FX_CSTYLE

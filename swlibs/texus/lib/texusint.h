@@ -112,7 +112,11 @@ int _txReadHeader( FILE *stream, TxMip *info );
 void txPalToNcc( GuNccTable *ncc_table, const FxU32 *pal );
 void txNccToPal( FxU32 *pal, const GuNccTable *ncc_table );
 
+#ifdef GLIDE3
+#define MAX_TEXWIDTH    2048
+#else
 #define MAX_TEXWIDTH    1024
+#endif
 
 extern TxErrorCallbackFnc_t _txErrorCallback;
 

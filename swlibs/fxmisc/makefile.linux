@@ -27,6 +27,7 @@ LCOPTS  =
 # sources
 HEADERS             = 3dfx.h fx64.h fxdll.h fximg.h fxglob.h fxos.h fxver.h \
 			linutil.h
+PRIVATE_HEADERS     = glob.h
 INSTALL_DESTINATION = $(BUILD_ROOT_SWLIBS)
 CFILES              = fx64.c fximg.c fxos.c linutil.c
         

@@ -26,19 +26,7 @@
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <sys/ioctl.h>
-
-/* There are a few minor differences for portio between libc5 and
- * glibc2 
- * libc5: unistd.h (included above) has the declaration of
- *        iopl() and asm/io.h has the declarations of inb, inw, inl and such.
- * glibc2: sys/io.h has the declaration of iopl() and includes
- *         asm/io.h for us */
-#if __GNU_LIBRARY__ <= 5
-#include <asm/io.h>
-#else
 #include <sys/io.h>
-#endif
-
 #include <fcntl.h>
 #include "fxpci.h"
 #include "pcilib.h"

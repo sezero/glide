@@ -24,10 +24,11 @@
 
 # usual case
 
-LCDEFS  = -DPORTIO_DIRECT -DMAPPL_MEMMAP_VXD
+LCDEFS  = -DPORTIO_DIRECT -DMAPPL_MEMMAP_VXD -DHAL_CSIM
 LCOPTS  = -I$(BUILD_ROOT)/h3/include
 
 # sources
+EXTPCIFILES         = fxhsim.c
 HEADERS             = fxpci.h sst1_pci.h
 PRIVATE_HEADERS     = pcilib.h
 INSTALL_DESTINATION = $(BUILD_ROOT_SWLIBS)

@@ -21,6 +21,6 @@
 
 THISDIR = newpci
 
-SUBDIRS = pcilib
+SUBDIRS = pcilib pcitools
 
 include $(BUILD_ROOT_SWLIBS)/include/make/3dfx.mak

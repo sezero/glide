@@ -19,6 +19,6 @@
 #
 
 THISDIR = texus
-SUBDIRS = lib cmd
+SUBDIRS = lib
 
 include $(BUILD_ROOT_SWLIBS)/include/make/3dfx.mak

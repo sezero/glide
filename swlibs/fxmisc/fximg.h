@@ -161,6 +161,10 @@ typedef union
     SrleInfo srleInfo;
 } ImgInfo;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 const char *imgGetErrorString( void );
 const char *imgTypeName( const ImgInfo *info );
 FxBool imgReadInfo( FILE *stream, ImgInfo *info );
@@ -168,5 +172,9 @@ FxBool imgReadData( FILE *stream, ImgInfo *info );
 FxBool imgReadFile(const char *filename, ImgInfo *info);
 FxBool imgWriteImage( FILE *stream, const ImgInfo *info, const ImgType type, const ImgData *data);
 FxBool imgWriteFile( const char *filename, const ImgInfo *info, const ImgType type, const ImgData *data);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -49,10 +49,15 @@ extern "C" {
  *
  *   Device Number = Bus Number * 32 + Slot Number     <== wrong, see above....
  */
+#ifdef HAL_CSIM
+#  define MAX_PCI_DEVICES 128
+#else
 #  define MAX_PCI_DEVICES 512
+#endif
 
 /* baseAddr0, baseAddr1, ioBaseAddr, romBaseAddr */
 #define MAX_PCI_BASEADDRESSES           4
+#define MAX_DEVICES_FUNCTIONS           8
 
 typedef int PciMemType;
 #define PciMemTypeUncacheable           0
@@ -163,7 +168,13 @@ FX_ENTRY FxBool FX_CALL
 pciGetConfigData( PciRegister reg, FxU32 device_number, FxU32 *data );
 
 FX_ENTRY FxBool FX_CALL 
+pciGetConfigDataRaw( PciRegister reg, FxU32 device_number, FxU32 *data );
+
+FX_ENTRY FxBool FX_CALL 
 pciSetConfigData( PciRegister reg, FxU32 device_number, FxU32 *data );
+
+FX_ENTRY FxBool FX_CALL
+pciSetConfigDataRaw( PciRegister reg, FxU32 device_bus_func_number, FxU32 *data );
 
 /* NB: This routine makes the implicit assumption that the device was
  * on bus0 which would not work across pci bridges or on agp devices.   
@@ -184,17 +195,26 @@ pciGetVendorName( FxU16 vendor_id );
 const char *
 pciGetClassName( FxU32 class_code , FxU32 deviceID);
 
+FX_ENTRY void FX_CALL pciPrintDeviceList(void);
+
 FX_ENTRY FxBool FX_CALL 
 pciFindCard(FxU32 vendorID, FxU32 deviceID, FxU32 *devNum);
 
 FX_ENTRY FxBool FX_CALL 
 pciFindCardMulti(FxU32 vID, FxU32 dID, FxU32 *devNum, FxU32 cardNum);
 
+FX_ENTRY FxBool FX_CALL 
+pciFindCardMultiFunc(FxU32 vID, FxU32 dID, FxU32 *devNum, FxU32 *funcNum, 
+		     FxU32 functionIndex);
+
 FX_ENTRY FxU32 * FX_CALL 
 pciMapCard(FxU32 vID, FxU32 dID, FxI32 len, FxU32 *devNo, FxU32 addrNo);
 
 FX_ENTRY FxU32 * FX_CALL
 pciMapCardMulti(FxU32 vID,FxU32 dID,FxI32 l,FxU32 *dNo,FxU32 cNo,FxU32 aNo);
+
+FX_ENTRY FxU32 * FX_CALL
+pciMapCardMultiFunc(FxU32 vID,FxU32 dID,FxI32 l,FxU32 *dNo,FxU32 cNo,FxU32 aNo);
 
 FX_ENTRY FxBool FX_CALL
 pciFindMTRRMatch(FxU32 pBaseAddrs, FxU32 psz, PciMemType type, FxU32 *mtrrNum);
