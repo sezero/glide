@@ -283,7 +283,7 @@ else
 GLIDE_OBJECTS += \
 	$(FX_GLIDE_HW)/glide3/src/gthread.o \
 	$(FX_GLIDE_HW)/minihwc/hwcio.o \
-	$(FX_GLIDE_HW)/minihwc/gdebug.o \
+	$(FX_GLIDE_HW)/minihwc/gdebug.o
 ifeq ($(DRI),1)
 GLIDE_OBJECTS += \
 	$(FX_GLIDE_HW)/minihwc/linhwc.o
