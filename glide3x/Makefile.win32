@@ -311,10 +311,9 @@ ASFLAGS = -O2 -fwin32 -D__WIN32__ --prefix _
 CFLAGS  = $(CFLAGS) -Od -MDd -DDEBUG=1 -D_DEBUG -D_MT -D_DLL -Zi
 LFLAGS  = $(LFLAGS) -debugtype:both /DEBUG
 ARFLAGS = $(ARFLAGS) -debugtype:both
-ASFLAGS = $(ASFLAGS) -Od -DDEBUG=1
+ASFLAGS = $(ASFLAGS) -g -DDEBUG=1
 !else
 CFLAGS  = $(CFLAGS) -Ox -MD -D_MT -D_DLL
-ASFLAGS = $(ASFLAGS) -O2
 !endif
 
 # So that we can get reasonable stuff from SoftIce etc even
