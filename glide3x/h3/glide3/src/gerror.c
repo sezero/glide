@@ -20,6 +20,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.2  2000/02/15 22:35:58  joseph
+** Changes to support FreeBSD (patch submitted by Doug Rabson)
+**
 ** Revision 1.1.1.1  1999/11/24 21:44:56  joseph
 ** Initial checkin for SourceForge
 **
@@ -225,6 +228,8 @@ _grErrorDefaultCallback( const char *s, FxBool fatal )
 }
 #endif
 
+/* [dBorca] */
+#ifndef __DJGPP__
 #ifdef __DOS__
 int _guHeapCheck( void )
 {
@@ -243,6 +248,7 @@ i3(void)
 {
   __asm int 3;
 } 
+#endif
 #endif
 
 void

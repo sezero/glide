@@ -19,6 +19,10 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.2  2000/11/24 18:36:48  alanh
+** Add new grStippleMode and grStipplePattern functions for both Voodoo3 and
+** Voodoo5 hardware.
+**
 ** Revision 1.1.1.1  1999/11/24 21:44:56  joseph
 ** Initial checkin for SourceForge
 **
@@ -825,7 +829,7 @@ typedef struct {
 */
 #define GR_MEMTYPE      GR_GET_RESERVED_1
 
-#ifndef __linux__
+#if !defined(__linux__) && (!defined(__DJGPP__) || defined(GLIDE_USE_C_TRISETUP)) /* [dBorca] */
 #define TRISETUPARGS const void *a, const void *b, const void *c
 #else
 #define TRISETUPARGS const void *g, const void *a, const void *b, const void *c
@@ -1234,7 +1238,7 @@ typedef struct GrGC_s
       windowedState;
 #endif /* GLIDE_INIT_HWC */
   } cmdTransportInfo;
-#ifndef __linux__
+#if !defined(__linux__) && (!defined(__DJGPP__) || defined(GLIDE_USE_C_TRISETUP)) /* [dBorca] */
   FxI32 (FX_CALL *triSetupProc)(const void *a, const void *b, const void *c);
 #else
   FxI32 (FX_CALL *triSetupProc)(const void *gc, const void *a, const void *b, const void *c);
@@ -1616,7 +1620,7 @@ _trisetup_noclip_valid(TRISETUPARGS);
 
 #else
 
-#if defined( __linux__ )
+#if defined( __linux__ ) || (defined(__DJGPP__) && !defined(GLIDE_USE_C_TRISETUP)) /* [dBorca] */
 
 #define TRISETUP(a, b, c) (gc->triSetupProc)(gc, a, b, c)
 
@@ -1822,6 +1826,12 @@ getThreadValueFast() {
 #ifdef __linux__
 extern FxU32 threadValueLinux;
 #define getThreadValueFast() threadValueLinux
+#endif
+
+/* [dBorca] */
+#ifdef __DJGPP__
+extern FxU32 threadValueDJGPP;
+#define getThreadValueFast() threadValueDJGPP
 #endif
 
 #define CUR_TRI_PROC(__checkValidP, __cullP) \

@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/11/24 21:44:56  joseph
+** Initial checkin for SourceForge
+**
 ** 
 ** 4     4/06/99 3:54p Dow
 ** Alt tab again.
@@ -394,7 +397,7 @@ GR_DIENTRY(gu3dfGetInfo, FxBool,
   /*
   ** determine the color format of the input image
   */
-#ifdef __GNUC__
+#if defined(__GNUC__) && !defined(__DJGPP__) /* [dBorca] DJGPP has `strupr' */
   /* This function is not found in libgcc.a */
   {
     char* tempStr = (char*)color_format;

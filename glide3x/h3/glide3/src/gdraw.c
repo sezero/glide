@@ -19,6 +19,9 @@
  **
  ** $Header$
  ** $Log$
+ ** Revision 1.2  2000/02/15 22:35:58  joseph
+ ** Changes to support FreeBSD (patch submitted by Doug Rabson)
+ **
  ** Revision 1.1.1.1  1999/11/24 21:44:56  joseph
  ** Initial checkin for SourceForge
  **
@@ -285,7 +288,7 @@ GR_ENTRY(grDrawTriangle, void, (const void *a, const void *b, const void *c))
     }
     lostContext: ; /* <-- my, that's odd, but MSVC was insistent  */
   }
-#elif defined( __linux__ ) || defined(__FreeBSD__)
+#elif defined( __linux__ ) || defined(__FreeBSD__) || defined(__DJGPP__) /* [dBorca] */
   {
     GR_BEGIN_NOFIFOCHECK("grDrawTriangle",92);
     TRISETUP(a, b, c);

@@ -22,6 +22,9 @@
 /*  $Header$ */
 /*  $Revision$ */
 /*  $Log$
+/*  Revision 1.4  2002/04/09 22:21:43  alanh
+/*  AMD 3DNow fixes
+/*
 /*  Revision 1.3  2000/10/20 19:07:00  billwhite
 /*  1.) Added changes for AMD 3DNow instructions in h5/glide3 and
 /*      h3/glide3.
@@ -148,7 +151,7 @@ LOCAL(win_coordinates):
 	test %ebp , %ebp	/*  does state need validation? */
 	jz LOCAL(no_validation)	/*  valid, don't need to validate */
 
-	call _grValidateState	/*  validate state */
+	call EXTRN(_grValidateState)	/*  validate state */
 
 LOCAL(no_validation):
 
@@ -160,7 +163,7 @@ LOCAL(no_validation):
 	mov _vc(%esp) , fc	/*  get base address of vertex C */
 	nop 	/*  filler */
 
-.align 4
+ALIGN(4)
 
 	femms 	/*  will use AMD3D, clear FPU/MMX registers */
 
@@ -214,14 +217,14 @@ LOCAL(no_validation):
 	push $0x0	/*  pointer to function name = NULL */
 
 	push tempVal	/*  fifo space required */
-	call _grCommandTransportMakeRoom	/*  note: updates fifoPtr */
+	call EXTRN(_grCommandTransportMakeRoom)	/*  note: updates fifoPtr */
 	add $12, %esp
 
 	jmp LOCAL(__triBegin)	/*  merge back with short path */
 
 /*  culling disabled */
 
-.align 4
+ALIGN(4)
 
 LOCAL(nocull):
 /*  Check to make sure that we have enough room for */
@@ -237,7 +240,7 @@ LOCAL(nocull):
 	push $0x0	/*  pointer to function name = NULL */
 
 	push tempVal	/*  fifo space needed */
-	call _grCommandTransportMakeRoom	/*  note: updates fifoPtr */
+	call EXTRN(_grCommandTransportMakeRoom)	/*  note: updates fifoPtr */
 	add $12, %esp
 #else	/*  !GLIDE_CULLING */
 
@@ -280,7 +283,7 @@ LOCAL(nocull):
 
 	ret	/*  return, pop 3 DWORD arguments off stack */
 
-.align 4
+ALIGN(4)
 LOCAL(win_coordinates):
 
 #endif
@@ -289,7 +292,7 @@ LOCAL(win_coordinates):
 	test %ebp , %ebp	/*  does state need validation? */
 	jz LOCAL(no_validation)	/*  valid, don't need to validate */
 
-	call _grValidateState	/*  validate state */
+	call EXTRN(_grValidateState)	/*  validate state */
 
 LOCAL(no_validation):
 
@@ -308,7 +311,7 @@ LOCAL(no_validation):
 	push $0x0	/*  pointer to function name = NULL */
 
 	push tempVal	/*  fifo space needed */
-	call _grCommandTransportMakeRoom	/*  note: updates fifoPtr */
+	call EXTRN(_grCommandTransportMakeRoom)	/*  note: updates fifoPtr */
 	add $12, %esp
 	
 	jmp LOCAL(__triBegin)	/*  large distance due to alignment */
@@ -319,7 +322,7 @@ LOCAL(no_validation):
 #define dlpstrt %ecx	/*  points to begin of dataList structure */
 #define vertex %edx	/*  the current vertex */
 
-.align 4
+ALIGN(4)
 
 LOCAL(__triBegin):
 	mov triPacketHdr(gc) , %eax	/*  Packet 3 header */
@@ -709,7 +712,7 @@ LOCAL(__triDone_cull):
 	mov (%edx) , %ebx
 	test $1 , %ebx
 	jnz LOCAL(__triDone)
-.align 4
+ALIGN(4)
 #endif
 	
 LOCAL(pastContextTest):
@@ -718,8 +721,8 @@ LOCAL(pastContextTest):
 	movl invalid(gc) , %edx
 	test %edx , %edx
 	je LOCAL(no_validation)
-	call _grValidateState
-.align 4
+	call EXTRN(_grValidateState)
+ALIGN(4)
 #endif
 	
 LOCAL(no_validation):
@@ -781,7 +784,7 @@ LOCAL(Area_Computation):
 	xor cull , intArea	/*  if (j ^ (culltest << 31)) */
 
 	jge LOCAL(__triDone)
-.align 4
+ALIGN(4)
 #endif	/*  GLIDE_CULLING     */
 
 LOCAL(nocull):
@@ -799,7 +802,7 @@ LOCAL(nocull):
 	push $0x0
 
 	push %eax
-	call _grCommandTransportMakeRoom
+	call EXTRN(_grCommandTransportMakeRoom)
 	add $12, %esp
 
 /*  Send triangle parameters */
@@ -816,7 +819,7 @@ LOCAL(nocull):
 	mov \__data , \__offset(\__addr)
 .endm	/*  GR_FIFO_WRITE */
 
-.align 4
+ALIGN(4)
 LOCAL(__triBegin):
 	mov fifoPtr(gc) , fifo	/*  Fetch Fifo Ptr */
 	mov $_va-STKOFF , vOffset	/*  Starting vertex */
@@ -827,7 +830,7 @@ LOCAL(__triBegin):
 	GR_FIFO_WRITE fifo , 0 , %eax	/*  Write packet header to fifo     */
 	add $4 , fifo	/*  Advance fifo for hdr & x/y coordinate */
 
-.align 4
+ALIGN(4)
 LOCAL(__vertexStart):
 	mov STKOFF(%esp, vOffset) , vertex	/*  Current vertex */
 	add $8 , fifo
@@ -868,7 +871,7 @@ LOCAL(__paramLoop):
 
 	jne LOCAL(__paramLoop)
 
-.align 4
+ALIGN(4)
 LOCAL(__nextVertex):
 /*  On to the next vertex */
 	add $4 , vOffset

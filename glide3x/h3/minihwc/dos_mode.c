@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/11/24 21:45:03  joseph
+** Initial checkin for SourceForge
+**
 ** 
 ** 3     4/06/99 3:36p Dow
 ** Alt tab stuff
@@ -38,7 +41,12 @@
 #include <string.h>
 
 #include <3dfx.h>
+/* [dBorca] */
+#ifdef __DJGPP__
+#include <dos.h>
+#else
 #include <i86.h>
+#endif
 #include <gdebug.h>
 
 static FxU16 oldVidMode;
@@ -54,10 +62,23 @@ static ResTableEntry _table[] = {
   {  640, 480, 0x111 },
   {  800, 600, 0x114 },
   { 1024, 768, 0x117 },
+/* [dBorca] */
+#ifdef H4
+  {  320,  200, 0x010e },
+  {  320,  240, 0x0182 },
+  {  400,  300, 0x0185 },
+  {  640,  400, 0x018a },
+  { 1280, 1024, 0x011a },
+#endif
   { 0, 0, 0 }
 };
 
 static unsigned long _tableSize = sizeof( _table ) / sizeof( ResTableEntry );
+
+/* [dBorca] */
+#include "glide.h"
+#include "fxglide.h"
+extern FxBool h3VideoMode (FxU32 regBase, FxU32 xRes, FxU32 yRes, FxU32 refresh);
 
 FxBool 
 setVideoMode( unsigned long dummy, int xres, int yres, int refresh, void *hmon ) 
@@ -81,9 +102,17 @@ setVideoMode( unsigned long dummy, int xres, int yres, int refresh, void *hmon )
     }
   }
 
-  if ( mode == 0 ) {
-    GDBG_INFO(80, "Setmode failed --  unimplemented resolution\n" );
-    return FXFALSE;
+  /* [dBorca]
+   * if resolution not found or refresh rate != 0, try the hard way...
+   */
+  if ((mode == 0) || (refresh != 0)) {
+     GR_DCL_GC;
+     if (!h3VideoMode(gc->bInfo->regInfo.ioPortBase, xres, yres, refresh)) {
+        GDBG_INFO(80, "Setmode failed --  unimplemented resolution\n" );
+        return FXFALSE;
+     } else {
+        return FXTRUE;
+     }
   }
 
     
@@ -96,8 +125,9 @@ setVideoMode( unsigned long dummy, int xres, int yres, int refresh, void *hmon )
   int386(0x10, &r, &rOut);
 
   /* XXXTACO!! - We should check the return value */
-    
-  return FXTRUE;
+
+  /* [dBorca] */
+  return (rOut.w.ax==0x004f);
 } /* setVideoMode */
 
 void 

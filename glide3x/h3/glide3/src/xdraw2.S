@@ -21,6 +21,9 @@
 /*  $Header$ */
 /*  $Revision$ */
 /*  $Log$
+/*  Revision 1.2  2000/02/15 22:35:59  joseph
+/*  Changes to support FreeBSD (patch submitted by Doug Rabson)
+/*
 /*  Revision 1.1.1.1  1999/11/24 21:44:58  joseph
 /*  Initial checkin for SourceForge
 /* */
@@ -89,6 +92,8 @@
 
 .file "xdraw2.asm"
 
+/* [dBorca] */
+#include "assyntax.h"
 
 /*  Definitions of cvg regs and glide root structures. */
 #include "fxgasm.h"
@@ -155,10 +160,8 @@ T2006:	.int	0x43800000	/*  256 */
 .text
 
 
-.align 32
-.globl PROC_TYPE(clip_nocull_invalid)
-.type PROC_TYPE(clip_nocull_invalid),@function
-PROC_TYPE(clip_nocull_invalid):
+ALIGN(32)
+GLOBL(PROC_TYPE(clip_nocull_invalid))
 
 #define LOCAL(arg) L_clip_nocull_invalid##arg
 	
@@ -179,10 +182,8 @@ PROC_TYPE(clip_nocull_invalid):
 END_PROC_TYPE(clip_nocull_invalid):
 .size PROC_TYPE(clip_nocull_invalid),END_PROC_TYPE(clip_nocull_invalid)-PROC_TYPE(clip_nocull_invalid)
 
-.align 32
-.globl PROC_TYPE(clip_cull_invalid)
-.type PROC_TYPE(clip_cull_invalid),@function
-PROC_TYPE(clip_cull_invalid):
+ALIGN(32)
+GLOBL(PROC_TYPE(clip_cull_invalid))
 
 #define LOCL(arg) .L_clip_cull_invalid_##arg
 	
@@ -203,10 +204,8 @@ PROC_TYPE(clip_cull_invalid):
 END_PROC_TYPE(clip_cull_invalid):
 .size PROC_TYPE(clip_cull_invalid),END_PROC_TYPE(clip_cull_invalid)-PROC_TYPE(clip_cull_invalid)
 
-.align 32
-.globl PROC_TYPE(clip_cull_valid)
-.type PROC_TYPE(clip_cull_valid),@function
-PROC_TYPE(clip_cull_valid):
+ALIGN(32)
+GLOBL(PROC_TYPE(clip_cull_valid))
 
 #define LOCAL(arg) L_clip_cull_valid_##arg
 	
@@ -227,10 +226,8 @@ PROC_TYPE(clip_cull_valid):
 END_PROC_TYPE(clip_cull_valid):
 .size PROC_TYPE(clip_cull_valid),END_PROC_TYPE(clip_cull_valid)-PROC_TYPE(clip_cull_valid)
 
-.align 32
-.globl PROC_TYPE(clip_nocull_valid)
-.type PROC_TYPE(clip_nocull_valid),@function
-PROC_TYPE(clip_nocull_valid):
+ALIGN(32)
+GLOBL(PROC_TYPE(clip_nocull_valid))
 
 #define LOCAL(arg) L_clip_nocull_valid_##arg
 	
@@ -251,10 +248,8 @@ PROC_TYPE(clip_nocull_valid):
 END_PROC_TYPE(clip_nocull_valid):
 .size PROC_TYPE(clip_nocull_valid),END_PROC_TYPE(clip_nocull_valid)-PROC_TYPE(clip_nocull_valid)
 
-.align 32
-.globl PROC_TYPE(win_nocull_invalid)
-.type PROC_TYPE(win_nocull_invalid),@function
-PROC_TYPE(win_nocull_invalid):
+ALIGN(32)
+GLOBL(PROC_TYPE(win_nocull_invalid))
 
 #define LOCAL(arg) L_win_nocull_invalid_##arg
 	
@@ -275,11 +270,8 @@ PROC_TYPE(win_nocull_invalid):
 END_PROC_TYPE(win_nocull_invalid):
 .size PROC_TYPE(win_nocull_invalid),END_PROC_TYPE(win_nocull_invalid)-PROC_TYPE(win_nocull_invalid)
 
-.align 32
-.globl PROC_TYPE(win_cull_invalid)
-
-.type PROC_TYPE(win_cull_invalid),@function
-PROC_TYPE(win_cull_invalid):
+ALIGN(32)
+GLOBL(PROC_TYPE(win_cull_invalid))
 
 #define LOCAL(arg) L_win_cull_invalid_##arg
 	
@@ -300,10 +292,8 @@ PROC_TYPE(win_cull_invalid):
 END_PROC_TYPE(win_cull_invalid):
 .size PROC_TYPE(win_cull_invalid),END_PROC_TYPE(win_cull_invalid)-PROC_TYPE(win_cull_invalid)
 
-.align 32
-.globl PROC_TYPE(win_cull_valid)
-.type PROC_TYPE(win_cull_valid),@function
-PROC_TYPE(win_cull_valid):
+ALIGN(32)
+GLOBL(PROC_TYPE(win_cull_valid))
 
 #define LOCAL(arg) L_win_cull_valid_##arg
 	
@@ -324,10 +314,8 @@ PROC_TYPE(win_cull_valid):
 END_PROC_TYPE(win_cull_valid):
 .size PROC_TYPE(win_cull_valid),END_PROC_TYPE(win_cull_valid)-PROC_TYPE(win_cull_valid)
 
-.align 32
-.globl PROC_TYPE(win_nocull_valid)
-.type PROC_TYPE(win_nocull_valid),@function
-PROC_TYPE(win_nocull_valid):
+ALIGN(32)
+GLOBL(PROC_TYPE(win_nocull_valid))
 
 #define LOCAL(arg) L_win_nocull_valid_##arg
 	
@@ -349,10 +337,8 @@ END_PROC_TYPE(win_nocull_valid):
 .size PROC_TYPE(win_nocull_valid),END_PROC_TYPE(win_nocull_valid)-PROC_TYPE(win_nocull_valid)
 
 #ifdef GL_AMD3D
-.align 32
-.globl _trisetup_clip_coor_thunk
-.type _trisetup_clip_coor_thunk,@function
-_trisetup_clip_coor_thunk:
+ALIGN(32)
+GLOBL(_trisetup_clip_coor_thunk)
 
 #define procPtr eax
 #define vPtr ecx

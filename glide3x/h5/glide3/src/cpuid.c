@@ -65,20 +65,18 @@ static void handler (int signal)
  * In  : feature request
  * Out : non-zero if requested feature supported
  *
- * Note: uses standard ANSI signal mechanism
+ * Note: this should be in the `has_feature' body. The reason it isn't:
+ *       under some systems (notably Linux), the `setjmp' may thrash EBX,
+ *       which is used for PositionIndependentCode/GlobalOffsetTable system.
+ *       Since EBX is non-volatile register, it should be restored upon return.
  */
-static int has_feature (int feature)
+static int check_feature (int feature)
 {
- int rv;
- /* register signal handlers */
- void (*old_sigill)(int) = signal(SIGILL, handler);
-
  if (setjmp(j)) {
     /* we got here only when `longjmp'ed by signal handlers */
-    rv = 0;
+    return 0;
  } else {
     /* we have signals and jump buffer set */
-    rv = 1;
     switch (feature) {
            case _CPU_HAS_CPUID:         TEST_CPUID(0);    break;
            case _CPU_FEATURE_SSE:       TEST_SSE();       break;
@@ -87,9 +85,29 @@ static int has_feature (int feature)
            case _CPU_FEATURE_MMX:       TEST_MMX();       break;
            case _CPU_FEATURE_3DNOWPLUS: TEST_3DNOWPLUS(); break;
            case _CPU_FEATURE_MMXPLUS:   TEST_MMXPLUS();   break;
-           default: rv = 0;
+           default: return 0;
     }
+    return !0;
  }
+}
+
+
+
+/* Desc: perform (possibly faulting) instructions in a safe manner
+ *
+ * In  : feature request
+ * Out : non-zero if requested feature supported
+ *
+ * Note: uses standard ANSI signal mechanism
+ */
+static int has_feature (int feature)
+{
+ int rv;
+
+ /* register signal handlers */
+ void (*old_sigill)(int) = signal(SIGILL, handler);
+
+ rv = check_feature(feature);
 
  /* restore the signal handlers */
  signal(SIGILL, old_sigill);
@@ -261,6 +279,7 @@ int _cpuid (_p_info *pinfo)
 
 #ifdef __GNUC__
  __asm("\n\
+	pushl	%%ebx			\n\
 	/* get the vendor string */	\n\
 	xorl	%%eax, %%eax		\n\
 	cpuid				\n\
@@ -281,6 +300,7 @@ int _cpuid (_p_info *pinfo)
 	movl	$0x80000001, %%eax	\n\
 	cpuid				\n\
 	movl	%%edx, %1		\n\
+	popl	%%ebx			\n\
  0:					\n\
  ":"=g"(dwMax), "=g"(dwExt),
    "=g"(dwStandard), "=g"(dwFeature),
@@ -375,7 +395,7 @@ notamd:
 
 
 
-#if CPUDEBUG
+#if CPUTEST
 #include <stdio.h>
 /* Desc:
  *

@@ -185,6 +185,48 @@ void endCriticalSection(void)
 {
 }
 
+/* [dBorca] */
+#elif defined(__DJGPP__)
+
+
+#include <3dfx.h>
+#include <glidesys.h>
+
+#define FX_DLL_DEFINITION
+#include <fxdll.h>
+#include <glide.h>
+
+#include "fxglide.h"
+#include "fxcmd.h"
+
+FxU32 threadValueDJGPP;
+
+void initThreadStorage(void)
+{
+}
+
+void setThreadValue( FxU32 value )
+{
+	threadValueDJGPP = value;
+}
+
+FxU32 getThreadValueSLOW( void )
+{
+	return threadValueDJGPP;
+}
+ 
+void initCriticalSection(void)
+{
+}
+
+void beginCriticalSection(void)
+{
+}
+
+void endCriticalSection(void)
+{
+}
+
 #else
 #  error "No thread synchronization/storage functions defined for this OS"
 #endif

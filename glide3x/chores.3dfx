@@ -1,4 +1,5 @@
 #!/bin/sh -f
+
 do_nothing() {
     return 0;
 }

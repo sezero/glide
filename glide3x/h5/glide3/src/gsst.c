@@ -860,7 +860,7 @@ static FxU32 lostcontext_csim;
 static void _grSstSetColumnsOfNWidth(FxU32 width);
 #endif /* FX_GLIDE_NAPALM */
 
-#ifndef __DJGPP__
+#if !defined(__DJGPP__) && !defined(__linux__)
 WINUSERAPI
 BOOL
 WINAPI

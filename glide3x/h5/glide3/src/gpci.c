@@ -839,7 +839,7 @@ static GrTexDownloadProc _texDownloadProcs[][4][5] =
 #undef GETENV
 #endif
 //#if defined(HWC_EXT_INIT)
-#ifndef __DJGPP__
+#if !defined(__DJGPP__) && !defined(__linux__)
 #define GETENV(a, b) hwcGetenvEx(a, b)
 #else
 #define GETENV(a, b) hwcGetenv(a)
@@ -1098,16 +1098,10 @@ _grSstDetectResources(void)
     char* envChipNum;
     FxU32 chipCount = 1;
 
-#ifndef __linux__
-#ifdef __DJGPP__
+    if ((hInfo = hwcInit(0x121a, 0x9)) == NULL)
     if ((hInfo = hwcInit(0x121a, 0x5)) == NULL) /* Voodoo3 */
-#endif
     if ((hInfo = hwcInit(0x121a, 0x3)) == NULL)
       goto __errExit; 
-#else	/* defined(__linux__) */
-    if ((hInfo = hwcInit(0x121a, 0x9)) == NULL)
-      goto __errExit; 
-#endif	/* defined(__linux__) */
 
     /* Iterate through boards found */
     for (ctx = 0; ctx < hInfo->nBoards; ctx++) {
@@ -2158,8 +2152,10 @@ _GlideInitEnvironment(int which)
   /* KoolSmoky - current_sst is not always 0  */
   /* _GlideRoot.current_sst = 0; */ /* make sure there's a valid GC */
   _GlideRoot.current_sst = ctx;
-  
+
+  /* dBorca - moved to grGlideInit
   grErrorSetCallback(_grErrorDefaultCallback);
+  */
 
   /* KoolSmoky - Moved to grGlideInit
   if ( !_grSstDetectResources() ) {

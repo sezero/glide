@@ -93,15 +93,11 @@ FX_GLIDE_CTRISETUP_SRC = gxdraw.c
 ASMTRISETUP            =
 else
 FX_GLIDE_CTRISETUP_SRC =
-if GL_AMD3D
-ASMTRISETUP            =
-else
-ASMTRISETUP            = xdraw2.S xdraw3.S
-endif
+ASMTRISETUP            = xdraw2_def.S xdraw3_def.S
 endif
 
 if GL_AMD3D
-GL_AMD3D_SRC = xtexdl_3dnow.S xdraw2_3dnow.S xdraw3_3dnow.S xdraw2_def.S xdraw3_def.S
+GL_AMD3D_SRC = xtexdl_3dnow.S xdraw2_3dnow.S xdraw3_3dnow.S
 endif
 
 VDEFS = $(FX_CHRIS_DENIS_ANTHONY_HACK_VDEFS) \
@@ -138,30 +134,28 @@ VINCLUDES = $(HAL_CSIM_INCLUDES)
 #
 # Special rules for assembly files.
 #
-xdraw2.lo : xdraw2.S xdraw2.inc.S fxgasm.h
-	libtool --mode=compile $(CC) $(AFLAGS) -c -o $@ xdraw2.S
+cpudtect.o cpudtect.lo: cpudtect.S assyntax.h
+	libtool --mode=compile $(CC) -$$ -I. $(AFLAGS) -c -o $*.o $<
 
-xdraw3.lo : xdraw3.S fxgasm.h
-	libtool --mode=compile $(CC) $(AFLAGS) -c -o $@ xdraw3.S
+xdraw2_def.o xdraw2_def.lo: xdraw2.S xdraw2.inc.S fxgasm.h assyntax.h
+	libtool --mode=compile $(CC) -$$ -I. $(AFLAGS) -c -o $*.o $<
+
+xdraw3_def.o xdraw3_def.lo: xdraw3.S fxgasm.h assyntax.h
+	libtool --mode=compile $(CC) -$$ -I. $(AFLAGS) -c -o $*.o $<
 
 # 3DNow!(tm) dependencies
 # XXX_def.obj targets are the default targets
 
 if GL_AMD3D
-xdraw2_def.lo: xdraw2.S xdraw2.inc.S fxgasm.h
-	libtool --mode=compile $(CC) $(AFLAGS) -c -o $@ xdraw2.S
 
-xdraw2_3dnow.lo: xdraw2.S xdraw2.inc.S fxgasm.h
-	libtool --mode=compile $(CC) $(AFLAGS) -DGL_AMD3D -DUSE_PACKET_FIFO=1 -c -o $@ xdraw2.S
+xdraw2_3dnow.o xdraw2_3dnow.lo: xdraw2.S xdraw2.inc.S fxgasm.h assyntax.h
+	libtool --mode=compile $(CC) -$$ -I. $(AFLAGS) -DGL_AMD3D -DUSE_PACKET_FIFO=1 -c -o $*.o $<
 
-xdraw3_def.lo: xdraw3.S fxgasm.h
-	libtool --mode=compile $(CC) $(AFLAGS) -c -o $@ xdraw3.S
+xdraw3_3dnow.o xdraw3_3dnow.lo: xdraw3.S fxgasm.h assyntax.h
+	libtool --mode=compile $(CC) -$$ -I. $(AFLAGS) -DGL_AMD3D -DUSE_PACKET_FIFO=1 -c -o $*.o $<
 
-xdraw3_3dnow.lo: xdraw3.S fxgasm.h
-	libtool --mode=compile $(CC) $(AFLAGS) -DGL_AMD3D -DUSE_PACKET_FIFO=1 -c -o $@ xdraw3.S
-
-xtexdl_3dnow.lo: xtexdl.S fxgasm.h 
-	libtool --mode=compile $(CC) $(AFLAGS) -DGL_AMD3D -DUSE_PACKET_FIFO=1 -c -o $@ xtexdl.S
+xtexdl_3dnow.o xtexdl_3dnow.lo: xtexdl.S fxgasm.h assyntax.h
+	libtool --mode=compile $(CC) -$$ -I. $(AFLAGS) -DGL_AMD3D -DUSE_PACKET_FIFO=1 -c -o $*.o $<
 
 endif
 
@@ -200,14 +194,15 @@ WHOLE_LIBS = $(top_builddir)/swlibs/fxmisc/libfxmisc.la \
              $(top_builddir)/@FX_GLIDE_HW@/minihwc/libminihwc.la
 LINK_LIBS  = -L/usr/X11R6/lib -lX11 -lXext -lXxf86dga -lXxf86vm
 
-CLEANFILES = fxinline.h fxgasm.h
+CLEANFILES = fxinline.h fxgasm.h assyntax.h
 
 noinst_PROGRAMS        = fxgasm
 include_HEADERS        = g3ext.h glide.h glideutl.h glidesys.h
 noinst_HEADERS         = fxglide.h gsstdef.h gsfc.h \
                          fxcmd.h fxsplash.h tv.h rcver.h qmodes.h \
                          macglide3.h
-fxgasm_SOURCES         = fxgasm.c gthread.c
+fxgasm_SOURCES         = fxgasm.c
+# gthread.c
 
 lib_LTLIBRARIES        = libglide3.la
 libglide3_la_SOURCES   = fxinline.h fxgasm.h \
@@ -223,16 +218,18 @@ libglide3_la_LDFLAGS    = -version-info 13:0:10
 libglide3_la_LIBADD     = $(WHOLE_LIBS) $(LINK_LIBS)
 
 #--------------------------------------------------------------------------#
-# special rules for making fxgasm.h, fxinclude.h
+# special rules for making fxgasm.h, fxinclude.h, assyntax.h
 #
 fxgasm.h: fxgasm
 	./fxgasm -hex > fxgasm.h
 fxinline.h: fxgasm
 	./fxgasm -inline > fxinline.h
+assyntax.h: $(top_srcdir)/swlibs/fxmisc/assyntax.h
+	ln -sf $< $@
 
 #--------------------------------------------------------------------------#
 # special rules for using fxgasm.h, fxinclude.h
 #
-diget.o diget.lo gdraw.o gdraw.lo gu.o gu.lo: fxinline.h
-xdraw2.o xdraw2_3dnow.o xdraw3_3dnow.o:       fxgasm.h
-xdraw2.lo xdraw2_3dnow.lo xdraw3_3dnow.lo:    fxgasm.h
+diget.o diget.lo gdraw.o gdraw.lo gu.o gu.lo:  fxinline.h
+xdraw2_def.o xdraw2_3dnow.o xdraw3_3dnow.o:    fxgasm.h
+xdraw2_def.lo xdraw2_3dnow.lo xdraw3_3dnow.lo: fxgasm.h

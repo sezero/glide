@@ -20,7 +20,10 @@
 */
 
 /*  $Header$ */
-/*  $Log$ */
+/*  $Log$
+/*  Revision 1.1.1.1  1999/11/24 21:44:53  joseph
+/*  Initial checkin for SourceForge
+/* */
 /*   */
 /*  4     4/06/99 3:54p Dow */
 /*  Alt tab again. */
@@ -49,6 +52,8 @@
 
 .file "cpudtect.asm"
 
+/* [dBorca] */
+#include "assyntax.h"
 
 /*       Data for data segment goes here */
 /* _DATA   SEGMENT DWORD USE32 PUBLIC 'DATA'  */
@@ -74,9 +79,7 @@
 
 /*   returns 4 for non-pen */
 
-.globl _cpu_detect_asm
-.type _cpu_detect_asm,@function
-_cpu_detect_asm:
+GLOBL(_cpu_detect_asm)
 .L_cpu_detect_asm_P6Stuff:
 	push %esi	/*  save registers that are not volatile */
 	push %edi
@@ -284,10 +287,8 @@ _cpu_detect_asm:
 /* ------------------------------------------------------------------------------    */
 /*  this routine sets the precision to single */
 /*  which effects all adds, mults, and divs */
-.align 4	/*   */
-.globl single_precision_asm
-.type single_precision_asm,@function
-single_precision_asm:
+ALIGN(4)	/*   */
+GLOBL(single_precision_asm)
 	push %eax	/*  make room */
 	fnclex 	/*  clear pending exceptions     */
 	fstcw (%esp)
@@ -303,10 +304,8 @@ single_precision_asm:
 /* ------------------------------------------------------------------------------    */
 /*  this routine sets the precision to double */
 /*  which effects all adds, mults, and divs */
-.align 4	/*   */
-.globl double_precision_asm
-.type double_precision_asm,@function
-double_precision_asm:
+ALIGN(4)	/*   */
+GLOBL(double_precision_asm)
 	push %eax	/*  make room */
 	fnclex 	/*  clear pending exceptions     */
 	fstcw (%esp)

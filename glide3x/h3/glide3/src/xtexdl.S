@@ -20,7 +20,10 @@
 
 /*  $Header$ */
 /*  $Revision$ */
-/*  $Log$ */
+/*  $Log$
+/*  Revision 1.1.1.1  1999/11/24 21:45:00  joseph
+/*  Initial checkin for SourceForge
+/* */
 /*   */
 /*  5     4/08/99 6:21p Atai */
 /*  added contect check for _grTexDownload_3DNow_MMX */
@@ -64,6 +67,8 @@
 
 .file "xtexdl.asm"
 
+/* [dBorca] */
+#include "assyntax.h"
 
 #ifdef USE_PACKET_FIFO
 #endif
@@ -100,12 +105,9 @@
 .text
 
 
-.align 32
+ALIGN(32)
 
-.globl _grTexDownload_3DNow_MMX
-
-.type _grTexDownload_3DNow_MMX,@function
-_grTexDownload_3DNow_MMX:
+GLOBL(_grTexDownload_3DNow_MMX)
 
 	push %ebx	/*  save caller's register variable */
 	mov _maxT-12(%esp) , %curT	/*  curT = maxT */
@@ -175,7 +177,7 @@ _grTexDownload_3DNow_MMX:
 	push $0	/*  NULL file name */
 
 	push $4	/*  fifo space required (bytes) */
-	call _grCommandTransportMakeRoom	/*  make fifo room */
+	call EXTRN(_grCommandTransportMakeRoom)	/*  make fifo room */
 	add $12, %esp
 #endif
 
@@ -198,7 +200,7 @@ _grTexDownload_3DNow_MMX:
 	mov %fifo , fifoPtr(%gc)	/*  store new fifoPtr */
 	jmp .L_grTexDownload_3DNow_MMX___startDownload	/*  fifo aligned, download texture now */
 
-.align 32
+ALIGN(32)
 
 /*  ebx = curT, edi = dataPtr, esi = gc, ebp = fifo, ecx = maxS = curS */
 /*  edx=fifoRoom, mm1 = texAddr|packetHdr, mm2 = TEX_ROW_ADDR_INCR(1)|0 */
@@ -270,7 +272,7 @@ _grTexDownload_3DNow_MMX:
 	push $0x0	/*  NULL file name */
 
 	push %eax	/*  fifo space required */
-	call _grCommandTransportMakeRoom	/*  make fifo room (if fifoPtr QWORD aligned before */
+	call EXTRN(_grCommandTransportMakeRoom)	/*  make fifo room (if fifoPtr QWORD aligned before */
 	add $12, %esp
 #endif
 

@@ -351,14 +351,22 @@ GR_DIENTRY(grGlideInit, void, (void))
   GDBG_INFO(80,"grGlideInit()\n");
 
   FXUNUSED(*glideIdent);
+
+  /* dBorca - play safe */
+  grErrorSetCallback(_grErrorDefaultCallback);
   
   /* KoolSmoky - let's detect glide devices *before* GETENV is called
   ** need to know where the devices are first if we want multimonitor
   ** capabilities.
   */
   if ( !_grSstDetectResources() ) {
+  /* Hack alert:
+   * dBorca - Linux/DRI failed the above call, so bypass the next one
+   */
+#ifndef __linux__
 #ifdef GLIDE_INIT_HWC
     GrErrorCallback( hwcGetErrorString(), FXTRUE );
+#endif
 #endif
   }
   

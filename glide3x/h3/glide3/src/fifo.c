@@ -19,6 +19,9 @@
  **
  ** $Header$
  ** $Log$
+ ** Revision 1.1.1.1  1999/11/24 21:44:55  joseph
+ ** Initial checkin for SourceForge
+ **
 ** 
 ** 6     4/16/99 4:27p Kcd
 ** SET*_FIFO macros.
@@ -691,7 +694,7 @@ _grCommandTransportMakeRoom(const FxI32 blockSize, const char* fName, const int 
   GR_BEGIN_NOFIFOCHECK(FN_NAME, 400);
 
   if ( gc->windowed ) {
-#if defined( GLIDE_INIT_HWC ) && !defined(__linux__)
+#if defined( GLIDE_INIT_HWC ) && !defined(__linux__) && !defined(__DJGPP__) /* [dBorca] */
     struct cmdTransportInfo*
       gcFifo = &gc->cmdTransportInfo;
     HwcWinFifo 

@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/11/24 21:45:00  joseph
+** Initial checkin for SourceForge
+**
 ** 
 ** 11    6/24/99 1:28a Stb_mmcclure
 ** Modifications to fix PRS 6627. Added hwcUnmapMemory9x for revised 9x
@@ -924,7 +927,7 @@ GR_ENTRY(grSstWinOpen, GrContext_t, ( FxU32                   hWnd,
   struct cmdTransportInfo *gcFifo = 0;
   GrContext_t retVal = 0;
 
-#ifndef __linux__
+#if !defined(__linux__) && !defined(__DJGPP__) /* [dBorca] */
   if (!hWnd)
     GrErrorCallback("grSstWinOpen: need to use a valid window handle",
                     FXTRUE);
@@ -1167,7 +1170,7 @@ GR_ENTRY(grSstWinOpen, GrContext_t, ( FxU32                   hWnd,
     gc->tBuffer.bufBPP = 0xffffffff; /* Don't matter to me */
 
     GDBG_INFO(1, "autoBump: 0x%x\n", _GlideRoot.environment.autoBump);
-    if (gc->cmdTransportInfo.autoBump = _GlideRoot.environment.autoBump) {
+    if ((gc->cmdTransportInfo.autoBump = _GlideRoot.environment.autoBump)) { /* [dBorca] avoid warning */
       if (!hwcInitFifo( bInfo, gc->cmdTransportInfo.autoBump)) {
         hwcRestoreVideo(bInfo);
         GrErrorCallback(hwcGetErrorString(), FXFALSE);
@@ -1612,7 +1615,7 @@ GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
   }
   _GlideRoot.windowsInit--;
 
-#ifndef __linux__  
+#if !defined(__linux__) && !defined(__DJGPP__) /* [dBorca] */
   if ( gc->bInfo->osNT )
     hwcUnmapMemory();
   else
@@ -1837,7 +1840,7 @@ GR_ENTRY(grFinish, void, (void))
 
   grFlush();
   if ( gc->windowed ) {
-#if defined( GLIDE_INIT_HWC ) && !defined( __linux__ )
+#if defined( GLIDE_INIT_HWC ) && !defined( __linux__ ) && !defined(__DJGPP__) /* [dBorca] */
     struct cmdTransportInfo*
       gcFifo = &gc->cmdTransportInfo;
     

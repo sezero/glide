@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/11/24 21:45:07  joseph
+** Initial checkin for SourceForge
+**
 ** 
 ** 27    6/24/99 12:45a Stb_mmcclure
 ** Modifications to fix PRS 6627. Added hwcUnmapMemory9x for revised 9x
@@ -576,6 +579,9 @@ modify [eax];
 #define P6FENCE { __asm xchg eax, fenceVar }
 #elif defined(__POWERPC__) && defined(__MWERKS__)
 #define P6FENCE __eieio()
+/* [dBorca] */
+#elif defined(__DJGPP__)
+#define P6FENCE __asm __volatile ("xchg %%eax, _fenceVar":::"%eax");
 #else
 #error "P6 Fencing in-line assembler code needs to be added for this compiler"
 #endif /* Compiler specific fence commands */
@@ -1200,7 +1206,10 @@ hwcInitRegisters(hwcBoardInfo *bInfo)
     if (GETENV("SSTH3_GRXCLOCK") || GETENV("SSTH3_MEMCLOCK")) {
      switch (bInfo->pciInfo.deviceID) {
         case 0x03: /* banshee */
+/* [dBorca] `h3InitPlls' is missing when H4 is defined */
+#ifndef H4
            h3InitPlls(bInfo->regInfo.ioPortBase,  grxSpeedInMHz, memSpeedInMHz);
+#endif
            break;
         case 0x5: /* voodoo3/avenger */
            break;
@@ -4191,11 +4200,17 @@ hwcShareContextData(hwcBoardInfo *bInfo, FxU32 **data)
     
   GDBG_INFO(80, FN_NAME ":  pointer to context = 0x%x\n",
             ctxRes.optData.shareContextDWORDRes.contextDWORD); 
-#endif  
+
+/* [dBorca] that must be initialized to something... */
+#elif defined(__DJGPP__)
+ *data = &dummyContextDWORD;
+#endif
   return retVal;
 #undef FN_NAME
 } /* hwcShareContextData */
 
+/* [dBorca] */
+#ifdef HWC_EXT_INIT
 void
 hwcUnmapMemory9x(hwcBoardInfo *bInfo) 
 {
@@ -4217,7 +4232,6 @@ hwcUnmapMemory9x(hwcBoardInfo *bInfo)
   
 } /* hwcUnmapMemory9x */
 
-#ifdef HWC_EXT_INIT
 void
 hwcUnmapMemory() 
 {

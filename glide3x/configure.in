@@ -225,6 +225,7 @@ AC_CHECK_TOOL(DLLTOOL, dlltool, false)
 AC_CHECK_TOOL(CP, cp, false)
 AC_PROG_INSTALL
 AM_PROG_LIBTOOL
+AM_PROG_AS
 MAKE="make -f makefile.autoconf"
 AC_SUBST(MAKE)
 dnl Checks for libraries.
@@ -282,7 +283,6 @@ AC_OUTPUT(build.3dfx
           swlibs/texus/lib/makefile.autoconf:swlibs/texus/lib/makefile.autoconf.in:swlibs/include/make/makefile.autoconf.bottom
           swlibs/texus2/makefile.autoconf:swlibs/texus2/makefile.autoconf.in:swlibs/include/make/makefile.autoconf.bottom
           swlibs/texus2/lib/makefile.autoconf:swlibs/texus2/lib/makefile.autoconf.in:swlibs/include/make/makefile.autoconf.bottom
-          swlibs/texus2/cmd/makefile.autoconf:swlibs/texus2/cmd/makefile.autoconf.in:swlibs/include/make/makefile.autoconf.bottom
+          swlibs/texus2/cmd/makefile.autoconf:swlibs/texus2/cmd/makefile.autoconf.in:swlibs/include/make/makefile.autoconf.bottom,
+	  [chmod +x build.3dfx]
           )
-AC_OUTPUT_COMMANDS([chmod +x build.3dfx])
-

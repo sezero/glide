@@ -80,8 +80,13 @@ endif
 ifeq ($(FX_GLIDE_HW),h5)
 GENDATE = h5/incsrc/gendate.h
 CFLAGS += -DFX_GLIDE_H5_CSIM=1 -DFX_GLIDE_NAPALM=1
+GLIDE_CPUID = \
+	h5/glide3/src/cpuid.c
 else
-ifneq ($(FX_GLIDE_HW),h3)
+ifeq ($(FX_GLIDE_HW),h3)
+GLIDE_CPUID = \
+	h3/glide3/src/cpudtect.S
+else
 $(error Invalid ASIC)
 endif
 endif
@@ -118,7 +123,7 @@ GLIDE_SOURCES = \
 	$(FX_GLIDE_HW)/glide3/src/distrip.c \
 	$(FX_GLIDE_HW)/glide3/src/diget.c \
 	$(FX_GLIDE_HW)/glide3/src/glfb.o \
-	$(FX_GLIDE_HW)/glide3/src/gsst.c \
+	$(FX_GLIDE_HW)/glide3/src/gsst.o \
 	$(FX_GLIDE_HW)/glide3/src/gtex.c \
 	$(FX_GLIDE_HW)/glide3/src/gtexdl.c \
 	$(FX_GLIDE_HW)/glide3/src/fifo.c \
@@ -126,7 +131,7 @@ GLIDE_SOURCES = \
 	$(GLIDE_K3D) \
 	$(GLIDE_ASM) \
 	$(FX_GLIDE_HW)/glide3/src/xtexdl_def.c \
-	$(FX_GLIDE_HW)/glide3/src/cpuid.c \
+	$(GLIDE_CPUID) \
 	h3/cinit/h3cinit.c \
 	h3/cinit/h3cinit2.c \
 	$(FX_GLIDE_SW)/newpci/pcilib/fxpci.c \
@@ -157,7 +162,7 @@ $(GLIDE_LIBDIR)/$(GLIDE_DXE) $(GLIDE_LIBDIR)/$(GLIDE_IMP): $(GLIDE_OBJECTS)
 ifeq ($(HAVEDXE3),)
 	$(warning Missing DXE3 package... Skipping $(GLIDE_DXE))
 else
-	-dxe3gen -o $(GLIDE_LIBDIR)/$(GLIDE_DXE) -I $(GLIDE_LIBDIR)/$(GLIDE_IMP) -D "Glide3/$(FX_GLIDE_HW) DJGPP" -E _gr -E _gu -U $(GLIDE_OBJECTS)
+	-dxe3gen -o $(GLIDE_LIBDIR)/$(GLIDE_DXE) -Y $(GLIDE_LIBDIR)/$(GLIDE_IMP) -D "Glide3/$(FX_GLIDE_HW) DJGPP" -E _gr -E _gu -U $(GLIDE_OBJECTS)
 endif
 
 ###############################################################################
@@ -166,6 +171,8 @@ endif
 h3/glide3/src/gglide.o: h3/glide3/src/gglide.c.save
 	$(CC) -o $@ $(CFLAGS) -x c -c $<
 h3/glide3/src/glfb.o: h3/glide3/src/glfb.c.save
+	$(CC) -o $@ $(CFLAGS) -x c -c $<
+h3/glide3/src/gsst.o: h3/glide3/src/gsst.c.save
 	$(CC) -o $@ $(CFLAGS) -x c -c $<
 $(FX_GLIDE_HW)/glide3/src/xtexdl_3dnow.o: $(FX_GLIDE_HW)/glide3/src/xtexdl.S
 	$(CC) -o $@ $(CFLAGS) -c $<
