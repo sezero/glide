@@ -19,6 +19,10 @@
 ;; $Header$
 ;; $Revision$
 ;; $Log$
+;; Revision 1.1.1.1.2.1  2004/12/23 20:45:56  koolsmoky
+;; converted to nasm syntax
+;; added x86 asm, 3dnow! triangle and mmx, 3dnow! texture download optimizations
+;;
 ;; Revision 1.1.1.1  1999/12/07 21:49:13  joseph
 ;; Initial checkin into SourceForge.
 ;;
@@ -82,6 +86,10 @@ extrn   _FifoMakeRoom
 segment		DATA
     One         DD  1.0
     Area        DD  0
+%IF GLIDE_PACKED_RGB
+    bias0       DD  0
+    bias1       DD  0
+%ENDIF
 
 ;;; Definitions of cvg regs and glide root structures.
 %INCLUDE "fxgasm.h"
