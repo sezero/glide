@@ -648,7 +648,7 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t type, GrBuffer_t buffer,
           info->strideInBytes = driInfo.stride;
         } else {
           info->strideInBytes     = gc->bInfo->buffInfo.bufLfbStride;
-      }
+        }
 #else	/* defined(__linux__) */
        /*
         * This is the default for 3D LFBs,
@@ -1322,7 +1322,7 @@ GR_ENTRY(grLfbReadRegion, FxBool, (GrBuffer_t src_buffer,
       scanline=src_height;
 
       /* set length - alignment fix*/
-      tmp=(((FxU32)src)&2);
+      tmp=(((AnyPtr)src)&2);
       length=src_width * bpp - tmp;
       src_adjust=info.strideInBytes - tmp;
       dst_adjust=dst_stride - tmp;
@@ -1333,7 +1333,7 @@ GR_ENTRY(grLfbReadRegion, FxBool, (GrBuffer_t src_buffer,
       while(src_height--)
       {
          /* adjust starting alignment */
-         if (((FxU32)src)&3)
+         if (((AnyPtr)src)&3)
             *((FxU16 *)dst)++=*((FxU16 *)src)++;
 
          /* read in dwords of pixels */
@@ -1345,12 +1345,12 @@ GR_ENTRY(grLfbReadRegion, FxBool, (GrBuffer_t src_buffer,
             /* copies aligned dwords */
             do
             {
-               *((FxU32 *)(((FxU32)dst) + byte_index))=*((FxU32 *)(((FxU32)src) + byte_index));
+               *((FxU32 *)(((AnyPtr)dst) + byte_index))=*((FxU32 *)(((AnyPtr)src) + byte_index));
             }while((byte_index+=4)<aligned);
 
             /* handle backend misalignment */
             if (byte_index!=(FxU32)length)
-               *((FxU16 *)(((FxU32)dst) + byte_index))=*((FxU16 *)(((FxU32)src) + byte_index));
+               *((FxU16 *)(((AnyPtr)dst) + byte_index))=*((FxU16 *)(((AnyPtr)src) + byte_index));
          }
          /* adjust for next line */
          ((FxU8 *)src)+=src_adjust;
