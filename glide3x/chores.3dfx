@@ -214,7 +214,7 @@ if [ "$DO_CONFIGURE" = YES ] ; then
         # Now, make a build directory, and configure in it.
         #
         echo -n "Making build directory $BUILD_DIRECTORY..."
-        mkdir $BUILD_DIRECTORY
+        mkdir -p $BUILD_DIRECTORY
         echo 'Done'
     fi
     #

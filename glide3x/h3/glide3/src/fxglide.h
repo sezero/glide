@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.2.1  2000/08/30 08:47:03  alanh
+** Changes for Voodoo3 for 64bit architectures
+**
 ** Revision 1.1.1.1  1999/11/24 21:44:56  joseph
 ** Initial checkin for SourceForge
 **
@@ -1479,7 +1482,7 @@ extern GrGCFuncs _curGCFuncs;
 #elif defined(__GNUC__) && defined(__ia64__)
 #define P6FENCE asm volatile("mf.a" ::: "memory")
 #elif defined(__GNUC__) && defined(__alpha__)
-#define P6FENCE
+#define P6FENCE asm volatile("mb" ::: "memory")
 #else  /* !defined ( P6FENCE ) */
 #  error "P6 Fencing code needs to be added for this compiler"
 #endif /* !defined ( P6FENCE ) */

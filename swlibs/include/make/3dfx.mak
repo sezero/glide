@@ -50,7 +50,7 @@ endif
 # determine the OS type
 #
 ifeq ($(SCRIPTDIR),)
-SCRIPTDIR=/home/tools/scripts
+SCRIPTDIR=$(TOPDIR)/swlibs/include/make/
 endif
 OS=$(shell $(SCRIPTDIR)/ostype)
 ifeq ($(OS),) 

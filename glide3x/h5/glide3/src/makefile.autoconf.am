@@ -230,16 +230,16 @@ noinst_HEADERS         = fxcmd.h     fxsplash.h  \
 fxgasm_SOURCES         = fxgasm.c gthread.c
 fxgasm_DEPENDENCIES    = gthread.lo
 
-lib_LTLIBRARIES        = libglide3x.la
-libglide3x_la_SOURCES   = fxinline.h fxgasm.h \
-                          gsplash.c g3df.c  gu.c gthread.c \
-                          gpci.c diglide.c disst.c ditex.c \
-                          gbanner.c gerror.c gaa.c gdraw.c \
-                          gglide.c distate.c gstrip.c distrip.c \
-                          diget.c glfb.c gsst.c gtex.c gtexdl.c \
-                          fifo.c $(CPUSOURCES) $(VGLIDE_SRC)
-libglide3x_la_LDFLAGS   = -version-info 13:0:10
-libglide3x_la_LIBADD    = $(WHOLE_LIBS) $(LINK_LIBS)
+lib_LTLIBRARIES        = libglide3.la
+libglide3_la_SOURCES   = fxinline.h fxgasm.h \
+                         gsplash.c g3df.c  gu.c gthread.c \
+                         gpci.c diglide.c disst.c ditex.c \
+                         gbanner.c gerror.c gaa.c gdraw.c \
+                         gglide.c distate.c gstrip.c distrip.c \
+                         diget.c glfb.c gsst.c gtex.c gtexdl.c \
+                         fifo.c cpudtect.s $(VGLIDE_SRC)
+libglide3_la_LDFLAGS   = -version-info 13:0:10
+libglide3_la_LIBADD    = $(WHOLE_LIBS) $(LINK_LIBS)
 
 #--------------------------------------------------------------------------#
 # special rules for making fxgasm.h, fxinclude.h

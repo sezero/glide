@@ -2088,8 +2088,7 @@ extern GrGCFuncs _curGCFuncs;
  */
 #define P6FENCE asm("xchg %%eax, %0" : : "m" (_GlideRoot.p6Fencer) : "eax");
 #elif defined(__GNUC__) && defined(__alpha__)
-/* This might need to be a memory barrier on alpha - we'll see */
-#define P6FENCE
+#define P6FENCE asm volatile("mb" ::: "memory")
 #elif defined(__GNUC__) && defined(__ia64__)
 #define P6FENCE asm volatile("mf.a" ::: "memory")
 #else  /* !defined ( P6FENCE ) */

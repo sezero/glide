@@ -69,7 +69,7 @@ static FxU32 fenceVar;
 #if defined(__i386__)
 #define P6FENCE asm("xchg %%eax, %0" : : "m" (fenceVar) : "eax");
 #elif defined(__alpha__)
-#define P6FENCE
+#define P6FENCE asm volatile("mb" ::: "memory")
 #elif defined(__ia64__)
 #define P6FENCE asm volatile("mf.a" ::: "memory")
 #elif
