@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/12/07 21:42:30  joseph
+** Initial checkin into SourceForge.
+**
 ** 
 ** 1     10/08/98 11:30a Brent
 ** 
@@ -121,7 +124,7 @@ GR_DIENTRY(grSstQueryBoards, FxBool, ( GrHwConfiguration *hwc ))
   GDBG_INIT();
   GDBG_INFO(80,"grSstQueryBoards(0x%x)\n",hwc);
 
-#if GLIDE_INIT_HAL
+#if 1/*GLIDE_INIT_HAL*/ /* [dBorca] must handle SLI correctly */
   hwc->num_sst = (_grSstDetectResources()
                   ? _GlideRoot.hwConfig.num_sst
                   : 0);

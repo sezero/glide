@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.3  2004/02/16 07:42:14  dborca
+** grSetNumPendingBuffers visible with grGetProcAddress
+**
 ** Revision 1.1.1.1.8.2  2003/12/08 13:13:11  dborca
 ** better Texus2 integration
 **
@@ -532,7 +535,7 @@ GR_DIENTRY(grGet, FxU32, (FxU32 pname, FxU32 plength, FxI32 *params))
   case GR_NUM_BOARDS:
     if (plength == 4) {
       *params =
-#if GLIDE_INIT_HAL
+#if 1/*GLIDE_INIT_HAL*/ /* [dBorca] must handle SLI correctly */
         (_grSstDetectResources() ? _GlideRoot.hwConfig.num_sst : 0);
 #else /* !GLIDE_INIT_HAL */ 
       sst1InitNumBoardsInSystem();
