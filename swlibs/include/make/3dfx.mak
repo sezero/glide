@@ -343,6 +343,21 @@ JUNK	= __junk__
 
 $(THISDIR)clobber: $(THISDIR)clean $(THISDIR)rmtargets
 	$(RM) -f $(MKDEPFILE) $(JUNK) $(TAGS)
+ifdef INSTALL_DESTINATION
+ifdef HEADERS
+	$(INSTALL) -d $(INSTALL_DESTINATION)/include
+	$(RM) -f $(addprefix $(INSTALL_DESTINATION)/include/, $(HEADERS))
+endif
+ifdef LIBRARIES
+	$(RM) -f $(addprefix $(INSTALL_DESTINATION)/lib/, $(LIBRARIES))
+endif
+ifneq "$(SHARED_LIBRARY)" ""
+	$(RM) -f $(addprefix $(INSTALL_DESTINATION)/lib/, $(SHARED_LIBRARY) $(SONAME) $(BASENAME))
+endif
+ifneq ($(strip $(INSTALL_TARGETS)),)
+	$(RM) -f $(addprefix $(INSTALL_DESTINATION)/bin/, $(INSTALL_TARGETS))
+endif
+endif
 
 $(THISDIR)clean: $(THISDIR)neat
 	$(RM) -f $(OBJECTS) $(JUNK)
