@@ -70,7 +70,7 @@ CP = cp
 ###############################################################################
 
 # platform
-CDEFS = -D__DOS__ -D__DOS32__ -DINIT_DOS -D__3Dfx_PCI_CFG__
+CDEFS = -DINIT_LINUX -D__3Dfx_PCI_CFG__
 
 # general
 CDEFS += -DGLIDE3 -DGLIDE3_ALPHA -DGLIDE_HW_TRI_SETUP=1 -DGLIDE_PACKED_RGB=0 -DGLIDE_PACKET3_TRI_SETUP=1 -DGLIDE_TRI_CULLING=1 -DUSE_PACKET_FIFO=1
