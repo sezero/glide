@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.2  2004/03/08 07:42:21  dborca
+** Voodoo Rush fixes
+**
 ** Revision 1.1.2.1  2004/03/02 07:55:30  dborca
 ** Bastardised Glide3x for SST1
 **
@@ -1920,13 +1923,6 @@ GR_DDFUNC(_grRebuildDataList, void, ( void ))
        gc->dataList[curTriSize + 1].addr = (float *)&hw->GRN;
        gc->dataList[curTriSize + 2].i    = gc->state.vData.pargbInfo.offset | 0x80000000;
        gc->dataList[curTriSize + 2].addr = (float *)&hw->BLU;
-       if (i & STATE_REQUIRES_IT_ALPHA) {
-          gc->dataList[curTriSize + 3].i    = gc->state.vData.pargbInfo.offset | 0x83000000;
-          gc->dataList[curTriSize + 3].addr = (float *)&hw->ALF;
-          /* +ALPHA */
-          curTriSize += 1;
-          params += 1;
-       }
        /* here endeth the Packed Color Workaround (tm) */
     }
     curTriSize += 3;
@@ -1950,15 +1946,13 @@ GR_DDFUNC(_grRebuildDataList, void, ( void ))
     if (gc->state.vData.colorType == GR_FLOAT) {
        gc->dataList[curTriSize + 0].i    = gc->state.vData.aInfo.offset;
        gc->dataList[curTriSize + 0].addr = (float *)&hw->ALF;
-       curTriSize += 1;
-       params += 1;
-    } else if (!(i & STATE_REQUIRES_IT_DRGB)) {
+    } else {
        /* [dBorca] Packed Color Workaround (tm) */
        gc->dataList[curTriSize + 0].i    = gc->state.vData.pargbInfo.offset | 0x83000000;
        gc->dataList[curTriSize + 0].addr = (float *)&hw->ALF;
-       curTriSize += 1;
-       params += 1;
     }
+    curTriSize += 1;
+    params += 1;
 
     gc->hwDep.sst96Dep.gwHeaders[gwHeaderNum] |= GWH_A_BITS;
     gwpSize += 3;
@@ -2107,13 +2101,6 @@ GR_DDFUNC(_grRebuildDataList, void, ( void ))
        gc->dataList[curTriSize + 1].addr = (float *)&hw->GRN;
        gc->dataList[curTriSize + 2].i    = gc->state.vData.pargbInfo.offset | 0x80000000;
        gc->dataList[curTriSize + 2].addr = (float *)&hw->BLU;
-       if (i & STATE_REQUIRES_IT_ALPHA) {
-          gc->dataList[curTriSize + 3].i    = gc->state.vData.pargbInfo.offset | 0x83000000;
-          gc->dataList[curTriSize + 3].addr = (float *)&hw->ALF;
-          /* +ALPHA */
-          curTriSize += 1;
-          params += 1;
-       }
        /* here endeth the Packed Color Workaround (tm) */
     }
     curTriSize += 3;
@@ -2131,15 +2118,13 @@ GR_DDFUNC(_grRebuildDataList, void, ( void ))
     if (gc->state.vData.colorType == GR_FLOAT) {
        gc->dataList[curTriSize + 0].i    = gc->state.vData.aInfo.offset;
        gc->dataList[curTriSize + 0].addr = (float *)&hw->ALF;
-       curTriSize += 1;
-       params += 1;
-    } else if (!(i & STATE_REQUIRES_IT_DRGB)) {
+    } else {
        /* [dBorca] Packed Color Workaround (tm) */
        gc->dataList[curTriSize + 0].i    = gc->state.vData.pargbInfo.offset | 0x83000000;
        gc->dataList[curTriSize + 0].addr = (float *)&hw->ALF;
-       curTriSize += 1;
-       params += 1;
     }
+    curTriSize += 1;
+    params += 1;
   }
   
   /* TMU1 --------------------------------- */
