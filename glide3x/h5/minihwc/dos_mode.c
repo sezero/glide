@@ -210,11 +210,6 @@ _outpw(port, (FxU16) (b));}
 
 #define CHECKFORROOM while (! (_inp((FxU16) regBase) & (FxU16)(0x3f)))
 
-extern
-FxU32 hwcReadConfigRegister(hwcBoardInfo *bInfo, FxU32 chipNumber, FxU32 offset);
-extern 
-void hwcWriteConfigRegister(hwcBoardInfo *bInfo, FxU32 chipNumber, FxU32 offset, FxU32 value);
-
 #define CFG_READ(_chip, _offset) \
   hwcReadConfigRegister(bInfo, _chip, offsetof(SstPCIConfigRegs, _offset))
 
@@ -626,6 +621,7 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
   FxU32 memBase0, memBase1;
   FxU32 sliBandHeightLog2, sliRenderMask, sliCompareMask, sliScanMask;
   FxU32 cmdStatus;
+  FxU32 vid2xMode;
 
   LOG((dbg,"hwcSetSLIAAMode() begin\n"));
 
@@ -735,6 +731,10 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
 
     /* Now on to the MUCH nastier backend stuff... */
     for(chipNum = 0; chipNum < numChips; chipNum++) {
+      /* Is 2x video mode enabled? */
+      HWC_IO_LOAD(bInfo->regInfo, vidProcCfg, temp);
+      vid2xMode = (temp & SST_VIDEO_2X_MODE_EN);
+      
       /* Set up pciInit0 and tmuGbeInit */
       if(chipNum == 0) {
         HWC_IO_LOAD(bInfo->regInfo, pciInit0, temp);
@@ -876,8 +876,10 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
       if((numChips > 1) && (chipNum > 0) && (aaEnable || sliEnable)) {
         FxU32 vsyncOffsetPixels, vsyncOffsetChars, vsyncOffsetHXtra;
 
-        if(analogSLI ||
-            ((numChips == 4) && sliEnable && aaEnable && aaSampleHigh && !analogSLI && (chipNum == 2))) {
+        if((analogSLI &&
+            !((numChips == 4) && sliEnable && aaEnable && !aaSampleHigh && !analogSLI && (chipNum != 2)) &&
+			!((numChips == 4) && !sliEnable && aaEnable && aaSampleHigh && analogSLI && (chipNum != 2) && (vid2xMode == 0))) ||
+			((numChips == 4) && sliEnable && aaEnable && aaSampleHigh && !analogSLI && (chipNum == 2))) {
 
           /* Handle four chips, 2-way analog SLI with digital 4-sample AA...*/
           vsyncOffsetPixels = 7;
@@ -917,223 +919,394 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
 
       if(numChips == 1 && aaEnable) {
         /* Single chip, 2-sample AA */
-        temp = SST_CFG_ENHANCED_VIDEO_EN |
-                SST_CFG_VIDEO_LOCALMUX_DESKTOP_PLUS_OVERLAY |
-                (SST_CFG_VIDEO_OTHERMUX_SEL_PIPE << SST_CFG_VIDEO_OTHERMUX_SEL_FALSE_SHIFT) |
-                SST_CFG_DIVIDE_VIDEO_BY_2;
-        CFG_WRITE(chipNum, cfgVideoCtrl0, temp);          
-        temp =  (0x00 << SST_CFG_SLI_RENDERMASK_FETCH_SHIFT) |
-                (0x00 << SST_CFG_SLI_COMPAREMASK_FETCH_SHIFT) |
-                (0x00 << SST_CFG_SLI_RENDERMASK_CRT_SHIFT) |
-                (0x00 << SST_CFG_SLI_COMPAREMASK_CRT_SHIFT);
-        CFG_WRITE(chipNum, cfgVideoCtrl1, temp);          
-        temp = (0x00 << SST_CFG_SLI_RENDERMASK_AAFIFO_SHIFT) |
-                (0xFF << SST_CFG_SLI_COMPAREMASK_AAFIFO_SHIFT);
-        CFG_WRITE(chipNum, cfgVideoCtrl2, temp);          
+        CFG_VIDEOCTRL0(SST_CFG_ENHANCED_VIDEO_EN | 
+                       SST_CFG_VIDEO_LOCALMUX_DESKTOP_PLUS_OVERLAY |
+                       SST_CFG_DIVIDE_VIDEO_BY_2,
+                       0,
+                       SST_CFG_VIDEO_OTHERMUX_SEL_PIPE);
+        CFG_VIDEOCTRL1(0x00,
+                       0x00,
+                       0x00,
+                       0x00);
+        CFG_VIDEOCTRL2(0x00, 0xff);          
       } else if(numChips == 2 && !sliEnable && aaEnable && aaSampleHigh && !analogSLI) {
         /* Two chips, 4-sample digital AA... */
         if(chipNum == 0) {
           /* First chip */
-          temp = SST_CFG_ENHANCED_VIDEO_EN |
-                  SST_CFG_VIDEO_LOCALMUX_DESKTOP_PLUS_OVERLAY |
-                  (SST_CFG_VIDEO_OTHERMUX_SEL_PIPE_PLUS_AAFIFO << SST_CFG_VIDEO_OTHERMUX_SEL_TRUE_SHIFT) |
-                  SST_CFG_DIVIDE_VIDEO_BY_4;
-          CFG_WRITE(chipNum, cfgVideoCtrl0, temp);
-          temp =  (0x00 << SST_CFG_SLI_RENDERMASK_FETCH_SHIFT) |
-                  (0x00 << SST_CFG_SLI_COMPAREMASK_FETCH_SHIFT) |
-                  (0x00 << SST_CFG_SLI_RENDERMASK_CRT_SHIFT) |
-                  (0x00 << SST_CFG_SLI_COMPAREMASK_CRT_SHIFT);
-          CFG_WRITE(chipNum, cfgVideoCtrl1, temp);
-          temp = (0x00 << SST_CFG_SLI_RENDERMASK_AAFIFO_SHIFT) |
-                  (0x00 << SST_CFG_SLI_COMPAREMASK_AAFIFO_SHIFT);
-          CFG_WRITE(chipNum, cfgVideoCtrl2, temp);          
+          CFG_VIDEOCTRL0(SST_CFG_ENHANCED_VIDEO_EN | 
+                         SST_CFG_VIDEO_LOCALMUX_DESKTOP_PLUS_OVERLAY |
+                         SST_CFG_DIVIDE_VIDEO_BY_4,
+                         SST_CFG_VIDEO_OTHERMUX_SEL_PIPE_PLUS_AAFIFO,
+                         0);
+          CFG_VIDEOCTRL1(0x00,
+                         0x00,
+                         0x00,
+                         0x00);
+          CFG_VIDEOCTRL2(0x00, 0x00);
         } else {
           /* Second chip */
-          temp = SST_CFG_ENHANCED_VIDEO_EN |
-                  SST_CFG_ENHANCED_VIDEO_SLV |
-                  SST_CFG_VIDEO_LOCALMUX_DESKTOP_PLUS_OVERLAY |
-                  (SST_CFG_VIDEO_OTHERMUX_SEL_PIPE << SST_CFG_VIDEO_OTHERMUX_SEL_TRUE_SHIFT) |
-                  SST_CFG_DIVIDE_VIDEO_BY_1;
-          CFG_WRITE(chipNum, cfgVideoCtrl0, temp);
-          temp =  (0x00 << SST_CFG_SLI_RENDERMASK_FETCH_SHIFT) |
-                  (0x00 << SST_CFG_SLI_COMPAREMASK_FETCH_SHIFT) |
-                  (0x00 << SST_CFG_SLI_RENDERMASK_CRT_SHIFT) |
-                  (0xFF << SST_CFG_SLI_COMPAREMASK_CRT_SHIFT);
-          CFG_WRITE(chipNum, cfgVideoCtrl1, temp);
-          temp = (0x00 << SST_CFG_SLI_RENDERMASK_AAFIFO_SHIFT) |
-                  (0x00 << SST_CFG_SLI_COMPAREMASK_AAFIFO_SHIFT);
-          CFG_WRITE(chipNum, cfgVideoCtrl2, temp);          
+          CFG_VIDEOCTRL0(SST_CFG_ENHANCED_VIDEO_EN | 
+                         SST_CFG_ENHANCED_VIDEO_SLV |
+                         SST_CFG_VIDEO_LOCALMUX_DESKTOP_PLUS_OVERLAY |
+                         SST_CFG_DIVIDE_VIDEO_BY_1,
+                         SST_CFG_VIDEO_OTHERMUX_SEL_PIPE,
+                         0);
+          CFG_VIDEOCTRL1(0x00,
+                         0x00,
+                         0x00,
+                         0xff);
+          CFG_VIDEOCTRL2(0x00, 0x00);
         }  
       } else if(numChips == 2 && !sliEnable && aaEnable && aaSampleHigh && analogSLI) {
         /* Two chips, 4-sample analog AA... */
         if(chipNum == 0) {
           /* First chip */
-          temp = SST_CFG_ENHANCED_VIDEO_EN |
-                  SST_CFG_VIDEO_LOCALMUX_DESKTOP_PLUS_OVERLAY |
-                  (SST_CFG_VIDEO_OTHERMUX_SEL_PIPE << SST_CFG_VIDEO_OTHERMUX_SEL_TRUE_SHIFT) |
-                  SST_CFG_DIVIDE_VIDEO_BY_4;
-          CFG_WRITE(chipNum, cfgVideoCtrl0, temp);
+          CFG_VIDEOCTRL0(SST_CFG_ENHANCED_VIDEO_EN | 
+                         SST_CFG_VIDEO_LOCALMUX_DESKTOP_PLUS_OVERLAY |
+                         SST_CFG_DIVIDE_VIDEO_BY_4,
+                         SST_CFG_VIDEO_OTHERMUX_SEL_PIPE,
+                         0);
         } else {
           /* Second chip */
-          temp = SST_CFG_ENHANCED_VIDEO_EN |
-                  SST_CFG_ENHANCED_VIDEO_SLV |
-                  SST_CFG_DAC_HSYNC_TRISTATE |
-                  SST_CFG_VIDEO_LOCALMUX_DESKTOP_PLUS_OVERLAY |
-                  (SST_CFG_VIDEO_OTHERMUX_SEL_PIPE << SST_CFG_VIDEO_OTHERMUX_SEL_TRUE_SHIFT) |
-                  SST_CFG_DIVIDE_VIDEO_BY_4;
-          CFG_WRITE(chipNum, cfgVideoCtrl0, temp);
-          temp =  (0x00 << SST_CFG_SLI_RENDERMASK_FETCH_SHIFT) |
-                  (0x00 << SST_CFG_SLI_COMPAREMASK_FETCH_SHIFT) |
-                  (0x00 << SST_CFG_SLI_RENDERMASK_CRT_SHIFT) |
-                  (0x00 << SST_CFG_SLI_COMPAREMASK_CRT_SHIFT);
-          CFG_WRITE(chipNum, cfgVideoCtrl1, temp);
-          temp = (0x00 << SST_CFG_SLI_RENDERMASK_AAFIFO_SHIFT) |
-                  (0x00 << SST_CFG_SLI_COMPAREMASK_AAFIFO_SHIFT);
-          CFG_WRITE(chipNum, cfgVideoCtrl2, temp);          
-        }  
-      } else if(numChips == 2 && sliEnable && !aaEnable && !analogSLI) {
+          CFG_VIDEOCTRL0(SST_CFG_ENHANCED_VIDEO_EN | 
+                         SST_CFG_ENHANCED_VIDEO_SLV |
+                         SST_CFG_DAC_HSYNC_TRISTATE |
+                         SST_CFG_VIDEO_LOCALMUX_DESKTOP_PLUS_OVERLAY |
+                         SST_CFG_DIVIDE_VIDEO_BY_4,
+                         SST_CFG_VIDEO_OTHERMUX_SEL_PIPE,
+                         0);
+        }
+        CFG_VIDEOCTRL1(0x00,
+                       0x00,
+                       0x00,
+                       0x00);
+        CFG_VIDEOCTRL2(0x00, 0x00);
+      } else if(numChips == 2 && sliEnable && !aaEnable /*[dBorca]: && !aaSampleHigh*/ && !analogSLI) {
         /* Two chips, 2-way digital SLI */
         if(chipNum == 0) {
           /* First chip */
-          temp = SST_CFG_ENHANCED_VIDEO_EN |
-                  (SST_CFG_VIDEO_OTHERMUX_SEL_AAFIFO << SST_CFG_VIDEO_OTHERMUX_SEL_TRUE_SHIFT) |
-                  (SST_CFG_VIDEO_OTHERMUX_SEL_PIPE << SST_CFG_VIDEO_OTHERMUX_SEL_FALSE_SHIFT) |
-                  SST_CFG_DIVIDE_VIDEO_BY_1;
-          CFG_WRITE(chipNum, cfgVideoCtrl0, temp);
-          temp =  ((0x01 <<sliBandHeightLog2) << SST_CFG_SLI_RENDERMASK_FETCH_SHIFT) |
-                  (0x00 << SST_CFG_SLI_COMPAREMASK_FETCH_SHIFT) |
-                  (0x00 << SST_CFG_SLI_RENDERMASK_CRT_SHIFT) |
-                  (0x00 << SST_CFG_SLI_COMPAREMASK_CRT_SHIFT);
-          CFG_WRITE(chipNum, cfgVideoCtrl1, temp);
-          temp = ((0x01 <<sliBandHeightLog2) << SST_CFG_SLI_RENDERMASK_AAFIFO_SHIFT) |
-                  ((0x01 <<sliBandHeightLog2) << SST_CFG_SLI_COMPAREMASK_AAFIFO_SHIFT);
-          CFG_WRITE(chipNum, cfgVideoCtrl2, temp);          
+          CFG_VIDEOCTRL0(SST_CFG_ENHANCED_VIDEO_EN | 
+                         SST_CFG_DIVIDE_VIDEO_BY_1,
+                         SST_CFG_VIDEO_OTHERMUX_SEL_AAFIFO,
+                         SST_CFG_VIDEO_OTHERMUX_SEL_PIPE);
+          CFG_VIDEOCTRL1(0x01 << sliBandHeightLog2,
+                         0x00,
+                         0x00,
+                         0x00);
+          CFG_VIDEOCTRL2(0x01 <<sliBandHeightLog2, 0x01 <<sliBandHeightLog2);        
         } else {
           /* Second chip */
-          temp = SST_CFG_ENHANCED_VIDEO_EN |
-                  SST_CFG_ENHANCED_VIDEO_SLV |
-                  (SST_CFG_VIDEO_OTHERMUX_SEL_PIPE << SST_CFG_VIDEO_OTHERMUX_SEL_TRUE_SHIFT) |
-                  (SST_CFG_VIDEO_OTHERMUX_SEL_PIPE << SST_CFG_VIDEO_OTHERMUX_SEL_FALSE_SHIFT) |
-                  SST_CFG_DIVIDE_VIDEO_BY_1;
-          CFG_WRITE(chipNum, cfgVideoCtrl0, temp);
-          temp = (((numChips - 1) << sliBandHeightLog2) << SST_CFG_SLI_RENDERMASK_FETCH_SHIFT) |
-                  ((chipNum  << sliBandHeightLog2)  << SST_CFG_SLI_COMPAREMASK_FETCH_SHIFT) |
-                  (0x00 << SST_CFG_SLI_RENDERMASK_CRT_SHIFT) |
-                  (0xFF << SST_CFG_SLI_COMPAREMASK_CRT_SHIFT);
-          CFG_WRITE(chipNum, cfgVideoCtrl1, temp);
-          temp = (((numChips - 1) << sliBandHeightLog2) << SST_CFG_SLI_RENDERMASK_AAFIFO_SHIFT) |
-                  ((chipNum << sliBandHeightLog2) << SST_CFG_SLI_COMPAREMASK_AAFIFO_SHIFT);
-          CFG_WRITE(chipNum, cfgVideoCtrl2, temp);
+          CFG_VIDEOCTRL0(SST_CFG_ENHANCED_VIDEO_EN | 
+                         SST_CFG_ENHANCED_VIDEO_SLV |
+                         /*[dBorca]: SST_CFG_VIDEO_LOCALMUX_DESKTOP_PLUS_OVERLAY |*/
+                         SST_CFG_DIVIDE_VIDEO_BY_1,
+                         SST_CFG_VIDEO_OTHERMUX_SEL_PIPE,
+                         SST_CFG_VIDEO_OTHERMUX_SEL_PIPE);
+          CFG_VIDEOCTRL1((numChips - 1) << sliBandHeightLog2,
+                         chipNum << sliBandHeightLog2,
+                         0x00,
+                         0xff);
+          CFG_VIDEOCTRL2((numChips - 1) << sliBandHeightLog2, chipNum << sliBandHeightLog2);
         }    
-      } else if((numChips == 2 || numChips == 4) && sliEnable && !aaEnable && analogSLI) {
+      } else if((numChips == 2 || numChips == 4) && sliEnable && !aaEnable /*[dBorca]: && !aaSampleHigh*/ && analogSLI) {
         /* 2 or 4 chips, 2/4-way analog SLI */
         if(chipNum == 0) {
           /* First chip */
-          temp = SST_CFG_ENHANCED_VIDEO_EN |
-                  (SST_CFG_VIDEO_OTHERMUX_SEL_PIPE << SST_CFG_VIDEO_OTHERMUX_SEL_TRUE_SHIFT) |
-                  (SST_CFG_VIDEO_OTHERMUX_SEL_PIPE << SST_CFG_VIDEO_OTHERMUX_SEL_FALSE_SHIFT) |
-                  SST_CFG_DIVIDE_VIDEO_BY_1;
-          CFG_WRITE(chipNum, cfgVideoCtrl0, temp);
-          temp = (((numChips - 1) << sliBandHeightLog2) << SST_CFG_SLI_RENDERMASK_FETCH_SHIFT) |
-                  (0x00 << SST_CFG_SLI_COMPAREMASK_FETCH_SHIFT) |
-                  (((numChips - 1) << sliBandHeightLog2) << SST_CFG_SLI_RENDERMASK_CRT_SHIFT) |
-                  (0x00 << SST_CFG_SLI_COMPAREMASK_CRT_SHIFT);
-          CFG_WRITE(chipNum, cfgVideoCtrl1, temp);
-          temp = (0x00 << SST_CFG_SLI_RENDERMASK_AAFIFO_SHIFT) |
-                  (0xFF << SST_CFG_SLI_COMPAREMASK_AAFIFO_SHIFT);
-          CFG_WRITE(chipNum, cfgVideoCtrl2, temp);          
+          CFG_VIDEOCTRL0(SST_CFG_ENHANCED_VIDEO_EN | 
+                         SST_CFG_DIVIDE_VIDEO_BY_1,
+                         SST_CFG_VIDEO_OTHERMUX_SEL_PIPE,
+                         SST_CFG_VIDEO_OTHERMUX_SEL_PIPE);
+          CFG_VIDEOCTRL1((numChips - 1) << sliBandHeightLog2,
+                         0x00,
+                         (numChips - 1) << sliBandHeightLog2,
+                         0x00);
+          CFG_VIDEOCTRL2(0x00, 0xff);        
         } else {
           /* Remaining chips */
-          temp = SST_CFG_ENHANCED_VIDEO_EN |
-                  SST_CFG_ENHANCED_VIDEO_SLV |
-                  (SST_CFG_VIDEO_OTHERMUX_SEL_PIPE << SST_CFG_VIDEO_OTHERMUX_SEL_TRUE_SHIFT) |
-                  (SST_CFG_VIDEO_OTHERMUX_SEL_PIPE << SST_CFG_VIDEO_OTHERMUX_SEL_FALSE_SHIFT) |
-                  SST_CFG_DIVIDE_VIDEO_BY_1;
-          CFG_WRITE(chipNum, cfgVideoCtrl0, temp);
-          temp = (((numChips - 1) << sliBandHeightLog2) << SST_CFG_SLI_RENDERMASK_FETCH_SHIFT) |
-                  ((chipNum << sliBandHeightLog2) << SST_CFG_SLI_COMPAREMASK_FETCH_SHIFT) |
-                  (((numChips - 1) << sliBandHeightLog2) << SST_CFG_SLI_RENDERMASK_CRT_SHIFT) |
-                  ((chipNum << sliBandHeightLog2) << SST_CFG_SLI_COMPAREMASK_CRT_SHIFT);
-          CFG_WRITE(chipNum, cfgVideoCtrl1, temp);
-          temp = (0x00 << SST_CFG_SLI_RENDERMASK_AAFIFO_SHIFT) |
-                  (0xFF << SST_CFG_SLI_COMPAREMASK_AAFIFO_SHIFT);
-          CFG_WRITE(chipNum, cfgVideoCtrl2, temp);          
+          CFG_VIDEOCTRL0(SST_CFG_ENHANCED_VIDEO_EN | 
+                         SST_CFG_ENHANCED_VIDEO_SLV |
+                         SST_CFG_DIVIDE_VIDEO_BY_1,
+                         SST_CFG_VIDEO_OTHERMUX_SEL_PIPE,
+                         SST_CFG_VIDEO_OTHERMUX_SEL_PIPE);
+          CFG_VIDEOCTRL1((numChips - 1) << sliBandHeightLog2,
+                         chipNum << sliBandHeightLog2,
+                         (numChips - 1) << sliBandHeightLog2,
+                         chipNum << sliBandHeightLog2);
+          CFG_VIDEOCTRL2(0x00, 0xff);
         }   
       } else if(numChips == 2 && sliEnable && aaEnable && !aaSampleHigh && !analogSLI) {
         /* Two chips, 2-sample AA with 2-way digital SLI... */
         if(chipNum == 0) {
           /* First chip */
-          temp = SST_CFG_ENHANCED_VIDEO_EN |
-                  SST_CFG_VIDEO_LOCALMUX_DESKTOP_PLUS_OVERLAY |
-                  (SST_CFG_VIDEO_OTHERMUX_SEL_AAFIFO << SST_CFG_VIDEO_OTHERMUX_SEL_TRUE_SHIFT) |
-                  (SST_CFG_VIDEO_OTHERMUX_SEL_PIPE << SST_CFG_VIDEO_OTHERMUX_SEL_FALSE_SHIFT) |
-                  SST_CFG_DIVIDE_VIDEO_BY_2;
-          CFG_WRITE(chipNum, cfgVideoCtrl0, temp);
-          temp = ((0x01 << sliBandHeightLog2) << SST_CFG_SLI_RENDERMASK_FETCH_SHIFT) |
-                  (0x00 << SST_CFG_SLI_COMPAREMASK_FETCH_SHIFT) |
-                  (0x00 << SST_CFG_SLI_COMPAREMASK_CRT_SHIFT) |
-                  (0x00 << SST_CFG_SLI_COMPAREMASK_CRT_SHIFT);
-          CFG_WRITE(chipNum, cfgVideoCtrl1, temp);
-          temp = ((0x01 << sliBandHeightLog2) << SST_CFG_SLI_RENDERMASK_AAFIFO_SHIFT) |
-                  ((0x01 << sliBandHeightLog2) << SST_CFG_SLI_COMPAREMASK_AAFIFO_SHIFT);
-          CFG_WRITE(chipNum, cfgVideoCtrl2, temp);
+          CFG_VIDEOCTRL0(SST_CFG_ENHANCED_VIDEO_EN | 
+                         SST_CFG_VIDEO_LOCALMUX_DESKTOP_PLUS_OVERLAY |
+                         SST_CFG_DIVIDE_VIDEO_BY_2,
+                         SST_CFG_VIDEO_OTHERMUX_SEL_AAFIFO,
+                         SST_CFG_VIDEO_OTHERMUX_SEL_PIPE);
+          CFG_VIDEOCTRL1(0x01 << sliBandHeightLog2,
+                         0x00,
+                         0x00,
+                         0x00);
+          CFG_VIDEOCTRL2(0x01 << sliBandHeightLog2, 0x01 << sliBandHeightLog2);        
         } else {
           /* Second chip */
-          temp = SST_CFG_ENHANCED_VIDEO_EN |
-                  SST_CFG_ENHANCED_VIDEO_SLV |
-                  SST_CFG_VIDEO_LOCALMUX_DESKTOP_PLUS_OVERLAY |
-                  (SST_CFG_VIDEO_OTHERMUX_SEL_PIPE << SST_CFG_VIDEO_OTHERMUX_SEL_TRUE_SHIFT) |
-                  (SST_CFG_VIDEO_OTHERMUX_SEL_PIPE << SST_CFG_VIDEO_OTHERMUX_SEL_FALSE_SHIFT) |
-                  SST_CFG_DIVIDE_VIDEO_BY_1;
-          CFG_WRITE(chipNum, cfgVideoCtrl0, temp);
-          temp = (((numChips - 1) << sliBandHeightLog2) << SST_CFG_SLI_RENDERMASK_FETCH_SHIFT) |
-                  ((chipNum  << sliBandHeightLog2) << SST_CFG_SLI_COMPAREMASK_FETCH_SHIFT) |
-                  (0x00 << SST_CFG_SLI_RENDERMASK_CRT_SHIFT) |
-                  (0xFF << SST_CFG_SLI_COMPAREMASK_CRT_SHIFT);
-          CFG_WRITE(chipNum, cfgVideoCtrl1, temp);
-          temp = (((numChips - 1) << sliBandHeightLog2) << SST_CFG_SLI_RENDERMASK_AAFIFO_SHIFT) |
-                  ((chipNum  << sliBandHeightLog2) << SST_CFG_SLI_COMPAREMASK_AAFIFO_SHIFT);
-          CFG_WRITE(chipNum, cfgVideoCtrl2, temp);
+          CFG_VIDEOCTRL0(SST_CFG_ENHANCED_VIDEO_EN | 
+                         SST_CFG_ENHANCED_VIDEO_SLV |
+                         SST_CFG_VIDEO_LOCALMUX_DESKTOP_PLUS_OVERLAY |
+                         SST_CFG_DIVIDE_VIDEO_BY_1,
+                         SST_CFG_VIDEO_OTHERMUX_SEL_PIPE,
+                         SST_CFG_VIDEO_OTHERMUX_SEL_PIPE);
+          CFG_VIDEOCTRL1((numChips - 1) << sliBandHeightLog2,
+                         chipNum  << sliBandHeightLog2,
+                         0x00,
+                         0xff);
+          CFG_VIDEOCTRL2((numChips - 1) << sliBandHeightLog2, chipNum  << sliBandHeightLog2);        
         }    
+      } else if(numChips == 2 && sliEnable && aaEnable && !aaSampleHigh && analogSLI) {
+        /* Two chips, 2-sample AA with 2-way analog SLI... */
+        if(chipNum == 0) {
+          /* First chip */
+          CFG_VIDEOCTRL0(SST_CFG_ENHANCED_VIDEO_EN | 
+                         SST_CFG_VIDEO_LOCALMUX_DESKTOP_PLUS_OVERLAY |
+                         SST_CFG_DIVIDE_VIDEO_BY_2,
+                         0,
+                         SST_CFG_VIDEO_OTHERMUX_SEL_PIPE);
+          CFG_VIDEOCTRL1(0x01 << sliBandHeightLog2,
+                         0x00,
+                         0x01 << sliBandHeightLog2,
+                         0x00);
+          CFG_VIDEOCTRL2(0x00, 0xff);        
+        } else {
+          /* Second chip */
+          CFG_VIDEOCTRL0(SST_CFG_ENHANCED_VIDEO_EN | 
+                         SST_CFG_ENHANCED_VIDEO_SLV |
+                         SST_CFG_VIDEO_LOCALMUX_DESKTOP_PLUS_OVERLAY |
+                         SST_CFG_DIVIDE_VIDEO_BY_2,
+                         0,
+                         SST_CFG_VIDEO_OTHERMUX_SEL_PIPE);
+          CFG_VIDEOCTRL1((numChips - 1) << sliBandHeightLog2,
+                         chipNum  << sliBandHeightLog2,
+                         (numChips - 1) << sliBandHeightLog2,
+                         chipNum  << sliBandHeightLog2);
+          CFG_VIDEOCTRL2(0x00, 0xff);        
+        }    
+      } else if(numChips == 4 && sliEnable && aaEnable && !aaSampleHigh && analogSLI) {
+        /* Four chip, 2-sample AA. two units of 2 chip analog SLI, with 1 subsample per unit. */
+        if(chipNum == 0) {
+          /* First chip */
+          CFG_VIDEOCTRL0(SST_CFG_ENHANCED_VIDEO_EN | 
+                         SST_CFG_DIVIDE_VIDEO_BY_2,
+                         SST_CFG_VIDEO_OTHERMUX_SEL_PIPE_PLUS_AAFIFO,
+                         0);
+          CFG_VIDEOCTRL1(0x01 << sliBandHeightLog2,
+                         0x00 << sliBandHeightLog2,
+                         0x01 << sliBandHeightLog2,
+                         0x00 << sliBandHeightLog2);
+          CFG_VIDEOCTRL2(0x00, 0x00);
+        } else if(chipNum == 1 || chipNum == 3) { 
+          /* Second and fourth chips */
+          CFG_VIDEOCTRL0(SST_CFG_ENHANCED_VIDEO_EN | 
+                         SST_CFG_ENHANCED_VIDEO_SLV | 
+                         SST_CFG_DAC_HSYNC_TRISTATE | 
+                         SST_CFG_DIVIDE_VIDEO_BY_1,
+                         SST_CFG_VIDEO_OTHERMUX_SEL_PIPE,
+                         0);
+          CFG_VIDEOCTRL1(0x01 << sliBandHeightLog2,
+                         (chipNum >> 1) << sliBandHeightLog2,
+                         0x00 << sliBandHeightLog2,
+                         0xFF << sliBandHeightLog2);
+          CFG_VIDEOCTRL2(0x00, 0x00);
+        } else {
+          /* Third chip */
+          CFG_VIDEOCTRL0(SST_CFG_ENHANCED_VIDEO_EN | 
+                         SST_CFG_ENHANCED_VIDEO_SLV | 
+                         SST_CFG_DIVIDE_VIDEO_BY_2,
+                         0,
+                         SST_CFG_VIDEO_OTHERMUX_SEL_PIPE_PLUS_AAFIFO);
+          CFG_VIDEOCTRL1(0x01 << sliBandHeightLog2,
+                         0x01 << sliBandHeightLog2,
+                         0x01 << sliBandHeightLog2,
+                         0x01 << sliBandHeightLog2);
+          CFG_VIDEOCTRL2(0x00, 0xff);
+        }    
+      } else if(numChips == 4 && sliEnable && aaEnable && aaSampleHigh == 1 && analogSLI) {
+        /* Four chip, 4-sample AA. 1 subsample per chip analog SLI'ed */
+        if(chipNum == 0) {
+          /* First chip */
+          CFG_VIDEOCTRL0(SST_CFG_ENHANCED_VIDEO_EN | 
+                         SST_CFG_DIVIDE_VIDEO_BY_4,
+                         SST_CFG_VIDEO_OTHERMUX_SEL_PIPE_PLUS_AAFIFO,
+                         0);
+          CFG_VIDEOCTRL1(0x00,
+                         0x00,
+                         0x00,
+                         0x00);
+          if(vid2xMode) {
+            CFG_VIDEOCTRL2(0x00, 0xff);
+		  } else {
+            CFG_VIDEOCTRL2(0x00, 0x00);
+		  }
+        } else if(chipNum == 1 || chipNum == 3) { 
+          /* Second and fourth chips */
+          CFG_VIDEOCTRL0(SST_CFG_ENHANCED_VIDEO_EN | 
+                         SST_CFG_ENHANCED_VIDEO_SLV | 
+                         SST_CFG_DAC_HSYNC_TRISTATE | 
+                         SST_CFG_DIVIDE_VIDEO_BY_1,
+                         SST_CFG_VIDEO_OTHERMUX_SEL_PIPE,
+                         0);
+          CFG_VIDEOCTRL1(0x00,
+                         0x00,
+                         0x00,
+                         0xff);
+          if(vid2xMode) {
+            CFG_VIDEOCTRL2(0x00, 0xff);
+		  } else {
+            CFG_VIDEOCTRL2(0x00, 0x00);
+		  }
+        } else {
+          /* Third chip */
+          CFG_VIDEOCTRL0(SST_CFG_ENHANCED_VIDEO_EN | 
+                         SST_CFG_ENHANCED_VIDEO_SLV | 
+                         SST_CFG_DAC_HSYNC_TRISTATE | 
+                         SST_CFG_DIVIDE_VIDEO_BY_4,
+                         0,
+                         SST_CFG_VIDEO_OTHERMUX_SEL_PIPE_PLUS_AAFIFO);
+          CFG_VIDEOCTRL1(0x00,
+                         0x00,
+                         0x00,
+                         0x00);
+          CFG_VIDEOCTRL2(0x00, 0xff);
+        }    
+      } else if(numChips == 4 && !sliEnable && aaEnable && aaSampleHigh == 2 && analogSLI) {
+        /* Four chip, 8-sample AA. 2 subsample per chip analog SLI'ed */
+        if(chipNum == 0) {
+          /* First chip */
+          CFG_VIDEOCTRL0(SST_CFG_ENHANCED_VIDEO_EN | 
+                         SST_CFG_VIDEO_LOCALMUX_DESKTOP_PLUS_OVERLAY | 
+                         SST_CFG_DIVIDE_VIDEO_BY_8,
+                         SST_CFG_VIDEO_OTHERMUX_SEL_PIPE_PLUS_AAFIFO,
+                         0);
+          CFG_VIDEOCTRL1(0x00,
+                         0x00,
+                         0x00,
+                         0x00);
+          if(vid2xMode) {
+            CFG_VIDEOCTRL2(0x00, 0xff);
+		  } else {
+            CFG_VIDEOCTRL2(0x00, 0x00);
+		  }
+        } else if(chipNum == 1 || chipNum == 3) { 
+          /* Second and fourth chips */
+          CFG_VIDEOCTRL0(SST_CFG_ENHANCED_VIDEO_EN | 
+                         SST_CFG_ENHANCED_VIDEO_SLV | 
+                         SST_CFG_VIDEO_LOCALMUX_DESKTOP_PLUS_OVERLAY | 
+                         SST_CFG_DAC_HSYNC_TRISTATE | 
+                         SST_CFG_DIVIDE_VIDEO_BY_1,
+                         SST_CFG_VIDEO_OTHERMUX_SEL_PIPE,
+                         0);
+          CFG_VIDEOCTRL1(0x00,
+                         0x00,
+                         0x00,
+                         0xff);
+          if(vid2xMode) {
+            CFG_VIDEOCTRL2(0x00, 0xff);
+		  } else {
+            CFG_VIDEOCTRL2(0x00, 0x00);
+		  }
+        } else {
+          /* Third chip */
+          CFG_VIDEOCTRL0(SST_CFG_ENHANCED_VIDEO_EN | 
+                         SST_CFG_ENHANCED_VIDEO_SLV | 
+                         SST_CFG_VIDEO_LOCALMUX_DESKTOP_PLUS_OVERLAY | 
+                         SST_CFG_DAC_HSYNC_TRISTATE | 
+                         SST_CFG_DIVIDE_VIDEO_BY_8,
+                         0,
+                         SST_CFG_VIDEO_OTHERMUX_SEL_PIPE_PLUS_AAFIFO);
+          CFG_VIDEOCTRL1(0x00,
+                         0x00,
+                         0x00,
+                         0x00);
+          CFG_VIDEOCTRL2(0x00, 0xff);
+        }    
+      } else if(numChips == 2 && !sliEnable && aaEnable && !aaSampleHigh && !analogSLI) {
+        /* Two chips, 2-sample AA. 1 subsample per chip digital SLI'ed */
+        if(chipNum == 0) {
+          /* First chip */
+          CFG_VIDEOCTRL0(SST_CFG_ENHANCED_VIDEO_EN | 
+                         SST_CFG_DIVIDE_VIDEO_BY_2,
+                         SST_CFG_VIDEO_OTHERMUX_SEL_PIPE_PLUS_AAFIFO,
+                         0);
+          CFG_VIDEOCTRL1(0x00,
+                         0x00,
+                         0x00,
+                         0x00);
+          CFG_VIDEOCTRL2(0x00, 0x00);
+        } else {
+          /* Second chip */
+          CFG_VIDEOCTRL0(SST_CFG_ENHANCED_VIDEO_EN | 
+                         SST_CFG_ENHANCED_VIDEO_SLV |
+                         SST_CFG_DIVIDE_VIDEO_BY_1,
+                         SST_CFG_VIDEO_OTHERMUX_SEL_PIPE,
+                         0);
+          CFG_VIDEOCTRL1(0x00,
+                         0x00,
+                         0x00,
+                         0xff);
+          CFG_VIDEOCTRL2(0x00, 0x00);
+        }    
+      } else if(numChips == 2 && !sliEnable && aaEnable && !aaSampleHigh && analogSLI) {
+        /* Two chips, 2-sample AA. 1 subsample per chip analog SLI'ed */
+        if(chipNum == 0) {
+          /* First chip */
+          CFG_VIDEOCTRL0(SST_CFG_ENHANCED_VIDEO_EN | 
+                         SST_CFG_DIVIDE_VIDEO_BY_2,
+                         SST_CFG_VIDEO_OTHERMUX_SEL_PIPE,
+                         0);
+        } else {
+          /* Second chip */
+          CFG_VIDEOCTRL0(SST_CFG_ENHANCED_VIDEO_EN | 
+                         SST_CFG_ENHANCED_VIDEO_SLV |
+                         SST_CFG_DAC_HSYNC_TRISTATE |
+                         SST_CFG_DIVIDE_VIDEO_BY_2,
+                         SST_CFG_VIDEO_OTHERMUX_SEL_PIPE,
+                         0);
+        }
+        CFG_VIDEOCTRL1(0x00,
+                       0x00,
+                       0x00,
+                       0x00);
+        CFG_VIDEOCTRL2(0x00, 0x00);
       } else if(numChips == 4 && sliEnable && !aaEnable && !analogSLI) {
         /* Four chips, 4-way digital SLI... */
         if(chipNum == 0) {
           /* First chip */
-          temp = SST_CFG_ENHANCED_VIDEO_EN |
-                  (SST_CFG_VIDEO_OTHERMUX_SEL_AAFIFO << SST_CFG_VIDEO_OTHERMUX_SEL_TRUE_SHIFT) |
-                  (SST_CFG_VIDEO_OTHERMUX_SEL_PIPE << SST_CFG_VIDEO_OTHERMUX_SEL_FALSE_SHIFT) |
-                  SST_CFG_SLI_AAFIFO_COMPARE_INV |
-                  SST_CFG_DIVIDE_VIDEO_BY_1;
-          CFG_WRITE(chipNum, cfgVideoCtrl0, temp);
-          temp = (((numChips - 1) << sliBandHeightLog2) << SST_CFG_SLI_RENDERMASK_FETCH_SHIFT) |
-                  (0x00 << SST_CFG_SLI_COMPAREMASK_FETCH_SHIFT) |
-                  (0x00 << SST_CFG_SLI_RENDERMASK_CRT_SHIFT) |
-                  (0x00 << SST_CFG_SLI_COMPAREMASK_CRT_SHIFT);
-          CFG_WRITE(chipNum, cfgVideoCtrl1, temp);
-          temp = (((numChips - 1) << sliBandHeightLog2) << SST_CFG_SLI_RENDERMASK_AAFIFO_SHIFT) |
-                  ((0x00 << sliBandHeightLog2) << SST_CFG_SLI_COMPAREMASK_AAFIFO_SHIFT);
-          CFG_WRITE(chipNum, cfgVideoCtrl2, temp);
+          CFG_VIDEOCTRL0(SST_CFG_ENHANCED_VIDEO_EN | 
+                         SST_CFG_SLI_AAFIFO_COMPARE_INV |
+                         SST_CFG_DIVIDE_VIDEO_BY_1,
+                         SST_CFG_VIDEO_OTHERMUX_SEL_AAFIFO,
+                         SST_CFG_VIDEO_OTHERMUX_SEL_PIPE);
+          CFG_VIDEOCTRL1((numChips - 1) << sliBandHeightLog2,
+                         0x00,
+                         0x00,
+                         0x00);
+          CFG_VIDEOCTRL2((numChips - 1) << sliBandHeightLog2, 0x00 << sliBandHeightLog2);
         } else {
           /* Remaining chips */
-          temp = SST_CFG_ENHANCED_VIDEO_EN |
-                  SST_CFG_ENHANCED_VIDEO_SLV |
-                  (SST_CFG_VIDEO_OTHERMUX_SEL_PIPE << SST_CFG_VIDEO_OTHERMUX_SEL_TRUE_SHIFT) |
-                  (SST_CFG_VIDEO_OTHERMUX_SEL_PIPE << SST_CFG_VIDEO_OTHERMUX_SEL_FALSE_SHIFT) |
-                  SST_CFG_DIVIDE_VIDEO_BY_1;
-          CFG_WRITE(chipNum, cfgVideoCtrl0, temp);
-          temp = (((numChips - 1) << sliBandHeightLog2) << SST_CFG_SLI_RENDERMASK_FETCH_SHIFT) |
-                  ((chipNum << sliBandHeightLog2) << SST_CFG_SLI_COMPAREMASK_FETCH_SHIFT) |
-                  (0x00 << SST_CFG_SLI_RENDERMASK_CRT_SHIFT) |
-                  (0xFF << SST_CFG_SLI_COMPAREMASK_CRT_SHIFT);
-          CFG_WRITE(chipNum, cfgVideoCtrl1, temp);
-          temp = (((numChips - 1) << sliBandHeightLog2) << SST_CFG_SLI_RENDERMASK_AAFIFO_SHIFT) |
-                  ((chipNum << sliBandHeightLog2) << SST_CFG_SLI_COMPAREMASK_AAFIFO_SHIFT);
-          CFG_WRITE(chipNum, cfgVideoCtrl2, temp);
+          CFG_VIDEOCTRL0(SST_CFG_ENHANCED_VIDEO_EN | 
+                         SST_CFG_ENHANCED_VIDEO_SLV |
+                         SST_CFG_DIVIDE_VIDEO_BY_1,
+                         SST_CFG_VIDEO_OTHERMUX_SEL_PIPE,
+                         SST_CFG_VIDEO_OTHERMUX_SEL_PIPE);
+          CFG_VIDEOCTRL1((numChips - 1) << sliBandHeightLog2,
+                         chipNum << sliBandHeightLog2,
+                         0x00,
+                         0xff);
+          CFG_VIDEOCTRL2((numChips - 1) << sliBandHeightLog2, chipNum << sliBandHeightLog2);
         }
 
-      } else if(numChips == 2 && sliEnable && aaEnable && !aaSampleHigh && !analogSLI) {
+      } else if(numChips == 4 && sliEnable && aaEnable && !aaSampleHigh && !analogSLI) {
+        /* Four chips, 2-sample AA with 4-way digital SLI */
         if(chipNum == 0) {
-          /* Four chips, 2-sample AA with 4-way digital SLI */
           CFG_VIDEOCTRL0(SST_CFG_ENHANCED_VIDEO_EN | 
                           SST_CFG_VIDEO_LOCALMUX_DESKTOP_PLUS_OVERLAY |
                           SST_CFG_SLI_AAFIFO_COMPARE_INV |
@@ -1160,7 +1333,7 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
           CFG_VIDEOCTRL2((numChips - 1) << sliBandHeightLog2,
                           chipNum << sliBandHeightLog2);
         }                                  
-      } else if(numChips == 4 && sliEnable && aaEnable && aaSampleHigh && !analogSLI) {
+      } else if(numChips == 4 && sliEnable && aaEnable && aaSampleHigh == 1 && !analogSLI) {
         /* Four chip, 2-way analog SLI with digital 4-sample AA */
         if(chipNum == 0) {
           /* First chip */
@@ -1184,7 +1357,7 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
                           SST_CFG_VIDEO_OTHERMUX_SEL_PIPE,
                           0);
           CFG_VIDEOCTRL1(0x01 << sliBandHeightLog2,
-                          ((chipNum + 1) >> 2) << sliBandHeightLog2,
+                          (chipNum >> 1) << sliBandHeightLog2,
                           0x00 << sliBandHeightLog2,
                           0xFF << sliBandHeightLog2);
           CFG_VIDEOCTRL2(0x00, 0x00);
@@ -1194,15 +1367,16 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
                           SST_CFG_ENHANCED_VIDEO_SLV |
                           SST_CFG_VIDEO_LOCALMUX_DESKTOP_PLUS_OVERLAY |
                           SST_CFG_DIVIDE_VIDEO_BY_4,
-                          SST_CFG_VIDEO_OTHERMUX_SEL_PIPE_PLUS_AAFIFO,
-                          0x00);
+                          0,
+                          SST_CFG_VIDEO_OTHERMUX_SEL_PIPE_PLUS_AAFIFO);
           CFG_VIDEOCTRL1(0x01 << sliBandHeightLog2,
                           0x01 << sliBandHeightLog2,
                           0x01 << sliBandHeightLog2,
                           0x01 << sliBandHeightLog2);
           CFG_VIDEOCTRL2(0x00, 0xff);
         }    
-      } else if(numChips == 4 && sliEnable && aaEnable && aaSampleHigh && analogSLI) {
+      } else if(numChips == 4 && sliEnable && aaEnable && aaSampleHigh == 1 && analogSLI) {
+        /* Four chip, 2-way analog SLI with analog 4-sample AA */
         if(chipNum == 0) {
           /* First chip */
           CFG_VIDEOCTRL0(SST_CFG_ENHANCED_VIDEO_EN |
@@ -1225,9 +1399,9 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
                           SST_CFG_VIDEO_OTHERMUX_SEL_PIPE,
                           0);
           CFG_VIDEOCTRL1(0x01 << sliBandHeightLog2,
-                          ((chipNum + 1) >> 2) << sliBandHeightLog2,
+                          (chipNum >> 1) << sliBandHeightLog2,
                           0x01 << sliBandHeightLog2,
-                          ((chipNum + 1) >> 2) << sliBandHeightLog2);
+                          (chipNum >> 1) << sliBandHeightLog2);
           CFG_VIDEOCTRL2(0x00, 0x00);
         } else {
           /* Third chip */
@@ -1247,10 +1421,24 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
 
       /* Make sure that last chip properly waits for data to be xfered
         * over the PCI bus before driving... */
-      if(numChips == 4 && sliEnable && aaEnable && aaSampleHigh && chipNum == 3) {
+      if(numChips == 4 && sliEnable && aaEnable && chipNum == 3) {
         temp = CFG_READ(chipNum, cfgSliAAMisc);
         temp |= SST_CFG_AA_LFB_RD_SLV_WAIT;
         CFG_WRITE(chipNum, cfgSliAAMisc, temp);
+      }  
+
+      /* Deal with the problem for LFB reads where the data really needs to
+         come from 4 different chips. Since the hardware does not support
+         this, we figure out a way to only return aliased data back back...
+         This is accomplished by having the Master return its lfb data    
+         By turning off AA LFB reads, chips 2/3 no longer snoop lfb reads
+         at all. Then, there is only handshaking between chips 0 & 1 so
+         the Master stays happy.
+       */
+      if(numChips == 4 && !sliEnable && aaEnable && aaSampleHigh && chipNum > 1) {
+        temp = CFG_READ(chipNum, cfgAALfbCtrl);
+        temp &= ~SST_AA_LFB_READ_ENABLE;
+        CFG_WRITE(chipNum, cfgAALfbCtrl, temp);
       }  
 
       if(chipNum > 0) {
@@ -1265,6 +1453,13 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
         temp |= SST_POWERDOWN_DAC;
         HWC_IO_STORE_SLAVE(chipNum, bInfo->regInfo, miscInit1, temp);
       }  
+      else if (numChips == 4) /* chipNum==0 */
+      {
+        /* Special Case 4 way where master also needs to sync from slave */
+        temp = CFG_READ(chipNum, cfgVideoCtrl0);
+        temp |= SST_CFG_VIDPLL_SEL;
+        CFG_WRITE(chipNum, cfgVideoCtrl0, temp);
+      } 
 
       LOG((dbg,"cfgInitEnable: %08lx\n",CFG_READ(chipNum, cfgInitEnable_FabID)));
       LOG((dbg,"cfgPciDecode:  %08lx\n",CFG_READ(chipNum, cfgPciDecode)));
@@ -1306,4 +1501,4 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
       }
     }      
   }    
-}      
+}

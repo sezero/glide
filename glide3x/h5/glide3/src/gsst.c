@@ -3492,7 +3492,7 @@ GR_ENTRY(grFinish, void, (void))
 
   grFlush();
   if ( gc->windowed ) {
-#if defined(GLIDE_INIT_HWC) && !defined(__linux__)
+#if defined(GLIDE_INIT_HWC) && !defined(__linux__) && !defined(__DJGPP__)
     struct cmdTransportInfo*
       gcFifo = &gc->cmdTransportInfo;
     

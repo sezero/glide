@@ -745,6 +745,7 @@
 
 #include <stddef.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 
 #include <3dfx.h>
@@ -1048,9 +1049,6 @@ static FxU32 **dummydata;
 #ifdef HWC_DXDRVR
 static hwcSwapType swapType;
 #endif
-
-static void
-lostContext(void);
 
 static FxU32
 pow2Round(FxU32 val, FxU32 roundVal);
@@ -7822,7 +7820,7 @@ void hwcAAScreenShot(hwcBoardInfo *bInfo, FxU32 colBufNum, FxBool dither)
   header[15] = (FxU8)(bInfo->vidInfo.yRes >> 8);
   header[16] =	32;  /* bytes per pixel */
   
-  if(file = fopen(fileName,"wb")) {
+  if ((file = fopen(fileName,"wb")) != NULL) {
     fwrite(header,18,1,file);
     fwrite(out,bInfo->vidInfo.xRes * bInfo->vidInfo.yRes * 4, 1, file);
     fclose(file);

@@ -814,18 +814,6 @@ static GrTexDownloadProc _texDownloadProcs[][4][5] =
 #define REGSTR_PATH_3DFXSW              "Software\\3Dfx Interactive\\Voodoo2"
 #define REGSTR_PATH_GLIDE               REGSTR_PATH_3DFXSW"\\Glide"
 
-#if !defined(GLIDE_INIT_HAL)
-#ifdef GETENV 
-#undef GETENV
-#endif
-//#if defined(HWC_EXT_INIT)
-#if !defined(__DJGPP__) && !defined(__linux__)
-#define GETENV(a, b) hwcGetenvEx(a, b)
-#else
-#define GETENV(a, b) hwcGetenv(a)
-#endif
-#endif
-
 
 /*-------------------------------------------------------------------
   Function: _grSstDetectResources
