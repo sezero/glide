@@ -585,8 +585,12 @@ static int doPIORead(pioData *desc)
 
 	if ((retval = verify_area(VERIFY_WRITE, desc->value, desc->size)))
 		return retval;
-#if 0
-	/* restricted */
+
+	/* full SSTIO aperture is defined by: 
+	 * unsigned short port = desc->port;
+	 * unsigned short base = cards[i].addr2 & ~1;
+	 * (base <= port && port <= (base + 0x108 - desc->size))
+	 */
 	switch (desc->port) {
 	case VGA_INPUT_STATUS_1C:
 		break;
@@ -599,33 +603,6 @@ static int doPIORead(pioData *desc)
 	default:
 		return -EPERM;
 	}
-#else
-	/* full range */
-	{
-	int i = desc->device;
-	unsigned short port = desc->port;
-	unsigned short base;
-
-	if (i < 0 || i >= numCards) {
-		/* scan for valid SSTIO aperture */
-		for (i = 0; i < numCards; i++) {
-			base = cards[i].addr2 & ~1;
-			if (base <= port && port <= (base + 0x107)) {
-				break;
-			}
-		}
-		if (i == numCards) {
-			return -EPERM;
-		}
-	} else {
-		/* check the given SSTIO aperture */
-		base = cards[i].addr2 & ~1;
-		if (base > port || port > (base + 0x107)) {
-			return -EPERM;
-		}
-	}
-	}
-#endif
 
 	switch (desc->size) {
 	case 1:
@@ -653,8 +630,11 @@ static int doPIOWrite(pioData *desc)
 	if ((retval = verify_area(VERIFY_READ, desc->value, desc->size)))
 		return retval;
 
-#if 0
-	/* restricted */
+	/* full SSTIO aperture is defined by: 
+	 * unsigned short port = desc->port;
+	 * unsigned short base = cards[i].addr2 & ~1;
+	 * (base <= port && port <= (base + 0x108 - desc->size))
+	 */
 	switch (desc->port) {
 	case SC_INDEX:
 		break;
@@ -665,33 +645,6 @@ static int doPIOWrite(pioData *desc)
 	default:
 		return -EPERM;
 	}
-#else
-	/* full range */
-	{
-	int i = desc->device;
-	unsigned short port = desc->port;
-	unsigned short base;
-
-	if (i < 0 || i >= numCards) {
-		/* scan for valid SSTIO aperture */
-		for (i = 0; i < numCards; i++) {
-			base = cards[i].addr2 & ~1;
-			if (base <= port && port <= (base + 0x107)) {
-				break;
-			}
-		}
-		if (i == numCards) {
-			return -EPERM;
-		}
-	} else {
-		/* check the given SSTIO aperture */
-		base = cards[i].addr2 & ~1;
-		if (base > port || port > (base + 0x107)) {
-			return -EPERM;
-		}
-	}
-	}
-#endif
 
 	copy_from_user(&retchar, desc->value, desc->size);
 	switch (desc->size) {
