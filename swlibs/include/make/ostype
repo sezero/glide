@@ -1,6 +1,9 @@
-#!/bin/csh -f
+#!/bin/bash
 #
 # $Log$
+# Revision 1.2  2000/06/15 00:11:40  joseph
+# Merged new swlibs code being used for Voodoo4/5 (h5).
+#
 # Revision 1.1.1.1  2000/03/16 20:38:24  bwhite
 # Imported CSIM sources
 #
@@ -17,33 +20,36 @@
 
 # if '-all' flag, return all supported architecture types
 
-if ( $#argv >= 1 ) then
-        if ( $1 == "-all" ) then
+if [ $# -ge 1 ]
+then
+        if [ $1 = "-all" ]
+        then
                 echo "hpux sunos solaris linux"
-                exit
-        endif
-endif
+                exit 0
+        fi
+fi
 
 # determine and return machine architecture type
 
-set a = `/bin/uname -s`
-switch ($a)
-case "HP-UX":
+a=$(/bin/uname -s)
+case $a in
+  "HP-UX")
     echo "hpux"
-    exit
-case "SunOS":
-    set b = `/bin/uname -r | /usr/bin/cut -c1`
-    if ($b > 4) then
+    ;;
+  "SunOS")
+    b=$(/bin/uname -r | /usr/bin/cut -c1)
+    if [ $b -gt 4 ]
+    then
         echo "solaris"
-        exit
     else
         echo "sunos"
-        exit
-    endif
-case "Linux":
+    fi
+    ;;
+  "Linux")
     echo "Linux"
-	exit
-default:
+    ;;
+  *)
     echo "unknown"
-	exit
-endsw
+    ;;
+esac
+
