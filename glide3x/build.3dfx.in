@@ -86,8 +86,9 @@ if [ $USING_XTERM -gt 0 ]
 then
     xterm_title --title "build.3dfx $@ (RUNNING) @ `hostname --fqdn`:$PWD"
 fi
-if instrument_command make -f makefile.autoconf "$@" 2>&1
-then
+instrument_command make -f makefile.autoconf "$@" 2>&1
+retstat="$?"
+if test "$retstat" = 0 ; then
     RETVAL="DONE"
 else
     RETVAL="FAILED"
@@ -96,3 +97,4 @@ if [ $USING_XTERM -gt 0 ]
 then
     xterm_title --title "build.3dfx $@ ($RETVAL) @ `hostname --fqdn`:$PWD"
 fi
+exit $retstat
