@@ -30,7 +30,7 @@
 #
 # VC++ 6.0
 # Windows 98 DDK
-# NASM 0.98.36 (win32)
+# NASM 0.98.38 (win32)
 #
 
 ##################################
@@ -499,31 +499,31 @@ glide3x.dll: $(FX_GLIDE_HW)\lib\minihwc.lib $(GLIDE3_OBJ) $(GLIDE3_RES)
 	$(MV) $(FX_GLIDE_HW)\lib\glide3x.dll $(FX_GLIDE_HW)\bin\glide3x.dll
 
 $(FX_GLIDE_HW)\glide3\src\xdraw2_def.obj: $(FX_GLIDE_HW)\glide3\src\xdraw2.asm
-	$(AS) $(ASFLAGS) $(INCS) -DUSE_PACKET_FIFO=1 -o $@ $(FX_GLIDE_HW)\glide3\src\xdraw2.asm
+	$(AS) $(ASFLAGS) -I$(FX_GLIDE_HW)\glide3\src\ -DUSE_PACKET_FIFO=1 -o $@ $(FX_GLIDE_HW)\glide3\src\xdraw2.asm
 
 $(FX_GLIDE_HW)\glide3\src\xdraw3_def.obj: $(FX_GLIDE_HW)\glide3\src\xdraw3.asm
-	$(AS) $(ASFLAGS) $(INCS) -DUSE_PACKET_FIFO=1 -o $@ $(FX_GLIDE_HW)\glide3\src\xdraw3.asm
+	$(AS) $(ASFLAGS) -I$(FX_GLIDE_HW)\glide3\src\ -DUSE_PACKET_FIFO=1 -o $@ $(FX_GLIDE_HW)\glide3\src\xdraw3.asm
 
 $(FX_GLIDE_HW)\glide3\src\xdraw2_3dnow.obj: $(FX_GLIDE_HW)\glide3\src\xdraw2.asm
-	$(AS) $(ASFLAGS) $(INCS) -DGL_AMD3D=1 -DUSE_PACKET_FIFO=1 -o $@ $(FX_GLIDE_HW)\glide3\src\xdraw2.asm
+	$(AS) $(ASFLAGS) -I$(FX_GLIDE_HW)\glide3\src\ -DGL_AMD3D=1 -DUSE_PACKET_FIFO=1 -o $@ $(FX_GLIDE_HW)\glide3\src\xdraw2.asm
 
 $(FX_GLIDE_HW)\glide3\src\xdraw3_3dnow.obj: $(FX_GLIDE_HW)\glide3\src\xdraw3.asm
-	$(AS) $(ASFLAGS) $(INCS) -DGL_AMD3D=1 -DUSE_PACKET_FIFO=1 -o $@ $(FX_GLIDE_HW)\glide3\src\xdraw3.asm
+	$(AS) $(ASFLAGS) -I$(FX_GLIDE_HW)\glide3\src\ -DGL_AMD3D=1 -DUSE_PACKET_FIFO=1 -o $@ $(FX_GLIDE_HW)\glide3\src\xdraw3.asm
 
 $(FX_GLIDE_HW)\glide3\src\xtexdl_3dnow.obj: $(FX_GLIDE_HW)\glide3\src\xtexdl.asm
-	$(AS) $(ASFLAGS) $(INCS) -DGL_AMD3D=1 -DUSE_PACKET_FIFO=1 -o $@ $(FX_GLIDE_HW)\glide3\src\xtexdl.asm
+	$(AS) $(ASFLAGS) -I$(FX_GLIDE_HW)\glide3\src\ -DGL_AMD3D=1 -DUSE_PACKET_FIFO=1 -o $@ $(FX_GLIDE_HW)\glide3\src\xtexdl.asm
 
 $(FX_GLIDE_HW)\glide3\src\xtexdl_mmx.obj: $(FX_GLIDE_HW)\glide3\src\xtexdl.asm
-	$(AS) $(ASFLAGS) $(INCS) -DGL_MMX=1 -DUSE_PACKET_FIFO=1 -o $@ $(FX_GLIDE_HW)\glide3\src\xtexdl.asm
+	$(AS) $(ASFLAGS) -I$(FX_GLIDE_HW)\glide3\src\ -DGL_MMX=1 -DUSE_PACKET_FIFO=1 -o $@ $(FX_GLIDE_HW)\glide3\src\xtexdl.asm
 
 $(FX_GLIDE_HW)\glide3\src\xdraw2_sse.obj: $(FX_GLIDE_HW)\glide3\src\xdraw2.asm
-	$(AS) $(ASFLAGS) $(INCS) -DGL_SSE=1 -DUSE_PACKET_FIFO=1 -o $@ $(FX_GLIDE_HW)\glide3\src\xdraw2.asm
+	$(AS) $(ASFLAGS) -I$(FX_GLIDE_HW)\glide3\src\ -DGL_SSE=1 -DUSE_PACKET_FIFO=1 -o $@ $(FX_GLIDE_HW)\glide3\src\xdraw2.asm
 
 $(FX_GLIDE_HW)\glide3\src\xdraw3_sse.obj: $(FX_GLIDE_HW)\glide3\src\xdraw3.asm
-	$(AS) $(ASFLAGS) $(INCS) -DGL_SSE=1 -DUSE_PACKET_FIFO=1 -o $@ $(FX_GLIDE_HW)\glide3\src\xdraw3.asm
+	$(AS) $(ASFLAGS) -I$(FX_GLIDE_HW)\glide3\src\ -DGL_SSE=1 -DUSE_PACKET_FIFO=1 -o $@ $(FX_GLIDE_HW)\glide3\src\xdraw3.asm
 
 $(FX_GLIDE_HW)\glide3\src\xtexdl_sse2.obj: $(FX_GLIDE_HW)\glide3\src\xtexdl.asm
-	$(AS) $(ASFLAGS) $(INCS) -DGL_SSE2=1 -DUSE_PACKET_FIFO=1 -o $@ $(FX_GLIDE_HW)\glide3\src\xtexdl.asm
+	$(AS) $(ASFLAGS) -I$(FX_GLIDE_HW)\glide3\src\ -DGL_SSE2=1 -DUSE_PACKET_FIFO=1 -o $@ $(FX_GLIDE_HW)\glide3\src\xtexdl.asm
 
 .c.obj:
 	$(CC) -Fo$@ $(INCS) $(FLAGS) $(CFLAGS) $<
