@@ -1095,8 +1095,8 @@ _grSstDetectResources(void)
     hwcInfo
       *hInfo;                   /* Info about all the relavent boards */
     int tmu;
-    char* envChipNum;
-    FxU32 chipCount = 1;
+    //char* envChipNum;    /* unused */
+    //FxU32 chipCount = 1; /* unused */
 
     if ((hInfo = hwcInit(0x121a, 0x9)) == NULL)
     if ((hInfo = hwcInit(0x121a, 0x5)) == NULL) /* Voodoo3 */
@@ -1116,10 +1116,10 @@ _grSstDetectResources(void)
       ** KoolSmoky - chipCount should be after hwcInit(0x....) because
       ** it calls GETENV.
       */
-      envChipNum = GETENV("FX_GLIDE_NUM_CHIPS", GC.bInfo->RegPath);
+      /*envChipNum = GETENV("FX_GLIDE_NUM_CHIPS", GC.bInfo->RegPath);
       
       if (envChipNum)
-        chipCount = atoi(envChipNum);
+        chipCount = atoi(envChipNum);*/ /* unused */
 
       if (bInfo->pciInfo.deviceID == SST_DEVICE_ID_H3)
         SST.type = GR_SSTTYPE_Banshee;
@@ -1876,15 +1876,15 @@ _GlideInitEnvironment(int which)
   GDBG_INFO(80,"          snapshot: %d\n",_GlideRoot.environment.snapshot);
   _GlideRoot.environment.guardbandclipping = GLIDE_GETENV("FX_GLIDE_GBC", GC.bInfo->RegPath, 1L);
   GDBG_INFO(80," guardbandclipping: %d\n",_GlideRoot.environment.guardbandclipping);
-  /* KoolSmoky - enable 2ppc only in certain condition. -1=disable 1=enable 0=glide desides. enabled for now */
-  _GlideRoot.environment.do2ppc            = GLIDE_GETENV("FX_GLIDE_2PPC", GC.bInfo->RegPath, 1L);
+  /* KoolSmoky - enable 2ppc only in certain condition. -1=disable 1=enable 0=glide desides. disabled for now */
+  _GlideRoot.environment.do2ppc            = GLIDE_GETENV("FX_GLIDE_2PPC", GC.bInfo->RegPath, 0L);
   GDBG_INFO(80," do2ppc           : %d\n",_GlideRoot.environment.do2ppc);
   _GlideRoot.environment.band2ppc          = GLIDE_GETENV("FX_GLIDE_2PPC_BAND", GC.bInfo->RegPath, 2L);
   GDBG_INFO(80," band2ppc         : %d\n",_GlideRoot.environment.band2ppc);
   _GlideRoot.environment.sliBandHeight     = GLIDE_GETENV("FX_GLIDE_SLI_BAND_HEIGHT", GC.bInfo->RegPath, 0L);
   GDBG_INFO(80," sliBandHeight    : %d\n",_GlideRoot.environment.sliBandHeight);
-  _GlideRoot.environment.aaClip     = GLIDE_GETENV("FX_GLIDE_AA_CLIP", GC.bInfo->RegPath, 1L);
-  GDBG_INFO(80," aaClip    : %d\n",_GlideRoot.environment.aaClip);
+  _GlideRoot.environment.aaClip            = GLIDE_GETENV("FX_GLIDE_AA_CLIP", GC.bInfo->RegPath, 1L);
+  GDBG_INFO(80," aaClip           : %d\n",_GlideRoot.environment.aaClip);
 
   /* KoolSmoky - there is a possibility that grEnable(GR_OPENGL_MODE_EXT) is called once
    * but grSstSelect is called multiple times, so we won't retreive the sliBandHeightForce

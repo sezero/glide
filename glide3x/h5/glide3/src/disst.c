@@ -178,6 +178,7 @@ GR_DIENTRY(grSstQueryHardware, FxBool, ( GrHwConfiguration *hwc ))
 GR_DIENTRY(grSstSelect, void, ( int which ))
 {
   static FxBool initialized[HWC_MAX_BOARDS];
+  FxU32 i;
   /* NB: We cannot use GR_DCL_GC here because we may be setting
    * a context into tls.
    */
@@ -186,15 +187,19 @@ GR_DIENTRY(grSstSelect, void, ( int which ))
   if ( which >= _GlideRoot.hwConfig.num_sst )
     GrErrorCallback( "grSstSelect:  non-existent SST", FXTRUE );
 
-  if(!initialized[which]) _GlideRoot.initialized = FXFALSE;
-  _GlideInitEnvironment(which); /* the main init code */
-  initialized[which] = FXTRUE;
+  if(!initialized[which]) {
+	  _GlideRoot.initialized = FXFALSE;
+	  _GlideInitEnvironment(which); /* the main init code */
+  }
+  for(i = 0; i < HWC_MAX_BOARDS; i++) initialized[i] = FXFALSE;
   
 #if GDBG_INFO_ON
   GDBG_ERROR_SET_CALLBACK(_grErrorCallback);
 #endif
   
   if (_GlideRoot.initialized) {
+
+	initialized[which] = FXTRUE;
     initThreadStorage();
     initCriticalSection();
     _GlideRoot.current_sst = which;

@@ -347,8 +347,10 @@ CFILES              =   $(CFILES) gsplash.c g3df.c  gu.c gthread.c \
                         gpci.c diglide.c disst.c ditex.c gsfc.c\
                         gbanner.c gerror.c gaa.c gdraw.c gglide.c $(GLIDE3FILES) \
                         glfb.c gsst.c gtex.c gtexdl.c $(HWSPEC) cpuid.c
+                        
+CPPFILES        =       $(CPPFILES) winsurf.cpp
 
-OFILES          =       $(CFILES:.c=.obj)
+OFILES          =       $(CFILES:.c=.obj) $(CPPFILES:.cpp=.obj)
 
 OTHER_CFILES    =       fxgasm.c fxbldno.c fxinline.h
 

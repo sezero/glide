@@ -2621,7 +2621,21 @@ GR_ENTRY(grBufferSwap, void, (FxU32 swapInterval))
   GR_BEGIN_NOFIFOCHECK(FN_NAME,86);
   GDBG_INFO_MORE(gc->myLevel,"(%d)\n",swapInterval);
 
+  // First thing first. Decrement the lockCounter
+  if (_GlideRoot.environment.lockCounter > -10) _GlideRoot.environment.lockCounter--;
+
 #ifdef FX_GLIDE_NAPALM
+#if !defined(__linux__) && !defined(__DJGPP__)
+  /* Window hacky stuff */
+  if (gc->windowed)
+  {
+	  extern void _grFlipWindowSurface();
+	  grFinish();
+	  _grFlipWindowSurface();
+	  gc->stats.bufferSwaps++;
+	  return;
+  }
+#endif
 
   // 4x FSAA or greater FSAA
   if (0 && gc->grPixelSample >= 4) {

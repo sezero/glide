@@ -23,14 +23,14 @@
 
 #define MANVERSION              3
 #define MANREVISION             10
-#define MINVERSION              01
+#define MINVERSION              00
 
 #ifdef __WIN32__
-#define BUILD_NUMBER            0001
+#define BUILD_NUMBER            3001 /* hmm, must be at least 674 for the 3dfx OpenGL ICD to work correctly */
 #endif
 
-#define VERSIONSTR "3.10.01.0001"
-#define CONTACTSTR "The Glide Open Source Project http://glide.sourceforge.net/\0"
+#define VERSIONSTR "3.10.00.3001"
+#define CONTACTSTR "The Glide Open Source Project http://glide.sourceforge.net/"
 
 #if defined(__WIN32__)
 #define _TRADEMARK_  "(tm)"

@@ -1572,6 +1572,18 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
   GDBG_INFO(80, "Setting hwnd to foreground.\n");
   SetForegroundWindow((HWND)hWnd);
 */
+
+  /* Want Windowed Mode */
+  if (resolution == GR_RESOLUTION_NONE)
+  {
+	 extern GrContext_t _grCreateWindowSurface(FxU32 hWnd,
+										GrColorFormat_t		format, 
+										GrOriginLocation_t	origin, 
+										GrPixelFormat_t		pixelformat,
+										int					nAuxBuffer);
+
+	 return _grCreateWindowSurface(hWnd, format, origin, pixelformat, nAuxBuffers);
+  }
 #endif	/* defined(__linux__) || defined(__DJGPP__) */
   
   /* NB: TLS must be setup before the 'declaration' which grabs the
@@ -2011,17 +2023,14 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
       {
         switch (gc->grSstRez) 
         {
-          case GR_RESOLUTION_1600x1024:
-             gc->do2ppc = FXTRUE;
-             break ;
           case GR_RESOLUTION_1600x1200:
-             break;
           case GR_RESOLUTION_1792x1344:
           case GR_RESOLUTION_1856x1392:
           case GR_RESOLUTION_1920x1440:
           case GR_RESOLUTION_2048x1536:
           case GR_RESOLUTION_2048x2048:
             gc->bInfo->h3analogSli = 1 ;
+			gc->do2ppc = FXTRUE;
             break;          
           case GR_RESOLUTION_400x300:
           case GR_RESOLUTION_320x200:
@@ -2043,8 +2052,6 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
         switch (gc->grSstRez) 
         {
           case GR_RESOLUTION_1600x1024:
-            gc->bInfo->h3analogSli = 1 ;
-            break ;
           case GR_RESOLUTION_1600x1200:
           case GR_RESOLUTION_1792x1344:
           case GR_RESOLUTION_1856x1392:
@@ -2064,6 +2071,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
             gc->chipCount = 1 ;
             gc->grPixelSample = 1 ;
           default:
+			gc->do2ppc = FXTRUE;
             break;
         }
       }
@@ -3075,10 +3083,21 @@ GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
   if (!gc)
     return 0;
 
+#if !defined(__linux__) && !defined(__DJGPP__)
+  /* We are in Windowed Mode */
+  if (gc->windowed)
+  {
+	 extern void _grReleaseWindowSurface(GrContext_t ctx);
+	 _grReleaseWindowSurface(context);
+	 return FXTRUE;
+  }
+#endif
+
   /* If we are OpenGL, we need to release Exclusive mode so other
   ** OpenGL fullscreen apps can run.  If not, we will cause a lot
   ** of problems.
   */
+#if 0
   if (_GlideRoot.environment.is_opengl == FXTRUE) {
     /* KoolSmoky- don't release Exclusive mode if we're running 
      * in NT5.1. This may cause probems. but, ohwell.
@@ -3086,6 +3105,7 @@ GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
      if( !gc->bInfo->osNT51 )
       hwcRestoreVideo(gc->bInfo);
   }
+#endif
 
 #ifndef	__linux__
   if (gc->lostContext) {

@@ -78,16 +78,11 @@ FxU32 getThreadValueSLOW( void ) {
 #elif 1
     __GR_GET_TLSC_VALUE();
 #else
-/*    __asm {
-      __asm mov esi, DWORD PTR fs:[WNT_TEB_PTR] 
-      __asm add esi, DWORD PTR _GlideRoot.tlsOffset \
-     __asm mov eax, DWORD PTR [esi] \
-}
-*/
+
   __asm {
-    __asm mov esi, DWORD PTR fs:[WNT_TEB_PTR];
-    __asm add esi, DWORD PTR _GlideRoot.tlsOffset;
-    __asm mov eax, DWORD PTR [esi];
+    mov esi, DWORD PTR fs:[WNT_TEB_PTR]
+    add esi, DWORD PTR _GlideRoot.tlsOffset
+    mov eax, DWORD PTR [esi]
   }
 
 #endif

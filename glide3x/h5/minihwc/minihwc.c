@@ -19,6 +19,7 @@
 **
 ** $Header$
 ** $Log:
+** 100             1.72.8          05/30/03 KoolSmoky       fixed up asm routines
 **  99   GlideXP   1.72.7          12/28/01 Ryan Nunn       Removing stupid debug
 **       comments.
 **  98   GlideXP   1.72.6          12/28/01 Ryan Nunn       Improving faster WinXP 
@@ -3237,6 +3238,13 @@ hwcGetSurfaceInfo(const hwcBoardInfo* bInfo,
   ret->height = desc.dwHeight;
   ret->width  = desc.dwWidth;
   ret->bitdepth  = _hwcPixelFormatToBitDepth(&desc.ddpfPixelFormat);
+
+  GDBG_INFO(80, "h %d\n", desc.dwHeight);
+  GDBG_INFO(80, "w %d\n", desc.dwWidth);
+  GDBG_INFO(80, "f %X\n", desc.dwFlags);
+  GDBG_INFO(80, "p %X\n", desc.ddpfPixelFormat.dwFlags);
+  GDBG_INFO(80, "c %X\n", desc.ddsCaps.dwCaps);
+
   retVal = (ret->bitdepth != 0x00UL);
   if (!retVal) {
     sprintf(errorString, "%s: Invalid surface pixel format (0x%X)\n", 
@@ -3529,6 +3537,12 @@ hwcAllocWinFifo(hwcBoardInfo* bInfo,
         GDBG_INFO(80, "%s: Could not find primary surface.\n", FN_NAME);
         goto __errSurfaceFifo;
       }
+
+	  GDBG_INFO(80, "ph %d\n", primaryDesc.dwHeight);
+	  GDBG_INFO(80, "pw %d\n", primaryDesc.dwWidth);
+	  GDBG_INFO(80, "pf %X\n", primaryDesc.dwFlags);
+	  GDBG_INFO(80, "pp %X\n", primaryDesc.ddpfPixelFormat.dwFlags);
+	  GDBG_INFO(80, "pc %X\n", primaryDesc.ddsCaps.dwCaps);
 
       /* If the DirectDraw driver supports wide surfaces then we can
        * specify what will align well w/ the underlying hw's page
@@ -4774,10 +4788,14 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
    if (NULL == GETENV("SSTH3_OVERLAYMODE", bInfo->RegPath))
    {
       /* We are in optimal mode by default */
-      if(bInfo->vidInfo.xRes < 1024)
-         vidProcCfg |= SST_OVERLAY_FILTER_2X2;
-      else
-         vidProcCfg |= SST_OVERLAY_FILTER_4X4;
+      if(bpp == 32 && !((bInfo->pciInfo.numChips == 4) && (bInfo->h3pixelSample >= 4))) { /* 32bpp and not 4x,8xfsaa on v56k */
+		 vidProcCfg |= SST_OVERLAY_FILTER_POINT;
+	  } else {
+         if(bInfo->vidInfo.xRes < 1024)
+            vidProcCfg |= SST_OVERLAY_FILTER_2X2;
+         else
+            vidProcCfg |= SST_OVERLAY_FILTER_4X4;
+	  }
    }
    else
    {
@@ -4785,10 +4803,14 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
       {
          default:
          case 1: /* Optimal */
-            if(bInfo->vidInfo.xRes < 1024)
-               vidProcCfg |= SST_OVERLAY_FILTER_2X2;
-            else
-               vidProcCfg |= SST_OVERLAY_FILTER_4X4;
+            if(bpp == 32 && !((bInfo->pciInfo.numChips == 4) && (bInfo->h3pixelSample >= 4))) { /* 32bpp and not 4x,8xfsaa on v56k */
+			   vidProcCfg |= SST_OVERLAY_FILTER_POINT;
+			} else {
+               if(bInfo->vidInfo.xRes < 1024)
+                  vidProcCfg |= SST_OVERLAY_FILTER_2X2;
+               else
+                  vidProcCfg |= SST_OVERLAY_FILTER_4X4;
+			}
             break;
          case 2: /* Normal */
             vidProcCfg |= SST_OVERLAY_FILTER_4X4;
@@ -4864,13 +4886,13 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
 
   /* Sorry, can only use 4x1 filter in this mode. */
   if ( bInfo->h3nwaySli > 1 ) {
-    if( ((vidProcCfg & SST_OVERLAY_FILTER_BILINEAR) == SST_OVERLAY_FILTER_BILINEAR) ||
-        ((vidProcCfg & SST_OVERLAY_FILTER_2X2) == SST_OVERLAY_FILTER_2X2) ) {
+    if(vidProcCfg & SST_OVERLAY_FILTER_MODE) {
       vidProcCfg &= ~SST_OVERLAY_FILTER_MODE;
       vidProcCfg |= SST_OVERLAY_FILTER_4X4;
     }
   }      
   
+#if 0 /* use optimal or let the user decide */
   /* Disable video filter in 32-bit mode */
 #if 1 /* looks better with filter when in 16bpp 2xfsaa */
   if(bpp == 32 || bInfo->h3pixelSample > 2) {
@@ -4880,6 +4902,7 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
     vidProcCfg &= ~SST_OVERLAY_FILTER_MODE;
     vidProcCfg |= SST_OVERLAY_FILTER_POINT;
   }  
+#endif
 
   HWC_IO_STORE(bInfo->regInfo, vidProcCfg, vidProcCfg);
 
@@ -6499,7 +6522,9 @@ static void hwcReadRegion565(hwcBoardInfo *bInfo, FxU32 src, FxU32 src_x, FxU32 
   end_x = src_x + src_width;
   end_y = src_y + src_height;
   
-  s = (FxU8 *)(src + src_x*2 + src_y*strideInBytes);
+  s = (FxU8 *)(src + src_x*4);
+  for (y = 0; y < src_y; y++) if((y & renderMask) == compareMask) s += strideInBytes;
+
   stride_diff = strideInBytes - (src_width*2);
   
   if (bInfo->CPUInfo.os_support & _CPU_FEATURE_MMX)
@@ -6515,6 +6540,8 @@ static void hwcReadRegion565(hwcBoardInfo *bInfo, FxU32 src, FxU32 src_x, FxU32 
       );
 #else
       __asm {
+	    emms /* mmx */
+
         /* mm7 = zero */
         pXor	mm7,	mm7;		
         
@@ -6535,10 +6562,11 @@ static void hwcReadRegion565(hwcBoardInfo *bInfo, FxU32 src, FxU32 src_x, FxU32 
         push	0x10401080;		/* g=10000010 b=10000100 */
         MovQ	mm4,	[esp]
         Add	esp,	8
+
         }
 #endif
 
-      for(y = 0; y < end_y; y++)
+      for(y = src_y; y < end_y; y++)
         {    
           if((y & renderMask) == compareMask)
             {
@@ -6551,10 +6579,10 @@ static void hwcReadRegion565(hwcBoardInfo *bInfo, FxU32 src, FxU32 src_x, FxU32 
                 /* Scanline Setup */
                 Mov	eax,	s
                 Mov	edx,	dst
-                Mov	edi,	end_x
+                Mov	edi,	src_width
                 Shl	edi,	3
                 Add	edi,	edx
-		Xor	ebx,	ebx
+				Xor	ebx,	ebx
 
                 align 8
                 
@@ -6597,6 +6625,7 @@ static void hwcReadRegion565(hwcBoardInfo *bInfo, FxU32 src, FxU32 src_x, FxU32 
 		add		eax,	stride_diff
 		mov		s,		eax
 		mov		dst,	edx
+
                 };
 #endif
             }
@@ -6604,20 +6633,25 @@ static void hwcReadRegion565(hwcBoardInfo *bInfo, FxU32 src, FxU32 src_x, FxU32 
             {
               dst += src_width*4;
             }
-        }  
+        }
 
-      /* Reset MMX State */
-      _m_empty();
+#ifndef __DJGPP__
+		  __asm {
+			  emms /* mmx */
+		  }
+#endif
+
     }
   else
     {
       /* Standard Unoptimized Loop */
-      for(y = 0; y < end_y; y++)
+      for(y = src_y; y < end_y; y++)
         {    
           if((y & renderMask) == compareMask)
             {
               /* This chip owns this scanline. */
-              for(x = 0; x < end_x; x++) {
+			  for(x = src_x; x < end_x; x++) 
+			  {
                 *dst++ += (FxU16) (((*(FxU16*) s) >> 00) & 0x1F) << 3;
                 *dst++ += (FxU16) (((*(FxU16*) s) >> 05) & 0x3F) << 2;
                 *dst++ += (FxU16) (((*(FxU16*) s) >> 11) & 0x1F) << 3;
@@ -6648,7 +6682,9 @@ static void hwcReadRegion1555(hwcBoardInfo *bInfo, FxU32 src, FxU32 src_x, FxU32
   end_x = src_x + src_width;
   end_y = src_y + src_height;
   
-  s = (FxU8 *)(src + src_x*2 + src_y*strideInBytes);
+  s = (FxU8 *)(src + src_x*4);
+  for (y = 0; y < src_y; y++) if((y & renderMask) == compareMask) s += strideInBytes;
+
   stride_diff = strideInBytes - (src_width*2);
   
   if (bInfo->CPUInfo.os_support & _CPU_FEATURE_MMX)
@@ -6664,6 +6700,8 @@ static void hwcReadRegion1555(hwcBoardInfo *bInfo, FxU32 src, FxU32 src_x, FxU32
       );
 #else
       __asm {
+	    emms /* mmx */
+
         /* mm7 = zero */
         pXor	mm7,	mm7;		
         
@@ -6684,10 +6722,11 @@ static void hwcReadRegion1555(hwcBoardInfo *bInfo, FxU32 src, FxU32 src_x, FxU32
 	push	0x10801080;		/* g=1000010000 b=1000010000 */
 	MovQ	mm4,	[esp]
 	Add	esp,	8
+
 	}
 #endif
 
-	for(y = 0; y < end_y; y++)
+	for(y = src_y; y < end_y; y++)
           {    
             if((y & renderMask) == compareMask)
               {
@@ -6700,7 +6739,7 @@ static void hwcReadRegion1555(hwcBoardInfo *bInfo, FxU32 src, FxU32 src_x, FxU32
                   /* Scanline Setup */
                   Mov	eax,	s
 		  Mov	edx,	dst
-		  Mov	edi,	end_x
+		  Mov	edi,	src_width
                   Shl	edi,	3
 		  Add	edi,	edx
 		  Xor	ebx,	ebx
@@ -6745,6 +6784,7 @@ static void hwcReadRegion1555(hwcBoardInfo *bInfo, FxU32 src, FxU32 src_x, FxU32
 		  add		eax,	stride_diff
 		  mov		s,		eax
 		  mov		dst,	edx
+
                   };
 #endif
               }
@@ -6752,20 +6792,24 @@ static void hwcReadRegion1555(hwcBoardInfo *bInfo, FxU32 src, FxU32 src_x, FxU32
               {
                 dst += src_width*4;
               }
-          }  
+          }
 
-      /* Reset MMX State */
-      _m_empty();
+#ifndef __DJGPP__
+		  __asm {
+			  emms /* mmx */
+		  }
+#endif
     }
   else
     {
       /* Standard Unoptimized Loop */
-      for(y = 0; y < end_y; y++)
+      for(y = src_y; y < end_y; y++)
         {    
           if((y & renderMask) == compareMask)
             {
               /* This chip owns this scanline. */
-              for(x = 0; x < end_x; x++) {
+              for(x = src_x; x < end_x; x++) 
+			  {
                 *dst++ += (FxU16) (((*(FxU16*) s) >> 00) & 0x1F) << 3;
                 *dst++ += (FxU16) (((*(FxU16*) s) >> 05) & 0x1F) << 3;
                 *dst++ += (FxU16) (((*(FxU16*) s) >> 10) & 0x1F) << 3;
@@ -6797,7 +6841,9 @@ static void hwcReadRegion8888(hwcBoardInfo *bInfo, FxU32 src, FxU32 src_x, FxU32
   end_x = src_x + src_width;
   end_y = src_y + src_height;
   
-  s = (FxU8 *)(src + src_x*4 + src_y*strideInBytes);
+  s = (FxU8 *)(src + src_x*4);
+  for (y = 0; y < src_y; y++) if((y & renderMask) == compareMask) s += strideInBytes;
+
   stride_diff = strideInBytes - (src_width*4);
   
   if (bInfo->CPUInfo.os_support & _CPU_FEATURE_MMX)
@@ -6806,10 +6852,14 @@ static void hwcReadRegion8888(hwcBoardInfo *bInfo, FxU32 src, FxU32 src_x, FxU32
 #ifdef __DJGPP__
       MMX_SETUP4();
 #else
-      __asm pXor mm7, mm7;
+		__asm {
+			emms /* mmx */
+
+			pXor mm7, mm7
+		}
 #endif
       
-      for(y = 0; y < end_y; y++)
+      for(y = src_y; y < end_y; y++)
         {    
           if((y & renderMask) == compareMask)
             {
@@ -6822,7 +6872,7 @@ static void hwcReadRegion8888(hwcBoardInfo *bInfo, FxU32 src, FxU32 src_x, FxU32
                 /* Scanline Setup */
                 Mov		eax,	s
                 Mov		edx,	dst
-		Mov		edi,	end_x
+		Mov		edi,	src_width
 		Shl		edi,	3
 		Add		edi,	edx
 
@@ -6847,6 +6897,7 @@ static void hwcReadRegion8888(hwcBoardInfo *bInfo, FxU32 src, FxU32 src_x, FxU32
 		add		eax,	stride_diff
 		mov		s,	eax
 		mov		dst,	edx
+
                 };
 #endif
             }
@@ -6856,18 +6907,21 @@ static void hwcReadRegion8888(hwcBoardInfo *bInfo, FxU32 src, FxU32 src_x, FxU32
             }
         }
 
-      /* Reset MMX State */
-      _m_empty();
+#ifndef __DJGPP__
+		__asm {
+			emms /* mmx */
+		}
+#endif
     }
   else
     {
       /* Standard Unoptimized Loop */
-      for(y = 0; y < end_y; y++)
+      for(y = src_y; y < end_y; y++)
         {    
           if((y & renderMask) == compareMask) 
             {
               /* This chip owns this scanline. */
-              for(x = 0; x < end_x; x++)
+              for(x = src_x; x < end_x; x++)
                 {
                   *dst++ += (FxU16) ((*(FxU32*) s) >> 0) & 0xFF;
                   *dst++ += (FxU16) ((*(FxU32*) s) >> 8) & 0xFF;
@@ -6951,7 +7005,7 @@ FxU32 hwcAAReadRegion16(hwcBoardInfo *bInfo, FxU32 colBufNum,
    * or 4 chip boards */
   if ((bInfo->h3pixelSize == 2) ||
       (bInfo->h3pixelSample == 2) ||
-      (numChips == 4)) {
+      (numChips == 4 && bInfo->h3pixelSample != 1)) {
     
     /* Figure out framebuffer format (1555 or 565) */
     HWC_IO_LOAD(bInfo->regInfo, vidProcCfg, vidProcCfg);
@@ -7135,6 +7189,8 @@ static void hwcCopyBuffer8888Flipped(hwcBoardInfo *bInfo, FxU16 *source, int w, 
       /* MMX Optimized Loop */
       __asm
         {
+		  emms /* mmx */
+
           Mov		eax,	src		/* eax = source */
           Mov		edx,	dst		/* edx = dest */
 	  Mov		edi,	endline	/* edi = endline */
@@ -7181,9 +7237,9 @@ static void hwcCopyBuffer8888Flipped(hwcBoardInfo *bInfo, FxU16 *source, int w, 
 	  Sub		eax, ebx		/* src -= w*2; */
 	  cmp		edx, end		/* if (dst!=end) */
 	  jne		loop_begin		/* goto loop_begin; */
+
+	  emms /* mmx */
 			
-	   /* Reset MMX State */
-	  emms;
         }
     }
   else
@@ -7217,6 +7273,8 @@ static void hwcCopyBuffer8888FlippedShifted(hwcBoardInfo *bInfo, FxU16 *source, 
       /* MMX Optimized Loop */
       __asm
       {
+	    emms /* mmx */
+
         Mov	eax,	src		/* eax = source */
 	Mov	edx,	dst		/* edx = dest */
 	Mov	edi,	endline	/* edi = endline */
@@ -7265,9 +7323,9 @@ static void hwcCopyBuffer8888FlippedShifted(hwcBoardInfo *bInfo, FxU16 *source, 
 	Sub		eax, ebx		/* src -= w*2; */
 	cmp		edx, end		/* if (dst!=end) */
 	jne		loop_begin		/* goto loop_begin; */
+
+	emms /* mmx */
 			
-	 /* Reset MMX State */
-	emms;
       }
     }
   else
@@ -7312,6 +7370,8 @@ static void hwcCopyBuffer8888FlippedDithered(hwcBoardInfo *bInfo, FxU16 *source,
       /* MMX Optimized Loop */
       __asm
       {
+	    emms /* mmx */
+
         /* mm7 = all ones */
         Mov		eax,	0xFFFFFFFF
 	MovD		mm7,	eax
@@ -7484,8 +7544,8 @@ static void hwcCopyBuffer8888FlippedDithered(hwcBoardInfo *bInfo, FxU16 *source,
 	jne		mmx_loop_begin	/* goto mmx_loop_begin; */
 			
         finished:
-	/* Reset MMX State */
-	emms;
+
+	    emms /* mmx */
       }
     }
   else
@@ -7569,10 +7629,7 @@ void hwcAAScreenShot(hwcBoardInfo *bInfo, FxU32 colBufNum, FxBool dither)
     {
       hwcCopyBuffer8888Flipped(bInfo, buffer, bInfo->vidInfo.xRes, bInfo->vidInfo.yRes, out, 0);
     }
-  
-  /* MMX Stuff */
-  _m_empty();
-  
+    
   /* Write buffer to disk */
 #ifdef _WIN32
   GetLocalTime(&curtime);
@@ -7739,7 +7796,63 @@ static void hwcCopyBuffer565Shifted(hwcBoardInfo *bInfo, FxU16 *src, int w, int 
   gshift = 3 - aaShift;
   rshift = 8 - aaShift;
   
-  while (dst<end)
+  if (bInfo->CPUInfo.os_support & _CPU_FEATURE_MMX)
+  {
+	  /* MMX Optimized Loop */
+	  __asm
+	  {
+		  emms /* mmx */
+
+		  Mov			eax,	src		/* eax = source */
+		  Mov			edx,	dst		/* edx = dest */
+		  Mov			edi,	endline	/* edi = endline */
+
+		  /* mm6 = aaShift */
+		  MovD		mm6,	aaShift	
+
+		  /* mm5 = mask */
+		  push		0x0000F800;		/* a r */
+		  push		0xFC00F800;		/* g b */
+		  MovQ		mm5,	[esp]
+		  Add			esp,	8
+
+		align 8
+loop_begin:
+		  /* Read Pixel, Reduce to 32 bits */
+		  MovQ		mm0,	mmword ptr [eax]
+		  pSRLW		mm0,	mm6		/* AA Shift to 32 bit */
+		  //pAnd		mm0,	mm5		/* 565 Mask */
+		  PackUSWB	mm0,	mm0
+		  MovD		ebx,	mm0
+
+		  /* Convert to 565 */
+		  Mov			ecx,	ebx
+		  And			ebx,	0x0000FCF8
+		  And			ecx,	0x00F80000
+		  Shr			bh,		2
+		  Shr			ecx,	8
+		  Shr			ebx,	3
+		  Or			ebx,	ecx
+
+		  /* Write */
+		  Mov			word ptr [edx],	bx
+
+		  /* Next Pixel */
+		  Add			eax, 8	
+		  Add			edx, 2
+		  cmp			edx, edi		/* if (dst!=endline) */
+		  jne			loop_begin		/* goto loop_begin; */
+
+		  /* Next Scanline */
+		  Add			edi, stride_dest/* endline += stride_dest; */
+		  Add			edx, stride_diff/* dest += stride_diff; */
+		  cmp			edx, end		/* if (dst!=end) */
+		  jne			loop_begin		/* goto loop_begin; */
+
+		  emms /* mmx */
+	  }
+  }
+  else while (dst<end)
     {
       while (dst<endline)
         {
@@ -8041,7 +8154,7 @@ void hwcAAReadRegion(hwcBoardInfo *bInfo, FxU32 colBufNum,
         {
           hwcCopyBuffer1555(bInfo, buffer, src_width, src_height, dst_stride, dst_data, 0);
         }
-    }	
+    }
   
   /* Free memory */
   _aligned_free (buffer);
@@ -8052,7 +8165,7 @@ void hwcAAReadRegion(hwcBoardInfo *bInfo, FxU32 colBufNum,
 #define BLUE_SHIFT      0
 
 
-#define CLAMP(val, min, max) if (val > max) val = max; /*else if (val < min) val = min;*//* KoolSmoky */
+#define CLAMP(val, min, max) if (val > max) val = max; else if (val < min) val = min
 #define ADJUST(val, lowest, low, high, typ) if (high < lowest) val=(typ)(low); else val = (typ)(high)
 #define GETFLOATENV(s, r, v) if (GETENV(s, r)) v = (FxFloat)(atof(GETENV(s, r)))
 
@@ -8159,11 +8272,15 @@ hwcGammaTable(hwcBoardInfo *bInfo, FxU32 nEntries, FxU32 *r, FxU32 *g, FxU32 *b)
     GDBG_INFO(69,": gRamp[%d] = %d\n", i, gRamp[i]);
   }
 
-  /* Colourless - Hack for V5 6000 4x and 8x FSAA*/
+  /* Colourless - Hack for V5 6000 4x and 8x FSAA */
+  /* KoolSmoky - Since the DAC is shared between 2 chips, the input to gamma look up 
+     table is divided by extra 2 and the MSB is lost. To correct this the table should 
+	 be only 7 bits. The resulting image will have only 7.5 bits per prime */
   if (bInfo->pciInfo.numChips == 4 && bInfo->h3pixelSample >= 4) {
-    
-    /* Go through 0 to 127 */
-    for (i = 0; i < 128; i++) gRamp[i] = gRamp[(i*255)/127];
+    gRamp[0] = 0; /* KoolSmoky - if row 0 is not 0 on napalm, we get strange banding effects on exit to desktop */
+
+    /* Go through 1 to 127 */
+    for (i = 1; i < 128; i++) gRamp[i] = ((gRamp[(i*255)/127] >> 1) & 0x007F7F7F); /* KoolSmoky - dac output is doubled in 4x, 8xfsaa */
     
     /* Go through 128 to 255 */
     for (; i < 256; i++) gRamp[i] = gRamp[127];

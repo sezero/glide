@@ -343,11 +343,13 @@ static FxBool _grLfbLock (GrLock_t type, GrBuffer_t buffer,
                             GrLfbWriteMode_t writeMode, GrOriginLocation_t origin, 
                             FxBool pixelPipeline, GrLfbInfo_t *info)
 {
-#define FN_NAME "grLfbLock"
+#define FN_NAME "_grLfbLock"
   FxBool
     rv = FXTRUE;
   const FxBool 
     idleLockP = ((type & GR_LFB_NOIDLE) == 0);
+  FxBool
+	noRead = FXFALSE;
   FxU32
     lfbMode,
     zaColor,
@@ -357,7 +359,7 @@ static FxBool _grLfbLock (GrLock_t type, GrBuffer_t buffer,
   GrLfbWriteMode_t fbMode = 0;
   GrLfbWriteMode_t depthMode = 0;
 
-  GR_BEGIN_NOFIFOCHECK_RET("grLfbLock", 82);
+  GR_BEGIN_NOFIFOCHECK_RET("_grLfbLock", 82);
   GDBG_INFO_MORE(gc->myLevel,"(%d,%d,0x%x)\n", type, buffer, info);
 
   GR_CHECK_COMPATABILITY(FN_NAME, !info,
@@ -367,6 +369,13 @@ static FxBool _grLfbLock (GrLock_t type, GrBuffer_t buffer,
                          "uninitialized info structure passed.");
 
   type = type & ~(GR_LFB_NOIDLE);
+
+  // LFBWOEXP Extension
+  if (type == GR_LFB_WRITE_ONLY_EXPLICIT_EXT)
+  {
+	  type = GR_LFB_WRITE_ONLY;
+	  noRead = FXTRUE;
+  }
 
   /* Pray that no one has made any glide calls that touch the hardware... */
 #ifdef FX_GLIDE_NAPALM
@@ -724,7 +733,7 @@ static FxBool _grLfbLock (GrLock_t type, GrBuffer_t buffer,
                 we just return the current buffer lfbPtr as the write ptr. 
                 This fixes those games that use the lfb write pointer to do
                 lfb reads. --mikec */
-              if((writeMode == (FxI32)fbMode) &&
+              if((writeMode == (FxI32)fbMode) && (!noRead)  &&
                 (!pixelPipeline) && 
                  /* Origin must be upper left since we will return raw lfb */
                  (origin != GR_ORIGIN_LOWER_LEFT)){
@@ -771,7 +780,7 @@ static FxBool _grLfbLock (GrLock_t type, GrBuffer_t buffer,
              * take both a read and write lock, but only save off the stride value 
              * from the latter one.  So if we return different strides OpenGL's lfb
              * accesses will be whacked. -- KCD */
-              if((writeMode == fbMode) &&
+              if((writeMode == fbMode) && (!noRead)  &&
                  (!pixelPipeline) && 
                  /* Origin must be upper left since we will return raw lfb */
                  (origin != GR_ORIGIN_LOWER_LEFT)){
@@ -917,7 +926,7 @@ static FxBool _grLfbLock (GrLock_t type, GrBuffer_t buffer,
 
   GR_RETURN(rv);
 #undef FN_NAME
-} /* grLfbLock */
+} /* _grLfbLock */
 
 /* Hack to correct locks of forced 32 bit surfaces */
 static FxU16 *forced_32bpp_lock_buffer = 0;
@@ -934,6 +943,7 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t _type, GrBuffer_t buffer,
 #define FN_NAME "grLfbLock"
   FxBool rv = FXTRUE;
   FxBool wantHwc;
+  FxBool forbidden = FXFALSE;
   
   GrLock_t type;
   
@@ -951,17 +961,41 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t _type, GrBuffer_t buffer,
     GDBG_INFO(79, "Read lock failure due to existing lock");
     return FXFALSE;
   }
+
+  /* Ok, we will disallow all Hwc reads (regardless of what the app might want) */
+  /* If we detect that the buffer is being locked far too much (aka a lock every frame) */
+  if (_GlideRoot.environment.lockCounter > 3)
+  {
+	  /* Disable HwcAAforLfbRead */
+	  if (_GlideRoot.environment.useHwcAAforLfbRead & 2)
+	  {
+		  _GlideRoot.environment.useHwcAAforLfbRead |= 4;
+		  _GlideRoot.environment.useHwcAAforLfbRead &= ~2;
+	  }
+	  forbidden = FXTRUE;
+  }
+  /* Re-allow it if we drop back to 0 */
+  else if ((_GlideRoot.environment.lockCounter) == -10 && (_GlideRoot.environment.useHwcAAforLfbRead & 4))
+  {
+	  /* Re-enable HwcAAforLfbRead */
+	  _GlideRoot.environment.useHwcAAforLfbRead |= 2;
+	  _GlideRoot.environment.useHwcAAforLfbRead &= ~4;
+	  forbidden = FXFALSE;
+  }
   
   /* We want to read using HWC if we using FSAA with 4 chips or want dithering */
   /* or we are using forced 32 bit mode and want dithering */
   wantHwc = (_GlideRoot.environment.useHwcAAforLfbRead & 2) &&
     ((gc->state.forced32BPP != 0    && _GlideRoot.environment.ditherHwcAA) ||
      (gc->bInfo->h3pixelSample >= 2 && (gc->chipCount == 4 || _GlideRoot.environment.ditherHwcAA)));
+
+  /* Incrememt the lockCounter */
+  if (type == GR_LFB_READ_ONLY) _GlideRoot.environment.lockCounter++;
   
   /* If we are using forced 32 bpp mode, the app is expecting 16 bit data */
   /* Or we want to be using HwcAA for the Lfb read lock */
   /* We need to use a hack for reading in OpenGL since they do 2 locks. Why, oh why, oh why...*/
-  if ((gc->state.forced32BPP || wantHwc) && 
+  if (!forbidden && (gc->state.forced32BPP || wantHwc) && 
       (!_GlideRoot.environment.is_opengl || _GlideRoot.environment.oglLfbLockHack) &&  
       (buffer ==  GR_BUFFER_FRONTBUFFER || buffer == GR_BUFFER_BACKBUFFER))
     {
@@ -1000,6 +1034,9 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t _type, GrBuffer_t buffer,
           
           /* Reset the useHwcAAforLfbRead setting */
           _GlideRoot.environment.useHwcAAforLfbRead = old_useHwcAAforLfbRead;
+
+		  /* Increment the lock counter again */
+		  _GlideRoot.environment.lockCounter++;
           
           /* Failed to read */
           if (!rv)
@@ -1045,10 +1082,10 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t _type, GrBuffer_t buffer,
 
 static FxBool _grLfbUnlock (GrLock_t type, GrBuffer_t buffer)
 {
-#define FN_NAME "grLfbUnlock"
+#define FN_NAME "_grLfbUnlock"
   FxBool rval = FXFALSE;
   
-  GR_BEGIN_NOFIFOCHECK_RET("grLfbUnLock", 83);
+  GR_BEGIN_NOFIFOCHECK_RET("_grLfbUnLock", 83);
   GDBG_INFO_MORE(gc->myLevel,"(%d, %d)\n", type, buffer);
   
   type = type & ~(GR_LFB_NOIDLE);
@@ -1148,7 +1185,7 @@ static FxBool _grLfbUnlock (GrLock_t type, GrBuffer_t buffer)
 
   GR_RETURN(rval);
 #undef FN_NAME
-} /* grLfbUnlock */
+} /* _grLfbUnlock */
 
 /* Hack to correct locks of forced 32 bit surfaces */
 GR_ENTRY(grLfbUnlock, FxBool, (GrLock_t _type, GrBuffer_t buffer))
@@ -1157,7 +1194,7 @@ GR_ENTRY(grLfbUnlock, FxBool, (GrLock_t _type, GrBuffer_t buffer))
   FxBool rval = FXFALSE;
   GrLock_t type;
   
-  GR_BEGIN_NOFIFOCHECK_RET("_grLfbUnLock", 83);
+  GR_BEGIN_NOFIFOCHECK_RET("grLfbUnLock", 83);
   GDBG_INFO_MORE(gc->myLevel,"(%d, %d)\n", _type, buffer);
   
   type = _type & ~(GR_LFB_NOIDLE);
@@ -1312,7 +1349,7 @@ _grLfbWriteRegion(FxBool pixPipelineP,
 
   info.size = sizeof(info);
   
-  if (grLfbLock(GR_LFB_WRITE_ONLY, 
+  if (_grLfbLock(GR_LFB_WRITE_ONLY_EXPLICIT_EXT, 
                  dst_buffer, 
                  writeMode,
                  GR_ORIGIN_UPPER_LEFT,
@@ -1326,7 +1363,6 @@ _grLfbWriteRegion(FxBool pixPipelineP,
     FxU32 length;               /* bytes to copy in scanline */
     FxU32 scanline;             /* scanline number */
     int   aligned;              /* word aligned? */
-    
     
     srcData = (FxU32 *) src_data;
     dstData = (FxU32 *) (((char*)info.lfbPtr)+ (dst_y*info.strideInBytes));
@@ -1417,7 +1453,7 @@ _grLfbWriteRegion(FxBool pixPipelineP,
       rv = FXFALSE;
       break;
     }
-    grLfbUnlock(GR_LFB_WRITE_ONLY, dst_buffer);
+    _grLfbUnlock(GR_LFB_WRITE_ONLY, dst_buffer);
   } else {
     rv = FXFALSE;
   }
@@ -1514,6 +1550,7 @@ static FxBool grLfbReadRegionOrigin (GrBuffer_t src_buffer, GrOriginLocation_t o
 #define FN_NAME "grLfbReadRegion"
    FxU32 bpp;
    FxBool rv;
+   FxBool wantHwc;
    GrLfbInfo_t info;
 
    GR_BEGIN_NOFIFOCHECK_RET("grLfbReadRegion",82);
@@ -1531,7 +1568,61 @@ static FxBool grLfbReadRegionOrigin (GrBuffer_t src_buffer, GrOriginLocation_t o
    }
    rv=FXFALSE;
 
-   if (grLfbLock(GR_LFB_READ_ONLY,
+   /* We want to read using HWC if we using FSAA with 4 chips or want dithering */
+   /* or we are using forced 32 bit mode and want dithering */
+   wantHwc = (_GlideRoot.environment.useHwcAAforLfbRead & 1) &&
+	   ((gc->state.forced32BPP != 0    && _GlideRoot.environment.ditherHwcAA) ||
+	   (gc->bInfo->h3pixelSample >= 2 && (gc->chipCount == 4 || _GlideRoot.environment.ditherHwcAA)));
+	
+   /* We want to use the 'advanced' and slow capture method */
+   if (wantHwc)
+   {
+	   FxU32 colBufferIndex = 0;
+	   FxU32 bpp = 0;
+
+	   if (gc->state.forced32BPP) bpp = gc->state.forced32BPP;
+	   else switch(gc->grPixelFormat)
+	   {
+			case GR_PIXFMT_ARGB_1555:
+			case GR_PIXFMT_AA_2_ARGB_1555:
+			case GR_PIXFMT_AA_4_ARGB_1555:
+			case GR_PIXFMT_AA_8_ARGB_1555: 	/* 8xaa */
+				bpp = 15;
+				break;
+			case GR_PIXFMT_ARGB_8888:
+			case GR_PIXFMT_AA_2_ARGB_8888:
+			case GR_PIXFMT_AA_4_ARGB_8888:
+			case GR_PIXFMT_AA_8_ARGB_8888:	/* 8xaa */
+				bpp = 32;
+				break; 
+			case GR_PIXFMT_RGB_565:
+			case GR_PIXFMT_AA_2_RGB_565:
+			case GR_PIXFMT_AA_4_RGB_565:
+			case GR_PIXFMT_AA_8_RGB_565: 	/* 8xaa */
+			default:
+				bpp = 16;
+				break;
+	   }
+		
+	   switch(src_buffer)
+	   {
+	   case GR_BUFFER_FRONTBUFFER:
+		   colBufferIndex = gc->frontBuffer;
+		   break;
+
+	   case GR_BUFFER_BACKBUFFER:
+		   colBufferIndex = gc->backBuffer;
+		   break;
+	   }
+
+	   hwcAAReadRegion(gc->bInfo, colBufferIndex,  src_x, src_y, 
+		   src_width, src_height,  dst_stride, dst_data,
+		   bpp, _GlideRoot.environment.ditherHwcAA);
+	   rv=FXTRUE;
+	   goto done;
+   }
+
+   if (_grLfbLock(GR_LFB_READ_ONLY,
                  src_buffer, 
                  GR_LFBWRITEMODE_ANY,
                  GR_ORIGIN_UPPER_LEFT,
@@ -1554,9 +1645,9 @@ static FxBool grLfbReadRegionOrigin (GrBuffer_t src_buffer, GrOriginLocation_t o
       dst_adjust=dst_stride - tmp;
 
       /* should be endian and pixel size safe */
-         /* it would be nice to test if quad blocks were faster */
-         /* like mmx loads and stores */
-      while(src_height--)
+      /* it would be nice to test if quad blocks were faster */
+      /* like mmx loads and stores */
+      if (!gc->state.forced32BPP) while(src_height--)
       {
          /* adjust starting alignment */
          if (((FxU32)src)&3)
@@ -1582,9 +1673,57 @@ static FxBool grLfbReadRegionOrigin (GrBuffer_t src_buffer, GrOriginLocation_t o
          ((FxU8 *)src)+=src_adjust;
          ((FxU8 *)dst)+=dst_adjust;
       }
+	  /* Nice I've got to convert it from 32 bit to 16 bit */
+	  else if (gc->state.forced32BPP == 16) while(src_height--) {
+
+		  /* read in dwords of pixels */
+		  if(length)
+		  {
+			  FxU32 byte_index=0;
+			  FxU32 byte_index2=0;
+				
+			  /* copies aligned dwords */
+			  do
+			  {
+				  FxU32 s =*((FxU32 *)(((FxU32)src) + byte_index));
+				  FxU16 d = (FxU16) (s & 0xF8) >> 3;
+				  d |= (s & 0xFC00) >> 5;
+				  d |= (s & 0xF80000) >> 8;
+				  *((FxU16 *)(((FxU32)dst) + (byte_index2))) = d;
+				  byte_index +=4;
+			  }while((byte_index2+=2)<(src_width*2));
+		  }
+		  /* adjust for next line */
+		  ((FxU8 *)src)+=info.strideInBytes;
+		  ((FxU8 *)dst)+=dst_stride;
+	  }
+	  else if (gc->state.forced32BPP == 15) while(src_height--) {
+
+		  /* read in dwords of pixels */
+		  if(length)
+		  {
+			  FxU32 byte_index=0;
+			  FxU32 byte_index2=0;
+
+			  /* copies aligned dwords */
+			  do
+			  {
+				  FxU32 s =*((FxU32 *)(((FxU32)src) + byte_index));
+				  FxU16 d = (FxU16) (s & 0xF8) >> 3;
+				  d |= (s & 0xF800) >> 6;
+				  d |= (s & 0xF80000) >> 9;
+				  *((FxU16 *)(((FxU32)dst) + (byte_index2))) = d;
+				  byte_index +=4;
+			  }while((byte_index2+=2)<(src_width*2));
+		  }
+		  /* adjust for next line */
+		  ((FxU8 *)src)+=info.strideInBytes;
+		  ((FxU8 *)dst)+=dst_stride;
+	  }
+
       rv=FXTRUE;
-      /* unlock buffer */
-      grLfbUnlock(GR_LFB_READ_ONLY,src_buffer);
+	  /* unlock buffer */
+      _grLfbUnlock(GR_LFB_READ_ONLY,src_buffer);
    }
 done:
    GR_RETURN(rv);
@@ -1617,7 +1756,7 @@ GR_ENTRY(grLfbReadRegion, FxBool, (GrBuffer_t src_buffer,
                  src_width, src_height, dst_stride, dst_data);
   
   info.size = sizeof(info);
-  if (grLfbLock(GR_LFB_READ_ONLY,
+  if (_grLfbLock(GR_LFB_READ_ONLY,
                 src_buffer, 
                 GR_LFBWRITEMODE_ANY,
                 GR_ORIGIN_UPPER_LEFT,
@@ -1729,7 +1868,7 @@ GR_ENTRY(grLfbReadRegion, FxBool, (GrBuffer_t src_buffer,
     }
   }
 #endif  
-    grLfbUnlock(GR_LFB_READ_ONLY, src_buffer);
+    _grLfbUnlock(GR_LFB_READ_ONLY, src_buffer);
   } else {
     rv = FXFALSE;
   }

@@ -3042,7 +3042,7 @@ $clip_setup_fog_oow:
     add       dataElem, 4                ; dataElem++
 
     movss     xmm3,[gc + depth_range]    ;
-    pfmul     xmm3,xmm0                  ; 
+    mulss     xmm3,xmm0                  ; 
 
     movss     xmm4,[gc + depth_range]    ; depth range
     subss     xmm4,xmm3                  ; 

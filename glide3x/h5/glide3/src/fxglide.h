@@ -777,6 +777,44 @@ typedef struct  {
 #define VRETRACEMASK            0x00000fff
 #define HRETRACEPOS             16
 
+struct tmuState_s {
+#define OOOO_OOOO_OIII_IIII  0x007f
+#define SR_MASK_4            OOOO_OOOO_OIII_IIII
+    FxU32 texPkt4Hdr_0;
+
+    FxU32 textureMode;     /* 0x300 (  0 ) */
+    FxU32 tLOD;            /* 0x304 (  1 ) */
+    FxU32 tDetail;         /* 0x308 (  2 ) */
+    FxU32 texBaseAddr;     /* 0x30C (  3 ) */
+    FxU32 texBaseAddr_1;   /* 0x310 (  4 ) */
+    FxU32 texBaseAddr_2;   /* 0x314 (  5 ) */
+    FxU32 texBaseAddr_3_8; /* 0x318 (  6 ) */
+    /* ----------- end packet -------------*/
+
+#define OOOO_OOOO_OOOO_OOII  0x0002
+#define SR_MASK_5            OOOO_OOOO_OOOO_OOII
+    FxU32 texPkt4Hdr_1;
+
+    FxU32 texchromaKey;
+    FxU32 texchromaRange;
+    /* ----------- end packet -------------*/
+    
+#define SR_WORDS_6       24
+    FxU32 texPkt1Hdr_2;
+    
+    FxU32 nccTable0[12];
+    FxU32 nccTable1[12];
+    /* ----------- end packet -------------*/
+    
+#ifdef FX_GLIDE_NAPALM
+#define OOOO_OOOO_OOOO_OOOI  0x0001
+#define SR_MASK_7            OOOO_OOOO_OOOO_OOOI
+    FxU32 texPkt4Hdr_3;
+
+    FxU32 combineMode;
+    /* ----------- end packet -------------*/
+#endif /* FX_GLIDE_NAPALM */
+};
 
 /*--------------------------------------------------------------------------
   State Restoration Buffer
@@ -852,44 +890,7 @@ typedef struct {
   /* ----------- end packet -------------*/
 #endif /* FX_GLIDE_NAPALM */
 
-  struct tmuState {
-#define OOOO_OOOO_OIII_IIII  0x007f
-#define SR_MASK_4            OOOO_OOOO_OIII_IIII
-    FxU32 texPkt4Hdr_0;
-
-    FxU32 textureMode;     /* 0x300 (  0 ) */
-    FxU32 tLOD;            /* 0x304 (  1 ) */
-    FxU32 tDetail;         /* 0x308 (  2 ) */
-    FxU32 texBaseAddr;     /* 0x30C (  3 ) */
-    FxU32 texBaseAddr_1;   /* 0x310 (  4 ) */
-    FxU32 texBaseAddr_2;   /* 0x314 (  5 ) */
-    FxU32 texBaseAddr_3_8; /* 0x318 (  6 ) */
-    /* ----------- end packet -------------*/
-
-#define OOOO_OOOO_OOOO_OOII  0x0002
-#define SR_MASK_5            OOOO_OOOO_OOOO_OOII
-    FxU32 texPkt4Hdr_1;
-
-    FxU32 texchromaKey;
-    FxU32 texchromaRange;
-    /* ----------- end packet -------------*/
-    
-#define SR_WORDS_6       24
-    FxU32 texPkt1Hdr_2;
-    
-    FxU32 nccTable0[12];
-    FxU32 nccTable1[12];
-    /* ----------- end packet -------------*/
-    
-#ifdef FX_GLIDE_NAPALM
-#define OOOO_OOOO_OOOO_OOOI  0x0001
-#define SR_MASK_7            OOOO_OOOO_OOOO_OOOI
-    FxU32 texPkt4Hdr_3;
-
-    FxU32 combineMode;
-    /* ----------- end packet -------------*/
-#endif /* FX_GLIDE_NAPALM */
-  } tmuState[GLIDE_NUM_TMU];
+  struct tmuState_s tmuState[GLIDE_NUM_TMU];
 
   struct PaletteRow {
 #define SR_WORDS_P       8
@@ -939,7 +940,7 @@ typedef struct {
     FxU32 tmuAlphaPassthrough; /* TMU alpha combine is in passthrough */
 
     GrStateBuffer shadow;      /* shadow of all hw state registers */
-    struct tmuState tmuShadow[GLIDE_NUM_TMU]; /* shadow of TMU registers */
+    struct tmuState_s tmuShadow[GLIDE_NUM_TMU]; /* shadow of TMU registers */
     GrColor_t tmuColor[GLIDE_NUM_TMU]; /* Shadow of TMU constant color values */
     
     FxU32 tmuMaskShadow;       /* Intermediate tmuMask value before grValidateTMUState() */
@@ -2140,9 +2141,10 @@ struct _GlideRoot_s {
     FxBool memFIFOHack;         /* flush FIFO as much as possible */
 #endif
 
-    FxU32  oglLfbLockHack;	/* Enables disable hack to get around forced 32bit problems in OpenGL */
+    FxU32  oglLfbLockHack;	    /* Enables disable hack to get around forced 32bit problems in OpenGL */
     FxU32  useHwcAAforLfbRead;  /* Specifies whether to use HwcAAReadRegion for read Locks and LfbReadRegion calls */
-    FxU32  ditherHwcAA;		/* Specifies whether to use HwcAAReadRegion should dither */
+    FxU32  ditherHwcAA;		    /* Specifies whether to use HwcAAReadRegion should dither */
+	FxI32  lockCounter;
   } environment;
 
   GrHwConfiguration     hwConfig;

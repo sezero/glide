@@ -27,6 +27,9 @@
 
 !if "$(DEBUG)" == "1"
 VCDEFS = $(VCDEFS) -DGDBG_INFO_ON=1 -DGLIDE_DEBUG=1
+!if "$(CEASE_ALL_GDBG)"=="1"
+VCDEFS = $(VCDEFS) -DCEASE_ALL_GDBG=1
+!endif
 !endif
 
 !if "$(FX_TARGET)" == "DOS"

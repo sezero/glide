@@ -37,7 +37,6 @@ rem                     +-include---nmake
 rem                     |
 rem                     +-newpci---pcilib
 rem
-rem ///////////////////////////////////////////////////////////////////
 set BUILD_ROOT=%cd%
 set BUILD_ROOT_SWLIBS=%BUILD_ROOT%\swlibs
 set FX_GLIDE_HW=h5
@@ -46,10 +45,12 @@ rem
 rem ///////////////////////////////////////////////////////////////////
 rem Compiler Environment
 rem These are usually preconfigured in the command prompt environment.
-rem ///////////////////////////////////////////////////////////////////
+rem
 rem set DXSDKROOT=c:\dxsdk
 rem set CC=%C32_ROOT%\bin\cl.exe
 rem set AS=%MASM_ROOT%\bin\ml.exe
+rem
+rem ///////////////////////////////////////////////////////////////////
 rem
 if "%1" == "" goto error
 goto %1

@@ -236,9 +236,18 @@ GR_ENTRY(grDrawPoint, void, (const void *p))
   GR_BEGIN_NOFIFOCHECK(FN_NAME, 90);
   GDBG_INFO_MORE(gc->myLevel, "(p = 0x%x)\n", p);
 
-  (gc->state.grEnableArgs.primitive_smooth_mode & GR_AA_ORDERED_POINTS_MASK
-   ? _grAADrawPoints
-   : _grDrawPoints)(GR_VTX_PTR_ARRAY, 1, (void *)&p);
+#if defined(__linux__) || defined(__DJGPP__)
+  if (gc->state.grEnableArgs.primitive_smooth_mode & GR_AA_ORDERED_POINTS_MASK)
+	  _grAADrawPoints(GR_VTX_PTR_ARRAY, 1, (void *)&p);
+  else
+	  _grDrawPoints(GR_VTX_PTR_ARRAY, 1, (void *)&p);
+#else
+  if (gc->state.grEnableArgs.primitive_smooth_mode & GR_AA_ORDERED_POINTS_MASK)
+	  _grAADrawPoints(GR_VTX_PTR_ARRAY, 1, &(void *)p);
+  else
+	  _grDrawPoints(GR_VTX_PTR_ARRAY, 1, &(void *)p);
+#endif
+
 #undef FN_NAME
 } /* grDrawPoint */
 
@@ -281,7 +290,7 @@ GR_ENTRY(grDrawLine, void, (const void *a, const void *b))
             _grAADrawLineStrip(GR_VTX_PTR_ARRAY, GR_LINES, 2, verts);
           else
             _grDrawLineStrip(GR_VTX_PTR_ARRAY, GR_LINES, 2, verts);
-        }
+  }
 #else
 #if defined(__linux__) || defined(__DJGPP__)
   if (gc->state.grEnableArgs.primitive_smooth_mode & GR_AA_ORDERED_LINES_MASK)

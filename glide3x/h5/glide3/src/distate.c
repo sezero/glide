@@ -1176,9 +1176,11 @@ GR_DIENTRY(grRenderBuffer, void , (GrBuffer_t buffer) )
 #ifdef FX_GLIDE_NAPALM
         if (gc->grPixelSample > 1) 
         {
-          _grAAOffsetValue(_GlideRoot.environment.aaXOffset[gc->sampleOffsetIndex],
-                           _GlideRoot.environment.aaYOffset[gc->sampleOffsetIndex],
-                           0, gc->chipCount - 1, FXTRUE, gc->enableSecondaryBuffer) ;
+			if (!gc->state.grEnableArgs.aaMultisampleDisableCount) {
+				_grAAOffsetValue(_GlideRoot.environment.aaXOffset[gc->sampleOffsetIndex],
+								 _GlideRoot.environment.aaYOffset[gc->sampleOffsetIndex],
+								 0, gc->chipCount - 1, FXTRUE, gc->enableSecondaryBuffer) ;
+			}
         }
 #endif
 
@@ -2046,6 +2048,7 @@ _grValidateState()
   /* Check for alpha test optimization */
   if (NOTVALID(alphaMode) || NOTVALID(fbzMode) || NOTVALID(stencilMode)) {
     updateAlphaMode = FXTRUE;
+	// KoolSmoky - need to recheck this.
     /*if((LOADARG(grAlphaBlendFunction, rgb_sf) == GR_BLEND_SRC_ALPHA) &&
        (LOADARG(grAlphaBlendFunction, rgb_df) == GR_BLEND_ONE_MINUS_SRC_ALPHA) &&
        (LOADARG(grAlphaBlendFunction, rgb_op) == GR_BLEND_OP_ADD) &&
@@ -2787,11 +2790,15 @@ GR_DIENTRY(grDisable, void , (GrEnableMode_t mode) )
 #ifdef FX_GLIDE_NAPALM
   case GR_AA_MULTI_SAMPLE:
     {
-      gc->state.grEnableArgs.aaMultisampleDisableCount++;
+		if (!gc->state.grEnableArgs.aaMultisampleDisableCount)
+		{
+            _grAAOffsetValue(_GlideRoot.environment.aaXOffset[0],
+							 _GlideRoot.environment.aaYOffset[0],
+							 0, gc->chipCount - 1, FXTRUE, gc->enableSecondaryBuffer) ;
+		}
+
+		gc->state.grEnableArgs.aaMultisampleDisableCount++;
       
-      _grAAOffsetValue(_GlideRoot.environment.aaXOffset[0],
-                       _GlideRoot.environment.aaYOffset[0],
-                       0, gc->chipCount - 1, FXTRUE, gc->enableSecondaryBuffer) ;
     }
     break;
 #endif
