@@ -2477,7 +2477,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
 #if __POWERPC__
       if (!hwcInitAGPFifo(bInfo, FXFALSE)) {
 #else
-      if (!hwcInitAGPFifo(bInfo, _GlideRoot.environment.forceAutoBump/*FXTRUE*/)) {
+      if (!hwcInitAGPFifo(bInfo, _GlideRoot.environment.autoBump/*FXTRUE*/)) {
 #endif      
         hwcRestoreVideo(bInfo);
         GrErrorCallback(hwcGetErrorString(), FXFALSE);

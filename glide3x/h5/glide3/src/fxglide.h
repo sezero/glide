@@ -2122,7 +2122,6 @@ struct _GlideRoot_s {
     FxBool texSubLodDither;     /* always do subsample mipmap dithering */
     FxBool aaClip;              /* clean out AA garbage */
 
-    FxBool forceAutoBump;       /* force Auto bump? */
 #if CHECK_SLAVE_SWAPCMD
     FxU32 checkSlaveSwapCMD;    /* check swap commands across all chips */
 #endif
