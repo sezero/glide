@@ -448,13 +448,7 @@ _txParseCmdline(int argc, char **argv, TxOpts *txOptions)
 
 }
 
-#if	defined(__linux__)
-#define MAIN_RETURN_TYPE int
-#else	/* defined(__linux__) */
-#define	MAIN_RETURN_TYPE void
-#endif	/* defined(__linux__) */
-
-MAIN_RETURN_TYPE
+int
 main(int argc, char **argv)
 {
   char    *progname;
@@ -477,7 +471,7 @@ main(int argc, char **argv)
       txOptions.output_base[0]) {
 
     fprintf(stderr, "Texus: many input files, but only one output file specified!\n");
-    exit(2);
+    return 2;
   }
 
 
@@ -760,5 +754,5 @@ main(int argc, char **argv)
       printf("No output file generated\n");
     }
   }
-  exit(0);
+  return 0;
 }
