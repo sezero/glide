@@ -19,6 +19,10 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.3  2000/11/16 18:58:27  alanh
+** add linux specific grRenderBuffer to fix problems switching between FRONT and
+** BACK buffers.
+**
 ** Revision 1.2  2000/10/27 07:54:51  alanh
 ** fix readPtr0/1 -> depth0/1 check
 **
@@ -2319,7 +2323,6 @@ GR_STATE_ENTRY(grRenderBuffer, void, (GrBuffer_t buffer))
   GR_END();
 #undef FN_NAME
 } /* grRenderBuffer */
-#else /* __linux__ */
 #endif
 
 GR_ENTRY(grCheckForRoom, void, (FxI32 n))
