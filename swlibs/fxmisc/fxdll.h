@@ -90,8 +90,13 @@
   #endif /* FX_DLL_ENABLE */
 
 #else /* FX_DLL_DEFINITION */
-  #define FX_ENTRY extern
-  #define FX_CALL __stdcall
+  #if defined(__MSC__)
+    #define FX_ENTRY __declspec( dllimport )
+    #define FX_CALL __stdcall
+  #else
+    #define FX_ENTRY extern
+    #define FX_CALL __stdcall
+  #endif
 #endif /* FX_DLL_DEFINITION */
 
 /*

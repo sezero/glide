@@ -69,7 +69,7 @@ typedef struct { float r, g, b, a; } FxColor4;
 #    define FX_ENTRY 
 #    define FX_CALL
 #  else
-#    define FX_ENTRY extern
+#    define FX_ENTRY __declspec( dllimport )
 #    define FX_CALL  __stdcall
 #  endif
 #elif defined(__WATCOMC__)
