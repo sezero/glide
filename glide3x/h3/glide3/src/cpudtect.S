@@ -22,6 +22,10 @@
 /*
  *  $Header$
  *  $Log$
+ *  Revision 1.1.1.1.6.2  2003/06/29 19:00:36  guillemj
+ *  Fixed nested comments warnings.
+ *  Removed some trailing spaces.
+ *
  *  Revision 1.1.1.1.6.1  2003/05/05 07:12:46  dborca
  *  no message
  *
@@ -58,7 +62,6 @@
 
 .file "cpudtect.asm"
 
-/* [dBorca] */
 #include "assyntax.h"
 
 /*       Data for data segment goes here */

@@ -36,7 +36,6 @@
  * macros for creating assembler offset files
  *----------------------------------------------------------------------*/
 
-#if 1	/* defined(NASM) - default */
 #define NEWLINE printf("\n")
 #define COMMENT printf(";----------------------------------------------------------------------\n")
 
@@ -66,71 +65,6 @@
         printf(#name " equ 0%xh\n", name); \
     else printf(#name " equ %d\n", name)
 
-#else	/* !NASM */
-
-#ifndef __linux__
-#define NEWLINE printf("\n")
-#define COMMENT printf(";----------------------------------------------------------------------\n")
-
-#define HEADER(str)     NEWLINE; COMMENT; \
-                        printf("; Assembler offsets for %s struct\n",str);\
-                        COMMENT; NEWLINE
-
-#define OFFSET(p,o,pname) if (hex) \
-        printf("%s\t= %08xh\n",pname,((int)&p.o)-(int)&p); \
-    else printf("%s\t= %10d\n",pname,((int)&p.o)-(int)&p)
-
-#if (GLIDE_PLATFORM & GLIDE_HW_SST96)
-#define HWOFFSET(p, o, pname) if (hex) \
-        printf("%s\t= %08xh\n",pname,(((int) &p.o)-(int)&p)>>2);\
-    else printf("%s\t= %10d\n",pname,(((int)&p.o)-(int)&p))
-#endif /* (GLIDE_PLATFORM & GLIDE_HW_SST96) */
-
-#define OFFSET2(p,o,pname) if (hex) \
-        printf("%s\t= %08xh\n",pname,((int)&o)-(int)&p); \
-    else printf("%s\t= %10d\n",pname,((int)&o)-(int)&p)
-
-#define SIZEOF(p,pname) if (hex) \
-        printf("SIZEOF_%s\t= %08xh\n",pname,sizeof(p)); \
-    else printf("SIZEOF_%s\t= %10d\n",pname,sizeof(p))
-
-#define CONST(name) if (hex) \
-        printf(#name " = 0%xh\n", name); \
-    else printf(#name " = %d\n", name)
-
-#else
-#define NEWLINE printf("\n");
-#define COMMENT printf("#----------------------------------------------------------------------\n")
-
-#define HEADER(str)     NEWLINE; COMMENT; \
-                        printf("# Assembler offsets for %s struct\n",str);\
-                        COMMENT; NEWLINE
-
-#define OFFSET(p,o,pname) if (hex) \
-        printf("%s\t .EQU %08x\n",pname,((int)&p.o)-(int)&p); \
-    else printf("%s\t .EQU %10d\n",pname,((int)&p.o)-(int)&p)
-
-#if (GLIDE_PLATFORM & GLIDE_HW_SST96)
-#define HWOFFSET(p, o, pname) if (hex) \
-        printf("%s\t .EQU %08x\n",pname,(((int) &p.o)-(int)&p)>>2);\
-    else printf("%s\t .EQU %10d\n",pname,(((int)&p.o)-(int)&p))
-#endif /* (GLIDE_PLATFORM & GLIDE_HW_SST96) */
-
-#define OFFSET2(p,o,pname) if (hex) \
-        printf("%s\t .EQU %08x\n",pname,((int)&o)-(int)&p); \
-    else printf("%s\t .EQU %10d\n",pname,((int)&o)-(int)&p)
-
-#define SIZEOF(p,pname) if (hex) \
-        printf("SIZEOF_%s\t .EQU %08x\n",pname,sizeof(p)); \
-    else printf("SIZEOF_%s\t .EQU %10d\n",pname,sizeof(p))
-
-#define CONST(name) if (hex) \
-        printf(#name " .EQU 0x%x\n", name); \
-    else printf(#name " .EQU %d\n", name)
-
-#endif
-
-#endif  /* defined(NASM)*/
 
 int
 main (int argc, char **argv)

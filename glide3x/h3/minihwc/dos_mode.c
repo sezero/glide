@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.5  2004/10/04 09:24:02  dborca
+** taming FX_CSTYLE havoc
+**
 ** Revision 1.1.1.1.8.4  2004/03/02 07:30:57  dborca
 ** changed the build process to make the branches independent
 ** made glide.h consistent across all branches
@@ -59,7 +62,6 @@
 #include <3dfx.h>
 #define FX_DLL_DEFINITION
 #include <fxdll.h>
-/* [dBorca] */
 #ifdef __DJGPP__
 #include <dos.h>
 #else
@@ -82,7 +84,6 @@ static ResTableEntry _table[] = {
   {  640, 480, 0x111 },
   {  800, 600, 0x114 },
   { 1024, 768, 0x117 },
-/* [dBorca] */
 #ifdef H4
   {  320,  200, 0x010e },
   {  320,  240, 0x0182 },
@@ -95,7 +96,6 @@ static ResTableEntry _table[] = {
 
 static unsigned long _tableSize = sizeof( _table ) / sizeof( ResTableEntry );
 
-/* [dBorca] */
 #include "glide.h"
 #include "fxglide.h"
 
@@ -145,7 +145,7 @@ setVideoMode( unsigned long dummy, int xres, int yres, int refresh, void *hmon )
 
   /* XXXTACO!! - We should check the return value */
 
-  /* [dBorca] */
+  /* [dBorca] ... and so we do! */
   return (rOut.w.ax==0x004f);
 } /* setVideoMode */
 

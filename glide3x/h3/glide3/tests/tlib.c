@@ -1637,7 +1637,6 @@ tlErrorMessage( char *err) {
   fprintf(stderr, err);
 } /* tlErrorMessage */
 
-/* [dBorca] */
 FxU32
 tlGethWnd(void)
 {

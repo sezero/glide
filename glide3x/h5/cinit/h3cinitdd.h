@@ -22,7 +22,6 @@
 */
 #include <stddef.h>
 
-/* [dBorca] */
 #ifdef __DJGPP__
 #include <fxdpmi.h>
 #endif

@@ -21,6 +21,9 @@
 /*  $Header$ */
 /*  $Revision$ */
 /*  $Log$
+/*  Revision 1.1.1.1.8.1  2003/05/05 07:12:47  dborca
+/*  no message
+/*
 /*  Revision 1.1.1.1  1999/11/24 21:45:00  joseph
 /*  Initial checkin for SourceForge
 /* */
@@ -67,7 +70,6 @@
 
 .file "xtexdl.asm"
 
-/* [dBorca] */
 #include "assyntax.h"
 
 #ifdef USE_PACKET_FIFO

@@ -48,7 +48,6 @@ unsigned long hWndMain;
 #endif
 
 #ifdef __DJGPP__
-/* [dBorca] */
 #include <conio.h>
 #include <pc.h>
 #include <crt0.h>
@@ -2184,7 +2183,7 @@ tlScreenDump
   return FXTRUE;
 }
 
-#if defined(__unix__) && !defined(__DJGPP__) /* [dBorca] */
+#if defined(__unix__) && !defined(__DJGPP__)
 
 /*-------------------------------------------------------------------
   Function: tlKbHit
@@ -2298,8 +2297,7 @@ tlErrorMessage( char *err)
 } /* tlErrorMessage */
 
 FxU32 tlGethWnd( void ) {
-/* [dBorca] */
-#ifdef __DJGPP__
+#ifdef __DOS32__
         return 1;
 #else
         return (FxU32)FrontWindow();

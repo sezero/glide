@@ -20,7 +20,6 @@
 
 .file "xdraw3.asm"
 
-/* [dBorca] */
 #include "assyntax.h"
 #ifdef __DJGPP__
 #define THREADVALUE EXTRN(threadValueDJGPP)

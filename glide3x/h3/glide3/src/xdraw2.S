@@ -22,6 +22,10 @@
  *  $Header$
  *  $Revision$
  *  $Log$
+ *  Revision 1.2.8.4  2003/06/29 19:00:36  guillemj
+ *  Fixed nested comments warnings.
+ *  Removed some trailing spaces.
+ *
  *  Revision 1.2.8.3  2003/06/29 18:43:27  guillemj
  *  Fix compilation warnings.
  *
@@ -106,7 +110,6 @@
 
 .file "xdraw2.asm"
 
-/* [dBorca] */
 #include "assyntax.h"
 
 /*  Definitions of cvg regs and glide root structures. */
