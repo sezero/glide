@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/12/07 21:42:30  joseph
+** Initial checkin into SourceForge.
+**
 ** 
 ** 1     10/08/98 11:30a Brent
 ** 
@@ -65,6 +68,8 @@
 
 #include <string.h>
 #include <3dfx.h>
+#define FX_DLL_DEFINITION
+#include <fxdll.h>
 #include <glide.h>
 
 #include "fxglide.h"

@@ -19,6 +19,9 @@
  **
  ** $Header$
  ** $Log$
+ ** Revision 1.1.1.1  1999/12/07 21:42:32  joseph
+ ** Initial checkin into SourceForge.
+ **
 ** 
 ** 1     10/08/98 11:30a Brent
 ** 
@@ -214,9 +217,9 @@ GR_ENTRY(grDrawLine, void, (const void *a, const void *b))
   GR_FLUSH_STATE();
 
   if (gc->state.grEnableArgs.primitive_smooth_mode & GR_AA_ORDERED_LINES_MASK)
-    _grAADrawLineStrip(GR_VTX_PTR_ARRAY, GR_LINES, 2, &a);
+    _grAADrawLineStrip(GR_VTX_PTR_ARRAY, GR_LINES, 2, (void *)&a);
   else
-    _grDrawLineStrip(GR_VTX_PTR_ARRAY, GR_LINES, 2, &a);
+    _grDrawLineStrip(GR_VTX_PTR_ARRAY, GR_LINES, 2, (void *)&a);
 #undef FN_NAME
 } /* grDrawLine */
 
@@ -956,9 +959,6 @@ _grDrawTriangles_Default(FxI32 mode, FxI32 count, void *pointers)
 #define FN_NAME "_grDrawTriangles_Default"
 
   FxI32
-#ifdef GLIDE_DEBUG
-    vSize,
-#endif
     k;
   FxI32 stride = mode;
   float *vPtr;
@@ -971,7 +971,7 @@ _grDrawTriangles_Default(FxI32 mode, FxI32 count, void *pointers)
   GR_FLUSH_STATE();
 
 #ifdef GLIDE_DEBUG
-  GDBG_INFO(110, "%s:  vSize = %d\n", FN_NAME, vSize);
+  GDBG_INFO(110, "%s:  vSize = %d\n", FN_NAME, gc->state.vData.vSize);
 
   GDBG_INFO(110, "%s:  paramMask = 0x%x\n", FN_NAME, gc->cmdTransportInfo.paramMask);
 #endif

@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.2  2004/01/20 14:04:10  dborca
+** compilation and some other minor fixes to aid in debugging
+**
 ** Revision 1.1.1.1.8.1  2003/11/03 13:34:29  dborca
 ** Voodoo2 happiness (DJGPP & Linux)
 **
@@ -73,9 +76,7 @@
 */
 #include <stdio.h>
 #include <string.h>
-#ifdef __GNUC__
 #include <ctype.h>
-#endif
 #include <3dfx.h>
 
 #define FX_DLL_DEFINITION

@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/12/07 21:42:32  joseph
+** Initial checkin into SourceForge.
+**
 ** 
 ** 1     10/08/98 11:30a Brent
 ** 
@@ -455,7 +458,7 @@ GR_ENTRY(grAADrawTriangle,
     if ((gc->state.cull_mode != GR_CULL_DISABLE) && (((FxI32)(j ^ (gc->state.cull_mode << 31UL))) >= 0))
       return;
   }
-  (*gc->curArchProcs.drawTrianglesProc)(GR_VTX_PTR_ARRAY, 3, &a);
+  (*gc->curArchProcs.drawTrianglesProc)(GR_VTX_PTR_ARRAY, 3, (void *)&a);
    
   /* Disable depth buffer writes for edge triangles */
   fbzMode = fbzModeOld;
@@ -537,7 +540,7 @@ _grAADrawPoints(FxI32 mode, FxI32 count, void *pointers)
   FxI32 stride = mode;
   FxU32 tmp_cullStripHdr;
 
-  GDBG_INFO(94,"_grAADrawPoints(0x%x)\n",e);
+  GDBG_INFO(94,"_grAADrawPoints(0x%x)\n",pointers);
 
   GDBG_INFO_MORE(gc->myLevel, "(count = %d, pointers = 0x%x)\n",
                  count, pointers);
