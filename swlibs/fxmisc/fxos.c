@@ -42,7 +42,8 @@ int fxGethostname(char *name, int n)
 #else
 #include <fxos.h>
 #endif
-#if !macintosh
+
+#if !macintosh && !defined(__FreeBSD__)
 /* return current time in seconds (floating point)      */
 float fxTime(void)
 {
