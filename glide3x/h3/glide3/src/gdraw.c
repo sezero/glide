@@ -19,6 +19,9 @@
  **
  ** $Header$
  ** $Log$
+ ** Revision 1.2.6.4  2004/10/05 14:47:15  dborca
+ ** conditional compilation a bit more sane
+ **
  ** Revision 1.2.6.3  2004/10/04 09:26:31  dborca
  ** DOS/OpenWatcom support
  **
@@ -255,7 +258,11 @@ GR_ENTRY(grDrawLine, void, (const void *a, const void *b))
 /*---------------------------------------------------------------------------
  ** grDrawTriangle
  */
-
+#if !defined(GLIDE_DEBUG) && !(GLIDE_PLATFORM & GLIDE_OS_UNIX) && !(GLIDE_PLATFORM & GLIDE_OS_DOS32)
+#if !(GLIDE_USE_C_TRISETUP)
+__declspec( naked )
+#endif
+#endif	/* !defined(GLIDE_DEBUG) && !(GLIDE_PLATFORM & GLIDE_OS_UNIX) && !(GLIDE_PLATFORM & GLIDE_OS_DOS32) */
 GR_ENTRY(grDrawTriangle, void, (const void *a, const void *b, const void *c))
 {
 #define FN_NAME "grDrawTriangle"
