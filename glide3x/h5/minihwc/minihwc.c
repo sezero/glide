@@ -1088,7 +1088,7 @@ static hwcBoardInfo *curBI = NULL;
 typedef struct {
   HDC dc;
   HMONITOR mon;
-  char RegPath[256];
+  char RegPath[255];
   char DeviceName[32];
   int  boardNum;
 } DevEnumRec;
@@ -1099,16 +1099,13 @@ getRegPath(char *regpath)
 {
   FxI32 OS = hwcGetOS();
 
-  if ((OS == OS_WIN32_NT4) ||
-      (OS == OS_WIN32_2K)  ||
-      (OS == OS_WIN32_XP)) 
-  {
+  if (OS == OS_WIN32_NT4) {
     HKEY hKey;
     DWORD type ;
     char strval[256];
     DWORD szData = sizeof(strval) ;
 
-	GDBG_INFO(80, "getRegPath: get registry path on NT4/2K/XP\n");
+	GDBG_INFO(80, "getRegPath: get registry path on NT4\n");
 
     /* Go fishing for the registry path on WinNT4 */
     if (RegOpenKey(HKEY_LOCAL_MACHINE, "HARDWARE\\DEVICEMAP\\VIDEO", &hKey) == ERROR_SUCCESS) {
@@ -1130,6 +1127,21 @@ getRegPath(char *regpath)
       }
       RegCloseKey(hKey);
     }
+  } else if ((OS == OS_WIN32_2K) || (OS == OS_WIN32_XP)) {
+	HKEY hKey;
+	
+	GDBG_INFO(80, "getRegPath: get registry path on 2K/XP\n");
+
+	/* XXX Incomplete. Always use Device0. We only get here when gdebug calls getenv. */
+	if (RegOpenKey(HKEY_LOCAL_MACHINE, "SYSTEM\\CurrentControlSet\\Services\\banshee\\Device0", &hKey) == ERROR_SUCCESS) {
+	   RegCloseKey(hKey);
+	   strcpy(regpath, "SYSTEM\\CurrentControlSet\\Services\\banshee\\Device0");
+	} else if (RegOpenKey(HKEY_LOCAL_MACHINE, "SYSTEM\\CurrentControlSet\\Services\\3dfxvs\\Device0", &hKey) == ERROR_SUCCESS) {
+	   RegCloseKey(hKey);
+	   strcpy(regpath, "SYSTEM\\CurrentControlSet\\Services\\3dfxvs\\Device0");
+	} else {
+	  strcpy(regpath, "SYSTEM\\CurrentControlSet\\Services\\3dfxvs\\Device0");
+	}
   } else {
     QDEVNODE QDevNode;
     QIN Qin;
@@ -8698,10 +8710,10 @@ hwcGetenvEx(const char *a, char *b)
 {
   char *retVal = NULL;
   static char hwcGetenvEx_retVal[256];
-  char regPath[256];
+  char regPath[255];
   HKEY hKey;
   DWORD type;
-  DWORD szData = 256 ;
+  DWORD szData = 255 ;
 
   hwcGetenvEx_retVal[0] = '\0';
 
@@ -8713,10 +8725,10 @@ hwcGetenvEx(const char *a, char *b)
 
   strcpy(regPath, b);
   
-  if (regPath == NULL) {
+  if (regPath[0] == '\0') {
     getRegPath(regPath);
     
-    if (regPath == NULL)
+    if (regPath[0] == '\0')
       return NULL;
   }
 
