@@ -20,7 +20,7 @@
 TAG_REGEXP 	= $(BUILD_ROOT)\$(FX_GLIDE_HW)\glide\src\glide.rx
 
 # Compile for specific hardware
-!if "$(FX_GLIDE_HW)" == "CVG"
+!if "$(FX_GLIDE_HW)" == "cvg"
 FX_GLIDE_REAL_HW=       1
 
 !if "$(FX_GLIDE_CTRISETUP)" == ""
@@ -32,7 +32,7 @@ LCDEFS          =       $(LCDEFS) -DCVG \
                         -DGLIDE_CHIP_BROADCAST=1 -DGLIDE_DEFAULT_GAMMA=1.3f
 LCDEFS          =       $(LCDEFS) \
                         -DGLIDE_BLIT_CLEAR=1 \
-!else if "$(FX_GLIDE_HW)" == "H3"
+!else if "$(FX_GLIDE_HW)" == "h3"
 FX_GLIDE_REAL_HW=       1
 FX_GLIDE_NO_FIFO=       1
 FX_GLIDE_CTRISETUP =    1
@@ -40,7 +40,7 @@ HWSPEC          =       fifo.c
 LCDEFS          =       $(LCDEFS) -DH3 \
                         -DGLIDE_HW_TRI_SETUP=1 -DGLIDE_PACKET3_TRI_SETUP=0
 !else
-!error "FX_GLIDE_HW == unknown value (H3|CVG)"
+!error "FX_GLIDE_HW == unknown value (h3|cvg)"
 !endif
 
 

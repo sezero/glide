@@ -35,7 +35,7 @@ ifeq ($(DEBUG),1)
 DBGOPTS         =       -DGDBG_INFO_ON
 endif
 
-ifneq ($(FX_GLIDE_HW),SST96)
+ifneq ($(FX_GLIDE_HW),sst96)
 LCDEFS		+=	-DDUMMY
 endif
 

@@ -30,7 +30,7 @@ endif
 DSPOPTS         =       -DGLIDE_HARDWARE 
 
 # Compile for specific hardware
-ifeq ($(FX_GLIDE_HW),SST96)
+ifeq ($(FX_GLIDE_HW),sst96)
 HWSPEC          = sst96.c
 LCDEFS          += -DSST96 -DGLIDE_USE_ALT_REGMAP
 
@@ -63,7 +63,7 @@ endif
 #
 
 # SST96 has no notion of alternate register mapping
-ifneq ($(FX_GLIDE_HW),SST96)
+ifneq ($(FX_GLIDE_HW),sst96)
 # Turn on/off alt register set. (G lide R eg M ap OPTS)
 ifeq ($(FX_GLIDE_REG_MAP),ORIG)
 GRMOPTS         =       -DGLIDE_USE_ALT_REGMAP
@@ -158,7 +158,7 @@ SUBLIBRARIES	= \
 
 
 LINKLIBRARIES+=-lm
-ifeq ($(FX_GLIDE_HW),SST96)
+ifeq ($(FX_GLIDE_HW),sst96)
 LINKLIBRARIES    +=	-L$(XLOCATION)/lib -lX11 -lXext \
 	-lXxf86rush -lXxf86dga -lXxf86vm
 endif

@@ -28,7 +28,7 @@ endif
 LCOPTS   =
 LCINCS   = -I$(BUILD_ROOT_SST1)/include
 
-ifeq ($(FX_GLIDE_HW),SST96)
+ifeq ($(FX_GLIDE_HW),sst96)
 INITHW   =      SST96
 else
 INITHW   =      SST1
