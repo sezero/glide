@@ -51,15 +51,7 @@
 /* UNIX */
 #define SEPARATOR2 '/'
 
-/* Things Added */
-#ifdef IS_ALT_TAB
-static DEVMODE curDevMode;
-static char *curDeviceName;
-#endif
-
 static HWND	hwndApp = 0;
-//static GUID     fooGuid;
-//static FxU32	_stride;
 
 /* Direct Draw stuff */
 LPDIRECTDRAW            lpDD1 = NULL;
@@ -69,12 +61,8 @@ LPDIRECTDRAW2           lpDD  = NULL;
 LPDIRECTDRAW4           lpDD4 = NULL;
 #endif
 
-char *opengl_regpath; /* KoolSmoky - registry path passed from grEnable */
-
-#ifdef IS_ALT_TAB
-FxBool is_opengl;     /* KoolSmoky - OpenGL flag */
-FxBool is_fullscreen; /* KoolSmoky - full screen flag */
-#endif
+static char dummy_regpath[] = "\0";
+char *opengl_regpath = dummy_regpath; /* KoolSmoky - registry path passed from grEnable */
 
 /*
  * parseFilename
@@ -96,7 +84,6 @@ _parseFilename(char *name)
     return name;
 }  /* End of parseFilename*/
 
-
 static int _set_exclusive_relaxed;
 static int _set_vidmode_relaxed;
 
@@ -108,32 +95,13 @@ typedef struct _enumInfoStruct {
 static BOOL FAR PASCAL
 ddEnumCbEx( GUID FAR *guid, LPSTR desc, LPSTR name, LPVOID ctx, HMONITOR hmon ) 
 {
-#if 0
-  DWORD    *data  = (DWORD*)ctx;
-  HMONITOR target = (HMONITOR)data[0];
-  BOOL     rv     = DDENUMRET_OK;
-#else
   EnumInfo* pEnumInfo = (EnumInfo*)ctx;
   BOOL     rv     = DDENUMRET_OK;
-#endif
   
-#if 0
-  if ( target == hmon ) {
-    if ( guid ) {
-      fooGuid = *guid;
-      data[1] = (DWORD)&fooGuid;
-    } else {
-      /* guid for primary display device */
-      data[1] = 0;
-    }
-    rv     = DDENUMRET_CANCEL;
-  }
-#else
   if(pEnumInfo->hmon == hmon) {
     if ( guid ) CopyMemory(&pEnumInfo->guid, guid, sizeof(GUID));
     rv     = DDENUMRET_CANCEL;
   }
-#endif
   
   return rv;
 }
@@ -217,79 +185,6 @@ msgEnumDisplayModes(hResult)
 
 } /* msgEnumDisplayModes */
 
-#ifdef __WIN32__
-static char *
-getModesRegPath() 
-{
-  char *retVal = NULL;
-  FxU32 OS = hwcGetOS();
-  
-  if ((OS == OS_WIN32_NT4) ||
-      (OS == OS_WIN32_2K)  ||
-      (OS == OS_WIN32_XP))
-  {
-    HKEY hKey;
-    DWORD type ;
-    static char strval[255];
-    DWORD szData = sizeof(strval) ;
-
-    /* Go fishing for the registry path on Win2K */
-    if (RegOpenKey(HKEY_LOCAL_MACHINE, "HARDWARE\\DEVICEMAP\\VIDEO", &hKey) == ERROR_SUCCESS)
-    {
-      if (RegQueryValueEx(hKey, "\\Device\\Video0", NULL, &type, strval, &szData) ==  ERROR_SUCCESS)
-      {
-        if (type != REG_SZ)
-        {
-          /* It is hardcoded on NT via Display Control code. see:
-           * $/devel/swtools/bansheecp2 */
-          retVal = "SYSTEM\\CurrentControlSet\\Services\\3Dfx\\Device0\\modes\\";
-        }
-         else
-         {
-          strcat(strval, "\\modes\\") ;
-          retVal = (char*)((int)strval + strlen("\\REGISTRY\\Machine\\")) ;
-         }
-      }
-       else
-         retVal = "SYSTEM\\CurrentControlSet\\Services\\3Dfx\\Device0\\modes\\";
-
-      RegCloseKey(hKey);
-    }
-  } else {
-    QDEVNODE QDevNode;
-    QIN Qin;
-    int status;
-
-    GDBG_INFO(80, "OS == W9X\n");
-
-    Qin.dwSubFunc = QUERYDEVNODE;
-    {
-      HDC curDC = GetDC(NULL);
-
-      status = ExtEscape ( (HDC)curDC, QUERYESCMODE, 
-                           sizeof(Qin), (LPCSTR)&Qin, 
-                           sizeof(QDevNode), (LPSTR)&QDevNode );
-      ReleaseDC(NULL, curDC);
-    }
-
-    if ( status > 0 ) {
-      static char regPath[255];
-
-      CM_Get_DevNode_Key( QDevNode.dwDevNode, NULL, 
-                          &regPath, sizeof(regPath), 
-                          CM_REGISTRY_SOFTWARE );
-      strcat(regPath, "\\modes\\");
-
-      retVal = regPath;
-    }
-  }
-
-  GDBG_INFO( 80, "REGPATH: %s\n", retVal );
-
-  return retVal;
-} /* getRegPath */
-#endif
-
 FxBool 
 setVideoMode( HWND hwnd, int xRes, int yRes, int h3pixelSize, int refresh, void *hmon, char *regpath , char *devicename )
 {
@@ -304,12 +199,6 @@ setVideoMode( HWND hwnd, int xRes, int yRes, int h3pixelSize, int refresh, void 
   FxU32 bpp = 16;
   //HRESULT ddRVal;
   //DWORD style;
-#ifdef IS_ALT_TAB
-  FxU32 OS = hwcGetOS();
-
-  /* reset fullscreen flag */
-  is_fullscreen = FXFALSE;
-#endif
 
 #ifdef FX_GLIDE_NAPALM
   if (h3pixelSize == 4) bpp = 32;
@@ -320,21 +209,12 @@ setVideoMode( HWND hwnd, int xRes, int yRes, int h3pixelSize, int refresh, void 
              refresh);
 #endif
   
-  GDBG_INFO( 80, "setVideoMode sees hwnd %x\n", hwnd);
+  GDBG_INFO( 80, "setVideoMode sees hwnd 0x%x\n", hwnd);
   hwndApp = ( hwnd == NULL ) ? GetActiveWindow() : hwnd;
   
   if ( hwndApp == NULL ) {
     GDBG_INFO( 80, "Couldn't get a valid window handle\n" );
   }
-
-  /* KoolSmoky - Window style and dimensions are not important,
-  ** since they will be adjusted elsewhere. It's important to call
-  ** ShowWindow to ensure that any activity from other windows is
-  ** obscured.*/
-  //ShowWindow( hwndApp, SW_SHOW );
-  //SetForegroundWindow(hwndApp);
-  // HACK //
-  //Sleep(100);
 
   ddGuid = NULL;
   ddraw = GetModuleHandle( "ddraw.dll" );      
@@ -342,15 +222,6 @@ setVideoMode( HWND hwnd, int xRes, int yRes, int h3pixelSize, int refresh, void 
     LPDIRECTDRAWENUMERATEEXA ddEnumEx;
     ddEnumEx = (void*)GetProcAddress( ddraw, "DirectDrawEnumerateExA" );
     if ( ddEnumEx ) {
-#if 0
-      DWORD   data[2];
-      data[0] = (DWORD)hmon;
-      data[1] = 0;
-      ddEnumEx( ddEnumCbEx, data, DDENUM_ATTACHEDSECONDARYDEVICES );
-      if ( data[1] ) {
-        ddGuid = (LPGUID)data[1];
-      }
-#else
       EnumInfo enumInfo;
 
       ZeroMemory(&enumInfo, sizeof(enumInfo));
@@ -358,33 +229,8 @@ setVideoMode( HWND hwnd, int xRes, int yRes, int h3pixelSize, int refresh, void 
       enumInfo.hmon = (HMONITOR)hmon;
       ddEnumEx( ddEnumCbEx, &enumInfo, DDENUM_ATTACHEDSECONDARYDEVICES );
       ddGuid = &enumInfo.guid;
-#endif
     }
   }
-
-  /* KoolSmoky - this only covers the PRIMARY VGA?  */
-//  EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &devMode);
-  /* KooSmoky - save display mode to restore at exit */
-#ifdef IS_ALT_TAB
-  curDeviceName=devicename;
-  EnumDisplaySettings(curDeviceName, ENUM_REGISTRY_SETTINGS, &curDevMode);
-
-  /* KoolSmoky - Hack for win95. make a disp struct if we don't get anything
-   * from EnumDisplaySettings.
-   */
-  if ((curDevMode.dmBitsPerPel < 8UL) || (curDevMode.dmBitsPerPel > 32UL)) {
-    HDC hdc = GetDC(NULL);
-    curDevMode.dmSize = sizeof(DEVMODE) ;
-    curDevMode.dmPelsWidth = GetSystemMetrics(SM_CXSCREEN) ;
-    curDevMode.dmPelsHeight = GetSystemMetrics(SM_CYSCREEN) ;
-    curDevMode.dmBitsPerPel = (DWORD)GetDeviceCaps(hdc, BITSPIXEL) ;
-    curDevMode.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT ;
-    ReleaseDC(NULL, hdc) ;
-  }
-
-  GDBG_INFO(80, "DeviceName: %s Display mode: %dx%dx%dbpp!\n", curDeviceName, curDevMode.dmPelsWidth, curDevMode.dmPelsHeight, curDevMode.dmBitsPerPel);
-
-#endif
 
 #if (WINXP_FASTER_ALT_TAB_FIX || WINXP_ALT_TAB_FIX)
    EnumDisplaySettings(devicename, ENUM_REGISTRY_SETTINGS, &devMode);
@@ -420,9 +266,6 @@ setVideoMode( HWND hwnd, int xRes, int yRes, int h3pixelSize, int refresh, void 
       bpp = 8;
   }
 #endif
-
-  
-//  checkSpecialList();
   
   if (lpDD == NULL) {
     /* only create directdraw object once */
@@ -456,12 +299,6 @@ setVideoMode( HWND hwnd, int xRes, int yRes, int h3pixelSize, int refresh, void 
     else GDBG_INFO(80, "DDraw4 Obj created!\n");
 #endif
   }
-
-  /* KoolSmoky - moves all of the pieces of surface memory
-   * on the display card to a contiguous block to make the
-   * largest single amount of free memory available.
-  IDirectDraw2_Compact(lpDD);
-  IDirectDraw_Compact(lpDD1);*/
   
   /* Set Exclusive Mode, change resolution,  */
   GDBG_INFO(80, "Setting Full screen exclusive mode!\n");
@@ -503,87 +340,9 @@ setVideoMode( HWND hwnd, int xRes, int yRes, int h3pixelSize, int refresh, void 
   
   /* Figure out if we can support the requested display mode.  If not,
      try to use the same x & y res, but the default refresh rate.*/
-  /* KoolSmoky - ditch ddraw and use changedisplaysettings to switch modes */
-  GDBG_INFO(80, "Setting Display Mode!\n");
-
-#ifdef IS_ALT_TAB
-  devMode.dmSize = sizeof(DEVMODE);
-  devMode.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFREQUENCY;
-  devMode.dmPelsWidth = xRes;
-  devMode.dmPelsHeight = yRes;
-  devMode.dmBitsPerPel = bpp;
-  devMode.dmDisplayFrequency = refresh;
-
-  if ((OS == OS_WIN32_95) ||
-      (OS == OS_WIN32_NT4)) 
-  {
-    // win95,nt4
-    if(ChangeDisplaySettings(&devMode, CDS_FULLSCREEN) == DISP_CHANGE_SUCCESSFUL)
-    {
-      /*style = GetWindowLong(hwndApp, GWL_STYLE);
-      style &= ~(WS_MAXIMIZE|WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX);
-      style |= WS_POPUP;
-      SetWindowLong(hwndApp, GWL_STYLE, style);*/
-      SetWindowPos(hwndApp, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
-
-      is_fullscreen = FXTRUE;
-      
-      GDBG_INFO(80, "Display Mode Set\n" );
-    } else {
-      GDBG_INFO(80, "Setting display mode at default refresh\n");
-      
-      devMode.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT ;
-      
-      if(ChangeDisplaySettings(&devMode, CDS_FULLSCREEN) == DISP_CHANGE_SUCCESSFUL)
-      {
-        /*style = GetWindowLong(hwndApp, GWL_STYLE);
-        style &= ~(WS_MAXIMIZE|WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX);
-        style |= WS_POPUP;
-        SetWindowLong(hwndApp, GWL_STYLE, style);*/
-        SetWindowPos(hwndApp, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
-
-        is_fullscreen = FXTRUE;
-        
-        GDBG_INFO(80, "Display Mode Set\n" );
-      }
-    }
-    
-  } else {
-    // win98,win2k,winxp
-    if(ChangeDisplaySettingsEx(curDeviceName, &devMode, NULL, CDS_FULLSCREEN, NULL) == DISP_CHANGE_SUCCESSFUL)
-    {
-      /*style = GetWindowLong(hwndApp, GWL_STYLE);
-      style &= ~(WS_MAXIMIZE|WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX);
-      style |= WS_POPUP;
-      SetWindowLong(hwndApp, GWL_STYLE, style);*/
-      SetWindowPos(hwndApp, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
-
-      is_fullscreen = FXTRUE;
-      
-      GDBG_INFO(80, "Display Mode Set\n" );
-    } else {
-      GDBG_INFO(80, "Setting display mode at default refresh\n");
-      
-      devMode.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT ;
-      
-      if(ChangeDisplaySettingsEx(curDeviceName, &devMode, NULL, CDS_FULLSCREEN, NULL) == DISP_CHANGE_SUCCESSFUL)
-      {
-        /*style = GetWindowLong(hwndApp, GWL_STYLE);
-        style &= ~(WS_MAXIMIZE|WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX);
-        style |= WS_POPUP;
-        SetWindowLong(hwndApp, GWL_STYLE, style);*/
-        SetWindowPos(hwndApp, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
-
-        is_fullscreen = FXTRUE;
-        
-        GDBG_INFO(80, "Display Mode Set\n" );
-      }
-    }
-  }
-#endif /* IS_ALT_TAB */
 
 #if (WINXP_FASTER_ALT_TAB_FIX || WINXP_ALT_TAB_FIX)
-  ddsd.dwSize = sizeof(ddsd);
+  ddsd.dwSize = sizeof(DDSURFACEDESC);
   ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT;
   ddsd.dwWidth = xRes;
   ddsd.dwHeight = yRes;
@@ -602,7 +361,7 @@ setVideoMode( HWND hwnd, int xRes, int yRes, int h3pixelSize, int refresh, void 
   if (hResult != DD_OK) {
     GDBG_INFO(80, "Warning:  EnumDisplayModes failed due to: \n");
     msgEnumDisplayModes(hResult);
-  }      
+  }
   
   GDBG_INFO(80, "Setting Display Mode!\n");
   
@@ -635,122 +394,7 @@ setVideoMode( HWND hwnd, int xRes, int yRes, int h3pixelSize, int refresh, void 
     GDBG_INFO(80, "Did not find mode %dx%d@any refresh\n", xRes, yRes);
     GDBG_INFO(80, "Setting video mode %dx%d@default refresh\n", xRes, yRes);
 
-#if 0 /* This only works for single display systems */
-    /*
-     ** This is really a hack here. We use the registry key entry to work
-     ** around DDraw refresh rate problem.
-     */
-    {
-      static char *regPath = NULL;
-      char mpath[256], mpath_8[256], tmp[32];
-      FxU32 reg_flag = 1;
-      if (regPath == NULL) {
-        regPath = getModesRegPath();
-      }
-      if ((regPath) && (bpp == 8)) {
-        HKEY hKey, hKey8;
-        FxU32 retVal;
-        DWORD type, szData, type8, szData8;
-        static char strval[255], strval8[255];
-        
-        /* get the current bpp path */
-        szData = sizeof(strval);
-        strcpy(mpath, regPath);
-        sprintf(tmp, "%d\\%d,%d",devMode.dmBitsPerPel,xRes,yRes);
-        strcat(mpath, tmp);
-        /* get the 8 bpp path */
-        szData8 = sizeof(strval8);
-        strcpy(mpath_8, regPath);
-        sprintf(tmp, "8\\%d,%d",xRes,yRes);
-        strcat(mpath_8, tmp);
-        /*
-         ** Get the original refresh rate from registry key
-         */
-        if (RegOpenKey(HKEY_LOCAL_MACHINE, mpath, &hKey) == ERROR_SUCCESS)  {
-          if (RegQueryValueEx(hKey, "RefreshRate", NULL, &type, strval,
-                              &szData) == ERROR_SUCCESS)  {
-            /*
-             ** overwrite 8 bit registry with glide refresh rate and set
-             ** the display mode. this is a workaround of the DDraw
-             ** refresh rate problem
-             */
-            if (RegOpenKey(HKEY_LOCAL_MACHINE, mpath_8, &hKey8)
-                == ERROR_SUCCESS) {
-              if (RegQueryValueEx(hKey8, "RefreshRate", NULL, &type8,
-                                  strval8, &szData8) == ERROR_SUCCESS) {
-                retVal = 1;
-              } else {
-                retVal = 0;
-              }
-              RegSetValueEx(hKey8, "RefreshRate", 0, REG_SZ, strval,
-                            strlen(strval));
-              hResult = IDirectDraw2_SetDisplayMode(lpDD, xRes, yRes,
-                                                    bpp, 0, 0);
-              reg_flag = 0;
-              /*
-               ** reset the original refresh rate
-               */
-              if (retVal) {
-                RegSetValueEx(hKey8, "RefreshRate", 0,
-                              REG_SZ, strval8, strlen(strval8));
-              }
-              RegCloseKey(hKey8);
-              /*
-               ** delete the key if the refresh rate isn't there in the
-               ** first place
-               */
-              if (!retVal) {
-                RegDeleteValue(hKey8, "RefreshRate" );
-                RegDeleteKey(hKey8, "RefreshRate" );
-              }
-              RegCloseKey(hKey);
-            }
-          } else {
-            /*
-             ** We did not find the "RefreshRate" key in the
-             ** devMode.dmBitsPerPel node so let's see if it exists for
-             ** this resolution under the 8 bpp node:
-             */
-            if (RegOpenKey(HKEY_LOCAL_MACHINE, mpath_8, &hKey8)
-                == ERROR_SUCCESS) {
-              if (RegQueryValueEx(hKey8, "RefreshRate", NULL, &type8, strval8,
-                                  &szData8) == ERROR_SUCCESS) {
-                retVal = 1;
-              } else {
-                retVal = 0;
-              }
-              RegSetValueEx(hKey8, "RefreshRate", 0, REG_SZ, strval,
-                            strlen(strval));
-              hResult = IDirectDraw2_SetDisplayMode(lpDD, xRes, yRes,
-                                                    bpp, 0, 0);
-              reg_flag = 0;
-              /*
-               ** reset the original refresh rate
-               */
-              if (retVal) {
-                RegSetValueEx(hKey8, "RefreshRate", 0,
-                              REG_SZ, strval8, strlen(strval8));
-              }
-              RegCloseKey(hKey8);
-              /*
-               ** delete the key if the refresh rate isn't there in the
-               ** first place
-               */
-              if (!retVal) {
-                RegDeleteValue(hKey8, "RefreshRate" );
-                RegDeleteKey(hKey8, "RefreshRate" );
-              }
-              RegCloseKey(hKey);
-            }
-          }
-        }
-      }
-      if (reg_flag)
-        hResult = IDirectDraw2_SetDisplayMode( lpDD, xRes, yRes, bpp, 0, 0 );
-    }
-#else
     hResult = IDirectDraw2_SetDisplayMode( lpDD, xRes, yRes, bpp, 0, 0 );
-#endif
     
     if (hResult != DD_OK) {
       GDBG_INFO(80, "Failed!\n",
@@ -779,10 +423,6 @@ void
 resetVideo( void ) 
 {
 #define FN_NAME "resetVideo"
-
-#ifdef IS_ALT_TAB
-  FxU32 OS = hwcGetOS();
-#endif
   
   GDBG_INFO(80, "%s:  called!\n", FN_NAME);
   
@@ -818,21 +458,6 @@ resetVideo( void )
   lpDD1 = NULL;
 #if WINXP_ALT_TAB_FIX
   lpDD4 = NULL;
-#endif
-
-#ifdef IS_ALT_TAB
-  //ChangeDisplaySettings(NULL, 0);
-  if ((OS == OS_WIN32_95) ||
-      (OS == OS_WIN32_NT4)) 
-  {
-    // win95,nt4
-    /* KoolSmoky - ripped from quake3 */
-    ChangeDisplaySettings(&curDevMode, CDS_RESET);
-  } else {
-    // win98,win2k,winxp
-    /* KoolSmoky - ripped from quake3 */
-    ChangeDisplaySettingsEx(curDeviceName, &curDevMode, NULL, CDS_RESET, NULL);
-  }
 #endif
 
   return;
@@ -909,73 +534,6 @@ static FxU32 refresh[] = {
   85,  //"GR_REFRESH_85Hz",
   120  //"GR_REFRESH_120Hz"
 };
-
-
-#ifdef IS_ALT_TAB
-/*
-**  checkResolution - check to see if a given resolution is available
-**
-**  This routine may only be called once and IT MUST BE CALLED FROM
-**  hwcInit().
-**  Any other useage will be very very bad, as it will mess with the
-**  app's DirectDraw context.
-*/
-/*  KoolSmoky - we won't mess with ddraw context anymore, we will be
-**  very very good.
-*/
-FxBool
-checkResolutions( FxBool *supportedByResolution, FxU32 stride, void *hmon, int h3pixelSize, char *devicename) 
-{
-#define FN_NAME "checkResolution"
-  DEVMODE chkDevMode;
-  DWORD chkRes, chkRefresh;
-  FxU32 OS = hwcGetOS();
-
-  GDBG_INFO(80, "%s:  called!\n", FN_NAME);
-
-  chkDevMode.dmSize   = sizeof(DEVMODE);
-  chkDevMode.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT | DM_BITSPERPEL | DM_DISPLAYFREQUENCY;
-
-  for(chkRes = 0x0;
-      chkRes < (sizeof(widthHeightByResolution) / sizeof(WidthHeight_t));
-      chkRes++) {
-    for (chkRefresh = 0 ;
-	 chkRefresh < (sizeof(refresh) / sizeof(FxU32)) ;
-         chkRefresh++) {
-      chkDevMode.dmPelsWidth         = widthHeightByResolution[chkRes].width;
-      chkDevMode.dmPelsHeight        = widthHeightByResolution[chkRes].height;
-
-      if(h3pixelSize == 4)
-        chkDevMode.dmBitsPerPel      = 32UL;
-      else
-        chkDevMode.dmBitsPerPel      = 16UL;
-      
-      chkDevMode.dmDisplayFrequency  = refresh[chkRefresh];
-
-      //ChangeDisplaySettings(NULL, 0);
-	  if ((OS == OS_WIN32_95) ||
-          (OS == OS_WIN32_NT4))
-      {
-        // win95,nt4
-        if(ChangeDisplaySettings(&chkDevMode, CDS_TEST) == DISP_CHANGE_SUCCESSFUL)
-          supportedByResolution[chkRes*stride + chkRefresh] = FXTRUE;
-        else
-          supportedByResolution[chkRes*stride + chkRefresh] = FXFALSE;
-      } else {
-        // win98,win2k,winxp
-        if(ChangeDisplaySettingsEx(devicename, &chkDevMode, NULL, CDS_TEST, NULL) == DISP_CHANGE_SUCCESSFUL)
-          supportedByResolution[chkRes*stride + chkRefresh] = FXTRUE;
-        else
-          supportedByResolution[chkRes*stride + chkRefresh] = FXFALSE;
-      }
-      
-    }
-  }
-  
-  return FXTRUE;
-#undef FN_NAME
-} /* checkResolutions */
-#endif /* IS_ALT_TAB */
 
 #if (WINXP_FASTER_ALT_TAB_FIX || WINXP_ALT_TAB_FIX)
 
@@ -1108,11 +666,11 @@ void EnableOpenGL( char *regpath )
 {
   GDBG_INFO(80, "EnableOpenGL: called!\n");
   
-  opengl_regpath = regpath;
-  
-#ifdef IS_ALT_TAB
-  is_opengl = FXTRUE;
-#endif
+  if(regpath[0] != '\0') {
+	opengl_regpath = regpath;
+  } else {
+    opengl_regpath = dummy_regpath;
+  }
   
   GDBG_INFO(80, "opengl regpath: %s\n", opengl_regpath);
   
