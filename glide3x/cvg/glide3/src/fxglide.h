@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.5  2004/02/16 07:42:15  dborca
+** grSetNumPendingBuffers visible with grGetProcAddress
+**
 ** Revision 1.1.1.1.8.4  2004/01/20 14:04:10  dborca
 ** compilation and some other minor fixes to aid in debugging
 **
@@ -479,6 +482,12 @@ do { \
 
 /* isolate this 'hack' here so as to make the code look cleaner */
 #ifdef __WATCOMC__
+/* [dBorca]
+ * gross hack to prevent Watcom appending @0 to names;
+ * this is dangerous if those functions have parameters
+ * and are called from inside the asm specializations...
+ * You have been warned!
+ */
 #define GR_CDECL __cdecl
 #else
 #define GR_CDECL

@@ -527,6 +527,12 @@
 
 /* local */
 #ifdef __WATCOMC__
+/* [dBorca]
+ * gross hack to prevent Watcom appending @0 to names;
+ * this is dangerous if those functions have parameters
+ * and are called from inside the asm specializations...
+ * You have been warned!
+ */
 #define GR_CDECL __cdecl
 #else
 #define GR_CDECL

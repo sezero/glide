@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.2.4.8  2004/10/07 07:16:38  dborca
+** corrected grDrawTriangle on MSVC
+**
 ** Revision 1.2.4.7  2004/10/05 14:47:15  dborca
 ** conditional compilation a bit more sane
 **
@@ -298,6 +301,12 @@
 
 /* local */
 #ifdef __WATCOMC__
+/* [dBorca]
+ * gross hack to prevent Watcom appending @0 to names;
+ * this is dangerous if those functions have parameters
+ * and are called from inside the asm specializations...
+ * You have been warned!
+ */
 #define GR_CDECL __cdecl
 #else
 #define GR_CDECL

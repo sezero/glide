@@ -19,6 +19,11 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.3  2004/10/04 09:35:59  dborca
+** second cut at Glide3x for Voodoo1/Rush (massive update):
+** delayed validation, vertex snapping, clip coordinates, strip/fan_continue, bugfixes.
+** and probably a bunch of other crap that I forgot
+**
 ** Revision 1.1.2.2  2004/03/08 07:42:21  dborca
 ** Voodoo Rush fixes
 **
@@ -249,6 +254,12 @@
 
 /* isolate this 'hack' here so as to make the code look cleaner */
 #ifdef __WATCOMC__
+/* [dBorca]
+ * gross hack to prevent Watcom appending @0 to names;
+ * this is dangerous if those functions have parameters
+ * and are called from inside the asm specializations...
+ * You have been warned!
+ */
 #define GR_CDECL __cdecl
 #else
 #define GR_CDECL
