@@ -160,7 +160,7 @@ GrContext_t _grCreateWindowSurface(FxU32                 hWnd,
                                    GrPixelFormat_t	pixelformat,
                                    int			nAuxBuffer)
 {
-  GrContext_t ctx;
+  static GrContext_t ctx = 0;
   GrGC *gc;
   RECT clientRect;
   LPGUID ddGuid = 0;
@@ -171,6 +171,17 @@ GrContext_t _grCreateWindowSurface(FxU32                 hWnd,
   
   GDBG_INFO(80, "_grCreateWindowSurface( 0x%x, %d, %d, %d, %d )\n",
             hWnd, format, origin, pixelformat, nAuxBuffer);
+
+  /* check */
+  if (lpClipper || lpTexSurf1 || lpTexSurf0 || lpAuxSurf ||
+      lpColSurf || lpPrimSurf || lpDDraw2 || lpDDraw1) {
+    if (ctx) {
+      _grReleaseWindowSurface(ctx);
+    } else {
+      GDBG_INFO(80, "Failed check!\n");
+      return 0;
+    }
+  }
   
   /* Allocate a context */
   ctx = grSurfaceCreateContext(GR_SURFACECONTEXT_WINDOWED);
@@ -230,7 +241,7 @@ GrContext_t _grCreateWindowSurface(FxU32                 hWnd,
   case GR_PIXFMT_AA_8_ARGB_8888:
     bpp = 32;
     if (IS_NAPALM(gc->bInfo->pciInfo.deviceID)) {
-      if (ddsd.ddpfPixelFormat.dwRGBBitCount < 32) {
+      if (ddsd.ddpfPixelFormat.dwRGBBitCount != 32) {
         GDBG_INFO(80, "Display is not in 32bpp format!\n");
         _grReleaseWindowSurface(ctx);
         MessageBox( thehWnd, "Desktop must be set to 32bbp!", "ERROR", MB_OK);
@@ -245,7 +256,7 @@ GrContext_t _grCreateWindowSurface(FxU32                 hWnd,
     break;
   default:
     bpp = 16;
-    if (ddsd.ddpfPixelFormat.dwRGBBitCount < 16) {
+    if (ddsd.ddpfPixelFormat.dwRGBBitCount != 16) {
       GDBG_INFO(80, "Display is not in 16bpp format!\n");
       _grReleaseWindowSurface(ctx);
       MessageBox( thehWnd, "Desktop must be set to 16bbp!", "ERROR", MB_OK);
@@ -303,25 +314,23 @@ GrContext_t _grCreateWindowSurface(FxU32                 hWnd,
   }
   
   /* Setup Color Surface */
-  if (!lpColSurf) {
-    GDBG_INFO(80, "Setting up Color Surface\n");
-    memset(&ddsd, 0, sizeof(ddsd));
-    ddsd.dwSize = sizeof(ddsd); 
-    ddsd.dwFlags = DDSD_CAPS|DDSD_HEIGHT|DDSD_WIDTH|DDSD_PIXELFORMAT;
-    ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN|DDSCAPS_VIDEOMEMORY;
-    ddsd.dwWidth = surfWidth;
-    ddsd.dwHeight = surfHeight;
-    ddsd.ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT);
-    ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
-    ddsd.ddpfPixelFormat.dwRGBBitCount = bpp;
-    
-    hResult = IDirectDraw2_CreateSurface( lpDDraw2, &ddsd, &lpColSurf, 0 );
-    if (hResult != DD_OK) {
-      GDBG_INFO(80, "Colour Surface Create Failed!\n");
-      GDBG_DDERR(hResult);
-      _grReleaseWindowSurface(ctx);
-      return 0;
-    }
+  GDBG_INFO(80, "Setting up Color Surface\n");
+  memset(&ddsd, 0, sizeof(ddsd));
+  ddsd.dwSize = sizeof(ddsd); 
+  ddsd.dwFlags = DDSD_CAPS|DDSD_HEIGHT|DDSD_WIDTH;/*|DDSD_PIXELFORMAT;*/
+  ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;/*|DDSCAPS_VIDEOMEMORY;*/
+  ddsd.dwWidth = surfWidth;
+  ddsd.dwHeight = surfHeight;
+  /*ddsd.ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT);
+  ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
+  ddsd.ddpfPixelFormat.dwRGBBitCount = bpp;*/
+  
+  hResult = IDirectDraw2_CreateSurface( lpDDraw2, &ddsd, &lpColSurf, 0 );
+  if (hResult != DD_OK) {
+    GDBG_INFO(80, "Colour Surface Create Failed!\n");
+    GDBG_DDERR(hResult);
+    _grReleaseWindowSurface(ctx);
+    return 0;
   }
   
   /* Setup Aux Surface */
@@ -329,13 +338,13 @@ GrContext_t _grCreateWindowSurface(FxU32                 hWnd,
     GDBG_INFO(80, "Setting up Aux Surface\n");
     memset(&ddsd, 0, sizeof(ddsd));
     ddsd.dwSize = sizeof(ddsd); 
-    ddsd.dwFlags = DDSD_CAPS|DDSD_HEIGHT|DDSD_WIDTH|DDSD_PIXELFORMAT;
-    ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN|DDSCAPS_VIDEOMEMORY;
+    ddsd.dwFlags = DDSD_CAPS|DDSD_HEIGHT|DDSD_WIDTH;/*|DDSD_PIXELFORMAT;*/
+    ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;/*|DDSCAPS_VIDEOMEMORY;*/
     ddsd.dwWidth = surfWidth;
     ddsd.dwHeight = surfHeight;
-    ddsd.ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT);
+    /*ddsd.ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT);
     ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
-    ddsd.ddpfPixelFormat.dwRGBBitCount = bpp;
+    ddsd.ddpfPixelFormat.dwRGBBitCount = bpp;*/
     
     hResult = IDirectDraw2_CreateSurface( lpDDraw2, &ddsd, &lpAuxSurf, 0 );
     if (hResult != DD_OK) {
@@ -350,14 +359,14 @@ GrContext_t _grCreateWindowSurface(FxU32                 hWnd,
   GDBG_INFO(80, "Setting up Texture Surface\n");
   memset(&ddsd, 0, sizeof(ddsd));
   ddsd.dwSize = sizeof(ddsd); 
-  ddsd.dwFlags = DDSD_CAPS|DDSD_HEIGHT|DDSD_WIDTH|DDSD_PIXELFORMAT;
-  ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN|DDSCAPS_VIDEOMEMORY;
+  ddsd.dwFlags = DDSD_CAPS|DDSD_HEIGHT|DDSD_WIDTH;/*|DDSD_PIXELFORMAT;*/
+  ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;/*|DDSCAPS_VIDEOMEMORY;*/
   /* XXX [koolsmoky] We're screwed if the texture is larger than 1024*1024 (Napalm). */
   ddsd.dwWidth = 1024;
   ddsd.dwHeight = 1024;
-  ddsd.ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT);
+  /*ddsd.ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT);
   ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
-  ddsd.ddpfPixelFormat.dwRGBBitCount = bpp;
+  ddsd.ddpfPixelFormat.dwRGBBitCount = bpp;*/
   
   hResult = IDirectDraw2_CreateSurface( lpDDraw2, &ddsd, &lpTexSurf0, 0 );
   if (hResult != DD_OK) {
