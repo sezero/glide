@@ -1,0 +1,238 @@
+/*
+** THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONLY
+** PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGHT
+** TO USE THE GLIDE TRADEMARK WITHOUT PRIOR WRITTEN PERMISSION OF 3DFX
+** INTERACTIVE, INC. A COPY OF THIS LICENSE MAY BE OBTAINED FROM THE 
+** DISTRIBUTOR OR BY CONTACTING 3DFX INTERACTIVE INC(info@3dfx.com). 
+** THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER 
+** EXPRESSED OR IMPLIED. SEE THE 3DFX GLIDE GENERAL PUBLIC LICENSE FOR A
+** FULL TEXT OF THE NON-WARRANTY PROVISIONS.  
+** 
+** USE, DUPLICATION OR DISCLOSURE BY THE GOVERNMENT IS SUBJECT TO
+** RESTRICTIONS AS SET FORTH IN SUBDIVISION (C)(1)(II) OF THE RIGHTS IN
+** TECHNICAL DATA AND COMPUTER SOFTWARE CLAUSE AT DFARS 252.227-7013,
+** AND/OR IN SIMILAR OR SUCCESSOR CLAUSES IN THE FAR, DOD OR NASA FAR
+** SUPPLEMENT. UNPUBLISHED RIGHTS RESERVED UNDER THE COPYRIGHT LAWS OF
+** THE UNITED STATES.  
+** 
+** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
+**
+** $Revision$
+** $Date$
+*/
+
+#include <stddef.h>
+#include <stdio.h>
+#include <string.h>
+
+#include <3dfx.h>
+#include <glidesys.h>
+
+#define FX_DLL_DEFINITION
+#include <fxdll.h>
+#include <glide.h>
+#include "fxglide.h"
+
+/*----------------------------------------------------------------------
+ * macros for creating assembler offset files
+ *----------------------------------------------------------------------*/
+
+#ifndef __linux__
+#define NEWLINE printf("\n")
+#define COMMENT printf(";----------------------------------------------------------------------\n")
+
+#define HEADER(str)     NEWLINE; COMMENT; \
+                        printf("; Assembler offsets for %s struct\n",str);\
+                        COMMENT; NEWLINE
+
+#define OFFSET(p,o,pname) if (hex) \
+        printf("%s\t= %08xh\n",pname,((int)&p.o)-(int)&p); \
+    else printf("%s\t= %10d\n",pname,((int)&p.o)-(int)&p)
+
+#define OFFSET2(p,o,pname) if (hex) \
+        printf("%s\t= %08xh\n",pname,((int)&o)-(int)&p); \
+    else printf("%s\t= %10d\n",pname,((int)&o)-(int)&p)
+
+#define SIZEOF(p,pname) if (hex) \
+        printf("SIZEOF_%s\t= %08xh\n",pname,sizeof(p)); \
+    else printf("SIZEOF_%s\t= %10d\n",pname,sizeof(p))
+
+#else
+
+#define NEWLINE printf("\n");
+#define COMMENT printf("/*----------------------------------------------------------------------*/\n")
+  
+#define HEADER(str)     NEWLINE; COMMENT; \
+                        printf("/* Assembler offsets for %s struct */\n",str);\
+                        COMMENT; NEWLINE
+
+#define OFFSET(p,o,pname) if (hex) \
+        printf("#define %s 0x%08x\n",pname,((int)&p.o)-(int)&p); \
+    else printf("#define %s %10d\n",pname,((int)&p.o)-(int)&p)
+
+#define OFFSET2(p,o,pname) if (hex) \
+        printf("#define %s 0x%08x\n",pname,((int)&o)-(int)&p); \
+    else printf("#define %s %10d\n",pname,((int)&o)-(int)&p)
+
+#define SIZEOF(p,pname) if (hex) \
+        printf("#define SIZEOF_%s 0x%08x\n",pname,sizeof(p)); \
+    else printf("#define SIZEOF_%s %10d\n",pname,sizeof(p))
+#endif
+
+
+int
+main (int argc, char **argv)
+{
+    int hex=0;          /* default is print in decimal  */
+    static struct _GlideRoot_s gr;
+    static GrGC gc;
+
+#if !GLIDE_HW_TRI_SETUP
+    static Sstregs sst;
+    static struct dataList_s dl;
+#endif /* !GLIDE_HW_TRI_SETUP */
+
+    if (argc > 1) {
+      if (strcmp("-inline", argv[1]) == 0) {
+        SstRegs dummyRegs = { 0x00UL };
+
+        printf("#ifndef __FX_INLINE_H__\n");
+        printf("#define __FX_INLINE_H__\n");
+        printf("\n");
+
+        printf("#define kTriProcOffset 0x%XUL\n",
+               offsetof(struct GrGC_s, triSetupProc));
+        
+        printf("/* The # of 2-byte entries in the hw fog table */\n");
+        printf("#define kInternalFogTableEntryCount 0x%XUL\n",
+               sizeof(dummyRegs.fogTable) >> 1);
+
+        printf("#define kTLSOffset 0x%XUL\n",
+               offsetof(struct _GlideRoot_s, tlsOffset));
+
+        printf("#define kLostContextOffset 0x%xUL\n",
+               offsetof(GrGC, lostContext));
+
+        printf("\n");
+        printf("#endif /* __FX_INLINE_H__ */\n");
+
+        return 0;
+      }
+
+      hex = 1;
+    }
+
+#if !GLIDE_HW_TRI_SETUP
+    printf("SST_CHIP_MASK = 0%xh\n",SST_CHIP_MASK);
+#endif
+
+    HEADER ("SSTREGS");
+
+    NEWLINE;
+    HEADER ("GC");
+    OFFSET (gc,base_ptr,"base_ptr\t");
+    OFFSET (gc,reg_ptr,"reg_ptr\t\t");
+    OFFSET (gc,lfb_ptr,"lfb_ptr\t\t");
+    OFFSET (gc,state.cull_mode,"cull_mode\t");
+#ifndef GLIDE3
+    OFFSET (gc, regDataList,"regDataList\t");
+#endif
+    OFFSET (gc, tsuDataList,"tsuDataList\t");
+    OFFSET (gc, cmdTransportInfo.triPacketHdr, "triPacketHdr");
+    OFFSET (gc, cmdTransportInfo.cullStripHdr, "cullStripHdr");
+    OFFSET (gc, cmdTransportInfo.paramMask, "paramMask");
+
+    OFFSET (gc, cmdTransportInfo.fifoStart, "fifoStart");
+    OFFSET (gc, cmdTransportInfo.fifoEnd, "fifoEnd");
+    OFFSET (gc, cmdTransportInfo.fifoOffset, "fifoOffset");
+    OFFSET (gc, cmdTransportInfo.fifoSize, "fifoSize");
+    OFFSET (gc, cmdTransportInfo.fifoJmpHdr, "fifoJmpHdr");
+    OFFSET (gc, cmdTransportInfo.fifoPtr, "fifoPtr");
+    OFFSET (gc, cmdTransportInfo.fifoRead, "fifoRead");
+
+    OFFSET (gc, cmdTransportInfo.fifoRoom, "fifoRoom");
+    OFFSET (gc, cmdTransportInfo.roomToReadPtr, "roomToReadPtr");
+    OFFSET (gc, cmdTransportInfo.roomToEnd, "roomToEnd");
+
+    OFFSET (gc, cmdTransportInfo.lfbLockCount, "lfbLockCount");
+
+    OFFSET (gc, archDispatchProcs.triSetupProc, "triSetupProc");
+    OFFSET (gc, archDispatchProcs.drawTrianglesProc, "drawTrianglesProc");
+    OFFSET (gc, archDispatchProcs.triSetupProc, "drawVertexList");
+
+    /* for Glide3 strip routine */
+    OFFSET (gc, state.vData.vSize, "vertexSize");
+    OFFSET (gc, state.vData.vStride, "vertexStride");
+    OFFSET (gc, state.invalid, "invalid");
+    OFFSET (gc, state.grCoordinateSpaceArgs.coordinate_space_mode, "CoordinateSpace");
+#ifdef GLIDE_VERTEX_TABLE
+    OFFSET (gc, state.vTable, "vTable");
+#endif
+    /* for Glide3 clip coordinate */
+    OFFSET (gc, state.paramIndex, "paramIndex");
+    OFFSET (gc, state.Viewport.hwidth, "vp_hwidth");
+    OFFSET (gc, state.Viewport.hheight, "vp_hheight");
+    OFFSET (gc, state.Viewport.hdepth, "vp_hdepth");
+    OFFSET (gc, state.Viewport.ox, "vp_ox");
+    OFFSET (gc, state.Viewport.oy, "vp_oy");
+    OFFSET (gc, state.Viewport.oz, "vp_oz");
+    OFFSET (gc, state.vData.colorType, "colorType");
+    OFFSET (gc, state.vData.wInfo.offset, "wInfo_offset");
+    OFFSET (gc, state.vData.qInfo.mode, "qInfo_mode");
+    OFFSET (gc, state.vData.qInfo.offset, "qInfo_offset");
+    OFFSET (gc, state.vData.q0Info.offset, "q0Info_offset");
+    OFFSET (gc, state.vData.q1Info.offset, "q1Info_offset");
+    OFFSET (gc, state.vData.q0Info.mode, "q0Info_mode");
+    OFFSET (gc, state.vData.q1Info.mode, "q1Info_mode");
+    OFFSET (gc, state.vData.fogInfo.offset, "fogInfo_offset");
+    OFFSET (gc, state.vData.fogInfo.mode, "fogInfo_mode");
+
+    OFFSET (gc, state.per_tmu[0].s_scale, "tmu0_s_scale");
+    OFFSET (gc, state.per_tmu[0].t_scale, "tmu0_t_scale");
+    OFFSET (gc, state.per_tmu[1].s_scale, "tmu1_s_scale");
+    OFFSET (gc, state.per_tmu[1].t_scale, "tmu1_t_scale");
+    OFFSET (gc, state.shadow.fbzMode, "fbi_fbzMode");
+
+    OFFSET (gc, curTriSize, "curTriSize\t");
+    OFFSET (gc, stats.trisProcessed, "trisProcessed\t");
+    OFFSET (gc, stats.trisDrawn, "trisDrawn\t");
+    OFFSET (gc, lostContext, "lostContext\t");
+    OFFSET (gc, windowed, "windowed\t");
+#ifdef GLIDE_INIT_HWC
+    OFFSET (gc, bInfo, "bInfo\t");
+#endif
+
+#if GLIDE_PACKED_RGB
+    OFFSET (gc, pool.ftemp1, "fTemp1");
+    OFFSET (gc, pool.ftemp2, "fTemp2");
+#endif
+
+    HEADER ("GlideRoot");
+    OFFSET (gr,p6Fencer,"p6Fencer\t");
+    OFFSET (gr,current_sst,"current_sst\t");
+    OFFSET (gr,CPUType,"CPUType\t\t");
+    OFFSET (gr,tlsOffset,"tlsOffset\t\t");    
+    OFFSET (gr, pool.f255,"pool_f255");
+    SIZEOF (gr.GCs[0].state,"GrState\t");
+    SIZEOF (gr.GCs[0],"GC\t");
+    NEWLINE;
+
+
+#if GLIDE_PACKED_RGB
+    OFFSET (gr, pool.fBiasHi,"fBiasHi");
+    OFFSET (gr, pool.fBiasLo,"fBiasLo");
+#endif /* (GLIDE_PLATFORM & GLIDE_HW_CVG) && GLIDE_PACKED_RGB */
+
+    SIZEOF (gr,"GlideRoot");
+    NEWLINE;
+
+#if !GLIDE_HW_TRI_SETUP
+    HEADER ("dataList");
+    OFFSET (dl,i,"dl_i\t\t");
+    OFFSET (dl,addr,"dl_addr\t\t");
+    SIZEOF (dl,"dataList\t");
+    NEWLINE;
+#endif /* !GLIDE_HW_TRI_SETUP */
+
+    return 0;
+}
