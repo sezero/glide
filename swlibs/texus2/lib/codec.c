@@ -1215,7 +1215,7 @@ again:
         for (i=0; i<32; i++) {
             float   e0, e1, e2, e;
 
-            j = bestColorAlpha((float *) &input[i][0], input[i][3], colors, ncolors, lerp);
+            j = bestColorAlpha((float *) &input[i][0], input[i][3], (const float (*)[4])colors, ncolors, lerp);
             if ( !lerp && ( j == 3 )) continue; // transparent black handled specially
             counts[j] += 1.0f;
             deltas[j][0] += (input[i][0] - colors[j][0]) * alpha;
@@ -1298,7 +1298,7 @@ again:
         for (i=0; i<32; i++) {
             float   dr, dg, db, da, e;
 
-            j = bestColorAlpha((float *) &input[i][0], input[i][3], colors, ncolors, lerp);
+            j = bestColorAlpha((float *) &input[i][0], input[i][3], (const float (*)[4])colors, ncolors, lerp);
             if ( !lerp && ( j == 3 )) continue;
             dr = ABS( input[i][0] - colors[j][0] );
             dg = ABS( input[i][1] - colors[j][1] );
@@ -1375,7 +1375,7 @@ encodeAlpha( float input[][3], FxI32  ainput[], void *bits, FxU32 lerp)
 
         /* Map input colors to closest entry in the palette */
         for (i=0; i<16; i++) {
-            index[i] = bestColorAlpha((float *) &input[i][0], (float)ainput[i], fpal, 4, lerp);
+            index[i] = bestColorAlpha((float *) &input[i][0], (float)ainput[i], (const float (*)[4])fpal, 4, lerp);
         }
 
         /* Now deal with odd block */
@@ -1386,7 +1386,7 @@ encodeAlpha( float input[][3], FxI32  ainput[], void *bits, FxU32 lerp)
 
         /* Map input colors to closest entry in the palette */
         for (i=16; i<32; i++) {
-            index[i] = bestColorAlpha((float *) &input[i][0], (float)ainput[i], fpal, 4, lerp);
+            index[i] = bestColorAlpha((float *) &input[i][0], (float)ainput[i], (const float (*)[4])fpal, 4, lerp);
         }
     } else { // no interpolation
         p[0] = ARGB( (int)col[0][3], (int) col[0][0], (int) col[0][1], (int) col[0][2]);
@@ -1398,7 +1398,7 @@ encodeAlpha( float input[][3], FxI32  ainput[], void *bits, FxU32 lerp)
 
         /* Map input colors to closest entry in the palette */
         for (i=0; i<32; i++) {
-            index[i] = bestColorAlpha((float *) &input[i][0], (float)ainput[i], col, 3, lerp);
+            index[i] = bestColorAlpha((float *) &input[i][0], (float)ainput[i], (const float (*)[4])col, 3, lerp);
         }
     } 
 

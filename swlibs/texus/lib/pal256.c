@@ -80,20 +80,20 @@ typedef unsigned short  ushort;
 
 typedef struct {
     float               weightedvar;            /* weighted variance */
-    ulong               mean[3];                        /* centroid */
-    ulong               weight;                         /* # of pixels in box */
-    ulong               freq[3][MAXCOLORS];     /* Projected frequencies */
+    uint                mean[3];                        /* centroid */
+    uint                weight;                         /* # of pixels in box */
+    uint                freq[3][MAXCOLORS];     /* Projected frequencies */
     int                 low[3], high[3];        /* Box extent */
 } Box;
 
 #define COLORMAXI ( 1 << NBITS )
 #if 0
-static ulong    *Histogram;             /* image histogram      */
+static uint    *Histogram;             /* image histogram      */
 #else
-static ulong    Histogram[COLORMAXI*COLORMAXI*COLORMAXI * sizeof(long)];
+static uint     Histogram[COLORMAXI*COLORMAXI*COLORMAXI * sizeof(long)];
 #endif
-static ulong    SumPixels;              /* total # of pixels    */
-static ulong    ColormaxI;              /* # of colors, 2^Bits */
+static uint     SumPixels;              /* total # of pixels    */
+static uint     ColormaxI;              /* # of colors, 2^Bits */
 static Box              _Boxes[MAXCOLORS];
 static Box              *Boxes;                 /* Array of color boxes. */
 
@@ -105,7 +105,7 @@ static int      CutBox(Box *box, Box *newbox);
 static void     BoxStats(Box *box);
 static int      GreatestVariance(Box *boxes, int n);
 static int      CutBoxes(Box *boxes, int colors);
-static void     QuantHistogram(ulong *pixels, int npixels, Box *box);
+static void     QuantHistogram(uint *pixels, int npixels, Box *box);
 
 /*
  * Perform variance-based color quantization on a 24-bit image.
@@ -132,16 +132,16 @@ txMipPal256(TxMip *pxMip, TxMip *txMip, int format, FxU32 dither, FxU32 compress
 
     Boxes = _Boxes;     
 #if 0
-    Histogram = (ulong *) txMalloc(ColormaxI*ColormaxI*ColormaxI * sizeof(long));
+    Histogram = (uint *) txMalloc(ColormaxI*ColormaxI*ColormaxI * sizeof(long));
     rgbmap = txMalloc((1<<NBITS)*(1<<NBITS)*(1<<NBITS));
 #endif
 
     /*
      * Zero-out the projected frequency arrays of the largest box.
      */
-    bzero(Boxes->freq[0], ColormaxI * sizeof(ulong));
-    bzero(Boxes->freq[1], ColormaxI * sizeof(ulong));
-    bzero(Boxes->freq[2], ColormaxI * sizeof(ulong));
+    bzero(Boxes->freq[0], ColormaxI * sizeof(uint));
+    bzero(Boxes->freq[1], ColormaxI * sizeof(uint));
+    bzero(Boxes->freq[2], ColormaxI * sizeof(uint));
     bzero(Histogram, ColormaxI * ColormaxI * ColormaxI * sizeof(long));
 
     /* Feed all bitmaps & generate histogram */
@@ -150,7 +150,7 @@ txMipPal256(TxMip *pxMip, TxMip *txMip, int format, FxU32 dither, FxU32 compress
     h = txMip->height;
     for (i=0; i< txMip->depth; i++) {
         SumPixels += w * h;
-        QuantHistogram((ulong *)txMip->data[i], w * h, &Boxes[0]);
+        QuantHistogram((uint *)txMip->data[i], w * h, &Boxes[0]);
         if (w > 1) w >>= 1;
         if (h > 1) h >>= 1;
     }
@@ -163,10 +163,10 @@ txMipPal256(TxMip *pxMip, TxMip *txMip, int format, FxU32 dither, FxU32 compress
      * from their 'prequantized' range to 0-FULLINTENSITY.
      */
     for (i = 0; i < OutColors; i++) {
-        ulong   r, g, b;
-        r = (ulong)(Boxes[i].mean[REDI] * Cfactor + 0.5);
-        g = (ulong)(Boxes[i].mean[GREENI] * Cfactor + 0.5);
-        b = (ulong)(Boxes[i].mean[BLUEI] * Cfactor + 0.5);
+        uint   r, g, b;
+        r = (uint)(Boxes[i].mean[REDI] * Cfactor + 0.5);
+        g = (uint)(Boxes[i].mean[GREENI] * Cfactor + 0.5);
+        b = (uint)(Boxes[i].mean[BLUEI] * Cfactor + 0.5);
 
         /*
         r &= 0xff;
@@ -195,11 +195,11 @@ txMipPal256(TxMip *pxMip, TxMip *txMip, int format, FxU32 dither, FxU32 compress
         h = txMip->height;
 
         for (i=0; i< txMip->depth; i++) {
-                ulong   *src;
+                uint   *src;
                 uchar   *dst;
                 int             n;
 
-                src = (ulong *) txMip->data[i];
+                src = (uint *) txMip->data[i];
                 dst = (uchar *) pxMip->data[i];
                 n   = w * h;
                 while (n--) {
@@ -239,9 +239,9 @@ txMipPal256(TxMip *pxMip, TxMip *txMip, int format, FxU32 dither, FxU32 compress
  * arrays for the first world-encompassing box.
  */
 static void
-QuantHistogram(ulong *pixels, int npixels, Box *box)
+QuantHistogram(uint *pixels, int npixels, Box *box)
 {
-    ulong *rf, *gf, *bf;
+    uint *rf, *gf, *bf;
     uchar rr, gg, bb;
     int         i;
 
@@ -319,7 +319,7 @@ static void
 BoxStats(Box *box)
 {
     int i, color;
-    ulong *freq;
+    uint *freq;
     float mean, var;
 
     if(box->weight == 0) {
@@ -404,7 +404,7 @@ FindCutpoint(Box *box, int color, Box *newbox1, Box *newbox2)
 {
     float u, v, max;
     int i, maxindex, minindex, cutpoint;
-    ulong optweight, curweight;
+    uint optweight, curweight;
 
     if (box->low[color] + 1 == box->high[color])
         return FALSE;   /* Cannot be cut. */
@@ -454,13 +454,13 @@ FindCutpoint(Box *box, int color, Box *newbox1, Box *newbox2)
 static void
 UpdateFrequencies(Box *box1, Box *box2)
 {
-    ulong myfreq, *h;
+    uint myfreq, *h;
     int b, g, r;
     int roff;
 
-    bzero(box1->freq[0], ColormaxI * sizeof(ulong));
-    bzero(box1->freq[1], ColormaxI * sizeof(ulong));
-    bzero(box1->freq[2], ColormaxI * sizeof(ulong)); 
+    bzero(box1->freq[0], ColormaxI * sizeof(uint));
+    bzero(box1->freq[1], ColormaxI * sizeof(uint));
+    bzero(box1->freq[2], ColormaxI * sizeof(uint)); 
 
     for (r = box1->low[0]; r < box1->high[0]; r++) {
         roff = r << NBITS;

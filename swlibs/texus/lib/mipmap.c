@@ -35,7 +35,7 @@
 #define B3(x)   ((x>>0)&0xFF)
 
 static void
-_txImgHalve(long *outdata, int width, int height, long *indata)
+_txImgHalve(int *outdata, int width, int height, int *indata)
 {
     unsigned int i,j,k;
     unsigned int w,h, *p,sum,*q;

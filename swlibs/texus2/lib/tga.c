@@ -335,7 +335,7 @@ _txReadTGAData( FILE *stream, TxMip *info)
     int		i, stride;
     int 	bpp;			// bytesPerPixel
     FxU8*	data;
-    long	BigEndian = 0xff000000;
+    long 	BigEndian = 0xff000000;
 
     // printf("TxREAD TGA DATA\n");
     tgaRLEcount = 0;

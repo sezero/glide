@@ -29,10 +29,10 @@
 #include "texusint.h"
 
 static int 
-dithmat[4][4] = {       0,  8,  2, 10, 
-                           12,  4, 14,  6, 
-                            3, 11,  1,  9, 
-                           15,  7, 13,  5 };
+dithmat[4][4] = {      { 0,  8,  2, 10,    },
+                       {    12,  4, 14,  6 },
+                       {     3, 11,  1,  9 },
+                       {    15,  7, 13,  5 }  };
 
 static struct   {
     int yhist[256], ihist[256], qhist[256];
@@ -124,7 +124,7 @@ _txPixQuantize_YIQ422_D4x4 (unsigned long argb, int x, int y, int w)
 }
 
 static void
-_txImgNcc(char *odata, unsigned long *idata, int w, int h, int format, 
+_txImgNcc(char *odata, unsigned int *idata, int w, int h, int format, 
     int dither)
 {
     int (*quantizer)(unsigned long argb, int x, int y, int w);
@@ -308,7 +308,7 @@ txMipNcc(TxMip *pxMip, TxMip *txMip, int format, FxU32 dither, FxU32 compression
 
 
     if ((dither & TX_DITHER_MASK) == TX_DITHER_ERR) {
-        txYABtoPal256((long *)pxMip->pal, (long *) &ncc.y[0]);
+        txYABtoPal256(pxMip->pal, &ncc.y[0]);
         txDiffuseIndex(pxMip, txMip, pixsize, pxMip->pal, 256);
     }
     else {

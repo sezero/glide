@@ -80,9 +80,9 @@ typedef unsigned short  ushort;
 
 typedef struct {
     float               weightedvar;              /* weighted variance */
-    ulong               mean[NCOMP];              /* centroid */
-    ulong               weight;                   /* # of pixels in box */
-    ulong               freq[NCOMP][MAXCOLORS];   /* Projected frequencies */
+    uint                mean[NCOMP];              /* centroid */
+    uint                weight;                   /* # of pixels in box */
+    uint                freq[NCOMP][MAXCOLORS];   /* Projected frequencies */
     int                 low[NCOMP], high[NCOMP];  /* Box extent */
 } Box;
 
@@ -92,12 +92,12 @@ static uchar inverse_pal[INVERSE_PAL_SIZE];
 
 #define COLORMAXI ( 1 << NBITS )
 #if 0
-static ulong    *Histogram;             /* image histogram      */
+static uint    *Histogram;             /* image histogram      */
 #else
-static ulong    Histogram[1<<INVERSE_PAL_TOTAL_BITS];
+static uint    Histogram[1<<INVERSE_PAL_TOTAL_BITS];
 #endif
-static ulong    SumPixels;              /* total # of pixels    */
-static ulong    ColormaxI;              /* # of colors, 2^Bits */
+static uint    SumPixels;              /* total # of pixels    */
+static uint    ColormaxI;              /* # of colors, 2^Bits */
 static Box      _Boxes[MAXCOLORS];
 static Box     *Boxes;                 /* Array of color boxes. */
 
@@ -109,7 +109,7 @@ static int      CutBox(Box *box, Box *newbox);
 static void     BoxStats(Box *box);
 static int      GreatestVariance(Box *boxes, int n);
 static int      CutBoxes(Box *boxes, int colors);
-static void     QuantHistogram(ulong *pixels, int npixels, Box *box);
+static void     QuantHistogram(uint *pixels, int npixels, Box *box);
 
 /*
  * Perform variance-based color quantization on a 32-bit image.
@@ -136,7 +136,7 @@ txMipPal6666(TxMip *pxMip, TxMip *txMip, int format, FxU32 dither, FxU32 compres
 
     Boxes = _Boxes;     
 #if 0
-    Histogram = (ulong *) txMalloc(INVERSE_PAL_SIZE * sizeof(long));
+    Histogram = (uint *) txMalloc(INVERSE_PAL_SIZE * sizeof(long));
     argbmap = txMalloc(INVERSE_PAL_SIZE);
 #endif
 
@@ -144,10 +144,10 @@ txMipPal6666(TxMip *pxMip, TxMip *txMip, int format, FxU32 dither, FxU32 compres
      * Zero-out the projected frequency arrays of the largest box.
      */
 
-    bzero(Boxes->freq[ALPHAI], ColormaxI * sizeof(ulong));
-    bzero(Boxes->freq[REDI],   ColormaxI * sizeof(ulong));
-    bzero(Boxes->freq[GREENI], ColormaxI * sizeof(ulong));
-    bzero(Boxes->freq[BLUEI],  ColormaxI * sizeof(ulong));
+    bzero(Boxes->freq[ALPHAI], ColormaxI * sizeof(uint));
+    bzero(Boxes->freq[REDI],   ColormaxI * sizeof(uint));
+    bzero(Boxes->freq[GREENI], ColormaxI * sizeof(uint));
+    bzero(Boxes->freq[BLUEI],  ColormaxI * sizeof(uint));
 
     bzero(Histogram, INVERSE_PAL_SIZE * sizeof(long));
 
@@ -157,7 +157,7 @@ txMipPal6666(TxMip *pxMip, TxMip *txMip, int format, FxU32 dither, FxU32 compres
     h = txMip->height;
     for (i=0; i< txMip->depth; i++) {
         SumPixels += w * h;
-        QuantHistogram((ulong *)txMip->data[i], w * h, &Boxes[0]);
+        QuantHistogram((uint *)txMip->data[i], w * h, &Boxes[0]);
         if (w > 1) w >>= 1;
         if (h > 1) h >>= 1;
     }
@@ -171,12 +171,12 @@ txMipPal6666(TxMip *pxMip, TxMip *txMip, int format, FxU32 dither, FxU32 compres
      */
 
     for (i = 0; i < OutColors; i++) {
-        ulong  a, r, g, b;
+        uint  a, r, g, b;
 
-        a = (ulong)(Boxes[i].mean[ALPHAI] * Cfactor + 0.5);
-        r = (ulong)(Boxes[i].mean[REDI]   * Cfactor + 0.5);
-        g = (ulong)(Boxes[i].mean[GREENI] * Cfactor + 0.5);
-        b = (ulong)(Boxes[i].mean[BLUEI]  * Cfactor + 0.5);
+        a = (uint)(Boxes[i].mean[ALPHAI] * Cfactor + 0.5);
+        r = (uint)(Boxes[i].mean[REDI]   * Cfactor + 0.5);
+        g = (uint)(Boxes[i].mean[GREENI] * Cfactor + 0.5);
+        b = (uint)(Boxes[i].mean[BLUEI]  * Cfactor + 0.5);
 
         if (a > 255) a = 255;
         if (r > 255) r = 255;
@@ -201,11 +201,11 @@ txMipPal6666(TxMip *pxMip, TxMip *txMip, int format, FxU32 dither, FxU32 compres
         h = txMip->height;
 
         for (i=0; i< txMip->depth; i++) {
-                ulong   *src;
+                uint   *src;
                 uchar   *dst;
                 int             n;
 
-                src = (ulong *) txMip->data[i];
+                src = (uint *) txMip->data[i];
                 dst = (uchar *) pxMip->data[i];
                 n   = w * h;
                 while (n--) {
@@ -246,9 +246,9 @@ txMipPal6666(TxMip *pxMip, TxMip *txMip, int format, FxU32 dither, FxU32 compres
  * arrays for the first world-encompassing box.
  */
 static void
-QuantHistogram(ulong *pixels, int npixels, Box *box)
+QuantHistogram(uint *pixels, int npixels, Box *box)
 {
-    ulong *af, *rf, *gf, *bf;
+    uint *af, *rf, *gf, *bf;
     uchar aa, rr, gg, bb;
     int         i;
 
@@ -327,7 +327,7 @@ static void
 BoxStats(Box *box)
 {
     int i, color;
-    ulong *freq;
+    uint *freq;
     float mean, var;
 
     if(box->weight == 0) {
@@ -417,7 +417,7 @@ FindCutpoint(Box *box, int color, Box *newbox1, Box *newbox2)
 {
     float u, v, max;
     int i, maxindex, minindex, cutpoint;
-    ulong optweight, curweight;
+    uint optweight, curweight;
 
     if (box->low[color] + 1 == box->high[color])
         return FALSE;   /* Cannot be cut. */
@@ -467,13 +467,13 @@ FindCutpoint(Box *box, int color, Box *newbox1, Box *newbox2)
 static void
 UpdateFrequencies(Box *box1, Box *box2)
 {
-    ulong myfreq, *h;
+    uint myfreq, *h;
     int b, g, r, a;
 
-    bzero(box1->freq[ALPHAI], ColormaxI * sizeof(ulong));
-    bzero(box1->freq[REDI],   ColormaxI * sizeof(ulong));
-    bzero(box1->freq[GREENI], ColormaxI * sizeof(ulong));
-    bzero(box1->freq[BLUEI],  ColormaxI * sizeof(ulong)); 
+    bzero(box1->freq[ALPHAI], ColormaxI * sizeof(uint));
+    bzero(box1->freq[REDI],   ColormaxI * sizeof(uint));
+    bzero(box1->freq[GREENI], ColormaxI * sizeof(uint));
+    bzero(box1->freq[BLUEI],  ColormaxI * sizeof(uint)); 
 
     for (a = box1->low[ALPHAI]; a < box1->high[ALPHAI]; a++) {
         for (r = box1->low[REDI]; r < box1->high[REDI]; r++) {

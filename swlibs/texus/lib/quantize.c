@@ -30,16 +30,16 @@
 #include "texusint.h"
 
 static int 
-dithmat[4][4] = {       0,  8,  2, 10, 
-                           12,  4, 14,  6, 
-                            3, 11,  1,  9, 
-                           15,  7, 13,  5 };
+dithmat[4][4] = {      { 0,  8,  2, 10,    },
+                       {    12,  4, 14,  6 },
+                       {     3, 11,  1,  9 },
+                       {    15,  7, 13,  5 } };
 
 // for error diffusion.
 static int      errR[MAX_TEXWIDTH], errG[MAX_TEXWIDTH], errB[MAX_TEXWIDTH];     
 
 static int
-_txPixQuantize_RGB332( unsigned long argb, int x, int y, int w)
+_txPixQuantize_RGB332( unsigned int argb, int x, int y, int w)
 {
     return (
                         (((argb>>16) & 0xE0) |
@@ -48,7 +48,7 @@ _txPixQuantize_RGB332( unsigned long argb, int x, int y, int w)
 }
 
 static int
-_txPixQuantize_RGB332_D4x4( unsigned long argb, int x, int y, int w)
+_txPixQuantize_RGB332_D4x4( unsigned int argb, int x, int y, int w)
 {
     int d = dithmat[y&3][x&3];
     int n, t;
@@ -63,7 +63,7 @@ _txPixQuantize_RGB332_D4x4( unsigned long argb, int x, int y, int w)
 }
 
 static int
-_txPixQuantize_RGB332_DErr( unsigned long argb, int x, int y, int w)
+_txPixQuantize_RGB332_DErr( unsigned int argb, int x, int y, int w)
 {
     static unsigned char a3[] = {0x00,0x24,0x49,0x6d,0x92,0xb6,0xdb,0xff};
     static unsigned char a2[] = {0x00,0x55,0xaa,0xff};
@@ -120,13 +120,13 @@ _txPixQuantize_RGB332_DErr( unsigned long argb, int x, int y, int w)
 /* YIQ422 done elsewhere */
 
 static int
-_txPixQuantize_A8( unsigned long argb, int x, int y, int w)
+_txPixQuantize_A8( unsigned int argb, int x, int y, int w)
 {
     return (argb >> 24);
 }
 
 static int
-_txPixQuantize_I8( unsigned long argb, int x, int y, int w)
+_txPixQuantize_I8( unsigned int argb, int x, int y, int w)
 {
     return (
     ((int) (((argb >>16) & 0xFF) * .30F +
@@ -135,7 +135,7 @@ _txPixQuantize_I8( unsigned long argb, int x, int y, int w)
 }
 
 static int
-_txPixQuantize_AI44( unsigned long argb, int x, int y, int w)
+_txPixQuantize_AI44( unsigned int argb, int x, int y, int w)
 {
     return(
         (int)   ((      ((argb>>16) & 0xFF) * .30F +
@@ -145,7 +145,7 @@ _txPixQuantize_AI44( unsigned long argb, int x, int y, int w)
 }
 
 static int
-_txPixQuantize_AI44_D4x4( unsigned long argb, int x, int y, int w)
+_txPixQuantize_AI44_D4x4( unsigned int argb, int x, int y, int w)
 {
     int d = dithmat[y&3][x&3];
     int n, t;
@@ -163,7 +163,7 @@ _txPixQuantize_AI44_D4x4( unsigned long argb, int x, int y, int w)
 }
 
 static int
-_txPixQuantize_AI44_DErr( unsigned long argb, int x, int y, int w)
+_txPixQuantize_AI44_DErr( unsigned int argb, int x, int y, int w)
 {
     int ii, t;
     static      int     qi;
@@ -198,7 +198,7 @@ _txPixQuantize_AI44_DErr( unsigned long argb, int x, int y, int w)
 
 
 static int
-_txPixQuantize_ARGB8332 ( unsigned long argb, int x, int y, int w)
+_txPixQuantize_ARGB8332 ( unsigned int argb, int x, int y, int w)
 {
     return (
                          ((argb>>16) & 0xE0) |
@@ -209,7 +209,7 @@ _txPixQuantize_ARGB8332 ( unsigned long argb, int x, int y, int w)
 
 
 static int
-_txPixQuantize_ARGB8332_D4x4( unsigned long argb, int x, int y, int w)
+_txPixQuantize_ARGB8332_D4x4( unsigned int argb, int x, int y, int w)
 {
     int d = dithmat[y&3][x&3];
     int n, t;
@@ -225,7 +225,7 @@ _txPixQuantize_ARGB8332_D4x4( unsigned long argb, int x, int y, int w)
 }
 
 static int
-_txPixQuantize_ARGB8332_DErr( unsigned long argb, int x, int y, int w)
+_txPixQuantize_ARGB8332_DErr( unsigned int argb, int x, int y, int w)
 {
     int t;
 
@@ -237,7 +237,7 @@ _txPixQuantize_ARGB8332_DErr( unsigned long argb, int x, int y, int w)
 /* AYIQ8422 done elsewhere */
 
 static int
-_txPixQuantize_RGB565( unsigned long argb, int x, int y, int w)
+_txPixQuantize_RGB565( unsigned int argb, int x, int y, int w)
 {
     return (
                     ((argb >> 8) & 0xF800) |
@@ -246,7 +246,7 @@ _txPixQuantize_RGB565( unsigned long argb, int x, int y, int w)
 }
 
 static int
-_txPixQuantize_RGB565_D4x4 ( unsigned long argb, int x, int y, int w)
+_txPixQuantize_RGB565_D4x4 ( unsigned int argb, int x, int y, int w)
 {
     int d = dithmat[y&3][x&3];
     int n, t;
@@ -262,7 +262,7 @@ _txPixQuantize_RGB565_D4x4 ( unsigned long argb, int x, int y, int w)
 
 
 static int
-_txPixQuantize_RGB565_DErr ( unsigned long argb, int x, int y, int w)
+_txPixQuantize_RGB565_DErr ( unsigned int argb, int x, int y, int w)
 {
     static int          qr, qg, qb;             // quantized incoming values.
     int                         ir, ig, ib;             // incoming values.
@@ -318,7 +318,7 @@ _txPixQuantize_RGB565_DErr ( unsigned long argb, int x, int y, int w)
 }
 
 static int
-_txPixQuantize_ARGB1555( unsigned long argb, int x, int y, int w)
+_txPixQuantize_ARGB1555( unsigned int argb, int x, int y, int w)
 {
     return (
                     ((argb >> 9) & 0x7C00) |
@@ -328,7 +328,7 @@ _txPixQuantize_ARGB1555( unsigned long argb, int x, int y, int w)
 }
 
 static int
-_txPixQuantize_ARGB1555_D4x4 ( unsigned long argb, int x, int y, int w)
+_txPixQuantize_ARGB1555_D4x4 ( unsigned int argb, int x, int y, int w)
 {
     int d = dithmat[y&3][x&3];
     int n, t;
@@ -344,7 +344,7 @@ _txPixQuantize_ARGB1555_D4x4 ( unsigned long argb, int x, int y, int w)
 }
 
 static int
-_txPixQuantize_ARGB1555_DErr ( unsigned long argb, int x, int y, int w)
+_txPixQuantize_ARGB1555_DErr ( unsigned int argb, int x, int y, int w)
 {
     static int          qr, qg, qb;             // quantized incoming values.
     int                         ir, ig, ib;             // incoming values.
@@ -401,7 +401,7 @@ _txPixQuantize_ARGB1555_DErr ( unsigned long argb, int x, int y, int w)
 }
 
 static int
-_txPixQuantize_ARGB4444 (unsigned long argb, int x, int y, int w)
+_txPixQuantize_ARGB4444 (unsigned int argb, int x, int y, int w)
 {
     return (
                     ((argb >> 12) & 0x0F00) |
@@ -411,7 +411,7 @@ _txPixQuantize_ARGB4444 (unsigned long argb, int x, int y, int w)
 }
 
 static int
-_txPixQuantize_ARGB4444_D4x4 (unsigned long argb, int x, int y, int w)
+_txPixQuantize_ARGB4444_D4x4 (unsigned int argb, int x, int y, int w)
 {
     int d = dithmat[y&3][x&3];
     int n, t;
@@ -427,7 +427,7 @@ _txPixQuantize_ARGB4444_D4x4 (unsigned long argb, int x, int y, int w)
 }
 
 static int
-_txPixQuantize_ARGB4444_DErr (unsigned long argb, int x, int y, int w)
+_txPixQuantize_ARGB4444_DErr (unsigned int argb, int x, int y, int w)
 {
     static int          qr, qg, qb;             // quantized incoming values.
     int                         ir, ig, ib;             // incoming values.
@@ -484,7 +484,7 @@ _txPixQuantize_ARGB4444_DErr (unsigned long argb, int x, int y, int w)
 }
 
 static int
-_txPixQuantize_AI88( unsigned long argb, int x, int y, int w)
+_txPixQuantize_AI88( unsigned int argb, int x, int y, int w)
 {
     return (
     (((int) (((argb >>16) & 0xFF) * .30F +
@@ -498,7 +498,7 @@ _txPixQuantize_AI88( unsigned long argb, int x, int y, int w)
 static void
 _txImgQuantize(char *dst, char *src, int w, int h, FxU32 format, FxU32 dither)
 {
-    int (*quantizer)(unsigned long argb, int x, int y, int w);
+    int (*quantizer)(unsigned int argb, int x, int y, int w);
     int         x, y;
 
     dither &= TX_DITHER_MASK;
@@ -589,7 +589,7 @@ _txImgQuantize(char *dst, char *src, int w, int h, FxU32 format, FxU32 dither)
         // 8 bit dst
         for (y=0; y<h; y++) {
                 for (x=0; x<w; x++) {
-                        *dst++ = (*quantizer)(*(unsigned long *)src, x, y, w);
+                        *dst++ = (*quantizer)(*(unsigned int *)src, x, y, w);
                         src += 4;
                 }
         }
@@ -599,7 +599,7 @@ _txImgQuantize(char *dst, char *src, int w, int h, FxU32 format, FxU32 dither)
 
         for (y=0; y<h; y++) {
                 for (x=0; x<w; x++) {
-                        *dst16++ = (*quantizer)(*(unsigned long *)src, x, y, w);
+                        *dst16++ = (*quantizer)(*(unsigned int *)src, x, y, w);
                         src += 4;
                 }
         }
