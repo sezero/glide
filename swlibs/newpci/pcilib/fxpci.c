@@ -608,10 +608,16 @@ pciSetConfigData( PciRegister reg, FxU32 device_bus_func_number, FxU32 *data )
     return FXFALSE;
   }
 
+  /*
+   * NOTE: This should really be this way, at least for now.
+   *
+   * Changing this to return the value returned by 
+   * pciUpdateRegisterLinux breaks sst1.
+   */
 #ifdef __linux__
   if (hasDev3DfxLinux()) {
-    pciUpdateRegisterLinux(reg.regAddress, *data, reg.sizeInBytes,
-			   device_bus_func_number);
+    pciUpdateRegisterLinux( reg.regAddress, *data, reg.sizeInBytes,
+			    device_bus_func_number);
     
     return FXTRUE;
   }
