@@ -19,6 +19,9 @@
 ;; $Header$
 ;; $Revision$
 ;; $Log$
+;; Revision 1.1.8.1  2003/04/06 18:23:09  koolsmoky
+;; initial checkin of dos win32 glide
+;;
 ;; Revision 1.1  2000/06/15 00:27:43  joseph
 ;; Initial checkin into SourceForge.
 ;;
@@ -84,72 +87,149 @@
 ; B4 Chip field fix.
 ;;
 
-TITLE   xdraw2.asm
-OPTION OLDSTRUCTS       
+%include "xos.inc"
 
-.686P
-IFDEF GL_AMD3D
-.MMX
-.K3D
-ENDIF
-IFDEF GL_SSE
-.XMM
-ENDIF
 
 ;;; Definitions of cvg regs and glide root structures.
-INCLUDE fxgasm.h    
+%INCLUDE "fxgasm.h"
 
-EXTRN   __GlideRoot:    DWORD
-EXTRN   __grCommandTransportMakeRoom@12: NEAR
-EXTRN   __grValidateState:NEAR
-EXTRN   _hwcQueryContext:NEAR
+extern _GlideRoot
+extern _grCommandTransportMakeRoom
+extern _grValidateState
 
-IFDEF HAL_CSIM
-EXTRN   _halStore32@8:  NEAR
-ENDIF
+%IFDEF HAL_CSIM
+extern halStore32
+%ENDIF
+    
+%MACRO GR_FIFO_WRITE 3
+%IFDEF HAL_CSIM
+    pushad
+    pushfd
+    
+;    push    %3
+ ;   mov     eax, %1
+  ;  add     eax, %2
+   ; push    eax
+    ;call    halStore32
 
-_DATA   SEGMENT
-    One         DD  03f800000r
+%ifidni %3, eax
+    lea     edx, [%1 + %2]
+    invoke  halStore32, edx, %3
+%else
+    lea     eax, [%1 + %2]
+    invoke  halStore32, eax, %3
+%endif
+
+    popfd
+    popad
+%ELSE
+    mov     [%1 + %2], %3
+%ENDIF
+%ENDMACRO ; GR_FIFO_WRITE
+
+%MACRO WRITE_MM1_FIFO_ALIGNED 1
+
+; 3DNow!
+%ifdef GL_AMD3D
+
+%IFDEF HAL_CSIM
+    movd      tempVal, mm1          ; previous param
+    GR_FIFO_WRITE fifo, %1, tempVal
+    punpckhdq mm1, mm1              ; current param
+    movd      tempVal, mm1          ;
+    GR_FIFO_WRITE fifo, %1 + 4, tempVal
+%ELSE
+    movq      [fifo+%1], mm1        ; store current param | previous param
+%ENDIF
+
+%endif
+
+; SSE
+%ifdef GL_SSE
+
+%IFDEF HAL_CSIM
+    ; csim isn't complete yet
+    movss     tempVal,xmm1          ; previous param - no can do
+    GR_FIFO_WRITE fifo, %1, tempVal
+    unpcklps  xmm1, xmm1            ; current param
+    movss     tempValm,xmm1         ; - no can do
+    GR_FIFO_WRITE fifo, %1 + 4, tempVal
+%ELSE
+    movlps    [fifo+%1],xmm1        ; store current param | previous param
+%ENDIF
+
+%endif
+
+%ENDMACRO ; WRITE_MM1_FIFO_ALIGNED
+
+%MACRO WRITE_MM1LOW_FIFO 0
+
+; 3DNow
+%ifdef GL_AMD3D
+
+%IFDEF HAL_CSIM
+    movd      tempVal, mm1          ; previous param
+    GR_FIFO_WRITE fifo, 0, tempVal  ;
+%ELSE
+    movd      [fifo], mm1           ; store current param | previous param
+%ENDIF
+
+%endif
+
+; SSE
+%ifdef GL_SSE
+
+%IFDEF HAL_CSIM
+    ; csim isn't complete yet
+    movss     tempVal,xmm1          ; previous param - no can do
+    GR_FIFO_WRITE fifo, 0, tempVal  ;
+%ELSE
+    movss     [fifo],xmm1           ; store current param | previous param ?shouldn't this be movlps?
+%ENDIF
+
+%endif
+
+%ENDMACRO ; WRITE_MM1LOW_FIFO
+
+segment		DATA
+    One         DD  1.0
     Area        DD  0
-_DATA   ENDS
 
-CONST   SEGMENT
-$T2003  DD  046400000r          ; 12288
-$T2005  DD  03f800000r          ; 1
-$T2006  DD  043800000r          ; 256
-CONST   ENDS
+segment		CONST
+$T2003  DD  12288.0
+$T2005  DD  1.0
+$T2006  DD  256.0
 
 ; Arguments (STKOFF = 16 from 4 pushes)
-STKOFF  = 16
-_va$    =  4 + STKOFF
-_vb$    =  8 + STKOFF
-_vc$    = 12 + STKOFF    
+STKOFF  equ 16
+_va$    equ  4 + STKOFF
+_vb$    equ  8 + STKOFF
+_vc$    equ 12 + STKOFF
 
     ;; coordinate offsets into vertex.
     ;; NB:  These are constants and are not
     ;;      user settable like the rest of the
     ;;      parameter offset. Weird.
-X       = 0
-Y       = 4
+X       equ 0
+Y       equ 4
 
-PROC_TYPE MACRO procType:=<Default>
-    IFDEF GL_AMD3D
-        EXITM <__trisetup_3DNow_&procType&@12>
-    ELSE
-        IFDEF GL_SSE
-            EXITM <__trisetup_SSE_&procType&@12>
-        ELSE
-            EXITM <__trisetup_Default_&procType&@12>
-        ENDIF
-    ENDIF
-    ENDM        
+%MACRO PROC_TYPE 1
+    %IFDEF GL_AMD3D
+        global _trisetup_3DNow_%1
+        _trisetup_3DNow_%1:
+    %ELSE
+        %IFDEF GL_SSE
+            global _trisetup_SSE_%1
+            _trisetup_SSE_%1:
+        %ELSE
+            global _trisetup_Default_%1
+            _trisetup_Default_%1:
+        %ENDIF
+    %ENDIF
+%ENDM
 
 ;; enables/disables trisProcessed and trisDrawn counters
-STATS = 1
-
-;; offsets into vertex struct
-X       = 0
-Y       = 4
+STATS equ 1
 
     ;; NB:  All of the base triangle procs expect to have the gc
     ;;      passed from the caller in edx so that we can avoid
@@ -160,242 +240,200 @@ Y       = 4
 
 ;--------------------------------------------------------------------------
 
-_TEXT       SEGMENT PAGE PUBLIC USE32 'CODE'
-            ASSUME DS: FLAT, SS: FLAT
+segment		TEXT
 
             ALIGN    32
-            PUBLIC   PROC_TYPE(clip_nocull_invalid)
-PROC_TYPE(clip_nocull_invalid)        PROC    NEAR
+PROC_TYPE clip_nocull_invalid
            
-GLIDE_VALIDATE_STATE textequ <1>
-GLIDE_CLIP_COORDS    textequ <1>
-GLIDE_CULLING        textequ <0>
-GLIDE_PACK_RGB       textequ <0>
-GLIDE_PACK_ALPHA     textequ <0>
-GLIDE_GENERIC_SETUP  textequ <0>
-INCLUDE xdraw2.inc
-GLIDE_GENERIC_SETUP  textequ <0>    
-GLIDE_PACK_ALPHA     textequ <0>
-GLIDE_PACK_RGB       textequ <0>    
-GLIDE_CULLING        textequ <0>
-GLIDE_CLIP_COORDS    textequ <0>
-GLIDE_VALIDATE_STATE textequ <0>
-
-PROC_TYPE(clip_nocull_invalid) ENDP    
+%define GLIDE_VALIDATE_STATE 1
+%define GLIDE_CLIP_COORDS    1
+%define GLIDE_CULLING        0
+%define GLIDE_PACK_RGB       0
+%define GLIDE_PACK_ALPHA     0
+%define GLIDE_GENERIC_SETUP  0
+%INCLUDE "xdraw2.inc"
+%undef GLIDE_GENERIC_SETUP
+%undef GLIDE_PACK_ALPHA
+%undef GLIDE_PACK_RGB           
+%undef GLIDE_CULLING
+%undef GLIDE_CLIP_COORDS
+%undef GLIDE_VALIDATE_STATE
 
             ALIGN  32
-            PUBLIC   PROC_TYPE(clip_cull_invalid)
-PROC_TYPE(clip_cull_invalid)   PROC    NEAR
+PROC_TYPE clip_cull_invalid
 
-GLIDE_VALIDATE_STATE textequ <1>
-GLIDE_CLIP_COORDS    textequ <1>
-GLIDE_CULLING        textequ <1>
-GLIDE_PACK_RGB       textequ <0>
-GLIDE_PACK_ALPHA     textequ <0>
-GLIDE_GENERIC_SETUP  textequ <0>
-INCLUDE xdraw2.inc
-GLIDE_GENERIC_SETUP  textequ <0>    
-GLIDE_PACK_ALPHA     textequ <0>
-GLIDE_PACK_RGB       textequ <0>    
-GLIDE_CULLING        textequ <0>
-GLIDE_CLIP_COORDS    textequ <0>
-GLIDE_VALIDATE_STATE textequ <0>
-
-PROC_TYPE(clip_cull_invalid)   ENDP
+%define GLIDE_VALIDATE_STATE 1
+%define GLIDE_CLIP_COORDS    1
+%define GLIDE_CULLING        1
+%define GLIDE_PACK_RGB       0
+%define GLIDE_PACK_ALPHA     0
+%define GLIDE_GENERIC_SETUP  0
+%INCLUDE "xdraw2.inc"
+%undef GLIDE_GENERIC_SETUP      
+%undef GLIDE_PACK_ALPHA
+%undef GLIDE_PACK_RGB           
+%undef GLIDE_CULLING
+%undef GLIDE_CLIP_COORDS
+%undef GLIDE_VALIDATE_STATE
         
             ALIGN    32
-            PUBLIC   PROC_TYPE(clip_cull_valid)
-PROC_TYPE(clip_cull_valid)  PROC    NEAR
+PROC_TYPE clip_cull_valid
 
-GLIDE_VALIDATE_STATE textequ <0>
-GLIDE_CLIP_COORDS    textequ <1>   
-GLIDE_CULLING        textequ <1>
-GLIDE_PACK_RGB       textequ <0>
-GLIDE_PACK_ALPHA     textequ <0>
-GLIDE_GENERIC_SETUP  textequ <0>
-INCLUDE xdraw2.inc
-GLIDE_GENERIC_SETUP  textequ <0>    
-GLIDE_PACK_ALPHA     textequ <0>
-GLIDE_PACK_RGB       textequ <0>    
-GLIDE_CULLING        textequ <0>
-GLIDE_CLIP_COORDS    textequ <0>
-GLIDE_VALIDATE_STATE textequ <0>
-
-PROC_TYPE(clip_cull_valid) ENDP
+%define GLIDE_VALIDATE_STATE 0
+%define GLIDE_CLIP_COORDS    1
+%define GLIDE_CULLING        1
+%define GLIDE_PACK_RGB       0
+%define GLIDE_PACK_ALPHA     0
+%define GLIDE_GENERIC_SETUP  0
+%INCLUDE "xdraw2.inc"
+%undef GLIDE_GENERIC_SETUP      
+%undef GLIDE_PACK_ALPHA
+%undef GLIDE_PACK_RGB           
+%undef GLIDE_CULLING
+%undef GLIDE_CLIP_COORDS
+%undef GLIDE_VALIDATE_STATE
     
             ALIGN    32
-            PUBLIC   PROC_TYPE(clip_nocull_valid)
-PROC_TYPE(clip_nocull_valid)  PROC    NEAR
+PROC_TYPE clip_nocull_valid
 
-GLIDE_VALIDATE_STATE textequ <0>
-GLIDE_CLIP_COORDS    textequ <1>   
-GLIDE_CULLING        textequ <0>
-GLIDE_PACK_RGB       textequ <0>
-GLIDE_PACK_ALPHA     textequ <0>
-GLIDE_GENERIC_SETUP  textequ <0>
-INCLUDE xdraw2.inc
-GLIDE_GENERIC_SETUP  textequ <0>    
-GLIDE_PACK_ALPHA     textequ <0>
-GLIDE_PACK_RGB       textequ <0>    
-GLIDE_CULLING        textequ <0>
-GLIDE_CLIP_COORDS    textequ <0>
-GLIDE_VALIDATE_STATE textequ <0>
-
-PROC_TYPE(clip_nocull_valid) ENDP
+%define GLIDE_VALIDATE_STATE 0
+%define GLIDE_CLIP_COORDS    1
+%define GLIDE_CULLING        0
+%define GLIDE_PACK_RGB       0
+%define GLIDE_PACK_ALPHA     0
+%define GLIDE_GENERIC_SETUP  0
+%INCLUDE "xdraw2.inc"
+%undef GLIDE_GENERIC_SETUP      
+%undef GLIDE_PACK_ALPHA
+%undef GLIDE_PACK_RGB           
+%undef GLIDE_CULLING
+%undef GLIDE_CLIP_COORDS
+%undef GLIDE_VALIDATE_STATE
 
             ALIGN    32
-            PUBLIC   PROC_TYPE(win_nocull_invalid)
-PROC_TYPE(win_nocull_invalid) PROC    NEAR
+PROC_TYPE win_nocull_invalid
          
-GLIDE_VALIDATE_STATE textequ <1>
-GLIDE_CLIP_COORDS    textequ <0>
-GLIDE_CULLING        textequ <0>
-GLIDE_PACK_RGB       textequ <0>
-GLIDE_PACK_ALPHA     textequ <0>
-GLIDE_GENERIC_SETUP  textequ <0>
-INCLUDE xdraw2.inc
-GLIDE_GENERIC_SETUP  textequ <0>    
-GLIDE_PACK_ALPHA     textequ <0>
-GLIDE_PACK_RGB       textequ <0>    
-GLIDE_CULLING        textequ <0>
-GLIDE_CLIP_COORDS    textequ <0>
-GLIDE_VALIDATE_STATE textequ <0>
-
-PROC_TYPE(win_nocull_invalid) ENDP    
+%define GLIDE_VALIDATE_STATE 1
+%define GLIDE_CLIP_COORDS    0
+%define GLIDE_CULLING        0
+%define GLIDE_PACK_RGB       0
+%define GLIDE_PACK_ALPHA     0
+%define GLIDE_GENERIC_SETUP  0
+%INCLUDE "xdraw2.inc"
+%undef GLIDE_GENERIC_SETUP      
+%undef GLIDE_PACK_ALPHA
+%undef GLIDE_PACK_RGB           
+%undef GLIDE_CULLING
+%undef GLIDE_CLIP_COORDS
+%undef GLIDE_VALIDATE_STATE
 
             ALIGN    32
-            PUBLIC   PROC_TYPE(win_cull_invalid)
-
-PROC_TYPE(win_cull_invalid)  PROC    NEAR
+PROC_TYPE win_cull_invalid
   
-GLIDE_VALIDATE_STATE textequ <1>
-GLIDE_CLIP_COORDS    textequ <0>
-GLIDE_CULLING        textequ <1>
-GLIDE_PACK_RGB       textequ <0>
-GLIDE_PACK_ALPHA     textequ <0>
-GLIDE_GENERIC_SETUP  textequ <0>
-INCLUDE xdraw2.inc
-GLIDE_GENERIC_SETUP  textequ <0>    
-GLIDE_PACK_ALPHA     textequ <0>
-GLIDE_PACK_RGB       textequ <0>    
-GLIDE_CULLING        textequ <0>
-GLIDE_CLIP_COORDS    textequ <0>
-GLIDE_VALIDATE_STATE textequ <0>
-
-PROC_TYPE(win_cull_invalid) ENDP    
+%define GLIDE_VALIDATE_STATE 1
+%define GLIDE_CLIP_COORDS    0
+%define GLIDE_CULLING        1
+%define GLIDE_PACK_RGB       0
+%define GLIDE_PACK_ALPHA     0
+%define GLIDE_GENERIC_SETUP  0
+%INCLUDE "xdraw2.inc"
+%undef GLIDE_GENERIC_SETUP
+%undef GLIDE_PACK_ALPHA
+%undef GLIDE_PACK_RGB           
+%undef GLIDE_CULLING
+%undef GLIDE_CLIP_COORDS
+%undef GLIDE_VALIDATE_STATE
 
             ALIGN    32
-            PUBLIC   PROC_TYPE(win_cull_valid)
-PROC_TYPE(win_cull_valid)  PROC    NEAR
+PROC_TYPE win_cull_valid
 
-GLIDE_VALIDATE_STATE textequ <0>
-GLIDE_CLIP_COORDS    textequ <0>   
-GLIDE_CULLING        textequ <1>
-GLIDE_PACK_RGB       textequ <0>
-GLIDE_PACK_ALPHA     textequ <0>
-GLIDE_GENERIC_SETUP  textequ <0>
-INCLUDE xdraw2.inc
-GLIDE_GENERIC_SETUP  textequ <0>    
-GLIDE_PACK_ALPHA     textequ <0>
-GLIDE_PACK_RGB       textequ <0>    
-GLIDE_CULLING        textequ <0>
-GLIDE_CLIP_COORDS    textequ <0>
-GLIDE_VALIDATE_STATE textequ <0>
-
-PROC_TYPE(win_cull_valid) ENDP
+%define GLIDE_VALIDATE_STATE 0
+%define GLIDE_CLIP_COORDS    0
+%define GLIDE_CULLING        1
+%define GLIDE_PACK_RGB       0
+%define GLIDE_PACK_ALPHA     0
+%define GLIDE_GENERIC_SETUP  0
+%INCLUDE "xdraw2.inc"
+%undef GLIDE_GENERIC_SETUP      
+%undef GLIDE_PACK_ALPHA
+%undef GLIDE_PACK_RGB           
+%undef GLIDE_CULLING
+%undef GLIDE_CLIP_COORDS
+%undef GLIDE_VALIDATE_STATE
     
             ALIGN    32
-            PUBLIC   PROC_TYPE(win_nocull_valid)
-PROC_TYPE(win_nocull_valid)  PROC    NEAR
+PROC_TYPE win_nocull_valid
 
-GLIDE_VALIDATE_STATE textequ <0>
-GLIDE_CLIP_COORDS    textequ <0>   
-GLIDE_CULLING        textequ <0>
-GLIDE_PACK_RGB       textequ <0>
-GLIDE_PACK_ALPHA     textequ <0>
-GLIDE_GENERIC_SETUP  textequ <0>
-INCLUDE xdraw2.inc
-GLIDE_GENERIC_SETUP  textequ <0>    
-GLIDE_PACK_ALPHA     textequ <0>
-GLIDE_PACK_RGB       textequ <0>    
-GLIDE_CULLING        textequ <0>
-GLIDE_CLIP_COORDS    textequ <0>
-GLIDE_VALIDATE_STATE textequ <0>
+%define GLIDE_VALIDATE_STATE 0
+%define GLIDE_CLIP_COORDS    0
+%define GLIDE_CULLING        0
+%define GLIDE_PACK_RGB       0
+%define GLIDE_PACK_ALPHA     0
+%define GLIDE_GENERIC_SETUP  0
+%INCLUDE "xdraw2.inc"
+%undef GLIDE_GENERIC_SETUP
+%undef GLIDE_PACK_ALPHA
+%undef GLIDE_PACK_RGB           
+%undef GLIDE_CULLING
+%undef GLIDE_CLIP_COORDS
+%undef GLIDE_VALIDATE_STATE
 
-PROC_TYPE(win_nocull_valid) ENDP
-
-IFDEF       GL_AMD3D    
+%IFDEF       GL_AMD3D
             ALIGN   32
-            PUBLIC  __trisetup_clip_coor_thunk@12
-__trisetup_clip_coor_thunk@12 PROC NEAR
+            global  _trisetup_clip_coor_thunk
+_trisetup_clip_coor_thunk:
 
-procPtr TEXTEQU <eax>    
-vPtr    TEXTEQU <ecx>
-gc      TEXTEQU <edx>           ; Current graphics context passed implicitly through edx
+%define procPtr eax
+%define vPtr    ecx
+%define gc      edx           ; Current graphics context passed implicitly through edx
     
     ;; Call through to the gc->curArchProcs.drawTrianglesProc w/o
     ;; adding extra stuff to the stack. I wish we could actually
     ;; do a direct return here w/o too much work.
     lea     vPtr, [esp + _va$ - STKOFF]         ; Get vertex pointer address
     mov     procPtr, [gc + drawTrianglesProc]   ; Prefetch drawTriangles proc addr
-    
-    push    vPtr                ; vertex array address
-    push    3                   ; 3 vertices
 
     ;; If debugging make sure that we're in clip coordinates
-IFDEF GLIDE_DEBUG
-    mov     eax, [gc + CoordinateSpace]
-    test    eax, 1
+%IFDEF GLIDE_DEBUG
+    test    [gc + CoordinateSpace], 1
     jnz     __clipSpace
     xor     eax, eax
     mov     [eax], eax
 __clipSpace:    
-ENDIF ; GLIDE_DEBUG
+%ENDIF ; GLIDE_DEBUG
 
-    push    1                   ; mode = grDrawVertexArray
-    call    procPtr             ; (*gc->curArchProcs.drawTrianglesProc)(grDrawVertexArray, 3, vPtr)
+    invoke  procPtr, 1, 3, vPtr ; (*gc->curArchProcs.drawTrianglesProc)(grDrawVertexArray, 3, vPtr)
 
     ret     12                  ; pop 3 dwords (vertex addrs) and return    
-__trisetup_clip_coor_thunk@12 ENDP
 
-ENDIF ; GL_AMD3D    
+%ENDIF ; GL_AMD3D
 
-IFDEF GL_SSE
+%IFDEF GL_SSE
             ALIGN   32
-            PUBLIC  __trisetup_SSE_clip_coor_thunk@12
-__trisetup_SSE_clip_coor_thunk@12 PROC NEAR
+            global  _trisetup_SSE_clip_coor_thunk
+_trisetup_SSE_clip_coor_thunk:
 
-procPtr TEXTEQU <eax>    
-vPtr    TEXTEQU <ecx>
-gc      TEXTEQU <edx>           ; Current graphics context passed implicitly through edx
+%define procPtr eax
+%define vPtr    ecx
+%define gc      edx           ; Current graphics context passed implicitly through edx
     
     ;; Call through to the gc->curArchProcs.drawTrianglesProc w/o
     ;; adding extra stuff to the stack. I wish we could actually
     ;; do a direct return here w/o too much work.
     lea     vPtr, [esp + _va$ - STKOFF]         ; Get vertex pointer address
     mov     procPtr, [gc + drawTrianglesProc]   ; Prefetch drawTriangles proc addr
-    
-    push    vPtr                ; vertex array address
-    push    3                   ; 3 vertices
 
     ;; If debugging make sure that we're in clip coordinates
-IFDEF GLIDE_DEBUG
-    mov     eax, [gc + CoordinateSpace]
-    test    eax, 1
+%IFDEF GLIDE_DEBUG
+    test    [gc + CoordinateSpace], 1
     jnz     __clipSpace
     xor     eax, eax
     mov     [eax], eax
 __clipSpace:    
-ENDIF ; GLIDE_DEBUG
+%ENDIF ; GLIDE_DEBUG
 
-    push    1                   ; mode = grDrawVertexArray
-    call    procPtr             ; (*gc->curArchProcs.drawTrianglesProc)(grDrawVertexArray, 3, vPtr)
+    invoke  procPtr, 1, 3, vPtr ; (*gc->curArchProcs.drawTrianglesProc)(grDrawVertexArray, 3, vPtr)
 
     ret     12                  ; pop 3 dwords (vertex addrs) and return    
-__trisetup_SSE_clip_coor_thunk@12 ENDP
 
-ENDIF ; GL_SSE
-
-_TEXT   ENDS
-        END
-
+%ENDIF ; GL_SSE

@@ -1303,12 +1303,7 @@ typedef struct {
  * the _archXXXX proc list that is selected at grGlideInit time.
  */
 
-#if !defined(__linux__) && (!defined(__DJGPP__) || defined(GLIDE_USE_C_TRISETUP)) /* [dBorca] asm workaround */
 typedef FxI32 (FX_CALL* GrTriSetupProc)(const void *a, const void *b, const void *c);
-#else   /* defined(__linux__) */
-typedef FxI32 (FX_CALL* GrTriSetupProc)(const void *g, const void *a, const void *b, const void *c);
-#endif  /* defined(__linux__) */
-
 typedef void  (FX_CALL* GrVertexListProc)(FxU32 pkType, FxU32 type, FxI32 mode, FxI32 count, void* ptrs);
 typedef void  (FX_CALL* GrDrawTrianglesProc)(FxI32 mode, FxI32 count, void* vPtrs);
 
@@ -1840,11 +1835,8 @@ typedef struct GrGC_s
                                    occur every 64K writes. */
 
   } cmdTransportInfo;
-#if !defined(__linux__) && (!defined(__DJGPP__) || defined(GLIDE_USE_C_TRISETUP)) /* [dBorca] asm workaround */
+
   FxI32 (FX_CALL *triSetupProc)(const void *a, const void *b, const void *c);
-#else	/* defined(__linux__) */
-  FxI32 (FX_CALL *triSetupProc)(const void *g, const void *a, const void *b, const void *c);
-#endif	/* defined(__linux__) */
   
   SstIORegs
     *ioRegs;                    /* I/O remap regs */
@@ -2357,8 +2349,10 @@ _trisetup_noclip_valid(const void *va, const void *vb, const void *vc );
 #elif defined(__POWERPC__)
 #define TRISETUP(_a, _b, _c) \
   ((FxI32 (*)(const void *va, const void *vb, const void *vc, GrGC *gc))*gc->triSetupProc)(_a, _b, _c, gc)
-#elif defined( __linux__ ) || (defined(__DJGPP__) && !defined(GLIDE_USE_C_TRISETUP)) /* [dBorca] asm workaround */
-#define TRISETUP(a, b, c) (gc->triSetupProc)(gc, a, b, c)
+#elif defined( __linux__ ) || defined(__DJGPP__)
+#define TRISETUP \
+  __asm(""::"d"(gc)); \
+  (*gc->triSetupProc)
 #else /* defined(__linux__) */
 #define TRISETUP \
   (*gc->triSetupProc)

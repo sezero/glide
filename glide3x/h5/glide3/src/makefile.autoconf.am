@@ -151,32 +151,28 @@ VINCLUDES = $(HAL_CSIM_INCLUDES)
 
 #
 # Special rules for assembly files.
+# Here beginneth the assembly cheap cheat (tm).
+# Some kind soul to fix this, pleaaase!!!
 #
-PREPROCESSOR=/lib/cpp -$$ -I.
-xdraw2_def.o xdraw2_def.lo: xdraw2.s xdraw2.inc.s fxgasm.h assyntax.h
-	$(PREPROCESSOR) $< > $*.tmp.s
-	libtool --mode=compile $(CC) $(AFLAGS) -c -o $*.o $*.tmp.s
-	$(RM) -f $*.tmp.s
+xdraw2_def.o xdraw2_def.lo: xdraw2.asm xdraw2.inc fxgasm.h
+	nasm -I@top_srcdir@/@FX_GLIDE_HW@/glide3/src -O2 -felf -D__linux__ -o $*.o $<
+	$(CP) $*.o $*.lo
 
-xdraw2_3dnow.o xdraw2_3dnow.lo: xdraw2.s xdraw2.inc.s fxgasm.h assyntax.h
-	$(PREPROCESSOR) -DGL_AMD3D -DUSE_PACKET_FIFO=1 $< > $*.tmp.s
-	libtool --mode=compile $(CC) $(AFLAGS) -c -o $*.o $*.tmp.s
-	$(RM) -f $*.tmp.s
+xdraw2_3dnow.o xdraw2_3dnow.lo: xdraw2.asm xdraw2.inc fxgasm.h
+	nasm -I@top_srcdir@/@FX_GLIDE_HW@/glide3/src -O2 -felf -D__linux__ -DGL_AMD3D -DUSE_PACKET_FIFO=1 -o $*.o $<
+	$(CP) $*.o $*.lo
 
-xdraw3_def.o xdraw3_def.lo: xdraw3.s fxgasm.h assyntax.h
-	$(PREPROCESSOR) $< > $*.tmp.s
-	libtool --mode=compile $(CC) $(AFLAGS) -c -o $*.o $*.tmp.s
-	$(RM) -f $*.tmp.s
+xdraw3_def.o xdraw3_def.lo: xdraw3.asm fxgasm.h
+	nasm -I@top_srcdir@/@FX_GLIDE_HW@/glide3/src -O2 -felf -D__linux__ -o $*.o $<
+	$(CP) $*.o $*.lo
 
-xdraw3_3dnow.o xdraw3_3dnow.lo: xdraw3.s fxgasm.h assyntax.h
-	$(PREPROCESSOR) -DGL_AMD3D -DUSE_PACKET_FIFO=1 $< > $*.tmp.s
-	libtool --mode=compile $(CC) $(AFLAGS) -c -o $*.o $*.tmp.s
-	$(RM) -f $*.tmp.s
+xdraw3_3dnow.o xdraw3_3dnow.lo: xdraw3.asm fxgasm.h
+	nasm -I@top_srcdir@/@FX_GLIDE_HW@/glide3/src -O2 -felf -D__linux__ -DGL_AMD3D -DUSE_PACKET_FIFO=1 -o $*.o $<
+	$(CP) $*.o $*.lo
 
-xtexdl_3dnow.o xtexdl_3dnow.lo: xtexdl.s fxgasm.h assyntax.h
-	$(PREPROCESSOR) -DGL_AMD3D -DUSE_PACKET_FIFO=1 $< > $*.tmp.s
-	libtool --mode=compile $(CC) $(AFLAGS) -c -o $*.o $*.tmp.s
-	$(RM) -f $*.tmp.s
+xtexdl_3dnow.o xtexdl_3dnow.lo: xtexdl.asm fxgasm.h
+	nasm -I@top_srcdir@/@FX_GLIDE_HW@/glide3/src -O2 -felf -D__linux__ -DGL_AMD3D -DUSE_PACKET_FIFO=1 -o $*.o $<
+	$(CP) $*.o $*.lo
 
 #
 # Library definitions.
@@ -198,7 +194,7 @@ WHOLE_LIBS = $(top_builddir)/swlibs/fxmisc/libfxmisc.la \
              $(top_builddir)/@FX_GLIDE_HW@/minihwc/libminihwc.la
 LINK_LIBS  = -L/usr/X11R6/lib -lX11 -lXext -lXxf86dga -lXxf86vm -lm
 
-CLEANFILES = fxinline.h fxgasm.h assyntax.h
+CLEANFILES = fxinline.h fxgasm.h
 
 noinst_PROGRAMS        = fxgasm
 include_HEADERS        = g3ext.h glide.h glideutl.h glidesys.h
@@ -225,14 +221,12 @@ libglide3_la_LDFLAGS   = -version-info 13:1:10
 libglide3_la_LIBADD    = $(WHOLE_LIBS) $(LINK_LIBS)
 
 #--------------------------------------------------------------------------#
-# special rules for making fxgasm.h, fxinclude.h, assyntax.h
+# special rules for making fxgasm.h, fxinclude.h
 #
 fxgasm.h: fxgasm
 	./fxgasm -hex > fxgasm.h
 fxinline.h: fxgasm
 	./fxgasm -inline > fxinline.h
-assyntax.h: $(top_srcdir)/swlibs/fxmisc/assyntax.h
-	ln -sf $< $@
 
 #--------------------------------------------------------------------------#
 # special rules for using fxgasm.h, fxinclude.h

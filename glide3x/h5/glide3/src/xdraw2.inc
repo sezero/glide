@@ -20,6 +20,9 @@
 ;; $Header$
 ;; $Revision$
 ;; $Log$
+;; Revision 1.1.8.1  2003/04/06 18:23:09  koolsmoky
+;; initial checkin of dos win32 glide
+;;
 ;; Revision 1.1  2000/06/15 00:27:43  joseph
 ;; Initial checkin into SourceForge.
 ;;
@@ -45,86 +48,45 @@
     ;;
     ;;      YOU HAVE BEEN WARNED    
 
-ifdef GL_AMD3D
+; Ugly, but seems to workaround the problem with locally defined
+; data segment globals not getting relocated properly when using
+; djgpp.
+
+%define zArea   One+04h
+%define zdxAB   One+08h
+%define zdxBC   One+0ch
+%define zdyAB   One+10h
+%define zdyBC   One+14h
+%define zculltest One+18h
+
+%define gc      esi       ; points to graphics context
+
+%ifdef GL_AMD3D
 
 ;---------------------------------------------------------------------------
 ; start 3DNow! version
 ;---------------------------------------------------------------------------
 
-TITLE   xdraw2.inc
-.686P
-.MMX
-.K3D
+%define gc      edi           ; points to graphics context
+%define fifo    ebp           ; points to fifo entries
+%define tempVal esi
 
-GR_FIFO_WRITE   MACRO __addr, __offset, __data
-IFDEF HAL_CSIM
-    pushad
-    pushfd
-    
-    push    __data
-    mov     eax, __addr
-    add     eax, __offset
-    push    eax
-    call    halStore32@8
-
-    popfd
-    popad
-ELSE
-    mov    [__addr + __offset], __data
-ENDIF
-ENDM ; GR_FIFO_WRITE
-
-
-WRITE_MM1_FIFO_ALIGNED MACRO __offset
-IFDEF HAL_CSIM
-    movd      tempVal, mm1          ; previous param
-    GR_FIFO_WRITE fifo, __offset, tempVal  
-    punpckhdq mm1, mm1              ; current param
-    movd      tempValm, mm1         ;
-    GR_FIFO_WRITE fifo, __offset+4, tempVal  
-ELSE
-    movq      [fifo+__offset], mm1  ; store current param | previous param
-ENDIF
-ENDM ; WRITE_MM1_FIFO_ALIGNED
-
-
-WRITE_MM1LOW_FIFO MACRO
-IFDEF HAL_CSIM
-    movd      tempVal, mm1          ; previous param
-    GR_FIFO_WRITE fifo, 0, tempVal  ;
-ELSE
-    movd      [fifo], mm1           ; store current param | previous param
-ENDIF
-ENDM ; WRITE_MM1LOW_FIFO
-
-
-; Arguments (STKOFF = 16 from 4 pushes)
-STKOFF  = 16
-_va$    =  4 + STKOFF
-_vb$    =  8 + STKOFF
-_vc$    = 12 + STKOFF
-
-
-gc      TEXTEQU     <edi>           ; points to graphics context
-fifo    TEXTEQU     <ebp>           ; points to fifo entries
-tempVal TEXTEQU     <esi>
-
-IF GLIDE_CLIP_COORDS
+%IF GLIDE_CLIP_COORDS
     ;; NB:  Currently, the 3DNow!(tm) clip coordinate stuff
     ;;      thunks through to the grDrawTriangles functions
     ;;      which has already been specialized for 3DNow!(tm).
     ;;      This means that we should never get here.
-IFDEF GLIDE_DEBUG    
+%IFDEF GLIDE_DEBUG
     xor     eax, eax
     mov     [eax], eax
-ENDIF    
-ELSE    
-IF GLIDE_CULLING
-fa      TEXTEQU     <eax>           ; vtx a from caller
-fb      TEXTEQU     <ebx>           ; vtx b from caller
-fc      TEXTEQU     <ecx>           ; vtx c from caller
-cull    TEXTEQU     <edx>           ; cull mode
-intArea TEXTEQU     <ecx>           ; area temp storage
+%ENDIF
+%ELSE
+%IF GLIDE_CULLING
+%define fa      eax           ; vtx a from caller
+%define fb      ebx           ; vtx b from caller
+%define fc      ecx           ; vtx c from caller
+%define cull    edx           ; cull mode
+%define intArea ecx           ; area temp storage
 
     ;; Prologue stuff
     push      edi                   ; save caller's register variable
@@ -136,25 +98,21 @@ intArea TEXTEQU     <ecx>           ; area temp storage
     mov       fb, [esp + _vb$ - 4]  ; get base address of vertex B
     push      ebp                   ; save frame pointer
 
-if GLIDE_CLIP_COORDS
+%if GLIDE_CLIP_COORDS
     mov       esi, [gc+CoordinateSpace] ; which coord. space (clip/window)?
-endif
+%endif
 
-if GLIDE_VALIDATE_STATE
+%if GLIDE_VALIDATE_STATE
     mov       ebp, [gc + invalid]   ; state validated?
-endif
+%endif
 
-if GLIDE_CLIP_COORDS
+%if GLIDE_CLIP_COORDS
     lea       eax, [esp+ _va$]      ; pointer to vertex pointers
     test      esi, esi              ; window coordinates ?
 
     jz        win_coordinates       ; yup
-    push      eax                   ; pointer to vertex pointers
 
-    push      3                     ; 3 vertices
-    push      1                     ; mode = grDrawVertexArray
-
-    call      __grDrawTriangles@12  ; draw the triangle in clip coordinate space
+    invoke    _grDrawTriangles, 1, 3, eax; draw the triangle in clip coordinate space
 
     pop       ebp                   ; restore frame pointer
     pop       ebx                   ; restore caller's register variable
@@ -165,17 +123,17 @@ if GLIDE_CLIP_COORDS
     ret       12                    ; return, pop 3 DWORD arguments off stack
 
 win_coordinates:
-endif  ; GLIDE_CLIP_COORDS
+%endif  ; GLIDE_CLIP_COORDS
 
-if GLIDE_VALIDATE_STATE
+%if GLIDE_VALIDATE_STATE
     test      ebp, ebp              ; does state need validation?
     jz        no_validation         ; valid, don't need to validate
 
-    call      __grValidateState     ; validate state
+    invoke    _grValidateState      ; validate state
 
-no_validation:    
+.no_validation:
 
-endif  ; GLIDE_VALIDATE_STATE 
+%endif  ; GLIDE_VALIDATE_STATE
 
     mov       cull, [gc + cull_mode]; get cull mode
     nop                             ; filler
@@ -192,7 +150,7 @@ endif  ; GLIDE_VALIDATE_STATE
 
     ;; Cull Check
 
-    jz        nocull                ; nope, no culling
+    jz        .nocull               ; nope, no culling
     mov       fa, [esp + _va$]      ; get base address of vertex A
 
     movq      mm2, [fc + X]         ; yc | xc
@@ -225,27 +183,23 @@ endif  ; GLIDE_VALIDATE_STATE
     ; Zero Area Triangle Check
 
     test      intArea, 7fffffffh    ; if ((j & 0x7FFFFFFF) == 0)
-    jz        __cullFail            ; area zero, triangle culled
+    jz        .__cullFail           ; area zero, triangle culled
 
     xor       intArea, cull         ; if (j ^ (culltest << 31))
-    jge       __cullFail            ; triangle facing away from viewer, culled
+    jge       .__cullFail           ; triangle facing away from viewer, culled
 
     cmp       ebx, tempVal          ; fifo space required >= space available ?
-    jge       __triBegin            ; yup, push out triangle data to Voodoo
+    jge       .__triBegin           ; yup, push out triangle data to Voodoo
 
-    push      @Line                 ; line number inside this function
-    push      0h                    ; pointer to function name = NULL
-
-    push      tempVal               ; fifo space required
-    call      __grCommandTransportMakeRoom@12 ; note: updates fifoPtr
+    invoke    _grCommandTransportMakeRoom, tempVal, 0, __LINE__; note: updates fifoPtr
     
-    jmp       __triBegin            ; merge back with short path
+    jmp       .__triBegin           ; merge back with short path
 
     ;; culling disabled
 
     ALIGN     16
 
-nocull:
+.nocull:
     ;; Check to make sure that we have enough room for
     ;; the complete triangle packet.
 
@@ -253,14 +207,10 @@ nocull:
     mov       ebx, [gc + fifoRoom]  ; fifo space available
 
     cmp       ebx, tempVal          ; fifo spce available >= space needed ?
-    jge       __triBegin            ; yup, ready to draw triangle
+    jge       .__triBegin           ; yup, ready to draw triangle
 
-    push      @Line                 ; line number inside this function
-    push      0h                    ; pointer to function name = NULL
-
-    push      tempVal               ; fifo space needed
-    call      __grCommandTransportMakeRoom@12 ; note: updates fifoPtr
-ELSE   ; !GLIDE_CULLING
+    invoke    _grCommandTransportMakeRoom, tempVal, 0, __LINE__; note: updates fifoPtr
+%ELSE   ; !GLIDE_CULLING
 
     ;; Prologue stuff
 
@@ -272,25 +222,21 @@ ELSE   ; !GLIDE_CULLING
 
     push      ebp                   ; save frame pointer
 
-if GLIDE_CLIP_COORDS
+%if GLIDE_CLIP_COORDS
     mov       edx, [gc+CoordinateSpace]; window coordinates or clip coordinates ?
-endif
+%endif
 
-if GLIDE_VALIDATE_STATE
+%if GLIDE_VALIDATE_STATE
     mov       ebp, [gc + invalid]   ; state validated?
-endif
+%endif
 
-if GLIDE_CLIP_COORDS
+%if GLIDE_CLIP_COORDS
     lea       eax, [esp+ _va$]      ; pointer to vertex pointers
     test      edx, edx              ; window coordinates ?
 
     jz        win_coordinates       ; yup
-    push      eax                   ; pointer to vertex pointers
 
-    push      3                     ; 3 vertices
-    push      1                     ; mode = grDrawVertexArray
-
-    call      __grDrawTriangles@12  ; draw the triangle in coordinate space
+    invoke    _grDrawTriangles, 1, 3, eax; draw the triangle in coordinate space
 
     pop       ebp                   ; restore frame pointer
     pop       ebx                   ; restore caller's register variable
@@ -303,17 +249,17 @@ if GLIDE_CLIP_COORDS
     ALIGN  16
 win_coordinates:
 
-endif
+%endif
 
-if GLIDE_VALIDATE_STATE
+%if GLIDE_VALIDATE_STATE
     test      ebp, ebp              ; does state need validation?
     jz        no_validation         ; valid, don't need to validate
 
-    call      __grValidateState     ; validate state
+    invoke    _grValidateState      ; validate state
 
 no_validation:
 
-endif
+%endif
 
     mov       tempVal, [gc + curTriSize] ; data for whole triangle in bytes
     add       tempVal, 4            ; fifo space needed (include 4-byte header)
@@ -322,25 +268,21 @@ endif
     femms                           ; will use AMD3D, clear FPU/MMX registers
 
     cmp       ebx, tempVal          ; fifo spce available >= space needed ?
-    jge       __triBegin            ; yup, ready to draw triangle
+    jge       .__triBegin           ; yup, ready to draw triangle
 
-    push      @Line                 ; line number inside this function
-    push      0h                    ; pointer to function name = NULL
-
-    push      tempVal               ; fifo space needed
-    call      __grCommandTransportMakeRoom@12 ; note: updates fifoPtr
+    invoke    _grCommandTransportMakeRoom, tempVal, 0, __LINE__; note: updates fifoPtr
     
-    jmp       __triBegin            ; large distance due to alignment
-endif ; GLIDE_CULLING
+    jmp       .__triBegin           ; large distance due to alignment
+%endif ; GLIDE_CULLING
 
 
-dlp     TEXTEQU     <ebx>           ; points to dataList structure
-dlpstrt TEXTEQU     <ecx>           ; points to begin of dataList structure
-vertex  TEXTEQU     <edx>           ; the current vertex
+%define dlp     ebx           ; points to dataList structure
+%define dlpstrt ecx           ; points to begin of dataList structure
+%define vertex  edx           ; the current vertex
 
     ALIGN 32                        
 
-__triBegin:
+.__triBegin:
     mov       eax, [gc+triPacketHdr]; Packet 3 header
     lea       dlp,[gc + tsuDataList]; Reset the dataList
 
@@ -350,7 +292,7 @@ __triBegin:
     mov       dlpstrt, dlp          ; save pointer to start of dataList
     test      fifo, 4               ; is fifo pointer qword aligned ?
 
-    jz        __fifo_aligned        ; yes, it is qword aligned
+    jz        .__fifo_aligned       ; yes, it is qword aligned
     movq      mm1, [vertex+X]       ; y | x
 
     GR_FIFO_WRITE fifo, 0, eax      ; write header to fifo; now qword aligned
@@ -364,14 +306,14 @@ __triBegin:
     add       dlp, 4                ; dlp++
 
     test      eax, eax              ; at end of list ?
-    jz        __paramLoopDoneWBzero1; yes, "write buffer" empty
+    jz        .__paramLoopDoneWBzero1; yes, "write buffer" empty
           
-__paramLoop1a:
+.__paramLoop1a:
     movd      mm1, [eax+vertex]     ; get next parameter
     mov       eax, [dlp]            ; offset = *(dlp + 1)
 
     test      eax, eax              ; at end of offset list (offset == 0) ?
-    jz        __paramLoopDoneWBone1 ; exit, write buffer contains one DWORD
+    jz        .__paramLoopDoneWBone1; exit, write buffer contains one DWORD
 
     movd      mm2, [eax+vertex]     ; get next parameter
     add       dlp, 8                ; dlp += 2
@@ -383,11 +325,11 @@ __paramLoop1a:
     test      eax, eax              ; at end of offset list (offset == 0) ?
 
     WRITE_MM1_FIFO_ALIGNED -8       ; PCI write current param | previous param
-    jnz       __paramLoop1a         ; nope, copy next parameter
+    jnz       .__paramLoop1a        ; nope, copy next parameter
 
-    jmp       __paramLoopDoneWBzero1; write buffer empty
+    jmp       .__paramLoopDoneWBzero1; write buffer empty
 
-__fifo_aligned:
+.__fifo_aligned:
     movd      mm2, [vertex+X]       ; y | x of vertex A
     add       fifo, 8               ; fifoPtr += 2*sizeof(FxU32)
 
@@ -401,9 +343,9 @@ __fifo_aligned:
     add       dlp, 4                ; dlp++
 
     test      eax, eax              ; end of list ?
-    jz        __paramLoopDoneWBone1 ; yes, "write buffer" has y data
+    jz        .__paramLoopDoneWBone1; yes, "write buffer" has y data
 
-__paramLoop1b:
+.__paramLoop1b:
     movd      mm2, [eax+vertex]     ; get next parameter
     add       fifo, 8               ; fifoPtr += 2*sizeof(FxU32)
 
@@ -414,15 +356,15 @@ __paramLoop1b:
     test      eax, eax              ; at end of offset list (offset == 0) ?
   
     WRITE_MM1_FIFO_ALIGNED -8       ; PCI write current param | previous param
-    jz        __paramLoopDoneWBzero1; exit, "write buffer" empty
+    jz        .__paramLoopDoneWBzero1; exit, "write buffer" empty
 
     movd      mm1, [eax+vertex]     ; get next parameter
     mov       eax, [dlp-4]          ; offset = *(dlp + 1)
 
     test      eax, eax              ; at end of offset list (offset == 0) ?
-    jnz       __paramLoop1b         ; nope, copy next parameter
+    jnz       .__paramLoop1b         ; nope, copy next parameter
 
-__paramLoopDoneWBone1:
+.__paramLoopDoneWBone1:
 
     ;; here: "write buffer" has one DWORD left over from vertex A
 
@@ -441,9 +383,9 @@ __paramLoopDoneWBone1:
     add       dlp, 4                ; dlp++
 
     test      eax, eax              ; end of list ?
-    jz        __paramLoopDoneWBone2 ; yes, "write buffer" has y data
+    jz        .__paramLoopDoneWBone2; yes, "write buffer" has y data
 
-__paramLoop2b:
+.__paramLoop2b:
     movd      mm2, [eax+vertex]     ; get next parameter
     add       fifo, 8               ; fifoPtr += 2*sizeof(FxU32)
 
@@ -454,17 +396,17 @@ __paramLoop2b:
     cmp       eax, 0                ; at end of offset list (offset == 0) ?
   
     WRITE_MM1_FIFO_ALIGNED -8       ; PCI write current param | previous param
-    jz        __paramLoopDoneWBzero2; exit, "write buffer" empty
+    jz        .__paramLoopDoneWBzero2; exit, "write buffer" empty
 
     movd      mm1, [eax+vertex]     ; get next parameter
     mov       eax, [dlp-4]          ; offset = *(dlp + 1)
 
     test      eax, eax              ; at end of offset list (offset == 0) ?
-    jnz       __paramLoop2b         ; nope, copy next parameter
+    jnz       .__paramLoop2b        ; nope, copy next parameter
 
-    jmp       __paramLoopDoneWBone2 ; write buffer contains one DWORD
+    jmp       .__paramLoopDoneWBone2; write buffer contains one DWORD
 
-__paramLoopDoneWBzero1:
+.__paramLoopDoneWBzero1:
 
     mov       vertex, [esp + _vb$]  ; Current vertex = B
     mov       dlp, dlpstrt          ; Reset the dataList
@@ -481,14 +423,14 @@ __paramLoopDoneWBzero1:
     add       dlp, 4                ; dlp++
 
     cmp       eax, 0                ; at end of list ?
-    jz        __paramLoopDoneWBzero2; yes, "write buffer" empty
+    jz        .__paramLoopDoneWBzero2; yes, "write buffer" empty
           
-__paramLoop2a:
+.__paramLoop2a:
     movd      mm1, [eax+vertex]     ; get next parameter
     mov       eax, [dlp]            ; offset = *(dlp + 1)
 
     cmp       eax, 0                ; at end of offset list (offset == 0) ?
-    jz        __paramLoopDoneWBone2 ; exit, write buffer contains one DWORD
+    jz        .__paramLoopDoneWBone2; exit, write buffer contains one DWORD
 
     movd      mm2, [eax+vertex]     ; get next parameter
     add       dlp, 8                ; dlp += 2
@@ -500,9 +442,9 @@ __paramLoop2a:
     test      eax, eax              ; at end of offset list (offset == 0) ?
 
     WRITE_MM1_FIFO_ALIGNED -8       ; PCI write current param | previous param
-    jnz       __paramLoop2a         ; nope, copy next parameter
+    jnz       .__paramLoop2a        ; nope, copy next parameter
 
-__paramLoopDoneWBzero2:
+.__paramLoopDoneWBzero2:
 
     mov       vertex, [esp + _vc$]  ; Current vertex = C
     mov       dlp, dlpstrt          ; Reset the dataList
@@ -518,14 +460,14 @@ __paramLoopDoneWBzero2:
     add       dlp, 4                ; dlp++
 
     test      eax, eax              ; at end of list ?
-    jz        __paramLoopDoneWBzero3; yes, "write buffer" empty
+    jz        .__paramLoopDoneWBzero3; yes, "write buffer" empty
           
-__paramLoop3a:
+.__paramLoop3a:
     movd      mm1, [eax+vertex]     ; get next parameter
     mov       eax, [dlp]            ; offset = *(dlp + 1)
 
     test      eax, eax              ; at end of offset list (offset == 0) ?
-    jz        __paramLoopDoneWBone3 ; exit, write buffer contains one DWORD
+    jz        .__paramLoopDoneWBone3; exit, write buffer contains one DWORD
 
     movd      mm2, [eax+vertex]     ; get next parameter
     add       dlp, 8                ; dlp += 2
@@ -537,11 +479,11 @@ __paramLoop3a:
     test      eax, eax              ; at end of offset list (offset == 0) ?
 
     WRITE_MM1_FIFO_ALIGNED -8       ; PCI write current param | previous param
-    jnz       __paramLoop3a         ; nope, copy next parameter
+    jnz       .__paramLoop3a        ; nope, copy next parameter
 
-    jmp       __paramLoopDoneWBzero3; write buffer empty
+    jmp       .__paramLoopDoneWBzero3; write buffer empty
 
-__paramLoopDoneWBone2:
+.__paramLoopDoneWBone2:
 
     ;; here: "write buffer" has one DWORD left over from vertex B
 
@@ -561,9 +503,9 @@ __paramLoopDoneWBone2:
     add       dlp, 4                ; dlp++
 
     test      eax, eax              ; end of list ?
-    jz        __paramLoopDoneWBone3 ; yes, "write buffer" has y data
+    jz        .__paramLoopDoneWBone3; yes, "write buffer" has y data
 
-__paramLoop3b:
+.__paramLoop3b:
     movd      mm2, [eax+vertex]     ; get next parameter
     add       fifo, 8               ; fifoPtr += 2*sizeof(FxU32)
 
@@ -574,22 +516,22 @@ __paramLoop3b:
     test      eax, eax              ; at end of offset list (offset == 0) ?
   
     WRITE_MM1_FIFO_ALIGNED -8       ; PCI write current param | previous param
-    jz        __paramLoopDoneWBzero3; exit, "write buffer" empty
+    jz        .__paramLoopDoneWBzero3; exit, "write buffer" empty
 
     movd      mm1, [eax+vertex]     ; get next parameter
     mov       eax, [dlp-4]          ; offset = *(dlp + 1)
 
     test      eax, eax              ; at end of offset list (offset == 0) ?
-    jnz       __paramLoop3b         ; nope, copy next parameter
+    jnz       .__paramLoop3b        ; nope, copy next parameter
 
-__paramLoopDoneWBone3:
+.__paramLoopDoneWBone3:
 
 ; "write buffer" contains one DWORD that needs to be flushed
 
     WRITE_MM1LOW_FIFO               ; 
     add       fifo, 4               ;
 
-__paramLoopDoneWBzero3:
+.__paramLoopDoneWBzero3:
 
     ;; Update gc->fifoPtr and gc->fifoRoom
 
@@ -613,7 +555,7 @@ __paramLoopDoneWBzero3:
 
     ;; Restore trashed registers    
 
-__triDone_nocull:
+.__triDone_nocull:
 
     inc       esi                   ; _GlideRoot.stats.trisProcessed++
     pop       ebp                   ; restore frame pointer
@@ -629,14 +571,14 @@ __triDone_nocull:
     ret       12                    ; return to caller
 
 
-IF GLIDE_CULLING
-__cullFail:
+%IF GLIDE_CULLING
+.__cullFail:
     mov       esi, [gc + trisProcessed]; triangles processed so far
     xor       eax, eax              ; return value = triangle not drawn
 
     femms                           ; no more AMD3D code, clear FPU/MMX regs
 
-__triDone_cull:
+.__triDone_cull:
     ;; Restore trashed registers    
     inc       esi                   ; _GlideRoot.stats.trisProcessed++;    
     pop       ebp                   ; restore frame pointer
@@ -648,99 +590,43 @@ __triDone_cull:
     pop       edi
 
     ret       12
-ENDIF ; GLIDE_CULLING
-ENDIF ; !GLIDE_CLIP_COORDS
+%ENDIF ; GLIDE_CULLING
+%ENDIF ; !GLIDE_CLIP_COORDS
 
 ;---------------------------------------------------------------------------
 ; end 3DNow! version
 ;---------------------------------------------------------------------------
 
-endif ; GL_AMD3D
+%endif ; GL_AMD3D
 
 
-ifdef GL_SSE
+%ifdef GL_SSE
 
 ;---------------------------------------------------------------------------
 ; start SSE version - note: CSIM incomplete.
 ;---------------------------------------------------------------------------
 
-TITLE   xdraw2.inc
-.686P
-.XMM
 
-GR_FIFO_WRITE   MACRO __addr, __offset, __data
-IFDEF HAL_CSIM
-    ; csim isn't complete yet
-    pushad
-    pushfd
-    
-    push    __data
-    mov     eax, __addr
-    add     eax, __offset
-    push    eax
-    call    halStore32@8
+%define gc      edi           ; points to graphics context
+%define fifo    ebp           ; points to fifo entries
+%define tempVal esi
 
-    popfd
-    popad
-ELSE
-    mov    [__addr + __offset], __data
-ENDIF
-ENDM ; GR_FIFO_WRITE
-
-
-WRITE_MM1_FIFO_ALIGNED MACRO __offset
-IFDEF HAL_CSIM
-    ; csim isn't complete yet
-    movss     tempVal,xmm1          ; previous param - no can do
-    GR_FIFO_WRITE fifo, __offset, tempVal  
-    unpcklps  xmm1, xmm1            ; current param
-    movss     tempValm,xmm1         ; - no can do
-    GR_FIFO_WRITE fifo, __offset+4, tempVal  
-ELSE
-    movlps    [fifo+__offset],xmm1  ; store current param | previous param
-ENDIF
-ENDM ; WRITE_MM1_FIFO_ALIGNED
-
-
-WRITE_MM1LOW_FIFO MACRO
-IFDEF HAL_CSIM
-    ; csim isn't complete yet
-    movss     tempVal,xmm1          ; previous param - no can do
-    GR_FIFO_WRITE fifo, 0, tempVal  ;
-ELSE
-    movss     [fifo],xmm1           ; store current param | previous param ?shouldn't this be movlps?
-ENDIF
-ENDM ; WRITE_MM1LOW_FIFO
-
-
-; Arguments (STKOFF = 16 from 4 pushes)
-STKOFF  = 16
-_va$    =  4 + STKOFF
-_vb$    =  8 + STKOFF
-_vc$    = 12 + STKOFF
-
-
-gc      TEXTEQU     <edi>           ; points to graphics context
-fifo    TEXTEQU     <ebp>           ; points to fifo entries
-tempVal TEXTEQU     <esi>
-
-IF GLIDE_CLIP_COORDS
+%IF GLIDE_CLIP_COORDS
     ;; NB:  Currently, the 3DNow!(tm) clip coordinate stuff
     ;;      thunks through to the grDrawTriangles functions
     ;;      which has already been specialized for 3DNow!(tm).
     ;;      This means that we should never get here.
-IFDEF GLIDE_DEBUG    
+%IFDEF GLIDE_DEBUG
     xor     eax, eax
     mov     [eax], eax
-ENDIF    
-ELSE    
-IF GLIDE_CULLING
-fa      TEXTEQU     <eax>           ; vtx a from caller
-fb      TEXTEQU     <ebx>           ; vtx b from caller
-fc      TEXTEQU     <ecx>           ; vtx c from caller
-cull    TEXTEQU     <edx>           ; cull mode
-intArea TEXTEQU     <ecx>           ; area temp storage
-zArea   TEXTEQU <One+04h>
+%ENDIF
+%ELSE
+%IF GLIDE_CULLING
+%define fa      eax           ; vtx a from caller
+%define fb      ebx           ; vtx b from caller
+%define fc      ecx           ; vtx c from caller
+%define cull    edx           ; cull mode
+%define intArea ecx           ; area temp storage
 
     ;; Prologue stuff
     push      edi                   ; save caller's register variable
@@ -752,25 +638,21 @@ zArea   TEXTEQU <One+04h>
     mov       fb, [esp + _vb$ - 4]  ; get base address of vertex B
     push      ebp                   ; save frame pointer
 
-if GLIDE_CLIP_COORDS
+%if GLIDE_CLIP_COORDS
     mov       esi, [gc+CoordinateSpace] ; which coord. space (clip/window)?
-endif
+%endif
 
-if GLIDE_VALIDATE_STATE
+%if GLIDE_VALIDATE_STATE
     mov       ebp, [gc + invalid]   ; state validated?
-endif
+%endif
 
-if GLIDE_CLIP_COORDS
+%if GLIDE_CLIP_COORDS
     lea       eax, [esp+ _va$]      ; pointer to vertex pointers
     test      esi, esi              ; window coordinates ?
 
     jz        win_coordinates       ; yup
-    push      eax                   ; pointer to vertex pointers
 
-    push      3                     ; 3 vertices
-    push      1                     ; mode = grDrawVertexArray
-
-    call      __grDrawTriangles@12  ; draw the triangle in clip coordinate space
+    invoke    _grDrawTriangles, 1, 3, eax; draw the triangle in clip coordinate space
 
     pop       ebp                   ; restore frame pointer
     pop       ebx                   ; restore caller's register variable
@@ -781,17 +663,17 @@ if GLIDE_CLIP_COORDS
     ret       12                    ; return, pop 3 DWORD arguments off stack
 
 win_coordinates:
-endif  ; GLIDE_CLIP_COORDS
+%endif  ; GLIDE_CLIP_COORDS
 
-if GLIDE_VALIDATE_STATE
+%if GLIDE_VALIDATE_STATE
     test      ebp, ebp              ; does state need validation?
     jz        no_validation         ; valid, don't need to validate
 
-    call      __grValidateState     ; validate state
+    invoke    _grValidateState      ; validate state
 
-no_validation:    
+.no_validation:
 
-endif  ; GLIDE_VALIDATE_STATE 
+%endif  ; GLIDE_VALIDATE_STATE
 
     mov       cull, [gc + cull_mode]; get cull mode
     nop                             ; filler
@@ -815,7 +697,7 @@ endif  ; GLIDE_VALIDATE_STATE
 
     ;; Cull Check
 
-    jz        nocull                ; nope, no culling
+    jz        .nocull               ; nope, no culling
     mov       fa, [esp + _va$]      ; get base address of vertex A
 
     movlps    xmm2,[fc + X]         ; yc | xc
@@ -847,33 +729,29 @@ endif  ; GLIDE_VALIDATE_STATE
 
     subss     xmm4,xmm5             ; dxAB*dyBC - dxBC*dyAB
 
-    movss     zArea,xmm4
-    mov       intArea,zArea         ; vectored !
+    movss     [zArea],xmm4
+    mov       intArea,[zArea]       ; vectored !
 
     ; Zero Area Triangle Check
 
     test      intArea, 7fffffffh    ; if ((j & 0x7FFFFFFF) == 0)
-    jz        __cullFail            ; area zero, triangle culled
+    jz        .__cullFail           ; area zero, triangle culled
 
     xor       intArea, cull         ; if (j ^ (culltest << 31))
-    jge       __cullFail            ; triangle facing away from viewer, culled
+    jge       .__cullFail           ; triangle facing away from viewer, culled
 
     cmp       ebx, tempVal          ; fifo space required >= space available ?
-    jge       __triBegin            ; yup, push out triangle data to Voodoo
+    jge       .__triBegin           ; yup, push out triangle data to Voodoo
 
-    push      @Line                 ; line number inside this function
-    push      0h                    ; pointer to function name = NULL
-
-    push      tempVal               ; fifo space required
-    call      __grCommandTransportMakeRoom@12 ; note: updates fifoPtr
+    invoke    _grCommandTransportMakeRoom, tempVal, 0, __LINE__; note: updates fifoPtr
     
-    jmp       __triBegin            ; merge back with short path
+    jmp       .__triBegin           ; merge back with short path
 
     ;; culling disabled
 
     ALIGN     16
 
-nocull:
+.nocull:
     ;; Check to make sure that we have enough room for
     ;; the complete triangle packet.
 
@@ -881,14 +759,10 @@ nocull:
     mov       ebx, [gc + fifoRoom]  ; fifo space available
 
     cmp       ebx, tempVal          ; fifo spce available >= space needed ?
-    jge       __triBegin            ; yup, ready to draw triangle
+    jge       .__triBegin           ; yup, ready to draw triangle
 
-    push      @Line                 ; line number inside this function
-    push      0h                    ; pointer to function name = NULL
-
-    push      tempVal               ; fifo space needed
-    call      __grCommandTransportMakeRoom@12 ; note: updates fifoPtr
-ELSE   ; !GLIDE_CULLING
+    invoke    _grCommandTransportMakeRoom, tempVal, 0, __LINE__; note: updates fifoPtr
+%ELSE   ; !GLIDE_CULLING
 
     ;; Prologue stuff
 
@@ -900,25 +774,21 @@ ELSE   ; !GLIDE_CULLING
 
     push      ebp                   ; save frame pointer
 
-if GLIDE_CLIP_COORDS
+%if GLIDE_CLIP_COORDS
     mov       edx, [gc+CoordinateSpace]; window coordinates or clip coordinates ?
-endif
+%endif
 
-if GLIDE_VALIDATE_STATE
+%if GLIDE_VALIDATE_STATE
     mov       ebp, [gc + invalid]   ; state validated?
-endif
+%endif
 
-if GLIDE_CLIP_COORDS
+%if GLIDE_CLIP_COORDS
     lea       eax, [esp+ _va$]      ; pointer to vertex pointers
     test      edx, edx              ; window coordinates ?
 
     jz        win_coordinates       ; yup
-    push      eax                   ; pointer to vertex pointers
 
-    push      3                     ; 3 vertices
-    push      1                     ; mode = grDrawVertexArray
-
-    call      __grDrawTriangles@12  ; draw the triangle in coordinate space
+    invoke    _grDrawTriangles, 1, 3, eax; draw the triangle in coordinate space
 
     pop       ebp                   ; restore frame pointer
     pop       ebx                   ; restore caller's register variable
@@ -931,17 +801,17 @@ if GLIDE_CLIP_COORDS
     ALIGN  16
 win_coordinates:
 
-endif
+%endif
 
-if GLIDE_VALIDATE_STATE
+%if GLIDE_VALIDATE_STATE
     test      ebp, ebp              ; does state need validation?
     jz        no_validation         ; valid, don't need to validate
 
-    call      __grValidateState     ; validate state
+    invoke    _grValidateState      ; validate state
 
 no_validation:
 
-endif
+%endif
 
     mov       tempVal, [gc + curTriSize] ; data for whole triangle in bytes
     add       tempVal, 4            ; fifo space needed (include 4-byte header)
@@ -957,25 +827,21 @@ endif
     xorps     xmm7,xmm7
 
     cmp       ebx, tempVal          ; fifo spce available >= space needed ?
-    jge       __triBegin            ; yup, ready to draw triangle
+    jge       .__triBegin           ; yup, ready to draw triangle
 
-    push      @Line                 ; line number inside this function
-    push      0h                    ; pointer to function name = NULL
-
-    push      tempVal               ; fifo space needed
-    call      __grCommandTransportMakeRoom@12 ; note: updates fifoPtr
+    invoke    _grCommandTransportMakeRoom, tempVal, 0, __LINE__; note: updates fifoPtr
     
-    jmp       __triBegin            ; large distance due to alignment
-endif ; GLIDE_CULLING
+    jmp       .__triBegin           ; large distance due to alignment
+%endif ; GLIDE_CULLING
 
 
-dlp     TEXTEQU     <ebx>           ; points to dataList structure
-dlpstrt TEXTEQU     <ecx>           ; points to begin of dataList structure
-vertex  TEXTEQU     <edx>           ; the current vertex
+%define dlp     ebx           ; points to dataList structure
+%define dlpstrt ecx           ; points to begin of dataList structure
+%define vertex  edx           ; the current vertex
 
     ALIGN 32                        
 
-__triBegin:
+.__triBegin:
     mov       eax, [gc+triPacketHdr]; Packet 3 header
     lea       dlp,[gc + tsuDataList]; Reset the dataList
 
@@ -985,7 +851,7 @@ __triBegin:
     mov       dlpstrt, dlp          ; save pointer to start of dataList
     test      fifo, 4               ; is fifo pointer qword aligned ?
 
-    jz        __fifo_aligned        ; yes, it is qword aligned
+    jz        .__fifo_aligned       ; yes, it is qword aligned
     movlps    xmm1,[vertex+X]       ; y | x
 
     GR_FIFO_WRITE fifo, 0, eax      ; write header to fifo; now qword aligned
@@ -999,14 +865,14 @@ __triBegin:
     add       dlp, 4                ; dlp++
 
     test      eax, eax              ; at end of list ?
-    jz        __paramLoopDoneWBzero1; yes, "write buffer" empty
+    jz        .__paramLoopDoneWBzero1; yes, "write buffer" empty
           
-__paramLoop1a:
+.__paramLoop1a:
     movss     xmm1,[eax+vertex]     ; get next parameter
     mov       eax, [dlp]            ; offset = *(dlp + 1)
 
     test      eax, eax              ; at end of offset list (offset == 0) ?
-    jz        __paramLoopDoneWBone1 ; exit, write buffer contains one DWORD
+    jz        .__paramLoopDoneWBone1; exit, write buffer contains one DWORD
 
     movss     xmm2,[eax+vertex]     ; get next parameter
     add       dlp, 8                ; dlp += 2
@@ -1018,11 +884,11 @@ __paramLoop1a:
     test      eax, eax              ; at end of offset list (offset == 0) ?
 
     WRITE_MM1_FIFO_ALIGNED -8       ; PCI write current param | previous param
-    jnz       __paramLoop1a         ; nope, copy next parameter
+    jnz       .__paramLoop1a        ; nope, copy next parameter
 
-    jmp       __paramLoopDoneWBzero1; write buffer empty
+    jmp       .__paramLoopDoneWBzero1; write buffer empty
 
-__fifo_aligned:
+.__fifo_aligned:
     movss     xmm2,[vertex+X]       ; 0 | x of vertex A
 
     GR_FIFO_WRITE fifo, 0, eax      ; write header to fifo
@@ -1036,9 +902,9 @@ __fifo_aligned:
     add       dlp, 4                ; dlp++
 
     test      eax, eax              ; end of list ?
-    jz        __paramLoopDoneWBone1 ; yes, "write buffer" has y data
+    jz        .__paramLoopDoneWBone1; yes, "write buffer" has y data
 
-__paramLoop1b:
+.__paramLoop1b:
     movss     xmm2,[eax+vertex]     ; get next parameter
     add       fifo, 8               ; fifoPtr += 2*sizeof(FxU32)
 
@@ -1049,15 +915,15 @@ __paramLoop1b:
     test      eax, eax              ; at end of offset list (offset == 0) ?
   
     WRITE_MM1_FIFO_ALIGNED -8       ; PCI write current param | previous param
-    jz        __paramLoopDoneWBzero1; exit, "write buffer" empty
+    jz        .__paramLoopDoneWBzero1; exit, "write buffer" empty
 
     movss     xmm1,[eax+vertex]     ; get next parameter
     mov       eax, [dlp-4]          ; offset = *(dlp + 1)
 
     test      eax, eax              ; at end of offset list (offset == 0) ?
-    jnz       __paramLoop1b         ; nope, copy next parameter
+    jnz       .__paramLoop1b        ; nope, copy next parameter
 
-__paramLoopDoneWBone1:
+.__paramLoopDoneWBone1:
 
     ;; here: "write buffer" has one DWORD left over from vertex A
 
@@ -1076,9 +942,9 @@ __paramLoopDoneWBone1:
     add       dlp, 4                ; dlp++
 
     test      eax, eax              ; end of list ?
-    jz        __paramLoopDoneWBone2 ; yes, "write buffer" has y data
+    jz        .__paramLoopDoneWBone2; yes, "write buffer" has y data
 
-__paramLoop2b:
+.__paramLoop2b:
     movss     xmm2,[eax+vertex]     ; get next parameter
     add       fifo, 8               ; fifoPtr += 2*sizeof(FxU32)
 
@@ -1089,17 +955,17 @@ __paramLoop2b:
     cmp       eax, 0                ; at end of offset list (offset == 0) ?
   
     WRITE_MM1_FIFO_ALIGNED -8       ; PCI write current param | previous param
-    jz        __paramLoopDoneWBzero2; exit, "write buffer" empty
+    jz        .__paramLoopDoneWBzero2; exit, "write buffer" empty
 
     movss     xmm1,[eax+vertex]     ; get next parameter
     mov       eax, [dlp-4]          ; offset = *(dlp + 1)
 
     test      eax, eax              ; at end of offset list (offset == 0) ?
-    jnz       __paramLoop2b         ; nope, copy next parameter
+    jnz       .__paramLoop2b        ; nope, copy next parameter
 
-    jmp       __paramLoopDoneWBone2 ; write buffer contains one DWORD
+    jmp       .__paramLoopDoneWBone2; write buffer contains one DWORD
 
-__paramLoopDoneWBzero1:
+.__paramLoopDoneWBzero1:
 
     mov       vertex, [esp + _vb$]  ; Current vertex = B
     mov       dlp, dlpstrt          ; Reset the dataList
@@ -1116,14 +982,14 @@ __paramLoopDoneWBzero1:
     add       dlp, 4                ; dlp++
 
     cmp       eax, 0                ; at end of list ?
-    jz        __paramLoopDoneWBzero2; yes, "write buffer" empty
+    jz        .__paramLoopDoneWBzero2; yes, "write buffer" empty
           
-__paramLoop2a:
+.__paramLoop2a:
     movss     xmm1,[eax+vertex]     ; get next parameter
     mov       eax, [dlp]            ; offset = *(dlp + 1)
 
     cmp       eax, 0                ; at end of offset list (offset == 0) ?
-    jz        __paramLoopDoneWBone2 ; exit, write buffer contains one DWORD
+    jz        .__paramLoopDoneWBone2; exit, write buffer contains one DWORD
 
     movss     xmm2,[eax+vertex]     ; get next parameter
     add       dlp, 8                ; dlp += 2
@@ -1135,9 +1001,9 @@ __paramLoop2a:
     test      eax, eax              ; at end of offset list (offset == 0) ?
 
     WRITE_MM1_FIFO_ALIGNED -8       ; PCI write current param | previous param
-    jnz       __paramLoop2a         ; nope, copy next parameter
+    jnz       .__paramLoop2a        ; nope, copy next parameter
 
-__paramLoopDoneWBzero2:
+.__paramLoopDoneWBzero2:
 
     mov       vertex, [esp + _vc$]  ; Current vertex = C
     mov       dlp, dlpstrt          ; Reset the dataList
@@ -1153,14 +1019,14 @@ __paramLoopDoneWBzero2:
     add       dlp, 4                ; dlp++
 
     test      eax, eax              ; at end of list ?
-    jz        __paramLoopDoneWBzero3; yes, "write buffer" empty
+    jz        .__paramLoopDoneWBzero3; yes, "write buffer" empty
           
-__paramLoop3a:
+.__paramLoop3a:
     movss     xmm1,[eax+vertex]     ; get next parameter
     mov       eax, [dlp]            ; offset = *(dlp + 1)
 
     test      eax, eax              ; at end of offset list (offset == 0) ?
-    jz        __paramLoopDoneWBone3 ; exit, write buffer contains one DWORD
+    jz        .__paramLoopDoneWBone3; exit, write buffer contains one DWORD
 
     movss     xmm2,[eax+vertex]     ; get next parameter
     add       dlp, 8                ; dlp += 2
@@ -1172,11 +1038,11 @@ __paramLoop3a:
     test      eax, eax              ; at end of offset list (offset == 0) ?
 
     WRITE_MM1_FIFO_ALIGNED -8       ; PCI write current param | previous param
-    jnz       __paramLoop3a         ; nope, copy next parameter
+    jnz       .__paramLoop3a        ; nope, copy next parameter
 
-    jmp       __paramLoopDoneWBzero3; write buffer empty
+    jmp       .__paramLoopDoneWBzero3; write buffer empty
 
-__paramLoopDoneWBone2:
+.__paramLoopDoneWBone2:
 
     ;; here: "write buffer" has one DWORD left over from vertex B
 
@@ -1196,9 +1062,9 @@ __paramLoopDoneWBone2:
     add       dlp, 4                ; dlp++
 
     test      eax, eax              ; end of list ?
-    jz        __paramLoopDoneWBone3 ; yes, "write buffer" has y data
+    jz        .__paramLoopDoneWBone3; yes, "write buffer" has y data
 
-__paramLoop3b:
+.__paramLoop3b:
     movss     xmm2,[eax+vertex]     ; get next parameter
     add       fifo, 8               ; fifoPtr += 2*sizeof(FxU32)
 
@@ -1209,22 +1075,22 @@ __paramLoop3b:
     test      eax, eax              ; at end of offset list (offset == 0) ?
   
     WRITE_MM1_FIFO_ALIGNED -8       ; PCI write current param | previous param
-    jz        __paramLoopDoneWBzero3; exit, "write buffer" empty
+    jz        .__paramLoopDoneWBzero3; exit, "write buffer" empty
 
     movss     xmm1,[eax+vertex]     ; get next parameter
     mov       eax, [dlp-4]          ; offset = *(dlp + 1)
 
     test      eax, eax              ; at end of offset list (offset == 0) ?
-    jnz       __paramLoop3b         ; nope, copy next parameter
+    jnz       .__paramLoop3b        ; nope, copy next parameter
 
-__paramLoopDoneWBone3:
+.__paramLoopDoneWBone3:
 
 ; "write buffer" contains one DWORD that needs to be flushed
 
     WRITE_MM1LOW_FIFO               ; 
     add       fifo, 4               ;
 
-__paramLoopDoneWBzero3:
+.__paramLoopDoneWBzero3:
 
     ;; Update gc->fifoPtr and gc->fifoRoom
 
@@ -1248,7 +1114,7 @@ __paramLoopDoneWBzero3:
 
     ;; Restore trashed registers    
 
-__triDone_nocull:
+.__triDone_nocull:
 
     inc       esi                   ; _GlideRoot.stats.trisProcessed++
     pop       ebp                   ; restore frame pointer
@@ -1262,12 +1128,12 @@ __triDone_nocull:
     ret       12                    ; return to caller
 
 
-IF GLIDE_CULLING
-__cullFail:
+%IF GLIDE_CULLING
+.__cullFail:
     mov       esi, [gc + trisProcessed]; triangles processed so far
     xor       eax, eax              ; return value = triangle not drawn
 
-__triDone_cull:
+.__triDone_cull:
     ;; Restore trashed registers    
     inc       esi                   ; _GlideRoot.stats.trisProcessed++;    
     pop       ebp                   ; restore frame pointer
@@ -1279,52 +1145,32 @@ __triDone_cull:
     pop       edi
 
     ret       12
-ENDIF ; GLIDE_CULLING
-ENDIF ; !GLIDE_CLIP_COORDS
+%ENDIF ; GLIDE_CULLING
+%ENDIF ; !GLIDE_CLIP_COORDS
 
 ;---------------------------------------------------------------------------
 ; end SSE version
 ;---------------------------------------------------------------------------
 
-endif ; GL_SSE
+%endif ; GL_SSE
 
 
-ifndef GL_AMD3D
-ifndef GL_SSE
+%ifndef GL_AMD3D
+%ifndef GL_SSE
 
 ;---------------------------------------------------------------------------
 ; original code
 ;---------------------------------------------------------------------------
-
-TITLE   xdraw2.inc
-.586P
         
-IFDEF HAL_CSIM
-EXTRN   halStore32@8:NEAR
-ENDIF
-        
-; Ugly, but seems to workaround the problem with locally defined
-; data segment globals not getting relocated properly when using
-; djgpp.
-
-zArea   TEXTEQU <One+04h>
-zdxAB   TEXTEQU <One+08h>
-zdxBC   TEXTEQU <One+0ch>
-zdyAB   TEXTEQU <One+10h>
-zdyBC   TEXTEQU <One+14h>
-zculltest TEXTEQU <One+18h>
-
-gc      TEXTEQU     <esi>       ; points to graphics context
-
-IF GLIDE_CLIP_COORDS
+%IF GLIDE_CLIP_COORDS
     ;; NB:  We should never hit this because the proc is
     ;;      either specialized or we thunk through to
     ;;      grDrawTriangles for the clipping etc.
-IFDEF GLIDE_DEBUG    
+%IFDEF GLIDE_DEBUG
     xor     eax, eax
     mov     [eax], eax
-ENDIF    
-ELSE        
+%ENDIF
+%ELSE
     ;; Prologue stuff
     push    esi
     push    edi
@@ -1335,7 +1181,7 @@ ELSE
 ;;   call    getThreadValueSLOW
 ;;   mov     gc, eax    
     
-IF 0
+%IF 0
 ;;; TRICKY STUFF HERE:
 ;;; The following code could be expressed like this but MASM had difficulty with it
 ;;; mov eax, DWORD PTR fs:[18h]
@@ -1350,44 +1196,44 @@ IF 0
   
    add eax, DWORD PTR __GlideRoot + tlsOffset
    mov gc, [eax]
-ELSE
+%ELSE
    mov gc, edx
-ENDIF
-IFDEF GLIDE_ALT_TAB
+%ENDIF
+%IFDEF GLIDE_ALT_TAB
    test gc, gc
-   je   __triDone
+   je   .__triDone
    mov edx, [gc + windowed]
    test edx, 1
-   jnz  pastContextTest         ; 
-   mov  edx, DWORD PTR [gc+lostContext]
+   jnz  .pastContextTest         ;
+   mov  edx, DWORD [gc+lostContext]
    mov ebx, [edx]
    test ebx, 1
-   jnz  __triDone
-pastContextTest:    
+   jnz  .__triDone
+.pastContextTest:
 
-ENDIF
+%ENDIF
             align 4
-IF GLIDE_VALIDATE_STATE
+%IF GLIDE_VALIDATE_STATE
 ;;;     GR_FLUSH_STATE()
-    mov     edx, DWORD PTR [gc+invalid]
+    mov     edx, DWORD [gc+invalid]
     test    edx, edx
-    je      SHORT no_validatioin
-    call    __grValidateState
-no_validatioin:
-ENDIF
+    je      .no_validatioin
+    invoke  _grValidateState
+.no_validatioin:
+%ENDIF
             align 4
-IF GLIDE_CULLING
-fa      TEXTEQU     <eax>       ; vtx a from caller
-fb      TEXTEQU     <ebx>       ; vtx b from caller
-fc      TEXTEQU     <ecx>       ; vtx c from caller
+%IF GLIDE_CULLING
+%define fa      eax       ; vtx a from caller
+%define fb      ebx       ; vtx b from caller
+%define fc      ecx       ; vtx c from caller
 
-cull    TEXTEQU     <edx>
-intArea TEXTEQU     <ebp>       ; temp Y storage
+%define cull    edx
+%define intArea ebp       ; temp Y storage
 
 ; some useful floating load and store macros <ala gmt>
-flds    TEXTEQU <fld  DWORD PTR>
-fsubs   TEXTEQU <fsub DWORD PTR>
-fmuls   TEXTEQU <fmul DWORD PTR>        
+%define flds    fld  DWORD
+%define fsubs   fsub DWORD
+%define fmuls   fmul DWORD
 
     ;; Pre-load the current culling mode before all of the
     ;; floating point area stuff.    
@@ -1398,11 +1244,11 @@ fmuls   TEXTEQU <fmul DWORD PTR>
     mov     fc, [esp + _vc$]
 
     test    cull, cull    
-    jz      nocull
+    jz      .nocull
 
     shl     cull, 31                    ; culltest << 31    
         
-Area_Computation:    
+.Area_Computation:
 ; 47-3
 ; jmp ret_pop0f
     flds    [fa + X]            ;  xa
@@ -1413,34 +1259,34 @@ Area_Computation:
     fsubs   [fc + Y]            ;  |    |    dyBC
     flds    [fa + Y]            ;  |    |    |    ya
     fsubs   [fb + Y]            ;  |    |    |    dyAB
-    fld     st(3)               ;  |    |    |    |    dxAB
-    fmul    st, st(2)           ;  |    |    |    |    t0         t0=dxAB*dyBC
-    fld     st(3)               ;  |    |    |    |    |    dxBC
-    fmul    st, st(2)           ;  |    |    |    |    |    t1    t1=dxBC*dyAB
-    fsubp   st(1),st            ;  |    |    |    |    area
-    fst     zArea               ;  |    |    |    |    area
+    fld     st3                 ;  |    |    |    |    dxAB
+    fmul    st0, st2            ;  |    |    |    |    t0         t0=dxAB*dyBC
+    fld     st3                 ;  |    |    |    |    |    dxBC
+    fmul    st0, st2            ;  |    |    |    |    |    t1    t1=dxBC*dyAB
+    fsubp   st1,st0             ;  |    |    |    |    area
+    fst     dword [zArea]       ;  |    |    |    |    area
 
     ;; Pop temp things from the sw culling off the fp stack
-    fstp    st(0)   ; 4
-    fstp    st(0)   ; 3
-    fstp    st(0)   ; 2
-    fstp    st(0)   ; 1
-    fstp    st(0)   ; 0    
+    fstp    st0   ; 4
+    fstp    st0   ; 3
+    fstp    st0   ; 2
+    fstp    st0   ; 1
+    fstp    st0   ; 0
 
-    mov     intArea, zArea        ; j = *(long *)&area
+    mov     intArea, [zArea]      ; j = *(long *)&area
     xor     eax, eax              ; Clear the return value (0 == culled)
 
     ; Zero Area Triangle Check
     and     intArea, 7fffffffh    ; if ((j & 0x7FFFFFFF) == 0)
-    jz      __triDone
+    jz      .__triDone
 
     ;; Triangle area check vs culling mode
-    mov     intArea, zArea              ; reload area just in case we're culling
+    mov     intArea, [zArea]            ; reload area just in case we're culling
     xor     intArea, cull               ; if (j ^ (culltest << 31))
     
-    jge     __triDone
-nocull: 
-ENDIF ; GLIDE_CULLING    
+    jge     .__triDone
+.nocull:
+%ENDIF ; GLIDE_CULLING
 
             align 4
     ;; Check to make sure that we have enough room for
@@ -1451,44 +1297,22 @@ ENDIF ; GLIDE_CULLING
     add     eax, 4
     cmp     ebx, eax
 
-    jge     __triBegin
+    jge     .__triBegin
     
-    push    @Line
-    push    0h
-    
-    push    eax
-    call    __grCommandTransportMakeRoom@12
+    invoke  _grCommandTransportMakeRoom, eax, 0, __LINE__
 
     ;; Send triangle parameters
     
-dlp     TEXTEQU     <ebx>       ; points to dataList structure
-fifo    TEXTEQU     <ebp>       ; points to next entry in fifo
-vertex  TEXTEQU     <edx>       ; the current vertex
-vOffset TEXTEQU     <ecx>       ; Current vertex offset
+%define dlp     ebx       ; points to dataList structure
+%define fifo    ebp       ; points to next entry in fifo
+%define vertex  edx       ; the current vertex
+%define vOffset ecx       ; Current vertex offset
 
-packCol TEXTEQU     <edi>
-tempVal TEXTEQU     <edi>
-
-GR_FIFO_WRITE   MACRO __addr, __offset, __data
-IFDEF HAL_CSIM
-    pushad
-    pushfd
-    
-    push    __data
-    mov     eax, __addr
-    add     eax, __offset
-    push    eax
-    call    halStore32@8
-
-    popfd
-    popad
-ELSE
-    mov    [__addr + __offset], __data
-ENDIF
-ENDM ; GR_FIFO_WRITE
+%define packCol edi
+%define tempVal edi
 
             align 32
-__triBegin:
+.__triBegin:
     mov     fifo, [gc + fifoPtr]        ; Fetch Fifo Ptr
     mov     vOffset, 4                  ; Starting vertex
 
@@ -1499,53 +1323,53 @@ __triBegin:
     add     fifo, 4                     ; Advance fifo for hdr & x/y coordinate
 
             align 32   
-__vertexStart:
+.__vertexStart:
     mov     vertex, [esp + STKOFF + vOffset]    ; Current vertex
     add     fifo, 8    
 
     nop                                         ; Avoid p5 agi w/ load of vertex ptr
     nop
     
-    mov     eax, DWORD PTR [vertex]             ; X
+    mov     eax, DWORD [vertex]                 ; X
     lea     dlp, [gc + tsuDataList]             ; Reset the dataList
 
     GR_FIFO_WRITE fifo, -8, eax                 ; PCI write X
-    mov     eax, DWORD PTR [vertex + 4]         ; Y 
+    mov     eax, DWORD [vertex + 4]             ; Y
 
     xor     packCol, packCol                    ; Clear packed color
     GR_FIFO_WRITE fifo, -4, eax                 ; PCI write Y
 
-__doParams:
-    mov     eax, DWORD PTR [dlp]                ; Get first offset from the data list
+.__doParams:
+    mov     eax, DWORD [dlp]                    ; Get first offset from the data list
     add     dlp, 4                              ; dlp++
     
     cmp     eax, 0                              ; Are we done?
-    je      __nextVertex
+    je      .__nextVertex
 
     ;; Not using align directive here because it sometimes
     ;; introduces an agi for the eax use below.
     nop
     nop
         
-__paramLoop:
-    mov     tempVal, DWORD PTR [eax + vertex]   ; Get the parameter from teh vertex
+.__paramLoop:
+    mov     tempVal, DWORD [eax + vertex]       ; Get the parameter from teh vertex
     add     fifo, 4                             ; fifoPtr += sizeof(FxU32)
 
-    mov     eax, DWORD PTR [dlp]                ; offset = *(dlp + 1)
+    mov     eax, DWORD [dlp]                    ; offset = *(dlp + 1)
     add     dlp, 4                              ; dlp++
     
     cmp     eax, 0                              ; Are we done?
     GR_FIFO_WRITE fifo, -4, tempVal             ; *fifoPtr = data
     
-    jne     SHORT __paramLoop
+    jne     .__paramLoop
 
                 align 4        
-__nextVertex:   
+.__nextVertex:
     ;; On to the next vertex
     add     vOffset, 4
 
     cmp     vOffset, 16                         ; Offset of one past last vertex?
-    jne     __vertexStart
+    jne     .__vertexStart
 
     ;; Update gc->fifoPtr and gc->fifoRoom
     mov     eax, fifo
@@ -1563,7 +1387,7 @@ __nextVertex:
     ;; return 1 (triangle drawn)    
     mov     eax, 1h
 
-__triDone:    
+.__triDone:
     ;; Restore trashed registers
     mov     ecx, [gc + trisProcessed]
     pop     ebp
@@ -1576,6 +1400,6 @@ __triDone:
         
     pop     esi
     ret     12
-ENDIF ; !GLIDE_CLIP_COOR
-ENDIF ; !GL_SSE
-ENDIF ; !GL_AMD3D
+%ENDIF ; !GLIDE_CLIP_COOR
+%ENDIF ; !GL_SSE
+%ENDIF ; !GL_AMD3D
