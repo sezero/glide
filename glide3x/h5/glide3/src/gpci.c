@@ -1389,10 +1389,8 @@ _GlideInitEnvironment(int which)
   //_GlideRoot.environment.aaGridRotation    = GLIDE_FGETENV("FX_GLIDE_AA_GRIDROTATION", GC.bInfo->RegPath, 27.5f); /* original values 2xaa=45deg 4xaa,8xaa=27.5deg */
   //GDBG_INFO(80,"    aaGridRotation: %f\n",_GlideRoot.environment.aaGridRotation);
 
-  /* set default glide state to not openGL app */
-  /* only if it's not already set to openGL app
-  if(_GlideRoot.environment.is_opengl != FXTRUE)
-    _GlideRoot.environment.is_opengl = FXFALSE; */
+  /* set default glide state to not openGL app. _GlideInitEnvironment() must not be called multiple times. */
+  _GlideRoot.environment.is_opengl = FXFALSE;
 
   /* note - glide now uses a string representation for the AA jitter values */
   /* This is the "old" way of doing two-sample AA, where each chip does two samples. */  
@@ -1877,9 +1875,9 @@ _GlideInitEnvironment(int which)
   /* KoolSmoky - there is a possibility that grEnable(GR_OPENGL_MODE_EXT) is called once
    * but grSstSelect is called multiple times, so we won't retreive the sliBandHeightForce
    * envar if it's already set to openGL app.
-   */
-  if( _GlideRoot.environment.sliBandHeightForce != FXTRUE )
-    _GlideRoot.environment.sliBandHeightForce = GLIDE_GETENV("FX_GLIDE_FORCE_SLI_BAND_HEIGHT", GC.bInfo->RegPath, 0L);
+   * Okay, changed the way _GlideInitEnvironment() will be called. will be called only once.
+  if( _GlideRoot.environment.sliBandHeightForce != FXTRUE ) */
+  _GlideRoot.environment.sliBandHeightForce = GLIDE_GETENV("FX_GLIDE_FORCE_SLI_BAND_HEIGHT", GC.bInfo->RegPath, 0L);
   GDBG_INFO(80," sliBandHeightForce : %d\n",_GlideRoot.environment.sliBandHeightForce);
 
   _GlideRoot.environment.swapPendingCount  = GLIDE_GETENV("FX_GLIDE_SWAPPENDINGCOUNT", GC.bInfo->RegPath, 1L);
