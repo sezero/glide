@@ -19,8 +19,34 @@ must be moved inside the glide3x directory.  The swlibs branch is not
 stored here within the glide3x cvs tree because it is also shared with
 the glide2x branch.
 
-A special note about H3:
-Currently the Glide3 H3 source is setup to build as a DRI client.  It is
-possible to compile Glide3 for H3 as a standalone library.  At this time
-the sources are not setup to do this.
+There are many other environment variables used to control the Glide
+build.  Here is a listing of some of the important ones:
 
+DEBUG=1:               Turn on debugging information, note this disables 
+                       the asm optimizations.
+FX_GLIDE_PIC=1:        Enable PIC in shared libraries.
+FX_GLIDE_CTRISETUP=1:  Use C versions as opposed to ASM versions of triangle
+                       setup code.
+GL_AMD3D=1:            Enable AMD 3DNow! optimizations.  Note this is broken
+                       on several platforms.
+
+A special note about H3:
+The Glide3 H3 source can be built as a DRI client or as a standalone library.
+Controlling which gets built is done by setting up symlinks.  Since CVS
+doesn't understand symlinks the glide3x/h3 source is not setup to build in
+either configuration.
+
+To setup glide3x/h3 to build as a DRI client, create the following symlinks:
+  h3/minihwc/linhwc.c.dri    --> h3/minihwc/linhwc.c
+  h3/glide3/src/gglide.c.dri --> h3/glide3/src/gglide.c
+  h3/glide3/src/gsst.c.dri   --> h3/glide3/src/gsst.c
+  h3/glide3/src/glfb.c.dri   --> h3/glide3/src/glfb.c
+
+To setup glide3x/h3 to build as a standalone library create the following 
+symlinks:
+  h3/minihwc/linhwc.c.save    --> h3/minihwc/linhwc.c
+  h3/glide3/src/gglide.c.save --> h3/glide3/src/gglide.c
+  h3/glide3/src/gsst.c.save   --> h3/glide3/src/gsst.c
+  h3/glide3/src/glfb.c.save   --> h3/glide3/src/glfb.c
+
+Support to make this happen automatically will be added in the future.
