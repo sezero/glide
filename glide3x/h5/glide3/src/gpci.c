@@ -1830,8 +1830,8 @@ _GlideInitEnvironment(int which)
   GDBG_INFO(80,"          snapshot: %d\n",_GlideRoot.environment.snapshot);
   _GlideRoot.environment.guardbandclipping = GLIDE_GETENV("FX_GLIDE_GBC", GC.bInfo->RegPath, 1L);
   GDBG_INFO(80," guardbandclipping: %d\n",_GlideRoot.environment.guardbandclipping);
-  /* KoolSmoky - enable 2ppc only in certain condition. -1=disable 1=enable 0=glide desides. disabled for now */
-  _GlideRoot.environment.do2ppc            = GLIDE_GETENV("FX_GLIDE_2PPC", GC.bInfo->RegPath, 0L);
+  /* KoolSmoky - enable 2ppc only in certain condition. -1=disable 1=enable 0=glide desides. always enabled. */
+  _GlideRoot.environment.do2ppc            = GLIDE_GETENV("FX_GLIDE_2PPC", GC.bInfo->RegPath, 1L);
   GDBG_INFO(80," do2ppc           : %d\n",_GlideRoot.environment.do2ppc);
   _GlideRoot.environment.band2ppc          = GLIDE_GETENV("FX_GLIDE_2PPC_BAND", GC.bInfo->RegPath, 2L);
   GDBG_INFO(80," band2ppc         : %d\n",_GlideRoot.environment.band2ppc);
