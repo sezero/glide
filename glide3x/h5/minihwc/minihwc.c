@@ -819,14 +819,7 @@ extern hrmSLIAAPtr _hrmSLIAA;
 #define HWCEXT_PROTOCOL(mon) (hInfo.boardInfo[mon].hwcProtocol==-1)
 #define HWCEXT_ESCAPE(mon) hInfo.boardInfo[mon].hwcEscape
 
-#if (!WINXP_ALT_TAB_FIX)
 extern void (*GrErrorCallback)(const char *string, FxBool fatal);
-#endif 
-
-#if WINXP_FASTER_ALT_TAB_FIX && !(WINXP_ALT_TAB_FIX)
-static WNDPROC wpWinProc = 0; 
-static LRESULT APIENTRY _XPAltTabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-#endif
 
 /*
  * AJB HACK
@@ -1046,6 +1039,11 @@ modify [eax];
 #if defined(HWC_EXT_INIT) || defined(HWC_GDX_INIT) || defined(__DJGPP__)
 static FxU32 dummyContextDWORD;
 static FxU32 **dummydata;
+#endif
+
+#if WINXP_ALT_TAB_FIX
+static WNDPROC wpWinProc = 0; 
+static LRESULT APIENTRY _XPAltTabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 #endif
 
 #ifdef HWC_DXDRVR
@@ -1667,11 +1665,9 @@ hwcInit(FxU32 vID, FxU32 dID)
         hInfo.boardInfo[monitor].h3Mem = atoi(GETENV("FX_GLIDE_FBRAM", hInfo.boardInfo[monitor].RegPath));      
       }
 
-#if (WINXP_FASTER_ALT_TAB_FIX || WINXP_ALT_TAB_FIX)
       checkResolutions((int *) resolutionSupported[monitor], 
                        (FxU32) sizeof(resolutionSupported[0][0]) / sizeof(FxBool),
                        (void *) hInfo.boardInfo[monitor].hMon);
-#endif
     }
   }
 #elif defined(HWC_GDX_INIT)
@@ -2419,7 +2415,7 @@ hwcAllocBuffers(hwcBoardInfo *bInfo, FxU32 nColBuffers, FxU32 nAuxBuffers)
     napalmfifo = FXTRUE;
   }
 
-  if (getenv("FX_GLIDE_V3FIFO")) {
+  if (GETENV("FX_GLIDE_V3FIFO", bInfo->RegPath)) {
     napalmfifo = FXFALSE;
   }
   if ((IS_NAPALM(bInfo->pciInfo.deviceID)) && (napalmfifo)) {
@@ -4551,7 +4547,7 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
             if(bpp == 32 && !((bInfo->pciInfo.numChips == 4) && (bInfo->h3pixelSample >= 4))) { /* 32bpp and not 4x,8xfsaa on v56k */
 			   vidProcCfg |= SST_OVERLAY_FILTER_POINT;
 			} else {
-               if(/*(bInfo->vidInfo.xRes < 1024) &&*/ !(vidProcCfg & SST_VIDEO_2X_MODE_EN) && !(bInfo->h3sliBandHeight <= 1))
+               if(/*(bInfo->vidInfo.xRes < 1024) &&*/ !(vidProcCfg & SST_VIDEO_2X_MODE_EN) && (bInfo->h3sliBandHeight > 1))
                   vidProcCfg |= SST_OVERLAY_FILTER_2X2;
                else
                   vidProcCfg |= SST_OVERLAY_FILTER_4X4;
@@ -5763,7 +5759,7 @@ hwcRestoreVideo(hwcBoardInfo *bInfo)
   resetVideo();
 #endif /* HWC_DXDRVR */
 
-#if WINXP_FASTER_ALT_TAB_FIX && !(WINXP_ALT_TAB_FIX)
+#if WINXP_ALT_TAB_FIX
   {
     WNDPROC curproc;
     curproc = (WNDPROC) GetWindowLong((HWND) bInfo->vidInfo.hWnd, GWL_WNDPROC);
@@ -8334,7 +8330,7 @@ hwcGammaTable(hwcBoardInfo *bInfo, FxU32 nEntries, FxU32 *r, FxU32 *g, FxU32 *b)
     gRamp[0] = 0; /* KoolSmoky - if row 0 is not 0 on napalm, we get strange banding effects on exit to desktop */
 
     /* Go through 1 to 127 */
-    for (i = 1; i < 128; i++) gRamp[i] = ((gRamp[(i*255)/127] >> 1) & 0x007F7F7F); /* KoolSmoky - dac output is doubled in 4x, 8xfsaa */
+    for (i = 1; i < 128; i++) gRamp[i] = ((gRamp[(i<<1)+1] >> 1) & 0x007F7F7F); /* KoolSmoky - dac output is doubled in 4x, 8xfsaa */
     
     /* Go through 128 to 255 */
     for (; i < 256; i++) gRamp[i] = gRamp[127];
@@ -8508,13 +8504,13 @@ hwcGetGammaTable(hwcBoardInfo *bInfo, FxU32 nEntries, FxU32 *r, FxU32 *g, FxU32 
     
     /* Go through 255 to 0 */
     for (i = 255; i > 0; i--) {
-      r[i] = r[i/2]<<1;
-      g[i] = g[i/2]<<1;
-      b[i] = b[i/2]<<1;
+      r[i] = r[i>>1]<<1;
+      g[i] = g[i>>1]<<1;
+      b[i] = b[i>>1]<<1;
     }
   }
   
-  if (r == gss_red) for (i = 0; i < 256; i++) gss_red_shifted[i] = r[i] << 16;
+  if (r == gss_red) for (i = 0; i < 256; i++) gss_red_shifted[i] = r[i] << 16; /* ? */
 
   return FXTRUE;
   
@@ -8783,45 +8779,9 @@ hwcGetenv(const char *a)
 #endif
 } /* _grGetenv */
 
+#if WINXP_ALT_TAB_FIX
 static FxU32 *cLostPointer = 0;
 
-#if WINXP_ALT_TAB_FIX
-extern LPDIRECTDRAW2        lpDD;
-extern LPDIRECTDRAW4        lpDD4;
-extern LPDIRECTDRAW         lpDD1;
-
-FxU32 __fastcall
-hwcQueryContextXP(hwcBoardInfo *bInfo)
-{
-#define FN_NAME "hwcQueryContext"
-	
-/* If we don't have cLostPointer, we wont do anything 
- * If there is no window, we'll also return true */
-  //if (!(cLostPointer && bInfo->vidInfo.hWnd)) return FXTRUE;
-  //if (!cLostPointer) return FXTRUE;
-  
-  /* If it's already lost, don't attempt to work out if it's lost */
-  //if (*cLostPointer) return FXFALSE;
-  
-  /* Check the DirectDraw cooperative level */
-  if (lpDD4 && IDirectDraw4_TestCooperativeLevel(lpDD4) != DD_OK) {
-    *cLostPointer = FXTRUE;
-    return FXFALSE;
-  }
-  
-  /* At it's simplest, if the window isn't visable, then it's lost :-) */
-  //  if (IsIconic((HWND) bInfo->vidInfo.hWnd) || !IsWindowVisible((HWND) bInfo->vidInfo.hWnd)) {
-  //    *cLostPointer = FXTRUE;
-  //    return FXFALSE;
-  //  }
-	
-  return FXTRUE;
-#undef FN_NAME
-} /* hwcQueryContextXP */
-
-#endif /* WINXP_ALT_TAB_FIX */
-
-#if WINXP_FASTER_ALT_TAB_FIX && !(WINXP_ALT_TAB_FIX)
 static LRESULT APIENTRY _XPAltTabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 #define FN_NAME "_XPAltTabProc"
@@ -8839,7 +8799,7 @@ static LRESULT APIENTRY _XPAltTabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARA
       *cLostPointer = FXTRUE;
       GDBG_INFO(80, FN_NAME "  Display settings changed\n");  
     }
-#if WINXP_SAFER_FASTER_ALT_TAB_FIX
+#if WINXP_SAFER_ALT_TAB_FIX
   else if (uMsg == WM_SIZE)
     {
       if (wParam == SIZE_MINIMIZED)
@@ -8932,10 +8892,10 @@ hwcShareContextData(hwcBoardInfo *bInfo, FxU32 **data)
   
   if( HWCEXT_PROTOCOL( bInfo->boardNum ) )
   {
-	if ((OS == OS_WIN32_NT4) ||
-		(OS == OS_WIN32_2K)  ||
-		(OS == OS_WIN32_XP))
-	{
+    if ((OS == OS_WIN32_NT4) ||
+        (OS == OS_WIN32_2K)  ||
+        (OS == OS_WIN32_XP))
+      {
       hwcExtRequest_t
         ctxReq;
       hwcExtResult_t
@@ -9006,42 +8966,45 @@ hwcShareContextData(hwcBoardInfo *bInfo, FxU32 **data)
        * check the retVal and the pointer. This also screws with ALT-TAB.
        */
       GDBG_INFO(80, FN_NAME ":  ExtEscape retVal=%d, dwordOffset=%d, contextDWORD=%d\n", retVal, ctxRes.optData.contextDwordNTRes.dwordOffset, ctxRes.optData.shareContextDWORDRes.contextDWORD);
-      if( (retVal <= 0) || 
-		  (ctxRes.optData.contextDwordNTRes.dwordOffset == 0) || 
-		  (OS == OS_WIN32_XP)) { /* make exceptions for winxp escapecalls */
-#if (WINXP_ALT_TAB_FIX || WINXP_FASTER_ALT_TAB_FIX)
-        cLostPointer =
-#endif
-        *data = &dummyContextDWORD;
-        GDBG_INFO(80, FN_NAME ":  using dummyContext \n");
-
-#if (WINXP_ALT_TAB_FIX || WINXP_FASTER_ALT_TAB_FIX)
-        GDBG_INFO(80, FN_NAME ":  Unable to get pointer to context! Compensating.\n");
-#else
-        GDBG_INFO(0,  FN_NAME ":  Unable to get pointer to context! Build Glide with WINXP_ALT_TAB_FIX=1 to avoid problems.\n");
-#endif
-				
-#if WINXP_FASTER_ALT_TAB_FIX && !(WINXP_ALT_TAB_FIX)
-        {
-          WNDPROC curproc;
-          curproc = (WNDPROC) GetWindowLong((HWND) bInfo->vidInfo.hWnd, GWL_WNDPROC);
-          
-          GDBG_INFO(80, FN_NAME ":  Setting up faster alt-tab fix.\n");
- 
-          if (curproc != (WNDPROC) _XPAltTabProc)
-            {
-              wpWinProc = curproc;
-              SetWindowLong ((HWND) bInfo->vidInfo.hWnd, GWL_WNDPROC, (LONG) _XPAltTabProc);
-              GDBG_INFO(80, FN_NAME ":  Set up faster alt-tab fix.\n");
-            }
-          else
-            {
-              GDBG_INFO(0, FN_NAME ":  Warning setting up faster ALT-TAB fix failed!\n");
-            }
+      {
+#ifdef WINXP_ALT_TAB_FIX
+        FxI32 useAltTabFix = 0;
+        if(GETENV("FX_GLIDE_ALT_TAB_FIX", bInfo->RegPath)) {
+          useAltTabFix = atoi(GETENV("FX_GLIDE_ALT_TAB_FIX", bInfo->RegPath));
         }
 #endif
-      } else {
-        *data = (FxU32 *) ctxRes.optData.contextDwordNTRes.dwordOffset;
+        if( (retVal <= 0) ||
+            (ctxRes.optData.contextDwordNTRes.dwordOffset == 0) 
+#ifdef WINXP_ALT_TAB_FIX
+            || (useAltTabFix)
+#endif
+            ) { /* XXX: make exceptions for winxp if we face problems! */
+#ifdef WINXP_ALT_TAB_FIX
+          cLostPointer =
+#endif
+          *data = &dummyContextDWORD;
+          GDBG_INFO(80, FN_NAME ":  using dummyContext \n");
+
+#ifdef WINXP_ALT_TAB_FIX
+          GDBG_INFO(80, FN_NAME ":  Unable to get pointer to context! Compensating.\n");
+          {
+            WNDPROC curproc;
+            curproc = (WNDPROC) GetWindowLong((HWND) bInfo->vidInfo.hWnd, GWL_WNDPROC);
+
+            GDBG_INFO(80, FN_NAME ":  Setting up winxp alt-tab fix.\n");
+
+            if (curproc != (WNDPROC) _XPAltTabProc) {
+              wpWinProc = curproc;
+              SetWindowLong ((HWND) bInfo->vidInfo.hWnd, GWL_WNDPROC, (LONG) _XPAltTabProc);
+              GDBG_INFO(80, FN_NAME ":  Alt-tab fix set.\n");
+            } else {
+              GDBG_INFO(0, FN_NAME ":  Alt-tab fix failed!\n");
+            }
+          }
+#endif
+        } else {
+          *data = (FxU32 *) ctxRes.optData.contextDwordNTRes.dwordOffset;
+        }
       }
     
     } else {      

@@ -717,11 +717,6 @@ hwcGetenvEx(const char *a, char *b);
 FxU32
 hwcQueryContext(hwcBoardInfo *bInfo);
 
-#if WINXP_ALT_TAB_FIX
-FxU32 __fastcall 
-hwcQueryContextXP(hwcBoardInfo *bInfo);
-#endif
-
 FxU32
 hwcShareContextData(hwcBoardInfo *bInfo, FxU32 **data);
 
