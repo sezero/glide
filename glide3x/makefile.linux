@@ -61,4 +61,4 @@ endif
 export FX_GLIDE3 = 1
 export FX_GLIDE_HW
 
-include swlibs/include/make/3dfx.mak
+include swlibs/include/make/3dfx.linux.mak

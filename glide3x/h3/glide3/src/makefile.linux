@@ -216,7 +216,7 @@ endif
 
 LCDEFS          +=      $(FIFODEFS)
 
-include $(BUILD_ROOT)/swlibs/include/make/3dfx.mak
+include $(BUILD_ROOT)/swlibs/include/make/3dfx.linux.mak
 
 ctags:  $(CFILES)
 	ctags $(CFILES)
