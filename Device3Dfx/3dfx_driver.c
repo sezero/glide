@@ -152,6 +152,7 @@
 #define PCI_REVISION_ID_LINUX 0x8
 #define PCI_BASE_ADDRESS_0_LINUX 0x10
 #define PCI_BASE_ADDRESS_1_LINUX 0x14
+#define PCI_BASE_ADDRESS_2_LINUX 0x18
 #define SST1_PCI_SPECIAL1_LINUX 0x40
 #define SST1_PCI_SPECIAL2_LINUX 0x44
 #define SST1_PCI_SPECIAL3_LINUX 0x48
@@ -187,6 +188,10 @@
 #define PCI_DEVICE_ID_3DFX_VOODOO3 5
 #endif
 
+#ifndef PCI_DEVICE_ID_3DFX_VOODOO4
+#define PCI_DEVICE_ID_3DFX_VOODOO4 9
+#endif
+
 static struct pci_card {
 	unsigned short	vendor;
 	unsigned short	device;
@@ -195,7 +200,8 @@ static struct pci_card {
 	{PCI_VENDOR_ID_3DFX, 		PCI_DEVICE_ID_3DFX_VOODOO2},
 	{PCI_VENDOR_ID_ALLIANCE, 	PCI_DEVICE_ID_ALLIANCE_AT3D},
 	{PCI_VENDOR_ID_3DFX, 		PCI_DEVICE_ID_3DFX_BANSHEE},
-	{PCI_VENDOR_ID_3DFX, 		PCI_DEVICE_ID_3DFX_VOODOO3}
+	{PCI_VENDOR_ID_3DFX, 		PCI_DEVICE_ID_3DFX_VOODOO3},
+	{PCI_VENDOR_ID_3DFX, 		PCI_DEVICE_ID_3DFX_VOODOO4}
 };
 
 #ifdef DEBUG
@@ -224,6 +230,7 @@ struct cardInfo_t {
 	int type;
 	int addr0;
   	int addr1;
+	int addr2;
 	unsigned char bus;
 	unsigned char dev;
 	struct file *curFile;
@@ -254,6 +261,7 @@ static void findCardType(int vendor, int device)
 	while (numCards < MAXCARDS && (dev = pci_find_device(vendor, device, dev))) {
 		pci_read_config_dword(dev, PCI_BASE_ADDRESS_0, &cards[numCards].addr0);
 		pci_read_config_dword(dev, PCI_BASE_ADDRESS_1, &cards[numCards].addr1);
+		pci_read_config_dword(dev, PCI_BASE_ADDRESS_2, &cards[numCards].addr2);
 		cards[numCards].bus = dev->bus->number;
 		cards[numCards].dev = dev->devfn;
 
@@ -386,6 +394,11 @@ static int doQueryFetch(pioData *desc)
 			return -EINVAL;
 		copy_to_user(desc->value, &cards[desc->device].addr1, desc->size);
 		return 0;
+	case PCI_BASE_ADDRESS_2_LINUX:
+		if (desc->size != 4)
+			return -EINVAL;
+		copy_to_user(desc->value, &cards[desc->device].addr2, desc->size);
+		return 0;
 	case SST1_PCI_SPECIAL1_LINUX:
 		if (desc->size != 4)
 			return -EINVAL;
@@ -502,10 +515,12 @@ static int doQuery(unsigned int cmd, unsigned long arg)
 static int doPIORead(pioData *desc)
 {
 	int retval;
-	char retchar;
+	int retchar;
 
 	if ((retval = verify_area(VERIFY_WRITE, desc->value, desc->size)))
 		return retval;
+#if 0
+	/* restricted */
 	switch (desc->port) {
 	case VGA_INPUT_STATUS_1C:
 		break;
@@ -518,12 +533,47 @@ static int doPIORead(pioData *desc)
 	default:
 		return -EPERM;
 	}
+#else
+	/* full range */
+	{
+         int i = desc->device;
+         unsigned short port = desc->port;
+         unsigned short base;
+         if (i < 0 || i >= numCards) {
+            /* scan for valid SSTIO aperture */
+            for (i = 0; i < numCards; i++) {
+                base = cards[i].addr2 & ~1;
+                if (base <= port && port <= (base + 0x107)) {
+                   break;
+                }
+            }
+            if (i == numCards) {
+               return -EPERM;
+            }
+         } else {
+            /* check the given SSTIO aperture */
+            base = cards[i].addr2 & ~1;
+            if (base > port || port > (base + 0x107)) {
+                return -EPERM;
+            }
+         }
+	}
+#endif
 
-	if (desc->size != 1)
+	switch (desc->size) {
+	case 1:
+		retchar = inb(desc->port);
+		break;
+	case 2:
+		retchar = inw(desc->port);
+		break;
+	case 4:
+		retchar = inl(desc->port);
+		break;
+	default:
 		return -EINVAL;
-
-	retchar = inb(desc->port);
-	copy_to_user(desc->value, &retchar, sizeof(char));
+	}
+	copy_to_user(desc->value, &retchar, desc->size);
 
 	return 0;
 }
@@ -531,11 +581,13 @@ static int doPIORead(pioData *desc)
 static int doPIOWrite(pioData *desc)
 {
 	int retval;
-	char retchar;
+	int retchar;
 
 	if ((retval = verify_area(VERIFY_READ, desc->value, desc->size)))
 		return retval;
 
+#if 0
+	/* restricted */
 	switch (desc->port) {
 	case SC_INDEX:
 		break;
@@ -546,12 +598,47 @@ static int doPIOWrite(pioData *desc)
 	default:
 		return -EPERM;
 	}
+#else
+	/* full range */
+	{
+         int i = desc->device;
+         unsigned short port = desc->port;
+         unsigned short base;
+         if (i < 0 || i >= numCards) {
+            /* scan for valid SSTIO aperture */
+            for (i = 0; i < numCards; i++) {
+                base = cards[i].addr2 & ~1;
+                if (base <= port && port <= (base + 0x107)) {
+                   break;
+                }
+            }
+            if (i == numCards) {
+               return -EPERM;
+            }
+         } else {
+            /* check the given SSTIO aperture */
+            base = cards[i].addr2 & ~1;
+            if (base > port || port > (base + 0x107)) {
+                return -EPERM;
+            }
+         }
+	}
+#endif
 
-	if (desc->size != 1)
+	copy_from_user(&retchar, desc->value, desc->size);
+	switch (desc->size) {
+	case 1:
+		outb(retchar, desc->port);
+		break;
+	case 2:
+		outw(retchar, desc->port);
+		break;
+	case 4:
+		outl(retchar, desc->port);
+		break;
+	default:
 		return -EINVAL;
-
-	copy_from_user(&retchar, desc->value, sizeof(char));
-	outb(retchar, desc->port);
+	}
 
 	return 0;
 }

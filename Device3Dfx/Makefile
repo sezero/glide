@@ -8,9 +8,9 @@ ARCH := $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/ar
 
 # Setup machine dependant compiler flags
 ifeq ($(ARCH), i386)
-OPT_CFLAGS = -O2 -m486 -fomit-frame-pointer \
+OPT_CFLAGS = -O2 -mcpu=pentium -fomit-frame-pointer \
                  -fno-strength-reduce \
-                 -malign-loops=2 -malign-jumps=2 -malign-functions=2
+                 -falign-loops=2 -falign-jumps=2 -falign-functions=2
 endif
 
 ifeq ($(ARCH), alpha)
@@ -22,7 +22,7 @@ endif
 
 endif	# ifeq ($OPT_CFLAGS),)
 
-CFLAGS := -DMODULE -D__KERNEL__ -I/usr/src/linux/include $(OPT_CFLAGS)
+CFLAGS := -DMODULE -D__KERNEL__ -I/usr/include/linux $(OPT_CFLAGS)
 
 ###############################################################################
 # You should never need to change anything below.
@@ -32,17 +32,12 @@ all: sanity 3dfx.o
 # Sanity checks
 sanity:
 	@( \
-	if [ ! -e /usr/src/linux ]; then \
-		echo "Expect kernel source at location /usr/src/linux"; \
-		echo "Sym.link /usr/src/linux -> where you have your sources"; \
+	if [ ! -r /usr/include/linux ]; then \
+		echo "Expect readable headers in /usr/include/linux"; \
 		exit -1; \
 	fi; \
-	if [ ! -r /usr/src/linux/include ]; then \
-		echo "Expect readable headers in /usr/src/linux/include"; \
-		exit -1; \
-	fi; \
-	if [ ! -r /usr/src/linux/include/linux/version.h ]; then \
-		echo "Missing /usr/src/linux/include/linux/version.h"; \
+	if [ ! -r /usr/include/linux/version.h ]; then \
+		echo "Missing /usr/include/linux/version.h"; \
 		echo "Configure and install the kernel first"; \
 		exit -1; \
 	fi; \
@@ -85,9 +80,9 @@ install:
 	if [ "$(RPM_INSTALL)" = "1" ]; then \
 		echo "/lib/modules/$(shell ./kinfo --UTS)/misc/3dfx.o"; \
 	else \
-		inconf=`grep 'alias char-major-107 3dfx' /etc/conf.modules`; \
+		inconf=`grep 'alias char-major-107 3dfx' /etc/modules.conf`; \
 		if [ -z "$$inconf" ]; then \
-			echo "alias char-major-107 3dfx" >> /etc/conf.modules; \
+			echo "alias char-major-107 3dfx" >> /etc/modules.conf; \
 		fi; \
 	fi; \
 	)
