@@ -29,6 +29,4 @@ FxBool setVideoMode( void *hwnd,
 
 void resetVideo( void );
 
-#if WINXP_FASTER_ALT_TAB_FIX || WINXP_ALT_TAB_FIX
 FxBool checkResolutions(FxBool *supportedByResolution, FxU32 stride, void *hmon);
-#endif

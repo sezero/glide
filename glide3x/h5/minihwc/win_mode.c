@@ -57,10 +57,6 @@ static HWND	hwndApp = 0;
 LPDIRECTDRAW            lpDD1 = NULL;
 LPDIRECTDRAW2           lpDD  = NULL;
 
-#if WINXP_ALT_TAB_FIX
-LPDIRECTDRAW4           lpDD4 = NULL;
-#endif
-
 static char dummy_regpath[] = "\0";
 char *opengl_regpath = dummy_regpath; /* KoolSmoky - registry path passed from grEnable */
 
@@ -190,10 +186,8 @@ setVideoMode( void *hwnd, int xRes, int yRes, int h3pixelSize, int refresh, void
 {
   LPGUID          ddGuid = NULL;
   HMODULE         ddraw = NULL;
-#if (WINXP_FASTER_ALT_TAB_FIX || WINXP_ALT_TAB_FIX)
   DDSURFACEDESC   ddsd;
   EMCData emcData;               /* Enum Modes Callbac Data */
-#endif
   HRESULT hResult;
   DEVMODE devMode;
   FxU32 bpp = 16;
@@ -233,7 +227,6 @@ setVideoMode( void *hwnd, int xRes, int yRes, int h3pixelSize, int refresh, void
     }
   }
 
-#if (WINXP_FASTER_ALT_TAB_FIX || WINXP_ALT_TAB_FIX)
    EnumDisplaySettings(devicename, ENUM_REGISTRY_SETTINGS, &devMode);
 
   /* KoolSmoky - Hack for win95. make a disp struct if we don't get anything
@@ -268,7 +261,6 @@ setVideoMode( void *hwnd, int xRes, int yRes, int h3pixelSize, int refresh, void
       GDBG_INFO(80, "DDraw communication hack: setting to 8bpp!\n");
       bpp = 8;
   }
-#endif
   
   if (lpDD == NULL) {
     /* only create directdraw object once */
@@ -279,28 +271,12 @@ setVideoMode( void *hwnd, int xRes, int yRes, int h3pixelSize, int refresh, void
     if ( IDirectDraw_QueryInterface( lpDD1, &IID_IDirectDraw2, 
                                      (LPVOID*)&lpDD ) != DD_OK ) {
       IDirectDraw_Release( lpDD1 );
-#if WINXP_ALT_TAB_FIX
-      lpDD4 = NULL;
-#endif
       lpDD1 = NULL;
       lpDD  = NULL;
       GDBG_INFO(80, "DDraw Obj Create Failed!\n");
       return FXFALSE;            
     } 
     else GDBG_INFO(80, "DDraw2 Obj created!\n");
-#if WINXP_ALT_TAB_FIX
-    if ( IDirectDraw_QueryInterface( lpDD1, &IID_IDirectDraw4, 
-                                     (LPVOID*)&lpDD4 ) != DD_OK ) {
-      IDirectDraw_Release( lpDD );
-      IDirectDraw_Release( lpDD1 );
-      lpDD4 = NULL;
-      lpDD1 = NULL;
-      lpDD  = NULL;
-      GDBG_INFO(80, "DDraw Obj Create Failed!\n");
-      return FXFALSE;            
-    } 
-    else GDBG_INFO(80, "DDraw4 Obj created!\n");
-#endif
   }
   
   /* Set Exclusive Mode, change resolution,  */
@@ -343,8 +319,7 @@ setVideoMode( void *hwnd, int xRes, int yRes, int h3pixelSize, int refresh, void
   
   /* Figure out if we can support the requested display mode.  If not,
      try to use the same x & y res, but the default refresh rate.*/
-
-#if (WINXP_FASTER_ALT_TAB_FIX || WINXP_ALT_TAB_FIX)
+  
   ddsd.dwSize = sizeof(DDSURFACEDESC);
   ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT;
   ddsd.dwWidth = xRes;
@@ -416,7 +391,6 @@ setVideoMode( void *hwnd, int xRes, int yRes, int h3pixelSize, int refresh, void
     /* ensure that any activity from other windows is obscured. */
     SetWindowPos(hwndApp, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
   }
-#endif /* WINXP_FASTER_ALT_TAB_FIX || WINXP_ALT_TAB_FIX */
   
   return FXTRUE;
   
@@ -432,23 +406,14 @@ resetVideo( void )
   if ( lpDD != NULL ) {
     GDBG_INFO(80, "%s:  has lpDD!\n", FN_NAME);
 
-#if (WINXP_FASTER_ALT_TAB_FIX || WINXP_ALT_TAB_FIX)
     IDirectDraw2_RestoreDisplayMode( lpDD );
     GDBG_INFO(80, "%s:  Restored Display Mode!\n", FN_NAME);
-#endif
     
     IDirectDraw2_SetCooperativeLevel( lpDD, hwndApp, DDSCL_NORMAL );
     GDBG_INFO(80, "%s:  Set cooperative level!\n", FN_NAME);
     
     IDirectDraw2_Release( lpDD );
     GDBG_INFO(80, "%s:  Released lpDD!\n", FN_NAME);
-
-#if WINXP_ALT_TAB_FIX
-    if ( lpDD4 ) {
-      IDirectDraw_Release( lpDD4 );
-      GDBG_INFO(80, "%s:  Released lpDD4!\n", FN_NAME);
-    }
-#endif
 
     if ( lpDD1 != NULL ) {
       GDBG_INFO(80, "%s:  has lpDD1!\n", FN_NAME);
@@ -459,9 +424,6 @@ resetVideo( void )
   
   lpDD = NULL;
   lpDD1 = NULL;
-#if WINXP_ALT_TAB_FIX
-  lpDD4 = NULL;
-#endif
 
   return;
 #undef FN_NAME
@@ -537,8 +499,6 @@ static FxU32 refresh[] = {
   85,  //"GR_REFRESH_85Hz",
   120  //"GR_REFRESH_120Hz"
 };
-
-#if (WINXP_FASTER_ALT_TAB_FIX || WINXP_ALT_TAB_FIX)
 
 static FxU32 resStride = 0;
 
@@ -624,28 +584,12 @@ checkResolutions(FxBool *supportedByResolution, FxU32 stride, void *hmon)
     if ( IDirectDraw_QueryInterface( lpDD1, &IID_IDirectDraw2, 
                                      (LPVOID*)&lpDD ) != DD_OK ) {
       IDirectDraw_Release( lpDD1 );
-#if WINXP_ALT_TAB_FIX
-      lpDD4 = NULL;
-#endif
       lpDD1 = NULL;
       lpDD  = NULL;
       GDBG_INFO(80, "DDraw Obj Create Failed!\n");
       return FXFALSE;            
     } 
     else GDBG_INFO(80, "DDraw2 Obj created!\n");
-#if WINXP_ALT_TAB_FIX
-    if ( IDirectDraw_QueryInterface( lpDD1, &IID_IDirectDraw4, 
-                                     (LPVOID*)&lpDD4 ) != DD_OK ) {
-      IDirectDraw_Release( lpDD );
-      IDirectDraw_Release( lpDD1 );
-      lpDD4 = NULL;
-      lpDD1 = NULL;
-      lpDD  = NULL;
-      GDBG_INFO(80, "DDraw Obj Create Failed!\n");
-      return FXFALSE;            
-    } 
-    else GDBG_INFO(80, "DDraw4 Obj created!\n");
-#endif
   }
   
   hResult = IDirectDraw2_EnumDisplayModes(lpDD, 0, NULL,
@@ -656,8 +600,6 @@ checkResolutions(FxBool *supportedByResolution, FxU32 stride, void *hmon)
   return FXTRUE;
 #undef FN_NAME
 } /* checkResolutions */
-
-#endif /* WINXP_FASTER_ALT_TAB_FIX || WINXP_ALT_TAB_FIX */
 
 
 void EnableOpenGL( char *regpath )
