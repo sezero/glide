@@ -3100,13 +3100,15 @@ assertDefaultState( void );
 #define GR_END()        {GR_CHECK_SIZE(); GR_TRACE_EXIT(myName);}
 
 #define GR_RETURN(val) \
+              do { \
                 if (GDBG_GET_DEBUGLEVEL(gc->myLevel)) { \
                   GR_CHECK_SIZE(); \
-                } \
-                else \
+                } else { \
                   GR_END(); \
+                } \
                 GR_TRACE_RETURN(gc->myLevel, myName, val); \
-                return val
+                return val; \
+              } while (0)
 
 #if defined(GLIDE_SANITY_ASSERT)
 #define GR_ASSERT(exp) ((void)((!(exp)) ? (_grAssert(#exp,  __FILE__, __LINE__),0) : 0xFFFFFFFF))
