@@ -20,6 +20,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.2.6.2  2003/07/25 07:13:41  dborca
+** removed debris
+**
 ** Revision 1.2.6.1  2003/05/05 07:12:46  dborca
 ** no message
 **
@@ -237,7 +240,6 @@ i3(void)
 {
   __asm int 3;
 } 
-#endif
 #endif
 
 void
