@@ -19,6 +19,8 @@
 **
 ** $Header$
 ** $Log: 
+**  11   3dfx      1.8.1.0.1.0 10/11/00 Brent           Forced check in to enforce
+**       branching.
 **  10   3dfx      1.8.1.0     06/20/00 Joseph Kain     Changes to support the
 **       Napalm Glide open source release.  Changes include cleaned up offensive
 **       comments and new legal headers.
@@ -29,7 +31,7 @@
 **  7    3dfx      1.6         01/31/00 Adam Briggs     Changed all device ID magic
 **       numbers to use those defined in fxhal.h & added IS_NAPALM macro to test
 **       against device ID range
-**  6    3dfx      1.5         01/20/00 Kenneth Dyke    Fixed texture memory sanity
+**  6    3dfx      1.5         01/19/00 Kenneth Dyke    Fixed texture memory sanity
 **       check bug.
 **  5    3dfx      1.4         10/27/99 Stephane Huaulme keeping the Mac compiler
 **       happy...

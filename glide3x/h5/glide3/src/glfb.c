@@ -1,24 +1,31 @@
 /*
-** THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONLY
-** PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGHT
-** TO USE THE GLIDE TRADEMARK WITHOUT PRIOR WRITTEN PERMISSION OF 3DFX
+** THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONL
+** PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGH
+** TO USE THE GLIDE TRADEMARK WITHOUT PRIOR WRITTEN PERMISSION OF 3DF
 ** INTERACTIVE, INC. A COPY OF THIS LICENSE MAY BE OBTAINED FROM THE
 ** DISTRIBUTOR OR BY CONTACTING 3DFX INTERACTIVE INC(info@3dfx.com).
 ** THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER
-** EXPRESSED OR IMPLIED. SEE THE 3DFX GLIDE GENERAL PUBLIC LICENSE FOR A
+** EXPRESSED OR IMPLIED. SEE THE 3DFX GLIDE GENERAL PUBLIC LICENSE FOR 
 ** FULL TEXT OF THE NON-WARRANTY PROVISIONS. 
 **
-** USE, DUPLICATION OR DISCLOSURE BY THE GOVERNMENT IS SUBJECT TO
-** RESTRICTIONS AS SET FORTH IN SUBDIVISION (C)(1)(II) OF THE RIGHTS IN
-** TECHNICAL DATA AND COMPUTER SOFTWARE CLAUSE AT DFARS 252.227-7013,
-** AND/OR IN SIMILAR OR SUCCESSOR CLAUSES IN THE FAR, DOD OR NASA FAR
-** SUPPLEMENT. UNPUBLISHED RIGHTS RESERVED UNDER THE COPYRIGHT LAWS OF
+** USE, DUPLICATION OR DISCLOSURE BY THE GOVERNMENT IS SUBJECT T
+** RESTRICTIONS AS SET FORTH IN SUBDIVISION (C)(1)(II) OF THE RIGHTS I
+** TECHNICAL DATA AND COMPUTER SOFTWARE CLAUSE AT DFARS 252.227-7013
+** AND/OR IN SIMILAR OR SUCCESSOR CLAUSES IN THE FAR, DOD OR NASA FA
+** SUPPLEMENT. UNPUBLISHED RIGHTS RESERVED UNDER THE COPYRIGHT LAWS O
 ** THE UNITED STATES. 
 **
-** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
+** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVE
 **
 ** $Header$
 ** $Log: 
+**  14   3dfx      1.7.1.2.1.2 10/11/00 Brent           Forced check in to enforce
+**       branching.
+**  13   3dfx      1.7.1.2.1.1 08/29/00 Jonny Cochrane  Some 8x FSAA code
+**  12   3dfx      1.7.1.2.1.0 08/08/00 Andy Hanson     Fix in grLfbReadRegion for
+**       32 bit surfaces.  If 32 bit is forced, and game isn't aware, we could
+**       overflow the destination buffer now.  but it wouldn't look right anyways. 
+**       Will add FX_GLIDE_LFB_OVERFLOW evar if a problem arises.
 **  11   3dfx      1.7.1.2     06/20/00 Joseph Kain     Fixed errors introduced by
 **       my previous merge.
 **  10   3dfx      1.7.1.1     06/20/00 Joseph Kain     Changes to support the
@@ -419,18 +426,21 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t type, GrBuffer_t buffer,
           case GR_PIXFMT_ARGB_1555:
           case GR_PIXFMT_AA_2_ARGB_1555:
           case GR_PIXFMT_AA_4_ARGB_1555:
+          case GR_PIXFMT_AA_8_ARGB_1555:	/* 8xaa */
             fbMode = GR_LFBWRITEMODE_1555;
             depthMode = GR_LFBWRITEMODE_ZA16;
             break;
           case GR_PIXFMT_ARGB_8888:
           case GR_PIXFMT_AA_2_ARGB_8888:
           case GR_PIXFMT_AA_4_ARGB_8888:
+          case GR_PIXFMT_AA_8_ARGB_8888:	/* 8xaa */
             fbMode = GR_LFBWRITEMODE_8888;
             depthMode = GR_LFBWRITEMODE_Z32;
             break;
           case GR_PIXFMT_RGB_565:
           case GR_PIXFMT_AA_2_RGB_565:
           case GR_PIXFMT_AA_4_RGB_565:
+          case GR_PIXFMT_AA_8_RGB_565:		/* 8xaa */
           default:
             fbMode = GR_LFBWRITEMODE_565;
             depthMode = GR_LFBWRITEMODE_ZA16;
@@ -483,18 +493,21 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t type, GrBuffer_t buffer,
         case GR_PIXFMT_ARGB_1555:
         case GR_PIXFMT_AA_2_ARGB_1555:
         case GR_PIXFMT_AA_4_ARGB_1555:
+        case GR_PIXFMT_AA_8_ARGB_1555: 	/* 8xaa */
           fbMode = GR_LFBWRITEMODE_1555;
           depthMode = GR_LFBWRITEMODE_ZA16;
           break;
         case GR_PIXFMT_ARGB_8888:
         case GR_PIXFMT_AA_2_ARGB_8888:
         case GR_PIXFMT_AA_4_ARGB_8888:
+        case GR_PIXFMT_AA_8_ARGB_8888:	/* 8xaa */
           fbMode = GR_LFBWRITEMODE_8888;
           depthMode = GR_LFBWRITEMODE_Z32;
           break; 
         case GR_PIXFMT_RGB_565:
         case GR_PIXFMT_AA_2_RGB_565:
         case GR_PIXFMT_AA_4_RGB_565:
+        case GR_PIXFMT_AA_8_RGB_565: 	/* 8xaa */
         default:
           fbMode = GR_LFBWRITEMODE_565;
           depthMode = GR_LFBWRITEMODE_ZA16;
@@ -591,7 +604,7 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t type, GrBuffer_t buffer,
     /* Get the current lfb buffer */
     {
       /* FixMe: Is this true if we're triple buffering? */
-      FxU32 colBufferIndex = 0;
+      FxU32 colBufferIndex;
       
       switch(buffer) {
       case GR_BUFFER_FRONTBUFFER:
@@ -631,17 +644,15 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t type, GrBuffer_t buffer,
 
       if (rv) {
 #ifdef	__linux__
-        if (!colBufferIndex) {
-          info->strideInBytes = driInfo.stride;
-        } else {
-          info->strideInBytes     = gc->bInfo->buffInfo.bufLfbStride;
-      }
+	if (!colBufferIndex)
+	  info->strideInBytes = driInfo.stride;
+	else
+	  info->strideInBytes     = 0x1000; /* This is the default for 3D LFBs,
+					     * which are always 2048
+					     pixels wide. */
 #else	/* defined(__linux__) */
-       /*
-        * This is the default for 3D LFBs,
-        * which are always 2048 pixels wide.
-        */
-        info->strideInBytes     = 0x1000;
+        info->strideInBytes     = 0x1000; /* This is the default for 3D LFBs,
+                                           * which are always 2048 pixels wide. */
 #endif	/* defined(__linux__) */
         info->origin            = origin;
 
@@ -686,17 +697,10 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t type, GrBuffer_t buffer,
           } 
 #endif          
             else {
-#ifdef __linux__
-           /*
-            * For Linux, we just return the correct address and
-            * stride.
-            */
-	    info->strideInBytes   = gc->bInfo->buffInfo.bufLfbStride;
-            info->lfbPtr          = (void *)gc->lfbBuffers[colBufferIndex];
-#else	/* defined(__linux__) */
             info->lfbPtr          = (void *)gc->lfb_ptr;
-#endif	/* defined(__linux__) */
-#ifndef	__linux__
+#ifdef __linux__
+	    info->strideInBytes   = 0x1000;
+#endif /* defined(__linux__) */
             switch (writeMode) {
             case GR_LFBWRITEMODE_565_DEPTH:
             case GR_LFBWRITEMODE_555_DEPTH:
@@ -707,7 +711,6 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t type, GrBuffer_t buffer,
               info->strideInBytes <<= 1;
               break;
             }
-#endif	/* defined(__linux__) */
           }
           REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 2, 0x3);
           REG_GROUP_SET(hw, colBufferAddr, gc->textureBuffer.addr );
@@ -716,15 +719,7 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t type, GrBuffer_t buffer,
         } else /* else !gc->textureBuffer.on  */        {
           if (type == GR_LFB_READ_ONLY) {
             info->lfbPtr        = (void *)gc->lfbBuffers[colBufferIndex];
-#if	defined(__linux__)
-            if (colBufferIndex == 0) {
-                info->strideInBytes = driInfo.stride;
-            } else {
-                info->strideInBytes     = gc->bInfo->buffInfo.bufLfbStride;
-            }
-#else	/* defined(__linux__) */
             info->strideInBytes     = gc->bInfo->buffInfo.bufLfbStride;
-#endif	/* defined(__linux__) */
 #if __POWERPC__
             if(IS_NAPALM(gc->bInfo->pciInfo.deviceID)) {
               if(gc->grPixelSize == 2) {
@@ -774,18 +769,8 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t type, GrBuffer_t buffer,
             /* Make sure dither rotation is disabled for 3D LFBs. */
             _3dlfb = FXTRUE;
             
-#if	defined(__linux__)
-           /*
-            * For Linux, we just return the correct address and
-            * stride.
-            */
-	    info->strideInBytes   = gc->bInfo->buffInfo.bufLfbStride;
-            info->lfbPtr          = (void *)gc->lfbBuffers[colBufferIndex];
-#else	/* defined(__linux__) */
             info->lfbPtr          = (void *)gc->lfb_ptr;
-#endif	/* defined(__linux__) */
 
-#ifndef	__linux__
             switch (writeMode) {
             case GR_LFBWRITEMODE_565_DEPTH:
             case GR_LFBWRITEMODE_555_DEPTH:
@@ -796,7 +781,6 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t type, GrBuffer_t buffer,
               info->strideInBytes <<= 1;
               break;
             }
-#endif	/* defined(__linux__) */
           }
         }
         
@@ -1266,6 +1250,91 @@ GR_ENTRY(grLfbWriteRegion, FxBool, (GrBuffer_t dst_buffer,
   FXTRUE - success
   FXFALSE - failure
   -------------------------------------------------------------------*/
+#if !__POWERPC__
+GR_ENTRY(grLfbReadRegion, FxBool, (GrBuffer_t src_buffer, 
+                                   FxU32 src_x, FxU32 src_y, 
+                                   FxU32 src_width, FxU32 src_height, 
+                                   FxU32 dst_stride, void *dst_data))
+{
+#define FN_NAME "grLfbReadRegion"
+   FxU32 bpp;
+   FxBool rv;
+   GrLfbInfo_t info;
+
+   GR_BEGIN_NOFIFOCHECK_RET("grLfbReadRegion",82);
+   GDBG_INFO_MORE(gc->myLevel,
+                  "(0x%x,%d,%d,%d,%d,%d,0x%x)\n",
+                  src_buffer, src_x, src_y,
+                  src_width, src_height, dst_stride, dst_data);
+
+   bpp=gc->bInfo->h3pixelSize;
+   info.size = sizeof(info);
+   if (!src_width)
+   {
+      rv=FXTRUE;
+      goto done;
+   }
+   rv=FXFALSE;
+
+   if (grLfbLock(GR_LFB_READ_ONLY,
+                 src_buffer, 
+                 GR_LFBWRITEMODE_ANY,
+                 GR_ORIGIN_UPPER_LEFT,
+                 FXFALSE,
+                 &info))
+   {
+      FxU32 *src,*dst;
+      FxI32 length,scanline;
+      FxU32 src_adjust,dst_adjust,tmp;
+
+      src=(FxU32 *) (((char*)info.lfbPtr)+
+                     (src_y*info.strideInBytes) + (src_x * bpp));
+      dst=dst_data;
+      scanline=src_height;
+
+      /* set length - alignment fix*/
+      tmp=(((FxU32)src)&2);
+      length=src_width * bpp - tmp;
+      src_adjust=info.strideInBytes - tmp;
+      dst_adjust=dst_stride - tmp;
+
+      /* should be endian and pixel size safe */
+         /* it would be nice to test if quad blocks were faster */
+         /* like mmx loads and stores */
+      while(src_height--)
+      {
+         /* adjust starting alignment */
+         if (((FxU32)src)&3)
+            *((FxU16 *)dst)++=*((FxU16 *)src)++;
+
+         /* read in dwords of pixels */
+         if(length)
+         {
+            FxU32 byte_index=0;
+            FxU32 aligned=length&(~3);
+
+            /* copies aligned dwords */
+            do
+            {
+               *((FxU32 *)(((FxU32)dst) + byte_index))=*((FxU32 *)(((FxU32)src) + byte_index));
+            }while((byte_index+=4)<aligned);
+
+            /* handle backend misalignment */
+            if (byte_index!=(FxU32)length)
+               *((FxU16 *)(((FxU32)dst) + byte_index))=*((FxU16 *)(((FxU32)src) + byte_index));
+         }
+         /* adjust for next line */
+         ((FxU8 *)src)+=src_adjust;
+         ((FxU8 *)dst)+=dst_adjust;
+      }
+      rv=FXTRUE;
+      /* unlock buffer */
+      grLfbUnlock(GR_LFB_READ_ONLY,src_buffer);
+   }
+done:
+   GR_RETURN(rv);
+}
+#else /* if __POWERPC__ */
 GR_ENTRY(grLfbReadRegion, FxBool, (GrBuffer_t src_buffer, 
                                    FxU32 src_x, FxU32 src_y, 
                                    FxU32 src_width, FxU32 src_height, 
@@ -1401,4 +1470,5 @@ GR_ENTRY(grLfbReadRegion, FxBool, (GrBuffer_t src_buffer,
   GR_RETURN(rv);
 #undef FN_NAME
 }/* grLfbReadRegion */
+#endif /* if __POWERPC__ */
 

@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler Version 6.14.8444		    06/20/00 17:18:56
+Microsoft (R) Macro Assembler Version 6.14.8444		    06/30/00 13:01:25
 cpudtect.asm						     Page 1 - 1
 
 
@@ -321,7 +321,7 @@ cpudtect.asm						     Page 1 - 1
 				    
  000001D0			_TEXT ENDS
 				END
-Microsoft (R) Macro Assembler Version 6.14.8444		    06/20/00 17:18:56
+Microsoft (R) Macro Assembler Version 6.14.8444		    06/30/00 13:01:25
 cpudtect.asm						     Symbols 2 - 1
 
 
@@ -379,7 +379,9 @@ CPUTypeP5  . . . . . . . . . . .	Number	 00000005h
 CPUTypeP6  . . . . . . . . . . .	Number	 00000006h   
 CPUTypePrePent . . . . . . . . .	Number	 00000004h   
 CPUTypeUnknown . . . . . . . . .	Number	 FFFFFFFFh   
+GDBG_INFO_ON . . . . . . . . . .	Text   	 
 GLIDE_ALT_TAB  . . . . . . . . .	Text   	 
+GLIDE_DEBUG  . . . . . . . . . .	Text   	 
 GLIDE_INIT_HWC . . . . . . . . .	Text   	 
 GLIDE_PACKED_RGB . . . . . . . .	Text   	 0
 GLIDE_TRI_CULLING  . . . . . . .	Text   	 1

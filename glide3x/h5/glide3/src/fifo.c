@@ -1,24 +1,25 @@
 /*
-** THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONLY
-** PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGHT
-** TO USE THE GLIDE TRADEMARK WITHOUT PRIOR WRITTEN PERMISSION OF 3DFX
-** INTERACTIVE, INC. A COPY OF THIS LICENSE MAY BE OBTAINED FROM THE
-** DISTRIBUTOR OR BY CONTACTING 3DFX INTERACTIVE INC(info@3dfx.com).
-** THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER
-** EXPRESSED OR IMPLIED. SEE THE 3DFX GLIDE GENERAL PUBLIC LICENSE FOR A 
-** FULL TEXT OF THE NON-WARRANTY PROVISIONS. 
-**
-** USE, DUPLICATION OR DISCLOSURE BY THE GOVERNMENT IS SUBJECT TO
-** RESTRICTIONS AS SET FORTH IN SUBDIVISION (C)(1)(II) OF THE RIGHTS IN
-** TECHNICAL DATA AND COMPUTER SOFTWARE CLAUSE AT DFARS 252.227-7013,
-** AND/OR IN SIMILAR OR SUCCESSOR CLAUSES IN THE FAR, DOD OR NASA FAR
-** SUPPLEMENT. UNPUBLISHED RIGHTS RESERVED UNDER THE COPYRIGHT LAWS OF
-** THE UNITED STATES. 
-**
-** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
+ ** Copyright (c) 1995, 3Dfx Interactive, Inc
+ ** All Rights Reserved
+ *
+ ** This is UNPUBLISHED PROPRIETARY SOURCE CODE of 3Dfx Interactive, Inc.
+ ** the contents of this file may not be disclosed to third parties, copied o
+ ** duplicated in any form, in whole or in part, without the prior writte
+ ** permission of 3Dfx Interactive, Inc
+ *
+ ** RESTRICTED RIGHTS LEGEND
+ ** Use, duplication or disclosure by the Government is subject to restriction
+ ** as set forth in subdivision (c)(1)(ii) of the Rights in Technical Dat
+ ** and Computer Software clause at DFARS 252.227-7013, and/or in similar o
+ ** successor clauses in the FAR, DOD or NASA FAR Supplement. Unpublished 
+ ** rights reserved under the Copyright Laws of the United States
  *
  ** $Header$
  ** $Log: 
+ **  14   3dfx      1.8.1.2.1.1 10/11/00 Brent           Forced check in to enforce
+ **       branching.
+ **  13   3dfx      1.8.1.2.1.0 07/21/00 Adam Briggs     don't try to bump > 0xffff
+ **       at a time
  **  12   3dfx      1.8.1.2     06/20/00 Joseph Kain     Fixed errors introduced by
  **       my previous merge.
  **  11   3dfx      1.8.1.1     06/20/00 Joseph Kain     Changes to support the
@@ -683,7 +684,17 @@ _grBumpNGrind()
 #else /* !HAL_CSIM */
   FIFO_CACHE_FLUSH(gc->cmdTransportInfo.fifoPtr);
   P6FENCE;
-  GR_CAGP_SET(bump, gc->cmdTransportInfo.fifoPtr - gc->cmdTransportInfo.lastBump);
+
+  /* AH FUK: the bump register can only handle a 16bit value */
+  while ((gc->cmdTransportInfo.fifoPtr - gc->cmdTransportInfo.lastBump) > 0xFFFFL)
+  {
+    GR_CAGP_SET(bump, 0xFFFFL);
+    gc->cmdTransportInfo.lastBump += 0xFFFFL ;
+  }
+
+  if (gc->cmdTransportInfo.fifoPtr - gc->cmdTransportInfo.lastBump)
+    GR_CAGP_SET(bump, gc->cmdTransportInfo.fifoPtr - gc->cmdTransportInfo.lastBump);
+  
   gc->cmdTransportInfo.lastBump = gc->cmdTransportInfo.fifoPtr;
   gc->cmdTransportInfo.bumpPos = gc->cmdTransportInfo.fifoPtr + (gc->cmdTransportInfo.bumpSize);
   if (gc->cmdTransportInfo.bumpPos > gc->cmdTransportInfo.fifoEnd)

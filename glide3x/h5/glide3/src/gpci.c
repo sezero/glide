@@ -1,24 +1,37 @@
 /*
-** THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONLY
-** PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGHT
-** TO USE THE GLIDE TRADEMARK WITHOUT PRIOR WRITTEN PERMISSION OF 3DFX
+** THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONL
+** PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGH
+** TO USE THE GLIDE TRADEMARK WITHOUT PRIOR WRITTEN PERMISSION OF 3DF
 ** INTERACTIVE, INC. A COPY OF THIS LICENSE MAY BE OBTAINED FROM THE
 ** DISTRIBUTOR OR BY CONTACTING 3DFX INTERACTIVE INC(info@3dfx.com).
 ** THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER
-** EXPRESSED OR IMPLIED. SEE THE 3DFX GLIDE GENERAL PUBLIC LICENSE FOR A 
+** EXPRESSED OR IMPLIED. SEE THE 3DFX GLIDE GENERAL PUBLIC LICENSE FOR 
 ** FULL TEXT OF THE NON-WARRANTY PROVISIONS. 
 **
-** USE, DUPLICATION OR DISCLOSURE BY THE GOVERNMENT IS SUBJECT TO
-** RESTRICTIONS AS SET FORTH IN SUBDIVISION (C)(1)(II) OF THE RIGHTS IN
-** TECHNICAL DATA AND COMPUTER SOFTWARE CLAUSE AT DFARS 252.227-7013,
-** AND/OR IN SIMILAR OR SUCCESSOR CLAUSES IN THE FAR, DOD OR NASA FAR
-** SUPPLEMENT. UNPUBLISHED RIGHTS RESERVED UNDER THE COPYRIGHT LAWS OF
+** USE, DUPLICATION OR DISCLOSURE BY THE GOVERNMENT IS SUBJECT T
+** RESTRICTIONS AS SET FORTH IN SUBDIVISION (C)(1)(II) OF THE RIGHTS I
+** TECHNICAL DATA AND COMPUTER SOFTWARE CLAUSE AT DFARS 252.227-7013
+** AND/OR IN SIMILAR OR SUCCESSOR CLAUSES IN THE FAR, DOD OR NASA FA
+** SUPPLEMENT. UNPUBLISHED RIGHTS RESERVED UNDER THE COPYRIGHT LAWS O
 ** THE UNITED STATES. 
 **
-** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
+** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVE
 **
 ** $Header$
 ** $Log: 
+**  44   3dfx      1.34.1.2.1.511/08/00 Drew McMinn     Create initialise read and
+**       use useAppGamma flag, to allow us to disable applications changing gamma
+**       values.
+**  43   3dfx      1.34.1.2.1.410/11/00 Brent           Forced check in to enforce
+**       branching.
+**  42   3dfx      1.34.1.2.1.309/26/00 Andy Hanson     Add environment variable of
+**       glide group so they can do wacky things safely.
+**  41   3dfx      1.34.1.2.1.208/29/00 Jonny Cochrane  Some 8x FSAA code
+**  40   3dfx      1.34.1.2.1.108/01/00 Andy Hanson     Fixed issue with source
+**       ignoring setting of GLIDE_SPLASH define.
+**       Fixed issue with setting of splash state when it wasn't going to be run.
+**  39   3dfx      1.34.1.2.1.006/28/00 troy thornton   added initialization of
+**       correct jitter values
 **  38   3dfx      1.34.1.2    06/20/00 Joseph Kain     Fixed errors introduced in
 **       merge.
 **  37   3dfx      1.34.1.1    06/20/00 Joseph Kain     Changes to support the
@@ -1219,13 +1232,21 @@ _GlideInitEnvironment(void)
   (((envStr = GETENV(__envVar)) == NULL) ? (__defVal) : atol(envStr))
 #define GLIDE_FGETENV(__envVar, __defVal) \
   (((envStr = GETENV(__envVar)) == NULL) ? (__defVal) : (float) atof(envStr))
-    
+#define GLIDE_34GETENV(__envVar, __defVal) \
+  (((signed char)(atof(((envStr = GETENV(__envVar)) == NULL) ? (__defVal) : (envStr))*16.0f)+8)&0x7f)
+  
+  
 #ifdef GLIDE_TEST_TEXTURE_ALIGNMENT
     SST_TEXTURE_ALIGN = GLIDE_GETENV("FX_GLIDE_TEX_ALIGN", 0x10UL);
 #endif
   _GlideRoot.environment.triBoundsCheck    = GETENV("FX_GLIDE_BOUNDS_CHECK") != NULL;
   GDBG_INFO(80,"    triBoundsCheck: %d\n",_GlideRoot.environment.triBoundsCheck);
+#ifdef GLIDE_SPLASH
   _GlideRoot.environment.noSplash          = GETENV("FX_GLIDE_NO_SPLASH") != NULL;
+#else
+  _GlideRoot.environment.noSplash          = 1;
+#endif
+
   GDBG_INFO(80,"          noSplash: %d\n",_GlideRoot.environment.noSplash);
   _GlideRoot.environment.shamelessPlug     = GETENV("FX_GLIDE_SHAMELESS_PLUG") != NULL;
   GDBG_INFO(80,"     shamelessPlug: %d\n",_GlideRoot.environment.shamelessPlug);
@@ -1238,38 +1259,159 @@ _GlideInitEnvironment(void)
   _GlideRoot.environment.noHW              = GETENV("FX_GLIDE_NO_HW") != NULL;
   GDBG_INFO(80,"              noHW: %d\n",_GlideRoot.environment.noHW);
 
-  /* This is the "old" way of doing two-sample AA, where each chip does two samples. */
-  _GlideRoot.environment.aaXOffset[1][0]   = GLIDE_GETENV("FX_GLIDE_AA2_OFFSET_X0",PRIBUFVTXOFFX_2SMPL_DEF_VAL);
-  _GlideRoot.environment.aaXOffset[1][1]   = GLIDE_GETENV("FX_GLIDE_AA2_OFFSET_X1",SECBUFVTXOFFX_2SMPL_DEF_VAL);
-  _GlideRoot.environment.aaXOffset[1][2]   = GLIDE_GETENV("FX_GLIDE_AA2_OFFSET_X0",PRIBUFVTXOFFX_2SMPL_DEF_VAL);
-  _GlideRoot.environment.aaXOffset[1][3]   = GLIDE_GETENV("FX_GLIDE_AA2_OFFSET_X1",SECBUFVTXOFFX_2SMPL_DEF_VAL);
+  /* set default glide state to not openGL app */
+  _GlideRoot.environment.is_opengl=FXFALSE;
 
-  _GlideRoot.environment.aaYOffset[1][0]   = GLIDE_GETENV("FX_GLIDE_AA2_OFFSET_Y0",PRIBUFVTXOFFY_2SMPL_DEF_VAL);
-  _GlideRoot.environment.aaYOffset[1][1]   = GLIDE_GETENV("FX_GLIDE_AA2_OFFSET_Y1",SECBUFVTXOFFY_2SMPL_DEF_VAL);
-  _GlideRoot.environment.aaYOffset[1][2]   = GLIDE_GETENV("FX_GLIDE_AA2_OFFSET_Y0",PRIBUFVTXOFFY_2SMPL_DEF_VAL);
-  _GlideRoot.environment.aaYOffset[1][3]   = GLIDE_GETENV("FX_GLIDE_AA2_OFFSET_Y1",SECBUFVTXOFFY_2SMPL_DEF_VAL);
+  /* note - glide now uses a string representation for the AA jitter values */
+  /* This is the "old" way of doing two-sample AA, where each chip does two samples. */  
+  _GlideRoot.environment.aaXOffset[1][0]   = GLIDE_34GETENV("FX_GLIDE_AA2_OFFSET_X0",PRIBUFVTXOFFX_2SMPL_DEF);
+  _GlideRoot.environment.aaXOffset[1][1]   = GLIDE_34GETENV("FX_GLIDE_AA2_OFFSET_X1",SECBUFVTXOFFX_2SMPL_DEF);
+  _GlideRoot.environment.aaXOffset[1][2]   = GLIDE_34GETENV("FX_GLIDE_AA2_OFFSET_X0",PRIBUFVTXOFFX_2SMPL_DEF);
+  _GlideRoot.environment.aaXOffset[1][3]   = GLIDE_34GETENV("FX_GLIDE_AA2_OFFSET_X1",SECBUFVTXOFFX_2SMPL_DEF);
+
+  _GlideRoot.environment.aaYOffset[1][0]   = GLIDE_34GETENV("FX_GLIDE_AA2_OFFSET_Y0",PRIBUFVTXOFFY_2SMPL_DEF);
+  _GlideRoot.environment.aaYOffset[1][1]   = GLIDE_34GETENV("FX_GLIDE_AA2_OFFSET_Y1",SECBUFVTXOFFY_2SMPL_DEF);
+  _GlideRoot.environment.aaYOffset[1][2]   = GLIDE_34GETENV("FX_GLIDE_AA2_OFFSET_Y0",PRIBUFVTXOFFY_2SMPL_DEF);
+  _GlideRoot.environment.aaYOffset[1][3]   = GLIDE_34GETENV("FX_GLIDE_AA2_OFFSET_Y1",SECBUFVTXOFFY_2SMPL_DEF);
 
   /* This is a nasty evil hack!  This rearranges the sample offsets to deal with the new way of doing two sample AA */
-  _GlideRoot.environment.aaXOffset[2][0]   = GLIDE_GETENV("FX_GLIDE_AA2_OFFSET_X0",PRIBUFVTXOFFX_2SMPL_DEF_VAL);
-  _GlideRoot.environment.aaXOffset[2][1]   = GLIDE_GETENV("FX_GLIDE_AA2_OFFSET_X0",PRIBUFVTXOFFX_2SMPL_DEF_VAL);
-  _GlideRoot.environment.aaXOffset[2][2]   = GLIDE_GETENV("FX_GLIDE_AA2_OFFSET_X1",SECBUFVTXOFFX_2SMPL_DEF_VAL);
-  _GlideRoot.environment.aaXOffset[2][3]   = GLIDE_GETENV("FX_GLIDE_AA2_OFFSET_X1",SECBUFVTXOFFX_2SMPL_DEF_VAL);
+  _GlideRoot.environment.aaXOffset[2][0]   = GLIDE_34GETENV("FX_GLIDE_AA2_OFFSET_X0",PRIBUFVTXOFFX_2SMPL_DEF);
+  _GlideRoot.environment.aaXOffset[2][1]   = GLIDE_34GETENV("FX_GLIDE_AA2_OFFSET_X0",PRIBUFVTXOFFX_2SMPL_DEF);
+  _GlideRoot.environment.aaXOffset[2][2]   = GLIDE_34GETENV("FX_GLIDE_AA2_OFFSET_X1",SECBUFVTXOFFX_2SMPL_DEF);
+  _GlideRoot.environment.aaXOffset[2][3]   = GLIDE_34GETENV("FX_GLIDE_AA2_OFFSET_X1",SECBUFVTXOFFX_2SMPL_DEF);
 
-  _GlideRoot.environment.aaYOffset[2][0]   = GLIDE_GETENV("FX_GLIDE_AA2_OFFSET_Y0",PRIBUFVTXOFFY_2SMPL_DEF_VAL);
-  _GlideRoot.environment.aaYOffset[2][1]   = GLIDE_GETENV("FX_GLIDE_AA2_OFFSET_Y0",PRIBUFVTXOFFY_2SMPL_DEF_VAL);
-  _GlideRoot.environment.aaYOffset[2][2]   = GLIDE_GETENV("FX_GLIDE_AA2_OFFSET_Y1",SECBUFVTXOFFY_2SMPL_DEF_VAL);
-  _GlideRoot.environment.aaYOffset[2][3]   = GLIDE_GETENV("FX_GLIDE_AA2_OFFSET_Y1",SECBUFVTXOFFY_2SMPL_DEF_VAL);
+  _GlideRoot.environment.aaYOffset[2][0]   = GLIDE_34GETENV("FX_GLIDE_AA2_OFFSET_Y0",PRIBUFVTXOFFY_2SMPL_DEF);
+  _GlideRoot.environment.aaYOffset[2][1]   = GLIDE_34GETENV("FX_GLIDE_AA2_OFFSET_Y0",PRIBUFVTXOFFY_2SMPL_DEF);
+  _GlideRoot.environment.aaYOffset[2][2]   = GLIDE_34GETENV("FX_GLIDE_AA2_OFFSET_Y1",SECBUFVTXOFFY_2SMPL_DEF);
+  _GlideRoot.environment.aaYOffset[2][3]   = GLIDE_34GETENV("FX_GLIDE_AA2_OFFSET_Y1",SECBUFVTXOFFY_2SMPL_DEF);
 
   /* This is the "normal" layout for 4-sample AA */
-  _GlideRoot.environment.aaXOffset[3][0]   = GLIDE_GETENV("FX_GLIDE_AA4_OFFSET_X0",PRIBUFVTXOFFX_4SMPL_CHP0_DEF_VAL);
-  _GlideRoot.environment.aaXOffset[3][1]   = GLIDE_GETENV("FX_GLIDE_AA4_OFFSET_X1",SECBUFVTXOFFX_4SMPL_CHP0_DEF_VAL);
-  _GlideRoot.environment.aaXOffset[3][2]   = GLIDE_GETENV("FX_GLIDE_AA4_OFFSET_X2",PRIBUFVTXOFFX_4SMPL_CHP1_DEF_VAL);
-  _GlideRoot.environment.aaXOffset[3][3]   = GLIDE_GETENV("FX_GLIDE_AA4_OFFSET_X3",SECBUFVTXOFFX_4SMPL_CHP1_DEF_VAL);
+
+  _GlideRoot.environment.aaXOffset[3][0]   = GLIDE_34GETENV("FX_GLIDE_AA4_OFFSET_X0",PRIBUFVTXOFFX_4SMPL_CHP0_DEF);
+  _GlideRoot.environment.aaXOffset[3][1]   = GLIDE_34GETENV("FX_GLIDE_AA4_OFFSET_X1",SECBUFVTXOFFX_4SMPL_CHP0_DEF);
+  _GlideRoot.environment.aaXOffset[3][2]   = GLIDE_34GETENV("FX_GLIDE_AA4_OFFSET_X2",PRIBUFVTXOFFX_4SMPL_CHP1_DEF);
+  _GlideRoot.environment.aaXOffset[3][3]   = GLIDE_34GETENV("FX_GLIDE_AA4_OFFSET_X3",SECBUFVTXOFFX_4SMPL_CHP1_DEF);
   
-  _GlideRoot.environment.aaYOffset[3][0]   = GLIDE_GETENV("FX_GLIDE_AA4_OFFSET_Y0",PRIBUFVTXOFFY_4SMPL_CHP0_DEF_VAL);
-  _GlideRoot.environment.aaYOffset[3][1]   = GLIDE_GETENV("FX_GLIDE_AA4_OFFSET_Y1",SECBUFVTXOFFY_4SMPL_CHP0_DEF_VAL);
-  _GlideRoot.environment.aaYOffset[3][2]   = GLIDE_GETENV("FX_GLIDE_AA4_OFFSET_Y2",PRIBUFVTXOFFY_4SMPL_CHP1_DEF_VAL);
-  _GlideRoot.environment.aaYOffset[3][3]   = GLIDE_GETENV("FX_GLIDE_AA4_OFFSET_Y3",SECBUFVTXOFFY_4SMPL_CHP1_DEF_VAL);
+  _GlideRoot.environment.aaYOffset[3][0]   = GLIDE_34GETENV("FX_GLIDE_AA4_OFFSET_Y0",PRIBUFVTXOFFY_4SMPL_CHP0_DEF);
+  _GlideRoot.environment.aaYOffset[3][1]   = GLIDE_34GETENV("FX_GLIDE_AA4_OFFSET_Y1",SECBUFVTXOFFY_4SMPL_CHP0_DEF);
+  _GlideRoot.environment.aaYOffset[3][2]   = GLIDE_34GETENV("FX_GLIDE_AA4_OFFSET_Y2",PRIBUFVTXOFFY_4SMPL_CHP1_DEF);
+  _GlideRoot.environment.aaYOffset[3][3]   = GLIDE_34GETENV("FX_GLIDE_AA4_OFFSET_Y3",SECBUFVTXOFFY_4SMPL_CHP1_DEF);  
+
+  /* these are the correct jitter vaules */
+  _GlideRoot.environment.aaXOffset[4][0]   = GLIDE_34GETENV("FX_GLIDE_AA2_OFFSET_X0",PRIBUFVTXOFFX_2SMPL_CORRECT_DEF);
+  _GlideRoot.environment.aaXOffset[4][1]   = GLIDE_34GETENV("FX_GLIDE_AA2_OFFSET_X1",SECBUFVTXOFFX_2SMPL_CORRECT_DEF);
+  _GlideRoot.environment.aaXOffset[4][2]   = GLIDE_34GETENV("FX_GLIDE_AA2_OFFSET_X0",PRIBUFVTXOFFX_2SMPL_CORRECT_DEF);
+  _GlideRoot.environment.aaXOffset[4][3]   = GLIDE_34GETENV("FX_GLIDE_AA2_OFFSET_X1",SECBUFVTXOFFX_2SMPL_CORRECT_DEF);
+  _GlideRoot.environment.aaXOffset[4][4]   = GLIDE_34GETENV("FX_GLIDE_AA2_OFFSET_X0",PRIBUFVTXOFFX_2SMPL_CORRECT_DEF);
+  _GlideRoot.environment.aaXOffset[4][5]   = GLIDE_34GETENV("FX_GLIDE_AA2_OFFSET_X1",SECBUFVTXOFFX_2SMPL_CORRECT_DEF);
+  _GlideRoot.environment.aaXOffset[4][6]   = GLIDE_34GETENV("FX_GLIDE_AA2_OFFSET_X0",PRIBUFVTXOFFX_2SMPL_CORRECT_DEF);
+  _GlideRoot.environment.aaXOffset[4][7]   = GLIDE_34GETENV("FX_GLIDE_AA2_OFFSET_X1",SECBUFVTXOFFX_2SMPL_CORRECT_DEF);
+
+  _GlideRoot.environment.aaYOffset[4][0]   = GLIDE_34GETENV("FX_GLIDE_AA2_OFFSET_Y0",PRIBUFVTXOFFY_2SMPL_CORRECT_DEF);
+  _GlideRoot.environment.aaYOffset[4][1]   = GLIDE_34GETENV("FX_GLIDE_AA2_OFFSET_Y1",SECBUFVTXOFFY_2SMPL_CORRECT_DEF);
+  _GlideRoot.environment.aaYOffset[4][2]   = GLIDE_34GETENV("FX_GLIDE_AA2_OFFSET_Y0",PRIBUFVTXOFFY_2SMPL_CORRECT_DEF);
+  _GlideRoot.environment.aaYOffset[4][3]   = GLIDE_34GETENV("FX_GLIDE_AA2_OFFSET_Y1",SECBUFVTXOFFY_2SMPL_CORRECT_DEF);
+  _GlideRoot.environment.aaYOffset[4][4]   = GLIDE_34GETENV("FX_GLIDE_AA2_OFFSET_Y0",PRIBUFVTXOFFY_2SMPL_CORRECT_DEF);
+  _GlideRoot.environment.aaYOffset[4][5]   = GLIDE_34GETENV("FX_GLIDE_AA2_OFFSET_Y1",SECBUFVTXOFFY_2SMPL_CORRECT_DEF);
+  _GlideRoot.environment.aaYOffset[4][6]   = GLIDE_34GETENV("FX_GLIDE_AA2_OFFSET_Y0",PRIBUFVTXOFFY_2SMPL_CORRECT_DEF);
+  _GlideRoot.environment.aaYOffset[4][7]   = GLIDE_34GETENV("FX_GLIDE_AA2_OFFSET_Y1",SECBUFVTXOFFY_2SMPL_CORRECT_DEF);
+
+  _GlideRoot.environment.aaXOffset[5][0]   = GLIDE_34GETENV("FX_GLIDE_AA2_OFFSET_X0",PRIBUFVTXOFFX_2SMPL_CORRECT_DEF);
+  _GlideRoot.environment.aaXOffset[5][1]   = GLIDE_34GETENV("FX_GLIDE_AA2_OFFSET_X0",PRIBUFVTXOFFX_2SMPL_CORRECT_DEF);
+  _GlideRoot.environment.aaXOffset[5][2]   = GLIDE_34GETENV("FX_GLIDE_AA2_OFFSET_X1",SECBUFVTXOFFX_2SMPL_CORRECT_DEF);
+  _GlideRoot.environment.aaXOffset[5][3]   = GLIDE_34GETENV("FX_GLIDE_AA2_OFFSET_X1",SECBUFVTXOFFX_2SMPL_CORRECT_DEF);
+  _GlideRoot.environment.aaXOffset[5][4]   = GLIDE_34GETENV("FX_GLIDE_AA2_OFFSET_X0",PRIBUFVTXOFFX_2SMPL_CORRECT_DEF);
+  _GlideRoot.environment.aaXOffset[5][5]   = GLIDE_34GETENV("FX_GLIDE_AA2_OFFSET_X0",PRIBUFVTXOFFX_2SMPL_CORRECT_DEF);
+  _GlideRoot.environment.aaXOffset[5][6]   = GLIDE_34GETENV("FX_GLIDE_AA2_OFFSET_X1",SECBUFVTXOFFX_2SMPL_CORRECT_DEF);
+  _GlideRoot.environment.aaXOffset[5][7]   = GLIDE_34GETENV("FX_GLIDE_AA2_OFFSET_X1",SECBUFVTXOFFX_2SMPL_CORRECT_DEF);
+
+  _GlideRoot.environment.aaYOffset[5][0]   = GLIDE_34GETENV("FX_GLIDE_AA2_OFFSET_Y0",PRIBUFVTXOFFY_2SMPL_CORRECT_DEF);
+  _GlideRoot.environment.aaYOffset[5][1]   = GLIDE_34GETENV("FX_GLIDE_AA2_OFFSET_Y0",PRIBUFVTXOFFY_2SMPL_CORRECT_DEF);
+  _GlideRoot.environment.aaYOffset[5][2]   = GLIDE_34GETENV("FX_GLIDE_AA2_OFFSET_Y1",SECBUFVTXOFFY_2SMPL_CORRECT_DEF);
+  _GlideRoot.environment.aaYOffset[5][3]   = GLIDE_34GETENV("FX_GLIDE_AA2_OFFSET_Y1",SECBUFVTXOFFY_2SMPL_CORRECT_DEF);  
+  _GlideRoot.environment.aaYOffset[5][4]   = GLIDE_34GETENV("FX_GLIDE_AA2_OFFSET_Y0",PRIBUFVTXOFFY_2SMPL_CORRECT_DEF);
+  _GlideRoot.environment.aaYOffset[5][5]   = GLIDE_34GETENV("FX_GLIDE_AA2_OFFSET_Y0",PRIBUFVTXOFFY_2SMPL_CORRECT_DEF);
+  _GlideRoot.environment.aaYOffset[5][6]   = GLIDE_34GETENV("FX_GLIDE_AA2_OFFSET_Y1",SECBUFVTXOFFY_2SMPL_CORRECT_DEF);
+  _GlideRoot.environment.aaYOffset[5][7]   = GLIDE_34GETENV("FX_GLIDE_AA2_OFFSET_Y1",SECBUFVTXOFFY_2SMPL_CORRECT_DEF);  
+                                                                                     
+  _GlideRoot.environment.aaXOffset[6][0]   = GLIDE_34GETENV("FX_GLIDE_AA4_OFFSET_X0",PRIBUFVTXOFFX_4SMPL_CHP0_CORRECT_DEF);
+  _GlideRoot.environment.aaXOffset[6][1]   = GLIDE_34GETENV("FX_GLIDE_AA4_OFFSET_X1",SECBUFVTXOFFX_4SMPL_CHP0_CORRECT_DEF);
+  _GlideRoot.environment.aaXOffset[6][2]   = GLIDE_34GETENV("FX_GLIDE_AA4_OFFSET_X2",PRIBUFVTXOFFX_4SMPL_CHP1_CORRECT_DEF);
+  _GlideRoot.environment.aaXOffset[6][3]   = GLIDE_34GETENV("FX_GLIDE_AA4_OFFSET_X3",SECBUFVTXOFFX_4SMPL_CHP1_CORRECT_DEF);
+  _GlideRoot.environment.aaXOffset[6][4]   = GLIDE_34GETENV("FX_GLIDE_AA4_OFFSET_X0",PRIBUFVTXOFFX_4SMPL_CHP0_CORRECT_DEF);
+  _GlideRoot.environment.aaXOffset[6][5]   = GLIDE_34GETENV("FX_GLIDE_AA4_OFFSET_X1",SECBUFVTXOFFX_4SMPL_CHP0_CORRECT_DEF);
+  _GlideRoot.environment.aaXOffset[6][6]   = GLIDE_34GETENV("FX_GLIDE_AA4_OFFSET_X2",PRIBUFVTXOFFX_4SMPL_CHP1_CORRECT_DEF);
+  _GlideRoot.environment.aaXOffset[6][7]   = GLIDE_34GETENV("FX_GLIDE_AA4_OFFSET_X3",SECBUFVTXOFFX_4SMPL_CHP1_CORRECT_DEF);
+
+  _GlideRoot.environment.aaYOffset[6][0]   = GLIDE_34GETENV("FX_GLIDE_AA4_OFFSET_Y0",PRIBUFVTXOFFY_4SMPL_CHP0_CORRECT_DEF);
+  _GlideRoot.environment.aaYOffset[6][1]   = GLIDE_34GETENV("FX_GLIDE_AA4_OFFSET_Y1",SECBUFVTXOFFY_4SMPL_CHP0_CORRECT_DEF);
+  _GlideRoot.environment.aaYOffset[6][2]   = GLIDE_34GETENV("FX_GLIDE_AA4_OFFSET_Y2",PRIBUFVTXOFFY_4SMPL_CHP1_CORRECT_DEF);
+  _GlideRoot.environment.aaYOffset[6][3]   = GLIDE_34GETENV("FX_GLIDE_AA4_OFFSET_Y3",SECBUFVTXOFFY_4SMPL_CHP1_CORRECT_DEF);
+  _GlideRoot.environment.aaYOffset[6][4]   = GLIDE_34GETENV("FX_GLIDE_AA4_OFFSET_Y0",PRIBUFVTXOFFY_4SMPL_CHP0_CORRECT_DEF);
+  _GlideRoot.environment.aaYOffset[6][5]   = GLIDE_34GETENV("FX_GLIDE_AA4_OFFSET_Y1",SECBUFVTXOFFY_4SMPL_CHP0_CORRECT_DEF);
+  _GlideRoot.environment.aaYOffset[6][6]   = GLIDE_34GETENV("FX_GLIDE_AA4_OFFSET_Y2",PRIBUFVTXOFFY_4SMPL_CHP1_CORRECT_DEF);
+  _GlideRoot.environment.aaYOffset[6][7]   = GLIDE_34GETENV("FX_GLIDE_AA4_OFFSET_Y3",SECBUFVTXOFFY_4SMPL_CHP1_CORRECT_DEF);
+
+/* jcochrane 4 chip offsets */
+
+/* 4chip 2xaa */
+  _GlideRoot.environment.aaXOffset[7][0]   = 0x04;
+  _GlideRoot.environment.aaXOffset[7][1]   = 0x00;
+  _GlideRoot.environment.aaXOffset[7][2]   = 0x0c;  
+  _GlideRoot.environment.aaXOffset[7][3]   = 0x00;
+  _GlideRoot.environment.aaXOffset[7][4]   = 0x04;
+  _GlideRoot.environment.aaXOffset[7][5]   = 0x00;
+  _GlideRoot.environment.aaXOffset[7][6]   = 0x0c;
+  _GlideRoot.environment.aaXOffset[7][7]   = 0x00;
+
+  _GlideRoot.environment.aaYOffset[7][0]   = 0x04;
+  _GlideRoot.environment.aaYOffset[7][1]   = 0x00;
+  _GlideRoot.environment.aaYOffset[7][2]   = 0x0c;  
+  _GlideRoot.environment.aaYOffset[7][3]   = 0x00;
+  _GlideRoot.environment.aaYOffset[7][4]   = 0x04;
+  _GlideRoot.environment.aaYOffset[7][5]   = 0x00;
+  _GlideRoot.environment.aaYOffset[7][6]   = 0x0c;  
+  _GlideRoot.environment.aaYOffset[7][7]   = 0x00;
+
+/* 4chip 4xaa */
+  _GlideRoot.environment.aaXOffset[8][0]   = 0x06; 
+  _GlideRoot.environment.aaXOffset[8][1]   = 0x00; 
+  _GlideRoot.environment.aaXOffset[8][2]   = 0x0e; 
+  _GlideRoot.environment.aaXOffset[8][3]   = 0x00; 
+  _GlideRoot.environment.aaXOffset[8][4]   = 0x02; 
+  _GlideRoot.environment.aaXOffset[8][5]   = 0x00; 
+  _GlideRoot.environment.aaXOffset[8][6]   = 0x0a; 
+  _GlideRoot.environment.aaXOffset[8][7]   = 0x00; 
+
+  _GlideRoot.environment.aaYOffset[8][0]   = 0x02; 
+  _GlideRoot.environment.aaYOffset[8][1]   = 0x00;    
+  _GlideRoot.environment.aaYOffset[8][2]   = 0x06; 
+  _GlideRoot.environment.aaYOffset[8][3]   = 0x00;    
+  _GlideRoot.environment.aaYOffset[8][4]   = 0x0a; 
+  _GlideRoot.environment.aaYOffset[8][5]   = 0x00;    
+  _GlideRoot.environment.aaYOffset[8][6]   = 0x0e; 
+  _GlideRoot.environment.aaYOffset[8][7]   = 0x00;    
+
+/* 4chip 8xaa */
+  _GlideRoot.environment.aaXOffset[9][0]   = 0x06; 
+  _GlideRoot.environment.aaXOffset[9][1]   = 0x04; 
+  _GlideRoot.environment.aaXOffset[9][2]   = 0x0e; 
+  _GlideRoot.environment.aaXOffset[9][3]   = 0x0a; 
+  _GlideRoot.environment.aaXOffset[9][4]   = 0x02; 
+  _GlideRoot.environment.aaXOffset[9][5]   = 0x0c; 
+  _GlideRoot.environment.aaXOffset[9][6]   = 0x0a; 
+  _GlideRoot.environment.aaXOffset[9][7]   = 0x06; 
+
+  _GlideRoot.environment.aaYOffset[9][0]   = 0x02; 
+  _GlideRoot.environment.aaYOffset[9][1]   = 0x06; 
+  _GlideRoot.environment.aaYOffset[9][2]   = 0x06; 
+  _GlideRoot.environment.aaYOffset[9][3]   = 0x04; 
+  _GlideRoot.environment.aaYOffset[9][4]   = 0x0a; 
+  _GlideRoot.environment.aaYOffset[9][5]   = 0x0a; 
+  _GlideRoot.environment.aaYOffset[9][6]   = 0x0e; 
+  _GlideRoot.environment.aaYOffset[9][7]   = 0x0c; 
+
+
 
   /*
    * AJB-  Support the slightly silly way the DirectX gang controls
@@ -1279,13 +1421,14 @@ _GlideInitEnvironment(void)
    *       Here is a breakdown of the bizarre table of magic numbers:
    *
    *       0 - SLI & AA disable
-   *       1 - SLI disabled, 2 sample AA enabled
-   *       2 - 2-way SLI enabled, AA disabled
-   *       3 - 2-way SLI enabled, 2 sample AA enabled
-   *       4 - SLI disabled, 4 sample AA enabled
-   *       5 - 4-way SLI enabled, AA disabled
-   *       6 - 4-way SLI enabled, 2 sample AA enabled
+   *       1 - SLI disabled, 2 sample AA enabled			
+   *       2 - 2-way SLI enabled, AA disabled				
+   *       3 - 2-way SLI enabled, 2 sample AA enabled		
+   *       4 - SLI disabled, 4 sample AA enabled			
+   *       5 - 4-way SLI enabled, AA disabled				
+   *       6 - 4-way SLI enabled, 2 sample AA enabled		
    *       7 - 2-way SLI enabled, 4 sample AA enabled
+   *	   8 - SLI disabled, 8 sample AA enabled
    *
    *       to add to the silliness:
    *
@@ -1314,6 +1457,10 @@ _GlideInitEnvironment(void)
     case 4:
     case 7:
       _GlideRoot.environment.aaSample = 4 ;
+	  break;
+//8xaa
+	case 8:
+	  _GlideRoot.environment.aaSample = 8 ;
       break ;
     
     default:
@@ -1421,6 +1568,8 @@ _GlideInitEnvironment(void)
   _GlideRoot.environment.gammaR = GLIDE_FGETENV("SSTH3_RGAMMA", -1.f);
   _GlideRoot.environment.gammaG = GLIDE_FGETENV("SSTH3_GGAMMA", -1.f);
   _GlideRoot.environment.gammaB = GLIDE_FGETENV("SSTH3_BGAMMA", -1.f);
+  
+  _GlideRoot.environment.useAppGamma  = GLIDE_GETENV("FX_GLIDE_USE_APP_GAMMA", 1L);
 
   _GlideRoot.CPUType                       = GLIDE_GETENV("FX_CPU", _cpu_detect_asm() );    
   GDBG_INFO(0,"               cpu: 0x%x\n",_GlideRoot.CPUType);

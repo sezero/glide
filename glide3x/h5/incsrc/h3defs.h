@@ -2,24 +2,35 @@
 #define __H3DEFS_H__
 
 /*
-** THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONLY
-** PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGHT
-** TO USE THE GLIDE TRADEMARK WITHOUT PRIOR WRITTEN PERMISSION OF 3DFX
+** THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONL
+** PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGH
+** TO USE THE GLIDE TRADEMARK WITHOUT PRIOR WRITTEN PERMISSION OF 3DF
 ** INTERACTIVE, INC. A COPY OF THIS LICENSE MAY BE OBTAINED FROM THE
 ** DISTRIBUTOR OR BY CONTACTING 3DFX INTERACTIVE INC(info@3dfx.com).
 ** THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER
-** EXPRESSED OR IMPLIED. SEE THE 3DFX GLIDE GENERAL PUBLIC LICENSE FOR A
+** EXPRESSED OR IMPLIED. SEE THE 3DFX GLIDE GENERAL PUBLIC LICENSE FOR 
 ** FULL TEXT OF THE NON-WARRANTY PROVISIONS. 
 **
-** USE, DUPLICATION OR DISCLOSURE BY THE GOVERNMENT IS SUBJECT TO
-** RESTRICTIONS AS SET FORTH IN SUBDIVISION (C)(1)(II) OF THE RIGHTS IN
-** TECHNICAL DATA AND COMPUTER SOFTWARE CLAUSE AT DFARS 252.227-7013,
-** AND/OR IN SIMILAR OR SUCCESSOR CLAUSES IN THE FAR, DOD OR NASA FAR
-** SUPPLEMENT. UNPUBLISHED RIGHTS RESERVED UNDER THE COPYRIGHT LAWS OF
+** USE, DUPLICATION OR DISCLOSURE BY THE GOVERNMENT IS SUBJECT T
+** RESTRICTIONS AS SET FORTH IN SUBDIVISION (C)(1)(II) OF THE RIGHTS I
+** TECHNICAL DATA AND COMPUTER SOFTWARE CLAUSE AT DFARS 252.227-7013
+** AND/OR IN SIMILAR OR SUCCESSOR CLAUSES IN THE FAR, DOD OR NASA FA
+** SUPPLEMENT. UNPUBLISHED RIGHTS RESERVED UNDER THE COPYRIGHT LAWS O
 ** THE UNITED STATES. 
 **
-** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
+** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVE
 **
+** This is UNPUBLISHED PROPRIETARY SOURCE CODE of 3Dfx Interactive, Inc.;
+** the contents of this file may not be disclosed to third parties, copied or
+** duplicated in any form, in whole or in part, without the prior written
+** permission of 3Dfx Interactive, Inc.
+**
+** RESTRICTED RIGHTS LEGEND:
+** Use, duplication or disclosure by the Government is subject to restrictions
+** as set forth in subdivision (c)(1)(ii) of the Rights in Technical Data
+** and Computer Software clause at DFARS 252.227-7013, and/or in similar or
+** successor clauses in the FAR, DOD or NASA FAR Supplement. Unpublished  -
+** rights reserved under the Copyright Laws of the United States.
 **
 ** $Revision$
 ** $Date$
@@ -562,48 +573,68 @@
 // Jitter values are in 3.4 format.
 //  2/16 = 0.125,  4/16 = 0.250,  6/16 = 0.375,  8/16 = 0.500
 // 10/16 = 0.625, 12/16 = 0.750, 14/16 = 0.875, 16/16 = 1.000
-#define SST_AA_CONTROL_PRIMARY_X_OFFSET_SHIFT          0
-#define SST_AA_CONTROL_PRIMARY_X_OFFSET                (0x7F << SST_AA_CONTROL_PRIMARY_X_OFFSET_SHIFT)
-        #define PRIBUFVTXOFFX_2SMPL_DEF           "-0.750"
-        #define PRIBUFVTXOFFX_4SMPL_CHP0_DEF      "-0.625"
-        #define PRIBUFVTXOFFX_4SMPL_CHP1_DEF      "-0.875"
+
+/* NOTE - Glide no longer uses binary jitter values, Glide now uses the string version */
+/* the *_DEF_VAL should not be used */
+
+#define SST_AA_CONTROL_PRIMARY_X_OFFSET_SHIFT             0
+#define SST_AA_CONTROL_PRIMARY_X_OFFSET                   (0x7F << SST_AA_CONTROL_PRIMARY_X_OFFSET_SHIFT)
+        #define PRIBUFVTXOFFX_2SMPL_DEF                   "-0.750"
+        #define PRIBUFVTXOFFX_4SMPL_CHP0_DEF              "-0.625"
+        #define PRIBUFVTXOFFX_4SMPL_CHP1_DEF              "-0.875"
+/* these are the correct jitter values */
+        #define PRIBUFVTXOFFX_2SMPL_CORRECT_DEF           "-0.250"
+        #define PRIBUFVTXOFFX_4SMPL_CHP0_CORRECT_DEF      "-0.125"
+        #define PRIBUFVTXOFFX_4SMPL_CHP1_CORRECT_DEF      "-0.375"
 // Note: Glide uses the binary values, and these are still the *original* values that ar
 //       centered around the pixel center, rather than offset by -0.5
-        #define PRIBUFVTXOFFX_2SMPL_DEF_VAL       0x7c
-        #define PRIBUFVTXOFFX_4SMPL_CHP0_DEF_VAL  0x7e
-        #define PRIBUFVTXOFFX_4SMPL_CHP1_DEF_VAL  0x7a
-#define SST_AA_CONTROL_PRIMARY_Y_OFFSET_SHIFT          7
-#define SST_AA_CONTROL_PRIMARY_Y_OFFSET                (0x7F << SST_AA_CONTROL_PRIMARY_Y_OFFSET_SHIFT)
-        #define PRIBUFVTXOFFY_2SMPL_DEF           "-0.750"
-        #define PRIBUFVTXOFFY_4SMPL_CHP0_DEF      "-0.875"
-        #define PRIBUFVTXOFFY_4SMPL_CHP1_DEF      "-0.375"
+        #define PRIBUFVTXOFFX_2SMPL_DEF_VAL               0x7c
+        #define PRIBUFVTXOFFX_4SMPL_CHP0_DEF_VAL          0x7e
+        #define PRIBUFVTXOFFX_4SMPL_CHP1_DEF_VAL          0x7a
+#define SST_AA_CONTROL_PRIMARY_Y_OFFSET_SHIFT             7
+#define SST_AA_CONTROL_PRIMARY_Y_OFFSET                   (0x7F << SST_AA_CONTROL_PRIMARY_Y_OFFSET_SHIFT)
+        #define PRIBUFVTXOFFY_2SMPL_DEF                   "-0.750"
+        #define PRIBUFVTXOFFY_4SMPL_CHP0_DEF              "-0.875"
+        #define PRIBUFVTXOFFY_4SMPL_CHP1_DEF              "-0.375"
+/* these are the correct jitter values */
+        #define PRIBUFVTXOFFY_2SMPL_CORRECT_DEF           "-0.250"
+        #define PRIBUFVTXOFFY_4SMPL_CHP0_CORRECT_DEF      "-0.375"
+        #define PRIBUFVTXOFFY_4SMPL_CHP1_CORRECT_DEF      "0.125"
 // Note: Glide uses the binary values, and these are still the *original* values that ar
 //       centered around the pixel center, rather than offset by -0.5
-        #define PRIBUFVTXOFFY_2SMPL_DEF_VAL       0x7c
-        #define PRIBUFVTXOFFY_4SMPL_CHP0_DEF_VAL  0x7a
-        #define PRIBUFVTXOFFY_4SMPL_CHP1_DEF_VAL  0x02
-#define SST_AA_CONTROL_SECONDARY_X_OFFSET_SHIFT        14
-#define SST_AA_CONTROL_SECONDARY_X_OFFSET              (0x7F << SST_AA_CONTROL_SECONDARY_X_OFFSET_SHIFT)
-        #define SECBUFVTXOFFX_2SMPL_DEF           "-0.250"
-        #define SECBUFVTXOFFX_4SMPL_CHP0_DEF      "-0.125"
-        #define SECBUFVTXOFFX_4SMPL_CHP1_DEF      "-0.375"
+        #define PRIBUFVTXOFFY_2SMPL_DEF_VAL               0x7c
+        #define PRIBUFVTXOFFY_4SMPL_CHP0_DEF_VAL          0x7a
+        #define PRIBUFVTXOFFY_4SMPL_CHP1_DEF_VAL          0x02
+#define SST_AA_CONTROL_SECONDARY_X_OFFSET_SHIFT           14
+#define SST_AA_CONTROL_SECONDARY_X_OFFSET                 (0x7F << SST_AA_CONTROL_SECONDARY_X_OFFSET_SHIFT)
+        #define SECBUFVTXOFFX_2SMPL_DEF                   "-0.250"
+        #define SECBUFVTXOFFX_4SMPL_CHP0_DEF              "-0.125"
+        #define SECBUFVTXOFFX_4SMPL_CHP1_DEF              "-0.375"
+/* these are the correct jitter values */
+        #define SECBUFVTXOFFX_2SMPL_CORRECT_DEF           "0.250"
+        #define SECBUFVTXOFFX_4SMPL_CHP0_CORRECT_DEF      "0.375"
+        #define SECBUFVTXOFFX_4SMPL_CHP1_CORRECT_DEF      "0.125"
 // Note: Glide uses the binary values, and these are still the *original* values that ar
 //       centered around the pixel center, rather than offset by -0.5
-        #define SECBUFVTXOFFX_2SMPL_DEF_VAL       0x04
-        #define SECBUFVTXOFFX_4SMPL_CHP0_DEF_VAL  0x06
-        #define SECBUFVTXOFFX_4SMPL_CHP1_DEF_VAL  0x02
-#define SST_AA_CONTROL_SECONDARY_Y_OFFSET_SHIFT        21
-#define SST_AA_CONTROL_SECONDARY_Y_OFFSET              (0x7F << SST_AA_CONTROL_SECONDARY_Y_OFFSET_SHIFT)
-        #define SECBUFVTXOFFY_2SMPL_DEF           "-0.250"
-        #define SECBUFVTXOFFY_4SMPL_CHP0_DEF      "-0.625"
-        #define SECBUFVTXOFFY_4SMPL_CHP1_DEF      "-0.125"
+        #define SECBUFVTXOFFX_2SMPL_DEF_VAL               0x04
+        #define SECBUFVTXOFFX_4SMPL_CHP0_DEF_VAL          0x06
+        #define SECBUFVTXOFFX_4SMPL_CHP1_DEF_VAL          0x02
+#define SST_AA_CONTROL_SECONDARY_Y_OFFSET_SHIFT           21
+#define SST_AA_CONTROL_SECONDARY_Y_OFFSET                 (0x7F << SST_AA_CONTROL_SECONDARY_Y_OFFSET_SHIFT)
+        #define SECBUFVTXOFFY_2SMPL_DEF                   "-0.250"
+        #define SECBUFVTXOFFY_4SMPL_CHP0_DEF              "-0.625"
+        #define SECBUFVTXOFFY_4SMPL_CHP1_DEF              "-0.125"
+/* these are the correct jitter values */
+        #define SECBUFVTXOFFY_2SMPL_CORRECT_DEF           "0.250"
+        #define SECBUFVTXOFFY_4SMPL_CHP0_CORRECT_DEF      "-0.125"
+        #define SECBUFVTXOFFY_4SMPL_CHP1_CORRECT_DEF      "0.375"
 // Note: Glide uses the binary values, and these are still the *original* values that ar
 //       centered around the pixel center, rather than offset by -0.5
-        #define SECBUFVTXOFFY_2SMPL_DEF_VAL       0x04
-        #define SECBUFVTXOFFY_4SMPL_CHP0_DEF_VAL  0x7e
-        #define SECBUFVTXOFFY_4SMPL_CHP1_DEF_VAL  0x06
-#define SST_AA_CONTROL_AA_ENABLE                       BIT(28)
-#define SST_AA_CONTROL_AA_DISABLE_FIRST                BIT(30)
+        #define SECBUFVTXOFFY_2SMPL_DEF_VAL               0x04
+        #define SECBUFVTXOFFY_4SMPL_CHP0_DEF_VAL          0x7e
+        #define SECBUFVTXOFFY_4SMPL_CHP1_DEF_VAL          0x06
+#define SST_AA_CONTROL_AA_ENABLE                          BIT(28)
+#define SST_AA_CONTROL_AA_DISABLE_FIRST                   BIT(30)
 
 //-------------------- SST chipMask bits --------------------
 #define SST_CHIP_MASK_CHIP_0_ENABLE                    BIT(0)
@@ -1376,7 +1407,7 @@
 // pciInit0
 #define SST_PCI_STALL_ENABLE            BIT(0)
 #define SST_PCI_LOWTHRESH_SHIFT         2
-#define SST_PCI_LOWTHRESH               (0xF << SST_PCI_LOWTHRESH_SHIFT)
+#define SST_PCI_LOWTHRESH               (0x1F << SST_PCI_LOWTHRESH_SHIFT)
 #define SST_PCI_HARDCODE_BASE           BIT(7)
 #define SST_PCI_READ_WS                 BIT(8)
 #define SST_PCI_WRITE_WS                BIT(9)

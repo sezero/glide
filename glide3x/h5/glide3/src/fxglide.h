@@ -1,21 +1,21 @@
 /*
-** THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONLY
-** PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGHT
-** TO USE THE GLIDE TRADEMARK WITHOUT PRIOR WRITTEN PERMISSION OF 3DFX
+** THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONL
+** PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGH
+** TO USE THE GLIDE TRADEMARK WITHOUT PRIOR WRITTEN PERMISSION OF 3DF
 ** INTERACTIVE, INC. A COPY OF THIS LICENSE MAY BE OBTAINED FROM THE
 ** DISTRIBUTOR OR BY CONTACTING 3DFX INTERACTIVE INC(info@3dfx.com).
 ** THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER
-** EXPRESSED OR IMPLIED. SEE THE 3DFX GLIDE GENERAL PUBLIC LICENSE FOR A
+** EXPRESSED OR IMPLIED. SEE THE 3DFX GLIDE GENERAL PUBLIC LICENSE FOR 
 ** FULL TEXT OF THE NON-WARRANTY PROVISIONS. 
 **
-** USE, DUPLICATION OR DISCLOSURE BY THE GOVERNMENT IS SUBJECT TO
-** RESTRICTIONS AS SET FORTH IN SUBDIVISION (C)(1)(II) OF THE RIGHTS IN
-** TECHNICAL DATA AND COMPUTER SOFTWARE CLAUSE AT DFARS 252.227-7013,
-** AND/OR IN SIMILAR OR SUCCESSOR CLAUSES IN THE FAR, DOD OR NASA FAR
-** SUPPLEMENT. UNPUBLISHED RIGHTS RESERVED UNDER THE COPYRIGHT LAWS OF
+** USE, DUPLICATION OR DISCLOSURE BY THE GOVERNMENT IS SUBJECT T
+** RESTRICTIONS AS SET FORTH IN SUBDIVISION (C)(1)(II) OF THE RIGHTS I
+** TECHNICAL DATA AND COMPUTER SOFTWARE CLAUSE AT DFARS 252.227-7013
+** AND/OR IN SIMILAR OR SUCCESSOR CLAUSES IN THE FAR, DOD OR NASA FA
+** SUPPLEMENT. UNPUBLISHED RIGHTS RESERVED UNDER THE COPYRIGHT LAWS O
 ** THE UNITED STATES. 
 **
-** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
+** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVE
 **
 ** $Header: fxglide.h, 44, 6/15/2000 9:18:11 AM, Bill White
 ** $Log:
@@ -2001,6 +2001,7 @@ struct _GlideRoot_s {
     FxBool texLodDither;        /* Always do lod-dithering      */
     FxI32  tmuMemory;           /* tmuMemory */
     float  gammaR, gammaG, gammaB; /* Gamma settings */
+    FxBool useAppGamma;         /* enable(1)(default)/disable(0) application gamma control */
     FxBool guardbandclipping;   /* enable gbc */
     FxI32  do2ppc;              /* enable 2ppc */
     FxU32  band2ppc;            /* 2ppc band */
@@ -2013,6 +2014,7 @@ struct _GlideRoot_s {
     FxI32  analogSli ;          /* force digital or analog sli */
     FxI32  lodBias;             /* User-adjustable lod bias value (signed) */
     FxU32  sliBandHeightForce;  /* Force user-specified band height */
+    FxU32  is_opengl;           /* specify whether we are opengl app or not */
     FxU32  noHW;                /* Disable HW writes */
 
     /* Force alternate buffer strategy */
@@ -2028,8 +2030,8 @@ struct _GlideRoot_s {
     FxU32  columnWidth;         /* 'n' in columns of n */
 
     /* Anti-aliasing default perturbation values */
-    FxU32  aaXOffset[4][4];
-    FxU32  aaYOffset[4][4];
+    FxU32  aaXOffset[10][8];		/* increase arrays for 8xaa */
+    FxU32  aaYOffset[10][8];
     /* Limit number of writes between fences */
     FxI32  fenceLimit;
   } environment;
@@ -3136,6 +3138,10 @@ extern const FxU32 _gr_aspect_xlate_table[];
 
 GrLOD_t
 _g3LodXlat(const GrLOD_t someLOD, const FxBool tBig);
+
+extern void g3LodBiasPerChip(void);
+
+extern FxBool MultitextureAndTrilinear(void);
 
 #endif /* __FXGLIDE_H__ */
 

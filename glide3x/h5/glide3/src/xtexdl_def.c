@@ -19,6 +19,8 @@
 **
 ** $Header$
 ** $Log: 
+**  7    3dfx      1.4.1.0.1.0 10/11/00 Brent           Forced check in to enforce
+**       branching.
 **  6    3dfx      1.4.1.0     06/20/00 Joseph Kain     Changes to support the
 **       Napalm Glide open source release.  Changes include cleaned up offensive
 **       comments and new legal headers.
@@ -32,7 +34,7 @@
 **       PCI_BUMP_N_GRIND on PowerPC.
 **  2    3dfx      1.1         09/22/99 Larry  warner   Created download procedures
 **       for FXT1 format.
-**  1    3dfx      1.0         09/12/99 StarTeam VTS Administrator 
+**  1    3dfx      1.0         09/11/99 StarTeam VTS Administrator 
 ** $
 ** 
 ** 9     8/05/99 5:03p Larryw
