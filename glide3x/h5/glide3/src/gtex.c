@@ -3644,7 +3644,8 @@ GR_DIENTRY(grAuxBuffer, void, (GrBuffer_t buffer ))
 
   GR_CHECK_F(myName,
              ((_GlideRoot.hwConfig.SSTs[_GlideRoot.current_sst].type != GR_SSTTYPE_Banshee) &&
-              (_GlideRoot.hwConfig.SSTs[_GlideRoot.current_sst].type != GR_SSTTYPE_Voodoo3)),
+              (_GlideRoot.hwConfig.SSTs[_GlideRoot.current_sst].type != GR_SSTTYPE_Voodoo3) &&
+              (_GlideRoot.hwConfig.SSTs[_GlideRoot.current_sst].type != GR_SSTTYPE_Voodoo4)),
              "grAuxBuffer not supported.");
   switch( buffer ){
   case GR_BUFFER_AUXBUFFER:
