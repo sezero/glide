@@ -30,4 +30,3 @@ Here are a few notes about building Glide3x from CVS.
     is also shared with the glide2x branch.  N.B.: If you use the CVS
     module Glide3, swlibs will be in the right place, and does not
     need to be moved.
-
