@@ -13,7 +13,7 @@
 #
 #    Environment variables:
 #	CPU		optimize for the given processor.
-#			default = k6
+#			default = pentium
 #	DXE=1		use DXE modules.
 #			default = no
 #
@@ -28,7 +28,7 @@
 
 FX_GLIDE_HW = h5
 TOP = ../../..
-CPU ?= k6
+CPU ?= pentium
 
 CC = gcc
 CFLAGS = -Wall -O2 -ffast-math -mcpu=$(CPU)
@@ -41,9 +41,9 @@ CFLAGS += -DFX_GLIDE_NAPALM=1
 LDFLAGS = -s -L$(TOP)/$(FX_GLIDE_HW)/lib
 
 ifdef DXE
-LDLIBS = -lg3i
-else
 LDLIBS = -lglid3
+else
+LDLIBS = -lglide
 endif
 
 .c.o:
