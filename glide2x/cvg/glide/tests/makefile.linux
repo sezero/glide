@@ -18,9 +18,13 @@
 
 LDIRT= $(PROGRAMS)
 
+GLIDE_ROOT	= $(BUILD_ROOT)/$(FX_GLIDE_HW)
+
 LIBOBJS = tlib.o plib.o
 
-LLDLIBS = $(LIBOBJS) -lglide
+GLIDELIB	= -L$(GLIDE_ROOT)/lib -lglide
+
+LLDLIBS = $(LIBOBJS) $(GLIDELIB)
 
 PRIVATE_HEADERS = tlib.h tlib.c plib.h plib.c tldata.inc
 
@@ -68,4 +72,6 @@ DATAFILES = alpha.3df decal1.3df lava.3df light.3df matt1.3df miro.3df \
 
 include $(BUILD_ROOT_SWLIBS)/include/make/3dfx.mak
 
+
+$(PROGRAMS):  $(LIBOBJS)
 
