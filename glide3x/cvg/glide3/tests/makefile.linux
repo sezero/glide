@@ -36,7 +36,7 @@ CFLAGS += -DCVG
 
 LDFLAGS = -s -L$(TOP)/$(FX_GLIDE_HW)/lib
 
-LDLIBS = -lglide3
+LDLIBS = -lglide3x
 LDLIBS += -lm
 
 .c.o:

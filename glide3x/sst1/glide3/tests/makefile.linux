@@ -49,7 +49,7 @@ CFLAGS += $(HWDEF)
 
 LDFLAGS = -s -L$(TOP)/$(FX_GLIDE_HW)/lib $(XPATH)
 
-LDLIBS = -lglide3
+LDLIBS = -lglide3x
 LDLIBS += $(XLIBS) -lm
 
 .c.o:
