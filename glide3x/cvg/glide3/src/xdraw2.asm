@@ -19,6 +19,9 @@
 ;; $Header$
 ;; $Revision$
 ;; $Log$
+;; Revision 1.1.1.1.8.2  2004/10/04 09:19:25  dborca
+;; handle STDCALL correctly
+;;
 ;; Revision 1.1.1.1.8.1  2003/11/03 13:34:29  dborca
 ;; Voodoo2 happiness (DJGPP & Linux)
 ;;
@@ -165,7 +168,7 @@ PROC_TYPE Default
 
 endp
 
-%IFNDEF GL_AMD3D
+%IFDEF GL_AMD3D
 	    ALIGN   32
 proc _trisetup_clip_coor_thunk, 12
 
@@ -195,4 +198,4 @@ __clipSpace:
     ret				; pop 3 dwords (vertex addrs) and return
 endp
 
-%ENDIF ; !GL_AMD3D
+%ENDIF ; GL_AMD3D
