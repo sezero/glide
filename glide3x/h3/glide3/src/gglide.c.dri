@@ -19,6 +19,10 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.2.3  2000/11/16 18:56:48  alanh
+** add a linux specific grRenderBuffer to fix switching between FRONT and
+** BACK buffers.
+**
 ** Revision 1.1.1.1.2.2  2000/11/14 14:11:19  alanh
 ** merge in trunk updates, fixup pci code, and fix texus2 code pointers.
 **
@@ -2326,7 +2330,6 @@ GR_STATE_ENTRY(grRenderBuffer, void, (GrBuffer_t buffer))
   GR_END();
 #undef FN_NAME
 } /* grRenderBuffer */
-#else /* __linux__ */
 #endif
 
 GR_ENTRY(grCheckForRoom, void, (FxI32 n))
