@@ -604,8 +604,9 @@ pciSetConfigData( PciRegister reg, FxU32 device_bus_func_number, FxU32 *data )
 
 #ifdef __linux__
   if (hasDev3DfxLinux()) {
-    return pciUpdateRegisterLinux(reg.regAddress, *data, reg.sizeInBytes,
+    pciUpdateRegisterLinux(reg.regAddress, *data, reg.sizeInBytes,
 				  device_bus_func_number);
+    return FXTRUE;
     
   }
 #endif

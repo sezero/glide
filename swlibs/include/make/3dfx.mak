@@ -56,7 +56,7 @@ CNODEBUG       = -O
 LDEBUG         = -g
 LNODEBUG       =
 DEBUGDEFS      = -DGDBG_INFO_ON -DGLIDE_DEBUG
-GCDEFS         = -DENDB -DX11
+GCDEFS         = -DENDB -DX11 -D__linux__
 GLDOPTS	       = -L$(BUILD_ROOT_SWLIBS)/lib -L$(BUILD_ROOT_HW)/lib
 LINK           = $(CC)
 
