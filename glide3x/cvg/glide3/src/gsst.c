@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.4  2004/11/25 19:07:31  koolsmoky
+** Prepare for newer splash screens
+**
 ** Revision 1.1.1.1.8.3  2004/10/08 06:28:35  dborca
 ** small matters concerning "ActiveWindow" on non-Windows
 **
@@ -301,6 +304,7 @@
 #include <glide.h>
 
 #include "fxglide.h"
+#include "fxsplash.h"
 
 #if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
 #define WIN32_LEAN_AND_MEAN
@@ -1508,49 +1512,49 @@ __errSliExit:
     HMODULE newSplash;
 
     if (newSplash = LoadLibrary("3dfxspl3.dll")) {
+      GrState glideState;
       FxBool didLoad;
-      FARPROC fxSplash;
-      FARPROC fxSplashInit;
-      FARPROC fxSplashPlug;
-      FARPROC fxSplashShutdown;
+      GrSplashProc fxSplash;
+      GrSplashInitProc fxSplashInit;
+      GrSplashPlugProc fxSplashPlug;
+      GrSplashShutdownProc fxSplashShutdown;
 
-      fxSplash         = GetProcAddress(newSplash, "_fxSplash@20");
-      fxSplashInit     = GetProcAddress(newSplash, "_fxSplashInit@24");
-      fxSplashPlug     = GetProcAddress(newSplash, "_fxSplashPlug@16");
-      fxSplashShutdown = GetProcAddress(newSplash, "_fxSplashShutdown@0");
+      fxSplash = (GrSplashProc)GetProcAddress(newSplash, "_fxSplash@20");
+      fxSplashInit = (GrSplashInitProc)GetProcAddress(newSplash, "_fxSplashInit@24");
+      fxSplashPlug = (GrSplashPlugProc)GetProcAddress(newSplash, "_fxSplashPlug@16");
+      fxSplashShutdown = (GrSplashShutdownProc)GetProcAddress(newSplash, "_fxSplashShutdown@0");
 
       didLoad = ((fxSplash != NULL) &&
                  (fxSplashInit != NULL) &&
                  (fxSplashPlug != NULL) &&
                  (fxSplashShutdown != NULL));
 
-      if (0 & didLoad) {
-        GrState glideState;
-
+      if (didLoad & 0/* [dBorca] i am evil! harr-harr */) {
+        /* new style DLL */
         grGlideGetState(&glideState);
-        {
-          didLoad = fxSplashInit(hWnd,
-                                 gc->state.screen_width, gc->state.screen_height,
-                                 nColBuffers, nAuxBuffers,
-                                 format);
-          if (didLoad) {
-            fxSplash(0.0f, 0.0f, 
-                     (float)gc->state.screen_width,
-                     (float)gc->state.screen_height,
-                     0);
-            _GlideRoot.environment.noSplash = 1;
-          } else {
-            fxSplashShutdown();
-          }
+        didLoad = fxSplashInit(hWnd,
+                               gc->state.screen_width, gc->state.screen_height,
+                               nColBuffers, nAuxBuffers,
+                               format);
+        if (didLoad) {
+          fxSplash(0.0f, 0.0f, 
+                   (float)gc->state.screen_width,
+                   (float)gc->state.screen_height,
+                   0);
+          fxSplashShutdown();
+          _GlideRoot.environment.noSplash = 1;
         }
         grGlideSetState((const void*)&glideState);
-      }
-
-      if (!_GlideRoot.environment.noSplash) {
-        if (fxSplash = GetProcAddress(newSplash, "_fxSplash@16")) {
-          fxSplash(hWnd, gc->state.screen_width, gc->state.screen_height, nAuxBuffers);
-          _GlideRoot.environment.noSplash = 1;        
-        }
+      } else {
+        /* old style DLL */
+        typedef int (FX_CALL *GrSplashOld) (FxU32 hWind, FxU32 scrWidth, FxU32 scrHeight, FxU32 nAuxBuffers);
+        GrSplashOld fxSplashOld = (GrSplashOld)GetProcAddress(newSplash, "_fxSplash@16");
+        if (fxSplashOld) {
+            grGlideGetState(&glideState);
+            fxSplashOld(hWnd, gc->state.screen_width, gc->state.screen_height, nAuxBuffers);
+            _GlideRoot.environment.noSplash = 1;
+	    grGlideSetState((const void*)&glideState);
+	}
       }
       
       FreeLibrary(newSplash);
