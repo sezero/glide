@@ -19,6 +19,10 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.2.2  2004/12/23 20:45:56  koolsmoky
+** converted to nasm syntax
+** added x86 asm, 3dnow! triangle and mmx, 3dnow! texture download optimizations
+**
 ** Revision 1.1.1.1.2.1  2004/12/12 15:27:47  koolsmoky
 ** changes to support new cpuid
 ** set default to disable alpha dither subtraction
@@ -310,6 +314,36 @@ static GrTexDownloadProc _texDownloadProcs[][2][4] =
 #endif /* GL_MMX */
 };
 #endif /* GLIDE_DISPATCH_DOWNLOAD */
+
+#if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+BOOL WINAPI 
+DllMain(HANDLE hInst, ULONG  ul_reason_for_call, LPVOID lpReserved) 
+{
+  switch( ul_reason_for_call ) {
+  case DLL_PROCESS_DETACH:
+    GDBG_INFO(80, "DllMain: DLL_PROCESS_DETACH\n");
+    grGlideShutdown();
+    break;
+  case DLL_PROCESS_ATTACH:
+    GDBG_INFO(80, "DllMain: DLL_PROCESS_ATTACH\n");
+    break;
+  case DLL_THREAD_ATTACH:
+    GDBG_INFO(80, "DllMain: DLL_THREAD_ATTACH\n");
+    break;
+  case DLL_THREAD_DETACH:
+    GDBG_INFO(80, "DllMain: DLL_THREAD_DETACH\n");
+    break;
+  default:
+    GDBG_INFO(80, "DllMain: Unhandled message.\n");
+    break;
+  }
+  
+  return TRUE;
+
+} /* DllMain */
+#endif
 
 /*-------------------------------------------------------------------
   Function: _grSstDetectResources

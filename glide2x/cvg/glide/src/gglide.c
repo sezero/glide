@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.2.2.3  2004/12/23 21:03:14  koolsmoky
+** swapinterval
+**
 ** Revision 1.2.2.2  2004/12/23 20:45:56  koolsmoky
 ** converted to nasm syntax
 ** added x86 asm, 3dnow! triangle and mmx, 3dnow! texture download optimizations
@@ -1735,6 +1738,8 @@ GR_ENTRY(grGlideShutdown, void, (void))
     gc->grSstRez = GR_RESOLUTION_NONE;
     gc->grSstRefresh = GR_REFRESH_NONE;
   }
+
+  _GlideRoot.initialized = FXFALSE;
 } /* grGlideShutdown */
 
 

@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.3  2004/12/12 15:05:25  koolsmoky
+** revert swapInterval environmental override in grBufferSwap(). SLI lines get misaligned when swapInterval 0 and vsync disabled.
+**
 ** Revision 1.1.1.1.8.2  2004/11/25 19:04:25  koolsmoky
 ** Always allow user to override swapInterval (vsync) but force vsync on with swapbuffer interval set to 0x0 when triple buffering is enabled.
 **
@@ -1981,6 +1984,8 @@ GR_ENTRY(grGlideShutdown, void, (void))
     gc->grSstRez = GR_RESOLUTION_NONE;
     gc->grSstRefresh = GR_REFRESH_NONE;
   }
+
+  _GlideRoot.initialized = FXFALSE;
 } /* grGlideShutdown */
 
 
