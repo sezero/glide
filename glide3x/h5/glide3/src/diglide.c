@@ -360,29 +360,7 @@ GR_DIENTRY(grGlideInit, void, (void))
   GDBG_INIT();
 
   GDBG_INFO(80,"grGlideInit()\n");
-
-  /* dBorca - play safe */
-  grErrorSetCallback(_grErrorDefaultCallback);
-  
-  /* KoolSmoky - let's detect glide devices *before* GETENV is called
-  ** need to know where the devices are first if we want multimonitor
-  ** capabilities.
-  */
-  if ( !_grSstDetectResources() ) {
-  /* Hack alert:
-   * dBorca - Linux/DRI failed the above call, so bypass the next one
-   */
-#ifndef DRI_BUILD
-#ifdef GLIDE_INIT_HWC
-    GrErrorCallback( hwcGetErrorString(), FXTRUE );
-#endif
-#endif
-  }
-
-  /* XXX [koolsmoky] if we have multiple sst devices, they will all
-   * use the same environment values. Win32 will use device0's registry.
-   */
-  _GlideInitEnvironment(0); /* the main init code */
+  _GlideInitEnvironment(); /* the main init code */
   FXUNUSED(*glideIdent);
 
 #if GDBG_INFO_ON

@@ -199,7 +199,10 @@ GR_DIENTRY(grSstSelect, void, ( int which ))
   {
     GR_DCL_GC;
     if (gc) {
-      if (gc->windowed) return;
+      if (gc->windowed) {
+        _GlideRoot.current_sst = which; // ZZZ
+        return;
+      }
     }
   }
 #endif

@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.7.4.17  2003/10/14 15:04:07  dborca
+** fixed minihwc; conditioned context checking; added Texus2 to Glide3
+**
 ** Revision 1.7.4.16  2003/08/21 08:49:55  dborca
 ** Texture fixes by Koolsmoky
 **
@@ -1571,26 +1574,16 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t _type, GrBuffer_t buffer,
     GR_RETURN(FXFALSE);
   }
   
-#if !DRI_BUILD /* fix me! */
-  /* Read using HWC if we want dithering and using FSAA or 16 bpp mode */
-  wantHwc = ((_GlideRoot.environment.useHwcAAforLfbRead & 2) &&                  /* using HWC and */
-             _GlideRoot.environment.ditherHwcAA &&                               /* want dithering and */
-             ((gc->bInfo->h3pixelSample > 1) || (gc->bInfo->h3pixelSize == 2))); /* using FSAA or 16 bit mode */
-#endif
-  
   /* If we are using forced 32 bpp mode, the app is expecting 16 bit data */
   /* Or we want to be using HwcAA for the Lfb read lock */
   /* We need to use a hack for reading in OpenGL since they do 2 locks. Why, oh why, oh why...*/
-  if ((gc->state.forced32BPP || wantHwc) &&                                           /* using forced 32 bpp mode or using HWC and */
-      (!_GlideRoot.environment.is_opengl || _GlideRoot.environment.oglLfbLockHack) && /* not OpenGL or using OpenGL lock hacks and */
-      (buffer ==  GR_BUFFER_FRONTBUFFER || buffer == GR_BUFFER_BACKBUFFER))           /* is front or back buffer */
-     {
+  if (gc->state.forced32BPP &&                                                   /* using forced 32 bpp mode or using HWC and */
+      (buffer ==  GR_BUFFER_FRONTBUFFER || buffer == GR_BUFFER_BACKBUFFER))      /* is front or back buffer */
+    {
       if (_GlideRoot.environment.is_opengl && type == GR_LFB_WRITE_ONLY && (gc->lockPtrs[GR_LFB_READ_ONLY] == (FxU32)buffer))
-        {
-          const FxU32 lockCount = gc->cmdTransportInfo.lfbLockCount;
-          
+        { 
           GDBG_INFO_MORE(82,"OpenGL Locking forced 32bit->16bit hack(%d, %d)\n", _type, buffer);
-
+          
           /* check if the buffer exists */
           if(!forced_32bpp_lock_buffer) GR_RETURN(FXFALSE);
           
@@ -1602,9 +1595,9 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t _type, GrBuffer_t buffer,
           info->writeMode = GR_LFBWRITEMODE_565;
           info->strideInBytes = gc->state.screen_width * 2;
           info->origin = origin;
-
-          gc->cmdTransportInfo.lfbLockCount = lockCount + 1;
-
+          
+          gc->cmdTransportInfo.lfbLockCount++;
+          
           GDBG_INFO_MORE(82,"OpenGL Locked forced hack (%d, %d)\n", _type, buffer);
           GR_RETURN(FXFALSE);
           
@@ -1615,20 +1608,10 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t _type, GrBuffer_t buffer,
           
           /* Force origin */
           /* origin = GR_ORIGIN_UPPER_LEFT; */
-          
-          /* Just play with the useHwcAAforLfbRead setting to tell the ReadRegion */
-          /* function what we want to do */
-          FxU32 old_useHwcAAforLfbRead = _GlideRoot.environment.useHwcAAforLfbRead;
-          if (wantHwc) _GlideRoot.environment.useHwcAAforLfbRead |= 1;
-          else _GlideRoot.environment.useHwcAAforLfbRead = 0;
-          
           GDBG_INFO_MORE(82,"Locking forced (%d, %d)\n", _type, buffer);
           
           forced_32bpp_lock_buffer = malloc (gc->state.screen_width * gc->state.screen_height * 2);
           rv = grLfbReadRegionOrigin(buffer, origin, 0, 0, gc->state.screen_width, gc->state.screen_height, gc->state.screen_width*2, forced_32bpp_lock_buffer);
-          
-          /* Reset the useHwcAAforLfbRead setting */
-          _GlideRoot.environment.useHwcAAforLfbRead = old_useHwcAAforLfbRead;
           
           /* Failed to read */
           if (!rv)
@@ -1646,7 +1629,7 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t _type, GrBuffer_t buffer,
           info->writeMode = GR_LFBWRITEMODE_565;
           info->strideInBytes = gc->state.screen_width * 2;
           info->origin = origin;
-
+          
           gc->cmdTransportInfo.lfbLockCount = lockCount + 1;
           
           GDBG_INFO_MORE(82,"Locked forced (%d, %d)\n", _type, buffer);
@@ -1810,18 +1793,10 @@ GR_ENTRY(grLfbUnlock, FxBool, (GrLock_t _type, GrBuffer_t buffer))
                          buffer != GR_BUFFER_AUXBUFFER,
                          "Bad buffer");
   
-#if !DRI_BUILD /* fix me! */
-  /* Read using HWC if we want dithering and using FSAA or 16 bpp mode */
-  wantHwc = ((_GlideRoot.environment.useHwcAAforLfbRead & 2) &&                  /* using HWC and */
-             _GlideRoot.environment.ditherHwcAA &&                               /* want dithering and */
-             ((gc->bInfo->h3pixelSample > 1) || (gc->bInfo->h3pixelSize == 2))); /* using FSAA or 16 bit mode */
-#endif
-  
   /* If we are using forced 32 bpp mode, the app is expecting 16 bit data */
   /* Or we want to be using HwcAA for the Lfb read lock */
   /* We need to use a hack for reading in OpenGL since they do 2 locks. Why, oh why, oh why...*/
-  if ((gc->state.forced32BPP || wantHwc) && 
-      (!_GlideRoot.environment.is_opengl || _GlideRoot.environment.oglLfbLockHack) &&  
+  if (gc->state.forced32BPP && 
       (buffer ==  GR_BUFFER_FRONTBUFFER || buffer == GR_BUFFER_BACKBUFFER))
     {
       if (_GlideRoot.environment.is_opengl && type == GR_LFB_WRITE_ONLY && (gc->lockPtrs[GR_LFB_READ_ONLY] == (FxU32)buffer))
@@ -2234,61 +2209,6 @@ static FxBool grLfbReadRegionOrigin (GrBuffer_t src_buffer, GrOriginLocation_t o
    bpp=gc->bInfo->h3pixelSize;
    info.size = sizeof(info);
    rv=FXFALSE;
-
-#if !DRI_BUILD /* fixme */
-   /* Read using HWC if we want dithering and using FSAA or 16 bpp mode */
-   wantHwc = ((_GlideRoot.environment.useHwcAAforLfbRead & 2) &&                  /* using HWC and */
-              _GlideRoot.environment.ditherHwcAA &&                               /* want dithering and */
-              ((gc->bInfo->h3pixelSample > 1) || (gc->bInfo->h3pixelSize == 2))); /* using FSAA or 16 bit mode */
-
-   /* We want to use the 'advanced' and slow capture method */
-   if(wantHwc) {
-     FxU32 colBufferIndex = 0;
-     FxU32 bpp = 0;
-
-     if(gc->state.forced32BPP) {
-       bpp = gc->state.forced32BPP;
-     } else {
-       switch(gc->grPixelFormat) {
-       case GR_PIXFMT_ARGB_1555:
-       case GR_PIXFMT_AA_2_ARGB_1555:
-       case GR_PIXFMT_AA_4_ARGB_1555:
-       case GR_PIXFMT_AA_8_ARGB_1555: 	/* 8xaa */
-         bpp = 15;
-         break;
-       case GR_PIXFMT_ARGB_8888:
-       case GR_PIXFMT_AA_2_ARGB_8888:
-       case GR_PIXFMT_AA_4_ARGB_8888:
-       case GR_PIXFMT_AA_8_ARGB_8888:	/* 8xaa */
-         bpp = 32;
-         break;
-       case GR_PIXFMT_RGB_565:
-       case GR_PIXFMT_AA_2_RGB_565:
-       case GR_PIXFMT_AA_4_RGB_565:
-       case GR_PIXFMT_AA_8_RGB_565: 	/* 8xaa */
-       default:
-         bpp = 16;
-         break;
-       }
-
-       switch(src_buffer) {
-       case GR_BUFFER_FRONTBUFFER:
-         colBufferIndex = gc->frontBuffer;
-         break;
-
-       case GR_BUFFER_BACKBUFFER:
-         colBufferIndex = gc->backBuffer;
-         break;
-       }
-     }
-
-     hwcAAReadRegion(gc->bInfo, colBufferIndex,  src_x, src_y,
-                     src_width, src_height,  dst_stride, dst_data,
-                     bpp, _GlideRoot.environment.ditherHwcAA);
-     rv=FXTRUE;
-     goto done;
-   }
-#endif
 
    if (_grLfbLock(GR_LFB_READ_ONLY,
                   src_buffer,

@@ -1995,11 +1995,11 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
       }
     } else {
       gc->sampleOffsetIndex = gc->grPixelSample-1 + ((gc->grSamplesPerChip == 1) ? 1 : 0);
-      if (!GETENV("FX_GLIDE_AA_SAMPLE", gc->bInfo->RegPath) && gc->sampleOffsetIndex)
+      if (!GETENV("FX_GLIDE_AA_SAMPLE") && gc->sampleOffsetIndex)
         gc->sampleOffsetIndex+=3;
     }
 #else
-    if (!GETENV("FX_GLIDE_AA_SAMPLE", gc->bInfo->RegPath) && gc->sampleOffsetIndex)
+    if (!GETENV("FX_GLIDE_AA_SAMPLE") && gc->sampleOffsetIndex)
         gc->sampleOffsetIndex+=3;
 #endif
 
@@ -2428,7 +2428,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
     GDBG_INFO(1, "autoBump: 0x%x\n", _GlideRoot.environment.autoBump);
     /* The logic for this is hosed for PowerPC, where we disable auto-bump even
        on PCI. */
-    if (gc->cmdTransportInfo.autoBump = _GlideRoot.environment.autoBump) {
+    if ((gc->cmdTransportInfo.autoBump = _GlideRoot.environment.autoBump)) {
       if (!hwcInitFifo( bInfo, gc->cmdTransportInfo.autoBump)) {
         hwcRestoreVideo(bInfo);
         GrErrorCallback(hwcGetErrorString(), FXFALSE);

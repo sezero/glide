@@ -600,11 +600,7 @@ const void *fxSplashPlug (FxU32* w, FxU32* h,
    Code Macros
    ----------------------------------------------------------------------- */
 #undef  GETENV
-#if (GLIDE_PLATFORM & GLIDE_OS_UNIX) || defined(__DJGPP__)
-#define GETENV(a, b) hwcGetenv(a)
-#else
-#define GETENV(a, b) hwcGetenvEx(a, b)
-#endif
+#define GETENV(a) hwcGetenv(a)
 
 /* -----------------------------------------------------------------------
    Internal Enumerated Types
@@ -2115,9 +2111,6 @@ struct _GlideRoot_s {
     FxI32  fenceLimit;
     FxBool texSubLodDither;     /* always do subsample mipmap dithering */
     FxBool aaClip;              /* clean out AA garbage */
-    float  aaPixelOffset;       /* AA jitter pixel offset */
-    float  aaJitterDisp;        /* AA jitter dispersity */
-    double aaGridRotation;      /* AA grid rotation */
 
     FxBool forceAutoBump;       /* force Auto bump? */
 #if CHECK_SLAVE_SWAPCMD
@@ -2127,9 +2120,7 @@ struct _GlideRoot_s {
     FxBool memFIFOHack;         /* flush FIFO as much as possible */
 #endif
 
-    FxU32  oglLfbLockHack;	    /* Enables disable hack to get around forced 32bit problems in OpenGL */
-    FxU32  useHwcAAforLfbRead;  /* Specifies whether to use HwcAAReadRegion for read Locks and LfbReadRegion calls */
-    FxU32  ditherHwcAA;		    /* Specifies whether to use HwcAAReadRegion should dither */
+    FxU32  ditherHwcAA;		/* Specifies whether to use HwcAAReadRegion should dither */
   } environment;
 
   GrHwConfiguration     hwConfig;
@@ -2850,7 +2841,7 @@ void
 _grDisplayStats(void);
 
 void
-_GlideInitEnvironment(int which);
+_GlideInitEnvironment(void);
 
 void FX_CSTYLE
 _grColorCombineDelta0Mode(FxBool delta0Mode);

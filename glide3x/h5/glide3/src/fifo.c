@@ -621,8 +621,6 @@ _grErrorCallback(const char* const procName,
                  const char* const format,
                  va_list           args)
 {
-  GR_DCL_GC;
-  
   static FxBool inProcP = FXFALSE;
 
   if (!inProcP) {
@@ -633,7 +631,7 @@ _grErrorCallback(const char* const procName,
       extern void (*GrErrorCallback)( const char *string, FxBool fatal );
 
       vsprintf(errMsgBuf, format, args);
-      (*GrErrorCallback)(errMsgBuf, (GETENV("FX_ERROR_FAIL", gc->bInfo->RegPath) != NULL));
+      (*GrErrorCallback)(errMsgBuf, (GETENV("FX_ERROR_FAIL") != NULL));
     }
     inProcP = FXFALSE;
   }

@@ -2698,9 +2698,8 @@ GR_DIENTRY(grEnable, void , (GrEnableMode_t mode) )
       /* EnableOpenGL - Win_Mode.c 
       ** Allow minihwc to know about OpenGL 
       */
-      /* KoolSmoky - the registry path should already be enumerated by now. */
-      void EnableOpenGL ( char *regpath );
-      EnableOpenGL( gc->bInfo->RegPath );
+      /*void EnableOpenGL ();
+      EnableOpenGL();*/
      /* setup env to determine whether we are an OGL app */
      _GlideRoot.environment.is_opengl=FXTRUE;
 #endif
@@ -2764,7 +2763,7 @@ GR_DIENTRY(grDisable, void , (GrEnableMode_t mode) )
       gc->tmuMemInfo[1].tramOffset = gc->tmuMemInfo[0].tramOffset + gc->tmuMemInfo[0].tramSize;
       gc->tmuMemInfo[1].tramSize   = (gc->bInfo->tramSize >> 1);
       gc->tmu_state[1].total_mem   = gc->tmuMemInfo[1].tramSize;
-  }
+    }
     break;
   case GR_COMBINEEXT_MODE:
     gc->state.grEnableArgs.combine_ext_mode = GR_MODE_DISABLE;

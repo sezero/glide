@@ -240,7 +240,7 @@ main (int argc, char **argv)
     OFFSET (gr,p6Fencer,"p6Fencer\t");
     OFFSET (gr,current_sst,"current_sst\t");
     OFFSET (gr,CPUType,"CPUType\t\t");
-    OFFSET (gr,tlsOffset,"tlsOffset\t\t");    
+    OFFSET (gr,tlsOffset,"tlsOffset\t\t");
     OFFSET (gr, pool.f255,"pool_f255");
     OFFSET (gr, pool.f1,"pool_f1");
     SIZEOF (gr.GCs[0].state,"GrState\t");
