@@ -2941,8 +2941,7 @@ FxU32
 _grTexTextureMemRequired(GrLOD_t small_lod, GrLOD_t large_lod, 
                          GrAspectRatio_t aspect, GrTextureFormat_t format,
                          FxU32 evenOdd,
-                         FxBool roundP,
-                         FxBool systemMem);
+                         FxBool roundP);
 void FX_CSTYLE
 _grUpdateParamIndex(void);
 
