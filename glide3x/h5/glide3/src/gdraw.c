@@ -355,7 +355,7 @@ GR_ENTRY(grDrawTriangle, void, (const void *a, const void *b, const void *c))
       test edx, edx;
       je   lostContext;
       mov eax, [edx + kLostContextOffset];
-      test eax, eax
+      test eax, eax;
       je   lostContext;
       mov eax, [eax];
       test eax, 1;
@@ -365,13 +365,13 @@ GR_ENTRY(grDrawTriangle, void, (const void *a, const void *b, const void *c))
     }
 #else
     __asm {
-      mov eax, DWORD PTR fs:[WNT_TEB_PTR] ;
+      mov eax, DWORD PTR fs:[WNT_TEB_PTR];
       add eax, DWORD PTR _GlideRoot.tlsOffset;
       mov edx, [eax];
       test edx, edx;
       je   lostContext;
       mov eax, [edx + kLostContextOffset];
-      test eax, eax
+      test eax, eax;
       je   lostContext;
       mov eax, [eax];
       test eax, 1;
