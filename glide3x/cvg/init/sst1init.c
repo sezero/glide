@@ -155,13 +155,7 @@
 #define SST1INIT_ALLOCATE // Allocate variables in sst1init.h
 #define FX_DLL_DEFINITION
 #include <fxdll.h>
-#ifdef FX_DLL_ENABLE
-  #undef FX_DLL_ENABLE
-  #include <fxpci.h>
-  #define FX_DLL_ENABLE
-#else
-  #include <fxpci.h>
-#endif
+
 #if !macintosh && !__linux__
 #include <fxremap.h>
 #endif
