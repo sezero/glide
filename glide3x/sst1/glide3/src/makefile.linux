@@ -69,7 +69,7 @@ CP = cp
 CDEFS = -D__linux__ -DINIT_LINUX
 
 # general
-CDEFS += -DGLIDE_HARDWARE
+CDEFS += -DGLIDE3 -DGLIDE_HARDWARE
 
 # subsystem
 ifeq ($(FX_GLIDE_HW),sst1)
