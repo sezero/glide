@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.2  2000/10/03 18:28:33  mercury
+** 003-clean_up_cvg-000, cvg tree cleanup.
+**
 ** Revision 1.1.1.1  1999/12/07 21:49:11  joseph
 ** Initial checkin into SourceForge.
 **
@@ -484,7 +487,7 @@ __tryReOpen:
     }
     
     /* Re-enabled write combining */
-    if (_GlideRoot.CPUType >= 6) {
+    if (_GlideRoot.CPUType.family >= 6) {
       sst1InitCaching(sstRegs, FXTRUE);
     }
 
@@ -877,7 +880,7 @@ __tryReOpen:
              * NB: The order of the caching changes is relevant here since
              * we don't want to waste mtrr's, even briefly.  
              */
-            if (_GlideRoot.CPUType >= 6) {
+            if (_GlideRoot.CPUType.family >= 6) {
               sst1InitCaching(gc->base_ptr, FXFALSE);
               sst1InitCaching((gc + 1)->base_ptr, FXTRUE);
             }
@@ -974,7 +977,7 @@ __tryReOpen:
          * NB: The order of the caching changes is relevant here since
          * we don't want to waste mtrr's, even briefly.  
          */
-        if (_GlideRoot.CPUType >= 6) {
+        if (_GlideRoot.CPUType.family >= 6) {
           sst1InitCaching(gc->slave_ptr, FXFALSE);
           sst1InitCaching(gc->base_ptr, FXTRUE);
         }
@@ -1335,7 +1338,7 @@ __errSliExit:
      * This is currently being done in _grDetectResources so that we
      * can match the nt driver semantics in win95.  
      */
-    if (_GlideRoot.CPUType >= 6) {
+    if (_GlideRoot.CPUType.family >= 6) {
       sst1InitCaching(gc->reg_ptr, FXTRUE);
     }
 #endif /* !GLIDE_INIT_HAL */
@@ -1679,7 +1682,7 @@ GR_ENTRY(grSstWinClose, void, (void))
      * track of the mtrr's.
      */
     sst1InitIdle(gc->reg_ptr);
-    if (_GlideRoot.CPUType >= 6) {
+    if (_GlideRoot.CPUType.family >= 6) {
       sst1InitCaching(gc->base_ptr, FXFALSE);
     }
     sst1InitShutdown(gc->reg_ptr);
