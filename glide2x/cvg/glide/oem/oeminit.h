@@ -89,5 +89,5 @@ FX_EXPORT FxU32 FX_CSTYLE fxoemInitSetVideo(OemInitInfo *oem);
 FX_EXPORT FxU32 FX_CSTYLE fxoemRestoreVideo(OemInitInfo *oem);
 FX_EXPORT FxU32 FX_CSTYLE fxoemControl(FxU32 mode);
 
-#endif __OEMINIT_H__
+#endif /* __OEMINIT_H__ */
 

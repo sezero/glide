@@ -20,7 +20,10 @@
 
 /*  $Header$ */
 /*  $Revision$ */
-/*  $Log$ */
+/*  $Log$
+/*  Revision 1.1.1.1  1999/12/07 21:49:30  joseph
+/*  Initial checkin into SourceForge.
+/* */
 /*   */
 /*  11    10/05/98 7:43p Peter */
 /*  3DNow!(tm) happiness everywhere */
@@ -122,10 +125,12 @@ PROC_TYPE(cull):
 #define GLIDE_GENERIC_SETUP 0
 #include "xdraw2.inc.S"
 #undef cull
-#define GLIDE_GENERIC_SETUP 0
-#define GLIDE_PACK_ALPHA 0
-#define GLIDE_PACK_RGB 0
-#define GLIDE_CULLING 0
+#undef GLIDE_GENERIC_SETUP
+#undef GLIDE_PACK_ALPHA
+#undef GLIDE_PACK_RGB
+#undef GLIDE_CULLING
+
+#undef LOCAL
 
 END_PROC_TYPE(cull):
 .size PROC_TYPE(cull),END_PROC_TYPE(cull)-PROC_TYPE(cull)
@@ -144,10 +149,12 @@ PROC_TYPE(cull_rgb):
 #define GLIDE_PACK_ALPHA 0
 #define GLIDE_GENERIC_SETUP 0
 #include "xdraw2.inc.S"
-#define GLIDE_GENERIC_SETUP 0
-#define GLIDE_PACK_ALPHA 0
-#define GLIDE_PACK_RGB 0
-#define GLIDE_CULLING 0
+#undef GLIDE_GENERIC_SETUP
+#undef GLIDE_PACK_ALPHA
+#undef GLIDE_PACK_RGB
+#undef GLIDE_CULLING
+
+#undef LOCAL
 
 END_PROC_TYPE(cull_rgb):
 .size PROC_TYPE(cull_rgb),END_PROC_TYPE(cull_rgb)-PROC_TYPE(cull_rgb)
@@ -165,10 +172,10 @@ PROC_TYPE(cull_argb):
 #define GLIDE_PACK_ALPHA 1
 #define GLIDE_GENERIC_SETUP 0
 #include "xdraw2.inc.S"
-#define GLIDE_GENERIC_SETUP 0
-#define GLIDE_PACK_ALPHA 0
-#define GLIDE_PACK_RGB 0
-#define GLIDE_CULLING 0
+#undef GLIDE_GENERIC_SETUP
+#undef GLIDE_PACK_ALPHA
+#undef GLIDE_PACK_RGB
+#undef GLIDE_CULLING
 
 END_PROC_TYPE(cull_argb):
 .size PROC_TYPE(cull_argb),END_PROC_TYPE(cull_argb)-PROC_TYPE(cull_argb)
@@ -187,10 +194,12 @@ PROC_TYPE(Default):
 #define GLIDE_PACK_ALPHA 0
 #define GLIDE_GENERIC_SETUP 0
 #include "xdraw2.inc.S"
-#define GLIDE_GENERIC_SETUP 0
-#define GLIDE_PACK_ALPHA 0
-#define GLIDE_PACK_RGB 0
-#define GLIDE_CULLING 0
+#undef GLIDE_GENERIC_SETUP
+#undef GLIDE_PACK_ALPHA
+#undef GLIDE_PACK_RGB
+#undef GLIDE_CULLING
+
+#undef LOCAL
 
 END_PROC_TYPE(Default):
 .size PROC_TYPE(Default),END_PROC_TYPE(Default)-PROC_TYPE(Default)
@@ -209,10 +218,12 @@ PROC_TYPE(rgb):
 #define GLIDE_PACK_ALPHA 0
 #define GLIDE_GENERIC_SETUP 0
 #include "xdraw2.inc.S"
-#define GLIDE_GENERIC_SETUP 0
-#define GLIDE_PACK_ALPHA 0
-#define GLIDE_PACK_RGB 0
-#define GLIDE_CULLING 0
+#undef GLIDE_GENERIC_SETUP
+#undef GLIDE_PACK_ALPHA
+#undef GLIDE_PACK_RGB
+#undef GLIDE_CULLING
+
+#undef LOCAL
 
 END_PROC_TYPE(rgb):
 .size PROC_TYPE(rgb),END_PROC_TYPE(rgb)-PROC_TYPE(rgb)
@@ -230,10 +241,12 @@ PROC_TYPE(argb):
 #define GLIDE_PACK_ALPHA 1
 #define GLIDE_GENERIC_SETUP 0
 #include "xdraw2.inc.S"
-#define GLIDE_GENERIC_SETUP 0
-#define GLIDE_PACK_ALPHA 0
-#define GLIDE_PACK_RGB 0
-#define GLIDE_CULLING 0
+#undef GLIDE_GENERIC_SETUP
+#undef GLIDE_PACK_ALPHA
+#undef GLIDE_PACK_RGB
+#undef GLIDE_CULLING
+
+#undef LOCAL
 
 END_PROC_TYPE(argb):
 .size PROC_TYPE(argb),END_PROC_TYPE(argb)-PROC_TYPE(argb)

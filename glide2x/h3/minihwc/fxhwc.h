@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.2  2000/10/03 18:29:57  mercury
+** 003-clean_up_h3-000, h3 tree cleanup.
+**
 ** Revision 1.1.1.1  1999/12/07 21:49:43  joseph
 ** Initial checkin into SourceForge.
 **
@@ -38,8 +41,8 @@
 **  I/O Macros
 */
 #warning Here!
-#define HWC_IO_LOAD(regInfo, reg, val)
-GDBG_INFO(120, "%s:  Storing 0x%x to IO Register %s\n", 
+#define HWC_IO_LOAD(regInfo, reg, val) \
+GDBG_INFO(120, "%s:  Storing 0x%x to IO Register %s\n", \
 ((SstIORegs *) regInfo.ioMemBase)->
 
 

@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.2  2003/06/28 19:10:36  guillemj
+** Fixed preprocessor invalid tokens in newer gcc 3.x versions.
+**
 ** Revision 1.1.1.1  1999/12/07 21:49:26  joseph
 ** Initial checkin into SourceForge.
 **
@@ -2004,7 +2007,7 @@ _grFifoFWriteDebug((FxU32) a, (float) b, (FxU32) c)
                                      __stwbrx( *((FxU32*)&temp), (void*)&(d), 0 ); \
                                    }
 #      define SET_LINEAR(d, s)     SET((d), (s))
-#      define SET_LINEAR_16(d, s)  SET((d), ((((FxU32)(s)) >> 16UL) | \ 
+#      define SET_LINEAR_16(d, s)  SET((d), ((((FxU32)(s)) >> 16UL) | \
                                            (((FxU32)(s)) << 16UL)))
 #      define SET_LINEAR_8(d, s)   ((d) = (s))
 #    else /* !defined(__MWERKS__) && POWERPC */
@@ -3008,7 +3011,7 @@ do { \
 #define REG_GROUP_SETF_CLAMP(__regBase, __regAddr, __val) \
 do { \
   const FxU32 fpClampVal = FP_FLOAT_CLAMP(__val); \
-  REG_GROUP_ASSERT(__regAddr, fpClampVal, FXTRUE); \  
+  REG_GROUP_ASSERT(__regAddr, fpClampVal, FXTRUE); \
   SET(((FxU32*)(__regBase))[offsetof(SstRegs, __regAddr) >> 2], fpClampVal); \
   GR_INC_SIZE(sizeof(FxU32)); \
 } while(0)
