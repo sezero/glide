@@ -6,6 +6,9 @@
 #
 # $Header$
 # $Log$
+# Revision 1.1.2.4  2003/06/13 07:22:57  dborca
+# more fixes to NASM sources
+#
 # Revision 1.1.2.3  2003/06/07 09:53:24  dborca
 # initial checkin for NASM sources
 #
@@ -187,7 +190,6 @@ endif
 
 GLIDE_OBJECTS += \
 	h3/cinit/h3cinit.o \
-	h3/cinit/h3cinit2.o \
 	$(FX_GLIDE_SW)/newpci/pcilib/fxpci.o \
 	$(FX_GLIDE_SW)/newpci/pcilib/fxdpmi2.o \
 	$(FX_GLIDE_HW)/minihwc/hwcio.o \

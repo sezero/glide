@@ -390,8 +390,6 @@ FxU32 h3InitGetMemSize (FxU32 regBase, FxBool isNapalm)
  if (isNapalm) {
     // Napalm memory sizing
 
-    dramInit0_strap &= SST_H5_SGRAM_TYPE | SST_SGRAM_NUM_CHIPSETS;
-
     nChips = ((dramInit0_strap & SST_SGRAM_NUM_CHIPSETS) == 0) ? 4 : 8;
 
     switch (dramInit0_strap & SST_H5_SGRAM_TYPE) {
@@ -415,11 +413,9 @@ FxU32 h3InitGetMemSize (FxU32 regBase, FxBool isNapalm)
        nChips = 8;
        partSize = 16;
     } else {
-       dramInit0_strap &= SST_H4_SGRAM_TYPE | SST_SGRAM_NUM_CHIPSETS;
-
        nChips = ((dramInit0_strap & SST_SGRAM_NUM_CHIPSETS) == 0) ? 4 : 8;
 
-       switch (dramInit0_strap & SST_H4_SGRAM_TYPE) {
+       switch (dramInit0_strap & SST_SGRAM_TYPE) {
               case SST_SGRAM_TYPE_8MBIT:   partSize = 8;    break;
               case SST_SGRAM_TYPE_16MBIT:  partSize = 16;   break;
               default: return 0;  // invalid sgram type!
@@ -846,6 +842,9 @@ h3InitSetVideoMode(
     FxU8 garbage;
     FxU16 *rs = h3InitFindVideoMode(xRes, yRes, refresh);
     FxU32 vidProcCfg;
+#ifndef H3VDD
+    FxU32 scanlinedouble;
+#endif
 
     if (rs == NULL)
     {
@@ -855,6 +854,13 @@ h3InitSetVideoMode(
     }
         
     GDBG_INFO(1, "h3InitSetVideoMode(%d, %d, %d)\n", xRes, yRes, refresh);
+
+#ifndef H3VDD
+    scanlinedouble = (yRes != /* vDispEnd */ (
+                               (((rs[15]<<8)&0x400) | ((rs[7]<<3)&0x200) | ((rs[7]<<7)&0x100) | rs[11]) + 1
+                              )
+                     );
+#endif
 
     //
     // MISC REGISTERS
@@ -939,10 +945,8 @@ h3InitSetVideoMode(
     vidProcCfg &= ~(SST_VIDEO_2X_MODE_EN | SST_HALF_MODE);
     if (rs[20])
         vidProcCfg |= SST_VIDEO_2X_MODE_EN;
-#if defined(H3VDD)
     if (scanlinedouble)
        vidProcCfg |= SST_HALF_MODE;
-#endif
     ISET32(vidProcCfg, vidProcCfg);
 
     //
@@ -981,7 +985,6 @@ h3InitSetVideoMode(
     // Initialize VIDEO res & proc mode info...
     //
 
-#if defined(H3VDD)
     if (scanlinedouble)
        ISET32( vidScreenSize, (yRes << 13) | (xRes & 0xfff));
     else
@@ -991,9 +994,6 @@ h3InitSetVideoMode(
        else
           ISET32( vidScreenSize, (yRes << 12) | (xRes & 0xfff));
        }
-#else
-    ISET32( vidScreenSize, (yRes << 12) | (xRes & 0xfff));
-#endif
 
     ISET32(vidOverlayStartCoords, 0);
 

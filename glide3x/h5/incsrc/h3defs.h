@@ -1586,7 +1586,7 @@
 #define SST_SGRAM_EN_WPB                BIT(25)
 #define SST_SGRAM_NUM_CHIPSETS          BIT(26)
 #define SST_SGRAM_TYPE_SHIFT            27
-#define SST_SGRAM_TYPE                  (0x7L<<SST_SGRAM_TYPE_SHIFT)
+#define SST_SGRAM_TYPE                  (0x1L<<SST_SGRAM_TYPE_SHIFT)
 #define SST_H4_SGRAM_TYPE               (0x1L<<SST_SGRAM_TYPE_SHIFT) // Voodoo3 specific
 #define SST_H5_SGRAM_TYPE               (0x7L<<SST_SGRAM_TYPE_SHIFT) // Napalm specific
 #       define SST_SGRAM_TYPE_8MBIT     (0x0L<<SST_SGRAM_TYPE_SHIFT)

@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.6.1  2003/05/05 07:12:47  dborca
+** no message
+**
 ** Revision 1.1.1.1  1999/11/24 21:45:07  joseph
 ** Initial checkin for SourceForge
 **
@@ -1221,7 +1224,7 @@ hwcInitRegisters(hwcBoardInfo *bInfo)
     /* read back the memory size, since we 
      * don't know it under DOS  (see hwcInit) - dwj 
      */
-    bInfo->h3Mem = h3InitGetMemSize(bInfo->regInfo.ioPortBase);
+    bInfo->h3Mem = h3InitGetMemSize(bInfo->regInfo.ioPortBase, FXFALSE);
 
     h3InitVga(bInfo->regInfo.ioPortBase, FXTRUE); 
   }
@@ -3213,7 +3216,7 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
     0,                          /* Filter mode */
     FXTRUE,                     /* tiled */
     pixFmt,                     /* pixel format of OS */
-    FXTRUE,                    /* bypass clut for OS? */
+    FXFALSE,                    /* bypass clut for OS? */
     0,                          /* 0=lower 256 CLUT entries, 1=upper 256 */
     bInfo->buffInfo.colBuffStart[0],/* board address of beginning of OS */
     stride);                    /* distance between scanlines of the OS, in
@@ -3435,6 +3438,10 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
   HWC_IO_STORE( bInfo->regInfo, vidDesktopOverlayStride,
                 ( bInfo->buffInfo.bufStrideInTiles << 16 ) |
                   bInfo->buffInfo.bufStrideInTiles );
+
+#ifdef __DJGPP__
+  HWC_IO_STORE(bInfo->regInfo, vidProcCfg, vidProcCfg | SST_VIDEO_PROCESSOR_EN);
+#endif
 
   return FXTRUE;
 

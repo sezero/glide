@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.1  2003/05/05 07:12:47  dborca
+** no message
+**
 ** Revision 1.1.1.1  1999/11/24 21:45:03  joseph
 ** Initial checkin for SourceForge
 **
@@ -78,7 +81,6 @@ static unsigned long _tableSize = sizeof( _table ) / sizeof( ResTableEntry );
 /* [dBorca] */
 #include "glide.h"
 #include "fxglide.h"
-extern FxBool h3VideoMode (FxU32 regBase, FxU32 xRes, FxU32 yRes, FxU32 refresh);
 
 FxBool 
 setVideoMode( unsigned long dummy, int xres, int yres, int refresh, void *hmon ) 
@@ -107,7 +109,7 @@ setVideoMode( unsigned long dummy, int xres, int yres, int refresh, void *hmon )
    */
   if ((mode == 0) || (refresh != 0)) {
      GR_DCL_GC;
-     if (!h3VideoMode(gc->bInfo->regInfo.ioPortBase, xres, yres, refresh)) {
+     if (!h3InitSetVideoMode(gc->bInfo->regInfo.ioPortBase, xres, yres, refresh, FXTRUE)) {
         GDBG_INFO(80, "Setmode failed --  unimplemented resolution\n" );
         return FXFALSE;
      } else {

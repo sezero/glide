@@ -5690,6 +5690,10 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
     HWC_IO_STORE(bInfo->regInfo, pciInit0, pciInit0);
   }
 
+#ifdef __DJGPP__
+  HWC_IO_STORE(bInfo->regInfo, vidProcCfg, vidProcCfg | SST_VIDEO_PROCESSOR_EN);
+#endif
+
   return FXTRUE;
 
 #undef FN_NAME
