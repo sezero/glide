@@ -4747,7 +4747,7 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
       if(bpp == 32 && !((bInfo->pciInfo.numChips == 4) && (bInfo->h3pixelSample >= 4))) { /* 32bpp and not 4x,8xfsaa on v56k */
 		 vidProcCfg |= SST_OVERLAY_FILTER_POINT;
 	  } else {
-         if(bInfo->vidInfo.xRes < 1024)
+         if(/*(bInfo->vidInfo.xRes < 1024) &&*/ !(vidProcCfg & SST_VIDEO_2X_MODE_EN) && (bInfo->h3sliBandHeight > 1))
             vidProcCfg |= SST_OVERLAY_FILTER_2X2;
          else
             vidProcCfg |= SST_OVERLAY_FILTER_4X4;
@@ -4762,7 +4762,7 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
             if(bpp == 32 && !((bInfo->pciInfo.numChips == 4) && (bInfo->h3pixelSample >= 4))) { /* 32bpp and not 4x,8xfsaa on v56k */
 			   vidProcCfg |= SST_OVERLAY_FILTER_POINT;
 			} else {
-               if(bInfo->vidInfo.xRes < 1024)
+               if(/*(bInfo->vidInfo.xRes < 1024) &&*/ !(vidProcCfg & SST_VIDEO_2X_MODE_EN) && !(bInfo->h3sliBandHeight <= 1))
                   vidProcCfg |= SST_OVERLAY_FILTER_2X2;
                else
                   vidProcCfg |= SST_OVERLAY_FILTER_4X4;
@@ -4773,7 +4773,7 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
             break;
          case 3: /* High */
             /* make sure that if 2x video mode is enabled, we use the 4x1 filter. */
-            if(vidProcCfg & SST_VIDEO_2X_MODE_EN)
+            if((vidProcCfg & SST_VIDEO_2X_MODE_EN) || (bInfo->h3sliBandHeight <= 1))
                vidProcCfg |= SST_OVERLAY_FILTER_4X4;
             else
                vidProcCfg |= SST_OVERLAY_FILTER_2X2;
@@ -4839,26 +4839,6 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
     HWC_IO_STORE(bInfo->regInfo, vidScreenSize, vidScreenSize);
 
   } 
-
-  /* Sorry, can only use 4x1 filter in this mode. */
-  if ( bInfo->h3nwaySli > 1 ) {
-    if(vidProcCfg & SST_OVERLAY_FILTER_MODE) {
-      vidProcCfg &= ~SST_OVERLAY_FILTER_MODE;
-      vidProcCfg |= SST_OVERLAY_FILTER_4X4;
-    }
-  }      
-  
-#if 0 /* use optimal or let the user decide */
-  /* Disable video filter in 32-bit mode */
-#if 1 /* looks better with filter when in 16bpp 2xfsaa */
-  if(bpp == 32 || bInfo->h3pixelSample > 2) {
-#else /* KoolSmoky - can't have filter in FSAA */
-  if(bpp == 32 || bInfo->h3pixelSample > 1) {
-#endif
-    vidProcCfg &= ~SST_OVERLAY_FILTER_MODE;
-    vidProcCfg |= SST_OVERLAY_FILTER_POINT;
-  }  
-#endif
 
   HWC_IO_STORE(bInfo->regInfo, vidProcCfg, vidProcCfg);
 
@@ -5548,6 +5528,10 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
 #if !HWC_EXT_INIT && !HWC_GDX_INIT
   if((IS_NAPALM(bInfo->pciInfo.deviceID)) && (bInfo->pciInfo.numChips > 1))
   {
+    FxU32 aaSampleHigh = 0;
+	if(bInfo->h3pixelSample == 4) aaSampleHigh = 1;
+	else if(bInfo->h3pixelSample == 8) aaSampleHigh = 2;
+
     hwcSetSLIAAMode(bInfo,
                  (bInfo->h3nwaySli > 1),     /* sliEnable */
                  (bInfo->h3pixelSample > 1), /* aaEnable */
@@ -5555,7 +5539,7 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
                  bInfo->h3sliBandHeight,     /* sliBandHeight */
                  bInfo->h3Mem * 1024 * 1024, /* totalMem */
                  bInfo->pciInfo.numChips,    /* numChips */
-                 (bInfo->h3pixelSample == 4),/* aaSampleHigh */
+                 aaSampleHigh,               /* aaSampleHigh */
                  bInfo->buffInfo.colBuffStart1[0],       /* aaColorBuffStart */
                  bInfo->buffInfo.lfbBuffAddr0[bInfo->buffInfo.nColBuffers],     /* aaDepthBuffStart */
                  bInfo->buffInfo.lfbBuffAddr0End[bInfo->buffInfo.nColBuffers],  /* aaDepthBuffEnd */
@@ -5894,14 +5878,18 @@ hwcRestoreVideo(hwcBoardInfo *bInfo)
 #if !HWC_EXT_INIT && !HWC_GDX_INIT
   if(IS_NAPALM(bInfo->pciInfo.deviceID)) {
     if(bInfo->pciInfo.numChips > 1) {
-      hwcSetSLIAAMode(bInfo,
+      FxU32 aaSampleHigh = 0;
+	  if(bInfo->h3pixelSample == 4) aaSampleHigh = 1;
+	  else if(bInfo->h3pixelSample == 8) aaSampleHigh = 2;
+      
+	  hwcSetSLIAAMode(bInfo,
                       0,     /* sliEnable */
                       0,     /* aaEnable */
                       bInfo->h3analogSli,         /* analogSLI */
                       bInfo->h3sliBandHeight,     /* sliBandHeight */
                       bInfo->h3Mem * 1024 * 1024, /* totalMem */
                       bInfo->pciInfo.numChips,    /* numChips */
-                      (bInfo->h3pixelSample == 4),/* aaSampleHigh */
+                      aaSampleHigh,               /* aaSampleHigh */
                       bInfo->buffInfo.colBuffStart1[0],       /* aaColorBuffStart */
                       bInfo->buffInfo.lfbBuffAddr0[bInfo->buffInfo.nColBuffers],     /* aaDepthBuffStart */
                       bInfo->buffInfo.lfbBuffAddr0End[bInfo->buffInfo.nColBuffers],  /* aaDepthBuffEnd */
@@ -8503,7 +8491,7 @@ static FxBool adjustBrightnessAndContrast_m(FxFloat contrast,
       ADJUST(pB[i], 0.0f, 0, b, FxU32);
       CLAMP(pB[i], 0, 255);
 
-      GDBG_INFO(69, "\t%d\t\t%d\t\t%d\t\t%d\n", i, pR[i], pG[i], pB[i]);
+      //GDBG_INFO(69, "\t%d\t\t%d\t\t%d\t\t%d\n", i, pR[i], pG[i], pB[i]);
   }
   
   return FXTRUE;
@@ -8555,7 +8543,7 @@ hwcGammaTable(hwcBoardInfo *bInfo, FxU32 nEntries, FxU32 *r, FxU32 *g, FxU32 *b)
     gss_green[i]       = g[i];
     gss_blue[i]        = b[i];
     gss_red_shifted[i] = gss_red[i] << 16;
-    GDBG_INFO(69,": gRamp[%d] = %d\n", i, gRamp[i]);
+    //GDBG_INFO(69,": gRamp[%d] = %d\n", i, gRamp[i]);
   }
 
   /* Colourless - Hack for V5 6000 4x and 8x FSAA */
@@ -8594,7 +8582,7 @@ hwcGammaTable(hwcBoardInfo *bInfo, FxU32 nEntries, FxU32 *r, FxU32 *g, FxU32 *b)
             FN_NAME, (vidProcCfg & SST_OVERLAY_CLUT_BYPASS) ? 1 : 0);
 
   for (i = 0; i < nEntries; i++) {
-    int repeat = 100;
+    /*int repeat = 100;
     while (repeat) {
       HWC_IO_STORE( bInfo->regInfo, dacAddr, dacBase + i);
       P6FENCE;
@@ -8611,7 +8599,24 @@ hwcGammaTable(hwcBoardInfo *bInfo, FxU32 nEntries, FxU32 *r, FxU32 *g, FxU32 *b)
     if (!repeat) {
       GDBG_INFO(0, "%s: Error Writing DacData [%d, %x]. DacBase = %d\n",
                 FN_NAME, i, gRamp[i], dacBase);
-    }
+    }*/
+    int repeat = 100 ;
+    do {
+      HWC_IO_STORE( bInfo->regInfo, dacAddr, dacBase + i);
+      P6FENCE;
+      HWC_IO_LOAD( bInfo->regInfo, dacAddr, rDacBase);
+      P6FENCE;
+    } while (--repeat && (rDacBase != (dacBase + i)));
+	if (!repeat) GDBG_INFO(0, "%s: Error Writing DacBase = %d\n", FN_NAME, dacBase);
+    
+	repeat = 100 ;
+	do {
+      HWC_IO_STORE( bInfo->regInfo, dacData, gRamp[i]);
+      P6FENCE;
+      HWC_IO_LOAD( bInfo->regInfo, dacData, rDacData);
+      P6FENCE;
+	} while (--repeat && (rDacData != gRamp[i]));
+	if (!repeat) GDBG_INFO(0, "%s: Error Writing DacData [%d, %x]\n", FN_NAME, i, gRamp[i]);
   }
 
   return FXTRUE;
@@ -9043,11 +9048,8 @@ hwcGetenv(char *a)
       return NULL;
   }
 
-  GDBG_INFO(80, "hwcGetEnv: %s  %s\n", a, regPath);
-
   if (RegOpenKey(HKEY_CURRENT_USER, regPath, &hKey) == ERROR_SUCCESS) {
-    if (RegQueryValueEx(hKey, a, NULL, &type, strval, &szData) ==
-        ERROR_SUCCESS) {
+    if (RegQueryValueEx(hKey, a, NULL, &type, strval, &szData) == ERROR_SUCCESS) {
       if (type != REG_SZ) {
         retVal = NULL;
       } else {
@@ -9060,8 +9062,7 @@ hwcGetenv(char *a)
   if ((retVal == NULL) &&
      RegOpenKey(HKEY_LOCAL_MACHINE, regPath, &hKey) == ERROR_SUCCESS)
   {
-    if (RegQueryValueEx(hKey, a, NULL, &type, strval, &szData) ==
-        ERROR_SUCCESS) {
+    if (RegQueryValueEx(hKey, a, NULL, &type, strval, &szData) == ERROR_SUCCESS) {
       if (type != REG_SZ) {
         retVal = NULL;
       } else {
@@ -9070,6 +9071,9 @@ hwcGetenv(char *a)
     }
     RegCloseKey(hKey);
   }
+
+  GDBG_INFO(80, "hwcGetEnv: %s = %s\n", a, (retVal == NULL ? "DEFAULT" : retVal));
+
   return (char*)retVal;
 #else
 char *
@@ -9106,12 +9110,9 @@ hwcGetenvEx(char *a, char *b)
   }
 
   strcat(regPath, "\\glide");
-
-  GDBG_INFO(80, "hwcGetEnvEx: %s  %s\n", a, regPath);
   
   if (RegOpenKey(HKEY_CURRENT_USER, regPath, &hKey) == ERROR_SUCCESS) {
-    if (RegQueryValueEx(hKey, a, NULL, &type, strval, &szData) ==
-        ERROR_SUCCESS) {
+    if (RegQueryValueEx(hKey, a, NULL, &type, strval, &szData) == ERROR_SUCCESS) {
       if (type != REG_SZ) {
         retVal = NULL;
       } else {
@@ -9124,8 +9125,7 @@ hwcGetenvEx(char *a, char *b)
   if ((retVal == NULL) &&
      RegOpenKey(HKEY_LOCAL_MACHINE, regPath, &hKey) == ERROR_SUCCESS)
   {
-    if (RegQueryValueEx(hKey, a, NULL, &type, strval, &szData) ==
-        ERROR_SUCCESS) {
+    if (RegQueryValueEx(hKey, a, NULL, &type, strval, &szData) == ERROR_SUCCESS) {
       if (type != REG_SZ) {
         retVal = NULL;
       } else {
@@ -9134,6 +9134,9 @@ hwcGetenvEx(char *a, char *b)
     }
     RegCloseKey(hKey);
   }
+
+  GDBG_INFO(80, "hwcGetEnvEx: %s = %s\n", a, (retVal == NULL ? "DEFAULT" : retVal));
+
   return (char*)retVal;
 } /* _grGetenvEx */
 #endif
