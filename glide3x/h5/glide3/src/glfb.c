@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.7.4.9  2003/07/07 23:29:05  koolsmoky
+** cleaned logs
+**
 ** Revision 1.7.4.8  2003/07/03 10:35:34  koolsmoky
 ** cleaned _grlfblock
 **
@@ -459,7 +462,7 @@
  * Note: Aligns src (LFB) before copying. Clobbers eax, ecx, esi, edi
  */
 #define MMX_SRCLINE(src, dst, length) __asm {\
-		__asm mov   ecx, length \
+		__asm mov	ecx, length	\
 		__asm mov	esi, src	\
 		__asm mov	edi, dst	\
 		__asm cmp	ecx, 8		\
@@ -656,9 +659,9 @@
 		jz	4f		\n\
 		.p2align 3,,7		\n\
 	3:				\n\
-		fild	qword ptr (%%esi)	\n\
-		fistp	qword ptr (%%edi)	\n\
+		fildq	(%%esi)		\n\
 		addl	$8, %%esi	\n\
+		fistpq	(%%edi)		\n\
 		addl	$8, %%edi	\n\
 		decl	%%eax		\n\
 		jnz	3b		\n\
@@ -709,9 +712,9 @@
 		jz	4f		\n\
 		.p2align 3,,7		\n\
 	3:				\n\
-		fild	qword ptr (%%esi)	\n\
-		fistp	qword ptr (%%edi)	\n\
+		fildq	(%%esi)		\n\
 		addl	$8, %%esi	\n\
+		fistpq	(%%edi)		\n\
 		addl	$8, %%edi	\n\
 		decl	%%eax		\n\
 		jnz	3b		\n\
@@ -753,9 +756,9 @@
 		jz	4f		\n\
 		.p2align 3,,7		\n\
 	3:				\n\
-		fild	qword ptr (%%esi)	\n\
-		fistp	qword ptr (%%edi)	\n\
+		fildq	(%%esi)		\n\
 		addl	$8, %%esi	\n\
+		fistpq	(%%edi)		\n\
 		addl	$8, %%edi	\n\
 		decl	%%eax		\n\
 		jnz	3b		\n\
@@ -771,20 +774,20 @@
 #else
 
 #define FPU_SRCLINE(src, dst, length) __asm {\
-		__asm mov   ecx, length \
+		__asm mov	ecx, length	\
 		__asm mov	esi, src	\
 		__asm mov	edi, dst	\
 		__asm cmp	ecx, 8		\
 		__asm jb	small_move_fpu_srcline	\
 		__asm test	esi, 2		\
-		__asm jz	check4_fpu_srcline		\
+		__asm jz	check4_fpu_srcline	\
 		__asm mov	ax, [esi]	\
 		__asm add	esi, 2		\
 		__asm mov	[edi], ax	\
 		__asm add	edi, 2		\
 		__asm sub	ecx, 2		\
 		__asm align	8		\
-	__asm check4_fpu_srcline:				\
+	__asm check4_fpu_srcline:		\
 		__asm test	esi, 4		\
 		__asm jz	aligned8_fpu_srcline	\
 		__asm mov	eax, [esi]	\
@@ -793,35 +796,35 @@
 		__asm add	edi, 4		\
 		__asm sub	ecx, 4		\
 		__asm align	8		\
-	__asm aligned8_fpu_srcline:				\
+	__asm aligned8_fpu_srcline:		\
 		__asm mov	eax, ecx	\
 		__asm and	ecx, 7		\
 		__asm shr	eax, 3		\
 		__asm jz	small_move_fpu_srcline	\
 		__asm align	8		\
-	__asm big_move_fpu_srcline:				\
-        __asm fild  qword ptr [esi] \
-		__asm fistp qword ptr [edi] \
+	__asm big_move_fpu_srcline:		\
+		__asm fild	qword ptr [esi]	\
 		__asm add	esi, 8		\
+		__asm fistp	qword ptr [edi]	\
 		__asm add	edi, 8		\
 		__asm dec	eax		\
 		__asm jnz	big_move_fpu_srcline	\
 		__asm align	8		\
-	__asm small_move_fpu_srcline:			\
+	__asm small_move_fpu_srcline:		\
 		__asm test	ecx, 4		\
-		__asm jz	check2_fpu_srcline		\
+		__asm jz	check2_fpu_srcline	\
 		__asm mov	eax, [esi]	\
 		__asm add	esi, 4		\
 		__asm mov	[edi], eax	\
 		__asm add	edi, 4		\
 		__asm align	8		\
-	__asm check2_fpu_srcline:				\
+	__asm check2_fpu_srcline:		\
 		__asm test	ecx, 2		\
-		__asm jz	finish_fpu_srcline		\
+		__asm jz	finish_fpu_srcline	\
 		__asm mov	ax, [esi]	\
 		__asm mov	[edi], ax	\
 		__asm align	8		\
-	__asm finish_fpu_srcline:				\
+	__asm finish_fpu_srcline:		\
 	}
 
 #define FPU_DSTLINE2(src, dst, width) __asm {\
@@ -853,10 +856,10 @@
 		__asm shr	eax, 2		\
 		__asm jz	small_move_fpu_dstline2	\
 		__asm align	8		\
-	__asm big_move_fpu_dstline2:			\
-        __asm fild  qword ptr [esi] \
-		__asm fistp qword ptr [edi] \
+	__asm big_move_fpu_dstline2:		\
+		__asm fild	qword ptr [esi]	\
 		__asm add	esi, 8		\
+		__asm fistp	qword ptr [edi]	\
 		__asm add	edi, 8		\
 		__asm dec	eax		\
 		__asm jnz	big_move_fpu_dstline2	\
@@ -899,9 +902,9 @@
 		__asm jz	small_move_fpu_dstline4	\
 		__asm align	8		\
 	__asm big_move_fpu_dstline4:		\
-        __asm fild  qword ptr [esi] \
-		__asm fistp qword ptr [edi] \
+		__asm fild	qword ptr [esi]	\
 		__asm add	esi, 8		\
+		__asm fistp	qword ptr [edi]	\
 		__asm add	edi, 8		\
 		__asm dec	eax		\
 		__asm jnz	big_move_fpu_dstline4	\
@@ -1968,6 +1971,7 @@ _grLfbWriteRegion(FxBool pixPipelineP,
 
   info.size = sizeof(info);
   
+#define SET_LFB_STRAIGHT (!HAL_CSIM && !SET_SWIZZLEHACK && !SET_BSWAP) /* Hack alert: more tests? */
   if (_grLfbLock(GR_LFB_WRITE_ONLY_EXPLICIT_EXT, 
                  dst_buffer, 
                  writeMode,
@@ -1977,7 +1981,7 @@ _grLfbWriteRegion(FxBool pixPipelineP,
     FxU32 *srcData;             /* Tracking Source Pointer */
     FxU32 *dstData;             /* Tracking Destination Pointer */
     FxU32 scanline;             /* scanline number */
-#if 0
+#if !SET_LFB_STRAIGHT
     FxU32 *end;                 /* Demarks End of each Scanline */
     FxI32 srcJump;              /* bytes to next scanline */
     FxU32 dstJump;              /* bytes to next scanline */
@@ -1996,7 +2000,7 @@ _grLfbWriteRegion(FxBool pixPipelineP,
     case GR_LFB_SRC_FMT_1555:
     case GR_LFB_SRC_FMT_ZA16:
       dstData = (FxU32*)(((FxU16*)dstData) + dst_x);
-#if 1 /* Hack alert: disable if SET_LFB_16 is not simple assignment */
+#if SET_LFB_STRAIGHT
       if (_GlideRoot.CPUType.os_support & _CPU_FEATURE_MMX) {
          do {
              MMX_DSTLINE2(srcData, dstData, src_width);
@@ -2075,7 +2079,7 @@ _grLfbWriteRegion(FxBool pixPipelineP,
     case GR_LFB_SRC_FMT_555_DEPTH:
     case GR_LFB_SRC_FMT_1555_DEPTH:
       dstData = ((FxU32*)dstData) + dst_x;
-#if 1 /* Hack alert: disable if SET_LFB is not simple assignment */
+#if SET_LFB_STRAIGHT
       if (_GlideRoot.CPUType.os_support & _CPU_FEATURE_MMX) {
          do {
              MMX_DSTLINE4(srcData, dstData, src_width);
@@ -2121,6 +2125,7 @@ _grLfbWriteRegion(FxBool pixPipelineP,
     rv = FXFALSE;
   }
 
+#undef SET_LFB_STRAIGHT
 done:
   GR_RETURN(rv);
 #undef FN_NAME
@@ -2297,49 +2302,45 @@ static FxBool grLfbReadRegionOrigin (GrBuffer_t src_buffer, GrOriginLocation_t o
                  &info))
    {
       FxU32 *src,*dst;
-      FxI32 length, tmplength;
+      FxI32 len;
       FxU32 src_adjust,dst_adjust,tmp;
 
       src=(FxU32 *) (((char*)info.lfbPtr)+
                      (src_y*info.strideInBytes) + (src_x * bpp));
-      length = src_width * bpp;
-	  tmplength = length; /* koolsmoky - MSC inline asm woes */
+      len = src_width * bpp;
 
-      if (_GlideRoot.CPUType.os_support & _CPU_FEATURE_MMX) {
-         if (!gc->state.forced32BPP) {
+      if (!gc->state.forced32BPP) {
+         if (_GlideRoot.CPUType.os_support & _CPU_FEATURE_MMX) {
             do {
-                MMX_SRCLINE(src, dst_data, tmplength);
+                MMX_SRCLINE(src, dst_data, len);
                 /* adjust for next line */
                 ((FxU8 *)src) += info.strideInBytes;
                 ((FxU8 *)dst_data) += dst_stride;
             } while (--src_height);
             MMX_RESET();
-            goto okay;
-		 }
-	  } else {
-		 if (!gc->state.forced32BPP) {
+         } else {
             do {
-                FPU_SRCLINE(src, dst_data, tmplength);
+                FPU_SRCLINE(src, dst_data, len);
                 /* adjust for next line */
                 ((FxU8 *)src) += info.strideInBytes;
                 ((FxU8 *)dst_data) += dst_stride;
             } while (--src_height);
-            goto okay;
          }
+         goto okay;
       }
 
+#if 0
       dst=dst_data;
 
       /* set length - alignment fix*/
       tmp=(((FxU32)src)&2);
-      length -= tmp;
+      len -= tmp;
       src_adjust=info.strideInBytes - tmp;
       dst_adjust=dst_stride - tmp;
 
       /* should be endian and pixel size safe */
       /* it would be nice to test if quad blocks were faster */
       /* like mmx loads and stores */
-#if 0
       if (!gc->state.forced32BPP) while(src_height--)
       {
          /* adjust starting alignment */
@@ -2347,10 +2348,10 @@ static FxBool grLfbReadRegionOrigin (GrBuffer_t src_buffer, GrOriginLocation_t o
             *((FxU16 *)dst)++=*((FxU16 *)src)++;
 
          /* read in dwords of pixels */
-         if(length)
+         if(len)
          {
             FxU32 byte_index=0;
-            FxU32 aligned=length&(~3);
+            FxU32 aligned=len&(~3);
 
             /* copies aligned dwords */
             do
@@ -2359,7 +2360,7 @@ static FxBool grLfbReadRegionOrigin (GrBuffer_t src_buffer, GrOriginLocation_t o
             }while((byte_index+=4)<aligned);
 
             /* handle backend misalignment */
-            if (byte_index!=(FxU32)length)
+            if (byte_index!=(FxU32)len)
                *((FxU16 *)(((FxU32)dst) + byte_index))=*((FxU16 *)(((FxU32)src) + byte_index));
          }
          /* adjust for next line */
@@ -2371,11 +2372,11 @@ static FxBool grLfbReadRegionOrigin (GrBuffer_t src_buffer, GrOriginLocation_t o
 	  if (gc->state.forced32BPP == 16) while(src_height--) {
 
 		  /* read in dwords of pixels */
-		  if(length)
+		  if(len)
 		  {
 			  FxU32 byte_index=0;
 			  FxU32 byte_index2=0;
-				
+
 			  /* copies aligned dwords */
 			  do
 			  {
@@ -2383,18 +2384,18 @@ static FxBool grLfbReadRegionOrigin (GrBuffer_t src_buffer, GrOriginLocation_t o
 				  FxU16 d = (FxU16) (s & 0xF8) >> 3;
 				  d |= (s & 0xFC00) >> 5;
 				  d |= (s & 0xF80000) >> 8;
-				  *((FxU16 *)(((FxU32)dst) + (byte_index2))) = d;
+				  *((FxU16 *)(((FxU32)dst_data) + (byte_index2))) = d;
 				  byte_index +=4;
 			  }while((byte_index2+=2)<(src_width*2));
 		  }
 		  /* adjust for next line */
 		  ((FxU8 *)src)+=info.strideInBytes;
-		  ((FxU8 *)dst)+=dst_stride;
+                  ((FxU8 *)dst_data) += dst_stride;
 	  }
 	  else if (gc->state.forced32BPP == 15) while(src_height--) {
 
 		  /* read in dwords of pixels */
-		  if(length)
+		  if(len)
 		  {
 			  FxU32 byte_index=0;
 			  FxU32 byte_index2=0;
@@ -2406,13 +2407,13 @@ static FxBool grLfbReadRegionOrigin (GrBuffer_t src_buffer, GrOriginLocation_t o
 				  FxU16 d = (FxU16) (s & 0xF8) >> 3;
 				  d |= (s & 0xF800) >> 6;
 				  d |= (s & 0xF80000) >> 9;
-				  *((FxU16 *)(((FxU32)dst) + (byte_index2))) = d;
+				  *((FxU16 *)(((FxU32)dst_data) + (byte_index2))) = d;
 				  byte_index +=4;
 			  }while((byte_index2+=2)<(src_width*2));
 		  }
 		  /* adjust for next line */
 		  ((FxU8 *)src)+=info.strideInBytes;
-		  ((FxU8 *)dst)+=dst_stride;
+                  ((FxU8 *)dst_data) += dst_stride;
 	  }
 
 okay:
@@ -2571,4 +2572,3 @@ GR_ENTRY(grLfbReadRegion, FxBool, (GrBuffer_t src_buffer,
 #undef FN_NAME
 }/* grLfbReadRegion */
 #endif /* if __POWERPC__ */
-
