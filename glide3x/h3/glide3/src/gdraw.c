@@ -19,6 +19,9 @@
  **
  ** $Header$
  ** $Log$
+ ** Revision 1.2.6.1  2003/05/05 07:12:46  dborca
+ ** no message
+ **
  ** Revision 1.2  2000/02/15 22:35:58  joseph
  ** Changes to support FreeBSD (patch submitted by Doug Rabson)
  **
@@ -428,6 +431,7 @@ _grDrawPoints(FxI32 mode, FxI32 count, void *pointers)
            */
 
           /* Mask off the real fractional bits from the mantissa */
+          /* [dBorca] Hack alert: bad type-punning with gcc -O2 */
           x = ((*(FxU32*)&gc->pool.ftemp1 & (0xFFFFFFFFUL << (22UL - kNumMantissaBits))) +
                (0x01UL << (22UL - kNumMantissaBits)));
           y = ((*(FxU32*)&gc->pool.ftemp2 & (0xFFFFFFFFUL << (22UL - kNumMantissaBits))) +
