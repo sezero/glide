@@ -1587,13 +1587,13 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
   /* Want Windowed Mode */
   if (resolution == GR_RESOLUTION_NONE)
   {
-	 extern GrContext_t _grCreateWindowSurface(FxU32 hWnd,
-										GrColorFormat_t		format, 
-										GrOriginLocation_t	origin, 
-										GrPixelFormat_t		pixelformat,
-										int					nAuxBuffer);
-
-	 return _grCreateWindowSurface(hWnd, format, origin, pixelformat, nAuxBuffers);
+    extern GrContext_t _grCreateWindowSurface(FxU32 hWnd,
+                                              GrColorFormat_t    format,
+                                              GrOriginLocation_t origin,
+                                              GrPixelFormat_t    pixelformat,
+                                              int                nAuxBuffer);
+    
+    return _grCreateWindowSurface(hWnd, format, origin, pixelformat, nAuxBuffers);
   }
 #endif	/* (GLIDE_PLATFORM & GLIDE_OS_UNIX) || defined(__DJGPP__) */
   
@@ -3253,12 +3253,12 @@ GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
 #if (GLIDE_OS & GLIDE_OS_WIN32)
   if (_GlideRoot.environment.is_opengl != FXTRUE) {
     if ((_GlideRoot.OS == OS_WIN32_95) ||
-	    (_GlideRoot.OS == OS_WIN32_98) ||
-		(_GlideRoot.OS == OS_WIN32_ME)) {
-        hwcUnmapMemory9x ( gc->bInfo );
-	} else {
-		hwcUnmapMemory();
-	}
+        (_GlideRoot.OS == OS_WIN32_98) ||
+        (_GlideRoot.OS == OS_WIN32_ME)) {
+      hwcUnmapMemory9x ( gc->bInfo );
+    } else {
+      hwcUnmapMemory();
+    }
   }
 #endif
 
