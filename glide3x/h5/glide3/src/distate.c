@@ -2040,22 +2040,14 @@ _grValidateState()
   /* Check for alpha test optimization */
   if (NOTVALID(alphaMode) || NOTVALID(fbzMode) || NOTVALID(stencilMode)) {
     updateAlphaMode = FXTRUE;
-	// KoolSmoky - need to recheck this.
-    /*if((LOADARG(grAlphaBlendFunction, rgb_sf) == GR_BLEND_SRC_ALPHA) &&
+    if((LOADARG(grAlphaBlendFunction, rgb_sf) == GR_BLEND_SRC_ALPHA) &&
        (LOADARG(grAlphaBlendFunction, rgb_df) == GR_BLEND_ONE_MINUS_SRC_ALPHA) &&
        (LOADARG(grAlphaBlendFunction, rgb_op) == GR_BLEND_OP_ADD) &&
        (LOADARG(grDepthMask, enable) == FXFALSE) &&
        ((LOADARG(grStencilMask, value) == 0x00) ||
-        (gc->state.grEnableArgs.stencil_mode == FXFALSE))) {*/
-    if(LOADARG(grDepthMask, enable) == FXFALSE) {
-      if((LOADARG(grAlphaBlendFunction, rgb_df) == GR_BLEND_ONE_MINUS_SRC_ALPHA) &&
-         (LOADARG(grAlphaBlendFunction, rgb_op) == GR_BLEND_OP_ADD) &&
-         (LOADARG(grDepthMask, enable) == FXFALSE) &&
-         ((LOADARG(grStencilMask, value) == 0x00) ||
-          (gc->state.grEnableArgs.stencil_mode == FXFALSE))) {
-        //GDBG_PRINTF("Alpha test optimization enabled.\n");
-        alphaTestOptimization = FXTRUE;
-      }
+        (gc->state.grEnableArgs.stencil_mode == FXFALSE))) {
+      //GDBG_PRINTF("Alpha test optimization enabled.\n");
+      alphaTestOptimization = FXTRUE;
     } else {
       //GDBG_PRINTF("Alpha test optimization disabled.\n");
     }  

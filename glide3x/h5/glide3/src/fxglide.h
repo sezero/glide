@@ -2157,12 +2157,13 @@ struct _GlideRoot_s {
   } deviceArchProcs;
 
 #if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
-#define OS_WIN32_95  0
-#define OS_WIN32_98  1
-#define OS_WIN32_ME  2
-#define OS_WIN32_NT4 3
-#define OS_WIN32_2K  4
-#define OS_WIN32_XP  5
+#define OS_UNKNOWN   0
+#define OS_WIN32_95  1
+#define OS_WIN32_98  2
+#define OS_WIN32_ME  3
+#define OS_WIN32_NT4 4
+#define OS_WIN32_2K  5
+#define OS_WIN32_XP  6
   FxI32 OS;
 #endif
 

@@ -1300,12 +1300,72 @@ _GlideInitEnvironment(void)
   }
 #endif
 
-#if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
-  _GlideRoot.OS = hwcGetOS();
-#endif
-
   /* dBorca - play safe */
   grErrorSetCallback(_grErrorDefaultCallback);
+
+#if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
+  /* Detect Windows OS before we detect glide devices */
+  {
+    OSVERSIONINFO ovi;
+    
+    ovi.dwOSVersionInfoSize = sizeof ( ovi );
+    GetVersionEx ( &ovi );
+    
+    /*XXX: [koolsmoky] I'm too lazy, set default as winxp */
+    _GlideRoot.OS = OS_WIN32_XP/*OS_UNKNOWN*/;
+    
+    if (ovi.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS) {
+      if(ovi.dwMajorVersion == 4) {
+        if (ovi.dwMinorVersion >= 90) {
+          _GlideRoot.OS = OS_WIN32_ME;
+        } else if (ovi.dwMinorVersion >= 10) {
+          _GlideRoot.OS = OS_WIN32_98;
+        } else {
+          _GlideRoot.OS = OS_WIN32_95;
+        }
+      }
+    } else if (ovi.dwPlatformId == VER_PLATFORM_WIN32_NT) {
+      if(ovi.dwMajorVersion == 4) {
+        _GlideRoot.OS = OS_WIN32_NT4;
+      } else if(ovi.dwMajorVersion == 5) {
+        if (ovi.dwMinorVersion >= 1) {
+          _GlideRoot.OS = OS_WIN32_XP;
+        } else {
+          _GlideRoot.OS = OS_WIN32_2K;
+        }
+      } else {
+        _GlideRoot.OS = OS_WIN32_XP;
+      }
+    }
+    
+    switch(_GlideRoot.OS) {
+    case OS_WIN32_95:
+      GDBG_INFO(80, "Detected Windows 95\n");
+      break;
+    case OS_WIN32_98:
+      GDBG_INFO(80, "Detected Windows 98\n");
+      break;
+    case OS_WIN32_ME:
+      GDBG_INFO(80, "Detected Windows Me\n");
+      break;
+    case OS_WIN32_NT4:
+      GDBG_INFO(80, "Detected Windows NT 4.0\n");
+      break;
+    case OS_WIN32_2K:
+      GDBG_INFO(80, "Detected Windows 2000\n");
+      break;
+    case OS_WIN32_XP:
+      GDBG_INFO(80, "Detected Windows XP\n");
+      break;
+    default:
+      GDBG_INFO(80, "Unknown Windows\n");
+      break;
+    }
+    
+    /* Pass retrieved OS info into minihwc */
+    hwcSetOSInfo(&_GlideRoot.OS);
+  }
+#endif
   
   /* KoolSmoky - detect glide devices before we check for user 
   ** environment tweaks.
@@ -1336,6 +1396,22 @@ _GlideInitEnvironment(void)
   /* Get CPU Info */
   _cpuid (&_GlideRoot.CPUType);
 
+  /* Check for vendor specific optimization cases */
+  GDBG_INFO( 0,"   CPU Vendor: %s\n", _GlideRoot.CPUType.v_name);
+  GDBG_INFO(80,"   MMX Support: %c\n", _GlideRoot.CPUType.os_support&_CPU_FEATURE_MMX ? 'Y' : 'N');
+  GDBG_INFO(80,"   SSE Support: %c\n", _GlideRoot.CPUType.os_support&_CPU_FEATURE_SSE ? 'Y' : 'N');
+  GDBG_INFO(80,"  SSE2 Support: %c\n", _GlideRoot.CPUType.os_support&_CPU_FEATURE_SSE2 ? 'Y' : 'N');
+  GDBG_INFO(80," 3DNow Support: %c\n", _GlideRoot.CPUType.os_support&_CPU_FEATURE_3DNOW ? 'Y' : 'N');
+  GDBG_INFO(80,"  MMX+ Support: %c\n", _GlideRoot.CPUType.os_support&_CPU_FEATURE_MMXPLUS ? 'Y' : 'N');
+  GDBG_INFO(80,"3DNow+ Support: %c\n", _GlideRoot.CPUType.os_support&_CPU_FEATURE_3DNOWPLUS ? 'Y' : 'N');
+  
+  /* No CPU Extensions Allowed */
+  if (GLIDE_GETENV("FX_GLIDE_NO_CPU_EXTENSIONS", 0L))
+  {
+    _GlideRoot.CPUType.feature = _GlideRoot.CPUType.os_support = 0;
+    GDBG_INFO(0,"CPU Extensions disabled\n");
+  }
+
 #if !DRI_BUILD
   /* Pass retrieved CPU Info into minihwc */
   hwcSetCPUInfo(&_GlideRoot.CPUType);
@@ -1356,22 +1432,6 @@ _GlideInitEnvironment(void)
   _GlideRoot.deviceArchProcs.nullVertexListProcs = _vertexListProcs[ARRAY_LAST(_vertexListProcs)];
   _GlideRoot.deviceArchProcs.nullTexProcs        = _texDownloadProcs + ARRAY_LAST(_texDownloadProcs);
 #undef ARRAY_LAST
-  
-  /* Check for vendor specific optimization cases */
-  GDBG_INFO( 0,"   CPU Vendor: %s\n", _GlideRoot.CPUType.v_name);
-  GDBG_INFO(80,"   MMX Support: %c\n", _GlideRoot.CPUType.os_support&_CPU_FEATURE_MMX ? 'Y' : 'N');
-  GDBG_INFO(80,"   SSE Support: %c\n", _GlideRoot.CPUType.os_support&_CPU_FEATURE_SSE ? 'Y' : 'N');
-  GDBG_INFO(80,"  SSE2 Support: %c\n", _GlideRoot.CPUType.os_support&_CPU_FEATURE_SSE2 ? 'Y' : 'N');
-  GDBG_INFO(80," 3DNow Support: %c\n", _GlideRoot.CPUType.os_support&_CPU_FEATURE_3DNOW ? 'Y' : 'N');
-  GDBG_INFO(80,"  MMX+ Support: %c\n", _GlideRoot.CPUType.os_support&_CPU_FEATURE_MMXPLUS ? 'Y' : 'N');
-  GDBG_INFO(80,"3DNow+ Support: %c\n", _GlideRoot.CPUType.os_support&_CPU_FEATURE_3DNOWPLUS ? 'Y' : 'N');
-  
-  /* No CPU Extensions Allowed */
-  if (GLIDE_GETENV("FX_GLIDE_NO_CPU_EXTENSIONS", 0L))
-  {
-    _GlideRoot.CPUType.feature = _GlideRoot.CPUType.os_support = 0;
-    GDBG_INFO(0,"CPU Extensions disabled\n");
-  }
 
 #if GL_MMX
   if (_GlideRoot.CPUType.os_support & _CPU_FEATURE_MMX) {  /* check for MMX feature */

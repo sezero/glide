@@ -617,16 +617,6 @@ hwcCheckMemSize(hwcBoardInfo *bInfo, FxU32 xres, FxU32 yres, FxU32 nColBuffers,
                 FxU32 nAuxBuffers, FxBool tiled);
 
 #ifdef __WIN32__
-
-#define OS_WIN32_95  0
-#define OS_WIN32_98  1
-#define OS_WIN32_ME  2
-#define OS_WIN32_NT4 3
-#define OS_WIN32_2K  4
-#define OS_WIN32_XP  5
-FxI32
-hwcGetOS();
-
 FxU32
 hwcAllocWinContext(hwcBoardInfo* bInfo);
 
@@ -765,6 +755,18 @@ extern void hwcAAReadRegion(hwcBoardInfo *bInfo, FxU32 colBufNum,
 
 void hwcCalcSipValue(hwcBoardInfo *bInfo, FxU32 chipNum, FxU32 *nandChain, FxU32 *norChain);
 
-void hwcSetCPUInfo (_p_info *CPUInfo_);
+void hwcSetCPUInfo (_p_info *cpuInfo);
+
+#if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
+/* values must be in sync with fxglide.h */
+#define OS_UNKNOWN   0
+#define OS_WIN32_95  1
+#define OS_WIN32_98  2
+#define OS_WIN32_ME  3
+#define OS_WIN32_NT4 4
+#define OS_WIN32_2K  5
+#define OS_WIN32_XP  6
+void hwcSetOSInfo(FxI32 *osInfo);
+#endif
 
 #endif                          /* MINIHWC_H not defined */

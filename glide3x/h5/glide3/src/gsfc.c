@@ -419,8 +419,8 @@ GR_EXT_ENTRY(grSurfaceReleaseContext, void , (GrContext_t ctx) )
        */
 #if (GLIDE_OS & GLIDE_OS_WIN32)
 	  if ((_GlideRoot.OS == OS_WIN32_95) ||
-		  (_GlideRoot.OS == OS_WIN32_98) ||
-		  (_GlideRoot.OS == OS_WIN32_ME))
+              (_GlideRoot.OS == OS_WIN32_98) ||
+              (_GlideRoot.OS == OS_WIN32_ME))
 		  hwcUnmapMemory9x ( gc->bInfo );
 #endif
 

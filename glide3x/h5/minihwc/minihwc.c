@@ -982,6 +982,10 @@ static __inline int min (int x, int y)
 static hwcInfo hInfo;
 static _p_info *CPUInfo = NULL;
 
+#if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
+static FxI32 *OSInfo = NULL;
+#endif
+
 #define MAX_ERROR_SIZE 1024
 static char errorString[MAX_ERROR_SIZE];
 static FxU32 fenceVar;
@@ -1090,9 +1094,7 @@ static hwcBoardInfo *curBI = NULL;
 static void
 getRegPath(char *regpath) 
 {
-  FxI32 OS = hwcGetOS();
-
-  if (OS == OS_WIN32_NT4) {
+  if ((FxI32)OSInfo == OS_WIN32_NT4) {
     HKEY hKey;
     DWORD type ;
     char strval[256];
@@ -1120,7 +1122,7 @@ getRegPath(char *regpath)
       }
       RegCloseKey(hKey);
     }
-  } else if ((OS == OS_WIN32_2K) || (OS == OS_WIN32_XP)) {
+  } else if (((FxI32)OSInfo == OS_WIN32_2K) || ((FxI32)OSInfo == OS_WIN32_XP)) {
     HKEY hKey;
     
     GDBG_INFO(80, "getRegPath: get registry path on 2K/XP\n");
@@ -1198,7 +1200,6 @@ hwcInit(FxU32 vID, FxU32 dID)
   EnumDisplayDevicesProc enumDisplayDevicesProc;
   int monitor;
   int num_monitor = 0; /* number of 3Dfx devices */
-  FxI32 OS = hwcGetOS();
   
   GDBG_INFO(80, "%s\n", FN_NAME);
   errorString[0] = '\0';
@@ -1365,7 +1366,7 @@ hwcInit(FxU32 vID, FxU32 dID)
           data[num_monitor].dc = hdc;
           strcpy(data[num_monitor].DeviceName, DispDev.DeviceName);
           
-          if ( (OS == OS_WIN32_98) || (OS == OS_WIN32_ME) ) {
+          if ( ((FxI32)OSInfo == OS_WIN32_98) || ((FxI32)OSInfo == OS_WIN32_ME) ) {
             strcpy(data[num_monitor].RegPath, DispDev.DeviceKey);
           } else {
             char *pdest;
@@ -4232,9 +4233,9 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
 #ifdef HWC_EXT_INIT
   hwcExtRequest_t ctxReq;
   hwcExtResult_t  ctxRes;
-  FxI32 OS = hwcGetOS();
 #endif
   FxI32 useV56KdacFix = 2;
+  FxI32 overlaymode;
   
   {
     FxU32 refresh;
@@ -4532,69 +4533,56 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
   }
 #endif
 
-  /* NOTE: This may over 'blur' the output, but we enable filtering if in fsaa even for 32bit color. */
-  if (NULL == GETENV("SSTH3_OVERLAYMODE")) {
-    /* We are in optimal mode by default */
+  overlaymode = 1; /* We are in optimal mode by default */
+  if (GETENV("SSTH3_OVERLAYMODE")) {
+    overlaymode = atoi(GETENV("SSTH3_OVERLAYMODE"));
+  }
+  /* NOTE: Not sure if the hw handles this, but we enable filtering if in fsaa even for 32bit color. */
+  switch(overlaymode) {
+  default:
+  case 1: /* Optimal */
     if(bpp == 32 &&
        !((useV56KdacFix != 0) && IS_NAPALM(bInfo->pciInfo.deviceID) && (bInfo->h3pixelSample > 1))) { /* 32bpp and not fsaa */
       vidProcCfg |= SST_OVERLAY_FILTER_POINT;
+    } else
+    /* make sure that if 2x video mode or SLI mode is enabled, we use the 4x1 filter. */
+    if((bInfo->vidInfo.xRes >= 1024) || /* can't tell the difference for resolutions larger than 1024*768 */
+       (vidProcCfg & SST_VIDEO_2X_MODE_EN) ||
+       (IS_NAPALM(bInfo->pciInfo.deviceID) && (bInfo->h3nwaySli > 1))) {
+      vidProcCfg |= SST_OVERLAY_FILTER_4X4;
     } else {
-      /* make sure that if 2x video mode or SLI mode is enabled, we use the 4x1 filter. */
-      if((bInfo->vidInfo.xRes >= 1024) || /* can't tell the difference for resolutions larger than 1024*768 */
-         (vidProcCfg & SST_VIDEO_2X_MODE_EN) ||
-         (IS_NAPALM(bInfo->pciInfo.deviceID) && (bInfo->h3nwaySli > 1))) {
-        vidProcCfg |= SST_OVERLAY_FILTER_4X4;
-      } else {
-        vidProcCfg |= SST_OVERLAY_FILTER_2X2;
-      }
+      vidProcCfg |= SST_OVERLAY_FILTER_2X2;
     }
-  } else {
-    switch(atoi(GETENV("SSTH3_OVERLAYMODE"))) {
-    default:
-    case 1: /* Optimal */
-      if(bpp == 32 &&
-         !((useV56KdacFix != 0) && IS_NAPALM(bInfo->pciInfo.deviceID) && (bInfo->h3pixelSample > 1))) {
-        vidProcCfg |= SST_OVERLAY_FILTER_POINT;
-      } else {
-        if((bInfo->vidInfo.xRes >= 1024) ||
-           (vidProcCfg & SST_VIDEO_2X_MODE_EN) ||
-           (IS_NAPALM(bInfo->pciInfo.deviceID) && (bInfo->h3nwaySli > 1))) {
-          vidProcCfg |= SST_OVERLAY_FILTER_4X4;
-        } else {
-          vidProcCfg |= SST_OVERLAY_FILTER_2X2;
-        }
-      }
-      break;
-    case 2: /* Normal */
-      if(bpp == 32) {
-        vidProcCfg |= SST_OVERLAY_FILTER_POINT;
-      } else {
-        vidProcCfg |= SST_OVERLAY_FILTER_4X4;
-      }
-      break;
-    case 3: /* High */
-      if(bpp == 32) {
-        vidProcCfg |= SST_OVERLAY_FILTER_POINT;
-      } else
-      if((vidProcCfg & SST_VIDEO_2X_MODE_EN) ||
-         (IS_NAPALM(bInfo->pciInfo.deviceID) && (bInfo->h3nwaySli > 1))) {
-        vidProcCfg |= SST_OVERLAY_FILTER_4X4;
-      } else {
-        vidProcCfg |= SST_OVERLAY_FILTER_2X2;
-      }
-      break;
-    case 4: /* Very High */
-      if(bpp == 32) {
-        vidProcCfg |= SST_OVERLAY_FILTER_POINT;
-      } else {
-        vidProcCfg |= SST_OVERLAY_FILTER_BILINEAR;
-      }
-      break;
-    case -1: /* Disabled */
-      /* use this just in case */
+    break;
+  case 2: /* Normal */
+    if(bpp == 32) {
       vidProcCfg |= SST_OVERLAY_FILTER_POINT;
-      break;
+    } else {
+      vidProcCfg |= SST_OVERLAY_FILTER_4X4;
     }
+    break;
+  case 3: /* High */
+    if(bpp == 32) {
+      vidProcCfg |= SST_OVERLAY_FILTER_POINT;
+    } else
+    if((vidProcCfg & SST_VIDEO_2X_MODE_EN) ||
+       (IS_NAPALM(bInfo->pciInfo.deviceID) && (bInfo->h3nwaySli > 1))) {
+      vidProcCfg |= SST_OVERLAY_FILTER_4X4;
+    } else {
+      vidProcCfg |= SST_OVERLAY_FILTER_2X2;
+    }
+    break;
+  case 4: /* Very High */
+    if(bpp == 32) {
+      vidProcCfg |= SST_OVERLAY_FILTER_POINT;
+    } else {
+      vidProcCfg |= SST_OVERLAY_FILTER_BILINEAR;
+    }
+    break;
+  case -1: /* Disabled */
+    /* use this just in case */
+    vidProcCfg |= SST_OVERLAY_FILTER_POINT;
+    break;
   }
   
   if (bInfo->h3pixelSample < 2)
@@ -4621,7 +4609,8 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
 
     /* set up desktop pixel format */
     /* Also turn off all filtering, as it seems to screw up multi-chip configs. */
-    vidProcCfg &= ~(SST_DESKTOP_PIXEL_FORMAT|SST_OVERLAY_FILTER_MODE);
+    /* [koolsmoky] Hmm, there seem to be no screw ups... */
+    vidProcCfg &= ~(SST_DESKTOP_PIXEL_FORMAT/*|SST_OVERLAY_FILTER_MODE*/);
     switch(vidProcCfg & SST_OVERLAY_PIXEL_FORMAT) {
       case SST_OVERLAY_PIXEL_RGB32U:
         vidProcCfg |= SST_DESKTOP_PIXEL_RGB32;
@@ -4774,9 +4763,9 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
 
     GDBG_INFO(80, FN_NAME ": HWC_MINIVDD_HACK\n");
 
-	if ((OS == OS_WIN32_NT4) ||
-		(OS == OS_WIN32_2K)  ||
-		(OS == OS_WIN32_XP))
+	if (((FxI32)OSInfo == OS_WIN32_NT4) ||
+            ((FxI32)OSInfo == OS_WIN32_2K)  ||
+            ((FxI32)OSInfo == OS_WIN32_XP))
     {
       FxU32 retVal = FXTRUE;
       ctxReq.which = HWCEXT_SLI_AA_REQUEST ;
@@ -5439,10 +5428,6 @@ hwcRestoreVideo(hwcBoardInfo *bInfo)
 {
 #define FN_NAME "hwcRestoreVideo"
 
-#ifdef HWC_EXT_INIT
-	FxI32 OS = hwcGetOS();
-#endif
-
   #if 1
   hwcIdleHardwareWithTimeout(bInfo);
 
@@ -5467,9 +5452,9 @@ hwcRestoreVideo(hwcBoardInfo *bInfo)
 
     GDBG_INFO(80, FN_NAME ": HWC_MINIVDD_HACK\n");
 
-	if ((OS == OS_WIN32_NT4) ||
-		(OS == OS_WIN32_2K)  ||
-		(OS == OS_WIN32_XP))
+	if (((FxI32)OSInfo == OS_WIN32_NT4) ||
+            ((FxI32)OSInfo == OS_WIN32_2K)  ||
+            ((FxI32)OSInfo == OS_WIN32_XP))
     {
       hwcExtRequest_t ctxReq ;
       hwcExtResult_t  ctxRes ;
@@ -8961,7 +8946,6 @@ hwcShareContextData(hwcBoardInfo *bInfo, FxU32 **data)
 #if HWC_EXT_INIT
   hwcExtRequest_t ctxReq;
   hwcExtResult_t  ctxRes;
-  FxI32 OS = hwcGetOS();
 
   GDBG_INFO(80, FN_NAME "\n");  
 
@@ -8969,9 +8953,9 @@ hwcShareContextData(hwcBoardInfo *bInfo, FxU32 **data)
   
   if( HWCEXT_PROTOCOL( bInfo->boardNum ) )
   {
-    if ((OS == OS_WIN32_NT4) ||
-        (OS == OS_WIN32_2K)  ||
-        (OS == OS_WIN32_XP))
+    if (((FxI32)OSInfo == OS_WIN32_NT4) ||
+        ((FxI32)OSInfo == OS_WIN32_2K)  ||
+        ((FxI32)OSInfo == OS_WIN32_XP))
       {
       hwcExtRequest_t
         ctxReq;
@@ -9139,12 +9123,11 @@ hwcUnmapMemory()
   FxU32 i;
   hwcExtRequest_t ctxReq;
   hwcExtResult_t  ctxRes;
-  FxI32 OS = hwcGetOS();
 
   if ( curBI ) {
-    if ((OS == OS_WIN32_NT4) ||
-        (OS == OS_WIN32_2K)  ||
-        (OS == OS_WIN32_XP))
+    if (((FxI32)OSInfo == OS_WIN32_NT4) ||
+        ((FxI32)OSInfo == OS_WIN32_2K)  ||
+        ((FxI32)OSInfo == OS_WIN32_XP))
       {
       hwcExtRequest_t
         ctxReq;
@@ -9677,70 +9660,15 @@ static  FxI32 valarray[SST_SIPROCESS_OSC_CNTR + 1];    // is this how you do an 
 }
 
 void
-hwcSetCPUInfo(_p_info *CPUInfo_)
+hwcSetCPUInfo(_p_info *cpuInfo)
 {
-  CPUInfo = CPUInfo_;
+  CPUInfo = cpuInfo;
 } /* hwcSetCPUInfo */
 
-#ifdef __WIN32__
-FxI32
-hwcGetOS()
+#if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
+void
+hwcSetOSInfo(FxI32 *osInfo)
 {
-  static FxI32 OS = -1;
-  OSVERSIONINFO ovi;
-  
-  if ( OS != -1 ) return OS;
-
-  ovi.dwOSVersionInfoSize = sizeof ( ovi );
-  GetVersionEx ( &ovi );
-
-  if (ovi.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS) {
-    if(ovi.dwMajorVersion == 4) {
-	  if (ovi.dwMinorVersion >= 90) {
-	    OS = OS_WIN32_ME;
-	  } else if (ovi.dwMinorVersion >= 10) {
-	    OS = OS_WIN32_98;
-	  } else {
-	    OS = OS_WIN32_95;
-	  }
-	}
-  } else if (ovi.dwPlatformId == VER_PLATFORM_WIN32_NT) {
-    if(ovi.dwMajorVersion == 4) {
-	  OS = OS_WIN32_NT4;
-	} else if(ovi.dwMajorVersion >= 5) {
-	  if (ovi.dwMinorVersion >= 1) {
-	    OS = OS_WIN32_XP;
-	  } else {
-	    OS = OS_WIN32_2K;
-	  }
-	}
-  }
-  
-  switch(OS) {
-	case OS_WIN32_95:
-	  GDBG_INFO(80, "hwcGetOS:  OS = win95\n");
-	  break;
-	case OS_WIN32_98:
-	  GDBG_INFO(80, "hwcGetOS:  OS = win98\n");
-	  break;
-	case OS_WIN32_ME:
-	  GDBG_INFO(80, "hwcGetOS:  OS = winme\n");
-	  break;
-	case OS_WIN32_NT4:
-	  GDBG_INFO(80, "hwcGetOS:  OS = winnt4.0\n");
-	  break;
-	case OS_WIN32_2K:
-	  GDBG_INFO(80, "hwcGetOS:  OS = win2k\n");
-	  break;
-	case OS_WIN32_XP:
-	  GDBG_INFO(80, "hwcGetOS:  OS = winxp\n");
-	  break;
-	default:
-	  GDBG_INFO(80, "hwcGetOS:  OS = unknown\n");
-	  break;
-  }
-
-  return OS;
-#undef FN_NAME
-} /* hwcGetOS */
-#endif /* __WIN32__ */
+  OSInfo = osInfo;
+} /* hwcSetOSInfo */
+#endif

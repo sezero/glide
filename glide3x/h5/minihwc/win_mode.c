@@ -229,16 +229,16 @@ setVideoMode( void *hwnd, int xRes, int yRes, int h3pixelSize, int refresh, void
   /* KoolSmoky - Hack for win95. make a disp struct if we don't get anything
    * from EnumDisplaySettings.
    */
-  if ((devMode.dmBitsPerPel < 8UL) || (devMode.dmBitsPerPel > 32UL) || (hwcGetOS() == OS_WIN32_95)) {
+  if ((devMode.dmBitsPerPel < 8UL) || (devMode.dmBitsPerPel > 32UL)) {
     devMode.dmSize       = sizeof(DEVMODE);
     devMode.dmPelsWidth  = GetSystemMetrics(SM_CXSCREEN);
     devMode.dmPelsHeight = GetSystemMetrics(SM_CYSCREEN);
     devMode.dmFields     = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
-	{
+    {
       HDC hdc = GetDC(NULL); /* grab DC of desktop */
       devMode.dmBitsPerPel = (DWORD)GetDeviceCaps(hdc, BITSPIXEL) ;
       ReleaseDC(NULL, hdc);
-	}
+    }
   }
 
   GDBG_INFO(80, "DeviceName: %s Display mode: %dx%dx%dbpp!\n", devicename, devMode.dmPelsWidth, devMode.dmPelsHeight, devMode.dmBitsPerPel);
