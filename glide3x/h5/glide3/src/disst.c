@@ -180,6 +180,10 @@ GR_DIENTRY(grSstSelect, void, ( int which ))
    */
   GDBG_INFO(80, "grSstSelect(0x%X)\n", which);
 
+  if (_GlideRoot.current_sst == which) {
+     return;
+  }
+
   if ( which >= _GlideRoot.hwConfig.num_sst )
     GrErrorCallback( "grSstSelect:  non-existent SST", FXTRUE );
 

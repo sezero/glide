@@ -1989,7 +1989,15 @@ _GlideInitEnvironment(int which)
 
   /* KoolSmoky - current_sst is not always 0  */
   /* _GlideRoot.current_sst = 0; */ /* make sure there's a valid GC */
-  _GlideRoot.current_sst = ctx;
+  /* [dBorca] - HACK!HACK!HACK
+   * invalidate current_sst; we'll be doing grSstSelect in grGlideInit.
+   * The reason for this is to bypass grSstSelect when invoked with same
+   * value as current_sst. Otherwise, setThreadValue seems to provoke a
+   * call DLL_PROCESS_DETACH in GR_RESOLUTION_NONE mode?!? Which breaks
+   * some applications...
+   */
+  /* _GlideRoot.current_sst = ctx; */
+  _GlideRoot.current_sst = -1;
 
   /* dBorca - moved to grGlideInit
   grErrorSetCallback(_grErrorDefaultCallback);
