@@ -18,6 +18,8 @@
 # COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 #
 
+!include $(BUILD_ROOT)\config.mak
+
 LDIRT= *.exe *.map *.sys *.obj *.lib
 
 # Special case rush because its built off of the sst1 tree
@@ -29,7 +31,7 @@ GLIDE_ROOT      =       $(BUILD_ROOT)\$(FX_GLIDE_HW)
 
 LCINCS  = $(LCINCS)  -I$(GLIDE_ROOT)\include -WX
 
-!if "$(FX_GLIDE_HW)" == "H5"
+!if "$(FX_GLIDE_HW)" == "h5"
 LCDEFS          =       $(LCDEFS) -DFX_GLIDE_NAPALM=1
 !endif
 
@@ -96,9 +98,9 @@ CFILES   = test00.c \
            test44.c \
            test45.c \
            test46.c \
-			 test47.c \
-			 test48.c \
-			 test49.c \
+           test47.c \
+           test48.c \
+           test49.c \
            display.c \
            sbench.c
 
@@ -106,7 +108,7 @@ PROGRAMS = $(CFILES:.c=.exe)
 
 DATAFILES = alpha.3df decal1.3df lava.3df light.3df matt1.3df miro.3df
 
-!include $(BUILD_ROOT)\swlibs/include/nmake/3dfx.mak
+!include $(BUILD_ROOT)\swlibs\include\nmake\3dfx.mak
 
 $(PROGRAMS):  $(LLDLIBS)
 
