@@ -251,6 +251,10 @@ FLAGS = $(FLAGS) -DGLIDE_SANITY_SIZE=1
 FLAGS = $(FLAGS) -DGLIDE_SANITY_ASSERT=1
 !endif
 
+!if "$(TEXUS2)" == "1"
+FLAGS = $(FLAGS) -DHAVE_TEXUS2
+!endif
+
 # Remove this line to disable the WinXP Alt Tab fix.
 FLAGS = $(FLAGS) -DWINXP_ALT_TAB_FIX=1 -DWINXP_SAFER_ALT_TAB_FIX=1
 
@@ -419,7 +423,9 @@ TEXUS2_OBJ = \
 	$(FX_GLIDE_SWLIBS)\texus2\lib\eigen.obj\
 	$(FX_GLIDE_SWLIBS)\texus2\lib\bitcoder.obj
 
+!if "$(TEXUS2)" == "1"
 GLIDE3_OBJ = $(GLIDE3_OBJ) $(TEXUS2_OBJ)
+!endif
 
 GLIDE3_RES = $(FX_GLIDE_HW)\glide3\src\glide.res
 

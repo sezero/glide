@@ -126,6 +126,10 @@ else
 #CDEFS += -DGLIDE_CHECK_CONTEXT
 endif
 
+ifeq ($(TEXUS2),1)
+CDEFS += -DHAVE_TEXUS2
+endif
+
 ###############################################################################
 #	flags
 ###############################################################################
@@ -267,6 +271,10 @@ GLIDE_OBJECTS += \
 	$(FX_GLIDE_HW)/minihwc/minihwc.o \
 	$(FX_GLIDE_HW)/minihwc/dos_mode.o \
 	h5/cinit/h3cinit.o
+ifeq ($(FX_GLIDE_HW),h5)
+GLIDE_OBJECTS += \
+	h5/minihwc/gpio.o
+endif
 endif
 
 TEXUS_SOURCES = \

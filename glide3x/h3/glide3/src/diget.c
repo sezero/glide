@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.6.1  2003/11/07 13:38:38  dborca
+** unite the clans
+**
 ** Revision 1.1.1.1  1999/11/24 21:44:54  joseph
 ** Initial checkin for SourceForge
 **
@@ -818,6 +821,12 @@ typedef struct {
     GrProc      proc;
 } GrExtensionTuple;
 
+#if HAVE_TEXUS2
+FX_ENTRY void FX_CALL txImgQuantize (char *dst, char *src, int w, int h, FxU32 format, FxU32 dither);
+FX_ENTRY void FX_CALL txMipQuantize (void *pxMip, void *txMip, int fmt, FxU32 d, FxU32 comp);
+FX_ENTRY void FX_CALL txPalToNcc (GuNccTable *ncc_table, const FxU32 *pal);
+#endif
+
 static GrExtensionTuple _extensionTable[] = {
     { "grGetRegistryOrEnvironmentStringExt",    (GrProc)grGetRegistryOrEnvironmentString },
     { "grChromaRangeModeExt",    (GrProc)grChromaRangeMode },
@@ -837,6 +846,11 @@ static GrExtensionTuple _extensionTable[] = {
     { "grCommandTransportMakeRoomExt2", (GrProc)_grCommandTransportMakeRoom },
     /* POINTCAST */
     { "grTexDownloadTableExt", (GrProc)grTexDownloadTableExt },
+#if HAVE_TEXUS2
+    { "txMipQuantize", (GrProc)txMipQuantize },
+    { "txImgQuantize", (GrProc)txImgQuantize },
+    { "txPalToNcc", (GrProc)txPalToNcc },
+#endif
     { 0, 0 }
 };
 

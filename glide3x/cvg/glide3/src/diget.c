@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.1  2003/11/03 13:34:29  dborca
+** Voodoo2 happiness (DJGPP & Linux)
+**
 ** Revision 1.1.1.1  1999/12/07 21:42:30  joseph
 ** Initial checkin into SourceForge.
 **
@@ -893,30 +896,53 @@ GR_DIENTRY(grReset, FxBool, (FxU32 what))
   
   Return:
   -------------------------------------------------------------------*/
+typedef struct {
+    const char *name;
+    GrProc      proc;
+} GrExtensionTuple;
+
+#if HAVE_TEXUS2
+FX_ENTRY void FX_CALL txImgQuantize (char *dst, char *src, int w, int h, FxU32 format, FxU32 dither);
+FX_ENTRY void FX_CALL txMipQuantize (void *pxMip, void *txMip, int fmt, FxU32 d, FxU32 comp);
+FX_ENTRY void FX_CALL txPalToNcc (GuNccTable *ncc_table, const FxU32 *pal);
+#endif
+
+static GrExtensionTuple _extensionTable[] = {
+    { "grChromaRangeModeExt", (GrProc)grChromaRangeMode },
+    { "grChromaRangeExt", (GrProc)grChromaRange },
+    { "grTexChromaModeExt", (GrProc)grTexChromaMode },
+    { "grTexChromaRangeExt", (GrProc)grTexChromaRange },
+    { "guQueryResolutionXYExt", (GrProc)guQueryResolutionXY },
+    { "grGetRegistryOrEnvironmentStringExt", (GrProc)grGetRegistryOrEnvironmentString },
+    { "grTexDownloadTableExt", (GrProc)grTexDownloadTableExt },
+#if HAVE_TEXUS2
+    { "txMipQuantize", (GrProc)txMipQuantize },
+    { "txImgQuantize", (GrProc)txImgQuantize },
+    { "txPalToNcc", (GrProc)txPalToNcc },
+#endif
+    { 0, 0 }
+};
+
 GR_DIENTRY(grGetProcAddress, GrProc, (char *procName))
 {
 #define FN_NAME "grGetProcAddress"
+  GrExtensionTuple *tuple;
 
   if (_GlideRoot.hwConfig.SSTs[_GlideRoot.current_sst].type == GR_SSTTYPE_Voodoo2) {
-    if (!strcmp(procName, "grChromaRangeModeExt"))
-      return (GrProc)grChromaRangeMode;
-    if (!strcmp(procName, "grChromaRangeExt"))
-      return (GrProc)grChromaRange;
-    if (!strcmp(procName, "grTexChromaModeExt"))
-      return (GrProc)grTexChromaMode;
-    if (!strcmp(procName, "grTexChromaRangeExt"))
-      return (GrProc)grTexChromaRange;
     if (!strcmp(procName, "grDrawTextureLineExt"))
       return (GrProc)_GlideRoot.deviceArchProcs.curLineProc;
-    if (!strcmp(procName, "guQueryResolutionXYExt"))
-      return (GrProc)guQueryResolutionXY;
-    if (!strcmp(procName, "grGetRegistryOrEnvironmentStringExt"))
-      return (GrProc)grGetRegistryOrEnvironmentString;
-    if (!strcmp(procName, "grTexDownloadTableExt"))
-      return (GrProc)grTexDownloadTableExt;
-  }
-  return NULL;
 
+    tuple = &_extensionTable[0];
+
+    while( tuple->name ) {
+        if ( !strcmp( procName, tuple->name ) ) {
+            return tuple->proc;
+        }
+        tuple++;
+    }
+  }
+
+  return NULL;
 #undef FN_NAME
 } /* grGetProcAddress */
 
