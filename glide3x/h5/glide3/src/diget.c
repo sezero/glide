@@ -1134,6 +1134,7 @@ static GrExtensionTuple _extensionTable[] = {
     { "txImgQuantize", (GrProc)txImgQuantize },
     { "txPalToNcc", (GrProc)txPalToNcc },
 #endif
+    { "grSetNumPendingBuffers", (GrProc)grSetNumPendingBuffers},
     { 0, 0 }
 };
 
