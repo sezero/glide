@@ -749,6 +749,7 @@
 #include <math.h>
 
 #include <3dfx.h>
+#include <glide.h>
 
 #ifdef HWC_EXT_INIT
 #include "hwcext.h"
@@ -873,13 +874,11 @@ typedef struct sli_aa_request {
 #endif
 
 //#if defined(HWC_EXT_INIT)
-#ifndef __DJGPP__
+#if !defined(__DJGPP__) && !(GLIDE_PLATFORM & GLIDE_OS_UNIX)
 #define GETENV(a, b) hwcGetenvEx(a, b)
 #else
 #define GETENV(a, b) hwcGetenv(a)
-#endif
 
-#ifdef __DJGPP__
 #define _aligned_malloc(a, b) malloc(a)
 #define _aligned_free free
 /* don't like macros, because of side-effects */
@@ -1032,6 +1031,8 @@ modify [eax];
 #define P6FENCE __sync()
 #elif defined(__DJGPP__) || defined (__MINGW32__)
 #define P6FENCE __asm __volatile ("xchg %%eax, _fenceVar":::"%eax")
+#elif (GLIDE_PLATFORM & GLIDE_OS_UNIX)
+#define P6FENCE __asm __volatile ("xchg %%eax, fenceVar":::"%eax")
 #else
 #error "P6 Fencing in-line assembler code needs to be added for this compiler"
 #endif /* Compiler specific fence commands */
@@ -1838,6 +1839,7 @@ hwcInit(FxU32 vID, FxU32 dID)
         if(IS_NAPALM(hInfo.boardInfo[i].pciInfo.deviceID)) {
           FxU32 device_vendor;
 
+#if !(GLIDE_PLATFORM & GLIDE_OS_UNIX) /* [dBorca] Hack alert: TODO bare Linux SLI */
           /* Detect two-chip board */
           device_vendor = hwcReadConfigRegister(&hInfo.boardInfo[i], 1, offsetof(SstPCIConfigRegs, deviceID_vendorID));
           if((device_vendor & 0xFFFF) == 0x121a && (IS_NAPALM((device_vendor >> 16)))) {
@@ -1864,6 +1866,7 @@ hwcInit(FxU32 vID, FxU32 dID)
             hInfo.boardInfo[i].pciInfo.pciBaseAddr[(chip << 2) + 2] = 
               hwcReadConfigRegister(&hInfo.boardInfo[i], chip, offsetof(SstPCIConfigRegs, ioBaseAddr));
           }
+#endif
         }        
 
         // Save realNumChips
@@ -2020,6 +2023,9 @@ hwcMapBoard(hwcBoardInfo *bInfo, FxU32 bAddrMask)
       bAddr, length;
 
     bInfo->isMapped = FXTRUE;
+    /* [dBorca] Hack alert:
+    bInfo->procHandle = getpid();
+    */
 
     if (IS_NAPALM(bInfo->pciInfo.deviceID))
       length = 32*1024*1024;
@@ -4404,7 +4410,7 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
    }
 #endif
 
-#ifdef __DOS32__
+#ifndef __WIN32__ /* DOS and Linux */
   /* Now call the cinit code */
 
   h3InitVideoOverlaySurface(
@@ -5408,7 +5414,7 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
     HWC_IO_STORE(bInfo->regInfo, pciInit0, pciInit0);
   }
 
-#ifdef __DJGPP__
+#if defined(__DJGPP__) || (GLIDE_PLATFORM & GLIDE_OS_UNIX)
   HWC_IO_STORE(bInfo->regInfo, vidProcCfg, vidProcCfg | SST_VIDEO_PROCESSOR_EN);
 #endif
 
@@ -6900,6 +6906,7 @@ FxU32 hwcAAReadRegion16(hwcBoardInfo *bInfo, FxU32 colBufNum,
 
 /* Gamma table */
 FxU32 gss_red[256], gss_green[256], gss_blue[256], gss_red_shifted[256];
+/*ZZZ*/FxU32 _gss_red[256], _gss_green[256], _gss_blue[256], _gss_red_shifted[256];
 
 static void hwcCopyBuffer8888Flipped(hwcBoardInfo *bInfo, FxU16 *source, int w, int h, FxU8 *dst, int aaShift)
 {
@@ -8807,6 +8814,12 @@ char *
 hwcGetenv(const char *a) 
 {
   return hwcGetenvEx(a, opengl_regpath);
+#elif (GLIDE_PLATFORM & GLIDE_OS_UNIX)
+extern char *file_getenv (const char *a);
+char *
+hwcGetenv(const char *a) 
+{
+  return file_getenv(a);
 #else
 char *
 hwcGetenv(const char *a) 

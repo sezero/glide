@@ -2791,7 +2791,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
     gcFifo->fifoRead = HW_FIFO_PTR( FXTRUE );
 #endif /* USE_PACKET_FIFO */
     
-#if !(GLIDE_PLATFORM & GLIDE_OS_UNIX)
+#if !DRI_BUILD
     if ( (void*)gcFifo->fifoPtr != (void*)gcFifo->fifoRead ) {
 #ifdef GLIDE_INIT_HWC
       hwcRestoreVideo( bInfo );
@@ -2799,7 +2799,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
       GDBG_INFO( gc->myLevel, "Initial fifo state is incorrect\n" );
       return 0;
     }
-#endif	/* GLIDE_PLATFORM & GLIDE_OS_UNIX */
+#endif	/* DRI_BUILD */
     
 #if __POWERPC__ && PCI_BUMP_N_GRIND
     enableCopyBackCache((FxU32)gcFifo->fifoStart,gcFifo->fifoSize);
@@ -3204,9 +3204,12 @@ GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
        */
       GDBG_INFO(gc->myLevel, "  Restore Video\n");
 #if !(GLIDE_PLATFORM & GLIDE_OS_UNIX)
-      if (!*gc->lostContext) {
+      if (!*gc->lostContext)
+#endif	/* !(GLIDE_PLATFORM & GLIDE_OS_UNIX) */
+#if !DRI_BUILD
       /* disable SLI and AA */
 #ifdef FX_GLIDE_NAPALM
+      {
         if (IS_NAPALM(gc->bInfo->pciInfo.deviceID)) {
           _grChipMask( SST_CHIP_MASK_ALL_CHIPS );
           _grTex2ppc(FXFALSE);
@@ -3224,7 +3227,7 @@ GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
 #endif            
         hwcRestoreVideo(gc->bInfo);
       }
-#endif	/* !(GLIDE_PLATFORM & GLIDE_OS_UNIX) */
+#endif	/* !DRI_BUILD */
 #endif /* !GLIDE_INIT_HAL */
 
       /*--------------------------
