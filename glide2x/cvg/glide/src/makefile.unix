@@ -1,0 +1,263 @@
+#
+# THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONLY
+# PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGHT
+# TO USE THE GLIDE TRADEMARK WITHOUT PRIOR WRITTEN PERMISSION OF 3DFX
+# INTERACTIVE, INC. A COPY OF THIS LICENSE MAY BE OBTAINED FROM THE 
+# DISTRIBUTOR OR BY CONTACTING 3DFX INTERACTIVE INC(info@3dfx.com). 
+# THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER 
+# EXPRESSED OR IMPLIED. SEE THE 3DFX GLIDE GENERAL PUBLIC LICENSE FOR A
+# FULL TEXT OF THE NON-WARRANTY PROVISIONS.  
+# 
+# USE, DUPLICATION OR DISCLOSURE BY THE GOVERNMENT IS SUBJECT TO
+# RESTRICTIONS AS SET FORTH IN SUBDIVISION (C)(1)(II) OF THE RIGHTS IN
+# TECHNICAL DATA AND COMPUTER SOFTWARE CLAUSE AT DFARS 252.227-7013,
+# AND/OR IN SIMILAR OR SUCCESSOR CLAUSES IN THE FAR, DOD OR NASA FAR
+# SUPPLEMENT. UNPUBLISHED RIGHTS RESERVED UNDER THE COPYRIGHT LAWS OF
+# THE UNITED STATES.  
+# 
+# COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
+
+TAG_REGEXP 	= $(BUILD_ROOT)/$(FX_GLIDE_HW)/glide/src/glide.rx
+
+
+# Compile for specific hardware
+ifeq ($(FX_GLIDE_HW),cvg)
+FX_GLIDE_REAL_HW=       1
+FX_GLIDE_CTRISETUP =    0
+
+HWSPEC          =       fifo.c
+LCDEFS          +=      -DCVG \
+                        -DGLIDE_CHIP_BROADCAST=1 -DGLIDE_DEFAULT_GAMMA=1.3 \
+			-DGLIDE_BLIT_CLEAR=1
+
+else 
+ifeq ($(FX_GLIDE_HW),H3)
+FX_GLIDE_REAL_HW=       1
+FX_GLIDE_NO_FIFO=       1
+FX_GLIDE_CTRISETUP =    1
+HWSPEC          =       fifo.c
+LCDEFS          +=      -DH3 \
+                        -DGLIDE_HW_TRI_SETUP=1 -DGLIDE_PACKET3_TRI_SETUP=0
+else
+error "FX_GLIDE_HW == unknown value (H3|CVG)"
+endif
+endif
+
+ifeq ($(DEBUG),1)
+DBGOPTS          =      -DGLIDE_DEBUG -DGDBG_INFO_ON
+GLIDE_SANITY_ALL =      1
+endif
+
+ifeq ($(FX_GLIDE_HW),)
+error "FX_GLIDE_HW not defined"
+endif
+
+# Display Options 
+DSPOPTS =
+SUBLIBRARIES =
+
+ifeq ($(HAL_HW),1)
+DSPOPTS         +=      -DHAL_HW=1
+SUBLIBRARIES    +=      $(BUILD_ROOT)/$(FX_GLIDE_HW)/lib/libsst1init.a \
+			$(BUILD_ROOT_SWLIBS)/lib/libfxmisc.a \
+			$(BUILD_ROOT_SWLIBS)/lib/libfxpci.a
+endif
+ifeq ($(DSPOPTS),)
+error "Unknown HAL_* configuration"
+endif
+
+# GLIDE_HW_TRI_SETUP:   Use the hw TSU for triangle rendering. 
+# GLIDE_TRI_CULLING:    Cull backfaced/zero area triangles in sw before the fifo.
+#                       NB: This must be set if GLIDE_HW_TRI_SETUP=0
+ifeq ($(FX_GLIDE_SW_SETUP),1)
+LCDEFS          +=       -DGLIDE_HW_TRI_SETUP=0 -DGLIDE_TRI_CULLING=1
+FX_GLIDE_CTRISETUP = 1
+else
+# Do culling test in sw for independent triangles
+CULL_MODE       =       -DGLIDE_TRI_CULLING=0
+ifeq ($(FX_GLIDE_HW_CULL),1)
+CULL_MODE       =       -DGLIDE_TRI_CULLING=1
+endif
+DSPOPTS         +=       $(CULL_MODE)
+
+# Send a single DWORD ARGB rather than 4 fp values, at
+# the cost of doing the conversion.
+ifeq ($(FX_GLIDE_PACK_RGB),1)
+LCDEFS          +=       -DGLIDE_PACKED_RGB=1
+endif
+
+endif
+
+ifneq ($(FX_GLIDE_NO_FIFO),1)
+FIFODEFS 	= -DUSE_PACKET_FIFO=1 \
+		  -DGLIDE_HW_TRI_SETUP=1 -DGLIDE_PACKET3_TRI_SETUP=1
+
+ifeq ($(FX_GLIDE_DEBUG_FIFO),1)
+# GLIDE_USE_DEBUG_FIFO:   Run w/ the small fifo to cause me/glide more stress
+# FIFO_ASSERT_FULL:       Check hw depth/fifo a lot (slow)
+LCDEFS          +=      -DGLIDE_USE_DEBUG_FIFO=1 -DFIFO_ASSERT_FULL=1 \
+			-DASSERT_FAULT=0 #-DGLIDE_SANITY_SIZE=1
+endif
+else
+FX_GLIDE_CTRISETUP = 1
+FIFODEFS	= -DGLIDE_HW_TRI_SETUP=1
+endif
+
+# Optimization Options
+# This is for turning on and off algorithmic optimizations,
+# not flags to the C compiler.  Usually this involves
+# enabling/disabling assembly language code, but it can also   
+# change the way C code works, or how C code generates data to be 
+# used by various pieces of code.
+# Usually these are set with environment variables or arguments to 
+# nmake.
+#
+
+# Turn on/off assembly language trisetup code.
+# (C on is Assembly off) (A ssembly T ri S etup OPTS)
+ifeq ($(FX_GLIDE_CTRISETUP),1)
+ASMTRISETUP     =
+ATSOPTS         =       -DGLIDE_USE_C_TRISETUP 
+CFILES          =       gxdraw.c
+else
+ASMTRISETUP     =       xdraw2.s
+DSPOPTS         +=      -DGLIDE_DISPATCH_SETUP=1 -DGLIDE_PACKED_RGB=0
+endif
+
+OPTOPTS         =       $(GRMOPTS) $(OTSOPTS) $(ATSOPTS)
+
+# local defines, begin with basics and then add on
+LCDEFS          +=      -DGLIDE_LIB
+
+ifeq ($(FX_GLIDE_CRYBABY),1)
+LCDEFS		+=	-DGLIDE_CHECK_COMPATABILITY=1
+endif
+
+# Turn Off/On compilation of shameless plug
+ifeq ($(FX_GLIDE_NO_PLUG),1)
+else
+LCDEFS          +=       -DGLIDE_PLUG
+endif
+
+# Turn Off/On splash screen
+ifeq ($(FX_GLIDE_NO_SPLASH),1)
+else
+LCDEFS          +=       -DGLIDE_SPLASH
+endif
+
+#Glide 3 Stuff, for migration all
+ifneq ($(FX_GLIDE3),)
+LCDEFS          +=      -DGLIDE3
+GLIDE3FILES     =       gstrip.c distrip.c distate.c diget.c
+endif
+
+#Glide 3. remove migration stuff
+ifneq ($(FX_GLIDE3_ALPHA),)
+LCDEFS          +=      -DGLIDE3_ALPHA
+GLIDE3FILES     =       gstrip.c distrip.c distate.c diget.c
+endif
+
+ifneq ($(GLIDE_SANITY_ALL)$(GLIDE_SANITY_SIZE),)
+LCDEFS          +=      -DGLIDE_SANITY_SIZE
+endif
+ifneq ($(GLIDE_SANITY_ALL)$(GLIDE_SANITY_ASSERT),)
+LCDEFS          +=      -DGLIDE_SANITY_ASSERT
+endif
+
+# Local Defs, Includes, and Options (C)
+LCINCS          +=      -I$(BUILD_ROOT)/$(FX_GLIDE_HW)/include 
+LCOPTS          =       $(DBGOPTS) $(DSPOPTS) $(OPTOPTS)
+
+# Local Defs, Includes, and Options (ASM)
+LADEFS          +=      $(ASM_REGMAP_DEFS)
+LAINCS          =       -I$(BUILD_ROOT)/$(FX_GLIDE_HW)/include
+LAOPTS          =       $(DBGOPTS) $(DSPOPTS) $(OPTOPTS)
+
+AFILES          =       $(ASMTRISETUP)
+
+# sources
+HEADERS         =       glide.h gump.h glidesys.h glideutl.h
+PRIVATE_HEADERS =       fxglide.h gsstdef.h fxinline.h
+
+INSTALL_DESTINATION =   $(BUILD_ROOT)/$(FX_GLIDE_HW)
+
+CFILES             +=   gsplash.c g3df.c  gu.c guclip.c gpci.c gump.c\
+                        diglide.c disst.c ditex.c gbanner.c gerror.c\
+                        gmovie.c digutex.c ddgump.c gaa.c gdraw.c\
+                        gglide.c glfb.c gsst.c gtex.c gtexdl.c\
+                        gutex.c $(HWSPEC) $(GLIDE3FILES) \
+			cpudetect.c
+
+OFILES          =       $(CFILES:.c=.o)
+
+OTHER_CFILES    =       fxgasm.c fxbldno.c fxinline.h
+
+CODFILES        =       $(CFILES:.c=.cod)
+
+# targets
+LDIRT           =       fxgasm.o fxgasm fxgasm.h fxinline.h fxbldno.o fxbldno fxbldno.h 
+
+ifeq ($(FX_GLIDE3),1)
+LIBRARIES       =       libglide3x.a
+SHARED_LIBRARY  =	libglide3x.so
+else
+LIBRARIES       =       libglide2x.a
+SHARED_LIBRARY  =	libglide2x.so
+endif
+RCFILE          =       glide.rc
+
+# Make a static link library for things like the diags.
+ifeq ($(FX_DLL_BUILD),1)
+FX_DLL_LIBRARY  =       1
+else
+LCDEFS          +=       -DFX_STATIC_BUILD
+endif
+
+
+LCDEFS          +=       $(FIFODEFS)
+
+include $(BUILD_ROOT)/swlibs/include/make/3dfx.mak
+
+codfiles: $(CODFILES)
+
+ctags:  $(CFILES)
+	ctags $(CFILES)
+
+gbanner.o : banner.inc
+gsplash.o : splshdat.c
+
+
+#--------------------------------------------------------------------------
+# special rules for making FXGASM.H
+#
+fxgasm: fxgasm.c $(HEADERS) gsstdef.h fxglide.h
+	$(CC) -o $@ fxgasm.c $(GCDEFS) $(LCDEFS) $(VCDEFS) $(LCOPTS) \
+	-I$(BUILD_ROOT)/$(FX_GLIDE_HW)/include -I$(BUILD_ROOT)/swlibs/include $(LDFLAGS)
+
+fxgasm.h: fxgasm
+	./fxgasm > fxgasm.h
+fxinline.h: fxgasm
+	./fxgasm -inline > fxinline.h
+
+#--------------------------------------------------------------------------
+# special rules for making FXBLDNO.H
+#
+
+fxbldno: fxbldno.c $(HEADERS) $(PRIVATE_HEADERS)
+	$(CC) -o $@ fxbldno.c $(GCDEFS) $(LCDEFS) $(VCDEFS) $(LCOPTS) $(LDFLAGS)
+
+fxbldno.h: fxbldno.exe
+	fxbldno > fxbldno.h
+
+glide.res: rcver.h fxbldno.h
+gglide.obj: rcver.h
+
+ifeq ($(FX_GLIDE_CTRISETUP),1)
+gdraw.o: fxinline.h
+endif
+
+xdraw2.o : xdraw2.s xdraw2.inc.s fxgasm.h fxinline.h
+	gasp xdraw2.s $(ASM_OPTS) $(LAOPTS) | as -V -Qy -o xdraw2.o
+
+cpudtect.o :
+	gasp cpudtect.s $(LAOPTS) | as -V -Qy -o cpudtect.o
