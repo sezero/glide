@@ -35,7 +35,6 @@
 %define XOS XOS_WATCD
 %define STDCALL 1
 %else
-%else
 %error Unknown OS
 %endif
 
