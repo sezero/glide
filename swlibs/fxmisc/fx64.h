@@ -116,7 +116,7 @@ extern FxI64 i64_zero;
 #define FX_MUL64( a, b )  ( __FX_MUL64( (a), (b) ) )
 #define FX_NEG64( a )     ( __FX_NEG64( (a).hi, (a).lo ) )
 #define FX_OR64( a, b )   ( __FX_OR64( a, b ) )
-#define FX_SET64( a, b, c ) {(a).hi = b; (a).lo = c;}
+#define FX_SET64( a, b, c ) do {(a).hi = b; (a).lo = c;} while(0)
 #define FX_SHL64( a, n )  ( __FX_SHL64( (a).hi, (a).lo, n ) )
 #define FX_SHR64( a, n )  ( __FX_SHR64( (a).hi, (a).lo, n ) )
 #define FX_SUB64( a, b )  ( __FX_SUB64( (a).hi, (a).lo, (b).hi, (b).lo ) )

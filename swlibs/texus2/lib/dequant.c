@@ -418,11 +418,11 @@ _txImgDequantizeYUV(FxU32 *out, FxU16 *in, int w, int h, FxU32 format)
 
                 _txCalcRGBFromYUV(Y[0], UV[0], UV[1], out);
 
-                *out++;
+                out++;
 
                 _txCalcRGBFromYUV(Y[1], UV[0], UV[1], out);
 
-                *out++;
+                out++;
         }
 }
 

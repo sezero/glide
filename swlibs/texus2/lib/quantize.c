@@ -1151,7 +1151,7 @@ _txImgQuantizeDXAlpha3(FxU16* dst, const FxU32* src,
        * encoding.
        */
       {
-        FxU64
+        FxI64
           alphaData;
 
         if (alphaEncMode == 0xFFUL/*minRangeP && maxRangeP*/) { /* do the 6-alpha block encoding */
