@@ -1778,7 +1778,7 @@ hwcInit(FxU32 vID, FxU32 dID)
     {
       /* No CPU Extensions Allowed */
       for (monitor = 0; monitor < num_monitor; monitor++) {
-        const char *no_cpu_ext = GETENV("GXP_GLIDE_NO_CPU_EXTENSIONS", data[monitor].RegPath);
+        const char *no_cpu_ext = GETENV("FX_GLIDE_NO_CPU_EXTENSIONS", data[monitor].RegPath);
         if (no_cpu_ext && atoi(no_cpu_ext)) CPUInfo.feature = CPUInfo.os_support = 0;
       }
     }
