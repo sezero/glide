@@ -19,6 +19,9 @@
 ## $Header$
 ## $Revision$
 ## $Log$
+## Revision 1.2  1999/12/11 00:42:21  joseph
+## Changed \(.data) to .section .data to fix build errors with binutils 2.9.5.
+##
 ## Revision 1.1.1.1  1999/12/07 21:49:13  joseph
 ## Initial checkin into SourceForge.
 ##
@@ -55,6 +58,10 @@
 #OPTION OLDSTRUCTS       
 # 586P
 
+# This was xdraw2.s but I renamed it for now to work with the shared
+# swlibs.  It hasn't changed to the format used in the .S files for
+# the Voodoo3 Glide soruces.
+	
 # some useful floating load and store macros <ala gmt>
 #flds    TEXTEQU <fld  DWORD PTR>
 #fsubs   TEXTEQU <fsub DWORD PTR>
@@ -136,7 +143,7 @@ GLIDE_CULLING       .ASSIGNA 1
 GLIDE_PACK_RGB	    .ASSIGNA 0
 GLIDE_PACK_ALPHA    .ASSIGNA 0
 GLIDE_GENERIC_SETUP .ASSIGNA 0
-.INCLUDE "xdraw2.inc.s"
+.INCLUDE "xdraw2.inc.S"
 GLIDE_GENERIC_SETUP .ASSIGNA 0
 GLIDE_PACK_ALPHA    .ASSIGNA 0
 GLIDE_PACK_RGB	    .ASSIGNA 0
@@ -162,7 +169,7 @@ GLIDE_CULLING       .ASSIGNA 1
 GLIDE_PACK_RGB	    .ASSIGNA 1
 GLIDE_PACK_ALPHA    .ASSIGNA 0
 GLIDE_GENERIC_SETUP .ASSIGNA 0
-.INCLUDE "xdraw2.inc.s"
+.INCLUDE "xdraw2.inc.S"
 GLIDE_GENERIC_SETUP .ASSIGNA 0
 GLIDE_PACK_ALPHA    .ASSIGNA 0
 GLIDE_PACK_RGB	    .ASSIGNA 0
@@ -180,7 +187,7 @@ GLIDE_CULLING       .ASSIGNA 1
 GLIDE_PACK_RGB	    .ASSIGNA 1
 GLIDE_PACK_ALPHA    .ASSIGNA 1
 GLIDE_GENERIC_SETUP .ASSIGNA 0
-.INCLUDE "xdraw2.inc.s"
+.INCLUDE "xdraw2.inc.S"
 GLIDE_GENERIC_SETUP .ASSIGNA 0
 GLIDE_PACK_ALPHA    .ASSIGNA 0
 GLIDE_PACK_RGB	    .ASSIGNA 0
@@ -199,7 +206,7 @@ GLIDE_CULLING       .ASSIGNA 0
 GLIDE_PACK_RGB	    .ASSIGNA 0
 GLIDE_PACK_ALPHA    .ASSIGNA 0
 GLIDE_GENERIC_SETUP .ASSIGNA 0
-.INCLUDE "xdraw2.inc.s"
+.INCLUDE "xdraw2.inc.S"
 GLIDE_GENERIC_SETUP .ASSIGNA 0
 GLIDE_PACK_ALPHA    .ASSIGNA 0
 GLIDE_PACK_RGB	    .ASSIGNA 0
@@ -218,7 +225,7 @@ GLIDE_CULLING       .ASSIGNA 0
 GLIDE_PACK_RGB	    .ASSIGNA 1
 GLIDE_PACK_ALPHA    .ASSIGNA 0
 GLIDE_GENERIC_SETUP .ASSIGNA 0
-.INCLUDE "xdraw2.inc.s"
+.INCLUDE "xdraw2.inc.S"
 GLIDE_GENERIC_SETUP .ASSIGNA 0
 GLIDE_PACK_ALPHA    .ASSIGNA 0
 GLIDE_PACK_RGB	    .ASSIGNA 0

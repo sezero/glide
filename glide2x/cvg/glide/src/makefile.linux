@@ -120,7 +120,7 @@ ASMTRISETUP     =
 ATSOPTS         =       -DGLIDE_USE_C_TRISETUP 
 CFILES          =       gxdraw.c
 else
-ASMTRISETUP     =       xdraw2.s
+ASMTRISETUP     =       xdraw2.S
 DSPOPTS         +=      -DGLIDE_DISPATCH_SETUP=1 -DGLIDE_PACKED_RGB=0
 endif
 
@@ -256,8 +256,8 @@ ifeq ($(FX_GLIDE_CTRISETUP),1)
 gdraw.o: fxinline.h
 endif
 
-xdraw2.o : xdraw2.s xdraw2.inc.s fxgasm.h fxinline.h
-	gasp xdraw2.s $(ASM_OPTS) $(LAOPTS) | as -V -Qy -o xdraw2.o
+xdraw2.o : xdraw2.S xdraw2.inc.S fxgasm.h fxinline.h
+	gasp xdraw2.S $(ASM_OPTS) $(LAOPTS) | as -V -Qy -o xdraw2.o
 
 cpudtect.o :
-	gasp cpudtect.s $(LAOPTS) | as -V -Qy -o cpudtect.o
+	gasp cpudtect.S $(LAOPTS) | as -V -Qy -o cpudtect.o

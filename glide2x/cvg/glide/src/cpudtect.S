@@ -19,6 +19,9 @@
 #
 # $Header$
 # $Log$
+# Revision 1.1.1.1  1999/12/07 21:49:08  joseph
+# Initial checkin into SourceForge.
+#
 # 
 # 2     3/04/97 9:10p Dow
 # Neutered mutiplatform multiheaded monster.
