@@ -4530,14 +4530,14 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
    {
       /* We are in optimal mode by default */
       if(bpp == 32 && !(IS_NAPALM(bInfo->pciInfo.deviceID) && (bInfo->pciInfo.numChips == 4) && (bInfo->h3pixelSample >= 4))) { /* 32bpp and not 4x,8xfsaa on v56k */
-		 vidProcCfg |= SST_OVERLAY_FILTER_POINT;
-	  } else {
+        vidProcCfg |= SST_OVERLAY_FILTER_POINT;
+      } else {
         if(/*(bInfo->vidInfo.xRes >= 1024) ||*/ (vidProcCfg & SST_VIDEO_2X_MODE_EN) || (IS_NAPALM(bInfo->pciInfo.deviceID) && (bInfo->h3sliBandHeight <= 1))) {
            vidProcCfg |= SST_OVERLAY_FILTER_4X4;
         } else {
            vidProcCfg |= SST_OVERLAY_FILTER_2X2;
         }
-	  }
+      }
    }
    else
    {
@@ -4546,8 +4546,8 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
          default:
          case 1: /* Optimal */
             if(bpp == 32 && !(IS_NAPALM(bInfo->pciInfo.deviceID) && (bInfo->pciInfo.numChips == 4) && (bInfo->h3pixelSample >= 4))) { /* 32bpp and not 4x,8xfsaa on v56k */
-			   vidProcCfg |= SST_OVERLAY_FILTER_POINT;
-			} else {
+              vidProcCfg |= SST_OVERLAY_FILTER_POINT;
+            } else {
                if(/*(bInfo->vidInfo.xRes >= 1024) ||*/ (vidProcCfg & SST_VIDEO_2X_MODE_EN) || (IS_NAPALM(bInfo->pciInfo.deviceID) && (bInfo->h3sliBandHeight <= 1))) {
                    vidProcCfg |= SST_OVERLAY_FILTER_4X4;
                } else {
