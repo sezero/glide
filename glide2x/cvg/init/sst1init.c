@@ -135,6 +135,7 @@
 ** SSTV2_VFIFO_THRESH            {0-31}  Select video fifo threshold
 ** SSTV2_VSYNC                   hex     Specify value of vSync video register
 ** SSTV2_NOREMAP                 0       Don't try to remap single board sli.
+** SSTV2_MISMATCHED_SLI          X       Allow mismatched SLI
 **
 ** VOODOO2_FILE                  name    Filename used in place of "voodoo2.ini"
 ** VOODOO2_PATH                  path    Path used to locate "voodoo2.ini" file
@@ -207,11 +208,13 @@ FX_EXPORT FxU32 * FX_CSTYLE sst1InitMapBoardDirect(FxU32 BoardNumber,
     else
       deviceID = 0x0002;
 
+#if !DIRECTX
     // Open PCI library (necessary for multiple calls to init routines, after
     // PCI library is closed by pciClose() call in sst1InitShutdown().
     // 
     // NB: It is safe to do this even if we never called pciClose.
     pciOpen();
+#endif
 
     /* NB: firstTime does not get cleared until we actually find a
      * board and get one mapped (A little weird to begin w/, but
@@ -446,9 +449,12 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitRegisters(FxU32 *sstbase)
 
     if(GETENV(("SSTV2_TEXMAP_DISABLE")))
        INIT_PRINTF(("sst1InitRegisters() WARNING: Disabling texture mapping\n"));
+
+#if !DIRECTX
     // Open PCI library (necessary for multiple calls to init routines, after
     // PCI library is closed by pciClose() call in sst1InitShutdown()
     pciOpen();
+#endif
 
     // Enable writes to the FBIINIT registers
     // Do not allow writes into the pci fifo until everything is reset
