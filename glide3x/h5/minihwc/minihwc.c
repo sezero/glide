@@ -2,23 +2,47 @@
 ** THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONLY
 ** PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGHT
 ** TO USE THE GLIDE TRADEMARK WITHOUT PRIOR WRITTEN PERMISSION OF 3DFX
-** INTERACTIVE, INC. A COPY OF THIS LICENSE MAY BE OBTAINED FROM THE 
-** DISTRIBUTOR OR BY CONTACTING 3DFX INTERACTIVE INC(info@3dfx.com). 
-** THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER 
+** INTERACTIVE, INC. A COPY OF THIS LICENSE MAY BE OBTAINED FROM THE
+** DISTRIBUTOR OR BY CONTACTING 3DFX INTERACTIVE INC(info@3dfx.com).
+** THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER
 ** EXPRESSED OR IMPLIED. SEE THE 3DFX GLIDE GENERAL PUBLIC LICENSE FOR A
-** FULL TEXT OF THE NON-WARRANTY PROVISIONS.  
-** 
+** FULL TEXT OF THE NON-WARRANTY PROVISIONS. 
+**
 ** USE, DUPLICATION OR DISCLOSURE BY THE GOVERNMENT IS SUBJECT TO
 ** RESTRICTIONS AS SET FORTH IN SUBDIVISION (C)(1)(II) OF THE RIGHTS IN
 ** TECHNICAL DATA AND COMPUTER SOFTWARE CLAUSE AT DFARS 252.227-7013,
 ** AND/OR IN SIMILAR OR SUCCESSOR CLAUSES IN THE FAR, DOD OR NASA FAR
 ** SUPPLEMENT. UNPUBLISHED RIGHTS RESERVED UNDER THE COPYRIGHT LAWS OF
-** THE UNITED STATES.  
-** 
+** THE UNITED STATES. 
+**
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
 ** $Header$
 ** $Log: 
+**  84   3dfx      1.71.1.6.1.406/20/00 Joseph Kain     Fixed errors introduced by
+**       my previous merge.
+**  83   3dfx      1.71.1.6.1.306/20/00 Joseph Kain     Changes to support the
+**       Napalm Glide open source release.  Changes include cleaned up offensive
+**       comments and new legal headers.
+**  82   3dfx      1.71.1.6.1.206/16/00 Adam Briggs     win2k & winnt unmap the
+**       board when we release the windowed mode context
+**  81   3dfx      1.71.1.6.1.106/07/00 Adam Briggs     allowed NT4 to run in
+**       multichip mode
+**  80   3dfx      1.71.1.6.1.005/24/00 Kenneth Dyke    Updated MacOS screenshot
+**       SLI/AA handling.
+**  79   3dfx      1.71.1.6    05/23/00 Adam Briggs     Added multichip support for
+**       win2k
+**  78   3dfx      1.71.1.5    05/23/00 Kenneth Dyke    Added some MacOS related
+**       fixes.
+**  77   3dfx      1.71.1.4    05/18/00 Adam Briggs     Changed win9x VDD name to
+**       h5vdd.
+**  76   3dfx      1.71.1.3    05/12/00 Stephane Huaulme made Mac compile happy by
+**       keeping local storage under 32K
+**  75   3dfx      1.71.1.2    05/11/00 Stephane Huaulme fixed a few Macintosh bugs
+**  74   3dfx      1.71.1.1    05/09/00 Kenneth Dyke    Added code to calculate
+**       chip values on Napalm.
+**  73   3dfx      1.71.1.0    05/02/00 Kenneth Dyke    Fixed a really effing
+**       stupid typo that broke FSAA screenshots. :(
 **  72   3dfx      1.71        04/25/00 Kenneth Dyke    Made FX_GLIDE_NO_HW a lot
 **       more robust.
 **  71   3dfx      1.70        04/21/00 Kenneth Dyke    FX_GLIDE_NO_HW support.
@@ -52,7 +76,7 @@
 **       workaround.
 **  56   3dfx      1.55        03/08/00 Kenneth Dyke    Keep track of whether or
 **       not a board is "mapped" or not.
-**  55   3dfx      1.54        03/08/00 Don Mullis      Generalize glide3 to handle
+**  55   3dfx      1.54        03/07/00 Don Mullis      Generalize glide3 to handle
 **       sub-byte-size texels.
 ** 
 **  54   3dfx      1.53        03/07/00 Adam Briggs     make sure that we don't
@@ -110,7 +134,7 @@
 ** 
 **  30   3dfx      1.29        01/24/00 Adam Briggs     only query for slave regs
 **       when slave chips are present
-**  29   3dfx      1.28        01/24/00 Adam Briggs     use the minivdd correctly
+**  29   3dfx      1.28        01/23/00 Adam Briggs     use the minivdd correctly
 **       and 4 sample AA suddenly works
 **  28   3dfx      1.27        01/22/00 Adam Briggs     made the build process stop
 **       whining
@@ -118,12 +142,12 @@
 **       mappings of slave regs
 **  26   3dfx      1.25        01/20/00 Kenneth Dyke    Do proper Napalm fifo
 **       padding.
-**  25   3dfx      1.24        01/20/00 Adam Briggs     for some strange reason,
+**  25   3dfx      1.24        01/19/00 Adam Briggs     for some strange reason,
 **       display driver escapes don't seem to work in DOS.
 **  24   3dfx      1.23        01/19/00 Adam Briggs     Made minihwc use either
 **       EXT_HWC or EXT_HWC_OLD depending on which one the display driver supports
 **       so that a new glide can try to run on an old display driver.
-**  23   3dfx      1.22        01/19/00 Kenneth Dyke    Fixed more issues with AA
+**  23   3dfx      1.22        01/18/00 Kenneth Dyke    Fixed more issues with AA
 **       buffers and chip configuration.
 **  22   3dfx      1.21        01/16/00 Kenneth Dyke    Use new & improved register
 **       bit names.
@@ -176,7 +200,7 @@
 **  3    3dfx      1.2         10/04/99 Matt McClure    Ported Glide Context
 **       Switching code from V3_OEM_100.
 **  2    3dfx      1.1         09/13/99 Anthony tai     check chip number
-**  1    3dfx      1.0         09/12/99 StarTeam VTS Administrator 
+**  1    3dfx      1.0         09/11/99 StarTeam VTS Administrator 
 ** $
 ** 
 ** 175   9/09/99 6:42p Atai
@@ -775,7 +799,7 @@ extern hrmSLIAAPtr _hrmSLIAA;
 #define HWC_MINIVDD_HACK 1
 
 #if defined(HWC_MINIVDD_HACK) && defined(HWC_EXT_INIT)
-#define MINIVDDNAME "\\\\.\\H4VDD"
+#define MINIVDDNAME "\\\\.\\H5VDD"
 /*
  * This mess was snipped from win9x\dx\inc\h3g.h
  *
@@ -828,7 +852,7 @@ typedef struct sli_aa_request {
 #define HWC_LFB_STRIDE     0x2000UL
 #define HWC_RAW_LFB_STRIDE SST_RAW_LFB_ADDR_STRIDE_8K
 
-static hwcInfo hInfo;
+       hwcInfo hInfo;
 static char errorString[1024];
 static FxU32 fenceVar;
 
@@ -1233,11 +1257,6 @@ hwcInit(FxU32 vID, FxU32 dID)
         }
       }
 
-      /* Temporary hack until SLI/AA are supported by the Win2K display drivers. */
-      if(hInfo.boardInfo[monitor].osNT) {
-        hInfo.boardInfo[monitor].pciInfo.numChips = 1;
-      }
-
       if (GETENV("FX_GLIDE_FBRAM")) {
         hInfo.boardInfo[monitor].h3Mem = atoi(GETENV("FX_GLIDE_FBRAM"));      
       }
@@ -1277,13 +1296,14 @@ hwcInit(FxU32 vID, FxU32 dID)
     {
         hrmVersionInfo_t        theVersion;
         _hrmGetVersionInfo( &theVersion );
-        if ( theVersion.major >= 1 && theVersion.minor >= 5 )
+        if ( theVersion.major >= 1 && theVersion.minor >= 6 )
         {
                 numTargets = hrmGetNumTargets();
         }
         else
         {
-                //ErrorMacCallback( "Current version of 3dfx Hardware Resource Manager is not compatible" );
+                sprintf(errorString, "Current version of 3dfx Hardware Resource Manager is not compatible with this version of Glide\n");
+                GDBG_INFO(80, "%s:  ERROR... Current version of 3dfx Hardware Resource Manager is not compatible\n", FN_NAME);
                 numTargets = 0;
         }
     }
@@ -1326,6 +1346,10 @@ hwcInit(FxU32 vID, FxU32 dID)
       hInfo.boardInfo[j].pciInfo.swizzleOffset[1] = boardInfo.swizzleOffset[1];                   
       hInfo.boardInfo[j].pciInfo.swizzleOffset[2] = boardInfo.swizzleOffset[2];                   
       hInfo.boardInfo[j].pciInfo.swizzleOffset[3] = boardInfo.swizzleOffset[3];                   
+
+      if (GETENV("FX_GLIDE_FBRAM")) {
+        hInfo.boardInfo[j].h3Mem = atoi(GETENV("FX_GLIDE_FBRAM"));      
+      }
 
 #ifdef FX_GLIDE_NAPALM
       if (GETENV("FX_GLIDE_DEVICEID")) {
@@ -1531,7 +1555,7 @@ hwcMapBoard(hwcBoardInfo *bInfo, FxU32 bAddrMask)
     }
   }
 #elif defined(HWC_GDX_INIT)
-        /* Pretty simple in MacOS case */
+        /* Pretty simple, because MacOS is basically lame */
   {
     FxU32
       bAddr;
@@ -2619,6 +2643,8 @@ hwcFreeWinContext(hwcBoardInfo* bInfo,
   ctxReq.optData.releaseContextReq.contextID = winContextId;
   GDBG_INFO(80, FN_NAME ":  ExtEscape:HWCEXT_RELEASECONTEXT\n");
 
+  bInfo->isMapped = FXFALSE ;
+
   return (ExtEscape(bInfo->hdc, HWCEXT_ESCAPE(bInfo->boardNum),     /**/
                       sizeof(ctxReq), (void*)&ctxReq,
                       sizeof(ctxRes), (void*)&ctxRes) > 0);
@@ -3343,7 +3369,7 @@ hwcGetSurfaceInfo(const hwcBoardInfo* bInfo,
   ret->lpSurface = desc.surface;
   ret->width = desc.width;
   ret->height = desc.height;
-  ret->depth = desc.bytesPerPixel;
+  ret->bitdepth = desc.bytesPerPixel * 8;
   ret->fbStride = desc.pitch;
   ret->fbOffset = ret->lpSurface - ret->lpLFB;
   ret->isTiled = (ret->fbOffset >= ret->tileBase) ? FXTRUE : FXFALSE;
@@ -4183,7 +4209,7 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
 
   HWC_IO_STORE(bInfo->regInfo, dramInit1, dramInit1);
 
-  HWC_IO_STORE(bInfo->regInfo, vidMaxRGBDelta, bpp == 15 ? 0x101010 : 0x100810);
+  HWC_IO_STORE(bInfo->regInfo, vidMaxRGBDelta,/* bpp == 15 ? 0x101010 : */ 0x100810);
 
   HWC_IO_STORE( bInfo->regInfo, vidDesktopOverlayStride,
                 ( bInfo->buffInfo.bufStrideInTiles << 16 ) |
@@ -4214,6 +4240,44 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
        (bInfo->h3pixelSample > 2) ||
        (bInfo->h3pixelSample == 2 && !bInfo->buffInfo.enable2ndbuffer)))
   {
+    if (bInfo->osNT)
+    {
+      ctxReq.which = HWCEXT_SLI_AA_REQUEST ;
+
+      /* Request SLI or AA enable */
+      ctxReq.optData.sliAAReq.ChipInfo.dwaaEn             = (bInfo->h3pixelSample > 1) ;
+      ctxReq.optData.sliAAReq.ChipInfo.dwsliEn            = (bInfo->h3nwaySli > 1) ;
+
+      ctxReq.optData.sliAAReq.ChipInfo.dwsliAaAnalog      = bInfo->h3analogSli ;
+      ctxReq.optData.sliAAReq.ChipInfo.dwsli_nlines       = bInfo->h3sliBandHeight;
+      ctxReq.optData.sliAAReq.ChipInfo.dwCfgSwapAlgorithm = 1 ; /* What the *F* is this about? */
+
+      /* Fill out the memory configuration. */
+      ctxReq.optData.sliAAReq.MemInfo.dwTotalMemory       = bInfo->h3Mem * 1024 * 1024 ;
+      ctxReq.optData.sliAAReq.MemInfo.dwTileMark          = bInfo->buffInfo.colBuffStart0[0] ;
+      ctxReq.optData.sliAAReq.MemInfo.dwTileCmpMark       = bInfo->buffInfo.colBuffStart0[0] ;
+
+      /* Fill out SLI mode information. */
+      ctxReq.optData.sliAAReq.ChipInfo.dwChips            = bInfo->pciInfo.numChips ;
+
+      /* Fill out AA mode information. */
+      ctxReq.optData.sliAAReq.ChipInfo.dwaaSampleHigh     = (bInfo->h3pixelSample == 4) ;
+   
+      ctxReq.optData.sliAAReq.MemInfo.dwaaSecondaryColorBufBegin  = bInfo->buffInfo.colBuffStart1[0] ;
+      ctxReq.optData.sliAAReq.MemInfo.dwaaSecondaryDepthBufBegin  = bInfo->buffInfo.lfbBuffAddr0[bInfo->buffInfo.nColBuffers];
+      ctxReq.optData.sliAAReq.MemInfo.dwaaSecondaryDepthBufEnd    = bInfo->buffInfo.lfbBuffAddr0End[bInfo->buffInfo.nColBuffers];
+      ctxReq.optData.sliAAReq.MemInfo.dwBpp = bpp;
+
+      ExtEscape((HDC)bInfo->hdc, HWCEXT_ESCAPE(bInfo->boardNum), 
+                sizeof(ctxReq), (LPSTR) &ctxReq,
+                sizeof(ctxRes), (LPSTR) &ctxRes);
+
+      /* the w2k miniport doesn't copy this value to the slave chips */
+      /* so for now re-write it here */
+      HWC_IO_STORE(bInfo->regInfo, vidScreenSize, vidScreenSize);
+    }
+     else
+    {
     DIOC_DATA DIOC_Data;
     SLI_AA_REQUEST Sli_AA_Request;
     HANDLE hDevice;
@@ -4253,6 +4317,7 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
       DeviceIoControl(hDevice, SLI_AA_ENABLE, &DIOC_Data, sizeof(DIOC_Data), NULL, 0x0, NULL, NULL);
     }
     CloseHandle(hDevice);
+    }
 
     /* The minivdd screws with lfbMemoryConfig, so we have to fix it. */
     HWC_IO_STORE(bInfo->regInfo, lfbMemoryConfig, lfbMemoryConfig);
@@ -4396,7 +4461,7 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
   }
 
   /*
-  **  Let's make sure we aren't a bunch of idiots
+  **  Let's make sure we aren't a bunch of pigeffers.
   */
   if (bInfo->h3pixelSample > 1 || bInfo->h3nwaySli > 1) { /* and thus it must be Napalm */
 
@@ -4508,8 +4573,11 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
 #endif /* HWC_EXT_INIT */
 
 #if HWC_GDX_INIT
-#if GDX_SLIAA
-  if((IS_NAPALM(bInfo->pciInfo.deviceID)) && (bInfo->pciInfo.numChips > 1))
+  if (((IS_NAPALM(bInfo->pciInfo.deviceID)) &&
+       (bInfo->pciInfo.numChips > 1)) &&
+      ((bInfo->h3nwaySli > 1) ||
+       (bInfo->h3pixelSample > 2) ||
+       (bInfo->h3pixelSample == 2 && !bInfo->buffInfo.enable2ndbuffer)))
   {
     hrmSLIAAChipInfo_t chipInfo;
     hrmSLIAAMemInfo_t  memInfo;
@@ -4530,8 +4598,8 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
     memInfo.tileMark = bInfo->buffInfo.colBuffStart0[0];
     memInfo.tileCmpMark = bInfo->buffInfo.colBuffStart0[0];
     memInfo.aaSecondaryColorBufBegin = bInfo->buffInfo.colBuffStart1[0];
-    memInfo.aaSecondaryDepthBufBegin = bInfo->buffInfo.auxBuffStart0;
-    memInfo.aaSecondaryDepthBufEnd   = bInfo->buffInfo.auxBuffEnd0;
+    memInfo.aaSecondaryDepthBufBegin = bInfo->buffInfo.lfbBuffAddr0[bInfo->buffInfo.nColBuffers];
+    memInfo.aaSecondaryDepthBufEnd   = bInfo->buffInfo.lfbBuffAddr0End[bInfo->buffInfo.nColBuffers];
     memInfo.bpp = bpp;
     
     if(chipInfo.aaEnable || chipInfo.sliEnable) {
@@ -4540,9 +4608,110 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
 
     /* The minivdd screws with lfbMemoryConfig, so we have to fix it. */
     HWC_IO_STORE(bInfo->regInfo, lfbMemoryConfig, lfbMemoryConfig);
+
+    /* This will automagically get broadcast to all chips. */
+    HWC_IO_STORE(bInfo->regInfo, vidMaxRGBDelta, /*bpp == 15 ? 0x101010 :*/ 0x100810);
+
+  /*
+  **  Let's make sure we aren't a bunch of pigeffers.
+  */
+  if (bInfo->h3pixelSample > 1 || bInfo->h3nwaySli > 1) { /* and thus it must be Napalm */
+
+    FxU32
+      tileLinearMark,
+      aaMark,
+      cfgAALfbCtrl,
+      cfgDepthBufferAperture,
+      locLFBMemCfg,
+      lfbTileCompare,
+      strideInTiles,
+      dramInit0,
+      dramInit1,
+      miscInit0,
+      miscInit1,
+      chipNum;
+
+    for(chipNum = 0; chipNum < bInfo->pciInfo.numChips; chipNum++) {
+      /* Load */
+      if(chipNum == 0) {
+        HWC_IO_STORE(bInfo->regInfo, lfbMemoryConfig, SST_RAW_LFB_UPDATE_CONTROL);
+        HWC_IO_LOAD(bInfo->regInfo, lfbMemoryConfig, locLFBMemCfg);
+        HWC_IO_STORE(bInfo->regInfo, lfbMemoryConfig, SST_RAW_LFB_UPDATE_CONTROL|SST_RAW_LFB_READ_CONTROL);
+        HWC_IO_LOAD(bInfo->regInfo, lfbMemoryConfig, lfbTileCompare);
+        HWC_IO_STORE(bInfo->regInfo, lfbMemoryConfig, SST_RAW_LFB_UPDATE_CONTROL);
+        HWC_IO_LOAD(bInfo->regInfo, dramInit0, dramInit0);
+        HWC_IO_LOAD(bInfo->regInfo, dramInit1, dramInit1);
+        HWC_IO_LOAD(bInfo->regInfo, miscInit0, miscInit0);
+        HWC_IO_LOAD(bInfo->regInfo, miscInit1, miscInit1);
+      } else {
+        HWC_IO_STORE_SLAVE(chipNum, bInfo->regInfo, lfbMemoryConfig, SST_RAW_LFB_UPDATE_CONTROL);
+        HWC_IO_LOAD_SLAVE(chipNum, bInfo->regInfo, lfbMemoryConfig, locLFBMemCfg);
+        HWC_IO_STORE_SLAVE(chipNum, bInfo->regInfo, lfbMemoryConfig, SST_RAW_LFB_UPDATE_CONTROL|SST_RAW_LFB_READ_CONTROL);
+        HWC_IO_LOAD_SLAVE(chipNum, bInfo->regInfo, lfbMemoryConfig, lfbTileCompare);
+        HWC_IO_STORE_SLAVE(chipNum, bInfo->regInfo, lfbMemoryConfig, SST_RAW_LFB_UPDATE_CONTROL);        
+        HWC_IO_LOAD_SLAVE(chipNum, bInfo->regInfo, dramInit0, dramInit0);
+        HWC_IO_LOAD_SLAVE(chipNum, bInfo->regInfo, dramInit1, dramInit1);
+        HWC_IO_LOAD_SLAVE(chipNum, bInfo->regInfo, miscInit0, miscInit0);
+        HWC_IO_LOAD_SLAVE(chipNum, bInfo->regInfo, miscInit1, miscInit1);
+      }
+
+      /* pull the tile aperture begin page bits out and shift them up by
+        12 since they represent the 4K-aligned page */
+      tileLinearMark = (SST_RAW_LFB_TILE_BEGIN_PAGE_UNMUNGE(locLFBMemCfg)) << 12;
+      strideInTiles  = (locLFBMemCfg & SST_RAW_LFB_TILE_STRIDE) >> SST_RAW_LFB_TILE_STRIDE_SHIFT;
+
+    _hrmReadConfigRegister((hrmBoard_t *)bInfo->hMon,
+                            0,
+                            offsetof(SstPCIConfigRegs, cfgAALfbCtrl),
+                            &cfgAALfbCtrl);
+
+    _hrmReadConfigRegister((hrmBoard_t *)bInfo->hMon,
+                            0,
+                            offsetof(SstPCIConfigRegs, cfgAADepthBufferAperture),
+                            &cfgDepthBufferAperture);
+
+      /* Clear bits [31:26] and bits [3:0] */
+      aaMark = cfgAALfbCtrl & ~(0xfc00000f);
+
+      GDBG_INFO(80, FN_NAME ":  Offsets of buffers from respective bases %d:\n",chipNum);
+      GDBG_INFO(80, "\tcfgAALfbCtrol:       %08lx %08lx\n",cfgAALfbCtrl,(cfgAALfbCtrl & SST_AA_LFB_READ_FORMAT) >> SST_AA_LFB_READ_FORMAT_SHIFT);
+      GDBG_INFO(80, "\tlocLFBMemCfg:        %08lx\n",locLFBMemCfg);
+      GDBG_INFO(80, "\tlfbTileCompare:      %08lx\n",lfbTileCompare);
+      GDBG_INFO(80, "\tstrideInTiles:       %08lx\n",strideInTiles);
+      GDBG_INFO(80, "\ttileMark:            %08lx\n",tileLinearMark);
+      GDBG_INFO(80, "\taaMark:              %08lx\n",aaMark);
+      GDBG_INFO(80, "\tcolBufferStart0[0]:  %08lx\n",
+                bInfo->buffInfo.colBuffStart0[0] - tileLinearMark);
+      GDBG_INFO(80, "\tcolBufferStart0[1]:  %08lx\n",  
+                bInfo->buffInfo.colBuffStart0[1] - tileLinearMark);
+      GDBG_INFO(80, "\tauxBufferStart0:  %08lx\n",
+                bInfo->buffInfo.auxBuffStart0 - tileLinearMark);
+
+      GDBG_INFO(80, "\tcolBufferStart1[0]:  %08lx\n",
+                bInfo->buffInfo.colBuffStart1[0] - aaMark);
+      GDBG_INFO(80, "\tcolBufferStart1[1]:  %08lx\n",
+                bInfo->buffInfo.colBuffStart1[1] - aaMark);
+      GDBG_INFO(80, "\tauxBufferStart1:  %08lx\n",
+                bInfo->buffInfo.auxBuffStart1 - aaMark);
+
+      GDBG_INFO(80, "\tcolorBufferBegin1:   %08lx\n",
+          (cfgAALfbCtrl & SST_SECONDARY_BUFFER_BASE));
+      GDBG_INFO(80, "\tdepthBufferBegin:    %08lx\n",
+          ((cfgDepthBufferAperture & SST_AA_DEPTH_BUFFER_APERTURE_BEGIN) >>
+           SST_AA_DEPTH_BUFFER_APERTURE_BEGIN_SHIFT) * 4096);
+      GDBG_INFO(80, "\tdepthBufferEnd:      %08lx\n",
+          ((cfgDepthBufferAperture & SST_AA_DEPTH_BUFFER_APERTURE_END) >>
+           SST_AA_DEPTH_BUFFER_APERTURE_END_SHIFT) * 4096);
+
+      GDBG_INFO(80, "\tbpp:                 %08lx\n",bpp);
+      GDBG_INFO(80, "\tdramInit0:           %08lx\n",dramInit0);
+      GDBG_INFO(80, "\tdramInit1:           %08lx\n",dramInit1);
+      GDBG_INFO(80, "\tmiscInit0:           %08lx\n",miscInit0);
+      GDBG_INFO(80, "\tmiscInit1:           %08lx\n",miscInit1);
+    }
+    }
   }
-#else
-  if(bInfo->pciInfo.numChips == 1 && bInfo->h3pixelSample == 2) {
+  else if(IS_NAPALM(bInfo->pciInfo.deviceID) && bInfo->h3pixelSample == 2) {
     
     FxU32 value, pixFmt;
     /* Single board two sample AA setup */
@@ -4602,10 +4771,9 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
                             
     
   }
-#endif /* GDX_SLIAA */
 #endif /* HWC_INIT_GDX */
 
-#if !HWC_EXT_INIT && !HWC_INIT_GDX
+#if !HWC_EXT_INIT && !HWC_GDX_INIT
   if((IS_NAPALM(bInfo->pciInfo.deviceID)) && (bInfo->pciInfo.numChips > 1))
   {
     hwcSetSLIAAMode(bInfo,
@@ -4725,8 +4893,33 @@ hwcRestoreVideo(hwcBoardInfo *bInfo)
   if (((IS_NAPALM(bInfo->pciInfo.deviceID)) &&
        (bInfo->pciInfo.numChips > 1)) &&
       ((bInfo->h3nwaySli > 1) ||
-       (bInfo->h3pixelSample > 2)))
+       (bInfo->h3pixelSample > 2) ||
+       (bInfo->h3pixelSample == 2 && !bInfo->buffInfo.enable2ndbuffer)))
   {
+    if (bInfo->osNT)
+    {
+      hwcExtRequest_t ctxReq ;
+      hwcExtResult_t  ctxRes ;
+ 
+      ctxReq.which = HWCEXT_SLI_AA_REQUEST ;
+
+      ctxReq.optData.sliAAReq.ChipInfo.dwaaEn             = (bInfo->h3pixelSample > 1) ;
+      /* Request SLI or AA disable */
+      ctxReq.optData.sliAAReq.ChipInfo.dwaaEn             = 0 ;
+      ctxReq.optData.sliAAReq.ChipInfo.dwsliEn            = 0 ;
+
+      ctxReq.optData.sliAAReq.ChipInfo.dwsli_nlines       = bInfo->h3sliBandHeight ;
+      
+      /* Fill out SLI mode information. */
+      ctxReq.optData.sliAAReq.ChipInfo.dwChips            = bInfo->pciInfo.numChips ;
+      ctxReq.optData.sliAAReq.ChipInfo.dwaaSampleHigh     = 0 ;
+
+      ExtEscape((HDC)bInfo->hdc, HWCEXT_ESCAPE(bInfo->boardNum), 
+                sizeof(ctxReq), (LPSTR) &ctxReq,
+                sizeof(ctxRes), (LPSTR) &ctxRes);
+    }
+     else
+    {
     DIOC_DATA DIOC_Data;
     SLI_AA_REQUEST Sli_AA_Request;
     HANDLE hDevice;
@@ -4752,7 +4945,7 @@ hwcRestoreVideo(hwcBoardInfo *bInfo)
       DeviceIoControl(hDevice, SLI_AA_DISABLE, &DIOC_Data, sizeof(DIOC_Data), NULL, 0x0, NULL, NULL);
     }
     CloseHandle(hDevice);
-
+    }
   }
    else
 #endif /* HWC_MINIVDD_HACK */
@@ -4831,8 +5024,11 @@ hwcRestoreVideo(hwcBoardInfo *bInfo)
 #endif
 
 #if HWC_GDX_INIT
-#if GDX_SLIAA
-  if((IS_NAPALM(bInfo->pciInfo.deviceID)) && (bInfo->pciInfo.numChips > 1))
+  if (((IS_NAPALM(bInfo->pciInfo.deviceID)) &&
+       (bInfo->pciInfo.numChips > 1)) &&
+      ((bInfo->h3nwaySli > 1) ||
+       (bInfo->h3pixelSample > 2) ||
+       (bInfo->h3pixelSample == 2 && !bInfo->buffInfo.enable2ndbuffer)))
   {
     hrmSLIAAChipInfo_t chipInfo;
     hrmSLIAAMemInfo_t  memInfo;
@@ -4858,8 +5054,7 @@ hwcRestoreVideo(hwcBoardInfo *bInfo)
     
     _hrmSLIAA((hrmBoard_t *)bInfo->hMon,&chipInfo,&memInfo);
   }
-#else
-  if(IS_NAPALM(bInfo->pciInfo.deviceID)) {
+  else if(IS_NAPALM(bInfo->pciInfo.deviceID)) {
      GDBG_INFO(80, "Cleaning up AA/SLI config registers\n");
    /* NOTE: Move this code to the ROM, so it can always
       clear out the AA/SLI config stuff after any mode change
@@ -4896,10 +5091,9 @@ hwcRestoreVideo(hwcBoardInfo *bInfo)
                             offsetof(SstPCIConfigRegs, cfgVideoCtrl2),
                             0);
   }
-#endif /* GDX_SLI_AA */
 #endif /* HWC_INIT_GDX */
 
-#if !HWC_EXT_INIT && !HWC_INIT_GDX
+#if !HWC_EXT_INIT && !HWC_GDX_INIT
   if(IS_NAPALM(bInfo->pciInfo.deviceID)) {
     if(bInfo->pciInfo.numChips > 1) {
       hwcSetSLIAAMode(bInfo,
@@ -5453,6 +5647,10 @@ static void hwcReadBuffer565(hwcBoardInfo *bInfo, FxU32 src, FxU32 strideInBytes
   FxU16 pix16;
   FxU8  r, g, b;
 
+#if __POWERPC__
+  src += bInfo->pciInfo.swizzleOffset[3];
+#endif
+
   width = bInfo->vidInfo.xRes;
   height = bInfo->vidInfo.yRes;
 
@@ -5489,9 +5687,13 @@ static void hwcReadBuffer1555(hwcBoardInfo *bInfo, FxU32 src, FxU32 strideInByte
   FxU16 pix16;
   FxU8  r, g, b;
 
+#if __POWERPC__
+  src += bInfo->pciInfo.swizzleOffset[3];
+#endif
+
   width = bInfo->vidInfo.xRes;
   height = bInfo->vidInfo.yRes;
-
+  
   srcY = 0;
 
   for(y = 0; y < height; y++) {    
@@ -5527,6 +5729,10 @@ static void hwcReadBuffer8888(hwcBoardInfo *bInfo, FxU32 src, FxU32 strideInByte
 
   width = bInfo->vidInfo.xRes;
   height = bInfo->vidInfo.yRes;
+
+#if __POWERPC__
+  src += bInfo->pciInfo.swizzleOffset[1];
+#endif
 
   srcY = 0;
 
@@ -5567,7 +5773,7 @@ static void hwcGammaCorrect(hwcBoardInfo *bInfo, FxU8 *buffer, FxU32 width, FxU3
     }  
   }
 }
-      
+
 /* Amazingly nasty code follows. */
 void hwcAAScreenShot(hwcBoardInfo *bInfo, FxU32 colBufNum)
 {
@@ -5654,12 +5860,20 @@ void hwcAAScreenShot(hwcBoardInfo *bInfo, FxU32 colBufNum)
       hwcWriteConfigRegister(bInfo, chip, offsetof(SstPCIConfigRegs, cfgSliLfbCtrl),0);
       hwcWriteConfigRegister(bInfo, chip, offsetof(SstPCIConfigRegs, cfgAALfbCtrl),0);
       hwcWriteConfigRegister(bInfo, chip, offsetof(SstPCIConfigRegs, cfgAADepthBufferAperture),0);
+      /* For PowerPC systems we have to futz around with cfgPciDecode a bit more since the master would normally try to decode
+       * 256MB of address space, which will screw up when we map it to where the slaves live. */
+#if __POWERPC__      
+      hwcWriteConfigRegister(bInfo, chip, offsetof(SstPCIConfigRegs, cfgPciDecode),
+        SST_PCI_IOBASE0_DECODE_256 | SST_PCI_MEMBASE0_DECODE_32MB | SST_PCI_MEMBASE1_DECODE_64MB);
+#else
       hwcWriteConfigRegister(bInfo, chip, offsetof(SstPCIConfigRegs, cfgPciDecode),cfgPciDecode[chip] & ~SST_MEMBASE1_SNOOP);
+#endif      
       hwcWriteConfigRegister(bInfo, chip, offsetof(SstPCIConfigRegs, memBaseAddr1),memBase1[1]);
     }  
 
     /* Map chips and read buffers */
     for(chip = 0; chip < bInfo->pciInfo.numChips; chip++) {
+
       /* Grab SLI config stuff */
       if(cfgSliLfbCtrl[chip] & SST_SLI_LFB_READ_ENABLE) {
         renderMask = (cfgSliLfbCtrl[chip] & SST_SLI_LFB_RENDERMASK) >> SST_SLI_LFB_RENDERMASK_SHIFT;
@@ -5675,7 +5889,7 @@ void hwcAAScreenShot(hwcBoardInfo *bInfo, FxU32 colBufNum)
          * makes it easier to deal with the new style 2-sample AA mode that uses
          * one buffer per chip, even though the backend LFB stuff is still configured
          * for two (that point to the same place). */
-        if(bInfo->h3pixelSize == 4) {
+        if(bInfo->h3pixelSample == 4) {
           aaShift = 0;
         } else {
           aaShift = 1;
@@ -5686,6 +5900,11 @@ void hwcAAScreenShot(hwcBoardInfo *bInfo, FxU32 colBufNum)
        
       /* Map chip to master address space. */
       hwcWriteConfigRegister(bInfo, chip, offsetof(SstPCIConfigRegs, memBaseAddr1),memBase1[0]);    
+      /* Again, on PowerPC we have to reprogram the chip we're looking at to decode the proper amount of memory. (256MB) */
+#if __POWERPC__
+      hwcWriteConfigRegister(bInfo, chip, offsetof(SstPCIConfigRegs, cfgPciDecode),
+              SST_PCI_IOBASE0_DECODE_256 | SST_PCI_MEMBASE0_DECODE_32MB | SST_PCI_MEMBASE1_DECODE_256MB);
+#endif      
 
       /* This will always read from the master, but all chips share the same values. */
       if(chip == 0) {
@@ -5735,7 +5954,11 @@ void hwcAAScreenShot(hwcBoardInfo *bInfo, FxU32 colBufNum)
         HWC_IO_STORE_SLAVE(chip,bInfo->regInfo, lfbMemoryConfig, lfbMemoryConfig);
       }  
     
-      /* Put chip back in temp location */
+      /* Put chip back in temp location with the rest of the slaves. */
+#if __POWERPC__
+      hwcWriteConfigRegister(bInfo, chip, offsetof(SstPCIConfigRegs, cfgPciDecode),
+              SST_PCI_IOBASE0_DECODE_256 | SST_PCI_MEMBASE0_DECODE_32MB | SST_PCI_MEMBASE1_DECODE_64MB);
+#endif      
       hwcWriteConfigRegister(bInfo, chip, offsetof(SstPCIConfigRegs, memBaseAddr1),memBase1[1]);    
 
     } 
@@ -6678,3 +6901,233 @@ hwcCheckTarget(FxU32 sfcOffset, FxU32 sfcWidth, FxU32 sfcHeight,
 } /* hwcCheckTarget */
 
 #endif /* HWC_EXT_INIT */
+
+/* This routine only really works on Napalm since someone decided to change the register
+ * layout from Voodoo3.  Redefine them here. */
+#undef SST_SIPROCESS_OSC_CNTR_RUN         
+#undef SST_SIPROCESS_OSC_NOR_SEL          
+#undef SST_SIPROCESS_OSC_FORCE_ENABLE     
+
+#define SST_SIPROCESS_OSC_CNTR_RUN         BIT(29)
+#define SST_SIPROCESS_OSC_NOR_SEL          BIT(30)
+#define SST_SIPROCESS_OSC_FORCE_ENABLE     BIT(31)
+
+void hwcCalcSipValue(hwcBoardInfo *bInfo, FxU32 chipNum, FxU32 *nandChain, FxU32 *norChain)
+{
+  FxU32 pllCtrl1, pllCtrl1_save;
+  FxU32 sipMonitor, temp;
+
+  int min, max, iters;     // some storage vars
+  FxI32 count, val;
+static  FxI32 valarray[SST_SIPROCESS_OSC_CNTR + 1];    // is this how you do an array? God, I suck...
+
+  int i;                   // some misc vars
+
+  double total, E, SD, VAR, N, avg;   // these might have to be floats instead of ints
+
+  // Don't do anything stupid. 
+  if(chipNum >= bInfo->pciInfo.numChips) {
+    *nandChain = 0;
+    *norChain = 0;
+    return;
+  }
+  // Okay, this is ripped from our diag environment, so 
+  // obviously isn't going to necessarily work in this case...
+  // This is just to get the base addresses into a var.
+
+  // Read out old PLL value so we can restore it later.
+  pllCtrl1 = 0x3205; // 125Mhz
+  if(chipNum > 0) {
+    HWC_IO_LOAD_SLAVE(chipNum, bInfo->regInfo, pllCtrl1, pllCtrl1_save);
+    HWC_IO_STORE_SLAVE(chipNum, bInfo->regInfo, pllCtrl1, pllCtrl1);
+  } else {
+    HWC_IO_LOAD(bInfo->regInfo, pllCtrl1, pllCtrl1_save);
+    HWC_IO_STORE(bInfo->regInfo, pllCtrl1, pllCtrl1);
+  }  
+
+  // set number of iterations
+  iters = 1000;
+
+  // initialize the storage array
+  for (i=0; i<(SST_SIPROCESS_OSC_CNTR + 1); i++) {
+	 valarray[i] = 0;
+  }
+
+  // start nand chain test
+  min = 0; max = 0;
+  for (i=0; i<iters; i++) {
+    // program to count for 256 grxclk cycles
+    count = 0x0ff;
+
+    // write reset and count to SIPMONITOR register
+    sipMonitor = count << SST_SIPROCESS_PCI_CNTR_SHIFT;
+    if(chipNum > 0) {
+      HWC_IO_STORE_SLAVE(chipNum, bInfo->regInfo, sipMonitor, sipMonitor | SST_SIPROCESS_OSC_CNTR_RESET_N | SST_SIPROCESS_OSC_NAND_SEL);
+      HWC_IO_STORE_SLAVE(chipNum, bInfo->regInfo, sipMonitor, sipMonitor | SST_SIPROCESS_OSC_CNTR_RESET_N | SST_SIPROCESS_OSC_NAND_SEL);
+      HWC_IO_LOAD_SLAVE(chipNum, bInfo->regInfo, sipMonitor, temp);
+      HWC_IO_STORE_SLAVE(chipNum, bInfo->regInfo, sipMonitor, sipMonitor | SST_SIPROCESS_OSC_CNTR_RUN | SST_SIPROCESS_OSC_NAND_SEL);
+    } else {
+      HWC_IO_STORE(bInfo->regInfo, sipMonitor, sipMonitor | SST_SIPROCESS_OSC_CNTR_RESET_N | SST_SIPROCESS_OSC_NAND_SEL);
+      HWC_IO_STORE(bInfo->regInfo, sipMonitor, sipMonitor | SST_SIPROCESS_OSC_CNTR_RESET_N | SST_SIPROCESS_OSC_NAND_SEL);
+      HWC_IO_LOAD(bInfo->regInfo, sipMonitor, temp);
+      HWC_IO_STORE(bInfo->regInfo, sipMonitor, sipMonitor | SST_SIPROCESS_OSC_CNTR_RUN | SST_SIPROCESS_OSC_NAND_SEL);
+    } 
+
+    while (count != 0) {
+      // read back countdown counter to see when countdown has ended
+      if(chipNum > 0) {
+        HWC_IO_LOAD_SLAVE(chipNum, bInfo->regInfo, sipMonitor, count);
+      } else {
+        HWC_IO_LOAD(bInfo->regInfo, sipMonitor, count);
+      }   
+      count = (count & SST_SIPROCESS_PCI_CNTR) >> SST_SIPROCESS_PCI_CNTR_SHIFT;
+    }
+	 
+    // read back actual SIP nand count
+    if(chipNum > 0) {
+      HWC_IO_LOAD_SLAVE(chipNum, bInfo->regInfo, sipMonitor, val);
+    } else {
+      HWC_IO_LOAD(bInfo->regInfo, sipMonitor, val);
+    } 
+
+    val &= SST_SIPROCESS_OSC_CNTR;
+
+    // some statistics here
+    if (val < min) { min = val; }
+    if (val > max) { max = val; }
+	 
+    valarray[val]++;   // Do you have to initialize the array first? I forget...
+  }
+
+  // Please change the formatting of any text to however you see fit
+  //printf("\n\n--- Process Values (NAND chain) ---\n");
+  //printf("\n sip value: occurences (probability)\n");
+  total = 0.0f;
+  for (i = 0; i <= max; i++) {
+    if (valarray[i] != 0) {
+      //printf("  %4d: %4d (%f)\n", i, valarray[i], ((float)valarray[i])/iters);
+      total += i * valarray[i];
+    }
+  }
+  
+  // some statistical stuff
+  E = total / iters;
+  total = 0;
+  for (i = 0; i <= max; i++) {
+    if (valarray[i] != 0) {
+      total += (i - E)*(i - E) * valarray[i];
+    }
+  }
+
+  VAR = total / iters;
+  SD  = sqrt(VAR);    // how do you do sqrt??
+
+  total = 0; N = 0;
+  for (i = 0; i <= max; i++) {
+    if ((valarray[i] != 0) && (i >= (E - SD)) && (i <= (E + SD))) {
+      total += i * valarray[i];
+      N += valarray[i];
+    }
+  }
+  avg = total / N;
+
+  //printf("E   = %g\n", E);
+  //printf("VAR = %g\n", VAR);
+  //printf("SD  = %g\n", SD);
+  //printf("NAND avg = %d (using %d values about E)\n", (FxU32)avg, N);
+	 
+  *nandChain = (FxU32)avg;
+
+  // initialize the storage array
+  for (i=0; i<(SST_SIPROCESS_OSC_CNTR + 1); i++) {
+    valarray[i] = 0;
+  }
+
+  // start nor chain test
+  min = 0; max = 0;
+  for (i=0; i<iters; i++) {
+    // program to count for 256 grxclk cycles
+    count = 0x0ff;
+
+    // write reset and count to SIPMONITOR register
+    sipMonitor = count << SST_SIPROCESS_PCI_CNTR_SHIFT;
+    if(chipNum > 0) {        
+      HWC_IO_STORE_SLAVE(chipNum, bInfo->regInfo, sipMonitor, sipMonitor | SST_SIPROCESS_OSC_CNTR_RESET_N | SST_SIPROCESS_OSC_NOR_SEL);
+      HWC_IO_STORE_SLAVE(chipNum, bInfo->regInfo, sipMonitor, sipMonitor | SST_SIPROCESS_OSC_CNTR_RESET_N | SST_SIPROCESS_OSC_NOR_SEL);
+      HWC_IO_LOAD_SLAVE(chipNum, bInfo->regInfo, sipMonitor, temp);
+      HWC_IO_STORE_SLAVE(chipNum, bInfo->regInfo, sipMonitor, sipMonitor | SST_SIPROCESS_OSC_CNTR_RUN | SST_SIPROCESS_OSC_NOR_SEL);
+    } else {
+      HWC_IO_STORE(bInfo->regInfo, sipMonitor, sipMonitor | SST_SIPROCESS_OSC_CNTR_RESET_N | SST_SIPROCESS_OSC_NOR_SEL);
+      HWC_IO_STORE(bInfo->regInfo, sipMonitor, sipMonitor | SST_SIPROCESS_OSC_CNTR_RESET_N | SST_SIPROCESS_OSC_NOR_SEL);
+      HWC_IO_LOAD(bInfo->regInfo, sipMonitor, temp);
+      HWC_IO_STORE(bInfo->regInfo, sipMonitor, sipMonitor | SST_SIPROCESS_OSC_CNTR_RUN | SST_SIPROCESS_OSC_NOR_SEL);
+    }    
+
+    while (count != 0) {
+      // read back countdown counter to see when countdown has ended
+      if(chipNum > 0) {
+        HWC_IO_LOAD_SLAVE(chipNum, bInfo->regInfo, sipMonitor, count);
+      } else {
+        HWC_IO_LOAD(bInfo->regInfo, sipMonitor, count);
+      }  
+      count = (count & SST_SIPROCESS_PCI_CNTR) >> SST_SIPROCESS_PCI_CNTR_SHIFT;
+    }
+	 
+    // read back actual SIP nand count
+    if(chipNum > 0) {
+      HWC_IO_LOAD_SLAVE(chipNum, bInfo->regInfo, sipMonitor, val);
+    } else {
+      HWC_IO_LOAD(bInfo->regInfo, sipMonitor, val);
+    }    
+    val &= SST_SIPROCESS_OSC_CNTR;
+
+    // some statistics here
+    if (val < min) { min = val; }
+    if (val > max) { max = val; }
+	 
+    valarray[val]++;   // Do you have to initialize the array first? I forget...
+  }
+
+  // Please change the formatting of any text to however you see fit
+  //printf("\n\n--- Process Values (NOR chain) ---\n");
+  //printf("\n sip value: occurences (probability)\n");
+  total = 0;
+  for (i = 0; i <= max; i++) {
+    if (valarray[i] != 0) {
+      //printf("  %4d: %4d (%f)\n", i, valarray[i], ((float)valarray[i])/iters);
+      total += i * valarray[i];
+    }
+  }
+
+  E = total / iters;
+  total = 0;
+  for (i = 0; i <= max; i++) {
+    if (valarray[i] != 0) {
+      total += (i - E)*(i - E) * valarray[i];
+    }
+  }
+
+  VAR = total / iters;
+  SD  = sqrt(VAR);    // how do you do sqrt??
+
+  total = 0; N = 0;
+  for (i = 0; i <= max; i++) {
+    if ((valarray[i] != 0) && (i >= (E - SD)) && (i <= (E + SD))) {
+      total += i * valarray[i];
+      N += valarray[i];
+    }
+  }
+  avg = total / N;
+
+  //printf("E   = %g\n", E);
+  //printf("VAR = %g\n", VAR);
+  //printf("SD  = %g\n", SD);
+  //printf("NOR avg = %d (using %d values about E)\n", (FxU32)avg, N);
+
+  *norChain = (FxU32)avg;
+
+  // Restore clock speed
+  HWC_IO_STORE(bInfo->regInfo, pllCtrl1, pllCtrl1_save);
+
+}
+

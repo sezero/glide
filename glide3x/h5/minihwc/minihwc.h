@@ -2,71 +2,73 @@
 ** THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONLY
 ** PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGHT
 ** TO USE THE GLIDE TRADEMARK WITHOUT PRIOR WRITTEN PERMISSION OF 3DFX
-** INTERACTIVE, INC. A COPY OF THIS LICENSE MAY BE OBTAINED FROM THE 
-** DISTRIBUTOR OR BY CONTACTING 3DFX INTERACTIVE INC(info@3dfx.com). 
-** THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER 
+** INTERACTIVE, INC. A COPY OF THIS LICENSE MAY BE OBTAINED FROM THE
+** DISTRIBUTOR OR BY CONTACTING 3DFX INTERACTIVE INC(info@3dfx.com).
+** THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER
 ** EXPRESSED OR IMPLIED. SEE THE 3DFX GLIDE GENERAL PUBLIC LICENSE FOR A
-** FULL TEXT OF THE NON-WARRANTY PROVISIONS.  
-** 
+** FULL TEXT OF THE NON-WARRANTY PROVISIONS. 
+**
 ** USE, DUPLICATION OR DISCLOSURE BY THE GOVERNMENT IS SUBJECT TO
 ** RESTRICTIONS AS SET FORTH IN SUBDIVISION (C)(1)(II) OF THE RIGHTS IN
 ** TECHNICAL DATA AND COMPUTER SOFTWARE CLAUSE AT DFARS 252.227-7013,
 ** AND/OR IN SIMILAR OR SUCCESSOR CLAUSES IN THE FAR, DOD OR NASA FAR
 ** SUPPLEMENT. UNPUBLISHED RIGHTS RESERVED UNDER THE COPYRIGHT LAWS OF
-** THE UNITED STATES.  
-** 
+** THE UNITED STATES. 
+**
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
-** $Header$
-** $Log: 
-**  21   3dfx      1.20        04/10/00 Kenneth Dyke    Added code to take
-**       full-precision screenshots.
-**  20   3dfx      1.19        03/27/00 Kenneth Dyke    DOS Glide support for
-**       two-chip (and maybe four-chip) Napalm boards.
-**  19   3dfx      1.18        03/14/00 Adam Briggs     let glide decide when to
-**       use analog sli
-**  18   3dfx      1.17        03/08/00 Kenneth Dyke    Keep track of whether or
-**       not a board is "mapped" or not.
-**  17   3dfx      1.16        03/08/00 Don Mullis      Generalize glide3 to handle
-**       sub-byte-size texels.
+** $Header: minihwc.h, 22, 5/9/2000 12:58:24 PM, Kenneth Dyke
+** $Log:
+**  22   3dfx      1.20.1.0    05/09/00 Kenneth Dyke    Added code to calculat
+**       chip values on Napalm
+**  21   3dfx      1.20        04/10/00 Kenneth Dyke    Added code to tak
+**       full-precision screenshots
+**  20   3dfx      1.19        03/27/00 Kenneth Dyke    DOS Glide support fo
+**       two-chip (and maybe four-chip) Napalm boards
+**  19   3dfx      1.18        03/14/00 Adam Briggs     let glide decide when t
+**       use analog sl
+**  18   3dfx      1.17        03/08/00 Kenneth Dyke    Keep track of whether o
+**       not a board is "mapped" or not
+**  17   3dfx      1.16        03/07/00 Don Mullis      Generalize glide3 to handl
+**       sub-byte-size texels
+**
+**  16   3dfx      1.15        03/03/00 Kenneth Dyke    Make sure code doesn't bar
+**       for non-Napalm build
+**  15   3dfx      1.14        03/03/00 Kenneth Dyke    Fixed physical -> LF
+**       address calculation once and for all (I hope).  Added code to support SL
+**       read abort workaround
+**  14   3dfx      1.13        03/01/00 Kenneth Dyke    A bunch of fixes for AA LF
+**       accesses (and 32-bit LFB accesses)
+**
+**  13   3dfx      1.12        02/14/00 Kenneth Dyke    Make sure that we calculat
+**       the right number of tiles we need when in SLI mode.  Get SLI band heigh
+**       info from Glide rather than checking env var directly
+**  12   3dfx      1.11        02/07/00 Kenneth Dyke    MacOS & PC fixes fo
+**       multi-chip anti-aliasing
+**  11   3dfx      1.10        01/31/00 Adam Briggs     changed the IS_NAPALM macr
+**       to cooperate with the display driver version of the sam
+**  10   3dfx      1.9         01/31/00 Adam Briggs     Changed all device ID magi
+**       numbers to use those defined in fxhal.h & added IS_NAPALM macro to tes
+**       against device ID rang
+**  9    3dfx      1.8         01/28/00 Kenneth Dyke    Update MacOS minihwc cod
+**       for new HRM protocol
+**
+**  8    3dfx      1.7         01/21/00 Adam Briggs     get the correct linea
+**       mappings of slave reg
+**  7    3dfx      1.6         01/19/00 Adam Briggs     Made minihwc use eithe
+**       EXT_HWC or EXT_HWC_OLD depending on which one the display driver support
+**       so that a new glide can try to run on an old display driver
+**  6    3dfx      1.5         01/18/00 Kenneth Dyke    Added specific offsets fo
+**       primary and secondard display buffers
+**  5    3dfx      1.4         01/16/00 Kenneth Dyke    Include pixel format i
+**       overlay setup code
+**  4    3dfx      1.3         01/03/00 Adam Briggs     added hwcGetGammaTabl
+**       function to allow OpenGL to later restore the original Gamma ramp
+**  3    3dfx      1.2         11/22/99 Kenneth Dyke    Added hwcIdleWinFifo()
+**  2    3dfx      1.1         11/09/99 Adam Briggs     Added support for gettin
+**       slave chip MMIO pointers from hwcMapBoard and hwcInitRegister
+**  1    3dfx      1.0         09/11/99 StarTeam VTS Administrator
 ** 
-**  16   3dfx      1.15        03/03/00 Kenneth Dyke    Make sure code doesn't barf
-**       for non-Napalm build.
-**  15   3dfx      1.14        03/03/00 Kenneth Dyke    Fixed physical -> LFB
-**       address calculation once and for all (I hope).  Added code to support SLI
-**       read abort workaround.
-**  14   3dfx      1.13        03/01/00 Kenneth Dyke    A bunch of fixes for AA LFB
-**       accesses (and 32-bit LFB accesses).
-** 
-**  13   3dfx      1.12        02/14/00 Kenneth Dyke    Make sure that we calculate
-**       the right number of tiles we need when in SLI mode.  Get SLI band height
-**       info from Glide rather than checking env var directly.
-**  12   3dfx      1.11        02/07/00 Kenneth Dyke    MacOS & PC fixes for
-**       multi-chip anti-aliasing.
-**  11   3dfx      1.10        01/31/00 Adam Briggs     changed the IS_NAPALM macro
-**       to cooperate with the display driver version of the same
-**  10   3dfx      1.9         01/31/00 Adam Briggs     Changed all device ID magic
-**       numbers to use those defined in fxhal.h & added IS_NAPALM macro to test
-**       against device ID range
-**  9    3dfx      1.8         01/28/00 Kenneth Dyke    Update MacOS minihwc code
-**       for new HRM protocol.
-** 
-**  8    3dfx      1.7         01/21/00 Adam Briggs     get the correct linear
-**       mappings of slave regs
-**  7    3dfx      1.6         01/19/00 Adam Briggs     Made minihwc use either
-**       EXT_HWC or EXT_HWC_OLD depending on which one the display driver supports
-**       so that a new glide can try to run on an old display driver.
-**  6    3dfx      1.5         01/19/00 Kenneth Dyke    Added specific offsets for
-**       primary and secondard display buffers.
-**  5    3dfx      1.4         01/16/00 Kenneth Dyke    Include pixel format in
-**       overlay setup code.
-**  4    3dfx      1.3         01/03/00 Adam Briggs     added hwcGetGammaTable
-**       function to allow OpenGL to later restore the original Gamma ramp.
-**  3    3dfx      1.2         11/22/99 Kenneth Dyke    Added hwcIdleWinFifo().
-**  2    3dfx      1.1         11/09/99 Adam Briggs     Added support for getting
-**       slave chip MMIO pointers from hwcMapBoard and hwcInitRegisters
-**  1    3dfx      1.0         09/12/99 StarTeam VTS Administrator 
-** $
 ** 
 ** 52    8/31/99 5:10p Atai
 ** program cfgAALfbCtrl
@@ -736,5 +738,7 @@ extern void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
 extern void hwcAAScreenShot(hwcBoardInfo *bInfo, FxU32 colBufNum);
 
 #endif
+
+void hwcCalcSipValue(hwcBoardInfo *bInfo, FxU32 chipNum, FxU32 *nandChain, FxU32 *norChain);
 
 #endif                          /* MINIHWC_H not defined */

@@ -19,11 +19,14 @@
 **
 ** $Header$
 ** $Log: 
+**  4    3dfx      1.2.1.0     06/20/00 Joseph Kain     Changes to support the
+**       Napalm Glide open source release.  Changes include cleaned up offensive
+**       comments and new legal headers.
 **  3    3dfx      1.2         02/14/00 Kenneth Dyke    Added macro to grab slave
 **       IO registers.
 **  2    3dfx      1.1         02/07/00 Kenneth Dyke    MacOS & PC fixes for
 **       multi-chip anti-aliasing.
-**  1    3dfx      1.0         09/12/99 StarTeam VTS Administrator 
+**  1    3dfx      1.0         09/11/99 StarTeam VTS Administrator 
 ** $
 ** 
 ** 3     6/03/99 4:53p Kcd

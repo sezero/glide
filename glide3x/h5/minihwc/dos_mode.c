@@ -2,33 +2,35 @@
 ** THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONLY
 ** PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGHT
 ** TO USE THE GLIDE TRADEMARK WITHOUT PRIOR WRITTEN PERMISSION OF 3DFX
-** INTERACTIVE, INC. A COPY OF THIS LICENSE MAY BE OBTAINED FROM THE 
-** DISTRIBUTOR OR BY CONTACTING 3DFX INTERACTIVE INC(info@3dfx.com). 
-** THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER 
+** INTERACTIVE, INC. A COPY OF THIS LICENSE MAY BE OBTAINED FROM THE
+** DISTRIBUTOR OR BY CONTACTING 3DFX INTERACTIVE INC(info@3dfx.com).
+** THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER
 ** EXPRESSED OR IMPLIED. SEE THE 3DFX GLIDE GENERAL PUBLIC LICENSE FOR A
-** FULL TEXT OF THE NON-WARRANTY PROVISIONS.  
-** 
+** FULL TEXT OF THE NON-WARRANTY PROVISIONS. 
+**
 ** USE, DUPLICATION OR DISCLOSURE BY THE GOVERNMENT IS SUBJECT TO
 ** RESTRICTIONS AS SET FORTH IN SUBDIVISION (C)(1)(II) OF THE RIGHTS IN
 ** TECHNICAL DATA AND COMPUTER SOFTWARE CLAUSE AT DFARS 252.227-7013,
 ** AND/OR IN SIMILAR OR SUCCESSOR CLAUSES IN THE FAR, DOD OR NASA FAR
 ** SUPPLEMENT. UNPUBLISHED RIGHTS RESERVED UNDER THE COPYRIGHT LAWS OF
-** THE UNITED STATES.  
-** 
+** THE UNITED STATES. 
+**
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
-** $Header$
-** $Log: 
-**  5    3dfx      1.4         04/25/00 Kenneth Dyke    Brough SLI/AA code for DOS
-**       a little more up to date.
-**  4    3dfx      1.3         03/28/00 Kenneth Dyke    Fixed missing parameter to
-**       setVideoMode.  C r0x.
-**  3    3dfx      1.2         03/28/00 Kenneth Dyke    Refinements to memory
-**       layout for DOS glide setup.
-**  2    3dfx      1.1         03/27/00 Kenneth Dyke    DOS Glide support for
-**       two-chip (and maybe four-chip) Napalm boards.
-**  1    3dfx      1.0         09/12/99 StarTeam VTS Administrator 
-** $
+** $Header: dos_mode.c, 6, 5/9/2000 12:51:00 PM, Kenneth Dyke
+** $Log:
+**  6    3dfx      1.4.1.0     05/09/00 Kenneth Dyke    Improved startup code fo
+**       Glide.  Fixes cold startup problem
+**  5    3dfx      1.4         04/25/00 Kenneth Dyke    Brough SLI/AA code for DO
+**       a little more up to date
+**  4    3dfx      1.3         03/28/00 Kenneth Dyke    Fixed missing parameter t
+**       setVideoMode.  C r0x
+**  3    3dfx      1.2         03/28/00 Kenneth Dyke    Refinements to memor
+**       layout for DOS glide setup
+**  2    3dfx      1.1         03/27/00 Kenneth Dyke    DOS Glide support fo
+**       two-chip (and maybe four-chip) Napalm boards
+**  1    3dfx      1.0         09/11/99 StarTeam VTS Administrator
+** 
 ** 
 ** 4     10/08/98 10:14a Dow
 ** Fixes 512x384 sometimes
@@ -245,18 +247,7 @@ mapSlavePhysical(hwcBoardInfo *bInfo, FxU32 chipNum)
     }
 
     numChips = memBase0Decode / (32*1024*1024);
-    if(numChips == 2) {
-      if(memBase1Mem == 128*1024*1024) {
-        /* Two-way 16MB PCI */
-        memBase1Decode = SST_PCI_MEMBASE1_DECODE_32MB;
-      } else if(memBase1Mem == 256*1024*1024) {
-        /* Two-way 32MB AGP */
-        memBase1Decode = SST_PCI_MEMBASE1_DECODE_64MB;
-      }
-    } else {
-      /* Four-way 32MB AGP */
-      memBase1Decode = SST_PCI_MEMBASE1_DECODE_64MB;      
-    }        
+    memBase1Decode = SST_PCI_MEMBASE1_DECODE_64MB
 
     /* Okay, remap master to make room for slaves. */
     cfgPciDecode &= ~(SST_PCI_MEMBASE0_DECODE | SST_PCI_MEMBASE1_DECODE | SST_PCI_IOBASE0_DECODE);
@@ -327,11 +318,10 @@ initSlave(hwcBoardInfo *bInfo, FxU32 chipNum)
   FxU32 pciInit0, pllCtrl1;
   FxU32 dramInit0, dramInit1;
   FxU32 miscInit0, miscInit1;
+  FxU32 tmuGbeInit
   FxU32 cmdStatus;
 
   LOG((dbg,"initSlave(%d)\n",chipNum));
-
-  h3InitResetAll(bInfo->regInfo.slaveIOBase[chipNum-1]);
 
   /* Copy over pll & memory timings, etc. */
   HWC_IO_LOAD(bInfo->regInfo, pllCtrl1, pllCtrl1);
@@ -348,6 +338,12 @@ initSlave(hwcBoardInfo *bInfo, FxU32 chipNum)
   HWC_IO_STORE_SLAVE(chipNum, bInfo->regInfo, miscInit0, miscInit0);
   HWC_IO_LOAD(bInfo->regInfo, miscInit1, miscInit1);
   HWC_IO_STORE_SLAVE(chipNum, bInfo->regInfo, miscInit1, miscInit1);
+  HWC_IO_LOAD(bInfo->regInfo, tmuGbeInit, tmuGbeInit)
+  HWC_IO_STORE_SLAVE(chipNum, bInfo->regInfo, tmuGbeInit, tmuGbeInit)
+
+  /* Init DRAM mode stuff *
+  HWC_IO_STORE_SLAVE(chipNum, bInfo->regInfo, dramData, 0x000000037)
+  HWC_IO_STORE_SLAVE(chipNum, bInfo->regInfo, dramCommand, 0x10d)
 
   /* Disable master IO */
   cmdStatus = CFG_READ(0, status_command);
@@ -357,6 +353,9 @@ initSlave(hwcBoardInfo *bInfo, FxU32 chipNum)
   cmdStatus = CFG_READ(chipNum, status_command);
   cmdStatus |= 1;
   CFG_WRITE(chipNum, status_command, cmdStatus);
+
+  /* Reset everything *
+  h3InitResetAll(bInfo->regInfo.slaveIOBase[chipNum-1])
 
   /* Init VGA (no legacy decode) */
   h3InitVga(bInfo->regInfo.slaveIOPortBase[chipNum-1], FXFALSE);
@@ -371,10 +370,11 @@ initSlave(hwcBoardInfo *bInfo, FxU32 chipNum)
   CFG_WRITE(0, status_command, cmdStatus);
 
 { 
-  FxU32 status, vgaInit0;
+  FxU32 status, vgaInit0, vgaInit1
   HWC_IO_LOAD_SLAVE(chipNum, bInfo->regInfo, status, status);
   HWC_IO_LOAD_SLAVE(chipNum, bInfo->regInfo, vgaInit0, vgaInit0);
-  LOG((dbg,"initSlave(%d) done.  slave status: %08lx vgaInit0: %08lx\n",chipNum, status, vgaInit0));
+  HWC_IO_LOAD_SLAVE(chipNum, bInfo->regInfo, vgaInit1, vgaInit1)
+  LOG((dbg,"initSlave(%d) done.  slave status: %08lx vgaInit0: %08lx vgaInit1: %08lx\n",chipNum, status, vgaInit0, vgaInit1))
 }
 }
 
@@ -458,12 +458,12 @@ buildVideoModeData(hwcBoardInfo *bInfo)
   /* 2X Mode */
   modeData[20] = (FxU16)IGET32(dacMode);
 
-{
-  FxU32 i;
-  for(i = 0; i < 21; i++) {
-  LOG((dbg,"modeData[%d]: %02lx\n",i,modeData[i]));
-  }
-}  
+  
+    FxU32 i
+    for(i = 0; i < 21; i++) 
+      LOG((dbg,"modeData[%d]: %02lx\n",i,modeData[i]))
+    
+  } 
 }  
 
 void
@@ -1256,7 +1256,12 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
       CFG_WRITE(chipNum, cfgSliLfbCtrl, 0);
       CFG_WRITE(chipNum, cfgAALfbCtrl, 0);
       CFG_WRITE(chipNum, cfgSliAAMisc, 0);
-      CFG_WRITE(chipNum, cfgVideoCtrl0, 0);
+      // Make sure slave chips don't drive HSYNC & VSYN
+      if(chipNum > 0) 
+        CFG_WRITE(chipNum, cfgVideoCtrl0, SST_CFG_DAC_HSYNC_TRISTATE | SST_CFG_DAC_VSYNC_TRISTATE)
+      } else 
+        CFG_WRITE(chipNum, cfgVideoCtrl0, 0)
+      
       CFG_WRITE(chipNum, cfgVideoCtrl1, 0);
       CFG_WRITE(chipNum, cfgVideoCtrl2, 0);
       CFG_WRITE(chipNum, cfgAADepthBufferAperture, 0);

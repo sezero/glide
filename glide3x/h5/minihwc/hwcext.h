@@ -2,28 +2,28 @@
 ** THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONLY
 ** PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGHT
 ** TO USE THE GLIDE TRADEMARK WITHOUT PRIOR WRITTEN PERMISSION OF 3DFX
-** INTERACTIVE, INC. A COPY OF THIS LICENSE MAY BE OBTAINED FROM THE 
-** DISTRIBUTOR OR BY CONTACTING 3DFX INTERACTIVE INC(info@3dfx.com). 
-** THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER 
+** INTERACTIVE, INC. A COPY OF THIS LICENSE MAY BE OBTAINED FROM THE
+** DISTRIBUTOR OR BY CONTACTING 3DFX INTERACTIVE INC(info@3dfx.com).
+** THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER
 ** EXPRESSED OR IMPLIED. SEE THE 3DFX GLIDE GENERAL PUBLIC LICENSE FOR A
-** FULL TEXT OF THE NON-WARRANTY PROVISIONS.  
-** 
+** FULL TEXT OF THE NON-WARRANTY PROVISIONS. 
+**
 ** USE, DUPLICATION OR DISCLOSURE BY THE GOVERNMENT IS SUBJECT TO
 ** RESTRICTIONS AS SET FORTH IN SUBDIVISION (C)(1)(II) OF THE RIGHTS IN
 ** TECHNICAL DATA AND COMPUTER SOFTWARE CLAUSE AT DFARS 252.227-7013,
 ** AND/OR IN SIMILAR OR SUCCESSOR CLAUSES IN THE FAR, DOD OR NASA FAR
 ** SUPPLEMENT. UNPUBLISHED RIGHTS RESERVED UNDER THE COPYRIGHT LAWS OF
-** THE UNITED STATES.  
-** 
+** THE UNITED STATES. 
+**
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
-*/
-/*
+*
+/
 **
 ** File name:   hwcext.h
 **
 ** Description: Structures for the hwc extensions.
 **
-** $Header$
+** $Header: hwcext.h, 9, 6/19/2000 7:55:50 PM, Adam Briggs
 **
 ** $History: hwcext.h $
 ** 
@@ -589,6 +589,52 @@ typedef struct hwcExtProtectCmdFifoReq_s {
 } hwcExtProtectCmdFifoReq_t;
 #endif
 
+/*
+** HWCEXT_SLI_AA_REQUEST
+*
+** I'm sorry this has to be here but I swear that IT'S NOT MY FAULT
+*
+** This escape should call into the miniport driver on NT and setup
+** the master & slaves for the requested SLI or AA mode.  SLI &/or
+** AA is disabled with the same call by setting dwaaEn = 0 && 
+** dwsliEn = 0 in the request structure.
+** 
+** Keen observers may note that the following structures bear a
+** remarkable resemblance to those structures that are passed
+** to the miniport driver by the display driver to execute the
+** same function.  They are duplicated here under different names
+** to protect this code in the case that those structures are
+** modified.
+*/
+#define HWCEXT_SLI_AA_REQUEST  0x1B
+
+typedef struct _hwc_sli_aa_chipinfo
+{
+   DWORD dwChips ;         /* dwChips: Number of chips in multi-chip configuration (1-4) */
+   DWORD dwsliEn ;         /* dwsliEn: Sli is to be enabled (0,1) */
+   DWORD dwaaEn ;          /* dwaaEn: Anti-aliasing is to be enabled (0,1) */
+   DWORD dwaaSampleHigh ;  /* dwaaSampleHigh: 0->Enable 2-sample AA, 1->Enable 4-sample AA */
+   DWORD dwsliAaAnalog ;   /* dwsliAaAnalog: 0->Enable digital SLI/AA, 1->Enable analog Sli/AA */
+   DWORD dwsli_nlines ;    /* dwsli_nLines: Number of lines owned by each chip in SLI (2-128) */
+   DWORD dwCfgSwapAlgorithm ; /* Swap Buffer Algorithm */
+}  HWCSLI_AA_CHIPINFO ;
+
+typedef struct _hwc_sli_aa_meminfo
+{
+   DWORD dwTotalMemory ;
+   DWORD dwTileMark ;
+   DWORD dwTileCmpMark ;
+   DWORD dwaaSecondaryColorBufBegin ;
+   DWORD dwaaSecondaryDepthBufBegin ;
+   DWORD dwaaSecondaryDepthBufEnd ;
+   DWORD dwBpp ;
+}  HWCSLI_AA_MEMINFO ; 
+
+typedef struct hwcExtSliAAReq_s
+{
+   HWCSLI_AA_CHIPINFO ChipInfo ;
+   HWCSLI_AA_MEMINFO  MemInfo ;
+} hwcExtSliAAReq_t ;
 
 /*
 **  The Request structure (given as input data to ExtEscape() )
@@ -617,6 +663,7 @@ typedef struct hwcExtRequest_s {
 #ifdef ENABLE_V3_W2K_GLIDE_CHANGES
     hwcExtProtectCmdFifoReq_t           protectCmdFifo;
 #endif
+    hwcExtSliAAReq_t                    sliAAReq ;
   } optData;
 } hwcExtRequest_t;
 
@@ -844,14 +891,25 @@ typedef struct
 {
     LONG        glideGDIFlags;  /* For cooperation with GDI.(Exclusive flag) */
     HANDLE      glideProcessHandle; /* Handle of glide process that last mapped membases */
+    LONG        glideReferenceCount ; /* this must be zero before the memory is unmapped */
     BYTE*       glideRegBase;           /* Saved glide register base address */
     BYTE*       glideLfbBase;           /* Saved glide Lfb base address - for mapping only */
     BYTE*       glideScreenBase;        /* Saved glide screen base address - used by glide. */
     BYTE*       glideIOBase;
-    ULONG       vidProcCfg;
-    ULONG       vidDesktopOverlayStride;
+    //ULONG       vidProcCfg
+    //ULONG       vidDesktopOverlayStride
 #ifdef SLI_AA
     BYTE        *glideSlaveRegBase[HWINFO_SST_MAX_NUM_CHIPS * HWINFO_SST_MAX_CHIP_INDEX];
+#endif
+
+#if (_WIN32_WINNT >= 0x0500)
+    PDEV        *ppdev;
+    ULONG       contextDWORDNTIndex;
+    ULONG       fifoType;
+    ULONG       lastFifoOffset;
+    ULONG       lastFifoSize;
+    ULONG       lastStateOffset;
+    ULONG       lastStateSize;
 #endif
 
 #ifdef ENABLE_V3_W2K_GLIDE_CHANGES
@@ -875,6 +933,18 @@ typedef struct
 } GLIDESTATE;
 
 extern GLIDESTATE glideState[];
+
+#if (_WIN32_WINNT >= 0x0500)
+#define MAX_ADDRESS_TABLE_SIZE    256
+
+typedef struct _LFBMapping
+{
+  HANDLE  ProcessID;
+  DWORD   LFBAddr;
+} LFBMAPPING;
+
+extern LFBMAPPING LfbMappings[];
+#endif
 #endif                                                  /* WINNT */
 
 #endif                          /* HWCEXT_H not defined */

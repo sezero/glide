@@ -18,7 +18,10 @@
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
 ** $Log: 
-**  1    3dfx      1.0         09/12/99 StarTeam VTS Administrator 
+**  2    3dfx      1.0.1.0     06/20/00 Joseph Kain     Changes to support the
+**       Napalm Glide open source release.  Changes include cleaned up offensive
+**       comments and new legal headers.
+**  1    3dfx      1.0         09/11/99 StarTeam VTS Administrator 
 ** $
 ** 
 ** 43    6/24/98 11:05a Dow
