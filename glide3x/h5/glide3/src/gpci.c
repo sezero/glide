@@ -1866,7 +1866,7 @@ _GlideInitEnvironment(int which)
   /* Get CPU Info */
   _cpuid (&_GlideRoot.CPUType);
 
-#ifndef DRI_BUILD
+#if !(GLIDE_PLATFORM & GLIDE_OS_UNIX)
   /* Pass retrieved CPU Info into minihwc */
   hwcSetCPUInfo(&_GlideRoot.CPUType);
 #endif

@@ -19,6 +19,10 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.7.4.13  2003/07/24 03:51:08  anholt
+** Convert h5/glide3/src/ for FreeBSD, mostly by changing #ifdef __linux__ to
+** #ifdef DRI_BUILD, and removing a bit of dead code.
+**
 ** Revision 1.7.4.12  2003/07/10 12:26:27  dborca
 ** no message
 **
@@ -1373,7 +1377,7 @@ static FxBool _grLfbLock (GrLock_t type, GrBuffer_t buffer,
 		  {
 #ifdef DRI_BUILD
            /*
-            * For Linux, we just return the correct address and
+            * For DRI, we just return the correct address and
             * stride.
             */
 	        info->strideInBytes   = gc->bInfo->buffInfo.bufLfbStride;
@@ -1381,6 +1385,8 @@ static FxBool _grLfbLock (GrLock_t type, GrBuffer_t buffer,
 #else	/* defined(DRI_BUILD) */
             info->lfbPtr          = (void *)gc->lfb_ptr;
 #endif	/* defined(DRI_BUILD) */
+
+/* [dBorca] need to revise this */
 #ifndef	DRI_BUILD
             switch (writeMode) 
 			{
@@ -1408,12 +1414,10 @@ static FxBool _grLfbLock (GrLock_t type, GrBuffer_t buffer,
 #if	defined(DRI_BUILD)
             if (colBufferIndex == 0) {
                 info->strideInBytes = driInfo.stride;
-            } else {
-                info->strideInBytes     = gc->bInfo->buffInfo.bufLfbStride;
-            }
-#else	/* defined(DRI_BUILD) */
-            info->strideInBytes     = gc->bInfo->buffInfo.bufLfbStride;
+            } else
 #endif	/* defined(DRI_BUILD) */
+            info->strideInBytes     = gc->bInfo->buffInfo.bufLfbStride;
+
 #if __POWERPC__
             if(IS_NAPALM(gc->bInfo->pciInfo.deviceID)) {
               if(gc->grPixelSize == 2) {
@@ -1470,7 +1474,7 @@ static FxBool _grLfbLock (GrLock_t type, GrBuffer_t buffer,
             
 #if	defined(DRI_BUILD)
            /*
-            * For Linux, we just return the correct address and
+            * For DRI, we just return the correct address and
             * stride.
             */
 	        info->strideInBytes   = gc->bInfo->buffInfo.bufLfbStride;
@@ -1479,6 +1483,7 @@ static FxBool _grLfbLock (GrLock_t type, GrBuffer_t buffer,
             info->lfbPtr          = (void *)gc->lfb_ptr;
 #endif	/* defined(DRI_BUILD) */
 
+/* [dBorca] need to revise this */
 #ifndef	DRI_BUILD
             switch (writeMode) 
 			{
@@ -2247,7 +2252,7 @@ static FxBool grLfbReadRegionOrigin (GrBuffer_t src_buffer, GrOriginLocation_t o
    info.size = sizeof(info);
    rv=FXFALSE;
 
-#ifndef DRI_BUILD /* [dBorca] fixme :D */
+#if !(GLIDE_PLATFORM & GLIDE_OS_UNIX) /* [dBorca] fixme :D */
    /* We want to read using HWC if we using FSAA with 4 chips or want dithering */
    /* or we are using forced 32 bit mode and want dithering */
    wantHwc = (_GlideRoot.environment.useHwcAAforLfbRead & 1) &&

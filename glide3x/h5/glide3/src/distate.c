@@ -840,12 +840,11 @@ GR_EXT_ENTRY(grLfbConstantStencil, void , (GrStencil_t value) )
   
   Return:
   -------------------------------------------------------------------*/
-#if defined(DRI_BUILD) || defined(__WIN32__)
 GR_EXT_ENTRY(grStipplePattern, void , (GrStipplePattern_t stipple))
 {
  #define FN_NAME "grStipplePattern"
 
-  GR_BEGIN_NOFIFOCHECK("grStippleMode\n", 85);
+  GR_BEGIN_NOFIFOCHECK("grStipplePattern\n", 85);
 
   INVALIDATE(stipple);
 
@@ -853,7 +852,6 @@ GR_EXT_ENTRY(grStipplePattern, void , (GrStipplePattern_t stipple))
 
  #undef FN_NAME
 } /* grStipplePattern */
-#endif /* DRI_BUILD __WIN32__ */
 
 
 /*-------------------------------------------------------------------
@@ -1016,7 +1014,6 @@ GR_EXT_ENTRY(grAlphaCombineExt, void , (GrACUColor_t     a,
   
   Return:
   -------------------------------------------------------------------*/
-#if defined(DRI_BUILD) || defined(__WIN32__)
 GR_DIENTRY(grStippleMode, void , (GrStippleMode_t mode) )
 {
  #define FN_NAME "grStippleMode"
@@ -1029,7 +1026,6 @@ GR_DIENTRY(grStippleMode, void , (GrStippleMode_t mode) )
 
  #undef FN_NAME
 } /* grStippleMode */
-#endif /* DRI_BUILD || __WIN32__*/
 
 /*-------------------------------------------------------------------
   Function: grDitherMode
@@ -2092,9 +2088,7 @@ _grValidateState()
     _grDepthBufferFunction(LOADARG(grDepthBufferFunction, fnc));
     _grDepthBufferMode(LOADARG(grDepthBufferMode, mode));
     _grDitherMode(LOADARG(grDitherMode, mode));
-#if defined(DRI_BUILD) || defined(__WIN32__)
     _grStippleMode(LOADARG(grStippleMode, mode));
-#endif /* DRI_BUILD  __WIN32__*/
     _grSstOrigin(LOADARG(grSstOrigin, origin));
     _grRenderBuffer(LOADARG(grRenderBuffer, buffer));
         /* tbext */
@@ -2307,7 +2301,6 @@ _grValidateState()
     REG_GROUP_END();
   }
 
-#if defined(DRI_BUILD) || defined(__WIN32__)
   if (NOTVALID(stipple)) {
     gc->state.shadow.stipple = LOADARG(grStipplePattern, stipple);
     REG_GROUP_BEGIN(BROADCAST_ID, stipple, 1, 0x01);
@@ -2316,7 +2309,6 @@ _grValidateState()
     }
     REG_GROUP_END();
   }
-#endif /* DRI_BUILD __WIN32__ */
 
   if (NOTVALID(stencilOp)) {
     FxU32 stencilOp = gc->state.shadow.stencilOp;

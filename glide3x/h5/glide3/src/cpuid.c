@@ -3,6 +3,9 @@
  *
  * $Header$
  * $Log$
+ * Revision 1.1.2.6  2003/07/24 13:13:03  koolsmoky
+ * use __try/__except mechanism for win32 to catch SSE sigillegal in win95
+ *
  * Revision 1.1.2.5  2003/07/01 11:16:42  dborca
  * fixed  a bug in GNUC code when running Intel; also removed detritus
  *
@@ -128,6 +131,9 @@ static int has_feature (int feature)
 
  /* register signal handlers */
  void (*old_sigill)(int) = signal(SIGILL, handler);
+ if (old_sigill == SIG_ERR) {
+    return 0;
+ }
 
  rv = check_feature(feature);
 
@@ -141,7 +147,7 @@ static int has_feature (int feature)
 #define _TRY() __try {
 #define _EXCEPTION() } __except(1) { return 0; } /* EXCEPTION_EXECUTE_HANDLER=1 */
  switch (feature) {
-	case _CPU_HAS_CPUID:         _TRY() TEST_CPUID(0)    _EXCEPTION() break;
+    case _CPU_HAS_CPUID:         _TRY() TEST_CPUID(0)    _EXCEPTION() break;
     case _CPU_FEATURE_SSE:       _TRY() TEST_SSE()       _EXCEPTION() break;
     case _CPU_FEATURE_SSE2:      _TRY() TEST_SSE2()      _EXCEPTION() break;
     case _CPU_FEATURE_3DNOW:     _TRY() TEST_3DNOW()     _EXCEPTION() break;

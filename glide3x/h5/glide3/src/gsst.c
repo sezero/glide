@@ -1419,7 +1419,7 @@ GR_ENTRY(grSstWinOpen, GrContext_t, ( FxU32                   hWnd,
   struct cmdTransportInfo *gcFifo = 0;
   GrContext_t retVal = 0;
 
-#if !defined(DRI_BUILD) && !defined(__DJGPP__)
+#if !(GLIDE_PLATFORM & GLIDE_OS_UNIX) && !defined(__DJGPP__)
   if (!hWnd) hWnd = (FxU32) GetActiveWindow();
   if (!hWnd)
     GrErrorCallback("grSstWinOpen: need to use a valid window handle",
@@ -1428,7 +1428,7 @@ GR_ENTRY(grSstWinOpen, GrContext_t, ( FxU32                   hWnd,
   GDBG_INFO(80, "Setting hwnd to foreground.\n");
   SetForegroundWindow((HWND)hWnd);
 */
-#endif	/* defined(DRI_BUILD) || defined(__DJGPP__) */
+#endif	/* (GLIDE_PLATFORM & GLIDE_OS_UNIX) || defined(__DJGPP__) */
 
   /* NB: TLS must be setup before the 'declaration' which grabs the
    * current gc. This gc is valid for all threads in the fullscreen
@@ -2357,7 +2357,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
     /* This actually gets taken in hwcInitVideo */
     gc->contextP = FXTRUE;
 
-#ifndef		DRI_BUILD
+#if !(GLIDE_PLATFORM & GLIDE_OS_UNIX)
     /* CSR - Set up flag for display driver to tell us that context was lost */
     if ( !gc->open )  /* If we already have a context open, then lets not
                          re-initialize the pointers                          */                                             
@@ -2369,7 +2369,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
     /* This actually gets taken in hwcInitVideo */
     gc->contextP = FXTRUE;
     *gc->lostContext = FXFALSE;
-#endif	/* defined(DRI_BUILD) */
+#endif	/* !(GLIDE_PLATFORM & GLIDE_OS_UNIX) */
 
     if (_GlideRoot.environment.gammaR != 1.3f &&
         _GlideRoot.environment.gammaG != 1.3f &&
@@ -2635,7 +2635,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
                                   gc->buffers0[gc->curBuffer], /* board address of beginning of OS  */
                                   gc->strideInTiles );        /* distance between scanlines of the OS, in*/
 
-#ifndef	DRI_BUILD
+#if !(GLIDE_PLATFORM & GLIDE_OS_UNIX)
     /*
     ** initialize context checking
     */
@@ -2644,7 +2644,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
       *gc->lostContext = FXFALSE;
       gc->contextP = 1;
     }
-#endif	/* defined(DRI_BUILD) */
+#endif	/* !(GLIDE_PLATFORM & GLIDE_OS_UNIX) */
 
 #endif /*  defined( GLIDE_INIT_HAL )  */
 #else  /* !defined( USE_PACKET_FIFO ) */
@@ -2756,7 +2756,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
                                   gc->buffers0[gc->curBuffer], /* board address of beginning of OS  */
                                   gc->strideInTiles );        /* distance between scanlines of the OS, in*/
     _grReCacheFifo(0);
-#ifndef	DRI_BUILD
+#if !(GLIDE_PLATFORM & GLIDE_OS_UNIX)
     /*
     ** initialize context checking
     */
@@ -2765,7 +2765,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
       *gc->lostContext = FXFALSE;
       gc->contextP = 1;
     }
-#endif /* defined(DRI_BUILD) */
+#endif /* !(GLIDE_PLATFORM & GLIDE_OS_UNIX) */
 
 #endif /* !defined( USE_PACKET_FIFO ) */
   
@@ -2801,7 +2801,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
     gcFifo->fifoRead = HW_FIFO_PTR( FXTRUE );
 #endif /* USE_PACKET_FIFO */
     
-#ifndef	DRI_BUILD
+#if !(GLIDE_PLATFORM & GLIDE_OS_UNIX)
     if ( (void*)gcFifo->fifoPtr != (void*)gcFifo->fifoRead ) {
 #ifdef GLIDE_INIT_HWC
       hwcRestoreVideo( bInfo );
@@ -2809,7 +2809,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
       GDBG_INFO( gc->myLevel, "Initial fifo state is incorrect\n" );
       return 0;
     }
-#endif	/* DRI_BUILD */
+#endif	/* GLIDE_PLATFORM & GLIDE_OS_UNIX */
     
 #if __POWERPC__ && PCI_BUMP_N_GRIND
     enableCopyBackCache((FxU32)gcFifo->fifoStart,gcFifo->fifoSize);
@@ -3124,7 +3124,7 @@ GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
   if (!gc)
     return 0;
 
-#if !defined(DRI_BUILD) && !defined(__DJGPP__)
+#if !(GLIDE_PLATFORM & GLIDE_OS_UNIX) && !defined(__DJGPP__)
   /* We are in Windowed Mode */
   if (gc->windowed)
   {
@@ -3146,7 +3146,7 @@ GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
   }
 #endif
 
-#ifndef	DRI_BUILD
+#if !(GLIDE_PLATFORM & GLIDE_OS_UNIX)
   if (gc->lostContext) {
     if (*gc->lostContext) {
 #if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
@@ -3159,7 +3159,7 @@ GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
       return 0;
     }
   }
-#endif	/* defined(DRI_BUILD) */
+#endif	/* !(GLIDE_PLATFORM & GLIDE_OS_UNIX) */
 
   /* NB: The gc that is being closed is the passed gc not the
    * currently selected gc. This must be setup before the
@@ -3213,7 +3213,7 @@ GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
        * safe everywhere.
        */
       GDBG_INFO(gc->myLevel, "  Restore Video\n");
-#ifndef	DRI_BUILD
+#if !(GLIDE_PLATFORM & GLIDE_OS_UNIX)
       if (!*gc->lostContext) {
       /* disable SLI and AA */
 #ifdef FX_GLIDE_NAPALM
@@ -3233,7 +3233,7 @@ GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
 #endif            
         hwcRestoreVideo(gc->bInfo);
       }
-#endif	/* defined(DRI_BUILD) */
+#endif	/* !(GLIDE_PLATFORM & GLIDE_OS_UNIX) */
 #endif /* !GLIDE_INIT_HAL */
 
       /*--------------------------
@@ -3528,14 +3528,14 @@ GR_ENTRY(grFinish, void, (void))
 
   grFlush();
   if ( gc->windowed ) {
-#if defined(GLIDE_INIT_HWC) && !defined(DRI_BUILD) && !defined(__DJGPP__)
+#if defined(GLIDE_INIT_HWC) && !(GLIDE_PLATFORM & GLIDE_OS_UNIX) && !defined(__DJGPP__)
     struct cmdTransportInfo*
       gcFifo = &gc->cmdTransportInfo;
     
     hwcIdleWinFifo(gc->bInfo,
                    &gcFifo->hwcFifoInfo,
                    gcFifo->issuedSerialNumber);
-#endif	/* defined(GLIDE_INIT_HWC) && !defined(DRI_BUILD) */
+#endif	/* defined(GLIDE_INIT_HWC) && !(GLIDE_PLATFORM & GLIDE_OS_UNIX) && !defined(__DJGPP__) */
   } else {
     /*while((_grSstStatus() & SST_BUSY) != 0) */
       /* Do Nothing */; 
