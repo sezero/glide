@@ -178,7 +178,7 @@ if [ "$DO_GENERATE" = YES ] ; then
         exit 100
     fi
     echo -n 'Automake...'
-    if automake ; then
+    if automake --add-missing --force-missing --copy; then
         do_nothing
     else
         echo 'Failed!!'
