@@ -1,10 +1,16 @@
-KSRC = /usr/src/linux
+KSRC ?= /usr/src/linux
 
-obj-m += ../3dfx_driver.o
+obj-m += 3dfx.o
 
 modules:
-	$(MAKE) -C $(KSRC) SUBDIRS=$(shell pwd) modules
+	ln -sf ../3dfx_driver.c 3dfx.c
+	$(MAKE) -C $(KSRC) M=$(shell pwd) modules
 
 clean:
-	cd ..; rm -f *.ko *.o *.mod.* .*.mod.* .*.cmd
+	rm -f 3dfx.c
+	$(MAKE) -C $(KSRC) M=$(shell pwd) clean
+
+install: modules
+	$(MAKE) -C $(KSRC) M=$(shell pwd) INSTALL_MOD_PATH="$(DESTDIR)" \
+		modules_install
 

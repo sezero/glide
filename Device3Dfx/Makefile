@@ -15,9 +15,8 @@ CFLAGS ?= -O2 -mno-fp-regs -mcpu=ev4 -ffixed-8 -Wa,-mev6 \
           -fomit-frame-pointer -fno-strict-aliasing
 endif
 
-KHEADERS ?= /usr/include
-KVERS ?= $(shell ./kinfo --UTS)
-MODULES_DIR = $(DESTDIR)/lib/modules/$(KVERS)
+KSRC ?= /usr/src/linux
+KHEADERS ?= $(KSRC)/include
 
 ALL_CFLAGS := -DMODULE -D__KERNEL__ \
               -I$(KHEADERS) -I$(KHEADERS)/asm/mach-default \
@@ -26,7 +25,9 @@ ALL_CFLAGS := -DMODULE -D__KERNEL__ \
 ###############################################################################
 # You should never need to change anything below.
 
-all: sanity module
+NAME := 3dfx
+
+all: modules
 
 # Sanity checks
 sanity:
@@ -47,17 +48,35 @@ sanity:
 	fi; \
 	)
 
-config: kinfo
+ifeq ($(wildcard config),config)
+
+config: sanity
+
+include config
+
+clean_type = clean_$(BUILD_TYPE)
+module_type = module_$(BUILD_TYPE)
+
+else
+
+KVERS ?= $(shell ./kinfo --UTS)
+MODULES_DIR = $(DESTDIR)/lib/modules/$(KVERS)
+
+config: sanity kinfo
 	@( \
 	KVER_MAJOR=`echo $(KVERS) | cut -d. -f1`; \
 	KVER_MINOR=`echo $(KVERS) | cut -d. -f2`; \
-	if [ "$$KVER_MAJOR" = 2 -a "$$KVER_MINOR" -ge 6 ]; then \
-	  echo MODULE_TDFX = 3dfx.ko; \
+	if [ $$KVER_MAJOR = 2 -a $$KVER_MINOR -ge 6 ]; then \
+	  echo BUILD_TYPE = kbuild; \
+	  echo MODULE_TDFX = kbuild/$(NAME).ko; \
 	else \
-	  echo MODULE_TDFX = 3dfx.o; \
+	  echo BUILD_TYPE = legacy; \
+	  echo MODULE_TDFX = $(NAME).o; \
 	fi; \
 	) > config
-	@$(MAKE) $(MAKECMDGOALS) configured-target=1
+	@$(MAKE) $(MAKECMDGOALS)
+
+endif
 
 kinfo: kinfo.c
 	$(CC) -I$(KHEADERS) -o kinfo kinfo.c
@@ -67,58 +86,58 @@ kinfo.h: kinfo
 	@./kinfo
 
 ###############################################################################
-# kernel 2.1+
 
--include config
+modules: config $(module_type)
 
-ifeq ($(configured-target),0)
-module: config
-else
-module: $(MODULE_TDFX)
-endif
+module_legacy: $(NAME).o
 
-3dfx.o 3dfx.ko: kinfo.h 3dfx_driver.c Makefile
+$(NAME).o: 3dfx_driver.c Makefile
 	$(CC) $(ALL_CFLAGS) -c -o $@ 3dfx_driver.c
+
+module_kbuild:
+	$(MAKE) -C kbuild
 
 ###############################################################################
 
-install_modules: module
-	mkdir -p $(MODULES_DIR)/misc
-	cp $(MODULE_TDFX) $(MODULES_DIR)/misc/
-
-install: install_modules
+install: config install_modules
 	@( \
 	if [ -e $(MODULES_DIR)/modules.dep ]; then \
-		indep=`grep 'misc/$(MODULE_TDFX):' $(MODULES_DIR)/modules.dep`; \
+		indep=`grep '$(NAME)/$(MODULE_TDFX):' $(MODULES_DIR)/modules.dep`; \
 		if [ -z "$$indep" ]; then \
-			echo "$(MODULES_DIR)/misc/$(MODULE_TDFX):" >> $(MODULES_DIR)/modules.dep; \
+			echo "$(MODULES_DIR)/$(NAME)/$(MODULE_TDFX):" >> $(MODULES_DIR)/modules.dep; \
 			echo "" >> $(MODULES_DIR)/modules.dep; \
 		fi; \
 	fi; \
-	if [ ! -e $(DESTDIR)/dev/.devfsd -a ! -c $(DESTDIR)/dev/3dfx ]; then \
-		mknod $(DESTDIR)/dev/3dfx c 107 0; \
-		chmod go+w $(DESTDIR)/dev/3dfx; \
+	if [ ! -e $(DESTDIR)/dev/.devfsd -a ! -c $(DESTDIR)/dev/$(NAME) ]; then \
+		mknod $(DESTDIR)/dev/$(NAME) c 107 0; \
+		chmod go+w $(DESTDIR)/dev/$(NAME); \
 	fi; \
 	if [ "$(RPM_INSTALL)" = "1" ]; then \
-		echo "$(MODULES_DIR)/misc/$(MODULE_TDFX)"; \
+		echo "$(MODULES_DIR)/$(NAME)/$(MODULE_TDFX)"; \
 	else \
-		inconf=`grep 'alias char-major-107 3dfx' $(DESTDIR)/etc/modules.conf`; \
+		inconf=`grep 'alias char-major-107 $(NAME)' $(DESTDIR)/etc/modules.conf`; \
 		if [ -z "$$inconf" ]; then \
-			echo "alias char-major-107 3dfx" >> $(DESTDIR)/etc/modules.conf; \
+			echo "alias char-major-107 $(NAME)" >> $(DESTDIR)/etc/modules.conf; \
 		fi; \
 	fi; \
 	)
 
+install_modules: modules
+	mkdir -p $(MODULES_DIR)/$(NAME)
+	cp $(MODULE_TDFX) $(MODULES_DIR)/$(NAME)/
+
 ###############################################################################
 # This is for debugging purposes by the developers:
 
-clean:
-	rm -f *.o *.ko *.s
+clean: config $(clean_type)
 	rm -f kinfo kinfo.h
 	rm -f config
 
-3dfx.s: 3dfx_driver.c Makefile
-	$(CC) $(ALL_CFLAGS) -S -c 3dfx_driver.c
+clean_legacy:
+	rm -f *.ko *.o *.mod.* .*.mod.* .*.cmd
+
+clean_kbuild:
+	$(MAKE) -C kbuild clean
 
 tar:
 	tar czf ../../SOURCES/Dev3Dfx-2.5.tar.gz 3dfx_driver.c Makefile
@@ -126,5 +145,7 @@ tar:
 debug:
 	$(MAKE) CFLAGS="-g -Wall -Wstrict-prototypes -DDEBUG"
 
-.PHONY: all sanity module install_modules install clean tar debug
+.PHONY: all sanity modules modules-legacy modules-kbuild
+.PHONY: install install-legacy install-kbuild
+.PHONY: clean clean-legacy tar debug
 
