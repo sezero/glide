@@ -998,7 +998,7 @@ _txImgConvert_ARGB565DErr(FxU32* dst, const FxU32* src, FxU32 format, int srcW, 
 
       /* scan for the min and max values */
       if (rawAlpha < minAlpha) minAlpha = rawAlpha;
-      if (rawAlpha > maxAlpha) minAlpha = rawAlpha;
+      if (rawAlpha > maxAlpha) maxAlpha = rawAlpha;
 
       /* sum of the alpha's */
       blockAlphaSum += rawAlpha;
@@ -1009,9 +1009,9 @@ _txImgConvert_ARGB565DErr(FxU32* dst, const FxU32* src, FxU32 format, int srcW, 
       (format == GR_TEXFMT_ARGB_CMP_DXT5)) {
     if ((minAlpha == 0x00UL) &&
         (maxAlpha == 0xFFUL)) {
-      return 0xFFUL; /* signal 6-alpha block encode for dxt4,5 */
+      return 0xFFUL; /* signal 6-alpha block encoding for dxt4,5 */
     } else {
-      return 0x00UL; /* signal 8-alpha block encode for dxt4,5 */
+      return 0x00UL; /* signal 8-alpha block encoding for dxt4,5 */
     }
   }
   
@@ -1049,11 +1049,12 @@ _txImgQuantizeDXT1(FxU16* dst, const FxU32* src,
   if (avgAlpha != 0xFFUL) /* we have varying alpha. do the 3-color encoding. */
   {
     /* set the threshold */
-    const FxU32 alphaThresh = 0x7FUL; /* According to OpenGL spec, a texel with an alpha component
-                                       * smaller than 0x7FUL will end up with 0x00UL alpha (black) and
-                                       * one with an alpha component equal to or larger than 0x7FUL will
-                                       * end up with 0xFFUL alpha.
-                                       */
+    /* According to OpenGL spec, a texel with an alpha component
+     * smaller than 0x7FUL will end up with 0x00UL alpha (black) and
+     * one with an alpha component equal to or larger than 0x7FUL will
+     * end up with 0xFFUL alpha.
+     */
+    const FxU32 alphaThresh = 0x7FUL;
     
     for(t = 0; t < h; t += 4) {
       for(s = 0; s < w; s += 4) {
