@@ -20,6 +20,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.2.6.3  2003/11/03 07:27:50  guillemj
+** Remove unbalanced #endif.
+**
 ** Revision 1.2.6.2  2003/07/25 07:13:41  dborca
 ** removed debris
 **
@@ -234,6 +237,7 @@ _grErrorDefaultCallback( const char *s, FxBool fatal )
 }
 #endif
 
+/*
 #if !defined(__linux__) && !defined(__FreeBSD__)
 void
 i3(void) 
@@ -241,6 +245,7 @@ i3(void)
   __asm int 3;
 } 
 #endif
+*/
 
 void
 _grAssert(char *exp, char *fileName, int lineNo)
