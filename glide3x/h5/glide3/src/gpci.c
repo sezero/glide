@@ -1188,16 +1188,14 @@ _grSstDetectResources(void)
       
       if (GETENV("FX_GLIDE_NUM_TMU", GC.bInfo->RegPath)) {
         int num_tmu = atoi(GETENV("FX_GLIDE_NUM_TMU", GC.bInfo->RegPath));
-        switch (num_tmu) {
-        case 1:
-          GC.num_tmu = 1;
-          GC.fbuf_size = (bInfo->h3Mem - 2);
-          break;
-        case 2:
+        /* XXX: what happens if someone requests invalid number of TMUs? */
+        if(num_tmu > 1) {
           GC.num_tmu = 2;
           GC.fbuf_size = (bInfo->h3Mem - 4);
-          break;
-        }         
+        } else {
+          GC.num_tmu = 1;
+          GC.fbuf_size = (bInfo->h3Mem - 2);
+        }
       }
       
       GC.state.grEnableArgs.combine_ext_mode = GR_MODE_DISABLE;
