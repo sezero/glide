@@ -24,6 +24,9 @@
 /*  Syncing up with 3dfx internal source repository.  These changes contain a
 /*  number of bug fixes.
 /*
+/*  Revision 1.2.2.2  2000/11/16 19:32:33  alanh
+/*  merge trunk into 64bit branch.
+/*
 /*  Revision 1.2.2.1  2000/08/30 08:37:51  alanh
 /*  Voodoo5 changes for 64bit architectures
 /*

@@ -27,6 +27,10 @@
 /*  Syncing up with 3dfx internal source repository.  These changes contain a
 /*  number of bug fixes.
 /*
+/*  Revision 1.2.2.2  2000/11/16 19:32:35  alanh
+/*  merge trunk into 64bit branch.
+/*
+/*
 /*  Revision 1.2.2.1  2000/11/14 14:11:19  alanh
 /*  merge in trunk updates, fixup pci code, and fix texus2 code pointers.
 /*

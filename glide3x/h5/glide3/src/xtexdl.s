@@ -25,6 +25,9 @@
 /*  Syncing up with 3dfx internal source repository.  These changes contain a
 /*  number of bug fixes.
 /*
+/*  Revision 1.2.2.1  2000/11/16 19:32:35  alanh
+/*  merge trunk into 64bit branch.
+/*
 /*  Revision 1.1  2000/06/15 00:27:43  josep
 /*  Initial checkin into SourceForge
 /

@@ -227,8 +227,8 @@ OTHER_CFILES    =       fxgasm.c fxbldno.c fxinline.h
 # targets
 LDIRT           =       fxgasm.o fxgasm fxgasm.h fxinline.h fxbldno.o fxbldno fxbldno.h 
 
-LIBRARIES       =       libglide3.a
-SHARED_LIBRARY  =	libglide3.so.3.10
+LIBRARIES       =       libglide3x.a
+SHARED_LIBRARY  =	libglide3.so.3.1
 SUBLIBRARIES    =       $(BUILD_ROOT_SWLIBS)/lib/libfxmisc.a \
 			$(BUILD_ROOT_SWLIBS)/lib/libfxpci.a \
 			$(BUILD_ROOT)/$(FX_GLIDE_HW)/lib/libminihwc.a
