@@ -937,7 +937,7 @@ static __inline int min (int x, int y)
 {
  return (x > y) ? y : x;
 }
-#define _m_empty() __asm __volatile ("emms")
+
 #define MMX_SETUP2(ar, gb, ar1m, gb1m, ar2m, gb2m)\
 	__asm(					\
 		/* mm7 = zero */		\
@@ -6540,8 +6540,6 @@ static void hwcReadRegion565(hwcBoardInfo *bInfo, FxU32 src, FxU32 src_x, FxU32 
       );
 #else
       __asm {
-	    emms /* mmx */
-
         /* mm7 = zero */
         pXor	mm7,	mm7;		
         
@@ -6591,56 +6589,49 @@ static void hwcReadRegion565(hwcBoardInfo *bInfo, FxU32 src, FxU32 src_x, FxU32 
                 mov	bx,	word ptr [eax]	/* ebx has packed rgb */
 #if 0
                 mov	ecx,    ebx			/* ecx too */
-		Shl	ebx,	3			/* bl now has b */
-		Shl	bh,     2			/* bh now has g */
-		Shl	ecx,	8			/* shift so r sig bit is bit 23 */
-		And	ecx,	0xF80000		/* ecx now has r */
-		Mov	cx,	bx			/* ecx now has r,g,b */
-		MovD	mm0,	ecx			/* Copy RGB into mm0 */
-		pUnpckLBW	mm0,	mm7		/* Bytes -> Words */
-		pSLLQ	mm0,	4			/* Shift everything left 4 bits */
-		pMulHW	mm0,	mm4			/* 0000 1080 1040 1080 - Replicate high bits to missing low bits */
+				Shl	ebx,	3			/* bl now has b */
+				Shl	bh,     2			/* bh now has g */
+				Shl	ecx,	8			/* shift so r sig bit is bit 23 */
+				And	ecx,	0xF80000		/* ecx now has r */
+				Mov	cx,	bx			/* ecx now has r,g,b */
+				MovD	mm0,	ecx			/* Copy RGB into mm0 */
+				pUnpckLBW	mm0,	mm7		/* Bytes -> Words */
+				pSLLQ	mm0,	4			/* Shift everything left 4 bits */
+				pMulHW	mm0,	mm4			/* 0000 1080 1040 1080 - Replicate high bits to missing low bits */
 #else
-		MovD		mm0,	ebx		/* Copy RGB into mm0 */
-		pUnpckLWD	mm0,	mm0		/* Rep Low Words -> High Words */
-		pUnpckLDQ	mm0,	mm0		/* Rep Low Dword -> High Dword */
-		pAnd		mm0,	mm6		/* 0000 F800 07E0 001F - Mask cols */
-		pMulLW		mm0,	mm5		/* 0001 0001 0020 0800 - Shifts all cols left */
-		pSRLQ		mm0,	4		/* Shift everything back right, but only 4 */
-		pMulHW		mm0,	mm4		/* 0000 1080 1040 1080 - Replicate high bits to missing low bits */
+				MovD		mm0,	ebx		/* Copy RGB into mm0 */
+				pUnpckLWD	mm0,	mm0		/* Rep Low Words -> High Words */
+				pUnpckLDQ	mm0,	mm0		/* Rep Low Dword -> High Dword */
+				pAnd		mm0,	mm6		/* 0000 F800 07E0 001F - Mask cols */
+				pMulLW		mm0,	mm5		/* 0001 0001 0020 0800 - Shifts all cols left */
+				pSRLQ		mm0,	4		/* Shift everything back right, but only 4 */
+				pMulHW		mm0,	mm4		/* 0000 1080 1040 1080 - Replicate high bits to missing low bits */
 #endif
 
-		/* Accumulate */
-		MovQ		mm3,	mmword ptr [edx]
-		pAddUSW		mm3,	mm0
-		MovQ		[edx],	mm3
+				/* Accumulate */
+				MovQ		mm3,	mmword ptr [edx]
+				pAddUSW		mm3,	mm0
+				MovQ		[edx],	mm3
                 Add		eax,	2
-		Add		edx,	8
+				Add		edx,	8
 
-		/* Loop */
-		cmp		edi,	edx
-		jne		loop_begin
+				/* Loop */
+				cmp		edi,	edx
+				jne		loop_begin
 
-		/* Next scanline */
-		add		eax,	stride_diff
-		mov		s,		eax
-		mov		dst,	edx
+				/* Next scanline */
+				add		eax,	stride_diff
+				mov		s,		eax
+				mov		dst,	edx
 
-                };
+                }
 #endif
-            }
-          else
-            {
-              dst += src_width*4;
+			} 
+		  else 
+		    {
+				dst += src_width*4;
             }
         }
-
-#ifndef __DJGPP__
-		  __asm {
-			  emms /* mmx */
-		  }
-#endif
-
     }
   else
     {
@@ -6700,8 +6691,6 @@ static void hwcReadRegion1555(hwcBoardInfo *bInfo, FxU32 src, FxU32 src_x, FxU32
       );
 #else
       __asm {
-	    emms /* mmx */
-
         /* mm7 = zero */
         pXor	mm7,	mm7;		
         
@@ -6711,19 +6700,19 @@ static void hwcReadRegion1555(hwcBoardInfo *bInfo, FxU32 src, FxU32 src_x, FxU32
         MovQ	mm6,	[esp]
         Add	esp,	8
 
-	/* mm5 = multiplier*/
-	push	0x00000001;		/* a<<=0 r<<=0 */
-	push	0x00200400;		/* g<<=5 b<<=10 */
-	MovQ	mm5,	[esp]
-	Add	esp,	8
+		/* mm5 = multiplier*/
+		push	0x00000001;		/* a<<=0 r<<=0 */
+		push	0x00200400;		/* g<<=5 b<<=10 */
+		MovQ	mm5,	[esp]
+		Add	esp,	8
 
         /* mm4 = multiplier2*/
-	push	0x00001080;		/* a=0000000000 r=1000010000 */
-	push	0x10801080;		/* g=1000010000 b=1000010000 */
-	MovQ	mm4,	[esp]
-	Add	esp,	8
+		push	0x00001080;		/* a=0000000000 r=1000010000 */
+		push	0x10801080;		/* g=1000010000 b=1000010000 */
+		MovQ	mm4,	[esp]
+		Add	esp,	8
 
-	}
+	  }
 #endif
 
 	for(y = src_y; y < end_y; y++)
@@ -6737,12 +6726,12 @@ static void hwcReadRegion1555(hwcBoardInfo *bInfo, FxU32 src, FxU32 src_x, FxU32
                 __asm {
 
                   /* Scanline Setup */
-                  Mov	eax,	s
-		  Mov	edx,	dst
-		  Mov	edi,	src_width
+				  Mov	eax,	s
+				  Mov	edx,	dst
+				  Mov	edi,	src_width
                   Shl	edi,	3
-		  Add	edi,	edx
-		  Xor	ebx,	ebx
+				  Add	edi,	edx
+				  Xor	ebx,	ebx
 
                   align 8
                   loop_begin:
@@ -6750,55 +6739,49 @@ static void hwcReadRegion1555(hwcBoardInfo *bInfo, FxU32 src, FxU32 src_x, FxU32
                   mov	bx,		word ptr [eax]	/* ebx has packed rgb */
 #if 0
                   mov	        ecx,    ebx				/* ecx too */
-		  Shl	        ebx,	3				/* bl now has b */
+				  Shl	        ebx,	3				/* bl now has b */
                   Shl	        bh,     3				/* bh now has g */
-		  Shl	        ecx,	9				/* shift so r sig bit is bit 23 */
-		  And	        ecx,	0xF80000        		/* ecx now has r */
-		  Mov	        cx,	bx				/* ecx now has r,g,b */
-		  MovD	        mm0,	ecx				/* Copy RGB into mm0 */
-		  pUnpckLBW	mm0,	mm7				/* Bytes -> Words */
-		  pSLLQ	        mm0,	4				/* Shift everything left 4 bits */
-		  pMulHW	mm0,	mm4				/* 0000 1080 1080 1080 - Replicate high bits to missing low bits */
+				  Shl	        ecx,	9				/* shift so r sig bit is bit 23 */
+				  And	        ecx,	0xF80000        		/* ecx now has r */
+				  Mov	        cx,	bx				/* ecx now has r,g,b */
+				  MovD	        mm0,	ecx				/* Copy RGB into mm0 */
+				  pUnpckLBW	mm0,	mm7				/* Bytes -> Words */
+				  pSLLQ	        mm0,	4				/* Shift everything left 4 bits */
+				  pMulHW	mm0,	mm4				/* 0000 1080 1080 1080 - Replicate high bits to missing low bits */
 #else
                   MovD		mm0,	ebx				/* Copy RGB into mm0 */
-		  pUnpckLWD	mm0,	mm0				/* Rep Low Words -> High Words */
-		  pUnpckLDQ	mm0,	mm0				/* Rep Low Dword -> High Dword */
-		  pAnd		mm0,	mm6				/* 0000 7C00 03E0 001F - Mask cols */
-		  pMulLW	mm0,	mm5				/* 0000 0001 0020 0400 - Shifts all cols left */
-		  pSRLQ		mm0,	4				/* Shift everything back right, but only 4 */
-		  pMulHW	mm0,	mm4				/* 0000 1080 1080 1080 - Replicate high bits to missing low bits */
+				  pUnpckLWD	mm0,	mm0				/* Rep Low Words -> High Words */
+				  pUnpckLDQ	mm0,	mm0				/* Rep Low Dword -> High Dword */
+				  pAnd		mm0,	mm6				/* 0000 7C00 03E0 001F - Mask cols */
+				  pMulLW	mm0,	mm5				/* 0000 0001 0020 0400 - Shifts all cols left */
+				  pSRLQ		mm0,	4				/* Shift everything back right, but only 4 */
+				  pMulHW	mm0,	mm4				/* 0000 1080 1080 1080 - Replicate high bits to missing low bits */
 #endif
 
-		  /* Accumulate */
-		  MovQ		mm3,	mmword ptr [edx]
-		  pAddUSW	mm3,	mm0
-		  MovQ		[edx],	mm3
-		  Add		eax,	2
-		  Add		edx,	8
+				  /* Accumulate */
+				  MovQ		mm3,	mmword ptr [edx]
+				  pAddUSW	mm3,	mm0
+				  MovQ		[edx],	mm3
+				  Add		eax,	2
+				  Add		edx,	8
 
-		  /* Loop */
-		  cmp		edi,	edx
-		  jne		loop_begin
+				  /* Loop */
+				  cmp		edi,	edx
+				  jne		loop_begin
 
                   /* Next scanline */
-		  add		eax,	stride_diff
-		  mov		s,		eax
-		  mov		dst,	edx
+				  add		eax,	stride_diff
+				  mov		s,		eax
+				  mov		dst,	edx
 
-                  };
+                  }
 #endif
               }
             else
               {
-                dst += src_width*4;
+				  dst += src_width*4;
               }
           }
-
-#ifndef __DJGPP__
-		  __asm {
-			  emms /* mmx */
-		  }
-#endif
     }
   else
     {
@@ -6853,8 +6836,6 @@ static void hwcReadRegion8888(hwcBoardInfo *bInfo, FxU32 src, FxU32 src_x, FxU32
       MMX_SETUP4();
 #else
 		__asm {
-			emms /* mmx */
-
 			pXor mm7, mm7
 		}
 #endif
@@ -6872,9 +6853,9 @@ static void hwcReadRegion8888(hwcBoardInfo *bInfo, FxU32 src, FxU32 src_x, FxU32
                 /* Scanline Setup */
                 Mov		eax,	s
                 Mov		edx,	dst
-		Mov		edi,	src_width
-		Shl		edi,	3
-		Add		edi,	edx
+				Mov		edi,	src_width
+				Shl		edi,	3
+				Add		edi,	edx
 
                 align 8
                 loop_begin:
@@ -6883,35 +6864,29 @@ static void hwcReadRegion8888(hwcBoardInfo *bInfo, FxU32 src, FxU32 src_x, FxU32
                 pUnpckLBW	mm0,	mm7
 
                 /* Accumulate */
-		MovQ		mm3,	mmword ptr [edx]
-		pAddUSW		mm3,	mm0
-		MovQ		[edx],	mm3
-		Add		eax,	4
-		Add		edx,	8
+				MovQ		mm3,	mmword ptr [edx]
+				pAddUSW		mm3,	mm0
+				MovQ		[edx],	mm3
+				Add		eax,	4
+				Add		edx,	8
 
                 /* Loop */
-		cmp		edi,	edx
-		jne		loop_begin
+				cmp		edi,	edx
+				jne		loop_begin
 
-		/* Next scanline */
-		add		eax,	stride_diff
-		mov		s,	eax
-		mov		dst,	edx
+				/* Next scanline */
+				add		eax,	stride_diff
+				mov		s,	eax
+				mov		dst,	edx
 
-                };
+                }
 #endif
             }
           else
             {
-              dst += src_width*4;
+				dst += src_width*4;
             }
         }
-
-#ifndef __DJGPP__
-		__asm {
-			emms /* mmx */
-		}
-#endif
     }
   else
     {
@@ -7189,57 +7164,52 @@ static void hwcCopyBuffer8888Flipped(hwcBoardInfo *bInfo, FxU16 *source, int w, 
       /* MMX Optimized Loop */
       __asm
         {
-		  emms /* mmx */
-
           Mov		eax,	src		/* eax = source */
           Mov		edx,	dst		/* edx = dest */
-	  Mov		edi,	endline	/* edi = endline */
+		  Mov		edi,	endline	/* edi = endline */
 
 	  align 8
           loop_begin:
-	  /* Read Pixel, Reduce to 32 bits */
-	  MovQ		mm0,	mmword ptr [eax]
-	  PackUSWB	mm0,	mm0
-	  MovD		ebx,	mm0
+		  /* Read Pixel, Reduce to 32 bits */
+		  MovQ		mm0,	mmword ptr [eax]
+		  PackUSWB	mm0,	mm0
+		  MovD		ebx,	mm0
 
-	  /* Gamma Correct Blue */
-	  Mov		ecx,    ebx
-	  And		ecx,    0xFF
-	  mov		bl,	byte ptr [ecx*4 + gss_blue]
+		  /* Gamma Correct Blue */
+		  Mov		ecx,    ebx
+		  And		ecx,    0xFF
+		  mov		bl,	byte ptr [ecx*4 + gss_blue]
 
-	  /* Gamma Correct Green */
-	  Mov		ecx,    ebx
-	  Shr		ecx,	8
-	  And		ecx,    0xFF
-	  mov		bh,	byte ptr [ecx*4 + gss_green]
+		  /* Gamma Correct Green */
+		  Mov		ecx,    ebx
+		  Shr		ecx,	8
+		  And		ecx,    0xFF
+		  mov		bh,	byte ptr [ecx*4 + gss_green]
 
-	  /* Gamma Correct Red */
-	  Mov		ecx,    ebx
-	  Shr		ecx,	16
-	  And		ecx,    0xFF
-	  mov		ecx,	dword ptr [ecx*4 + gss_red_shifted]
-	  And		ebx,    0xFF00FFFF
-	  Or		ebx,	ecx
+		  /* Gamma Correct Red */
+		  Mov		ecx,    ebx
+		  Shr		ecx,	16
+		  And		ecx,    0xFF
+		  mov		ecx,	dword ptr [ecx*4 + gss_red_shifted]
+		  And		ebx,    0xFF00FFFF
+		  Or		ebx,	ecx
 
-	  /* Write */
-	  Mov		[edx],	ebx
+		  /* Write */
+		  Mov		[edx],	ebx
 
-	  /* Next Pixel */
-	  Add		eax, 8	
-	  Add		edx, 4
-	  cmp		edx, edi		/* if (dst!=endline) */
-	  jne		loop_begin		/* goto loop_begin; */
+		  /* Next Pixel */
+		  Add		eax, 8	
+		  Add		edx, 4
+		  cmp		edx, edi		/* if (dst!=endline) */
+		  jne		loop_begin		/* goto loop_begin; */
 
-	  /* Next Scanline */
-	  Mov		ebx, w
-	  Add		edi, ebx		/* endline += w; */
-	  Shl		ebx, 2
-	  Sub		eax, ebx		/* src -= w*2; */
-	  cmp		edx, end		/* if (dst!=end) */
-	  jne		loop_begin		/* goto loop_begin; */
-
-	  emms /* mmx */
-			
+		  /* Next Scanline */
+		  Mov		ebx, w
+		  Add		edi, ebx		/* endline += w; */
+		  Shl		ebx, 2
+		  Sub		eax, ebx		/* src -= w*2; */
+		  cmp		edx, end		/* if (dst!=end) */
+		  jne		loop_begin		/* goto loop_begin; */			
         }
     }
   else
@@ -7273,59 +7243,54 @@ static void hwcCopyBuffer8888FlippedShifted(hwcBoardInfo *bInfo, FxU16 *source, 
       /* MMX Optimized Loop */
       __asm
       {
-	    emms /* mmx */
-
         Mov	eax,	src		/* eax = source */
-	Mov	edx,	dst		/* edx = dest */
-	Mov	edi,	endline	/* edi = endline */
-	MovD	mm6,	aaShift	/* mm6 = aaShift */
+		Mov	edx,	dst		/* edx = dest */
+		Mov	edi,	endline	/* edi = endline */
+		MovD	mm6,	aaShift	/* mm6 = aaShift */
 
         align 8
         loop_begin:
-	/* Read Pixel, Reduce to 32 bits */
-	MovQ		mm0,	mmword ptr [eax]
-	pSRLW		mm0,	mm6
-	PackUSWB	mm0,	mm0
-	MovD		ebx,	mm0
+		/* Read Pixel, Reduce to 32 bits */
+		MovQ		mm0,	mmword ptr [eax]
+		pSRLW		mm0,	mm6
+		PackUSWB	mm0,	mm0
+		MovD		ebx,	mm0
 
         /* Gamma Correct Blue */
-	Mov		ecx,    ebx
-	And		ecx,    0xFF
-	mov		bl,	byte ptr [ecx*4 + gss_blue]
+		Mov		ecx,    ebx
+		And		ecx,    0xFF
+		mov		bl,	byte ptr [ecx*4 + gss_blue]
 
-	/* Gamma Correct Green */
-	Mov		ecx,    ebx
-	Shr		ecx,	8
-	And		ecx,    0xFF
-	mov		bh,		byte ptr [ecx*4 + gss_green]
+		/* Gamma Correct Green */
+		Mov		ecx,    ebx
+		Shr		ecx,	8
+		And		ecx,    0xFF
+		mov		bh,		byte ptr [ecx*4 + gss_green]
 
-	/* Gamma Correct Red */
-	Mov		ecx,    ebx
-	Shr		ecx,	16
-	And		ecx,    0xFF
-	mov		ecx,	dword ptr [ecx*4 + gss_red_shifted]
-	And		ebx,    0xFF00FFFF
-	Or		ebx,	ecx
+		/* Gamma Correct Red */
+		Mov		ecx,    ebx
+		Shr		ecx,	16
+		And		ecx,    0xFF
+		mov		ecx,	dword ptr [ecx*4 + gss_red_shifted]
+		And		ebx,    0xFF00FFFF
+		Or		ebx,	ecx
 
-	/* Write */
-	Mov		[edx],	ebx
+		/* Write */
+		Mov		[edx],	ebx
 
-	/* Next Pixel */
-	Add		eax, 8	
-	Add		edx, 4
-	cmp		edx, edi		/* if (dst!=endline) */
-	jne		loop_begin		/* goto loop_begin; */
+		/* Next Pixel */
+		Add		eax, 8	
+		Add		edx, 4
+		cmp		edx, edi		/* if (dst!=endline) */
+		jne		loop_begin		/* goto loop_begin; */
 
-	/* Next Scanline */
-	Mov		ebx, w
-	Add		edi, ebx		/* endline += w; */
-	Shl		ebx, 2
-	Sub		eax, ebx		/* src -= w*2; */
-	cmp		edx, end		/* if (dst!=end) */
-	jne		loop_begin		/* goto loop_begin; */
-
-	emms /* mmx */
-			
+		/* Next Scanline */
+		Mov		ebx, w
+		Add		edi, ebx		/* endline += w; */
+		Shl		ebx, 2
+		Sub		eax, ebx		/* src -= w*2; */
+		cmp		edx, end		/* if (dst!=end) */
+		jne		loop_begin		/* goto loop_begin; */
       }
     }
   else
@@ -7370,182 +7335,177 @@ static void hwcCopyBuffer8888FlippedDithered(hwcBoardInfo *bInfo, FxU16 *source,
       /* MMX Optimized Loop */
       __asm
       {
-	    emms /* mmx */
-
         /* mm7 = all ones */
         Mov		eax,	0xFFFFFFFF
-	MovD		mm7,	eax
-	pUnpckLDQ	mm7,	mm7				/* Rep Low Dword -> High Dword */
+		MovD		mm7,	eax
+		pUnpckLDQ	mm7,	mm7				/* Rep Low Dword -> High Dword */
 
         /* mm6 = aaShift */
-	MovD		mm6,	aaShift	
+		MovD		mm6,	aaShift	
 
         /* mm5 = accumulated error */
-	pXor		mm5,	mm5		
+		pXor		mm5,	mm5		
 
         /* mm4 = error_mask */
-	MovD		mm4,	dither_mask		/* error_mask -> Low word */
-	pUnpckLWD	mm4,	mm4				/* Rep Low Words -> High Words */
-	pUnpckLDQ	mm4,	mm4				/* Rep Low Dword -> High Dword */
+		MovD		mm4,	dither_mask		/* error_mask -> Low word */
+		pUnpckLWD	mm4,	mm4				/* Rep Low Words -> High Words */
+		pUnpckLDQ	mm4,	mm4				/* Rep Low Dword -> High Dword */
 
         /* mm3 = val_max */
-	MovD		mm3,	val_max			/* val_max -> Low word */
-	pUnpckLWD	mm3,	mm3				/* Rep Low Words -> High Words */
-	pUnpckLDQ	mm3,	mm3				/* Rep Low Dword -> High Dword */
+		MovD		mm3,	val_max			/* val_max -> Low word */
+		pUnpckLWD	mm3,	mm3				/* Rep Low Words -> High Words */
+		pUnpckLDQ	mm3,	mm3				/* Rep Low Dword -> High Dword */
 
-	/* mm2 = min mask */
+		/* mm2 = min mask */
 
-	/* mm1 = masked maximum cols */
+		/* mm1 = masked maximum cols */
 
-	/* mm0 = colour */
+		/* mm0 = colour */
 
-	/* eax = source */
-	Mov		eax,	src		
+		/* eax = source */
+		Mov		eax,	src		
 
-	/* edx = dest */
-	Mov		edx,	dst		
+		/* edx = dest */
+		Mov		edx,	dst		
 
-	/* edi = endline */
-	Mov		edi,	endline	
+		/* edi = endline */
+		Mov		edi,	endline	
 
-	/* Check to see if we support MMXPlus or SSE */
-	Mov		ecx,	sse_mmxplus
-	And		ecx,	ecx
-	jz		mmx_loop_begin
+		/* Check to see if we support MMXPlus or SSE */
+		Mov		ecx,	sse_mmxplus
+		And		ecx,	ecx
+		jz		mmx_loop_begin
 
-	/* SSE/MMX+ Loop */
+		/* SSE/MMX+ Loop */
 	align 8
         loop_begin:
-	/* Read Pixel and add error  */
-	/* c = *src + er - (*src>>8) */
-	MovQ		mm0,	mmword ptr [eax]
-	MovQ		mm1,	mm0
-	pSRLW		mm1,	8
-	pSubSW		mm0,	mm1
-	pAddSW		mm0,	mm5
+		/* Read Pixel and add error  */
+		/* c = *src + er - (*src>>8) */
+		MovQ		mm0,	mmword ptr [eax]
+		MovQ		mm1,	mm0
+		pSRLW		mm1,	8
+		pSubSW		mm0,	mm1
+		pAddSW		mm0,	mm5
 
         /* Clamp to max */
-	/* c = min(c,val_max) */
-	pMinSW		mm0,	mm3
+		/* c = min(c,val_max) */
+		pMinSW		mm0,	mm3
 
-	/* Find error */
-	/* er = c & dither_mask; */
-	MovQ		mm5,	mm0			/* er = c */
-	pAnd		mm5,	mm4			/* er &= dither_mask */
+		/* Find error */
+		/* er = c & dither_mask; */
+		MovQ		mm5,	mm0			/* er = c */
+		pAnd		mm5,	mm4			/* er &= dither_mask */
 
-	/* Reduce to 32 bits */
-	pSRLW		mm0,	mm6
-	PackUSWB	mm0,	mm0
-	MovD		ebx,	mm0
+		/* Reduce to 32 bits */
+		pSRLW		mm0,	mm6
+		PackUSWB	mm0,	mm0
+		MovD		ebx,	mm0
 
-	/* Gamma Correct Blue */
-	Mov		ecx,    ebx
-	And		ecx,    0xFF
-	mov		bl,		byte ptr [ecx*4 + gss_blue]
+		/* Gamma Correct Blue */
+		Mov		ecx,    ebx
+		And		ecx,    0xFF
+		mov		bl,		byte ptr [ecx*4 + gss_blue]
 
-	/* Gamma Correct Green */
-	Mov		ecx,    ebx
-	Shr		ecx,	8
-	And		ecx,    0xFF
-	mov		bh,		byte ptr [ecx*4 + gss_green]
+		/* Gamma Correct Green */
+		Mov		ecx,    ebx
+		Shr		ecx,	8
+		And		ecx,    0xFF
+		mov		bh,		byte ptr [ecx*4 + gss_green]
 
-	/* Gamma Correct Red */
-	Mov		ecx,    ebx
-	Shr		ecx,	16
-	And		ecx,    0xFF
-	mov		ecx,	dword ptr [ecx*4 + gss_red_shifted]
-	And		ebx,    0xFF00FFFF
-	Or		ebx,	ecx
+		/* Gamma Correct Red */
+		Mov		ecx,    ebx
+		Shr		ecx,	16
+		And		ecx,    0xFF
+		mov		ecx,	dword ptr [ecx*4 + gss_red_shifted]
+		And		ebx,    0xFF00FFFF
+		Or		ebx,	ecx
 
-	/* Write */
-	Mov		[edx],	ebx
+		/* Write */
+		Mov		[edx],	ebx
 
-	/* Next Pixel */
-	Add		eax, 8	
-	Add		edx, 4
-	cmp		edx, edi		/* if (dst!=endline) */
-	jne		loop_begin		/* goto loop_begin; */
+		/* Next Pixel */
+		Add		eax, 8	
+		Add		edx, 4
+		cmp		edx, edi		/* if (dst!=endline) */
+		jne		loop_begin		/* goto loop_begin; */
 
-	/* Next Scanline */
-	Mov		ebx, w
-	Add		edi, ebx		/* endline += w; */
-	Shl		ebx, 2
-	Sub		eax, ebx		/* src -= w*2; */
-	cmp		edx, end		/* if (dst!=end) */
-	jne		loop_begin		/* goto loop_begin; */
-	jmp		finished
+		/* Next Scanline */
+		Mov		ebx, w
+		Add		edi, ebx		/* endline += w; */
+		Shl		ebx, 2
+		Sub		eax, ebx		/* src -= w*2; */
+		cmp		edx, end		/* if (dst!=end) */
+		jne		loop_begin		/* goto loop_begin; */
+		jmp		finished
 
-
-	/* MMX Optimized Loop */
+		/* MMX Optimized Loop */
 	align 8
         mmx_loop_begin:
-	/* Read Pixel and add error  */
-	/* c = *src + er - (*src>>8) */
-	MovQ		mm0,	mmword ptr [eax]
-	MovQ		mm1,	mm0
-	pSRLW		mm1,	8
-	pSubSW		mm0,	mm1
-	pAddSW		mm0,	mm5
+		/* Read Pixel and add error  */
+		/* c = *src + er - (*src>>8) */
+		MovQ		mm0,	mmword ptr [eax]
+		MovQ		mm1,	mm0
+		pSRLW		mm1,	8
+		pSubSW		mm0,	mm1
+		pAddSW		mm0,	mm5
 
-	/* Clamp to max */
-	/* c = min(c,val_max) */
-	MovQ		mm2,	mm3
-	pCmpGtW		mm2,	mm0			/* Compare col to max. Sets mm2 if clipping req */
-	pAnd		mm0,    mm2			/* mm0 = masked col vals */
-	pAndN		mm2,	mm7			/* mm2 = (~mm2) & ~0 */
-	MovQ		mm1,	mm3			/* mm1 = max vals */
-	pAnd		mm1,    mm2			/* mm1 = masked max vals */
-	pOr		mm0,	mm1			/* Combine max and cols */
+		/* Clamp to max */
+		/* c = min(c,val_max) */
+		MovQ		mm2,	mm3
+		pCmpGtW		mm2,	mm0			/* Compare col to max. Sets mm2 if clipping req */
+		pAnd		mm0,    mm2			/* mm0 = masked col vals */
+		pAndN		mm2,	mm7			/* mm2 = (~mm2) & ~0 */
+		MovQ		mm1,	mm3			/* mm1 = max vals */
+		pAnd		mm1,    mm2			/* mm1 = masked max vals */
+		pOr		mm0,	mm1			/* Combine max and cols */
 
-	/* Find error */
-	/* er = c & dither_mask; */
-	MovQ		mm5,	mm0			/* er = c */
-	pAnd		mm5,	mm4			/* er &= dither_mask */
+		/* Find error */
+		/* er = c & dither_mask; */
+		MovQ		mm5,	mm0			/* er = c */
+		pAnd		mm5,	mm4			/* er &= dither_mask */
 
-	/* Reduce to 32 bits */
-	pSRLW		mm0,	mm6
-	PackUSWB	mm0,	mm0
-	MovD		ebx,	mm0
+		/* Reduce to 32 bits */
+		pSRLW		mm0,	mm6
+		PackUSWB	mm0,	mm0
+		MovD		ebx,	mm0
 
-	/* Gamma Correct Blue */
-	Mov		ecx,    ebx
-	And		ecx,    0xFF
-	mov		bl,	byte ptr [ecx*4 + gss_blue]
+		/* Gamma Correct Blue */
+		Mov		ecx,    ebx
+		And		ecx,    0xFF
+		mov		bl,	byte ptr [ecx*4 + gss_blue]
 
-	/* Gamma Correct Green */
-	Mov		ecx,    ebx
-	Shr		ecx,	8
-	And		ecx,    0xFF
-	mov		bh,	byte ptr [ecx*4 + gss_green]
+		/* Gamma Correct Green */
+		Mov		ecx,    ebx
+		Shr		ecx,	8
+		And		ecx,    0xFF
+		mov		bh,	byte ptr [ecx*4 + gss_green]
 
-	/* Gamma Correct Red */
-	Mov		ecx,    ebx
-	Shr		ecx,	16
-	And		ecx,    0xFF
-	mov		ecx,	dword ptr [ecx*4 + gss_red_shifted]
-	And		ebx,    0xFF00FFFF
-	Or		ebx,	ecx
+		/* Gamma Correct Red */
+		Mov		ecx,    ebx
+		Shr		ecx,	16
+		And		ecx,    0xFF
+		mov		ecx,	dword ptr [ecx*4 + gss_red_shifted]
+		And		ebx,    0xFF00FFFF
+		Or		ebx,	ecx
 
-	/* Write */
-	Mov		[edx],	ebx
+		/* Write */
+		Mov		[edx],	ebx
 
-	/* Next Pixel */
-	Add		eax, 8	
-	Add		edx, 4
-	cmp		edx, edi		/* if (dst!=endline) */
-	jne		mmx_loop_begin	/* goto mmx_loop_begin; */
+		/* Next Pixel */
+		Add		eax, 8	
+		Add		edx, 4
+		cmp		edx, edi		/* if (dst!=endline) */
+		jne		mmx_loop_begin	/* goto mmx_loop_begin; */
 
-	/* Next Scanline */
-	Mov		ebx, w
-	Add		edi, ebx		/* endline += w; */
-	Shl		ebx, 2
-	Sub		eax, ebx		/* src -= w*2; */
-	cmp		edx, end		/* if (dst!=end) */
-	jne		mmx_loop_begin	/* goto mmx_loop_begin; */
+		/* Next Scanline */
+		Mov		ebx, w
+		Add		edi, ebx		/* endline += w; */
+		Shl		ebx, 2
+		Sub		eax, ebx		/* src -= w*2; */
+		cmp		edx, end		/* if (dst!=end) */
+		jne		mmx_loop_begin	/* goto mmx_loop_begin; */
 			
         finished:
-
-	    emms /* mmx */
       }
     }
   else
@@ -7615,20 +7575,26 @@ void hwcAAScreenShot(hwcBoardInfo *bInfo, FxU32 colBufNum, FxBool dither)
     free(buffer);
     return;
   }
+
+  if (bInfo->CPUInfo.os_support & _CPU_FEATURE_3DNOW) __asm femms;
+  else if (bInfo->CPUInfo.os_support & _CPU_FEATURE_MMX) __asm emms;
   
   aaShift = hwcAAReadRegion16(bInfo, colBufNum, 0, 0, bInfo->vidInfo.xRes, bInfo->vidInfo.yRes, buffer);
   
   if (aaShift)
-    {
+  {
       if (dither)
         hwcCopyBuffer8888FlippedDithered(bInfo, buffer, bInfo->vidInfo.xRes, bInfo->vidInfo.yRes, out, aaShift);
       else
         hwcCopyBuffer8888FlippedShifted(bInfo, buffer, bInfo->vidInfo.xRes, bInfo->vidInfo.yRes, out, aaShift);
-    }
+  }
   else
-    {
+  {
       hwcCopyBuffer8888Flipped(bInfo, buffer, bInfo->vidInfo.xRes, bInfo->vidInfo.yRes, out, 0);
-    }
+  }
+
+  if (bInfo->CPUInfo.os_support & _CPU_FEATURE_3DNOW) __asm femms;
+  else if (bInfo->CPUInfo.os_support & _CPU_FEATURE_MMX) __asm emms;
     
   /* Write buffer to disk */
 #ifdef _WIN32
@@ -7801,8 +7767,6 @@ static void hwcCopyBuffer565Shifted(hwcBoardInfo *bInfo, FxU16 *src, int w, int 
 	  /* MMX Optimized Loop */
 	  __asm
 	  {
-		  emms /* mmx */
-
 		  Mov			eax,	src		/* eax = source */
 		  Mov			edx,	dst		/* edx = dest */
 		  Mov			edi,	endline	/* edi = endline */
@@ -7848,8 +7812,6 @@ loop_begin:
 		  Add			edx, stride_diff/* dest += stride_diff; */
 		  cmp			edx, end		/* if (dst!=end) */
 		  jne			loop_begin		/* goto loop_begin; */
-
-		  emms /* mmx */
 	  }
   }
   else while (dst<end)
@@ -8095,66 +8057,72 @@ void hwcAAReadRegion(hwcBoardInfo *bInfo, FxU32 colBufNum,
   buffer = _aligned_malloc(src_width * src_height * 8, 8);
   
   if(!buffer) return;
+
+  if (bInfo->CPUInfo.os_support & _CPU_FEATURE_3DNOW) __asm femms;
+  else if (bInfo->CPUInfo.os_support & _CPU_FEATURE_MMX) __asm emms;
   
   aaShift = hwcAAReadRegion16(bInfo, colBufNum, src_x, src_y, src_width, src_height, buffer);
   
   if (bpp == 32)
-    {
+  {
       if (aaShift)
-        {
+      {
           if (dither)
             hwcCopyBuffer8888Dithered(bInfo, buffer, src_width, src_height, dst_stride, dst_data, aaShift);
           else
             hwcCopyBuffer8888Shifted(bInfo, buffer, src_width, src_height, dst_stride, dst_data, aaShift);
-        }
+      }
       else
-        {
+      {
           hwcCopyBuffer8888(bInfo, buffer, src_width, src_height, dst_stride, dst_data, 0);
-        }
-    }
+      }
+  }
   else if (bpp == 16)
-    {
+  {
       FxU32 vidProcCfg;
       HWC_IO_LOAD(bInfo->regInfo, vidProcCfg, vidProcCfg);
       
       if (aaShift)
-        {
+      {
           if (dither)
             hwcCopyBuffer565Dithered(bInfo, buffer, src_width, src_height, dst_stride, dst_data, aaShift);
           else
             hwcCopyBuffer565Shifted(bInfo, buffer, src_width, src_height, dst_stride, dst_data, aaShift);
-        }
+      }
       else if (dither && (vidProcCfg & SST_OVERLAY_PIXEL_FORMAT) == SST_OVERLAY_PIXEL_RGB32U)
-        {
+      {
           hwcCopyBuffer565Dithered(bInfo, buffer, src_width, src_height, dst_stride, dst_data, 0);
-        }
+      }
       else
-        {
+      {
           hwcCopyBuffer565(bInfo, buffer, src_width, src_height, dst_stride, dst_data, 0);
-        }
-    }	
+      }
+  }	
   else if (bpp == 15)
-    {
+  {
       FxU32 vidProcCfg;
       HWC_IO_LOAD(bInfo->regInfo, vidProcCfg, vidProcCfg);
       
       if (aaShift)
-        {
+      {
           if (dither)
             hwcCopyBuffer1555Dithered(bInfo, buffer, src_width, src_height, dst_stride, dst_data, aaShift);
           else
             hwcCopyBuffer1555Shifted(bInfo, buffer, src_width, src_height, dst_stride, dst_data, aaShift);
-        }
+      }
       else if (dither && ((vidProcCfg & SST_OVERLAY_PIXEL_FORMAT) == SST_OVERLAY_PIXEL_RGB565D || 
                           (vidProcCfg & SST_OVERLAY_PIXEL_FORMAT) == SST_OVERLAY_PIXEL_RGB565U))
-        {
+      {
           hwcCopyBuffer1555Dithered(bInfo, buffer, src_width, src_height, dst_stride, dst_data, 0);
-        }
+      }
       else
-        {
+      {
           hwcCopyBuffer1555(bInfo, buffer, src_width, src_height, dst_stride, dst_data, 0);
-        }
-    }
+      }
+  }
+
+  if (bInfo->CPUInfo.os_support & _CPU_FEATURE_3DNOW) __asm femms;
+  else if (bInfo->CPUInfo.os_support & _CPU_FEATURE_MMX) __asm emms;
   
   /* Free memory */
   _aligned_free (buffer);
