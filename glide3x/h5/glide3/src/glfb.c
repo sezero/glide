@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.7.4.10  2003/07/08 08:06:45  dborca
+** updates to MMX/FPU specializations
+**
 ** Revision 1.7.4.9  2003/07/07 23:29:05  koolsmoky
 ** cleaned logs
 **
@@ -2301,9 +2304,12 @@ static FxBool grLfbReadRegionOrigin (GrBuffer_t src_buffer, GrOriginLocation_t o
                  FXFALSE,
                  &info))
    {
-      FxU32 *src,*dst;
+      FxU32 *src;
       FxI32 len;
+#if 0
+      FxU32 *dst;
       FxU32 src_adjust,dst_adjust,tmp;
+#endif
 
       src=(FxU32 *) (((char*)info.lfbPtr)+
                      (src_y*info.strideInBytes) + (src_x * bpp));
