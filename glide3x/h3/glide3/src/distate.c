@@ -19,6 +19,9 @@
  **
  ** $Header$
  ** $Log$
+ ** Revision 1.2.4.1  2003/06/29 18:45:55  guillemj
+ ** Fixed preprocessor invalid token errors.
+ **
  ** Revision 1.2  2000/11/24 18:36:48  alanh
  ** Add new grStippleMode and grStipplePattern functions for both Voodoo3 and
  ** Voodoo5 hardware.
@@ -553,7 +556,6 @@ GR_DIENTRY(grDepthBufferMode, void , (GrDepthBufferMode_t mode) )
   
   Return:
   -------------------------------------------------------------------*/
-#ifdef __linux__
 GR_EXT_ENTRY(grStipplePattern, void , (GrStipplePattern_t stipple))
 {
  #define FN_NAME "grStipplePattern"
@@ -566,7 +568,6 @@ GR_EXT_ENTRY(grStipplePattern, void , (GrStipplePattern_t stipple))
 
  #undef FN_NAME
 } /* grStipplePattern */
-#endif /* __linux__ */
 
  /*-------------------------------------------------------------------
   Function: grStippleMode
@@ -578,7 +579,6 @@ GR_EXT_ENTRY(grStipplePattern, void , (GrStipplePattern_t stipple))
   
   Return:
   -------------------------------------------------------------------*/
-#ifdef __linux__
 GR_DIENTRY(grStippleMode, void , (GrStippleMode_t mode) )
 {
  #define FN_NAME "grStippleMode"
@@ -591,7 +591,6 @@ GR_DIENTRY(grStippleMode, void , (GrStippleMode_t mode) )
 
  #undef FN_NAME
 } /* grStippleMode */
-#endif /* __linux__ */
 
 /*-------------------------------------------------------------------
   Function: grDitherMode
@@ -952,9 +951,7 @@ _grValidateState()
     _grDepthBufferFunction(LOADARG(grDepthBufferFunction, fnc));
     _grDepthBufferMode(LOADARG(grDepthBufferMode, mode));
     _grDitherMode(LOADARG(grDitherMode, mode));
-#ifdef __linux__
     _grStippleMode(LOADARG(grStippleMode, mode));
-#endif /* __linux__ */
     _grSstOrigin(LOADARG(grSstOrigin, origin));
     _grRenderBuffer(LOADARG(grRenderBuffer, buffer));
 
@@ -1013,7 +1010,6 @@ _grValidateState()
     reg_cnt++;
   }
 
-#ifdef __linux__
   if (NOTVALID(stipple)) {
     gc->state.shadow.stipple = LOADARG(grStipplePattern, stipple);
     REG_GROUP_BEGIN(BROADCAST_ID, stipple, 1, 0x01);
@@ -1022,7 +1018,6 @@ _grValidateState()
     }
     REG_GROUP_END();
   }
-#endif /* __linux__ */
 
   if (NOTVALID(lfbMode)) {
     FxU32
@@ -1392,7 +1387,7 @@ GR_DIENTRY(grViewport, void , (FxI32 x, FxI32 y, FxI32 width, FxI32 height) )
 #undef FN_NAME
 } /* grViewport */
 
-#ifdef __linux__
+#if DRI_BUILD
 void
 _grInvalidateAll()
 {

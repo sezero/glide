@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.1  2003/11/03 13:34:29  dborca
+** Voodoo2 happiness (DJGPP & Linux)
+**
 ** Revision 1.1.1.1  1999/12/07 21:42:34  joseph
 ** Initial checkin into SourceForge.
 **
@@ -199,7 +202,7 @@ GR_DDFUNC(_grTexDownloadNccTableExt,
   _GlideRoot.stats.palDownloads++;
   _GlideRoot.stats.palBytes += (end-start+1)<<2;
 
-  if (gc->tmu_state[tmu].ncc_table[which] != table) {
+  /*if (gc->tmu_state[tmu].ncc_table[which] != table)*/ {
     SstRegs* texHW;
     int i;
 #ifdef GLIDE_POINTCAST_PALETTE
@@ -488,7 +491,7 @@ GR_DDFUNC(_grTexDownloadNccTable,
   _GlideRoot.stats.palDownloads++;
   _GlideRoot.stats.palBytes += (end-start+1)<<2;
 
-  if (gc->tmu_state[tmu].ncc_table[which] != table) {
+  /*if (gc->tmu_state[tmu].ncc_table[which] != table)*/ {
     SstRegs* texHW;
     int i;
 #ifdef GLIDE_POINTCAST_PALETTE

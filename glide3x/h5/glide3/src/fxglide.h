@@ -3260,7 +3260,7 @@ static GrLOD_t g3LodXlat_base[2] = { GR_LOD_LOG2_256, GR_LOD_LOG2_2048 };
   (g3LodXlat_base[tBig] - someLOD)
 #endif
 
-GR_ENTRY(grTexDownloadTableExt,
+GR_EXT_ENTRY(grTexDownloadTableExt,
          void,
          (GrChipID_t tmu, GrTexTable_t type,  void *data));
 

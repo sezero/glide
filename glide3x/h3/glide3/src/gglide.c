@@ -19,7 +19,21 @@
 **
 ** $Header$
 ** $Log$
-** Revision 1.1.1.1  1999/11/24 21:45:02  joseph
+** Revision 1.5  2000/11/24 18:36:48  alanh
+** Add new grStippleMode and grStipplePattern functions for both Voodoo3 and
+** Voodoo5 hardware.
+**
+** Revision 1.4  2000/11/16 20:25:38  alanh
+** fix a typo
+**
+** Revision 1.3  2000/11/16 18:58:27  alanh
+** add linux specific grRenderBuffer to fix problems switching between FRONT and
+** BACK buffers.
+**
+** Revision 1.2  2000/10/27 07:54:51  alanh
+** fix readPtr0/1 -> depth0/1 check
+**
+** Revision 1.1.1.1  1999/11/24 21:45:01  joseph
 ** Initial checkin for SourceForge
 **
 ** 
@@ -93,7 +107,7 @@
 ** Fixed effed-up size checking in gglide.c
 ** 
 ** 68    11/30/98 6:57p Peter
-** windowed texture f*ckage
+** windowed texture muckage
 ** 
 ** 67    11/18/98 6:34p Dow
 ** Fixed clear problem on v3/banshee
@@ -366,7 +380,7 @@
  * direct writes tsu registers
  * 
  * 114   11/18/97 6:11p Peter
- * fixed glide3 effage
+ * fixed glide3 muckage
  * 
  * 113   11/18/97 4:36p Peter
  * chipfield stuff cleanup and w/ direct writes
@@ -394,7 +408,7 @@
  * enable _grUpdateParamIndex for grGlideSetState
  * 
  * 105   11/12/97 9:54p Peter
- * fixed all the effage from new config
+ * fixed all the muckage from new config
  * 
  * 104   11/12/97 2:27p Peter
  * 
@@ -427,6 +441,10 @@
 #include "fxglide.h"
 #include "fxcmd.h"
 #include "fxinline.h"
+
+#if DRI_BUILD
+#include <lindri.h>
+#endif
 
 #include "rcver.h"
 static char glideIdent[] = "@#%" VERSIONSTR ;
@@ -776,7 +794,8 @@ GR_ENTRY(grBufferClear, void, (GrColor_t color, GrAlpha_t alpha, FxU32 depth))
   GDBG_INFO_MORE(gc->myLevel, "(0x%x,0x%x,0x%x)\n", color, alpha, depth);
 
   /* validate the state */
-  if (gc->state.invalid) _grValidateState();
+  if (gc->state.invalid)
+    _grValidateState();
 
   {
     const GrColor_t oldc1 = gc->state.shadow.color1;
@@ -892,7 +911,12 @@ GR_ENTRY(grBufferClear, void, (GrColor_t color, GrAlpha_t alpha, FxU32 depth))
           
           REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 2, 0x3);
           REG_GROUP_SET(hw, colBufferAddr,gc->buffers[gc->grColBuf]);
-          REG_GROUP_SET(hw,colBufferStride,gc->state.shadow.auxBufferStride);
+#if DRI_BUILD
+          REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer)? driInfo.stride :
+			gc->state.shadow.auxBufferStride);
+#else
+          REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.auxBufferStride);
+#endif
           REG_GROUP_END();
           
           REG_GROUP_BEGIN(BROADCAST_ID, fbzMode, 2, 0x21);
@@ -920,7 +944,13 @@ GR_ENTRY(grBufferClear, void, (GrColor_t color, GrAlpha_t alpha, FxU32 depth))
 
         REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 2, 0x3);
         REG_GROUP_SET(hw, colBufferAddr, gc->buffers[gc->windowed ? 0 : gc->curBuffer]);
-        REG_GROUP_SET(hw,colBufferStride,gc->state.shadow.colBufferStride);
+
+#if DRI_BUILD
+        REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride :
+		      gc->state.shadow.colBufferStride);
+#else
+        REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride);
+#endif
         REG_GROUP_END();
 
         REG_GROUP_BEGIN(BROADCAST_ID, fbzMode, 1, 1);
@@ -1006,7 +1036,7 @@ GR_ENTRY(grBufferClear, void, (GrColor_t color, GrAlpha_t alpha, FxU32 depth))
 } /* grBufferClear */
 #endif
 
-
+#if !DRI_BUILD
 /*---------------------------------------------------------------------------
 ** grBufferSwap
 **
@@ -1123,6 +1153,142 @@ GR_ENTRY(grBufferSwap, void, (FxU32 swapInterval))
   GR_END();
 #undef FN_NAME  
 } /* grBufferSwap */
+#else
+/*---------------------------------------------------------------------------
+** grBufferSwap
+**
+** NOTE:        This routine should be COMPLETELY device-independant,
+**              but it isn't right now because we need to move all the
+**              code for the splash screen into the init library.
+*/
+
+GR_ENTRY(grDRIBufferSwap, void, (FxU32 swapInterval))
+{
+  FxU32 regMask;
+  int cnt, x, y, w, h;
+
+#define FN_NAME "grBufferSwap"
+  GR_BEGIN_NOFIFOCHECK(FN_NAME,86);
+  GDBG_INFO_MORE(gc->myLevel,"(%d)\n",swapInterval);
+
+  /* optionally display the 3Dfx powerfield logo overlay */
+  if (_GlideRoot.environment.shamelessPlug) _grShamelessPlug();
+
+  /* check for environmental override */
+  if (_GlideRoot.environment.swapInterval >= 0) {
+    swapInterval = _GlideRoot.environment.swapInterval;
+  }
+
+  if (swapInterval) {
+    if (swapInterval > 1) 
+      swapInterval = ((swapInterval - 1) << 1) | 1; /* Format for hw */
+  }
+  
+  while(_grBufferNumPending() > 3);
+
+#if USE_PACKET_FIFO
+  {
+    int i, j = -1;
+
+    for ( i = 0; i < MAX_BUFF_PENDING && j == -1; i++) {
+      if (gc->bufferSwaps[i] == 0xffffffff) {
+        gc->bufferSwaps[i] =
+          (FxU32) gc->cmdTransportInfo.fifoPtr -
+          (FxU32) gc->cmdTransportInfo.fifoStart; 
+        j = i;
+      }
+    }
+    GR_ASSERT(j != -1);
+
+    gc->swapsPending++;
+
+  }
+#endif
+
+  /* Just 0x1 for mask is OK here since we're writing one register */
+  REG_GROUP_BEGIN(BROADCAST_ID, swapbufferCMD, 1, 0x1); 
+  REG_GROUP_SET(hw, swapbufferCMD, swapInterval);
+  REG_GROUP_END();
+
+  cnt=driInfo.numClip;
+  if (cnt) {
+    /* Copy */
+    regMask=0;
+    ADDWAXMASK(regMask, srcBaseAddr, srcBaseAddr);
+    ADDWAXMASK(regMask, srcFormat, srcBaseAddr);
+    REG_GROUP_BEGIN_WAX(srcBaseAddr, 2, regMask);
+    REG_GROUP_SET_WAX(hw, srcBaseAddr, gc->buffers[1]|BIT(31));
+    REG_GROUP_SET_WAX(hw, srcFormat, gc->strideInTiles | (3<<16));
+    REG_GROUP_END();
+
+    do {
+      cnt--;
+      x=driInfo.pClip[cnt].x1;
+      y=driInfo.pClip[cnt].y1;
+      w=driInfo.pClip[cnt].x2-x;
+      h=driInfo.pClip[cnt].y2-y;
+      regMask=0;
+      ADDWAXMASK(regMask, srcXY, srcXY);
+      ADDWAXMASK(regMask, dstSize, srcXY);
+      ADDWAXMASK(regMask, dstXY, srcXY);
+      ADDWAXMASK(regMask, command, srcXY);
+      REG_GROUP_BEGIN_WAX(srcXY, 4, regMask);
+      REG_GROUP_SET_WAX(hw, srcXY, x | ((driInfo.y+(y-driInfo.y))<<16));
+      REG_GROUP_SET_WAX(hw, dstSize, (w&0x1FFF)|((h&0x1FFF)<<16));
+      REG_GROUP_SET_WAX(hw, dstXY, (x&0x1FFF) | ((y&0x1FFF)<<16));
+      REG_GROUP_SET_WAX(hw, command, (0xCC<<24) | 0x1 | BIT(8));
+      REG_GROUP_END();
+    } while (cnt);
+
+    /* Put things back as X expects them */
+    regMask=0;
+    ADDWAXMASK(regMask, srcBaseAddr, srcBaseAddr);
+    ADDWAXMASK(regMask, srcFormat, srcBaseAddr);
+    REG_GROUP_BEGIN_WAX(srcBaseAddr, 2, regMask);
+    REG_GROUP_SET_WAX(hw, srcBaseAddr, gc->buffers[0]);
+    REG_GROUP_SET_WAX(hw, srcFormat, driInfo.stride | (3<<16));
+    REG_GROUP_END();
+  }
+
+#ifdef GLIDE_DEBUG
+  {
+    if ((FxI32)_GlideRoot.environment.snapshot > 0) {
+      static char saveDBG[GDBG_MAX_LEVELS];
+      int i;
+      
+      /* turn off tracing after frame 0 and the snapshot frame */
+      if ((gc->stats.bufferSwaps == 0) || 
+          (gc->stats.bufferSwaps == _GlideRoot.environment.snapshot + 3)) {
+        GDBG_PRINTF(FN_NAME": FX_SNAPSHOT (%ld)\n", gc->stats.bufferSwaps);
+
+        for (i = 1; i < GDBG_MAX_LEVELS; i++) {
+          if (gc->stats.bufferSwaps == 0) saveDBG[i] = (char)GDBG_GET_DEBUGLEVEL(i);
+          GDBG_SET_DEBUGLEVEL(i, 0);
+        }
+      }
+      /* turn on tracing after the snapshot frame */
+      if (gc->stats.bufferSwaps == _GlideRoot.environment.snapshot) {
+        GDBG_PRINTF(FN_NAME": FX_SNAPSHOT (%ld)\n", gc->stats.bufferSwaps);
+
+        for (i = 1; i < GDBG_MAX_LEVELS; i++) {
+          GDBG_SET_DEBUGLEVEL(i, saveDBG[i]);
+        }
+      }
+    }
+  }
+#endif /* GLIDE_DEBUG */
+
+  gc->stats.bufferSwaps++;
+  
+  GR_END();
+#undef FN_NAME  
+} /* grBufferSwap */
+
+void grBufferSwap(FxU32 i) {
+  grDRIBufferSwap(i);
+}
+
+#endif
 
 /*---------------------------------------------------------------------------
 ** grBufferNumPending
@@ -1748,6 +1914,44 @@ GR_ENTRY(grDisableAllEffects, void, (void))
 } /* grDisableAllEffects */
 
 /*---------------------------------------------------------------------------
+** grStippleMode
+*/
+
+GR_STATE_ENTRY(grStippleMode, void, (GrStippleMode_t mode))
+{
+#define FN_NAME "_grStippleMode"
+  FxU32 fbzMode;
+  GR_BEGIN_NOFIFOCHECK("_grStippleMode", 85);
+  GDBG_INFO_MORE(gc->myLevel, "(%d)\n", mode);
+
+  fbzMode = gc->state.shadow.fbzMode; 
+
+  fbzMode &= ~(SST_ENSTIPPLE | SST_ENSTIPPLEPATTERN);
+
+  switch (mode) {
+  case GR_STIPPLE_DISABLE:      
+    break;           
+                    
+  case GR_STIPPLE_PATTERN:
+    fbzMode |= (SST_ENSTIPPLE | SST_ENSTIPPLEPATTERN);
+    break;
+
+  case GR_STIPPLE_ROTATE:
+    fbzMode |= SST_ENSTIPPLE;
+    break;
+  }
+   
+  gc->state.shadow.fbzMode = fbzMode;
+
+#if !GLIDE3
+  GR_SET_EXPECTED_SIZE(sizeof(FxU32), 1);
+  GR_SET(BROADCAST_ID, hw, fbzMode,  fbzMode);
+  GR_CHECK_SIZE();
+#endif /* !GLIDE3 */
+#undef FN_NAME
+} /* grStippleMode */
+
+/*---------------------------------------------------------------------------
 ** grDitherMode
 */
 
@@ -2113,7 +2317,7 @@ GR_ENTRY(grGlideSetState, void, (const void *state))
 **  and the only drawbuffer modes supported by the fbzMode register are 0
 **  (back) and 1 (front)
 */
-
+#if !DRI_BUILD
 GR_STATE_ENTRY(grRenderBuffer, void, (GrBuffer_t buffer))
 {
 #define FN_NAME "_grRenderBuffer"
@@ -2140,6 +2344,31 @@ GR_STATE_ENTRY(grRenderBuffer, void, (GrBuffer_t buffer))
   GR_END();
 #undef FN_NAME
 } /* grRenderBuffer */
+#else /* DRI_BUILD */
+GR_STATE_ENTRY(grRenderBuffer, void, (GrBuffer_t buffer))
+{
+#define FN_NAME "_grRenderBuffer"
+  GR_BEGIN_NOFIFOCHECK(FN_NAME, 85);
+  GDBG_INFO_MORE(gc->myLevel,"(%d)\n",buffer);
+  GR_CHECK_F(myName, buffer >= GR_BUFFER_AUXBUFFER, "invalid buffer");
+
+  {
+    gc->curBuffer = ((buffer == GR_BUFFER_FRONTBUFFER)
+                     ? gc->frontBuffer
+                     : gc->backBuffer);
+    REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 2, 0x3); 
+    REG_GROUP_SET(hw, colBufferAddr, gc->buffers[gc->curBuffer]);
+    REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride :
+		    gc->state.shadow.colBufferStride);
+    REG_GROUP_END();
+
+    gc->state.shadow.colBufferAddr = gc->buffers[gc->curBuffer];
+  }
+
+  GR_END();
+#undef FN_NAME
+} /* grRenderBuffer */
+#endif
 
 GR_ENTRY(grCheckForRoom, void, (FxI32 n))
 {

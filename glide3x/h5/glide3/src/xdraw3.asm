@@ -35,7 +35,7 @@ extrn _grCommandTransportMakeRoom, 12
     
 segment		CONST
         ALIGN 8
-_F256_F256      DD    43800000h, 43800000h ; 256 | 256
+_F256_F256      DD    256.0, 256.0
 
 segment		DATA
         ALIGN   8

@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/11/24 21:45:02  joseph
+** Initial checkin for SourceForge
+**
 ** 
 ** 4     4/06/99 3:54p Dow
 ** Alt tab again.
@@ -211,7 +214,7 @@
 #include "fxglide.h"
 #include "fxcmd.h"
 
-#ifdef __linux__
+#if DRI_BUILD
 #include <lindri.h>
 #endif
 
@@ -450,7 +453,7 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t type, GrBuffer_t buffer,
       }
 
       if (rv) {
-#ifdef __linux__
+#if DRI_BUILD
 	if (!colBufferIndex) 
 	  info->strideInBytes = driInfo.stride;
 	else
@@ -481,7 +484,7 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t type, GrBuffer_t buffer,
           GR_CHECK_SIZE();
 
           info->lfbPtr          = (void *)gc->lfb_ptr;
-#ifdef __linux__
+#if DRI_BUILD
 	  info->strideInBytes   = 0x1000;
 #endif
 

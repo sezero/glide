@@ -19,6 +19,10 @@
 ;; $Header$
 ;; $Revision$
 ;; $Log$
+;; Revision 1.1.8.8  2003/09/12 05:11:45  koolsmoky
+;; preparing for graphic context checks
+;; fixed jmp errors
+;;
 ;; Revision 1.1.8.7  2003/07/07 23:29:06  koolsmoky
 ;; cleaned logs
 ;;
@@ -223,7 +227,7 @@ Y       equ 4
 %ENDM
 
 ;; enables/disables trisProcessed and trisDrawn counters
-STATS equ 1
+%define STATS 1
 
     ;; NB:  All of the base triangle procs expect to have the gc
     ;;      passed from the caller in edx so that we can avoid

@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.6.2  2003/06/21 12:43:04  dborca
+** h3cinit cleanup
+**
 ** Revision 1.1.1.1.6.1  2003/05/05 07:12:47  dborca
 ** no message
 **
@@ -585,6 +588,8 @@ modify [eax];
 /* [dBorca] */
 #elif defined(__DJGPP__)
 #define P6FENCE __asm __volatile ("xchg %%eax, _fenceVar":::"%eax");
+#elif defined(__linux__)
+#define P6FENCE __asm __volatile ("xchg %%eax, fenceVar":::"%eax")
 #else
 #error "P6 Fencing in-line assembler code needs to be added for this compiler"
 #endif /* Compiler specific fence commands */
@@ -3202,7 +3207,7 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
   }
 #endif
 
-#ifdef __DOS32__
+#ifndef __WIN32__ /* DOS and Linux */
   /* Now call the cinit code */
 
   h3InitVideoOverlaySurface(
@@ -3439,7 +3444,7 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
                 ( bInfo->buffInfo.bufStrideInTiles << 16 ) |
                   bInfo->buffInfo.bufStrideInTiles );
 
-#ifdef __DJGPP__
+#if defined(__DJGPP__) || defined(__linux__)
   HWC_IO_STORE(bInfo->regInfo, vidProcCfg, vidProcCfg | SST_VIDEO_PROCESSOR_EN);
 #endif
 
@@ -4083,6 +4088,9 @@ hwcGetenv(char *a)
     RegCloseKey(hKey);
   }
   return (char*)retVal;
+#elif defined(__linux__)
+  extern char *file_getenv (const char *a);
+  return file_getenv(a);
 #else
   return getenv(a);
 #endif
@@ -4209,7 +4217,7 @@ hwcShareContextData(hwcBoardInfo *bInfo, FxU32 **data)
             ctxRes.optData.shareContextDWORDRes.contextDWORD); 
 
 /* [dBorca] that must be initialized to something... */
-#elif defined(__DJGPP__)
+#elif defined(__DJGPP__) || defined(__linux__)
  *data = &dummyContextDWORD;
 #endif
   return retVal;

@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/11/24 21:44:57  joseph
+** Initial checkin for SourceForge
+**
 ** 
 ** 5     5/26/99 9:22a Stb_acampbel
 ** Removed an extra string format parameter from a debug output statement
@@ -264,6 +267,361 @@
 #include "fxglide.h"
 #include "fxcmd.h"
 
+#define GLIDE_POINTCAST_PALETTE 1
+
+/*---------------------------------------------------------------------------
+** _grTexDownloadNccTableExt
+**
+** Downloads an ncctable to the specified _physical_ TMU(s).  This
+** function is called internally by Glide and should not be executed
+** by an application.
+*/
+GR_DDFUNC(_grTexDownloadNccTableExt,
+          void,
+          (GrChipID_t tmu, FxU32 which, const GuNccTable *table, int start, int end))
+{
+#define FN_NAME "_grTexDownloadNccTableExt"
+  GR_BEGIN_NOFIFOCHECK(FN_NAME,89);
+  GDBG_INFO_MORE(gc->myLevel,"(%d,%d, 0x%x, %d,%d)\n",tmu,which,table,start,end);
+  GR_ASSERT(start==0);
+  GR_ASSERT(end==11);
+
+  /* check for null pointer */
+  if (table == NULL) return;
+
+  gc->stats.palDownloads++;
+  gc->stats.palBytes += (end-start+1)<<2;
+
+  /*if (gc->tmu_state[tmu].ncc_table[which] != table)*/ {
+    SstRegs* texHW;
+    int i;
+#ifdef GLIDE_POINTCAST_PALETTE
+    texHW = SST_TMU(hw,tmu);
+#else
+    texHW = SST_CHIP(hw, 0x06UL);
+#endif
+
+    if (which == 0) {
+#ifdef GLIDE_POINTCAST_PALETTE
+      REG_GROUP_BEGIN((0x02UL << tmu), nccTable0, 12, 0x0FFF);
+#else
+      REG_GROUP_BEGIN(0x06UL, nccTable0, 12, 0x0FFF);
+#endif
+      for (i = 0; i < 12; i++) {
+        gc->state.shadow.tmuState[tmu].nccTable0[i] = table->packed_data[i];
+        REG_GROUP_SET(texHW, nccTable0[i], table->packed_data[i]);
+      }
+      REG_GROUP_END();
+    } else {
+#ifdef GLIDE_POINTCAST_PALETTE
+      REG_GROUP_BEGIN((0x02UL << tmu), nccTable1, 12, 0x0FFF);
+#else
+      REG_GROUP_BEGIN(0x06UL, nccTable1, 12, 0x0FFF);
+#endif
+      for (i = 0; i < 12; i++) {
+        gc->state.shadow.tmuState[tmu].nccTable1[i] = table->packed_data[i];
+        REG_GROUP_SET(texHW, nccTable1[i], table->packed_data[i]);
+      }
+      REG_GROUP_END();
+    }
+
+    gc->tmu_state[tmu].ncc_table[which] = table;
+  }
+
+  GR_END();
+#undef FN_NAME
+} /* _grTexDownloadNccTableExt */
+
+/*-------------------------------------------------------------------
+  Function: _grTexDownloadPaletteExt
+  Date: 6/9
+  Implementor(s): jdt
+  Library: Glide
+  Description:
+    Private function to download a palette to the specified tmu
+  Arguments:
+    tmu - which tmu to download the palette to
+    pal - the pallete data
+    start - beginning index to download
+    end   - ending index to download
+  Return:
+    none
+  -------------------------------------------------------------------*/
+GR_DDFUNC(_grTexDownloadPaletteExt,
+          void,
+          (GrChipID_t tmu, GrTexTable_t type, GuTexPalette *pal, int start, int end))
+{
+#define FN_NAME "_grTexDownloadPaletteExt"
+  GR_BEGIN_NOFIFOCHECK(FN_NAME, 89);
+  GDBG_INFO_MORE(gc->myLevel,"(%d,0x%x, %d,%d)\n",tmu,pal,start,end);
+
+  GR_CHECK_F(FN_NAME, pal == NULL, "pal invalid");
+  GR_CHECK_F(FN_NAME, start < 0, "invalid start index");
+  GR_CHECK_F(FN_NAME, end > 255, "invalid end index");
+    
+  /* NOTE:
+  **
+  **  This code broadcasts the palette because in the future, we will
+  **  only support one global texture palette no matter how many TMUs
+  **  there are.  This is fallout from the fact that future hardware
+  **  has a unified memory architecture.
+  **  
+  **  Source licensees (meaning arcade or LBE vendors that) require the
+  **  one palette/tmu mode should define GLIDE_POINTCAST_PALETTE on
+  **  the command line for this file.  Understand, however, that this
+  **  will not work on future hardware.
+  */
+
+#ifdef GLIDE_POINTCAST_PALETTE
+  /*
+  **  FURTHER NOTE:  
+  **  There is a sublety (nice way of saying BUG) here.
+  **  If TMU0 is specified, then the palette will be broadcast to all
+  **  TMUS.  So, if the user downloads TMU1's palette, then TMU0's
+  **  palette, TMU0's palette will be on *both* TMUs.  This is a
+  **  pretty strong indicator that no one is using separate palettes
+  **  on different TMUs.
+  */
+  hw = SST_TMU(hw,tmu);
+#else
+  hw = SST_CHIP(hw,0xE);
+#endif
+
+  gc->stats.palDownloads++;
+  gc->stats.palBytes += ((end - start + 1) << 2);
+
+  /* We divide the writes into 3 chunks trying to group things into
+   * complete 8 word grouped packets to fit the nccTable palette
+   * format: stuff before the 8 word alignment, aligned writes, and
+   * stuff after the 8 word alignment to the end. The slop regions
+   * are one packet apiece.  
+   */
+  {
+#ifdef GLIDE_POINTCAST_PALETTE
+    const FifoChipField chipId = (FifoChipField)(0x02UL << tmu);
+#else
+    const FifoChipField chipId = (FifoChipField)0x06UL;
+#endif
+    const int endSlop = (end & ~0x07);
+    const int startSlop = MIN(((start + 8) & ~0x07) - 1, end);
+    int i = start;
+
+    if (type == GR_TEXTABLE_PALETTE) {
+      /* Is the start of the palette range unaligned or is the end of
+       * the range less than a completely aligned range?  
+       */
+      if (((start & 0x07) != 0) || (end < ((start + 8) & ~0x07))) {
+        const FxI32 slopCount = startSlop - start + 1;
+        GR_ASSERT((slopCount > 0) && (slopCount <= 8));
+        
+        REG_GROUP_BEGIN(chipId, nccTable0[4 + (start & 0x07)], 
+                        slopCount, (0xFF >> (8 - slopCount)));
+        while(i < start + slopCount) {
+          FxU32 entry;
+          
+          entry = (0x80000000 | ((i & 0xFE) << 23) | pal->data[i] & 0xFFFFFF);
+          
+          gc->state.shadow.paletteRow[i>>3].data[i&7] = entry;
+          REG_GROUP_SET(hw, nccTable0[4 + (i & 0x07)], entry );
+          
+          i++;
+        }
+        REG_GROUP_END();
+      }
+
+      /* Do all of the aligned palette ranges. */
+      while(i < endSlop) {
+        const int endIndex = i + 8;
+        
+        REG_GROUP_BEGIN(chipId, nccTable0[4], 8, 0xFF);
+        while(i < endIndex) {
+          FxU32 entry;
+          
+          entry = (0x80000000 | ((i & 0xFE) << 23) | pal->data[i] & 0xFFFFFF);
+          
+          gc->state.shadow.paletteRow[i>>3].data[i&7] = entry;
+          REG_GROUP_SET(hw, nccTable0[4 + (i & 0x07)], entry );
+          
+          i++;
+        }
+        REG_GROUP_END();
+      }
+  
+      /* Do we have any more slop at the end of the ragne? */
+      if (i <= end) {
+        const FxU32 slopCount = end - endSlop + 1;
+        
+        REG_GROUP_BEGIN(chipId, nccTable0[4], 
+                        slopCount, (0xFF >> (8 - slopCount)));
+        while(i <= end) {
+          FxU32 entry;
+          
+          entry = (0x80000000 | ((i & 0xFE) << 23) | pal->data[i] & 0xFFFFFF);
+          
+          gc->state.shadow.paletteRow[i>>3].data[i&7] = entry;
+          REG_GROUP_SET(hw, nccTable0[4 + (i & 0x07)], entry );
+          
+          i++;
+        }
+        REG_GROUP_END();
+      }
+    } else {
+      /* Is the start of the palette range unaligned or is the end of
+       * the range less than a completely aligned range?  
+       */
+      if (((start & 0x07) != 0) || (end < ((start + 8) & ~0x07))) {
+        const FxI32 slopCount = startSlop - start + 1;
+        GR_ASSERT((slopCount > 0) && (slopCount <= 8));
+        
+        REG_GROUP_BEGIN(chipId, nccTable0[4 + (start & 0x07)], 
+                        slopCount, (0xFF >> (8 - slopCount)));
+        while(i < start + slopCount) {
+          FxU32
+            p1, p2, p3, p4,
+            entry;
+          
+          p1 = p2 = pal->data[i];
+          p1 &= 0xfc000000;          p2 &= 0x00fc0000;
+          p1 >>= 8;                  p2 >>= 6;
+          p3 = p4 = pal->data[i];
+          p3 &= 0x0000fc00;          p4 &= 0x000000fc;
+          p3 >>= 4;                  p4 >>= 2;
+          p1 |= p2;                  p3 |= p4;              p1 |= p3;
+
+          entry = (0x80000000UL | ((i & 0xFEUL) << 23) | p1);
+          gc->state.shadow.paletteRow[i>>3].data[i&7] = entry;
+          REG_GROUP_SET(hw, nccTable0[4 + (i & 0x07)], entry);
+
+          i++;
+        }
+        REG_GROUP_END();
+      }
+
+      /* Do all of the aligned palette ranges. */
+      while(i < endSlop) {
+        const int endIndex = i + 8;
+        
+        REG_GROUP_BEGIN(chipId, nccTable0[4], 8, 0xFF);
+        while(i < endIndex) {
+          FxU32 p1, p2, p3, p4;
+          p1 = p2 = pal->data[i];
+          p1 &= 0xfc000000;          p2 &= 0x00fc0000;
+          p1 >>= 8;                  p2 >>= 6;
+          p3 = p4 = pal->data[i];
+          p3 &= 0x0000fc00;          p4 &= 0x000000fc;
+          p3 >>= 4;                  p4 >>= 2;
+          p1 |= p2;                  p3 |= p4;              p1 |= p3;
+          REG_GROUP_SET(hw, nccTable0[4 + (i & 0x07)],
+                        (0x80000000 | ((i & 0xFE) << 23) | p1));
+          i++;
+        }
+        REG_GROUP_END();
+      }
+  
+      /* Do we have any more slop at the end of the ragne? */
+      if (i <= end) {
+        const FxU32 slopCount = end - endSlop + 1;
+        
+        REG_GROUP_BEGIN(chipId, nccTable0[4], 
+                        slopCount, (0xFF >> (8 - slopCount)));
+        while(i <= end) {
+          FxU32 
+            p1, p2, p3, p4,
+            entry;
+
+          p1 = p2 = pal->data[i];
+          p1 &= 0xfc000000;          p2 &= 0x00fc0000;
+          p1 >>= 8;                  p2 >>= 6;
+          p3 = p4 = pal->data[i];
+          p3 &= 0x0000fc00;          p4 &= 0x000000fc;
+          p3 >>= 4;                  p4 >>= 2;
+          p1 |= p2;                  p3 |= p4;              p1 |= p3;
+
+          entry = (0x80000000UL | ((i & 0xFE) << 23) | p1);
+          gc->state.shadow.paletteRow[i>>3].data[i&7] = entry;
+          REG_GROUP_SET(hw, nccTable0[4 + (i & 0x07)], entry);
+          
+          i++;
+        }
+        REG_GROUP_END();
+      }
+    }
+  }
+
+  /* NB: If we're changing table types and the currently selected texture is
+   * a palettized texture then we need to change the texture format
+   * behind the user's back to match the table type.
+   */
+  if (type != gc->state.tex_table) {
+    FxI32
+      i;
+
+    for(i = 0; i < gc->num_tmu; i++) {
+      const FxU32
+        texFmt      = (gc->state.shadow.tmuState[i].textureMode & SST_TFORMAT),
+        newTexMode  = (gc->state.shadow.tmuState[i].textureMode ^
+                       ((GR_TEXFMT_P_8 ^ GR_TEXFMT_P_8_RGBA) << SST_TFORMAT_SHIFT));
+      
+      if ((texFmt == (GR_TEXFMT_P_8 << SST_TFORMAT_SHIFT)) ||
+          (texFmt == (GR_TEXFMT_P_8_RGBA << SST_TFORMAT_SHIFT))) {
+        
+        GR_SET_EXPECTED_SIZE(sizeof(FxU32), 1);
+        GR_SET((0x02UL << i), SST_TMU(hw, i), textureMode, newTexMode);
+        GR_CHECK_SIZE();
+
+        gc->state.shadow.tmuState[i].textureMode = newTexMode;
+      }
+    }
+  }
+    
+  GR_END();
+#undef FN_NAME
+} /* _grTexDownloadPaletteExt */
+
+/*-------------------------------------------------------------------
+  Function: grTexDownloadTableExt
+  Date: 6/3
+  Implementor(s): jdt, GaryMcT
+  Library: glide
+  Description:
+    download look up table data to a tmu
+  Arguments:
+    tmu - which tmu
+    type - what type of table to download
+        One of:
+            GR_TEXTABLE_NCC0
+            GR_TEXTABLE_NCC1
+            GR_TEXTABLE_PALETTE
+    void *data - pointer to table data
+  Return:
+    none
+  -------------------------------------------------------------------*/
+GR_EXT_ENTRY(grTexDownloadTableExt,
+         void,
+         (GrChipID_t tmu, GrTexTable_t type,  void *data))
+{
+  GR_BEGIN_NOFIFOCHECK("grTexDownloadTableExt",89);
+  GDBG_INFO_MORE(gc->myLevel,"(%d,0x%x)\n",type,data);
+  GR_CHECK_F(myName, type > GR_TEXTABLE_PALETTE_6666_EXT, "invalid table specified");
+  GR_CHECK_F(myName, !data, "invalid data pointer");
+
+  if ((type == GR_TEXTABLE_PALETTE) || (type == GR_TEXTABLE_PALETTE_6666_EXT)) {
+    _grTexDownloadPaletteExt(tmu, type, (GuTexPalette *)data, 0, 255);
+  } else {                                 /* Type is an ncc table */
+    _grTexDownloadNccTableExt(tmu, type, (GuNccTable*)data, 0, 11);
+  }
+
+  /* NB: Set the current palette type after we do the download because
+   * the palette download code may need to know that there is a table
+   * type change and do something hoopti.  
+   */
+  gc->state.tex_table = type;
+
+  GR_END();
+} /* grTexDownloadTableExt */
+
+#undef GLIDE_POINTCAST_PALETTE
+
 /*---------------------------------------------------------------------------
 ** _grTexDownloadNccTable
 **
@@ -287,7 +645,7 @@ GR_DDFUNC(_grTexDownloadNccTable,
   gc->stats.palDownloads++;
   gc->stats.palBytes += (end-start+1)<<2;
 
-  if (gc->tmu_state[tmu].ncc_table[which] != table) {
+  /*if (gc->tmu_state[tmu].ncc_table[which] != table)*/ {
     SstRegs* texHW;
     int i;
 #ifdef GLIDE_POINTCAST_PALETTE

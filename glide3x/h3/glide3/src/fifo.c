@@ -19,6 +19,9 @@
  **
  ** $Header$
  ** $Log$
+ ** Revision 1.1.1.1.6.1  2003/05/05 07:12:46  dborca
+ ** no message
+ **
  ** Revision 1.1.1.1  1999/11/24 21:44:55  joseph
  ** Initial checkin for SourceForge
  **
@@ -827,7 +830,7 @@ _grCommandTransportMakeRoom(const FxI32 blockSize, const char* fName, const int 
      * we wrap check the current hw fifo pointer which is going to be the
      * 2d driver's fifo if we lost our context.
      */
-#if defined(GLIDE_INIT_HWC) && !defined(__linux__)
+#if defined(GLIDE_INIT_HWC) && GLIDE_CHECK_CONTEXT
     gc->contextP = hwcQueryContext(gc->bInfo);
 #else
     gc->contextP = 1; 
@@ -1171,7 +1174,7 @@ _reg_group_begin_internal_wax( FxU32 __regBase,
 #endif /* GLIDE_DEBUG */
 #endif /* USE_PACKET_FIFO */
 
-#ifdef __linux__
+#if DRI_BUILD
 void
 _grImportFifo(int fifoPtr, int fifoRead) {
   struct cmdTransportInfo* gcFifo;

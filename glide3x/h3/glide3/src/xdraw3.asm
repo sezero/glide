@@ -16,48 +16,41 @@
 ;; 
 ;; COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 
-TITLE   xdraw3.asm
-.586P
-.MMX
-.K3D    
+%include "xos.inc"
 
-EXTRN   __GlideRoot:DWORD
-EXTRN   __grValidateState:NEAR
-EXTRN   __grCommandTransportMakeRoom@12:NEAR    
+extrn _GlideRoot
+extrn _grValidateState
+extrn _grCommandTransportMakeRoom, 12
 
-ifdef GL_AMD3D
+%ifdef GL_AMD3D
 
 ;;--------------------------------------------------------------------------
 ;; start AMD3D version
 ;;--------------------------------------------------------------------------
 
 ;;; include listing.inc
-INCLUDE fxgasm.h
+%INCLUDE "fxgasm.h"
     
-CONST   SEGMENT
+segment		CONST
         ALIGN 8
-_F256_F256      DQ    04380000043800000h ; 256 | 256
-CONST   ENDS
+_F256_F256      DD    256.0, 256.0
 
-_DATA   SEGMENT
+segment		DATA
         ALIGN   8
-btab            DD    8 DUP(0)
-atab            DD    8 DUP(0)
+btab            DD    0, 0, 0, 0, 0, 0, 0, 0
+atab            DD    0, 0, 0, 0, 0, 0, 0, 0
 vSize           DD    0
 strideinbytes   DD    0
 vertices        DD    0
-_DATA    ENDS
 
 
-_TEXT         SEGMENT PAGE PUBLIC USE32 'CODE'
-              ASSUME DS: FLAT, SS: FLAT
+segment		TEXT
 
             ALIGN 32
-PUBLIC  __grDrawTriangles_3DNow@12
-_mode     = 20
-_count    = 24
-_pointers = 28
-__grDrawTriangles_3DNow@12 PROC NEAR
+%define _mode     20
+%define _count    24
+%define _pointers 28
+proc _grDrawTriangles_3DNow, 12
 
 ; 930  : {
 ; 931  : #define FN_NAME "_grDrawTriangles"
@@ -77,38 +70,38 @@ __grDrawTriangles_3DNow@12 PROC NEAR
 ; 945  : 
 ; 946  :   GR_FLUSH_STATE();
 
-gc            TEXTEQU  <edi>             ; points to graphics context
-fifo          TEXTEQU  <ecx>             ; points to next entry in fifo
-dlp           TEXTEQU  <ebp>             ; points to dataList structure
-vertexCount   TEXTEQU  <esi>             ; Current vertex counter in the packet
-vertexPtr     TEXTEQU  <ebx>             ; Current vertex pointer (in deref mode)
-vertex        TEXTEQU  <ebx>             ; Current vertex (in non-deref mode)
-dlpStart      TEXTEQU  <edx>             ; Pointer to start of offset list
+%define gc            edi             ; points to graphics context
+%define fifo          ecx             ; points to next entry in fifo
+%define dlp           ebp             ; points to dataList structure
+%define vertexCount   esi             ; Current vertex counter in the packet
+%define vertexPtr     ebx             ; Current vertex pointer (in deref mode)
+%define vertex        ebx             ; Current vertex (in non-deref mode)
+%define dlpStart      edx             ; Pointer to start of offset list
 
     push      edi                        ; save caller's register variable
-    mov       eax, DWORD PTR fs:[18h]    ; get thread local storage base pointer
+    SET_TLSBASE eax                      ; get thread local storage base pointer
 
     push      esi                        ; save caller's register variable
-    mov       edx, [__GlideRoot+tlsOffset]; offset of GC into tls
+    SET_TLSOFFSET edx                    ; offset of GC into tls
 
     push      ebx                        ; save caller's register variable
     mov       vertexCount, [esp+_count-4]; number of vertices in triangles
 
-    mov       gc, [eax+edx]              ; get GC for current thread 
+    GET_GC    eax, edx                   ; get GC for current thread
     mov       vertexPtr, [esp+_pointers-4]; get current vertex pointer (deref mode)
 
     push      ebp                        ; save frame pointer
     mov       edx, [gc + invalid]        ; state needs validation ?
 
     test      vertexCount, vertexCount   ; number of vertices <= 0 ?
-    jle       $tris_done                 ; yup, triangles are done
+    jle       .tris_done                 ; yup, triangles are done
 
     test      edx, edx                   ; do we need to validate state ?
-    je        $no_validation             ; nope, it's valid
+    je        .no_validation             ; nope, it's valid
 
-    call      __grValidateState          ; validate state
+    invoke    _grValidateState           ; validate state
 
-$no_validation:
+.no_validation:
 
 ; 947  : 
 ; 948  : #ifdef GLIDE_DEBUG
@@ -155,7 +148,7 @@ $no_validation:
     mov       [gc + trisProcessed], eax  ; trisProcessed
 
     test      edx, edx                   ; mode 0 (array of vertices) ?
-    jnz       $deref_mode                ; nope, it's mode 1 (array of pointers to vertices)
+    jnz       .deref_mode                ; nope, it's mode 1 (array of pointers to vertices)
 
     mov       edx, [gc + vertexStride]   ; get stride in DWORDs
 
@@ -163,7 +156,7 @@ $no_validation:
     test      ecx, ecx                   ; coordinate space == 0 (window) ?
 
     mov       [strideinbytes], edx       ; save off stride (in bytes)
-    jnz       $clip_coordinates_ND       ; nope, coordinate space != window  
+    jnz       .clip_coordinates_ND       ; nope, coordinate space != window  
 
 ; 961  :     while (count > 0) {
 ; 962  :       FxI32 vcount = count >=15 ? 15 : count;
@@ -171,7 +164,7 @@ $no_validation:
 ; 964  :       TRI_STRIP_BEGIN(kSetupStrip, vcount, gc->state.vData.vSize, SSTCP_PKT3_BDDBDD);
 ; 965  :       
 
-$win_coords_loop_ND:
+.win_coords_loop_ND:
 
     sub       vertexCount, 15            ; vertexCount >= 15 ? CF=0 : CF=1
     mov       ecx, [gc + vertexSize]     ; bytes of data for each vertex 
@@ -187,16 +180,12 @@ $win_coords_loop_ND:
     add       ecx, 4                     ; add header size ==> total packet size
 
     cmp       eax, ecx                   ; fifo space avail >= packet size ?
-    jge       $win_tri_begin_ND          ; yup, start writing triangle data
+    jge       .win_tri_begin_ND          ; yup, start writing triangle data
 
-    push      @Line                      ; line number inside this function
-    push      0h                         ; pointer to function name = NULL
-
-    push      ecx                        ; fifo space needed
-    call      __grCommandTransportMakeRoom@12 ; note: updates fifoPtr
+    invoke    _grCommandTransportMakeRoom, ecx, 0, __LINE__; note: updates fifoPtr
 
         align   32
-$win_tri_begin_ND:
+.win_tri_begin_ND:
 
     mov       eax, vertexCount           ; number of vertices in triangles
     mov       fifo, [gc + fifoPtr]       ; get fifoPtr
@@ -208,7 +197,7 @@ $win_tri_begin_ND:
     or        eax, ebp                   ; setup vertex count and type
 
     test      fifo, 4                    ; fifoPtr QWORD aligned ?
-    jz        $fifo_aligned_ND           ; yup
+    jz        .fifo_aligned_ND           ; yup
 
     mov       [fifo], eax                ; PCI write packet type
     add       fifo, 4                    ; fifo pointer now QWORD aligned
@@ -237,7 +226,7 @@ $win_tri_begin_ND:
 ; 987  :       count -= 15;
 ; 988  :     }
 
-$win_vertex_loop_ND_WB0:                 ; nothing in "write buffer"
+.win_vertex_loop_ND_WB0:                 ; nothing in "write buffer"
 
     mov       eax, [dlpStart]            ; get first offset from offset list
     mov       dlp, dlpStart              ; point to start of offset list
@@ -249,15 +238,15 @@ $win_vertex_loop_ND_WB0:                 ; nothing in "write buffer"
     test      eax, eax                   ; if offset == 0, end of list
 
     movq      [fifo-8], mm1              ; PCI write x, y
-    jz        $win_datalist_end_ND_WB0   ; no more vertex data, nothing in "write buffer" 
+    jz        .win_datalist_end_ND_WB0   ; no more vertex data, nothing in "write buffer" 
 
-$win_datalist_loop_ND_WB0:               ; nothing in "write buffer"
+.win_datalist_loop_ND_WB0:               ; nothing in "write buffer"
 
     movd      mm1, [vertex + eax]        ; get next parameter
     mov       eax, [dlp]                 ; get next offset from offset list
 
     test      eax, eax                   ; at end of offset list (offset == 0) ?
-    jz        $win_datalist_end_ND_WB1   ; exit, write buffer contains one DWORD
+    jz        .win_datalist_end_ND_WB1   ; exit, write buffer contains one DWORD
 
     movd      mm2, [vertex + eax]        ; get next parameter
     add       dlp, 8                     ; dlp++
@@ -269,17 +258,17 @@ $win_datalist_loop_ND_WB0:               ; nothing in "write buffer"
     punpckldq mm1, mm2                   ; current param | previous param
 
     movq      [fifo-8], mm1              ; PCI write current param | previous param
-    jnz       $win_datalist_loop_ND_WB0  ; nope, copy next parameter
+    jnz       .win_datalist_loop_ND_WB0  ; nope, copy next parameter
 
-$win_datalist_end_ND_WB0:
+.win_datalist_end_ND_WB0:
 
     mov       eax, [strideinbytes]       ; get offset to next vertex
     dec       vertexCount                ; another vertex done. Any left?
 
     lea       vertex, [vertex + eax]     ; points to next vertex
-    jnz       $win_vertex_loop_ND_WB0    ; yup, output next vertex
+    jnz       .win_vertex_loop_ND_WB0    ; yup, output next vertex
 
-$win_vertex_end_ND_WB0:
+.win_vertex_end_ND_WB0:
 
     mov       eax, [gc + fifoPtr]        ; old fifoPtr
     mov       ebp, [gc + fifoRoom]       ; old number of bytes available in fifo
@@ -297,7 +286,7 @@ $win_vertex_end_ND_WB0:
     test      vertexCount, vertexCount   ; any vertices left to process ?
 
     nop                                  ; filler
-    jg        $win_coords_loop_ND        ; loop if number of vertices to process >= 0
+    jg        .win_coords_loop_ND        ; loop if number of vertices to process >= 0
 
     femms                                ; no more MMX code; clear MMX/FPU state
 
@@ -307,13 +296,13 @@ $win_vertex_end_ND_WB0:
     pop       esi                        ; restore caller's register variable
     pop       edi                        ; restore caller's register variable
 
-    ret       12                         ; return, pop 3 DWORD parameters off stack
+    ret                                  ; return, pop 3 DWORD parameters off stack
 
-$fifo_aligned_ND:
+.fifo_aligned_ND:
 
     movd      mm1, eax                   ; move header into "write buffer"
 
-$win_vertex_loop_ND_WB1:                 ; one DWORD in "write buffer"
+.win_vertex_loop_ND_WB1:                 ; one DWORD in "write buffer"
 
     movd      mm2, [vertex]              ; 0 | x of vertex
     add       fifo, 8                    ; fifoPtr += 2*sizeof(FxU32)
@@ -328,9 +317,9 @@ $win_vertex_loop_ND_WB1:                 ; one DWORD in "write buffer"
     movd      mm1, [vertex+4]            ; 0 | y of vertex
 
     cmp       eax, 0                     ; offset == 0 (list empty) ?
-    jz        $win_datalist_end_ND_WB1   ; yup, no more vertex data, one DWORD in "write buffer"
+    jz        .win_datalist_end_ND_WB1   ; yup, no more vertex data, one DWORD in "write buffer"
 
-$win_datalist_loop_ND_WB1:               ; one DWORD in "write buffer" 
+.win_datalist_loop_ND_WB1:               ; one DWORD in "write buffer" 
 
     movd      mm2, [vertex + eax]        ; get next parameter
     add       fifo, 8                    ; fifoPtr += 2*sizeof(FxU32)
@@ -342,23 +331,23 @@ $win_datalist_loop_ND_WB1:               ; one DWORD in "write buffer"
     cmp       eax, 0                     ; at end of offset list (offset == 0) ?
 
     movq      [fifo-8], mm1              ; PCI write current param | previous param
-    jz        $win_datalist_end_ND_WB0   ; yes, exit, "write buffer" empty
+    jz        .win_datalist_end_ND_WB0   ; yes, exit, "write buffer" empty
 
     movd      mm1, [vertex + eax]        ; get next parameter
     mov       eax, [dlp-4]               ; get next offset from offset list
 
     cmp       eax, 0                     ; at end of offset list (offset == 0) ?
-    jnz       $win_datalist_loop_ND_WB1  ; nope, copy next parameter
+    jnz       .win_datalist_loop_ND_WB1  ; nope, copy next parameter
 
-$win_datalist_end_ND_WB1:
+.win_datalist_end_ND_WB1:
 
     mov       eax, [strideinbytes]       ; get offset to next vertex
     dec       vertexCount                ; another vertex done. Any left?
 
     lea       vertex, [vertex + eax]     ; points to next vertex
-    jnz       $win_vertex_loop_ND_WB1    ; yup, output next vertex
+    jnz       .win_vertex_loop_ND_WB1    ; yup, output next vertex
 
-$win_vertex_end_ND_WB1:
+.win_vertex_end_ND_WB1:
 
     movd      [fifo], mm1                ; flush "write buffer"
     mov       eax, [gc + fifoPtr]        ; old fifoPtr
@@ -379,7 +368,7 @@ $win_vertex_end_ND_WB1:
     test      vertexCount, vertexCount   ; any vertices left to process ?
 
     nop                                  ; filler
-    jg        $win_coords_loop_ND        ; loop if number of vertices to process >= 0
+    jg        .win_coords_loop_ND        ; loop if number of vertices to process >= 0
 
     femms                                ; no more MMX code; clear MMX/FPU state
 
@@ -389,18 +378,18 @@ $win_vertex_end_ND_WB1:
     pop       esi                        ; restore caller's register variable
     pop       edi                        ; restore caller's register variable
 
-    ret       12                         ; return, pop 3 DWORD parameters off stack
+    ret                                  ; return, pop 3 DWORD parameters off stack
 
     align 32
 
-$deref_mode:
+.deref_mode:
 
     prefetch  [vertexPtr]                ; pre-load first group of pointers
 
     test      ecx, ecx                   ; coordinate space == 0 (window) ?
-    jnz       $clip_coordinates_D        ; nope, coordinate space != window
+    jnz       .clip_coordinates_D        ; nope, coordinate space != window
 
-$win_coords_loop_D:
+.win_coords_loop_D:
 
     sub       vertexCount, 15            ; vertexCount >= 15 ? CF=0 : CF=1
     mov       ecx, [gc + vertexSize]     ; bytes of data for each vertex 
@@ -416,16 +405,12 @@ $win_coords_loop_D:
     add       ecx, 4                     ; add header size ==> total packet size
 
     cmp       eax, ecx                   ; fifo space avail >= packet size ?
-    jge       $win_tri_begin_D           ; yup, start writing triangle data
+    jge       .win_tri_begin_D           ; yup, start writing triangle data
 
-    push      @Line                      ; line number inside this function
-    push      0h                         ; pointer to function name = NULL
-
-    push      ecx                        ; fifo space needed
-    call      __grCommandTransportMakeRoom@12 ; note: updates fifoPtr
+    invoke    _grCommandTransportMakeRoom, ecx, 0, __LINE__ ; note: updates fifoPtr
 
         align 32
-$win_tri_begin_D:
+.win_tri_begin_D:
 
     mov       eax, vertexCount           ; number of vertices in triangles
     mov       fifo, [gc + fifoPtr]       ; get fifoPtr
@@ -437,12 +422,12 @@ $win_tri_begin_D:
     lea       dlpStart, [gc+tsuDataList] ; pointer to start of offset list
 
     test      fifo, 4                    ; fifoPtr QWORD aligned ?
-    jz        $fifo_aligned_D            ; yup
+    jz        .fifo_aligned_D            ; yup
 
     mov       [fifo], eax                ; PCI write packet type
     add       fifo, 4                    ; fifo pointer now QWORD aligned
 
-$win_vertex_loop_D_WB0:                  ; nothing in "write buffer"
+.win_vertex_loop_D_WB0:                  ; nothing in "write buffer"
 
     mov       edx, [vertexPtr]           ; dereference pointer, edx points to vertex
     add       vertexPtr, 4               ; next pointer
@@ -457,15 +442,15 @@ $win_vertex_loop_D_WB0:                  ; nothing in "write buffer"
     add       fifo, 8                    ; fifo += 2
 
     test      eax, eax                   ; if offset == 0, end of offset list
-    je        $win_datalist_end_D_WB0    ; no more vertex data, nothing in "write buffer" 
+    je        .win_datalist_end_D_WB0    ; no more vertex data, nothing in "write buffer" 
 
-$win_datalist_loop_D_WB0:                ; nothing in "write buffer"
+.win_datalist_loop_D_WB0:                ; nothing in "write buffer"
 
     movd      mm1, [edx + eax]           ; get next parameter
     mov       eax, [dlp]                 ; get next offset from offset list
 
     test      eax, eax                   ; at end of offset list (offset == 0) ?
-    jz        $win_datalist_end_D_WB1    ; exit, write buffer contains one DWORD
+    jz        .win_datalist_end_D_WB1    ; exit, write buffer contains one DWORD
 
     movd      mm2, [edx + eax]           ; get next parameter
     add       dlp, 8                     ; dlp++
@@ -477,14 +462,14 @@ $win_datalist_loop_D_WB0:                ; nothing in "write buffer"
     cmp       eax, 0                     ; at end of offset list (offset == 0) ?
 
     movq      [fifo-8], mm1              ; PCI write current param | previous param
-    jnz       $win_datalist_loop_D_WB0   ; nope, copy next parameter
+    jnz       .win_datalist_loop_D_WB0   ; nope, copy next parameter
 
-$win_datalist_end_D_WB0:
+.win_datalist_end_D_WB0:
 
     dec       vertexCount                ; another vertex done. Any left?
-    jnz       $win_vertex_loop_D_WB0     ; yup, output next vertex
+    jnz       .win_vertex_loop_D_WB0     ; yup, output next vertex
 
-$win_vertex_end_D_WB0:
+.win_vertex_end_D_WB0:
 
     mov       eax, [gc + fifoPtr]        ; old fifoPtr
     nop                                  ; filler
@@ -504,7 +489,7 @@ $win_vertex_end_D_WB0:
     test      vertexCount, vertexCount   ; any vertices left to process ?
 
     mov       [esp + _count], vertexCount; remaining number of vertices to process
-    jg        $win_coords_loop_D         ; loop if number of vertices to process >= 0
+    jg        .win_coords_loop_D         ; loop if number of vertices to process >= 0
 
     femms                                ; no more MMX code; clear MMX/FPU state
 
@@ -514,13 +499,13 @@ $win_vertex_end_D_WB0:
     pop       esi                        ; restore caller's register variable
     pop       edi                        ; restore caller's register variable
 
-    ret       12                         ; return, pop 3 DWORD parameters off stack
+    ret                                  ; return, pop 3 DWORD parameters off stack
 
-$fifo_aligned_D:
+.fifo_aligned_D:
 
     movd      mm1, eax                   ; move header into "write buffer"
 
-$win_vertex_loop_D_WB1:                  ; one DWORD in "write buffer"
+.win_vertex_loop_D_WB1:                  ; one DWORD in "write buffer"
 
     mov       edx, [vertexPtr]           ; dereference pointer, edx points to vertex
     add       vertexPtr, 4               ; next pointer
@@ -538,9 +523,9 @@ $win_vertex_loop_D_WB1:                  ; one DWORD in "write buffer"
     movd      mm1, [edx + 4]             ; 0 | y of vertex
 
     cmp       eax, 0                     ; offset == 0 (list empty) ?
-    je        $win_datalist_end_D_WB1    ; yup, no more vertex data, one DWORD in "write buffer"
+    je        .win_datalist_end_D_WB1    ; yup, no more vertex data, one DWORD in "write buffer"
 
-$win_datalist_loop_D_WB1:                ; one DWORD in "write buffer" = MM1
+.win_datalist_loop_D_WB1:                ; one DWORD in "write buffer" = MM1
 
     movd      mm2, [edx + eax]           ; get next parameter
     add       fifo, 8                    ; fifoPtr += 2*sizeof(FxU32)
@@ -552,20 +537,20 @@ $win_datalist_loop_D_WB1:                ; one DWORD in "write buffer" = MM1
     test      eax, eax                   ; at end of offset list (offset == 0) ?
 
     movq      [fifo-8], mm1              ; PCI write current param | previous param
-    jz        $win_datalist_end_D_WB0    ; yes, exit, "write buffer" empty
+    jz        .win_datalist_end_D_WB0    ; yes, exit, "write buffer" empty
 
     movd      mm1, [edx + eax]           ; get next parameter
     mov       eax, [dlp-4]               ; get next offset from offset list
 
     test      eax,  eax                  ; at end of offset list (offset == 0) ?
-    jnz       $win_datalist_loop_D_WB1   ; nope, copy next parameter
+    jnz       .win_datalist_loop_D_WB1   ; nope, copy next parameter
 
-$win_datalist_end_D_WB1:
+.win_datalist_end_D_WB1:
 
     dec       vertexCount                ; another vertex done. Any left?
-    jnz       $win_vertex_loop_D_WB1     ; yup, output next vertex
+    jnz       .win_vertex_loop_D_WB1     ; yup, output next vertex
 
-$win_vertex_end_D_WB1:
+.win_vertex_end_D_WB1:
 
     movd      [fifo], mm1                ; flush "write buffer"
     mov       eax, [gc + fifoPtr]        ; old fifoPtr
@@ -586,7 +571,7 @@ $win_vertex_end_D_WB1:
     cmp       vertexCount, 0             ; any vertices left to process ?
 
     nop                                  ; filler
-    jg        $win_coords_loop_D         ; loop if number of vertices to process >= 0
+    jg        .win_coords_loop_D         ; loop if number of vertices to process >= 0
 
     femms                                ; no more MMX code; clear MMX/FPU state
 
@@ -596,7 +581,7 @@ $win_vertex_end_D_WB1:
     pop       esi                        ; restore caller's register variable
     pop       edi                        ; restore caller's register variable
 
-    ret       12                         ; return, pop 3 DWORD parameters off stack
+    ret                                  ; return, pop 3 DWORD parameters off stack
 
     ALIGN     32
 
@@ -634,17 +619,17 @@ $win_vertex_end_D_WB1:
 ; 1020 :   }
 ; 1021 : }
 
-$clip_coordinates_D:
+.clip_coordinates_D:
 
-    mov       [strideinbytes], 4         ; unit stride for array of pointers to vertices
+    mov       dword [strideinbytes], 4   ; unit stride for array of pointers to vertices
 
-$clip_coordinates_ND:
+.clip_coordinates_ND:
 
-dataElem      textequ <ebp>              ; number of vertex components processed
+%define dataElem      ebp                ; number of vertex components processed
 
-    movd      mm6,[__GlideRoot+pool_f255]; GlideRoot.pool.f255 
+    movd      mm6,[_GlideRoot+pool_f255] ; GlideRoot.pool.f255
 
-$clip_coords_begin:
+.clip_coords_begin:
 
     sub       vertexCount, 15            ; vertexCount >= 15 ? CF=0 : CF=1
     mov       ecx, [gc + vertexSize]     ; bytes of data for each vertex 
@@ -660,16 +645,12 @@ $clip_coords_begin:
     add       ecx, 4                     ; add header size ==> total packet size
 
     cmp       eax, ecx                   ; fifo space avail >= packet size ?
-    jge       $clip_tri_begin            ; yup, start writing triangle data
+    jge       .clip_tri_begin            ; yup, start writing triangle data
 
-    push      @Line                      ; line number inside this function
-    push      0h                         ; pointer to function name = NULL
-
-    push      ecx                        ; fifo space needed
-    call      __grCommandTransportMakeRoom@12 ; note: updates fifoPtr
+    invoke    _grCommandTransportMakeRoom, ecx, 0, __LINE__ ; note: updates fifoPtr
 
         align 32
-$clip_tri_begin:
+.clip_tri_begin:
     mov       edx, vertexCount           ; number of vertices in triangles
     mov       fifo, [gc + fifoPtr]       ; get fifoPtr
 
@@ -681,7 +662,7 @@ $clip_tri_begin:
     mov       [fifo], edx                ; PCI write packet type
     add       fifo, 4                    ; fifo pointer now QWORD aligned
 
-$clip_for_begin:
+.clip_for_begin:
 
     mov       edx, vertexPtr             ; vertex = vertexPtr (assume no-deref mode)
     mov       eax, [esp+_mode]           ; mode 0 = no deref, mode 1 = deref
@@ -690,11 +671,11 @@ $clip_for_begin:
     test      eax, eax                   ; deref mode ?
 
     mov       eax, [gc + wInfo_offset]   ; get offset of W into vertex struct
-    jz        $clip_noderef              ; yup, no-deref mode
+    jz        .clip_noderef              ; yup, no-deref mode
 
     mov       edx, [vertexPtr]           ; vertex = *vertexPtr
 
-$clip_noderef:
+.clip_noderef:
 
     movd      mm0, [edx + eax]           ; 0 | W of current vertex
     pfrcp     mm1, mm0                   ; 0 | 1/W approx
@@ -744,13 +725,13 @@ $clip_noderef:
     mov       eax, [gc + tsuDataList]    ; first entry from offset list
 
     movq      [fifo-8], mm2              ; PCI write transformed x, y
-    jz        $clip_setup_ooz            ; nope, no color at all needed
+    jz        .clip_setup_ooz            ; nope, no color at all needed
   
-    cmp       DWORD PTR [gc+colorType], 0; gc->state.vData.colorType == GR_FLOAT ?
-    jne       $clip_setup_pargb          ; nope, packed ARGB format
+    cmp       DWORD [gc+colorType], 0    ; gc->state.vData.colorType == GR_FLOAT ?
+    jne       .clip_setup_pargb          ; nope, packed ARGB format
   
     test      esi, 1                     ; STATE_REQUIRES_IT_DRGB ?
-    jz        $clip_setup_a              ; no, but definitely A
+    jz        .clip_setup_a              ; no, but definitely A
 
     movd      mm2, [edx + eax]           ; 0 | r
     mov       eax, [gc + tsuDataList+4]  ; offset of g part of vertex data
@@ -774,9 +755,9 @@ $clip_noderef:
     lea       fifo, [fifo+12]            ; fifoPtr += 3*sizeof(FxFloat)
 
     movd      [fifo-4], mm2              ; PCI write b*255
-    jz        $clip_setup_ooz            ; nope, no alpha, proceeed with ooz
+    jz        .clip_setup_ooz            ; nope, no alpha, proceeed with ooz
 
-$clip_setup_a:
+.clip_setup_a:
     movd      mm2, [eax+edx]             ; 0 | a
     add       fifo, 4                    ; fifoPtr += sizeof(FxFloat)
 
@@ -787,9 +768,9 @@ $clip_setup_a:
     mov       eax, [gc+dataElem+tsuDataList]; offset of next part of vertex data
 
     movd      [fifo-4], mm2              ; PCI write a*255
-    jmp       $clip_setup_ooz            ; check whether we need to push out z
+    jmp       .clip_setup_ooz            ; check whether we need to push out z
 
-$clip_setup_pargb:
+.clip_setup_pargb:
     movd      mm2, [eax+edx]             ; get packed ARGB data
     add       fifo, 4                    ; fifoPtr += sizeof(FxU32)
 
@@ -815,16 +796,16 @@ $clip_setup_pargb:
 ;;;    } \
 ;;;  } \
 
-$clip_setup_ooz:
+.clip_setup_ooz:
   
     test      esi, 4                     ; STATE_REQUIRES_OOZ ?
-    jz        $clip_setup_qow            ; nope
+    jz        .clip_setup_qow            ; nope
 
-    test      DWORD PTR[gc+fbi_fbzMode],200000h ; gc->state.fbi_config.fbzMode & SST_DEPTH_FLOAT_SEL != 0 ?
-    je        $clip_setup_ooz_nofog      ; nope
+    test      DWORD [gc+fbi_fbzMode],200000h ; gc->state.fbi_config.fbzMode & SST_DEPTH_FLOAT_SEL != 0 ?
+    je        .clip_setup_ooz_nofog      ; nope
 
-    cmp       DWORD PTR[gc+qInfo_mode], 0; gc->state.vData.qInfo.mode == GR_PARAM_ENABLE ?
-    jz        $clip_setup_fog_oow        ; nope
+    cmp       DWORD [gc+qInfo_mode], 0   ; gc->state.vData.qInfo.mode == GR_PARAM_ENABLE ?
+    jz        .clip_setup_fog_oow        ; nope
 
     mov       eax, [gc + qInfo_offset]   ; offset of Q component of vertex
     add       fifo, 4                    ; fifoPtr += sizeof(FxFloat)
@@ -836,9 +817,9 @@ $clip_setup_ooz:
     pfmul     mm2, mm0                   ; 0 | q*oow
 
     movd      [fifo-4], mm2              ; PCI write transformed Q
-    jmp       $clip_setup_qow            ; check whether we need to write Q or W
+    jmp       .clip_setup_qow            ; check whether we need to write Q or W
 
-$clip_setup_fog_oow:
+.clip_setup_fog_oow:
 
     add       fifo, 4                    ; fifoPtr += sizeof(FxFloat) 
     add       dataElem, 4                ; dataElem++
@@ -846,9 +827,9 @@ $clip_setup_fog_oow:
     movd      [fifo-4], mm0              ; PCI write oow
     mov       eax,[gc+dataElem+tsuDataList]; pointer to next vertex component
 
-    jmp       $clip_setup_qow            ; check whether we need to write Q or W
+    jmp       .clip_setup_qow            ; check whether we need to write Q or W
 
-$clip_setup_ooz_nofog:
+.clip_setup_ooz_nofog:
 
     movd      mm2, [eax + edx]           ; 0 | z component of vertex
     add       fifo, 4                    ; fifoPtr += sizeof(FxFloat)
@@ -878,12 +859,12 @@ $clip_setup_ooz_nofog:
 ;;;    i = gc->tsuDataList[dataElem]; \
 ;;;  } \
 
-$clip_setup_qow:
+.clip_setup_qow:
     test      esi, 8                     ; STATE_REQUIRES_OOW_FBI ?
-    jz        $clip_setup_qow0           ; nope
+    jz        .clip_setup_qow0           ; nope
 
-    cmp       DWORD PTR[gc+fogInfo_mode],0; gc->state.vData.fogInfo.mode == GR_PARAM_ENABLE ?
-    jz        $clip_setup_oow_nofog      ; nope, no fog
+    cmp       DWORD [gc+fogInfo_mode],0  ; gc->state.vData.fogInfo.mode == GR_PARAM_ENABLE ?
+    jz        .clip_setup_oow_nofog      ; nope, no fog
 
     mov       eax, [gc + fogInfo_offset] ; offset of fogInfo component of vertex
     add       fifo, 4                    ; fifoPtr += sizeof(FxFloat)
@@ -895,12 +876,12 @@ $clip_setup_qow:
     pfmul     mm2, mm0                   ; fogInfo*oow
 
     movd      [fifo-4], mm2              ; PCI write transformed Q
-    jmp       $clip_setup_qow0           ; continue with q0
+    jmp       .clip_setup_qow0           ; continue with q0
 
-$clip_setup_oow_nofog:
+.clip_setup_oow_nofog:
 
-    cmp       DWORD PTR [gc+qInfo_mode],0; gc->state.vData.qInfo.mode == GR_PARAM_ENABLE ?
-    je        $clip_setup_oow            ; nope, write oow, not Q
+    cmp       DWORD [gc+qInfo_mode],0    ; gc->state.vData.qInfo.mode == GR_PARAM_ENABLE ?
+    je        .clip_setup_oow            ; nope, write oow, not Q
 
     mov       eax, [gc + qInfo_offset]   ; offset of Q component of vertex
     add       fifo, 4                    ; fifoPtr += sizeof(FxFloat)
@@ -912,9 +893,9 @@ $clip_setup_oow_nofog:
     pfmul     mm2, mm0                   ; q*oow
 
     movd      [fifo-4], mm2              ; PCI write transformed Q
-    jmp       $clip_setup_qow0           ; continue with q0
+    jmp       .clip_setup_qow0           ; continue with q0
 
-$clip_setup_oow:
+.clip_setup_oow:
     add       fifo, 4                    ; fifoPtr += sizeof(FxFloat) 
     add       dataElem, 4                ; dataElem++
 
@@ -932,12 +913,12 @@ $clip_setup_oow:
 ;;;    i = gc->tsuDataList[dataElem]; \
 ;;;  } \
 
-$clip_setup_qow0:
+.clip_setup_qow0:
     test      esi, 16                    ; STATE_REQUIRES_W_TMU0 ?
-    jz        $clip_setup_stow0          ; nope 
+    jz        .clip_setup_stow0          ; nope 
 
-    cmp       DWORD PTR [gc+q0Info_mode],0; does vertex have Q component ?
-    je        $clip_setup_oow0           ; nope, not Q but W
+    cmp       DWORD [gc+q0Info_mode],0   ; does vertex have Q component ?
+    je        .clip_setup_oow0           ; nope, not Q but W
 
     mov       eax, [gc+q0Info_offset]    ; offset of Q component of vertex
     add       fifo, 4                    ; fifoPtr += sizeof(FxFloat)
@@ -949,11 +930,11 @@ $clip_setup_qow0:
     pfmul     mm2, mm0                   ; q0*oow
 
     movd      [fifo-4], mm2              ; PCI write transformed q0
-    jmp       $clip_setup_stow0          ; continue with stow0
+    jmp       .clip_setup_stow0          ; continue with stow0
 
     nop                                  ; filler
 
-$clip_setup_oow0:
+.clip_setup_oow0:
     add       fifo, 4                    ; fifoPtr += sizeof(FxFloat) 
     add       dataElem, 4                ; dataElem++
 
@@ -965,10 +946,10 @@ $clip_setup_oow0:
 ;;;    DA_SETF_SCALE_ADVANCE(_s,_oow*gc->state.tmu_config[0].t_scale); \
 ;;;  } \
 
-$clip_setup_stow0:
+.clip_setup_stow0:
 
     test      esi, 32                    ; STATE_REQUIRES_ST_TMU0 ?
-    jz        $clip_setup_qow1           ; nope
+    jz        .clip_setup_qow1           ; nope
 
     movq      mm7, [gc + tmu0_s_scale]   ; state.tmu_config[0].t_scale | state.tmu_config[0].s_scale
     add       fifo, 8                    ; fifoPtr += 2*sizeof(FxFloat)
@@ -999,12 +980,12 @@ $clip_setup_stow0:
 ;;;    i = gc->tsuDataList[dataElem]; \
 ;;;  } \
 
-$clip_setup_qow1:
+.clip_setup_qow1:
     test      esi, 64                    ; STATE_REQUIRES_W_TMU1 ?
-    jz        $clip_setup_stow1          ; nope
+    jz        .clip_setup_stow1          ; nope
 
-    cmp       DWORD PTR [gc+q1Info_mode],0; does vertex have Q component ?
-    je        $clip_setup_oow1           ; nope, not Q but W
+    cmp       DWORD [gc+q1Info_mode],0   ; does vertex have Q component ?
+    je        .clip_setup_oow1           ; nope, not Q but W
 
     mov       eax, [gc+q1Info_offset]    ; offset of Q component of vertex
     add       fifo, 4                    ; fifoPtr += sizeof(FxFloat)
@@ -1016,9 +997,9 @@ $clip_setup_qow1:
     pfmul     mm2, mm0                  ; q1*oow
 
     movd      [fifo-4], mm2              ; PCI write transformed q1
-    jmp       $clip_setup_stow1          ; continue with stow1
+    jmp       .clip_setup_stow1          ; continue with stow1
 
-$clip_setup_oow1:
+.clip_setup_oow1:
     add       fifo, 4                    ; fifoPtr += sizeof(FxFloat) 
     add       dataElem, 4                ; dataElem++
 
@@ -1030,13 +1011,13 @@ $clip_setup_oow1:
 ;;;    DA_SETF_SCALE_ADVANCE(_s,_oow*gc->state.tmu_config[1].t_scale); \
 ;;;  } \
 
-$clip_setup_stow1:
+.clip_setup_stow1:
 
     test      esi, 128                   ; STATE_REQUIRES_ST_TMU1 ?
     mov       vertexCount, [vertices]    ; get number of vertices
 
     movq      mm7, [gc + tmu1_s_scale]   ; state.tmu_config[1].t_scale | state.tmu_config[1].s_scale
-    jz        $clip_setup_end            ; nope
+    jz        .clip_setup_end            ; nope
 
     movd      mm2, [edx + eax]           ; param1
     add       fifo, 8                    ; fifoPtr += 2*sizeof(FxFloat)
@@ -1050,12 +1031,12 @@ $clip_setup_stow1:
     pfmul     mm2, mm7                   ; param2*oow*state.tmu_config[1].t_scale | param1*oow*state.tmu_config[1].s_scale
     movq      [fifo-8], mm2              ; PCI write param2*oow*state.tmu_config[1].t_scale | param1*oow*state.tmu_config[1].s_scale
 
-$clip_setup_end:
+.clip_setup_end:
 
     dec       vertexCount                ; vcount--
-    jnz       $clip_for_begin            ; until 
+    jnz       .clip_for_begin            ; until 
 
-$clip_for_end:
+.clip_for_end:
 
     mov       eax, [gc + fifoPtr]        ; old fifoPtr
     mov       ebp, [gc + fifoRoom]       ; old number of bytes available in fifo
@@ -1072,62 +1053,61 @@ $clip_for_end:
     mov       [esp + _count], vertexCount; remaining number of vertices to process 
     cmp       vertexCount, 0             ; any vertices left to process ?
 
-    jg        $clip_coords_begin         ; loop if number of vertices to process >= 0
+    jg        .clip_coords_begin         ; loop if number of vertices to process >= 0
 
     femms                                ; no more MMX code; clear MMX/FPU state
 
-$tris_done:
+.tris_done:
     pop       ebp                        ; restore frame pointer
     pop       ebx                        ; restore caller's register variable
 
     pop       esi                        ; restore caller's register variable
     pop       edi                        ; restore caller's register variable
 
-    ret       12                         ; return, pop 3 DWORD parameters
-__grDrawTriangles_3DNow@12 ENDP
+    ret                                  ; return, pop 3 DWORD parameters
+endp
 
-_pktype   = 20
-_type     = 24
-_mode     = 28
-_count    = 32
-_pointers = 36
+_pktype   equ 20
+_type     equ 24
+%define _mode     28
+%define _count    32
+%define _pointers 36
 
-gc            TEXTEQU  <edi>             ; points to graphics context
-fifo          TEXTEQU  <ecx>             ; points to next entry in fifo
-dlp           TEXTEQU  <ebp>             ; points to dataList structure
-vertexCount   TEXTEQU  <esi>             ; Current vertex counter in the packet
-vertexPtr     TEXTEQU  <ebx>             ; Current vertex pointer (in deref mode)
-vertex        TEXTEQU  <ebx>             ; Current vertex (in non-deref mode)
-dlpStart      TEXTEQU  <edx>             ; Pointer to start of offset list
+%define gc            edi             ; points to graphics context
+%define fifo          ecx             ; points to next entry in fifo
+%define dlp           ebp             ; points to dataList structure
+%define vertexCount   esi             ; Current vertex counter in the packet
+%define vertexPtr     ebx             ; Current vertex pointer (in deref mode)
+%define vertex        ebx             ; Current vertex (in non-deref mode)
+%define dlpStart      edx             ; Pointer to start of offset list
 
-X TEXTEQU     <0>
-Y TEXTEQU     <4>
+%define X 0
+%define Y 4
 
                   ALIGN  32
 
-    PUBLIC  __grDrawVertexList_3DNow_Window@20
-__grDrawVertexList_3DNow_Window@20 PROC NEAR
+proc _grDrawVertexList_3DNow_Window, 20
 ; 132  : {
 
-    mov       edx, DWORD PTR fs:[18h]    ; get thread local storage base pointer        
+    SET_TLSBASE edx                      ; get thread local storage base pointer
     push      edi                        ; save caller's register variable
 
     push      esi                        ; save caller's register variable
     mov       vertexCount, [esp+_count-8]; number of vertices in strip/fan
 
     push      ebp                        ; save frame pointer
-    mov       ebp, [__GlideRoot + tlsOffset]; GC position relative to tls base    
+    SET_TLSOFFSET ebp                    ; GC position relative to tls base
 
     push      ebx                        ; save caller's register variable        
     mov       vertexPtr, [esp+_pointers] ; get current vertex pointer (deref mode)
                                          ; get current vertex (non-deref mode)
     
-    mov       gc, [edx + ebp]            ; get current graphics context from tls
+    GET_GC    edx, ebp                   ; get current graphics context from tls
     test      vertexCount, vertexCount   ; number of vertices <= 0 ?
 
     nop                                  ; filler
-    jle       strip_done                 ; yup, the strip/fan is done
-  
+    jle       .strip_done                ; yup, the strip/fan is done
+
 ;;;     vSize = gc->state.vData.vSize
 ;;;     if (stride == 0)
 ;;;       stride = gc->state.vData.vStride;
@@ -1150,7 +1130,7 @@ __grDrawVertexList_3DNow_Window@20 PROC NEAR
     test      edx, edx                   ; mode 0 (array of vertices) ?
     mov       edx, [gc + vertexStride]   ; get stride in DWORDs
     
-    jnz       deref_mode                 ; nope, it's mode 1 (array of pointers to vertices)
+    jnz       .deref_mode                ; nope, it's mode 1 (array of pointers to vertices)
 
     femms                                ; we'll use MMX; clear MMX/3DX state      
 
@@ -1169,7 +1149,7 @@ __grDrawVertexList_3DNow_Window@20 PROC NEAR
 ;;;         TRI_STRIP_BEGIN(type, vcount, vSize, pktype);
 
 
-win_coords_loop_ND:
+.win_coords_loop_ND:
 
     sub       vertexCount, 15            ; vertexCount >= 15 ? CF=0 : CF=1
     mov       ecx, [gc + vertexSize]     ; bytes of data for each vertex 
@@ -1185,16 +1165,12 @@ win_coords_loop_ND:
     add       ecx, 4                     ; add header size ==> total packet size
 
     cmp       eax, ecx                   ; fifo space avail >= packet size ?
-    jge       win_strip_begin_ND         ; yup, start writing strip data
+    jge       .win_strip_begin_ND        ; yup, start writing strip data
 
-    push      @Line                      ; line number inside this function
-    push      0h                         ; pointer to function name = NULL
-
-    push      ecx                        ; fifo space needed
-    call      __grCommandTransportMakeRoom@12 ; note: updates fifoPtr
+    invoke    _grCommandTransportMakeRoom, ecx, 0, __LINE__; note: updates fifoPtr
 
         align 32
-win_strip_begin_ND:
+.win_strip_begin_ND:
 ;;;     Setup packet header
 ;;;
     mov       eax, vertexCount           ; number of vertices in strip/fan
@@ -1216,7 +1192,7 @@ win_strip_begin_ND:
     lea       dlpStart, [gc+tsuDataList] ; pointer to start of offset list
 
     test      fifo, 4                    ; fifoPtr QWORD aligned ?
-    jz        fifo_aligned_ND            ; yup
+    jz        .fifo_aligned_ND           ; yup
 
     mov       [fifo], eax                ; PCI write packet type
     add       fifo, 4                    ; fifo pointer now QWORD aligned
@@ -1234,7 +1210,7 @@ win_strip_begin_ND:
 ;;;       TRI_SETF(FARRAY(vPtr, 4));
 ;;;       i = gc->tsuDataList[dataElem];
 
-win_vertex_loop_ND_WB0:                  ; nothing in "write buffer"
+.win_vertex_loop_ND_WB0:                 ; nothing in "write buffer"
 
     mov       eax, [dlpStart]            ; get first offset from offset list
     lea       dlp, [dlpStart+4]          ; point to start of offset list
@@ -1246,7 +1222,7 @@ win_vertex_loop_ND_WB0:                  ; nothing in "write buffer"
     test      eax, eax                   ; if offset == 0, end of list
 
     movq      [fifo-8], mm1              ; PCI write x, y
-    jz        win_datalist_end_ND_WB0    ; no more vertex data, nothing in "write buffer" 
+    jz        .win_datalist_end_ND_WB0   ; no more vertex data, nothing in "write buffer"
 
 ;;;       while (i != GR_DLIST_END) {
 ;;;         TRI_SETF(FARRAY(vPtr, i));
@@ -1254,13 +1230,13 @@ win_vertex_loop_ND_WB0:                  ; nothing in "write buffer"
 ;;;         i = gc->tsuDataList[dataElem];
 ;;;       }
 
-win_datalist_loop_ND_WB0:                ; nothing in "write buffer"
+.win_datalist_loop_ND_WB0:               ; nothing in "write buffer"
 
     movd      mm1, [vertex + eax]        ; get next parameter
     mov       eax, [dlp]                 ; get next offset from offset list
 
     test      eax, eax                   ; at end of offset list (offset == 0) ?
-    jz        win_datalist_end_ND_WB1    ; exit, write buffer contains one DWORD
+    jz        .win_datalist_end_ND_WB1   ; exit, write buffer contains one DWORD
 
     movd      mm2, [vertex + eax]        ; get next parameter
     add       dlp, 8                     ; dlp++
@@ -1272,17 +1248,17 @@ win_datalist_loop_ND_WB0:                ; nothing in "write buffer"
     punpckldq mm1, mm2                   ; current param | previous param
 
     movq      [fifo-8], mm1              ; PCI write current param | previous param
-    jnz       win_datalist_loop_ND_WB0   ; nope, copy next parameter
+    jnz       .win_datalist_loop_ND_WB0  ; nope, copy next parameter
 
-win_datalist_end_ND_WB0:
+.win_datalist_end_ND_WB0:
 
     mov       eax, [strideinbytes]       ; get offset to next vertex
     sub       vertexCount, 1             ; another vertex done. Any left?
 
     lea       vertex, [vertex + eax]     ; points to next vertex
-    jnz       win_vertex_loop_ND_WB0     ; yup, output next vertex
+    jnz       .win_vertex_loop_ND_WB0    ; yup, output next vertex
 
-win_vertex_end_ND_WB0:
+.win_vertex_end_ND_WB0:
 
 ;;;       TRI_END;
 ;;;     Prepare for the next packet (if the strip size is longer than 15)
@@ -1310,7 +1286,7 @@ win_vertex_end_ND_WB0:
     mov       [esp + _count], vertexCount; remaining number of vertices to process 
 
     test      vertexCount, vertexCount   ; any vertices left to process ?
-    jg        win_coords_loop_ND         ; loop if number of vertices to process >= 0
+    jg        .win_coords_loop_ND        ; loop if number of vertices to process >= 0
 
     femms                                ; no more MMX code; clear MMX/FPU state
 
@@ -1320,15 +1296,15 @@ win_vertex_end_ND_WB0:
     pop       esi                        ; restore caller's register variable
     pop       edi                        ; restire caller's register variable
 
-    ret       20                         ; return, pop 5 DWORD parameters off stack
+    ret                                  ; return, pop 5 DWORD parameters off stack
 
     ALIGN 32
 
-fifo_aligned_ND:
+.fifo_aligned_ND:
 
     movd      mm1, eax                   ; move header into "write buffer"
 
-win_vertex_loop_ND_WB1:                  ; one DWORD in "write buffer"
+.win_vertex_loop_ND_WB1:                 ; one DWORD in "write buffer"
 
     movd      mm2, [vertex + X]          ; 0 | x of vertex
     add       fifo, 8                    ; fifoPtr += 2*sizeof(FxU32)
@@ -1343,7 +1319,7 @@ win_vertex_loop_ND_WB1:                  ; one DWORD in "write buffer"
     movd      mm1, [vertex + Y]          ; 0 | y of vertex
 
     cmp       eax, 0                     ; offset == 0 (list empty) ?
-    jz        win_datalist_end_ND_WB1    ; yup, no more vertex data, one DWORD in "write buffer"
+    jz        .win_datalist_end_ND_WB1   ; yup, no more vertex data, one DWORD in "write buffer"
 
 ;;;       while (i != GR_DLIST_END) {
 ;;;         TRI_SETF(FARRAY(vPtr, i));
@@ -1351,7 +1327,7 @@ win_vertex_loop_ND_WB1:                  ; one DWORD in "write buffer"
 ;;;         i = gc->tsuDataList[dataElem];
 ;;;       }
 
-win_datalist_loop_ND_WB1:                ; one DWORD in "write buffer" 
+.win_datalist_loop_ND_WB1:               ; one DWORD in "write buffer"
 
     movd      mm2, [vertex + eax]        ; get next parameter
     add       fifo, 8                    ; fifoPtr += 2*sizeof(FxU32)
@@ -1363,23 +1339,23 @@ win_datalist_loop_ND_WB1:                ; one DWORD in "write buffer"
     cmp       eax, 0                     ; at end of offset list (offset == 0) ?
 
     movq      [fifo-8], mm1              ; PCI write current param | previous param
-    jz        win_datalist_end_ND_WB0    ; yes, exit, "write buffer" empty
+    jz        .win_datalist_end_ND_WB0   ; yes, exit, "write buffer" empty
 
     movd      mm1, [vertex+eax]          ; get next parameter
     mov       eax, [dlp-4]               ; get next offset from offset list
 
     test      eax, eax                   ; at end of offset list (offset == 0) ?
-    jnz       win_datalist_loop_ND_WB1   ; nope, copy next parameter
+    jnz       .win_datalist_loop_ND_WB1  ; nope, copy next parameter
 
-win_datalist_end_ND_WB1:
+.win_datalist_end_ND_WB1:
 
     mov       eax, [strideinbytes]       ; get offset to next vertex
     sub       vertexCount, 1             ; another vertex done. Any left?
 
     lea       vertex, [vertex + eax]     ; points to next vertex
-    jnz       win_vertex_loop_ND_WB1     ; yup, output next vertex
+    jnz       .win_vertex_loop_ND_WB1    ; yup, output next vertex
 
-win_vertex_end_ND_WB1:
+.win_vertex_end_ND_WB1:
 
     movd      [fifo], mm1                ; flush "write buffer"
     add       fifo, 4                    ; fifoPtr += sizeof(FxU32)
@@ -1410,7 +1386,7 @@ win_vertex_end_ND_WB1:
     test      vertexCount, vertexCount   ; any vertices left to process ?
 
     nop                                  ; filler
-    jg        win_coords_loop_ND         ; loop if number of vertices to process >= 0
+    jg        .win_coords_loop_ND        ; loop if number of vertices to process >= 0
 
     femms                                ; no more MMX code; clear MMX/FPU state
 
@@ -1420,17 +1396,17 @@ win_vertex_end_ND_WB1:
     pop       esi                        ; restore caller's register variable
     pop       edi                        ; restire caller's register variable
 
-    ret       20                         ; return, pop 5 DWORD parameters off stack
+    ret                                  ; return, pop 5 DWORD parameters off stack
 
     ALIGN 32
     
-deref_mode:
+.deref_mode:
 
     femms                                ; we'll use MMX; clear FPU/MMX state
 
     prefetch  [vertexPtr]                ; pre-load first group of pointers
 
-win_coords_loop_D:
+.win_coords_loop_D:
 
     sub       vertexCount, 15            ; vertexCount >= 15 ? CF=0 : CF=1
     mov       ecx, [gc + vertexSize]     ; bytes of data for each vertex 
@@ -1446,16 +1422,12 @@ win_coords_loop_D:
     add       ecx, 4                     ; add header size ==> total packet size
 
     cmp       eax, ecx                   ; fifo space avail >= packet size ?
-    jge       win_strip_begin_D          ; yup, start writing strip data
+    jge       .win_strip_begin_D         ; yup, start writing strip data
 
-    push      @Line                      ; line number inside this function
-    push      0h                         ; pointer to function name = NULL
-
-    push      ecx                        ; fifo space needed
-    call      __grCommandTransportMakeRoom@12 ; note: updates fifoPtr
+    invoke    _grCommandTransportMakeRoom, ecx, 0, __LINE__; note: updates fifoPtr
 
         align 32
-win_strip_begin_D:
+.win_strip_begin_D:
 ;;;     Setup packet header
 ;;;
     mov       eax, vertexCount           ; number of vertices in strip/fan
@@ -1477,7 +1449,7 @@ win_strip_begin_D:
     lea       dlpStart, [gc+tsuDataList] ; pointer to start of offset list
 
     test      fifo, ebp                  ; fifoPtr QWORD aligned ?
-    jz        fifo_aligned_D             ; yup
+    jz        .fifo_aligned_D            ; yup
 
     mov       [fifo], eax                ; PCI write packet type
     add       fifo, 4                    ; fifo pointer now QWORD aligned
@@ -1496,7 +1468,7 @@ win_strip_begin_D:
 ;;;       i = gc->tsuDataList[dataElem];
 
 
-win_vertex_loop_D_WB0:                   ; nothing in "write buffer"
+.win_vertex_loop_D_WB0:                  ; nothing in "write buffer"
 
     mov       edx, [vertexPtr]           ; dereference pointer, edx points to vertex
     add       vertexPtr, 4               ; next pointer
@@ -1511,7 +1483,7 @@ win_vertex_loop_D_WB0:                   ; nothing in "write buffer"
     movq      [fifo-8], mm1              ; PCI write x, y
 
     test      eax, eax                   ; if offset == 0, end of offset list
-    je        win_datalist_end_D_WB0     ; no more vertex data, nothing in "write buffer" 
+    je        .win_datalist_end_D_WB0    ; no more vertex data, nothing in "write buffer"
 
 ;;;       while (i != GR_DLIST_END) {
 ;;;         TRI_SETF(FARRAY(vPtr, i));
@@ -1519,13 +1491,13 @@ win_vertex_loop_D_WB0:                   ; nothing in "write buffer"
 ;;;         i = gc->tsuDataList[dataElem];
 ;;;       }
 
-win_datalist_loop_D_WB0:                 ; nothing in "write buffer"
+.win_datalist_loop_D_WB0:                ; nothing in "write buffer"
 
     movd      mm1, [edx + eax]           ; get next parameter
     mov       eax, [dlp]                 ; get next offset from offset list
 
     test      eax, eax                   ; at end of offset list (offset == 0) ?
-    jz        win_datalist_end_D_WB1     ; exit, write buffer contains one DWORD
+    jz        .win_datalist_end_D_WB1    ; exit, write buffer contains one DWORD
 
     add       dlp, 8                     ; dlp++
     movd      mm2, [edx + eax]           ; get next parameter
@@ -1537,14 +1509,14 @@ win_datalist_loop_D_WB0:                 ; nothing in "write buffer"
     test      eax, eax                   ; at end of offset list (offset == 0) ?
 
     movq      [fifo-8], mm1              ; PCI write current param | previous param
-    jnz       win_datalist_loop_D_WB0    ; nope, copy next parameter
+    jnz       .win_datalist_loop_D_WB0   ; nope, copy next parameter
 
-win_datalist_end_D_WB0:
+.win_datalist_end_D_WB0:
 
     dec       vertexCount                ; another vertex done. Any left?
-    jnz       win_vertex_loop_D_WB0      ; yup, output next vertex
+    jnz       .win_vertex_loop_D_WB0     ; yup, output next vertex
 
-win_vertex_end_D_WB0:
+.win_vertex_end_D_WB0:
 
 ;;;       TRI_END;
 ;;;     Prepare for the next packet (if the strip size is longer than 15)
@@ -1572,7 +1544,7 @@ win_vertex_end_D_WB0:
     test      vertexCount, vertexCount   ; any vertices left to process ?
 
     nop                                  ; filler
-    jg        win_coords_loop_D          ; loop if number of vertices to process >= 0
+    jg        .win_coords_loop_D         ; loop if number of vertices to process >= 0
 
     femms                                ; no more MMX code; clear MMX/FPU state
 
@@ -1582,15 +1554,15 @@ win_vertex_end_D_WB0:
     pop       esi                        ; restore caller's register variable
     pop       edi                        ; restire caller's register variable
 
-    ret       20                         ; return, pop 5 DWORD parameters off stack
+    ret                                  ; return, pop 5 DWORD parameters off stack
 
     ALIGN 32
 
-fifo_aligned_D:
+.fifo_aligned_D:
 
     movd      mm1, eax                   ; move header into "write buffer"
 
-win_vertex_loop_D_WB1:                   ; one DWORD in "write buffer"
+.win_vertex_loop_D_WB1:                  ; one DWORD in "write buffer"
 
     mov       edx, [vertexPtr]           ; dereference pointer, edx points to vertex
     add       vertexPtr, 4               ; next pointer
@@ -1608,7 +1580,7 @@ win_vertex_loop_D_WB1:                   ; one DWORD in "write buffer"
     movd      mm1, [edx + Y]             ; 0 | y of vertex
 
     test      eax, eax                   ; offset == 0 (list empty) ?
-    je        win_datalist_end_D_WB1     ; yup, no more vertex data, one DWORD in "write buffer"
+    je        .win_datalist_end_D_WB1    ; yup, no more vertex data, one DWORD in "write buffer"
 
 ;;;       while (i != GR_DLIST_END) {
 ;;;         TRI_SETF(FARRAY(vPtr, i));
@@ -1616,7 +1588,7 @@ win_vertex_loop_D_WB1:                   ; one DWORD in "write buffer"
 ;;;         i = gc->tsuDataList[dataElem];
 ;;;       }
 
-win_datalist_loop_D_WB1:                ; one DWORD in "write buffer" = MM1
+.win_datalist_loop_D_WB1:               ; one DWORD in "write buffer" = MM1
 
     movd      mm2, [edx + eax]          ; get next parameter
     add       fifo, 8                   ; fifoPtr += 2*sizeof(FxU32)
@@ -1628,20 +1600,20 @@ win_datalist_loop_D_WB1:                ; one DWORD in "write buffer" = MM1
     cmp       eax, 0                    ; at end of offset list (offset == 0) ?
 
     movq      [fifo-8], mm1             ; PCI write current param | previous param
-    jz        win_datalist_end_D_WB0    ; yes, exit, "write buffer" empty
+    jz        .win_datalist_end_D_WB0   ; yes, exit, "write buffer" empty
 
     movd      mm1, [edx + eax]          ; get next parameter
     mov       eax, [dlp-4]              ; get next offset from offset list
 
     cmp       eax, 0                    ; at end of offset list (offset == 0) ?
-    jnz       win_datalist_loop_D_WB1   ; nope, copy next parameter
+    jnz       .win_datalist_loop_D_WB1  ; nope, copy next parameter
 
-win_datalist_end_D_WB1:
+.win_datalist_end_D_WB1:
 
     dec       vertexCount               ; another vertex done. Any left?
-    jnz       win_vertex_loop_D_WB1     ; yup, output next vertex
+    jnz       .win_vertex_loop_D_WB1    ; yup, output next vertex
 
-win_vertex_end_D_WB1:
+.win_vertex_end_D_WB1:
 
     movd      [fifo], mm1               ; flush "write buffer"
     add       fifo, 4                   ; fifoPtr++
@@ -1672,48 +1644,47 @@ win_vertex_end_D_WB1:
     cmp       vertexCount, 0             ; any vertices left to process ?
 
     mov       [esp + _count], vertexCount; remaining number of vertices to process 
-    jg        win_coords_loop_D          ; loop if number of vertices to process >= 0
+    jg        .win_coords_loop_D         ; loop if number of vertices to process >= 0
 
     femms                                ; no more MMX code; clear MMX/FPU state
 
-strip_done: 
+.strip_done:
     pop       ebx                        ; restore caller's register variable
     pop       ebp                        ; restore frame pointer
 
     pop       esi                        ; restore caller's register variable
     pop       edi                        ; restire caller's register variable
 
-    ret       20                         ; return, pop 5 DWORD parameters off stack
+    ret                                  ; return, pop 5 DWORD parameters off stack
 
-__grDrawVertexList_3DNow_Window@20 ENDP
+endp
 
 
    
 
-    PUBLIC  __grDrawVertexList_3DNow_Clip@20
-__grDrawVertexList_3DNow_Clip@20 PROC NEAR
-; 132  : {
-
     ALIGN 32
 
-    mov       edx, DWORD PTR fs:[18h]    ; get thread local storage base pointer        
+proc _grDrawVertexList_3DNow_Clip, 20
+; 132  : {
+
+    SET_TLSBASE edx                      ; get thread local storage base pointer
     push      edi                        ; save caller's register variable
 
     push      esi                        ; save caller's register variable
     mov       vertexCount, [esp+_count-8]; number of vertices in strip/fan
 
     push      ebp                        ; save frame pointer
-    mov       ebp, [__GlideRoot + tlsOffset]; GC position relative to tls base    
+    SET_TLSOFFSET ebp                    ; GC position relative to tls base
 
     push      ebx                        ; save caller's register variable        
     mov       vertexPtr, [esp+_pointers] ; get current vertex pointer (deref mode)
                                          ; get current vertex (non-deref mode)
     
-    mov       gc, [edx + ebp]            ; get current graphics context from tls
+    GET_GC    edx, ebp                   ; get current graphics context from tls
     test      vertexCount, vertexCount   ; number of vertices <= 0 ?
 
-    jle       strip_done                 ; yup, the strip/fan is done
-  
+    jle       .strip_done                ; yup, the strip/fan is done
+
 ;;;     vSize = gc->state.vData.vSize
 ;;;     if (stride == 0)
 ;;;       stride = gc->state.vData.vStride;
@@ -1736,20 +1707,20 @@ __grDrawVertexList_3DNow_Clip@20 PROC NEAR
     test      edx, edx                   ; mode 0 (array of vertices) ?
     mov       edx, [gc + vertexStride]   ; get stride in DWORDs
 
-    movd      mm6, [__GlideRoot+pool_f255]; GlideRoot.pool.f255     
-    mov       [strideinbytes], 4         ; array of pointers    
+    movd      mm6, [_GlideRoot+pool_f255]; GlideRoot.pool.f255
+    mov       dword [strideinbytes], 4   ; array of pointers
         
-    jnz       clip_coords_begin          ; nope, it's mode 1
+    jnz       .clip_coords_begin         ; nope, it's mode 1
 
-clip_coordinates_ND:
+.clip_coordinates_ND:
 
     shl       edx, 2                     ; stride in bytes
     mov       [strideinbytes], edx       ; save off stride (in bytes)
 
     align   32
-clip_coords_begin:
+.clip_coords_begin:
 
-dataElem      textequ <ebp>              ; number of vertex components processed    
+%define dataElem      ebp                ; number of vertex components processed
 
 ;;;   {
 ;;;     float oow;
@@ -1771,16 +1742,12 @@ dataElem      textequ <ebp>              ; number of vertex components processed
     nop                                  ; filler
 
     cmp       eax, ecx                   ; fifo space avail >= packet size ?
-    jge       clip_strip_begin           ; yup, start writing strip data
+    jge       .clip_strip_begin          ; yup, start writing strip data
 
-    push      @Line                      ; line number inside this function
-    push      0h                         ; pointer to function name = NULL
-
-    push      ecx                        ; fifo space needed
-    call      __grCommandTransportMakeRoom@12 ; note: updates fifoPtr
+    invoke    _grCommandTransportMakeRoom, ecx, 0, __LINE__; note: updates fifoPtr
 
         align 32
-clip_strip_begin:
+.clip_strip_begin:
 ;;;     TRI_STRIP_BEGIN(type, vcount, vSize, pktype)
 
     mov       edx, [esp + _type]         ; setup mode
@@ -1805,7 +1772,7 @@ clip_strip_begin:
 ;;;       float *vPtr
 ;;;       vPtr = pointers
   
-clip_for_begin:
+.clip_for_begin:
 
 ;;;       if (mode)
 ;;;         vPtr = *(float **)vPtr
@@ -1817,12 +1784,12 @@ clip_for_begin:
     test      eax, eax                   ; deref mode ?
 
     mov       eax, [gc+wInfo_offset]     ; get offset of W into vertex struct
-    jz        clip_noderef               ; yup, no-deref mode
+    jz        .clip_noderef              ; yup, no-deref mode
 
     mov       edx, [vertexPtr]           ; vertex = *vertexPtr
     lea       esp, [esp]                 ; filler
 
-clip_noderef:
+.clip_noderef:
 
 ;;;       oow = 1.0f / FARRAY(vPtr, gc->state.vData.wInfo.offset)
 
@@ -1863,13 +1830,13 @@ clip_noderef:
 ;;;       TRI_VP_SETFS(vPtr, oow);
 
     movq      [fifo-8], mm2              ; PCI write transformed x, y
-    jz        clip_setup_ooz             ; nope, no color at all needed
+    jz        .clip_setup_ooz            ; nope, no color at all needed
   
-    cmp       DWORD PTR [gc+colorType], 0; gc->state.vData.colorType == GR_FLOAT ?
-    jne       clip_setup_pargb           ; nope, packed ARGB format
+    cmp       DWORD [gc+colorType], 0    ; gc->state.vData.colorType == GR_FLOAT ?
+    jne       .clip_setup_pargb          ; nope, packed ARGB format
   
     test      esi, 1                     ; STATE_REQUIRES_IT_DRGB ?
-    jz        clip_setup_a               ; no, but definitely A
+    jz        .clip_setup_a              ; no, but definitely A
 
     movd      mm2, [edx + eax]           ; 0 | r
     mov       eax, [gc+tsuDataList+4]    ; offset of g part of vertex data
@@ -1893,9 +1860,9 @@ clip_noderef:
     lea       fifo, [fifo+12]            ; fifoPtr += 3*sizeof(FxFloat)
 
     movd      [fifo-4], mm2              ; PCI write b*255
-    jz        clip_setup_ooz             ; nope, no alpha, proceeed with ooz
+    jz        .clip_setup_ooz            ; nope, no alpha, proceeed with ooz
 
-clip_setup_a:
+.clip_setup_a:
     movd      mm2, [eax+edx]             ; 0 | a
     add       fifo, 4                    ; fifoPtr += sizeof(FxFloat)
 
@@ -1906,11 +1873,11 @@ clip_setup_a:
     mov       eax, [gc+dataElem+tsuDataList]; offset of next part of vertex data
 
     movd      [fifo-4], mm2              ; PCI write a*255
-    jmp       clip_setup_ooz             ; check whether we need to push out z
+    jmp       .clip_setup_ooz            ; check whether we need to push out z
 
     ALIGN     32
 
-clip_setup_pargb:
+.clip_setup_pargb:
     movd      mm2, [eax+edx]             ; get packed ARGB data
     add       fifo, 4                    ; fifoPtr += sizeof(FxU32)
 
@@ -1919,16 +1886,16 @@ clip_setup_pargb:
 
     movd      [fifo-4], mm2              ; PCI write packed ARGB
 
-clip_setup_ooz:
+.clip_setup_ooz:
   
     test      esi, 4                     ; STATE_REQUIRES_OOZ ?
-    jz        clip_setup_qow             ; nope
+    jz        .clip_setup_qow            ; nope
 
-    test      DWORD PTR[gc+fbi_fbzMode],200000h ; gc->state.fbi_config.fbzMode & SST_DEPTH_FLOAT_SEL != 0 ?
-    je        clip_setup_ooz_nofog       ; nope
+    test      DWORD [gc+fbi_fbzMode],200000h ; gc->state.fbi_config.fbzMode & SST_DEPTH_FLOAT_SEL != 0 ?
+    je        .clip_setup_ooz_nofog      ; nope
 
-    cmp       DWORD PTR[gc+qInfo_mode], 0; gc->state.vData.qInfo.mode == GR_PARAM_ENABLE ?
-    jz        clip_setup_fog_oow         ; nope
+    cmp       DWORD [gc+qInfo_mode], 0   ; gc->state.vData.qInfo.mode == GR_PARAM_ENABLE ?
+    jz        .clip_setup_fog_oow        ; nope
 
     mov       eax, [gc + qInfo_offset]   ; offset of Q component of vertex
     add       fifo, 4                    ; fifoPtr += sizeof(FxFloat)
@@ -1940,9 +1907,9 @@ clip_setup_ooz:
     pfmul     mm2, mm0                   ; 0 | q*oow
 
     movd      [fifo-4], mm2              ; PCI write transformed Q
-    jmp       clip_setup_qow             ; check whether we need to write Q or W
+    jmp       .clip_setup_qow            ; check whether we need to write Q or W
 
-clip_setup_fog_oow:
+.clip_setup_fog_oow:
 
     add       fifo, 4                    ; fifoPtr += sizeof(FxFloat) 
     add       dataElem, 4                ; dataElem++
@@ -1950,9 +1917,9 @@ clip_setup_fog_oow:
     movd      [fifo-4], mm0              ; PCI write oow
     mov       eax,[gc+dataElem+tsuDataList]; pointer to next vertex component
 
-    jmp       clip_setup_qow             ; check whether we need to write Q or W
+    jmp       .clip_setup_qow            ; check whether we need to write Q or W
 
-clip_setup_ooz_nofog:
+.clip_setup_ooz_nofog:
 
     movd      mm2, [eax + edx]           ; 0 | z component of vertex
     add       fifo, 4                    ; fifoPtr += sizeof(FxFloat)
@@ -1969,12 +1936,12 @@ clip_setup_ooz_nofog:
     pfadd     mm2, mm4                   ; 0 | TRI_SETF(FARRAY(_s, i)*_oow*gc->state.Viewport.hdepth+gc->state.Viewport.oz
     movd      [fifo-4], mm2              ; PCI write transformed Z
 
-clip_setup_qow:
+.clip_setup_qow:
     test      esi, 8                     ; STATE_REQUIRES_OOW_FBI ?
-    jz        clip_setup_qow0            ; nope
+    jz        .clip_setup_qow0           ; nope
 
-    cmp       DWORD PTR[gc+fogInfo_mode],0; gc->state.vData.fogInfo.mode == GR_PARAM_ENABLE ?
-    jz        clip_setup_oow_nofog       ; nope, no fog
+    cmp       DWORD [gc+fogInfo_mode],0  ; gc->state.vData.fogInfo.mode == GR_PARAM_ENABLE ?
+    jz        .clip_setup_oow_nofog      ; nope, no fog
 
     mov       eax, [gc + fogInfo_offset] ; offset of fogInfo component of vertex
     add       fifo, 4                    ; fifoPtr += sizeof(FxFloat)
@@ -1986,12 +1953,12 @@ clip_setup_qow:
     pfmul     mm2, mm0                   ; fogInfo*oow
 
     movd      [fifo-4], mm2              ; PCI write transformed Q
-    jmp       clip_setup_qow0            ; continue with q0
+    jmp       .clip_setup_qow0           ; continue with q0
 
-clip_setup_oow_nofog:
+.clip_setup_oow_nofog:
 
-    cmp       DWORD PTR [gc+qInfo_mode],0; does vertex have Q component ?
-    je        clip_setup_oow             ; nope, not Q but W
+    cmp       DWORD [gc+qInfo_mode],0    ; does vertex have Q component ?
+    je        .clip_setup_oow            ; nope, not Q but W
 
     add       fifo, 4                    ; fifoPtr += sizeof(FxFloat)
     mov       eax, [gc+qInfo_offset]     ; offset of Q component of vertex
@@ -2003,23 +1970,23 @@ clip_setup_oow_nofog:
     pfmul     mm2, mm0                   ; q*oow
 
     movd      [fifo-4], mm2              ; PCI write transformed Q
-    jmp       clip_setup_qow0            ; continue with q0
+    jmp       .clip_setup_qow0           ; continue with q0
 
     ALIGN     32
 
-clip_setup_oow:
+.clip_setup_oow:
     add       fifo, 4                    ; fifoPtr += sizeof(FxFloat) 
     add       dataElem, 4                ; dataElem++
 
     movd      [fifo-4], mm0              ; PCI write oow
     mov       eax,[gc+dataElem+tsuDataList]; pointer to next vertex component
 
-clip_setup_qow0:
+.clip_setup_qow0:
     test      esi, 16                    ; STATE_REQUIRES_W_TMU0 ?
-    jz        clip_setup_stow0           ; nope 
+    jz        .clip_setup_stow0          ; nope
 
-    cmp       DWORD PTR [gc+q0Info_mode],0; does vertex have Q component ?
-    je        clip_setup_oow0            ; nope, not Q but W
+    cmp       DWORD [gc+q0Info_mode],0   ; does vertex have Q component ?
+    je        .clip_setup_oow0           ; nope, not Q but W
 
     mov       eax, [gc+q0Info_offset]    ; offset of Q component of vertex
     add       fifo, 4                    ; fifoPtr += sizeof(FxFloat)
@@ -2031,21 +1998,21 @@ clip_setup_qow0:
     pfmul     mm2, mm0                   ; q0*oow
 
     movd      [fifo-4], mm2              ; PCI write transformed q0
-    jmp       clip_setup_stow0           ; continue with stow0
+    jmp       .clip_setup_stow0          ; continue with stow0
 
     ALIGN     32
 
-clip_setup_oow0:
+.clip_setup_oow0:
     add       fifo, 4                    ; fifoPtr += sizeof(FxFloat) 
     add       dataElem, 4                ; dataElem++
 
     movd      [fifo-4], mm0              ; PCI write oow
     mov       eax,[gc+dataElem+tsuDataList]; pointer to next vertex component
 
-clip_setup_stow0:
+.clip_setup_stow0:
 
     test      esi, 32                    ; STATE_REQUIRES_ST_TMU0 ?
-    jz        clip_setup_qow1            ; nope
+    jz        .clip_setup_qow1           ; nope
 
     movq      mm7, [gc + tmu0_s_scale]   ; state.tmu_config[0].t_scale | state.tmu_config[0].s_scale
     add       fifo, 8                    ; fifoPtr += 2*sizeof(FxFloat)
@@ -2064,12 +2031,12 @@ clip_setup_stow0:
     movq      [fifo-8], mm2              ; PCI write param2*oow*tmu0_t_scale | param1*oow*tmu0_s_scale 
     mov       eax, [gc+dataElem+tsuDataList]; pointer to next vertex component
 
-clip_setup_qow1:
+.clip_setup_qow1:
     test      esi, 64                    ; STATE_REQUIRES_W_TMU1 ?
-    jz        clip_setup_stow1           ; nope
+    jz        .clip_setup_stow1          ; nope
 
-    cmp       DWORD PTR [gc+q1Info_mode],0; does vertex have Q component ?
-    je        clip_setup_oow1            ; nope, not Q but W
+    cmp       DWORD [gc+q1Info_mode],0   ; does vertex have Q component ?
+    je        .clip_setup_oow1           ; nope, not Q but W
 
     mov       eax, [gc+q1Info_offset]    ; offset of Q component of vertex
     add       fifo, 4                    ; fifoPtr += sizeof(FxFloat)
@@ -2081,24 +2048,24 @@ clip_setup_qow1:
     pfmul     mm2, mm0                   ; q1*oow
 
     movd      [fifo-4], mm2              ; PCI write transformed q1
-    jmp       clip_setup_stow1           ; continue with stow1
+    jmp       .clip_setup_stow1          ; continue with stow1
 
     ALIGN     32
 
-clip_setup_oow1:
+.clip_setup_oow1:
     add       fifo, 4                    ; fifoPtr += sizeof(FxFloat) 
     add       dataElem, 4                ; dataElem++
 
     movd      [fifo-4], mm0              ; PCI write oow
     mov       eax,[gc+dataElem+tsuDataList]; pointer to next vertex component
 
-clip_setup_stow1:
+.clip_setup_stow1:
 
     test      esi, 128                   ; STATE_REQUIRES_ST_TMU1 ?
     mov       vertexCount, [vertices]    ; get number of vertices
 
     movq      mm7, [gc + tmu1_s_scale]   ; state.tmu_config[1].t_scale | state.tmu_config[1].s_scale
-    jz        clip_setup_end             ; nope
+    jz        .clip_setup_end            ; nope
 
     movd      mm2, [edx+eax]             ; param1
     add       fifo, 8                    ; fifoPtr += 2*sizeof(FxFloat)
@@ -2112,13 +2079,13 @@ clip_setup_stow1:
     pfmul     mm2, mm7                   ; param2*oow*state.tmu_config[1].t_scale | param1*oow*state.tmu_config[1].s_scale
     movq      [fifo-8], mm2              ; PCI write param2*oow*state.tmu_config[1].t_scale | param1*oow*state.tmu_config[1].s_scale
 
-clip_setup_end:
+.clip_setup_end:
 
 ; 206  :       for (k = 0; k < vcount; k++) {
 
     dec       vertexCount                ; vcount--
-    jnz       clip_for_begin             ; until 
-clip_for_end:
+    jnz       .clip_for_begin            ; until
+.clip_for_end:
 
 ; 221  :       }
 ; 222  :       TRI_END;
@@ -2141,12 +2108,12 @@ clip_for_end:
     mov       [esp + _count], vertexCount; remaining number of vertices to process 
     cmp       vertexCount, 0             ; any vertices left to process ?
 
-    mov       DWORD PTR [esp+_pktype], 16; pktype = SSTCP_PKT3_DDDDDD (strip continuation)
-    jg        clip_coords_begin          ; loop if number of vertices to process >= 0
+    mov       DWORD [esp+_pktype], 16    ; pktype = SSTCP_PKT3_DDDDDD (strip continuation)
+    jg        .clip_coords_begin         ; loop if number of vertices to process >= 0
 
     femms                                ; no more MMX code; clear MMX/FPU state    
 
-strip_done:
+.strip_done:
 ;;;    }
 ;;;  #undef FN_NAME
 ;;;  } /* _grDrawVertexList */
@@ -2157,37 +2124,33 @@ strip_done:
     pop       esi                        ; restore caller's register variable
     pop       edi                        ; restore caller's register variable
 
-    ret       20                         ; return, pop 5 DWORD parameters off stack
+    ret                                  ; return, pop 5 DWORD parameters off stack
 
-__grDrawVertexList_3DNow_Clip@20 ENDP
+endp
 
-_TEXT    ENDS
 
 ;;--------------------------------------------------------------------------
 ;; end AMD3D version
 ;;--------------------------------------------------------------------------
-endif ; GL_AMD3D
+%endif ; GL_AMD3D
 
 ;;--------------------------------------------------------------------------
 ;; start original code
 ;;--------------------------------------------------------------------------
 
-ifndef GL_AMD3D
+%ifndef GL_AMD3D
 
-TITLE   xdraw3.asm
-.586P
 ;;; include listing.inc
-INCLUDE fxgasm.h
+%INCLUDE "fxgasm.h"
 
-CONST   SEGMENT
-_F1    DD      03f800000r                      ; 1
-_F256  DD      043800000r                      ; 256
+segment		CONST
+_F1    DD      1.0
+_F256  DD      256.0
 
-_VPF1    DD      03f800000r                      ; 1
-_VPF256  DD      043800000r                      ; 256    
-CONST   ENDS
+_VPF1    DD      1.0
+_VPF256  DD      256.0
 
-_DATA   SEGMENT
+segment		DATA
 vSize           DD    0
 ccoow           DD    0
 packetVal       DD    0
@@ -2198,36 +2161,33 @@ oowa            DD    0
 vPtr0           DD    0
 vPtr1           DD    0
 vPtr2           DD    0
-_DATA    ENDS
 
-_TEXT       SEGMENT PAGE PUBLIC USE32 'CODE'
-            ASSUME DS: FLAT, SS: FLAT
+segment		TEXT
     
-_pktype = 20
-_type = 24
-_mode = 28
-_count = 32
-_pointers = 36
+_pktype equ 20
+_type equ 24
+_mode equ 28
+_count equ 32
+_pointers equ 36
 
-gc                 TEXTEQU     <esi>       ; points to graphics context
-fifo               TEXTEQU     <ecx>       ; points to next entry in fifo
-dlp                TEXTEQU     <ebp>       ; points to dataList structure
-vertexCount        TEXTEQU     <ebx>       ; Current vertex counter in the packet
-vertexPtr          TEXTEQU     <edi>       ; Current vertex pointer
+%define gc                 esi       ; points to graphics context
+%define fifo               ecx       ; points to next entry in fifo
+%define dlp                ebp       ; points to dataList structure
+%define vertexCount        ebx       ; Current vertex counter in the packet
+%define vertexPtr          edi       ; Current vertex pointer
 
         ALIGN 32
 
-        PUBLIC __drawvertexlist@20
-__drawvertexlist@20 PROC NEAR
+proc _drawvertexlist, 20
 ; 132  : {
 
-        mov     eax, DWORD PTR fs:[18h]; get thread local storage base pointer        
+        SET_TLSBASE eax              ; get thread local storage base pointer
         push    esi
 
-        mov     esi, [__GlideRoot + tlsOffset]; GC position relative to tls base
+        SET_TLSOFFSET esi            ; GC position relative to tls base
         push    edi
     
-        mov     gc, DWORD PTR [eax + esi]    
+        GET_GC  eax, esi
         push    ebx
 
 ;;;     GR_DCL_GC
@@ -2235,23 +2195,23 @@ __drawvertexlist@20 PROC NEAR
 ;;;     if (stride == 0)
 ;;;       stride = gc->state.vData.vStride;
         push    ebp            
-        mov     ecx, DWORD PTR [gc+vertexSize]
+        mov     ecx, DWORD [gc+vertexSize]
     
-        mov     edx, DWORD PTR [esp+_mode]
-        mov     vertexCount, DWORD PTR [esp+_count]
+        mov     edx, DWORD [esp+_mode]
+        mov     vertexCount, DWORD [esp+_count]
     
-        mov     vertexPtr, DWORD PTR [esp+_pointers]
-        mov     DWORD PTR vSize, ecx
+        mov     vertexPtr, DWORD [esp+_pointers]
+        mov     DWORD [vSize], ecx
 
         shl     edx, 2
-;;;     mov     ecx, DWORD PTR [gc+CoordinateSpace]
+;;;     mov     ecx, DWORD [gc+CoordinateSpace]
           test    edx, edx
-        jne     SHORT no_stride
-        mov     edx, DWORD PTR [gc+vertexStride]
+        jne     .no_stride
+        mov     edx, DWORD [gc+vertexStride]
         shl     edx, 2
 
         align 4
-no_stride:
+.no_stride:
 
 ;;;     Draw the first (or possibly only) set.  This is necessary because
 ;;;     the packet is 3_BDDDDDD, and in the next set, the packet is 3_DDDDDD
@@ -2261,58 +2221,55 @@ no_stride:
 ;;;     if (gc->state.grCoordinateSpaceArgs.coordinate_space_mode == GR_WINDOW_COORDS) {
 
 ;;;     test    ecx, ecx
-          mov     DWORD PTR strideinbytes, edx
+          mov     DWORD [strideinbytes], edx
 
 ;;;       while (count > 0) {
 ;;;         FxI32 k, vcount = count >= 15 ? 15 : count;
 ;;;         GR_SET_EXPECTED_SIZE(vcount * vSize, 1);
 ;;;         TRI_STRIP_BEGIN(type, vcount, vSize, pktype);
 
-        mov     eax, DWORD PTR [esp+_count]
+        mov     eax, DWORD [esp+_count]
 ;;;       jne     clip_coordinates
 
         test    eax, eax
-          jle     strip_done
+          jle     .strip_done
 
         align 4
-window_coords_begin:
+.window_coords_begin:
 
         cmp     vertexCount, 15                 ; 0000000fH
-          jl      SHORT win_partial_packet
+          jl      .win_partial_packet
         mov     vertexCount, 15                 ; 0000000fH
 
         align 4
-win_partial_packet:
+.win_partial_packet:
 
-        mov     eax, DWORD PTR vSize
-        mov     ecx, DWORD PTR [gc+fifoRoom]
+        mov     eax, DWORD [vSize]
+        mov     ecx, DWORD [gc+fifoRoom]
         imul    eax, vertexCount
         add     eax, 4
         cmp     ecx, eax
-        jge     SHORT win_strip_begin
-        push    @Line
-        push    0h
-        push    eax
-        call    __grCommandTransportMakeRoom@12
+        jge     .win_strip_begin
+        invoke  _grCommandTransportMakeRoom, eax, 0, __LINE__
         
         align 4
-win_strip_begin:
+.win_strip_begin:
 
 ;;;     Setup pacet header
 ;;;
-        mov     fifo, DWORD PTR [gc+fifoPtr]
+        mov     fifo, DWORD [gc+fifoPtr]
           mov     eax, vertexCount
-        mov     edx, DWORD PTR [esp+_type]
-          mov     ebp, DWORD PTR [gc+cullStripHdr]
+        mov     edx, DWORD [esp+_type]
+          mov     ebp, DWORD [gc+cullStripHdr]
         shl     edx, 22                 ; 00000010H
           add     fifo, 4
         shl     eax, 6
           or    ebp, edx
         or      eax, ebp
-          mov     edx, DWORD PTR [esp+_pktype]
+          mov     edx, DWORD [esp+_pktype]
         or      eax, edx
           nop
-        mov     DWORD PTR [fifo-4], eax
+        mov     DWORD [fifo-4], eax
 
 ;;;     for (k = 0; k < vcount; k++) {
 ;;;       FxI32 i;
@@ -2328,31 +2285,31 @@ win_strip_begin:
 ;;;       i = gc->tsuDataList[dataElem];
 
         align 4
-win_for_begin:
+.win_for_begin:
 
         mov     edx, vertexPtr
-          mov     eax, DWORD PTR strideinbytes
+          mov     eax, DWORD [strideinbytes]
         cmp     eax, 4
-          jne     SHORT win_no_deref
-        mov     edx, DWORD PTR [vertexPtr]
+          jne     .win_no_deref
+        mov     edx, DWORD [vertexPtr]
 
         align 4
-win_no_deref:
+.win_no_deref:
 
         add     fifo, 8
           add     vertexPtr, eax
 
-        mov     eax, DWORD PTR [edx]
-          mov     ebp, DWORD PTR [edx+4]
+        mov     eax, DWORD [edx]
+          mov     ebp, DWORD [edx+4]
         
-        mov     DWORD PTR [fifo-8], eax
-          mov     eax, DWORD PTR [gc+tsuDataList]
+        mov     DWORD [fifo-8], eax
+          mov     eax, DWORD [gc+tsuDataList]
 
-        mov     DWORD PTR [fifo-4], ebp
+        mov     DWORD [fifo-4], ebp
   
           test    eax, eax
-        lea     dlp, DWORD PTR [gc+tsuDataList]
-          je      SHORT win_datalist_end
+        lea     dlp, [gc+tsuDataList]
+          je      .win_datalist_end
   
         align 4
 
@@ -2362,25 +2319,25 @@ win_no_deref:
 ;;;         i = gc->tsuDataList[dataElem];
 ;;;       }
 
-win_datalist_begin:
+.win_datalist_begin:
 
         add     fifo, 4
           add     dlp, 4
 
-        mov     eax, DWORD PTR [edx+eax]
+        mov     eax, DWORD [edx+eax]
           nop
 
-        mov     DWORD PTR [fifo-4], eax
-          mov     eax, DWORD PTR [dlp]
+        mov     DWORD [fifo-4], eax
+          mov     eax, DWORD [dlp]
 
 
         test    eax, eax
-          jne     SHORT win_datalist_begin
-win_datalist_end:
+          jne     .win_datalist_begin
+.win_datalist_end:
 
         dec     vertexCount
-          jne     SHORT win_for_begin
-win_for_end:
+          jne     .win_for_begin
+.win_for_end:
 
 ;;;       TRI_END;
 ;;;     Prepare for the next packet (if the strip size is longer than 15)
@@ -2389,487 +2346,477 @@ win_for_end:
 ;;;       pktype = SSTCP_PKT3_DDDDDD;
 ;;;     }
   
-        mov     eax, DWORD PTR [gc+fifoPtr]
-          mov     edx, DWORD PTR [gc+fifoRoom]
+        mov     eax, DWORD [gc+fifoPtr]
+          mov     edx, DWORD [gc+fifoRoom]
         sub     eax, fifo
-          mov     vertexCount, DWORD PTR [esp+_count]
+          mov     vertexCount, DWORD [esp+_count]
         add     edx, eax
           sub     vertexCount, 15                 ; 0000000fH
   
-        mov     DWORD PTR [gc+fifoRoom], edx
-          mov     DWORD PTR [esp+_count], vertexCount
+        mov     DWORD [gc+fifoRoom], edx
+          mov     DWORD [esp+_count], vertexCount
   
-        mov     DWORD PTR [gc+fifoPtr], fifo
+        mov     DWORD [gc+fifoPtr], fifo
           test    vertexCount, vertexCount
   
-        mov     DWORD PTR [esp+_pktype], 16 ; 00000010H
-          jg      window_coords_begin
+        mov     DWORD [esp+_pktype], 16 ; 00000010H
+          jg      .window_coords_begin
 
-strip_done:
+.strip_done:
         pop     ebp
           pop     ebx
         pop     edi
           pop     esi
-        ret     20                      ; 00000014H
+        ret                             ; 00000014H
 
-__drawvertexlist@20 ENDP
+endp
 
-_pktype = 20
-_type = 24
-_mode = 28
-_count = 32
-_pointers = 36
-
-gc                 TEXTEQU     <esi>       ; points to graphics context
-fifo               TEXTEQU     <ecx>       ; points to next entry in fifo
-vertexPtr          TEXTEQU     <edx>       ; pointer to vertex or vertex array
+%define gc                 esi       ; points to graphics context
+%define fifo               ecx       ; points to next entry in fifo
+%define vertexPtr          edx       ; pointer to vertex or vertex array
 
         ALIGN 32    
 
-        PUBLIC __vpdrawvertexlist@20
-__vpdrawvertexlist@20 PROC NEAR
+proc _vpdrawvertexlist, 20
 
-        mov     eax, DWORD PTR fs:  [18h]   ; tls base pointer
+        SET_TLSBASE eax              ; tls base pointer
         push    esi
 
-        mov     esi, [__GlideRoot + tlsOffset]; gc position relative to tls base
+        SET_TLSOFFSET esi            ; gc position relative to tls base
         push    edi
 
         push    ebx        
-        mov     gc, [eax + esi]
-        
+        GET_GC  eax, esi
+
         push    ebp
-        mov     ecx, DWORD PTR [esp+_mode]
+        mov     ecx, DWORD [esp+_mode]
         
-        mov     edi, DWORD PTR [esp+_pointers]
-        mov     eax, DWORD PTR [gc+wInfo_offset]
+        mov     edi, DWORD [esp+_pointers]
+        mov     eax, DWORD [gc+wInfo_offset]
     
         test    ecx, ecx
-        je      w_no_dref
+        je      .w_no_dref
     
-        mov     edi, DWORD PTR [edi]
+        mov     edi, DWORD [edi]
         
         align   4
-w_no_dref:
+.w_no_dref:
         
 ;;;     load first w
         
-        fld     DWORD PTR [edi+eax]
-        fdivr   DWORD PTR _F1
+        fld     DWORD [edi+eax]
+        fdivr   DWORD [_F1]
         
-        mov     ecx, DWORD PTR [gc+vertexSize]
-        mov     edx, DWORD PTR [esp+_mode]
+        mov     ecx, DWORD [gc+vertexSize]
+        mov     edx, DWORD [esp+_mode]
 
-        mov     edi, DWORD PTR [esp+_count]
-;;;     mov     vertexArray, DWORD PTR [esp+_pointers]
+        mov     edi, DWORD [esp+_count]
+;;;     mov     vertexArray, DWORD [esp+_pointers]
 
         shl     edx, 2
-        mov     DWORD PTR vSize, ecx
+        mov     DWORD [vSize], ecx
 
         test    edx, edx
 
-        jne     SHORT no_stride
+        jne     .no_stride
 
-        mov     edx, DWORD PTR [gc+vertexStride]
+        mov     edx, DWORD [gc+vertexStride]
         shl     edx, 2
 
         align 4
-no_stride:
+.no_stride:
 
-        mov     DWORD PTR strideinbytes, edx
-        mov     eax, DWORD PTR [esp+_type]
+        mov     DWORD [strideinbytes], edx
+        mov     eax, DWORD [esp+_type]
 
         shl     eax, 16                 ; 00000010H
-        mov     DWORD PTR packetVal, eax
+        mov     DWORD [packetVal], eax
 
-clip_coords_begin:
+.clip_coords_begin:
 
         cmp     edi, 15
-        jl      SHORT clip_partial_packet
+        jl      .clip_partial_packet
         mov     edi, 15
-clip_partial_packet:
+.clip_partial_packet:
 
 ;;;     GR_SET_EXPECTED_SIZE(vcount * vSize, 1)
 
-        mov     eax, DWORD PTR vSize
-        mov     ecx, DWORD PTR [gc+fifoRoom]
+        mov     eax, DWORD [vSize]
+        mov     ecx, DWORD [gc+fifoRoom]
         
         imul    eax, edi
         add     eax, 4
         cmp     ecx, eax
-        jge     SHORT clip_strip_begin
-        push    @Line
-        push    0h
-        push    eax
-        call    __grCommandTransportMakeRoom@12
+        jge     .clip_strip_begin
+        invoke  _grCommandTransportMakeRoom, eax, 0, __LINE__
 
             align 4
-clip_strip_begin:
+.clip_strip_begin:
 ;;;     TRI_STRIP_BEGIN(type, vcount, vSize, pktype)
 
   
-        mov     fifo, DWORD PTR [gc+fifoPtr]
+        mov     fifo, DWORD [gc+fifoPtr]
         mov     eax, edi
         
-        mov     edx, DWORD PTR packetVal
-        mov     ebp, DWORD PTR [gc+cullStripHdr]
+        mov     edx, DWORD [packetVal]
+        mov     ebp, DWORD [gc+cullStripHdr]
         
         or      eax, edx
         add     fifo, 4
         
         shl     eax, 6
-        mov     edx, DWORD PTR [esp+_pktype]
+        mov     edx, DWORD [esp+_pktype]
         
         or      eax, ebp
 
         or      eax, edx
-        mov     DWORD PTR [fifo-4], eax
+        mov     DWORD [fifo-4], eax
 
   
-        mov     vertexPtr, DWORD PTR [esp+_pointers]
-        mov     eax, DWORD PTR [esp+_mode]
+        mov     vertexPtr, DWORD [esp+_pointers]
+        mov     eax, DWORD [esp+_mode]
 
         test    eax, eax
         
-        je      SHORT clip_for_begin
-        mov     vertexPtr, DWORD PTR [vertexPtr]
+        je      .clip_for_begin
+        mov     vertexPtr, DWORD [vertexPtr]
 
         align   4
-clip_for_begin:
+.clip_for_begin:
 
         add     fifo, 8
-        mov     ebp, DWORD PTR strideinbytes
+        mov     ebp, DWORD [strideinbytes]
 
-        add     DWORD PTR [esp+_pointers], ebp
-        mov     eax, DWORD PTR [gc+paramIndex]
+        add     DWORD [esp+_pointers], ebp
+        mov     eax, DWORD [gc+paramIndex]
         
         xor     ebp, ebp
-        mov     ebx, DWORD PTR [gc+tsuDataList]
+        mov     ebx, DWORD [gc+tsuDataList]
 
 ;;; ;   setup x and y
 
-        fld     DWORD PTR [gc+vp_hwidth]
-        fmul    DWORD PTR [vertexPtr]
-        fmul    st, st(1)
-        fadd    DWORD PTR [gc+vp_ox]
-        fxch    st(1)
+        fld     DWORD [gc+vp_hwidth]
+        fmul    DWORD [vertexPtr]
+        fmul    st0, st1
+        fadd    DWORD [gc+vp_ox]
+        fxch    st1
 
-        fld     DWORD PTR [gc+vp_hheight]
-        fmul    DWORD PTR [vertexPtr+4]
+        fld     DWORD [gc+vp_hheight]
+        fmul    DWORD [vertexPtr+4]
         test    al, 3
-        fmul    st, st(1)
-        fadd    DWORD PTR [gc+vp_oy]
-        fxch    st(1)
-        fstp    DWORD PTR ccoow
-        fxch    st(1)
-        fstp    DWORD PTR [fifo-8]
-        fstp    DWORD PTR [fifo-4]
+        fmul    st0, st1
+        fadd    DWORD [gc+vp_oy]
+        fxch    st1
+        fstp    DWORD [ccoow]
+        fxch    st1
+        fstp    DWORD [fifo-8]
+        fstp    DWORD [fifo-4]
         
 ;;; ;   set up color
 
-        je      clip_setup_ooz
+        je      .clip_setup_ooz
   
-        cmp     DWORD PTR [gc+colorType], ebp
-        jne     SHORT clip_setup_pargb
+        cmp     DWORD [gc+colorType], ebp
+        jne     .clip_setup_pargb
   
         test    al, 1
-        je      SHORT clip_setup_a
+        je      .clip_setup_a
         
         add     fifo, 12
         mov     ebp, 3
 
-        fld     DWORD PTR __GlideRoot+pool_f255
-        fmul    DWORD PTR [ebx+vertexPtr]
-        fld     DWORD PTR __GlideRoot+pool_f255
-        fmul    DWORD PTR [ebx+vertexPtr+4]
-        fld     DWORD PTR __GlideRoot+pool_f255
-        fmul    DWORD PTR [ebx+vertexPtr+8]
-        fxch    st(2)
-        fstp    DWORD PTR [fifo-12]
-        fstp    DWORD PTR [fifo-8]
-        fstp    DWORD PTR [fifo-4]
-        mov     ebx, DWORD PTR [gc+tsuDataList+12]
+        fld     DWORD [_GlideRoot+pool_f255]
+        fmul    DWORD [ebx+vertexPtr]
+        fld     DWORD [_GlideRoot+pool_f255]
+        fmul    DWORD [ebx+vertexPtr+4]
+        fld     DWORD [_GlideRoot+pool_f255]
+        fmul    DWORD [ebx+vertexPtr+8]
+        fxch    st2
+        fstp    DWORD [fifo-12]
+        fstp    DWORD [fifo-8]
+        fstp    DWORD [fifo-4]
+        mov     ebx, DWORD [gc+tsuDataList+12]
         
         align 4
-clip_setup_a:
+.clip_setup_a:
   
         test    al, 2
-        je      SHORT clip_setup_ooz
+        je      .clip_setup_ooz
 
         add     fifo, 4
         inc     ebp
 
-        fld     DWORD PTR [ebx+vertexPtr]  
-        fmul    DWORD PTR __GlideRoot+pool_f255
-        fstp    DWORD PTR [fifo-4]
+        fld     DWORD [ebx+vertexPtr]  
+        fmul    DWORD [_GlideRoot+pool_f255]
+        fstp    DWORD [fifo-4]
   
-        mov     ebx, DWORD PTR [gc+ebp*4+tsuDataList]
-        jmp     SHORT clip_setup_ooz
+        mov     ebx, DWORD [gc+ebp*4+tsuDataList]
+        jmp     .clip_setup_ooz
         
         align 4
-clip_setup_pargb:
+.clip_setup_pargb:
         add     fifo, 4
-        mov     ebx, DWORD PTR [ebx+vertexPtr]
+        mov     ebx, DWORD [ebx+vertexPtr]
 
-        mov     DWORD PTR [fifo-4], ebx
+        mov     DWORD [fifo-4], ebx
         nop
         
         mov     ebp, 1  
-        mov     ebx, DWORD PTR [gc+tsuDataList+4]
+        mov     ebx, DWORD [gc+tsuDataList+4]
         align 4
-clip_setup_ooz:
+.clip_setup_ooz:
   
         test    al, 4
-        je      SHORT clip_setup_qow
+        je      .clip_setup_qow
 
         add     fifo, 4
         inc     ebp
 
-        test    DWORD PTR [gc+fbi_fbzMode], 200000h
-        je      clip_setup_ooz_nofog
+        test    DWORD [gc+fbi_fbzMode], 200000h
+        je      .clip_setup_ooz_nofog
 
-        mov     ebx, DWORD PTR [gc+qInfo_mode]
+        mov     ebx, DWORD [gc+qInfo_mode]
         test    ebx, ebx
-        je      SHORT clip_setup_fog_oow
-        mov     ebx, DWORD PTR [gc+qInfo_offset]
+        je      .clip_setup_fog_oow
+        mov     ebx, DWORD [gc+qInfo_offset]
 
-        fld     DWORD PTR [vertexPtr+ebx]
-        fmul    DWORD PTR ccoow
-        fstp    DWORD PTR [fifo-4]
+        fld     DWORD [vertexPtr+ebx]
+        fmul    DWORD [ccoow]
+        fstp    DWORD [fifo-4]
         
-        mov     ebx, DWORD PTR [gc+ebp*4+tsuDataList]
-        jmp     clip_setup_qow
+        mov     ebx, DWORD [gc+ebp*4+tsuDataList]
+        jmp     .clip_setup_qow
 
         align 4
-clip_setup_fog_oow:
-        mov     ebx, DWORD PTR ccoow
+.clip_setup_fog_oow:
+        mov     ebx, dword [ccoow]
 
-        mov     DWORD PTR [fifo-4], ebx
-        mov     ebx, DWORD PTR [gc+ebp*4+tsuDataList]
-        jmp     clip_setup_qow
+        mov     dword [fifo-4], ebx
+        mov     ebx, DWORD [gc+ebp*4+tsuDataList]
+        jmp     .clip_setup_qow
 
         align 4
-clip_setup_ooz_nofog:   
+.clip_setup_ooz_nofog:
         
-        fld     DWORD PTR [ebx+vertexPtr]  
-        fmul    DWORD PTR [gc+vp_hdepth]
-        fmul    DWORD PTR ccoow  
-        fadd    DWORD PTR [gc+vp_oz]
-        fstp    DWORD PTR [fifo-4]
+        fld     DWORD [ebx+vertexPtr]  
+        fmul    DWORD [gc+vp_hdepth]
+        fmul    DWORD [ccoow]
+        fadd    DWORD [gc+vp_oz]
+        fstp    DWORD [fifo-4]
   
-        mov     ebx, DWORD PTR [gc+ebp*4+tsuDataList]
+        mov     ebx, DWORD [gc+ebp*4+tsuDataList]
         align 4
-clip_setup_qow:
+.clip_setup_qow:
   
         test    al, 8
-        je      SHORT clip_setup_qow0
+        je      .clip_setup_qow0
   
-        mov     ebx, DWORD PTR [gc+fogInfo_mode]
+        mov     ebx, DWORD [gc+fogInfo_mode]
         test    ebx, ebx
-        je      SHORT clip_setup_oow_nofog
-        mov     ebx, DWORD PTR [gc+fogInfo_offset]
+        je      .clip_setup_oow_nofog
+        mov     ebx, DWORD [gc+fogInfo_offset]
 
-        fld     DWORD PTR [vertexPtr+ebx]
-        fmul    DWORD PTR ccoow
-        fstp    DWORD PTR [fifo]
+        fld     DWORD [vertexPtr+ebx]
+        fmul    DWORD [ccoow]
+        fstp    DWORD [fifo]
 
-        jmp     SHORT clip_setup_oow_inc
+        jmp     .clip_setup_oow_inc
         
         align 4
-clip_setup_oow_nofog:
+.clip_setup_oow_nofog:
         
-        mov     ebx, DWORD PTR [gc+qInfo_mode]
+        mov     ebx, DWORD [gc+qInfo_mode]
         test    ebx, ebx
-        je      SHORT clip_setup_oow
-        mov     ebx, DWORD PTR [gc+qInfo_offset]
+        je      .clip_setup_oow
+        mov     ebx, DWORD [gc+qInfo_offset]
 
-        fld     DWORD PTR [vertexPtr+ebx]
-        fmul    DWORD PTR ccoow
-        fstp    DWORD PTR [fifo]
+        fld     DWORD [vertexPtr+ebx]
+        fmul    DWORD [ccoow]
+        fstp    DWORD [fifo]
 
-        jmp     SHORT clip_setup_oow_inc
+        jmp     .clip_setup_oow_inc
         
         align 4
-clip_setup_oow:
-        mov     ebx, DWORD PTR ccoow
+.clip_setup_oow:
+        mov     ebx, DWORD [ccoow]
 
-        mov     DWORD PTR [fifo], ebx
+        mov     DWORD [fifo], ebx
         align 4
-clip_setup_oow_inc:
+.clip_setup_oow_inc:
   
-        mov     ebx, DWORD PTR [gc+ebp*4+tsuDataList+4]
+        mov     ebx, DWORD [gc+ebp*4+tsuDataList+4]
         add     fifo, 4
         
         inc     ebp
         align 4
-clip_setup_qow0:
+.clip_setup_qow0:
   
         test    al, 16
-        je      SHORT clip_setup_stow0
+        je      .clip_setup_stow0
   
-        mov     ebx, DWORD PTR [gc+q0Info_mode]
+        mov     ebx, DWORD [gc+q0Info_mode]
         cmp     ebx, 1
-        jne     SHORT clip_setup_oow0
+        jne     .clip_setup_oow0
   
-        mov     ebx, DWORD PTR [gc+q0Info_offset]
+        mov     ebx, DWORD [gc+q0Info_offset]
         
-        fld     DWORD PTR [ebx+vertexPtr]
-        fmul    DWORD PTR ccoow
-        fstp    DWORD PTR [fifo]
+        fld     DWORD [ebx+vertexPtr]
+        fmul    DWORD [ccoow]
+        fstp    DWORD [fifo]
         
-        jmp     SHORT clip_setup_oow0_inc
+        jmp     .clip_setup_oow0_inc
         align 4
-clip_setup_oow0:
-        mov     ebx, DWORD PTR ccoow
+.clip_setup_oow0:
+        mov     ebx, DWORD [ccoow]
         
-        mov     DWORD PTR [fifo], ebx
+        mov     DWORD [fifo], ebx
         align 4
-clip_setup_oow0_inc:
-        mov     ebx, DWORD PTR [gc+ebp*4+tsuDataList+4]
+.clip_setup_oow0_inc:
+        mov     ebx, DWORD [gc+ebp*4+tsuDataList+4]
         add     fifo, 4
         
         inc     ebp
         align 4
-clip_setup_stow0:
+.clip_setup_stow0:
   
         test    al, 32
-        je      SHORT clip_setup_qow1
+        je      .clip_setup_qow1
         
 
-        fld     DWORD PTR ccoow
-        fmul    DWORD PTR [ebx+vertexPtr]
+        fld     DWORD [ccoow]
+        fmul    DWORD [ebx+vertexPtr]
 
         add     fifo, 8
         add     ebp, 2
 
-        fmul    DWORD PTR [gc+tmu0_s_scale]
-        fld     DWORD PTR ccoow
-        fmul    DWORD PTR [ebx+vertexPtr+4]
-        mov     ebx, DWORD PTR [gc+ebp*4+tsuDataList]
-        fmul    DWORD PTR [gc+tmu0_t_scale]
+        fmul    DWORD [gc+tmu0_s_scale]
+        fld     DWORD [ccoow]
+        fmul    DWORD [ebx+vertexPtr+4]
+        mov     ebx, DWORD [gc+ebp*4+tsuDataList]
+        fmul    DWORD [gc+tmu0_t_scale]
         fxch
-        fstp    DWORD PTR [fifo-8]
-        fstp    DWORD PTR [fifo-4]
+        fstp    DWORD [fifo-8]
+        fstp    DWORD [fifo-4]
         
         align 4
-clip_setup_qow1:
+.clip_setup_qow1:
 
         test    al, 64
-        je      SHORT clip_setup_stow1
+        je      .clip_setup_stow1
 
-        mov     ebx, DWORD PTR [gc+q1Info_mode]
+        mov     ebx, DWORD [gc+q1Info_mode]
         cmp     ebx, 1
-        jne     SHORT clip_setup_oow1
+        jne     .clip_setup_oow1
 
-        mov     ebx, DWORD PTR [gc+q1Info_offset]
+        mov     ebx, DWORD [gc+q1Info_offset]
         
-        fld     DWORD PTR [ebx+vertexPtr]
-        fmul    DWORD PTR ccoow
-        fstp    DWORD PTR [fifo]
+        fld     DWORD [ebx+vertexPtr]
+        fmul    DWORD [ccoow]
+        fstp    DWORD [fifo]
         
-        jmp     SHORT clip_setup_oow1_inc
+        jmp     .clip_setup_oow1_inc
         align 4
-clip_setup_oow1:
-        mov     ebx, DWORD PTR ccoow
+.clip_setup_oow1:
+        mov     ebx, DWORD [ccoow]
 
-        mov     DWORD PTR [fifo], ebx
+        mov     DWORD [fifo], ebx
         align 4
-clip_setup_oow1_inc:
+.clip_setup_oow1_inc:
   
-        mov     ebx, DWORD PTR [gc+ebp*4+tsuDataList+4]
+        mov     ebx, DWORD [gc+ebp*4+tsuDataList+4]
         add     fifo, 4
 
         inc     ebp
 
         align 4
-clip_setup_stow1:
+.clip_setup_stow1:
   
         test    al, 128
-        je      SHORT clip_setup_end
+        je      .clip_setup_end
 
-        fld     DWORD PTR ccoow
-        fmul    DWORD PTR [ebx+vertexPtr]
+        fld     DWORD [ccoow]
+        fmul    DWORD [ebx+vertexPtr]
         add     fifo, 8
-        fmul    DWORD PTR [gc+tmu1_s_scale]
-        fld     DWORD PTR ccoow
-        fmul    DWORD PTR [ebx+vertexPtr+4]
-        mov     ebx, DWORD PTR [gc+ebp*4+tsuDataList+4]
-        fmul    DWORD PTR [gc+tmu1_t_scale]
+        fmul    DWORD [gc+tmu1_s_scale]
+        fld     DWORD [ccoow]
+        fmul    DWORD [ebx+vertexPtr+4]
+        mov     ebx, DWORD [gc+ebp*4+tsuDataList+4]
+        fmul    DWORD [gc+tmu1_t_scale]
         fxch        
-        fstp    DWORD PTR [fifo-8]
-        fstp    DWORD PTR [fifo-4]
+        fstp    DWORD [fifo-8]
+        fstp    DWORD [fifo-4]
 
         align 4
-clip_setup_end:
+.clip_setup_end:
 
         dec     edi        
-        jz      clip_for_end
+        jz      .clip_for_end
 
-        mov     vertexPtr, DWORD PTR [esp+_pointers]
-        mov     ebx, DWORD PTR [esp+_mode]
+        mov     vertexPtr, DWORD [esp+_pointers]
+        mov     ebx, DWORD [esp+_mode]
 
         test    ebx, ebx
-        je      SHORT w_clip_no_deref
+        je      .w_clip_no_deref
 
 
-        mov     vertexPtr, DWORD PTR [vertexPtr]
+        mov     vertexPtr, DWORD [vertexPtr]
         align 4
-w_clip_no_deref:
+.w_clip_no_deref:
 
-        mov     ebx, DWORD PTR [gc+wInfo_offset]
+        mov     ebx, DWORD [gc+wInfo_offset]
         
-        fld     DWORD PTR [ebx+vertexPtr]  
-        fdivr   DWORD PTR _F1
+        fld     DWORD [ebx+vertexPtr]  
+        fdivr   DWORD [_F1]
         
-        jmp     clip_for_begin
+        jmp     .clip_for_begin
         align 4
-clip_for_end:
+.clip_for_end:
   
-        mov     ebx, DWORD PTR [gc+fifoPtr]
-        mov     edx, DWORD PTR [gc+fifoRoom]
+        mov     ebx, DWORD [gc+fifoPtr]
+        mov     edx, DWORD [gc+fifoRoom]
         
         sub     ebx, fifo
-        mov     edi, DWORD PTR [esp+_count]
+        mov     edi, DWORD [esp+_count]
         
         add     edx, ebx
         sub     edi, 15                 ; 0000000fH
   
-        mov     DWORD PTR [gc+fifoRoom], edx
-        mov     DWORD PTR [esp+_count], edi
+        mov     DWORD [gc+fifoRoom], edx
+        mov     DWORD [esp+_count], edi
   
-        mov     DWORD PTR [gc+fifoPtr], fifo
-        mov     DWORD PTR [esp+_pktype], 16 ; 00000010H
+        mov     DWORD [gc+fifoPtr], fifo
+        mov     DWORD [esp+_pktype], 16 ; 00000010H
 
-        jle     strip_done
-        mov     edx, DWORD PTR [esp+_pointers]
+        jle     .strip_done
+        mov     edx, DWORD [esp+_pointers]
 
-        mov     ebx, DWORD PTR [esp+_mode]
+        mov     ebx, DWORD [esp+_mode]
         test    ebx, ebx
         
-        je      SHORT w1_clip_no_deref
-        mov     edx, DWORD PTR [edx]
+        je      .w1_clip_no_deref
+        mov     edx, DWORD [edx]
         
         align 4
-w1_clip_no_deref:
+.w1_clip_no_deref:
 
-        mov     ebx, DWORD PTR [gc+wInfo_offset]
-        fld     DWORD PTR [ebx+edx]  
-        fdivr   DWORD PTR _F1
+        mov     ebx, DWORD [gc+wInfo_offset]
+        fld     DWORD [ebx+edx]  
+        fdivr   DWORD [_F1]
   
-        jmp     clip_coords_begin
+        jmp     .clip_coords_begin
         align 4
-strip_done:
+.strip_done:
 
         pop     ebp
         pop     ebx
         pop     edi
         pop     esi
-        ret     20                      ; 00000014H
-__vpdrawvertexlist@20 ENDP
+        ret                             ; 00000014H
+endp
 
-gc                 TEXTEQU     <esi>       ; points to graphics context
-fifo               TEXTEQU     <ecx>       ; points to next entry in fifo
-vertexPtr          TEXTEQU     <edi>       ; Current vertex pointer
+%define gc                 esi       ; points to graphics context
+%define fifo               ecx       ; points to next entry in fifo
+%define vertexPtr          edi       ; Current vertex pointer
 
     ;; NB:  All of the base triangle procs expect to have the gc
     ;;      passed from the caller in edx so that we can avoid
@@ -2880,353 +2827,362 @@ vertexPtr          TEXTEQU     <edi>       ; Current vertex pointer
 
         ALIGN 32    
 
-    PUBLIC  __vptrisetup_cull@12
-__vptrisetup_cull@12 PROC NEAR
-_va = 20
-_vb = 24
-_vc = 28
+proc _vptrisetup_cull, 12
+_va equ 20
+_vb equ 24
+_vc equ 28
         push    ebx
         push    esi
         
         push    edi
         mov     gc, edx
+
+%if 1
+        ;
+        ; AJB: Clip Coord mode needs to call grValidateState
+        ;
+        mov       edx, [gc + invalid]        ; state needs validation ?
+
+        test      edx, edx                   ; do we need to validate state ?
+        je        .no_validation             ; nope, it's valid
+
+        invoke    _grValidateState           ; validate state
+
+.no_validation:
+%endif
         
-        mov     ecx, DWORD PTR [esp+_va-4]
-        mov     eax, DWORD PTR [gc+wInfo_offset]
+        mov     ecx, DWORD [esp+_va-4]
+        mov     eax, DWORD [gc+wInfo_offset]
         
         push    ebp
         nop
         
 ;;; ;   oow[0] = 1.0f / FARRAY(va, gc->state.vData.wInfo.offset)
 
-        fld     DWORD PTR [eax+ecx]
+        fld     DWORD [eax+ecx]
 
-        fdivr   DWORD PTR _F1
+        fdivr   DWORD [_F1]
 
-        mov     ecx, DWORD PTR [esp+_vb]
-        mov     ebx, DWORD PTR [esp+_vc]
+        mov     ecx, DWORD [esp+_vb]
+        mov     ebx, DWORD [esp+_vc]
 
         nop
         nop
         
-        mov     ebp, DWORD PTR [eax+ecx]
-        mov     edi, DWORD PTR [eax+ebx]
+        mov     ebp, DWORD [eax+ecx]
+        mov     edi, DWORD [eax+ebx]
 
-        mov     DWORD PTR vPtr1, ebp
-        mov     DWORD PTR vPtr2, edi
+        mov     DWORD [vPtr1], ebp
+        mov     DWORD [vPtr2], edi
         
 ;;; ;   GR_SET_EXPECTED_SIZE(_GlideRoot.curTriSize, 1)
 
-        mov     eax, DWORD PTR __GlideRoot+curTriSize
-        mov     ecx, DWORD PTR [gc+fifoRoom]
+        mov     eax, DWORD [gc+curTriSize]
+        mov     ecx, DWORD [gc+fifoRoom]
         
         add     eax, 4
         nop
         
         cmp     ecx, eax
-        jge     SHORT setup_pkt_hdr
+        jge     .setup_pkt_hdr
         
-        push    @Line                      ; line number inside this function
-        push    0h                         ; pointer to function name = NULL
-
-        push    eax
-        call    __grCommandTransportMakeRoom@12
+        invoke  _grCommandTransportMakeRoom, eax, 0, __LINE__
 
         align 4
-setup_pkt_hdr:  
+.setup_pkt_hdr:
 
 ;;; ;   TRI_STRIP_BEGIN(kSetupStrip, 3, gc->state.vData.vSize, SSTCP_PKT3_BDDBDD)
 
 
-        mov     fifo, DWORD PTR [gc+fifoPtr]
-        mov     eax, DWORD PTR [gc+cullStripHdr]
+        mov     fifo, DWORD [gc+fifoPtr]
+        mov     eax, DWORD [gc+cullStripHdr]
 
         add     fifo, 4
-        lea     ebp, DWORD PTR [esp+_va]
+        lea     ebp, [esp+_va]
 
         or      eax, 192                ; 000000c0H
         mov     edx, 0                
 
-        mov     DWORD PTR [fifo-4], eax        
-        mov     vertexPtr, DWORD PTR [ebp]
+        mov     DWORD [fifo-4], eax        
+        mov     vertexPtr, DWORD [ebp]
 
-        mov     eax, DWORD PTR [gc+paramIndex]
+        mov     eax, DWORD [gc+paramIndex]
         nop
 
 ;;; Begin loop
         
         align 4
-begin_for_loop:
+.begin_for_loop:
 
         add     edx, 4
         add     fifo, 8
         
         xor     ebx, ebx
-        mov     ebp, DWORD PTR [gc+tsuDataList]
+        mov     ebp, DWORD [gc+tsuDataList]
 
 ;;; ;   setup x and y
 
-        fld     DWORD PTR [gc+vp_hwidth]
-        fmul    DWORD PTR [vertexPtr]
-        fmul    st, st(1)
-        fadd    DWORD PTR [gc+vp_ox]
-        fxch    st(1)
+        fld     DWORD [gc+vp_hwidth]
+        fmul    DWORD [vertexPtr]
+        fmul    st0, st1
+        fadd    DWORD [gc+vp_ox]
+        fxch    st1
 
-        fld     DWORD PTR [vertexPtr+4]
-        fmul    DWORD PTR [gc+vp_hheight]
+        fld     DWORD [vertexPtr+4]
+        fmul    DWORD [gc+vp_hheight]
         test    al, 3
-        fmul    st, st(1)
-        fadd    DWORD PTR [gc+vp_oy]
-        fxch    st(1)
-        fstp    DWORD PTR oowa    
-        fxch    st(1)
-        fstp    DWORD PTR [fifo-8]
-        fstp    DWORD PTR [fifo-4]
+        fmul    st0, st1
+        fadd    DWORD [gc+vp_oy]
+        fxch    st1
+        fstp    DWORD [oowa]
+        fxch    st1
+        fstp    DWORD [fifo-8]
+        fstp    DWORD [fifo-4]
         
 ;;; ;   set up color
 
-        je      clip_setup_ooz
+        je      .clip_setup_ooz
 
-        cmp     DWORD PTR [gc+colorType], ebx
-        jne     SHORT clip_setup_pargb
+        cmp     DWORD [gc+colorType], ebx
+        jne     .clip_setup_pargb
         
         test    al, 1
-        je      SHORT clip_setup_a
+        je      .clip_setup_a
 
         add     fifo, 12
         add     ebx, 3
 
-        fld     DWORD PTR __GlideRoot+pool_f255
-        fmul    DWORD PTR [vertexPtr+ebp]
-        fld     DWORD PTR __GlideRoot+pool_f255
-        fmul    DWORD PTR [vertexPtr+ebp+4]
-        fld     DWORD PTR __GlideRoot+pool_f255
-        fmul    DWORD PTR [vertexPtr+ebp+8]
-        fxch    st(2)
-        fstp    DWORD PTR [fifo-12]
-        fstp    DWORD PTR [fifo-8]
-        fstp    DWORD PTR [fifo-4]
-        mov     ebp, DWORD PTR [gc+tsuDataList+12]
+        fld     DWORD [_GlideRoot+pool_f255]
+        fmul    DWORD [vertexPtr+ebp]
+        fld     DWORD [_GlideRoot+pool_f255]
+        fmul    DWORD [vertexPtr+ebp+4]
+        fld     DWORD [_GlideRoot+pool_f255]
+        fmul    DWORD [vertexPtr+ebp+8]
+        fxch    st2
+        fstp    DWORD [fifo-12]
+        fstp    DWORD [fifo-8]
+        fstp    DWORD [fifo-4]
+        mov     ebp, DWORD [gc+tsuDataList+12]
         
         align 4
-clip_setup_a:          
+.clip_setup_a:
 
         test    al, 2
-        je      SHORT clip_setup_ooz
+        je      .clip_setup_ooz
         
         add     fifo, 4
         inc     ebx
         
-        fld     DWORD PTR [vertexPtr+ebp]
-        fmul    DWORD PTR __GlideRoot+pool_f255
-        fstp    DWORD PTR [fifo-4]
+        fld     DWORD [vertexPtr+ebp]
+        fmul    DWORD [_GlideRoot+pool_f255]
+        fstp    DWORD [fifo-4]
         
-        mov     ebp, DWORD PTR [gc+tsuDataList+ebx*4]
-        jmp     SHORT clip_setup_ooz
+        mov     ebp, DWORD [gc+tsuDataList+ebx*4]
+        jmp     .clip_setup_ooz
         align 4
-clip_setup_pargb:
+.clip_setup_pargb:
         add     fifo, 4
-        mov     ebx, DWORD PTR [vertexPtr+ebp]
+        mov     ebx, DWORD [vertexPtr+ebp]
         
-        mov     DWORD PTR [fifo-4], ebx
+        mov     DWORD [fifo-4], ebx
         nop
         
         mov     ebx, 1
-        mov     ebp, DWORD PTR [gc+tsuDataList+4]
+        mov     ebp, DWORD [gc+tsuDataList+4]
         align 4
-clip_setup_ooz:
+.clip_setup_ooz:
 
         test    al, 4
-        je      SHORT clip_setup_qow
+        je      .clip_setup_qow
         
         add     fifo, 4
         inc     ebx
         
-        test    DWORD PTR [gc+fbi_fbzMode], 200000h
-        je      clip_setup_ooz_nofog
+        test    DWORD [gc+fbi_fbzMode], 200000h
+        je      .clip_setup_ooz_nofog
 
-        mov     ebp, DWORD PTR [gc+qInfo_mode]
+        mov     ebp, DWORD [gc+qInfo_mode]
         test    ebp, ebp
-        je      SHORT clip_setup_fog_oow
-        mov     ebp, DWORD PTR [gc+qInfo_offset]
+        je      .clip_setup_fog_oow
+        mov     ebp, DWORD [gc+qInfo_offset]
 
-        fld     DWORD PTR [vertexPtr+ebp]
-        fmul    DWORD PTR oowa
-        fstp    DWORD PTR [fifo-4]
+        fld     DWORD [vertexPtr+ebp]
+        fmul    DWORD [oowa]
+        fstp    DWORD [fifo-4]
 
-        mov     ebp, DWORD PTR [gc+tsuDataList+ebx*4]
-        jmp     clip_setup_qow
-
-        align 4
-clip_setup_fog_oow:
-        mov     ebp, DWORD PTR oowa
-
-        mov     DWORD PTR [fifo-4], ebp
-        mov     ebp, DWORD PTR [gc+tsuDataList+ebx*4]
-        jmp     clip_setup_qow
+        mov     ebp, DWORD [gc+tsuDataList+ebx*4]
+        jmp     .clip_setup_qow
 
         align 4
-clip_setup_ooz_nofog:   
+.clip_setup_fog_oow:
+        mov     ebp, dword [oowa]
 
-        fld     DWORD PTR [vertexPtr+ebp]
-        fmul    DWORD PTR [gc+vp_hdepth]
-        fmul    DWORD PTR oowa
-        fadd    DWORD PTR [gc+vp_oz]
-        fstp    DWORD PTR [fifo-4]
+        mov     dword [fifo-4], ebp
+        mov     ebp, DWORD [gc+tsuDataList+ebx*4]
+        jmp     .clip_setup_qow
+
+        align 4
+.clip_setup_ooz_nofog:
+
+        fld     DWORD [vertexPtr+ebp]
+        fmul    DWORD [gc+vp_hdepth]
+        fmul    DWORD [oowa]
+        fadd    DWORD [gc+vp_oz]
+        fstp    DWORD [fifo-4]
         
-        mov     ebp, DWORD PTR [gc+tsuDataList+ebx*4]
+        mov     ebp, DWORD [gc+tsuDataList+ebx*4]
         align 4
-clip_setup_qow: 
+.clip_setup_qow:
 
         test    al, 8
-        je      SHORT clip_setup_qow0
+        je      .clip_setup_qow0
 
-        cmp     DWORD PTR [gc+fogInfo_mode], 1
-        jne     SHORT clip_setup_oow_nofog
+        cmp     DWORD [gc+fogInfo_mode], 1
+        jne     .clip_setup_oow_nofog
 
-        mov     ebp, DWORD PTR [gc+fogInfo_offset]
-        fld     DWORD PTR oowa
-        fmul    DWORD PTR [ebp+vertexPtr]
-        fstp    DWORD PTR [fifo]
+        mov     ebp, DWORD [gc+fogInfo_offset]
+        fld     DWORD [oowa]
+        fmul    DWORD [vertexPtr+ebp]
+        fstp    DWORD [fifo]
         
-        jmp     SHORT clip_setup_oow_inc
+        jmp     .clip_setup_oow_inc
         align 4
-clip_setup_oow_nofog:
-        cmp     DWORD PTR [gc+qInfo_mode], 1
-        jne     SHORT clip_setup_oow
+.clip_setup_oow_nofog:
+        cmp     DWORD [gc+qInfo_mode], 1
+        jne     .clip_setup_oow
 
-        mov     ebp, DWORD PTR [gc+qInfo_offset]
-        fld     DWORD PTR oowa
-        fmul    DWORD PTR [ebp+vertexPtr]
-        fstp    DWORD PTR [fifo]
+        mov     ebp, DWORD [gc+qInfo_offset]
+        fld     DWORD [oowa]
+        fmul    DWORD [vertexPtr+ebp]
+        fstp    DWORD [fifo]
         
-        jmp     SHORT clip_setup_oow_inc
+        jmp     .clip_setup_oow_inc
         align 4
-clip_setup_oow:
+.clip_setup_oow:
         
-        mov     ebp, DWORD PTR oowa
+        mov     ebp, DWORD [oowa]
         
-        mov     DWORD PTR [fifo], ebp
+        mov     DWORD [fifo], ebp
         align 4
-clip_setup_oow_inc:
-        mov     ebp, DWORD PTR [gc+tsuDataList+ebx*4+4]   
+.clip_setup_oow_inc:
+        mov     ebp, DWORD [gc+tsuDataList+ebx*4+4]   
         add     fifo, 4
         
         inc     ebx
         align 4
-clip_setup_qow0:
+.clip_setup_qow0:
 
         test    al, 16                  ; 00000010H
-        je      SHORT clip_setup_stow0
+        je      .clip_setup_stow0
 
-        cmp     DWORD PTR [gc+q0Info_mode], 1        
-        jne     SHORT clip_setup_oow0
+        cmp     DWORD [gc+q0Info_mode], 1        
+        jne     .clip_setup_oow0
                         
-        mov     ebp, DWORD PTR [gc+q0Info_offset]
+        mov     ebp, DWORD [gc+q0Info_offset]
         
-        fld     DWORD PTR oowa
-        fmul    DWORD PTR [ebp+vertexPtr]
-        fstp    DWORD PTR [fifo]
+        fld     DWORD [oowa]
+        fmul    DWORD [ebp+vertexPtr]
+        fstp    DWORD [fifo]
         
-        jmp     SHORT clip_setup_oow0_inc
+        jmp     .clip_setup_oow0_inc
         align 4
-clip_setup_oow0:
-        mov     ebp, DWORD PTR oowa
+.clip_setup_oow0:
+        mov     ebp, DWORD [oowa]
         
-        mov     DWORD PTR [fifo], ebp
+        mov     DWORD [fifo], ebp
         align 4
-clip_setup_oow0_inc:
-        mov     ebp, DWORD PTR [gc+tsuDataList+ebx*4+4]
+.clip_setup_oow0_inc:
+        mov     ebp, DWORD [gc+tsuDataList+ebx*4+4]
         add     fifo, 4
         
         inc     ebx
         align 4
-clip_setup_stow0:
+.clip_setup_stow0:
                         
         test    al, 32
-        je      SHORT clip_setup_qow1
+        je      .clip_setup_qow1
 
         
-        fld     DWORD PTR oowa
-        fmul    DWORD PTR [vertexPtr+ebp]
+        fld     DWORD [oowa]
+        fmul    DWORD [vertexPtr+ebp]
 
         add     fifo, 8
         add     ebx, 2
 
-        fmul    DWORD PTR [gc+tmu0_s_scale]
-        fld     DWORD PTR oowa
-        fmul    DWORD PTR [vertexPtr+ebp+4]
-        mov     ebp, DWORD PTR [gc+tsuDataList+ebx*4]
-        fmul    DWORD PTR [gc+tmu0_t_scale]
+        fmul    DWORD [gc+tmu0_s_scale]
+        fld     DWORD [oowa]
+        fmul    DWORD [vertexPtr+ebp+4]
+        mov     ebp, DWORD [gc+tsuDataList+ebx*4]
+        fmul    DWORD [gc+tmu0_t_scale]
         fxch    
-        fstp    DWORD PTR [fifo-8]
-        fstp    DWORD PTR [fifo-4]
+        fstp    DWORD [fifo-8]
+        fstp    DWORD [fifo-4]
         
         align 4
-clip_setup_qow1:
+.clip_setup_qow1:
 
         test    al, 64
-        je      SHORT clip_setup_stow1
+        je      .clip_setup_stow1
 
-        cmp     DWORD PTR [gc+q1Info_mode], 1
-        jne     SHORT clip_setup_oow1
+        cmp     DWORD [gc+q1Info_mode], 1
+        jne     .clip_setup_oow1
 
-        mov     ebp, DWORD PTR [gc+q1Info_offset]
+        mov     ebp, DWORD [gc+q1Info_offset]
         
-        fld     DWORD PTR [ebp+vertexPtr]
-        fmul    DWORD PTR oowa
-        fstp    DWORD PTR [fifo]
+        fld     DWORD [vertexPtr+ebp]
+        fmul    DWORD [oowa]
+        fstp    DWORD [fifo]
         
-        jmp     SHORT clip_setup_oow1_inc
+        jmp     .clip_setup_oow1_inc
         align 4
-clip_setup_oow1:
-        mov     ebp, DWORD PTR oowa
+.clip_setup_oow1:
+        mov     ebp, DWORD [oowa]
         
-        mov     DWORD PTR [fifo], ebp
+        mov     DWORD [fifo], ebp
         align 4
-clip_setup_oow1_inc:
-        mov     ebp, DWORD PTR [gc+tsuDataList+ebx*4+4]
+.clip_setup_oow1_inc:
+        mov     ebp, DWORD [gc+tsuDataList+ebx*4+4]
         add     fifo, 4
         
         inc     ebx
         align 4
-clip_setup_stow1:
+.clip_setup_stow1:
 
         test    al, 128
-        je      SHORT clip_setup_end
+        je      .clip_setup_end
         
 
-        fld     DWORD PTR oowa
-        fmul    DWORD PTR [vertexPtr+ebp]
+        fld     DWORD [oowa]
+        fmul    DWORD [vertexPtr+ebp]
         add     fifo, 8  
-        fmul    DWORD PTR [gc+tmu1_s_scale]
-        fld     DWORD PTR oowa
-        fmul    DWORD PTR [vertexPtr+ebp+4]
-        fmul    DWORD PTR [gc+tmu1_t_scale]
+        fmul    DWORD [gc+tmu1_s_scale]
+        fld     DWORD [oowa]
+        fmul    DWORD [vertexPtr+ebp+4]
+        fmul    DWORD [gc+tmu1_t_scale]
         fxch    
-        fstp    DWORD PTR [fifo-8]
-        fstp    DWORD PTR [fifo-4]
+        fstp    DWORD [fifo-8]
+        fstp    DWORD [fifo-4]
 
         align 4
-clip_setup_end:
+.clip_setup_end:
 
         cmp     edx, 12
-        je      update_fifo_ptr
+        je      .update_fifo_ptr
         
-        fld     DWORD PTR vPtr0[edx]
-        fdivr   DWORD PTR _F1
+        fld     DWORD [vPtr0+edx]
+        fdivr   DWORD [_F1]
         
-        lea     ebx, DWORD PTR [esp+_va]
-        mov     ebp, DWORD PTR [gc+wInfo_offset]
+        lea     ebx, [esp+_va]
+        mov     ebp, DWORD [gc+wInfo_offset]
         
-        mov     vertexPtr, DWORD PTR [ebx+edx]
-        jmp     begin_for_loop
+        mov     vertexPtr, DWORD [ebx+edx]
+        jmp     .begin_for_loop
        
         align 4
-update_fifo_ptr:        
+.update_fifo_ptr:
 
-        mov     ebx, DWORD PTR [gc+fifoPtr]
-        mov     edx, DWORD PTR [gc+fifoRoom]
+        mov     ebx, dword [gc+fifoPtr]
+        mov     edx, dword [gc+fifoRoom]
         
         sub     ebx, fifo
         mov     eax, 1
@@ -3234,11 +3190,11 @@ update_fifo_ptr:
         add     edx, ebx
         pop     ebp
 
-        mov     DWORD PTR [gc+fifoRoom], edx
+        mov     dword [gc+fifoRoom], edx
         pop     edi
 
-        mov     DWORD PTR [gc+fifoPtr], fifo
-        mov     ebx, DWORD PTR __GlideRoot+trisProcessed
+        mov     dword [gc+fifoPtr], fifo
+        mov     ebx, dword [_GlideRoot+trisProcessed]
 
 ;;; ;   _GlideRoot.stats.trisProcessed++
 
@@ -3246,14 +3202,12 @@ update_fifo_ptr:
         pop     esi
         inc     ebx
 
-        mov     DWORD PTR __GlideRoot+trisProcessed, ebx
+        mov     dword [_GlideRoot+trisProcessed], ebx
         pop     ebx
         
-        ret     12                      ; 0000000cH
+        ret                             ; 0000000cH
         
-__vptrisetup_cull@12 ENDP
-_TEXT   ENDS
+endp
     
-endif  ; !GL_AMD3D
+%endif  ; !GL_AMD3D
 
-END

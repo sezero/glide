@@ -19,7 +19,10 @@
 **
 ** $Header$
 ** $Log$
-** Revision 1.1.1.1  1999/11/24 21:45:00  joseph
+** Revision 1.1.1.1.6.1  2003/06/29 18:43:27  guillemj
+** Fix compilation warnings.
+**
+** Revision 1.1.1.1  1999/11/24 21:45:01  joseph
 ** Initial checkin for SourceForge
 **
 ** 
@@ -122,7 +125,7 @@
 ** Fixed dumb Codewarrior warning.
 ** 
 ** 83    2/18/99 3:05p Atai
-** allow calls to guGammaCorrectionRGB after
+** allow calls guGammaCorrectionRGB after
 ** grGlideShutdown. Check if we have a null gc.
 ** 
 ** 82    2/13/99 2:01p Dow
@@ -531,6 +534,10 @@
 #include <windows.h>
 #endif
 
+#if DRI_BUILD
+#include <lindri.h>
+#endif
+
 #define kPageBoundarySlop 0x1000UL
 #define kPageBoundaryMask (kPageBoundarySlop - 1)
 
@@ -538,30 +545,30 @@
 
 ResEntry
 _resTable[] = {
-  GR_RESOLUTION_320x200, 320, 200, /* 0x0 */
-  GR_RESOLUTION_320x240, 320,  240, /*   0x1 */
-  GR_RESOLUTION_400x256, 400,  256, /*   0x2 */
-  GR_RESOLUTION_512x384, 512,  384, /*   0x3 */
-  GR_RESOLUTION_640x200, 640,  200, /*   0x4 */
-  GR_RESOLUTION_640x350, 640,  350, /*   0x5 */
-  GR_RESOLUTION_640x400, 640,  400, /*   0x6 */
-  GR_RESOLUTION_640x480, 640,  480, /*   0x7 */
-  GR_RESOLUTION_800x600, 800,  600, /*   0x8 */
-  GR_RESOLUTION_960x720, 960,  720, /*   0x9 */
-  GR_RESOLUTION_856x480, 856,  480, /*   0xa */
-  GR_RESOLUTION_512x256, 512,  256, /*   0xb */
-  GR_RESOLUTION_1024x768, 1024,  768, /*  0xC */
-  GR_RESOLUTION_1280x1024, 1280,  1024, /* 0xD */
-  GR_RESOLUTION_1600x1200, 1600,  1200, /* 0xE */
-  GR_RESOLUTION_400x300, 400,  300, /*   0xF */
-  GR_RESOLUTION_1152x864, 1152,  864, /*  0x10 */
-  GR_RESOLUTION_1280x960, 1280,  960, /*  0x11 */
-  GR_RESOLUTION_1600x1024, 1600,  1024, /* 0x12 */
-  GR_RESOLUTION_1792x1344, 1792,  1344, /* 0x13 */
-  GR_RESOLUTION_1856x1392, 1856,  1392, /* 0x14 */
-  GR_RESOLUTION_1920x1440, 1920,  1440, /* 0x15 */
-  GR_RESOLUTION_2048x1536, 2048,  1536, /* 0x16 */
-  GR_RESOLUTION_2048x2048, 2048,  2048 /* 0x17 */
+  {GR_RESOLUTION_320x200, 320, 200}, /* 0x0 */
+  {GR_RESOLUTION_320x240, 320,  240}, /*   0x1 */
+  {GR_RESOLUTION_400x256, 400,  256}, /*   0x2 */
+  {GR_RESOLUTION_512x384, 512,  384}, /*   0x3 */
+  {GR_RESOLUTION_640x200, 640,  200}, /*   0x4 */
+  {GR_RESOLUTION_640x350, 640,  350}, /*   0x5 */
+  {GR_RESOLUTION_640x400, 640,  400}, /*   0x6 */
+  {GR_RESOLUTION_640x480, 640,  480}, /*   0x7 */
+  {GR_RESOLUTION_800x600, 800,  600}, /*   0x8 */
+  {GR_RESOLUTION_960x720, 960,  720}, /*   0x9 */
+  {GR_RESOLUTION_856x480, 856,  480}, /*   0xa */
+  {GR_RESOLUTION_512x256, 512,  256}, /*   0xb */
+  {GR_RESOLUTION_1024x768, 1024,  768}, /*  0xC */
+  {GR_RESOLUTION_1280x1024, 1280,  1024}, /* 0xD */
+  {GR_RESOLUTION_1600x1200, 1600,  1200}, /* 0xE */
+  {GR_RESOLUTION_400x300, 400,  300}, /*   0xF */
+  {GR_RESOLUTION_1152x864, 1152,  864}, /*  0x10 */
+  {GR_RESOLUTION_1280x960, 1280,  960}, /*  0x11 */
+  {GR_RESOLUTION_1600x1024, 1600,  1024}, /* 0x12 */
+  {GR_RESOLUTION_1792x1344, 1792,  1344}, /* 0x13 */
+  {GR_RESOLUTION_1856x1392, 1856,  1392}, /* 0x14 */
+  {GR_RESOLUTION_1920x1440, 1920,  1440}, /* 0x15 */
+  {GR_RESOLUTION_2048x1536, 2048,  1536}, /* 0x16 */
+  {GR_RESOLUTION_2048x2048, 2048,  2048} /* 0x17 */
 };
 
 /* ---------------------------------------------
@@ -739,8 +746,13 @@ initGC ( GrGC *gc )
   GDBG_INFO(95, FN_NAME"(0x%X)\n", gc);
   
   /* Setup the indices of the logical buffers */
+#if DRI_BUILD
+  gc->curBuffer   = (gc->grColBuf > 1) ? 1 : 0;
+  gc->frontBuffer = 0;
+#else
   gc->curBuffer   = 0;
   gc->frontBuffer = ((gc->grColBuf > 1) ? 1 : 0);
+#endif
   gc->backBuffer  = (gc->grColBuf > 2) ? 2 : gc->curBuffer;
   
   for (t = 0; t < 7; t++) {
@@ -927,7 +939,7 @@ GR_ENTRY(grSstWinOpen, GrContext_t, ( FxU32                   hWnd,
   struct cmdTransportInfo *gcFifo = 0;
   GrContext_t retVal = 0;
 
-#if !defined(__linux__) && !defined(__DJGPP__) /* [dBorca] */
+#if !defined(__linux__) && !defined(__DJGPP__)
   if (!hWnd)
     GrErrorCallback("grSstWinOpen: need to use a valid window handle",
                     FXTRUE);
@@ -965,8 +977,13 @@ GR_ENTRY(grSstWinOpen, GrContext_t, ( FxU32                   hWnd,
         ? GR_RESOLUTION_640x480 
           : resolution;
 
+#if DRI_BUILD
+    gc->state.screen_width = driInfo.screenWidth;
+    gc->state.screen_height = driInfo.screenHeight;
+#else
     gc->state.screen_width  = _resTable[resolution].xres;
     gc->state.screen_height = _resTable[resolution].yres;
+
     GR_CHECK_F( FN_NAME, 
                 resolution != _resTable[resolution].resolution, 
                 "resolution table compilation incorrect" );
@@ -974,6 +991,7 @@ GR_ENTRY(grSstWinOpen, GrContext_t, ( FxU32                   hWnd,
       gc->state.screen_width  = gc->vidTimings->xDimension;
       gc->state.screen_height = gc->vidTimings->yDimension;
     }
+#endif
   
     gc->state.origin             = origin;
     gc->grSstRez                 = resolution;
@@ -1040,9 +1058,14 @@ GR_ENTRY(grSstWinOpen, GrContext_t, ( FxU32                   hWnd,
 
       gc->hwInitP = FXTRUE;
     }
-  
+
+#if DRI_BUILD
+    vInfo->xRes	       = driInfo.w;
+    vInfo->yRes	       = driInfo.h;
+#else
     vInfo->xRes        = gc->state.screen_width;
     vInfo->yRes        = gc->state.screen_height;
+#endif
     vInfo->refresh     = gc->grSstRefresh;
     vInfo->tiled       = FXTRUE;
     vInfo->initialized = FXTRUE;
@@ -1095,7 +1118,7 @@ GR_ENTRY(grSstWinOpen, GrContext_t, ( FxU32                   hWnd,
     /* This actually gets taken in hwcInitVideo */
     gc->contextP = FXTRUE;
 
-#ifndef __linux__
+#if GLIDE_CHECK_CONTEXT
     /* CSR - Set up flag for display driver to tell us that context was lost */
 	if ( !gc->open )  /* If we already have a context open, then lets not
 					     re-initialize the pointers                          */						
@@ -1170,7 +1193,7 @@ GR_ENTRY(grSstWinOpen, GrContext_t, ( FxU32                   hWnd,
     gc->tBuffer.bufBPP = 0xffffffff; /* Don't matter to me */
 
     GDBG_INFO(1, "autoBump: 0x%x\n", _GlideRoot.environment.autoBump);
-    if ((gc->cmdTransportInfo.autoBump = _GlideRoot.environment.autoBump)) { /* [dBorca] avoid warning */
+    if ((gc->cmdTransportInfo.autoBump = _GlideRoot.environment.autoBump)) {
       if (!hwcInitFifo( bInfo, gc->cmdTransportInfo.autoBump)) {
         hwcRestoreVideo(bInfo);
         GrErrorCallback(hwcGetErrorString(), FXFALSE);
@@ -1376,7 +1399,8 @@ GR_ENTRY(grSstWinOpen, GrContext_t, ( FxU32                   hWnd,
      */
     gcFifo->fifoPtr  = gcFifo->fifoStart;
     gcFifo->fifoRead = HW_FIFO_PTR( FXTRUE );
-    
+
+#if !DRI_BUILD
     if ( (void*)gcFifo->fifoPtr != (void*)gcFifo->fifoRead ) {
 #ifdef GLIDE_INIT_HWC
       hwcRestoreVideo( bInfo );
@@ -1384,6 +1408,7 @@ GR_ENTRY(grSstWinOpen, GrContext_t, ( FxU32                   hWnd,
       GDBG_INFO( gc->myLevel, "Initial fifo state is incorrect\n" );
       return 0;
     }
+#endif
     
     if (!gc->cmdTransportInfo.autoBump) {
       gcFifo->bumpSize = _GlideRoot.environment.bumpSize;
@@ -1404,7 +1429,7 @@ GR_ENTRY(grSstWinOpen, GrContext_t, ( FxU32                   hWnd,
 
 
     }
-    
+
     GDBG_INFO(80, "Command Fifo:\n"
               "\tfifoStart:       0x%x\n"
               "\tfifoEnd:         0x%x\n"
@@ -1416,6 +1441,10 @@ GR_ENTRY(grSstWinOpen, GrContext_t, ( FxU32                   hWnd,
               gcFifo->fifoOffset, 
               gcFifo->fifoSize,
               gcFifo->fifoPtr ); 
+
+#if DRI_BUILD
+    _grImportFifo(*driInfo.fifoPtr, *driInfo.fifoRead);
+#endif
     
     /* The hw is now in a usable state from the fifo macros.
      * 
@@ -1467,7 +1496,12 @@ GR_ENTRY(grSstWinOpen, GrContext_t, ( FxU32                   hWnd,
     REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 4, 0xf);
     {
       REG_GROUP_SET(hw, colBufferAddr, gc->state.shadow.colBufferAddr);
+#if DRI_BUILD
+      REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride :
+		    gc->state.shadow.colBufferStride);
+#else
       REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride);
+#endif
       REG_GROUP_SET(hw, auxBufferAddr, gc->state.shadow.auxBufferAddr);
       REG_GROUP_SET(hw, auxBufferStride, gc->state.shadow.auxBufferStride); 
     }
@@ -1476,8 +1510,16 @@ GR_ENTRY(grSstWinOpen, GrContext_t, ( FxU32                   hWnd,
     
     GDBG_INFO( gc->myLevel, "  Setting all Glide state\n" );
     assertDefaultState();
+#if DRI_BUILD
+    if (nColBuffers>1)
+	grRenderBuffer(GR_BUFFER_BACKBUFFER);
+    else
+	grRenderBuffer(GR_BUFFER_FRONTBUFFER);
+    grClipWindow(0, 0, gc->state.screen_width, gc->state.screen_height);
+#else
     clearBuffers( gc );
-
+#endif
+    
     /* The new splash know the color format so we move it above splash screen */
     gc->state.color_format = format;
 
@@ -1494,7 +1536,7 @@ GR_ENTRY(grSstWinOpen, GrContext_t, ( FxU32                   hWnd,
 
     GR_END();
   }
-  
+
   return retVal;
 #undef FN_NAME
 } /* grSstWinOpen */
@@ -1536,7 +1578,7 @@ GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
   GrGC* gc = (GrGC*)context;
   GDBG_INFO(80, FN_NAME"(0x%X)\n", context);
 
-#ifndef __linux__
+#if GLIDE_CHECK_CONTEXT
   if (gc->lostContext) {
     if (*gc->lostContext)
       return 0;
@@ -1584,7 +1626,7 @@ GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
        * safe everywhere.
        */
       GDBG_INFO(gc->myLevel, "  Restore Video");
-#ifndef __linux__
+#if GLIDE_CHECK_CONTEXT
       if (!*gc->lostContext)
 #endif
         hwcRestoreVideo(gc->bInfo);
@@ -1615,7 +1657,7 @@ GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
   }
   _GlideRoot.windowsInit--;
 
-#if !defined(__linux__) && !defined(__DJGPP__) /* [dBorca] */
+#if !defined(__linux__) && !defined (__DJGPP__)
   if ( gc->bInfo->osNT )
     hwcUnmapMemory();
   else
@@ -1626,7 +1668,27 @@ GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
 #undef FN_NAME
 } /* grSstWinClose */
 
+/*-------------------------------------------------------------------
+  Function: grSetNumPendingBuffers
+  Date: 13-Oct-2000
+  Implementor(s): mmcclure
+  Description:
+  
+  Allow the application to supply the number of pending buffers
 
+  Arguments:
+
+  NumPendingBuffers - Sent to force number of pending buffers
+  
+  Return:
+  -------------------------------------------------------------------*/
+GR_DIENTRY(grSetNumPendingBuffers, void, (FxI32 NumPendingBuffers))
+{
+  /* [dBorca] TODO
+   *
+  _GlideRoot.environment.swapPendingCount = NumPendingBuffers;
+   */
+}
 
 /*-------------------------------------------------------------------
   Function: grSelectContext
@@ -1689,7 +1751,7 @@ GR_DIENTRY(grSelectContext, FxBool , (GrContext_t context) )
         GR_ASSERT((gc >= _GlideRoot.GCs) &&
                   (gc <= _GlideRoot.GCs + MAX_NUM_SST));
 
-#if defined( GLIDE_INIT_HWC ) && !defined(__linux__)
+#if defined( GLIDE_INIT_HWC ) && GLIDE_CHECK_CONTEXT
         gc->contextP = hwcQueryContext(gc->bInfo);
 #else
         gc->contextP = 1;
@@ -1840,7 +1902,7 @@ GR_ENTRY(grFinish, void, (void))
 
   grFlush();
   if ( gc->windowed ) {
-#if defined( GLIDE_INIT_HWC ) && !defined( __linux__ ) && !defined(__DJGPP__) /* [dBorca] */
+#if defined( GLIDE_INIT_HWC ) && !defined( __linux__ ) && !defined( __DJGPP__ )
     struct cmdTransportInfo*
       gcFifo = &gc->cmdTransportInfo;
     

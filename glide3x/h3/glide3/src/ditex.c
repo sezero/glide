@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/11/24 21:44:54  joseph
+** Initial checkin for SourceForge
+**
 ** 
 ** 6     6/10/99 12:17p Stb_mmcclure
 ** Cleaned up comments made in grTexMinAddress
@@ -555,7 +558,7 @@ GR_DIENTRY(grTexMinAddress, FxU32, ( GrChipID_t tmu ))
      
   FXUNUSED(hw); 
 
-#ifndef __linux__
+#if GLIDE_CHECK_CONTEXT
   if (!gc->lostContext)  
     return 0; 
   

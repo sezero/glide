@@ -37,7 +37,29 @@
  * macros for creating assembler offset files
  *----------------------------------------------------------------------*/
 
-#if !defined(__linux__) && !defined(__FreeBSD__) && !defined(__DJGPP__) /* [dBorca] */
+#if 1	/* defined(NASM) - default */
+#define NEWLINE printf("\n")
+#define COMMENT printf(";----------------------------------------------------------------------\n")
+
+#define HEADER(str)     NEWLINE; COMMENT; \
+                        printf("; Assembler offsets for %s struct\n",str);\
+                        COMMENT; NEWLINE
+
+#define OFFSET(p,o,pname) if (hex) \
+        printf("%s\tequ %08xh\n",pname,((int)&p.o)-(int)&p); \
+    else printf("%s\tequ %10d\n",pname,((int)&p.o)-(int)&p)
+
+#define OFFSET2(p,o,pname) if (hex) \
+        printf("%s\tequ %08xh\n",pname,((int)&o)-(int)&p); \
+    else printf("%s\tequ %10d\n",pname,((int)&o)-(int)&p)
+
+#define SIZEOF(p,pname) if (hex) \
+        printf("SIZEOF_%s\tequ %08lxh\n",pname,sizeof(p)); \
+    else printf("SIZEOF_%s\tequ %10ld\n",pname,sizeof(p))
+
+#else	/* !NASM */
+
+#if !defined(__linux__) && !defined(__FreeBSD__) && !defined(__DJGPP__)
 #define NEWLINE printf("\n")
 #define COMMENT printf(";----------------------------------------------------------------------\n")
 
@@ -78,6 +100,8 @@
         printf("#define SIZEOF_%s 0x%08lx\n",pname,sizeof(p)); \
     else printf("#define SIZEOF_%s %10ld\n",pname,sizeof(p))
 #endif
+
+#endif  /* defined(NASM)*/
 
 
 int
@@ -136,6 +160,9 @@ main (int argc, char **argv)
     OFFSET (gc,state.cull_mode,"cull_mode\t");
 #ifndef GLIDE3
     OFFSET (gc, regDataList,"regDataList\t");
+#endif
+#ifdef GLIDE_DEBUG
+    OFFSET (gc,checkPtr,"checkPtr\t\t");
 #endif
     OFFSET (gc, tsuDataList,"tsuDataList\t");
     OFFSET (gc, cmdTransportInfo.triPacketHdr, "triPacketHdr");

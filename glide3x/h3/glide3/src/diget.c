@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/11/24 21:44:54  joseph
+** Initial checkin for SourceForge
+**
 ** 
 ** 5     5/24/99 2:48p Jamesb
 ** Added ptrLostContext to exported cmdTransport struct.
@@ -687,6 +690,32 @@ GR_DIENTRY(grGetString, const char *, (FxU32 pname))
 } /* grGetString */
 
 /*-------------------------------------------------------------------
+  Function: grGetRegistryOrEnvironmentStringExt
+  Date: 4/17/2000       
+  Implementor(s): atom
+  Description: 
+
+    This is here so the spooky code for finding the correct registry
+    tweak path in 9x/NT/2K does not have to be duplicated in 3dfxogl.
+
+  Arguments: char* to the name of the setting to check for.
+  
+  Return: char* to the requested entry either from the registry
+          or the environment settings.  NULL on error.
+  -------------------------------------------------------------------*/
+GR_EXT_ENTRY(grGetRegistryOrEnvironmentString, char*, (char* theEntry))
+{
+#define FN_NAME "grGetRegistryOrEnvironmentString"
+  char*  retval ;
+
+  retval = getenv(theEntry) ;
+
+  return retval ;
+
+#undef FN_NAME
+} /* grGetRegistryOrEnvironmentString */
+
+/*-------------------------------------------------------------------
   Function: grReset
   Date: 16-Dec-97
   Implementor(s): atai
@@ -790,6 +819,7 @@ typedef struct {
 } GrExtensionTuple;
 
 static GrExtensionTuple _extensionTable[] = {
+    { "grGetRegistryOrEnvironmentStringExt",    (GrProc)grGetRegistryOrEnvironmentString },
     { "grChromaRangeModeExt",    (GrProc)grChromaRangeMode },
     { "grChromaRangeExt",   (GrProc)grChromaRange },
     { "grTexChromaModeExt", (GrProc)grTexChromaMode },
@@ -805,6 +835,8 @@ static GrExtensionTuple _extensionTable[] = {
 #endif /* (GLIDE_PLATFORM & GLIDE_OS_WIN32) */
     { "grCommandTransportInfoExt2", (GrProc)_grCommandTransportInfo },
     { "grCommandTransportMakeRoomExt2", (GrProc)_grCommandTransportMakeRoom },
+    /* POINTCAST */
+    { "grTexDownloadTableExt", (GrProc)grTexDownloadTableExt },
     { 0, 0 }
 };
 

@@ -20,6 +20,10 @@
 ;; $Header$
 ;; $Revision$
 ;; $Log$
+;; Revision 1.1.8.7  2003/09/12 05:11:45  koolsmoky
+;; preparing for graphic context checks
+;; fixed jmp errors
+;;
 ;; Revision 1.1.8.6  2003/07/07 23:29:06  koolsmoky
 ;; cleaned logs
 ;;
@@ -123,7 +127,7 @@
 ;;    lea       eax, [esp+ _va$]      ; pointer to vertex pointers
 ;;    test      esi, esi              ; window coordinates ?
 ;;
-;;    jz        win_coordinates       ; yup
+;;    jz        .win_coordinates       ; yup
 ;;
 ;;    invoke    _grDrawTriangles, 1, 3, eax; draw the triangle in clip coordinate space
 ;;
@@ -135,7 +139,7 @@
 ;;
 ;;    ret                             ; return, pop 3 DWORD arguments off stack
 ;;
-;;win_coordinates:
+;;.win_coordinates:
 ;;%endif  ; GLIDE_CLIP_COORDS
 
 %if GLIDE_VALIDATE_STATE
@@ -260,7 +264,7 @@
 ;;    lea       eax, [esp+ _va$]      ; pointer to vertex pointers
 ;;    test      edx, edx              ; window coordinates ?
 ;;
-;;    jz        win_coordinates       ; yup
+;;    jz        .win_coordinates       ; yup
 ;;
 ;;    invoke    _grDrawTriangles, 1, 3, eax; draw the triangle in coordinate space
 ;;
@@ -273,7 +277,7 @@
 ;;    ret                             ; return, pop 3 DWORD arguments off stack
 ;;
 ;;    ALIGN  16
-;;win_coordinates:
+;;.win_coordinates:
 ;;
 ;;%endif
 
@@ -702,7 +706,7 @@
 ;;    lea       eax, [esp+ _va$]      ; pointer to vertex pointers
 ;;    test      esi, esi              ; window coordinates ?
 ;;
-;;    jz        win_coordinates       ; yup
+;;    jz        .win_coordinates       ; yup
 ;;
 ;;    invoke    _grDrawTriangles, 1, 3, eax; draw the triangle in clip coordinate space
 ;;
@@ -714,7 +718,7 @@
 ;;
 ;;    ret                             ; return, pop 3 DWORD arguments off stack
 ;;
-;;win_coordinates:
+;;.win_coordinates:
 ;;%endif  ; GLIDE_CLIP_COORDS
 
 %if GLIDE_VALIDATE_STATE
@@ -837,7 +841,7 @@
 ;;    lea       eax, [esp+ _va$]      ; pointer to vertex pointers
 ;;    test      edx, edx              ; window coordinates ?
 ;;
-;;    jz        win_coordinates       ; yup
+;;    jz        .win_coordinates       ; yup
 ;;
 ;;    invoke    _grDrawTriangles, 1, 3, eax; draw the triangle in coordinate space
 ;;
@@ -850,7 +854,7 @@
 ;;    ret                             ; return, pop 3 DWORD arguments off stack
 ;;
 ;;    ALIGN  16
-;;win_coordinates:
+;;.win_coordinates:
 ;;
 ;;%endif
 
@@ -1249,7 +1253,7 @@
    db 00h
    db 00h
   
-   add eax, DWORD PTR __GlideRoot + tlsOffset
+   add eax, DWORD [_GlideRoot + tlsOffset]
    mov gc, [eax]
 %ELSE
    mov gc, edx

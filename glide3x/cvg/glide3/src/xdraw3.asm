@@ -32,7 +32,7 @@ extrn   _FifoMakeRoom
 
 segment		CONST
         ALIGN 8
-_F256_F256      DD    043800000h, 43800000h ; 256 | 256
+_F256_F256      DD    043800000h, 43800000h
 
 segment		DATA
         ALIGN   8

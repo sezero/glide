@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.2.4.3  2003/07/25 07:13:41  dborca
+** removed debris
+**
 ** Revision 1.2.4.2  2003/06/29 18:45:55  guillemj
 ** Fixed preprocessor invalid token errors.
 **
@@ -779,14 +782,12 @@ typedef struct {
     struct {
       GrDitherMode_t mode;
     } grDitherModeArgs;
-#ifdef __linux__
     struct {
       GrStippleMode_t mode;
     } grStippleModeArgs;
     struct {
       GrStipplePattern_t stipple;
     } grStipplePatternArgs;
-#endif /* __linux__ */
     struct {
       GrBuffer_t buffer;
     } grRenderBufferArgs;
@@ -835,11 +836,7 @@ typedef struct {
 */
 #define GR_MEMTYPE      GR_GET_RESERVED_1
 
-#if !defined(__linux__) && (!defined(__DJGPP__) || defined(GLIDE_USE_C_TRISETUP)) /* [dBorca] */
 #define TRISETUPARGS const void *a, const void *b, const void *c
-#else
-#define TRISETUPARGS const void *g, const void *a, const void *b, const void *c
-#endif
 
 /* gpci.c 
  *
@@ -1244,11 +1241,8 @@ typedef struct GrGC_s
       windowedState;
 #endif /* GLIDE_INIT_HWC */
   } cmdTransportInfo;
-#if !defined(__linux__) && (!defined(__DJGPP__) || defined(GLIDE_USE_C_TRISETUP)) /* [dBorca] */
+
   FxI32 (FX_CALL *triSetupProc)(const void *a, const void *b, const void *c);
-#else
-  FxI32 (FX_CALL *triSetupProc)(const void *gc, const void *a, const void *b, const void *c);
-#endif
   
   SstIORegs
     *ioRegs;                    /* I/O remap regs */
@@ -1626,9 +1620,11 @@ _trisetup_noclip_valid(TRISETUPARGS);
 
 #else
 
-#if defined( __linux__ ) || (defined(__DJGPP__) && !defined(GLIDE_USE_C_TRISETUP)) /* [dBorca] */
+#if defined( __linux__ ) || defined(__DJGPP__) /* [dBorca] */
 
-#define TRISETUP(a, b, c) (gc->triSetupProc)(gc, a, b, c)
+#define TRISETUP \
+  __asm(""::"d"(gc)); \
+  (*gc->triSetupProc)
 
 #else
 #define TRISETUP \
@@ -1670,11 +1666,9 @@ _grColorCombine(
                FxBool invert );
 
 
-#ifdef __linux__
 void FX_CALL
 grStipplePattern(
             GrStipplePattern_t stipple);
-#endif /* __linux__ */
 
 void FX_CALL 
 grChromaRangeMode(GrChromaRangeMode_t mode);
@@ -1718,10 +1712,8 @@ _grDepthBufferMode( GrDepthBufferMode_t mode );
 void
 _grDitherMode( GrDitherMode_t mode );
 
-#ifdef __linux__ 
 void
 _grStippleMode( GrStippleMode_t mode );
-#endif /* __linux__ */
 
 void
 _grRenderBuffer( GrBuffer_t buffer );
@@ -2281,5 +2273,8 @@ extern const FxU32 _gr_aspect_xlate_table[];
 #define HEIGHT_BY_ASPECT_LOD(__aspect, __lod) \
   _grMipMapHostWH[G3_ASPECT_TRANSLATE(__aspect)][G3_LOD_TRANSLATE(__lod)][1]
 
-#endif /* __FXGLIDE_H__ */
+GR_EXT_ENTRY(grTexDownloadTableExt,
+         void,
+         (GrChipID_t tmu, GrTexTable_t type,  void *data));
 
+#endif /* __FXGLIDE_H__ */
