@@ -1011,10 +1011,36 @@ _grBufferClear2D(const FxU32 buffOffset,
   {
     FxU32    flippedTop ;
     FxU32    flippedBottom ;
+#if 1
+    FxU32    maxY;
 
+    /* [dBorca] Hack alert:
+     * textureAuxBuffer is not correctly handled!
+     */
+    if (gc->textureBuffer.on) {
+       maxY = gc->textureBuffer.height;
+    } else {
+       maxY = gc->state.screen_height >> (gc->sliCount >> 1);
+    }
+
+    flippedTop = maxY - clipBottom ;
+    flippedBottom = maxY - clipTop ;
+
+    /* [dBorca] Hack alert:
+     * textureAuxBuffer is not correctly handled!
+     * Compensate for grTextureBuffer subtraction in `gtex.c'. Why? Oh, why?
+     * Could be a bug in hardware logic?
+     * It seems the non-tiled path is not correctly understood by WAX!
+     * I'm not sure about the next condition... should we use (!tiled) instead?
+     */
+    if (gc->textureBuffer.on) {
+       buffOffset += ( gc->state.screen_height - height ) * gc->textureBuffer.width * gc->grPixelSize;
+    }
+#else
     flippedTop = (gc->state.screen_height >> (gc->sliCount >> 1))
                  - height - clipTop ;
     flippedBottom = flippedTop + height ;
+#endif
 
     clip0min = ((flippedTop << 16) | clipLeft);
     clip0max = ((clipRight) | ((flippedBottom) << 16));
@@ -1029,7 +1055,11 @@ _grBufferClear2D(const FxU32 buffOffset,
   REG_GROUP_SET_WAX(gc->gRegs, clip0max, clip0max);
 
   /* Set buffer address and or in the tiled bit */
+#if 0 /* [dBorca] dumb assumption */
   dstBaseAddr = buffOffset | ((stride & SST_BUFFER_MEMORY_TILED) ? SSTG_IS_TILED : 0) ;
+#else
+  dstBaseAddr = buffOffset | (tiled ? SSTG_IS_TILED : 0) ;
+#endif
   REG_GROUP_SET_WAX(gc->gRegs, dstBaseAddr, dstBaseAddr);
   
   /* Build up dstFormat (Should this be done globally?) */
@@ -1612,6 +1642,12 @@ GR_ENTRY(grBufferClear, void, (GrColor_t color, GrAlpha_t alpha, FxU32 depth))
         /* If we start doing bikini lines, we will need to either send diff't size */
         /* blts to each chip, or send extra single line blts to certain chips */
         /* in addition to a blt for the common area of the fill.  */
+
+        /* [dBorca]
+         * the `clipBottomTop' and `clipLeftRight' are defined wrong if we
+         * want texturebuffer clears. Also failing the test below will get
+         * us into `_grTriFill', which is not fixed for textureBuffer yet!
+         */
         if ((!(gc->state.shadow.clipBottomTop & (((gc->sliCount << gc->sliBandHeight) - 1) << SST_CLIPTOP_SHIFT)) &&
            !(gc->state.shadow.clipBottomTop & (((gc->sliCount << gc->sliBandHeight) - 1) << SST_CLIPBOTTOM_SHIFT))) &&
             _GlideRoot.environment.waxon && ((gc->state.tbufferMask & 0xf) == 0xf)) /* KoolSmoky - come back to this! tbufferMask incorrect! */
@@ -1653,9 +1689,15 @@ GR_ENTRY(grBufferClear, void, (GrColor_t color, GrAlpha_t alpha, FxU32 depth))
             
             if (gc->textureBuffer.on)
             {
+#if 0 /* [dBorca] don't use colBuffer addr/stride */
               _grBufferClear2D(gc->state.shadow.colBufferAddr,
                                clipLeft, clipBottom, clipRight, clipTop, color,
                                mask, FXFALSE, gc->state.shadow.colBufferStride) ;
+#else /* [dBorca] right now we are discarding any clipping into texturebuffers. Fix me! */
+              _grBufferClear2D(gc->textureBuffer.addr,
+                               0, 0, gc->textureBuffer.width, gc->textureBuffer.height, color,
+                               mask, FXFALSE, gc->textureBuffer.stride) ;
+#endif
             }
              else
             {
@@ -1681,9 +1723,15 @@ GR_ENTRY(grBufferClear, void, (GrColor_t color, GrAlpha_t alpha, FxU32 depth))
         
             if (gc->textureAuxBuffer.on)
             {
+#if 0 /* [dBorca] don't use auxBuffer addr/stride */
               _grBufferClear2D(gc->state.shadow.auxBufferAddr,
                                clipLeft, clipBottom, clipRight, clipTop, depth, mask,
                                FXFALSE, gc->state.shadow.auxBufferStride) ;
+#else /* [dBorca] right now we are discarding any clipping into texturebuffers. Fix me! */
+              _grBufferClear2D(gc->textureAuxBuffer.addr,
+                               0, 0, gc->textureAuxBuffer.width, gc->textureAuxBuffer.height, color,
+                               mask, FXFALSE, gc->textureAuxBuffer.stride) ;
+#endif
             }
              else
             {
@@ -2041,6 +2089,12 @@ GR_EXT_ENTRY(grBufferClearExt, void, (GrColor_t color, GrAlpha_t alpha, FxU32 de
       /*  to get all of their little hairs off */
       /*  */
       if (gc->sliCount > 1) {     /* This code can only possibly help in Sli */
+        /* [dBorca]
+         * texturebuffer clears will fail badly! See `grClearBuffer' for needed
+         * modifications. As soon as the required changes will be made, this comment
+         * will become futile and shall be scheduled for deletion! :)
+         */
+      
         /* We don't do bikini lines yet */
         /* ie, clip window must be on an even chip boundary */
         /* If we start doing bikini lines, we will need to either send diff't size */
@@ -3243,6 +3297,13 @@ _grClipNormalizeAndGenerateRegValues(FxU32 minx, FxU32 miny, FxU32 maxx,
   } else {
     
     /* don't allow bogus clip coords!!! */
+
+    /* [dBorca] Hack alert:
+     * if we want clipping into texturebuffers, we are not allowed to
+     * clamp to screen size (which might be smaller than texture size,
+     * namely for Napalm -- which can handle up to 2048x2048). Need to
+     * revise this...
+     */
     if (maxx > gc->state.screen_width) maxx = gc->state.screen_width;
     if (maxy > gc->state.screen_height) maxy = gc->state.screen_height;
   }
@@ -3742,7 +3803,6 @@ GR_ENTRY(grDisableAllEffects, void, (void))
 ** grStippleMode
 */
 
-#if defined(DRI_BUILD) || defined(__WIN32__)
 GR_STATE_ENTRY(grStippleMode, void, (GrStippleMode_t mode))
 {
 #define FN_NAME "_grStippleMode"
@@ -3776,7 +3836,6 @@ GR_STATE_ENTRY(grStippleMode, void, (GrStippleMode_t mode))
 #endif /* !GLIDE3 */
 #undef FN_NAME
 } /* grStippleMode */
-#endif /* defined(DRI_BUILD) || defined(__WIN32__) */
 
 /*---------------------------------------------------------------------------
 ** grDitherMode
