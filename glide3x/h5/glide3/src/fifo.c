@@ -1349,17 +1349,22 @@ _fifoAssertFull( void )
   
   if ( !gc->windowed ) {
     if ((gFifoCheckCount++ & kFifoCheckMask) == 0) {
+#if GLIDE_INIT_HAL
       const FxU32 cmdFifoDepth = GR_GET(((SstRegs*)(gc->reg_ptr))->cmdFifoDepth);
+#else
+      /* [dBorca] gc->reg_ptr == NULL if not GLIDE_INIT_HAL */
+      const FxU32 cmdFifoDepth = GR_GET(((SstRegs*)(gc->sstRegs))->cmdFifoDepth);
+#endif
       const FxU32 maxFifoDepth = ((gc->cmdTransportInfo.fifoSize - FIFO_END_ADJUST) >> 2);
-      if(cmdFifoDepth > maxFifoDepth) { 
+      if(cmdFifoDepth > maxFifoDepth) {
         GDBG_PRINTF("cmdFifoDepth > size: 0x%X : 0x%Xn", 
                     cmdFifoDepth, maxFifoDepth); 
-        ASSERT_FAULT_IMMED(cmdFifoDepth <= maxFifoDepth); 
-      } else if (cmdFifoDepth + (gc->cmdTransportInfo.fifoRoom >> 2) > maxFifoDepth) { 
+        ASSERT_FAULT_IMMED(cmdFifoDepth <= maxFifoDepth);
+      } else if (cmdFifoDepth + (gc->cmdTransportInfo.fifoRoom >> 2) > maxFifoDepth) {
         GDBG_PRINTF("cmdFifoDepth + fifoRoom > size: (0x%X : 0x%X) : 0x%Xn", 
                     cmdFifoDepth, (gc->cmdTransportInfo.fifoRoom >> 2), maxFifoDepth); 
-        ASSERT_FAULT_IMMED(cmdFifoDepth + (gc->cmdTransportInfo.fifoRoom >> 2) <= maxFifoDepth); 
-      } 
+        ASSERT_FAULT_IMMED(cmdFifoDepth + (gc->cmdTransportInfo.fifoRoom >> 2) <= maxFifoDepth);
+      }
     } 
     ASSERT_FAULT_IMMED(HW_FIFO_PTR(FXTRUE) >= (FxU32)gc->cmdTransportInfo.fifoStart); 
     ASSERT_FAULT_IMMED(HW_FIFO_PTR(FXTRUE) < (FxU32)gc->cmdTransportInfo.fifoEnd); 

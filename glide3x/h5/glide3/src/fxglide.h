@@ -2329,7 +2329,7 @@ _trisetup_noclip_valid(const void *va, const void *vb, const void *vc );
   (*gc->triSetupProc)
 #else  // _MSC_VER
 // TRISETUP Macro for msvc 6 or later 
-#ifdef GLIDE_DEBUG
+#if defined(GLIDE_DEBUG) || GLIDE_USE_C_TRISETUP
 // MSVC6 Debug does funny stuff, so push our parms inline
 #define TRISETUP(_a, _b, _c) \
   __asm { \

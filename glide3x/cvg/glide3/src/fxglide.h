@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.3  2003/11/03 13:34:29  dborca
+** Voodoo2 happiness (DJGPP & Linux)
+**
 ** Revision 1.1.1.1.8.2  2003/07/25 07:13:41  dborca
 ** removed debris
 **
@@ -3346,7 +3349,9 @@ double_precision_asm(void);
 #define G3_LOD_TRANSLATE(lod)                       (lod)
 #define G3_ASPECT_TRANSLATE(aspect)                 (aspect)
 #else /* !GLIDE3_DEBUG */
-#define TEX_INFO(ptr,field)                         ptr##field##Log2
+/* [dBorca] picky preprocessors
+#define TEX_INFO(ptr,field)                         ptr##field##Log2*/
+#define TEX_INFO(ptr,field)                         ptr field##Log2
 #define G3_LOD_TRANSLATE(lod)                       (0x8-lod)
 #define G3_ASPECT_TRANSLATE(aspect)                 (0x3-(aspect))
 #endif /* !GLIDE3_DEBUG */

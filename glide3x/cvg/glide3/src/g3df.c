@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.1  2003/11/03 13:34:29  dborca
+** Voodoo2 happiness (DJGPP & Linux)
+**
 ** Revision 1.1.1.1  1999/12/07 21:42:32  joseph
 ** Initial checkin into SourceForge.
 **
@@ -70,7 +73,9 @@
 */
 #include <stdio.h>
 #include <string.h>
-
+#ifdef __GNUC__
+#include <ctype.h>
+#endif
 #include <3dfx.h>
 
 #define FX_DLL_DEFINITION

@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.6.2  2003/06/29 18:43:27  guillemj
+** Fix compilation warnings.
+**
 ** Revision 1.1.1.1.6.1  2003/05/05 07:12:46  dborca
 ** no message
 **
@@ -401,18 +404,13 @@ GR_DIENTRY(gu3dfGetInfo, FxBool,
   /*
   ** determine the color format of the input image
   */
-#if defined(__GNUC__) && !defined(__DJGPP__) /* [dBorca] DJGPP has `strupr' */
-  /* This function is not found in libgcc.a */
   {
-    char* tempStr = (char*)color_format;
-    while(*tempStr != '\0') *tempStr++ = toupper(*tempStr);
+    char *tempStr = (char*)color_format;
+    while (*tempStr != '\0') {
+          *tempStr = toupper(*tempStr);
+          tempStr++;
+    }
   }
-#else
-        {
-                extern char* strupr(char*);
-        strupr(color_format);
-  }
-#endif /* __GNUC__ */
 
   i = 0;
   format_found = FXFALSE;
