@@ -39,7 +39,7 @@
 #include <stdio.h>
 #include <time.h>
 
-main(int argc, char **argv)
+int main (int argc, char **argv)
 {
     struct tm	locTime;
     time_t	sysTime;
@@ -48,7 +48,7 @@ main(int argc, char **argv)
     time(&sysTime);
     locTime = *localtime(&sysTime);
 
-    if (build = getenv("BUILD_NUMBER")) {
+    if ((build = getenv("BUILD_NUMBER")) != NULL) {
 	printf("#define BUILD_NUMBER		%s\n", build);
 	printf("#define BUILD_NUMBER_STR	\"%s\"\n", build);
     } else {
