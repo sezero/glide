@@ -886,12 +886,6 @@ typedef struct sli_aa_request {
 #define GETENV(a, b) hwcGetenv(a)
 #endif
 
-#ifdef __GNUC__
-#define MMX_RESET() __asm __volatile ("emms")
-#else
-#define MMX_RESET() __asm { _asm emms }
-#endif
-
 #ifdef __DJGPP__
 #define _aligned_malloc(a, b) malloc(a)
 #define _aligned_free free
@@ -900,6 +894,12 @@ static __inline int min (int x, int y)
 {
  return (x > y) ? y : x;
 }
+#endif
+
+#ifdef __GNUC__
+
+#define MMX_RESET() __asm __volatile ("emms")
+
 #define MMX_SETUP2(ar, gb, ar1m, gb1m, ar2m, gb2m)\
 	__asm(					\
 		"emms"				\
@@ -974,6 +974,10 @@ static __inline int min (int x, int y)
 		movl	%%eax, %0		\n\
 		movl	%%edx, %1		\n\
 	":"+a"(s), "+d"(dst):"D"(src_width), "g"(stride_diff));
+#else
+
+#define MMX_RESET() __asm { _asm emms }
+
 #endif
 
 #define MAXFIFOSIZE        0x40000
@@ -1033,7 +1037,7 @@ modify [eax];
 #define P6FENCE {_asm xchg eax, fenceVar}
 #elif defined(__POWERPC__) && defined(__MWERKS__)
 #define P6FENCE __sync()
-#elif defined(__DJGPP__)
+#elif defined(__DJGPP__) || defined (__MINGW32__)
 #define P6FENCE __asm __volatile ("xchg %%eax, _fenceVar":::"%eax")
 #else
 #error "P6 Fencing in-line assembler code needs to be added for this compiler"
@@ -6263,7 +6267,7 @@ static void hwcReadRegion565(hwcBoardInfo *bInfo, FxU32 src, FxU32 src_x, FxU32 
   if (CPUInfo && (CPUInfo->os_support & _CPU_FEATURE_MMX))
     {
       /* MMX Optimized Loop */
-#ifdef __DJGPP__
+#ifdef __GNUC__
       MMX_SETUP2(0x0000F800, /* a r */
                  0x07E0001F, /* g b */
                  0x00010001, /* a<<=0 r<<=0 */
@@ -6304,7 +6308,7 @@ static void hwcReadRegion565(hwcBoardInfo *bInfo, FxU32 src, FxU32 src_x, FxU32 
           if((y & renderMask) == compareMask)
             {
               /* This chip owns this scanline. */
-#ifdef __DJGPP__
+#ifdef __GNUC__
               MMX_LOOP2(s, dst, src_width, stride_diff);
 #else
               __asm {
@@ -6419,7 +6423,7 @@ static void hwcReadRegion1555(hwcBoardInfo *bInfo, FxU32 src, FxU32 src_x, FxU32
   if (CPUInfo && (CPUInfo->os_support & _CPU_FEATURE_MMX))
     {
       /* MMX Optimized Loop */
-#ifdef __DJGPP__
+#ifdef __GNUC__
       MMX_SETUP2(0x00007C00, /* a r */
                  0x03E0001F, /* g b */
                  0x00000001, /* a<<=0 r<<=0 */
@@ -6460,7 +6464,7 @@ static void hwcReadRegion1555(hwcBoardInfo *bInfo, FxU32 src, FxU32 src_x, FxU32
             if((y & renderMask) == compareMask)
               {
                 /* This chip owns this scanline. */
-#ifdef __DJGPP__
+#ifdef __GNUC__
                 MMX_LOOP2(s, dst, src_width, stride_diff);
 #else
                 __asm {
@@ -6575,7 +6579,7 @@ static void hwcReadRegion8888(hwcBoardInfo *bInfo, FxU32 src, FxU32 src_x, FxU32
   if (CPUInfo && (CPUInfo->os_support & _CPU_FEATURE_MMX))
     {
       /* MMX Optimized Loop */
-#ifdef __DJGPP__
+#ifdef __GNUC__
       MMX_SETUP4();
 #else
 		__asm {
@@ -6589,7 +6593,7 @@ static void hwcReadRegion8888(hwcBoardInfo *bInfo, FxU32 src, FxU32 src_x, FxU32
         {    
           if((y & renderMask) == compareMask)
             {
-#ifdef __DJGPP__
+#ifdef __GNUC__
               MMX_LOOP4(s, dst, src_width, stride_diff);
 #else
               /* This chip owns this scanline. */
@@ -6909,7 +6913,7 @@ static void hwcCopyBuffer8888Flipped(hwcBoardInfo *bInfo, FxU16 *source, int w, 
   if (CPUInfo && (CPUInfo->os_support & _CPU_FEATURE_MMX))
     {
       /* MMX Optimized Loop */
-#ifdef __DJGPP__
+#ifdef __GNUC__
       __asm("\n\
 	emms /* mmx */					\n\
 							\n\
@@ -7044,7 +7048,7 @@ static void hwcCopyBuffer8888FlippedShifted(hwcBoardInfo *bInfo, FxU16 *source, 
   if (CPUInfo && (CPUInfo->os_support & _CPU_FEATURE_MMX))
     {
       /* MMX Optimized Loop */
-#ifdef __DJGPP__
+#ifdef __GNUC__
       __asm("\n\
 	emms /* mmx */					\n\
 	movd	%5, %%mm6 /* mm6 = aaShift */		\n\
@@ -7194,7 +7198,7 @@ static void hwcCopyBuffer8888FlippedDithered(hwcBoardInfo *bInfo, FxU16 *source,
       FxU32 sse_mmxplus = CPUInfo->os_support & (_CPU_FEATURE_MMXPLUS|_CPU_FEATURE_SSE);
 
       /* MMX Optimized Loop */
-#ifdef __DJGPP__
+#ifdef __GNUC__
       __asm("\n\
 	emms /* mmx */						\n\
 								\n\
@@ -7795,7 +7799,7 @@ static void hwcCopyBuffer565Shifted(hwcBoardInfo *bInfo, FxU16 *src, int w, int 
   if (CPUInfo && (CPUInfo->os_support & _CPU_FEATURE_MMX))
   {
 	  /* MMX Optimized Loop */
-#ifdef __DJGPP__
+#ifdef __GNUC__
       __asm("\n\
 	emms /* mmx */					\n\
 							\n\
@@ -8718,8 +8722,9 @@ hwcGetenvEx(const char *a, char *b)
   hwcGetenvEx_retVal[0] = '\0';
 
   /* the system environment variables override the registry settings */
-  if(retVal = getenv(a))
-	return retVal;
+  if ((retVal = getenv(a)) != NULL) {
+     return retVal;
+  }
 
   szData = sizeof(hwcGetenvEx_retVal);
 
@@ -8948,19 +8953,27 @@ hwcShareContextData(hwcBoardInfo *bInfo, FxU32 **data)
         ctxReq.which = HWCEXT_CONTEXT_DWORD_NT;
         
         /* Now for the NASTY stuff: */
+#ifdef __GNUC__
+        __asm __volatile (" xor %%eax, %%eax; mov %%cs, %%ax; mov %%eax, %0":"=g"(ohWell));
+#else
         __asm {
           __asm  mov eax, 0;
           __asm  mov ax, cs;
           __asm  mov ohWell, eax;
         }
+#endif
 
         ctxReq.optData.contextDwordNTReq.codeSegment = ohWell;
 
+#ifdef __GNUC__
+        __asm __volatile (" xor %%eax, %%eax; mov %%ds, %%ax; mov %%eax, %0":"=g"(ohWell));
+#else
         __asm {
           __asm  mov eax, 0;
           __asm  mov ax, ds;
           __asm  mov ohWell, eax;
         }
+#endif
     
         ctxReq.optData.contextDwordNTReq.dataSegment = ohWell;
         
