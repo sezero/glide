@@ -30,7 +30,16 @@
 #include "pcilib.h"
 
 #include <fxdpmi.h>
+
+/* [dBorca] */
+#ifdef __DJGPP__
+#include <crt0.h>
+#include <dpmi.h>
+#include <sys/nearptr.h>
+static FxBool dirty;
+#else
 #include <fxmemmap.h>
+#endif
 
 /* Callback declarations */
 static FxBool pciInitializeDPMI(void);
@@ -96,12 +105,31 @@ pciPlatformInit(void)
 static FxBool
 pciInitializeDPMI(void)
 {
+/* [dBorca] */
+#ifdef __DJGPP__
+ /* enable nearptr access */
+ if (_crt0_startup_flags & _CRT0_FLAG_NEARPTR) {
+    dirty = FXFALSE;
+ } else {
+    if (__djgpp_nearptr_enable() == 0)
+       return FXFALSE;
+
+    dirty = FXTRUE;
+ }
+#endif
   return FXTRUE;
 }
 
 static FxBool
 pciShutdownDPMI(void)
 {
+/* [dBorca] */
+#ifdef __DJGPP__
+ if (dirty) {
+    __djgpp_nearptr_disable();
+    dirty = FXFALSE;
+ }
+#endif
   return FXTRUE;
 }
 
@@ -117,6 +145,26 @@ static FxBool
 pciMapLinearDPMI(FxU32 busNumber, FxU32 physical_addr,
                FxU32 *linear_addr, FxU32 *length)
 {
+/* [dBorca] */
+#ifdef __DJGPP__
+ __dpmi_meminfo meminfo;
+
+ if (physical_addr >= 0x100000) {
+    /* map into linear memory */
+    meminfo.address = physical_addr;
+    /* Hack alert:
+     * because of the TILE shit, we must enhance the mapped area
+     */
+    meminfo.size = *length * 3 / 2;
+    if (__dpmi_physical_address_mapping(&meminfo) != 0)
+       return FXFALSE;
+
+    *linear_addr = meminfo.address - __djgpp_base_address;
+ } else {
+    /* exploit 1 -> 1 physical to linear mapping in low megabyte */
+    *linear_addr = physical_addr;
+ }
+#else
   FxBool onWindows;
 
   /*  
@@ -152,14 +200,29 @@ pciMapLinearDPMI(FxU32 busNumber, FxU32 physical_addr,
 
   /* If we got here, it's OK to map the memory */
   *linear_addr = DpmiMapPhysicalToLinear( physical_addr, *length );
+#endif
 
-  return FXTRUE;
+ return FXTRUE;
 }
 
 static FxBool
 pciUnmapLinearDPMI( FxU32 linear_addr, FxU32 length ) 
 {
+/* [dBorca] */
+#ifdef __DJGPP__
+ __dpmi_meminfo meminfo;
+
+ if (linear_addr >= 0x100000) {
+    meminfo.address = linear_addr + __djgpp_base_address;
+    if (!__dpmi_free_physical_address_mapping(&meminfo)) {
+       return FXTRUE;
+    }
+ }
+
+ return FXFALSE;
+#else
   DpmiUnmapMemory(linear_addr, length);
+#endif
 }
 
 /* Platform port io stuff */
@@ -184,50 +247,82 @@ pciPortInLongDPMI(FxU16 port)
 static FxBool
 pciPortOutByteDPMI(FxU16 port, FxU8 data)
 {
-  return outp(port, data);
+  /* [dBorca] */
+  outp(port, data);
+  return FXTRUE;
 }
 
 static FxBool
 pciPortOutWordDPMI(FxU16 port, FxU16 data)
 {
-  return outpw(port, data);
+  /* [dBorca] */
+  outpw(port, data);
+  return FXTRUE;
 }
 
 static FxBool
 pciPortOutLongDPMI(FxU16 port, FxU32 data)
 {
-  return outpd(port, data);
+  /* [dBorca] */
+  outpd(port, data);
+  return FXTRUE;
 }
 
 static FxBool 
 pciMsrGetDPMI(MSRInfo* in, MSRInfo* out)
 {
+/* [dBorca] */
+#ifdef __DJGPP__
+  return FXTRUE;
+#else
   return DpmiGetMSR((FxU32)in, (FxU32)out);
+#endif
 }
 
 static FxBool 
 pciMsrSetDPMI(MSRInfo* in, MSRInfo* out)
 {
+/* [dBorca] */
+#ifdef __DJGPP__
+  return FXTRUE;
+#else
   return DpmiSetMSR((FxU32)in, (FxU32)out);
+#endif
 }
 
 /* Platform utilities. */
 static FxBool
 pciOutputStringDPMI(const char* msg)
 {
+/* [dBorca] */
+#ifdef __DJGPP__
+ printf("%s", msg);
+ return FXTRUE;
+#else
   return DpmiOutputDebugString(msg);
+#endif
 }
 
 static FxBool
 pciSetPermissionDPMI(const FxU32 addrBase, const FxU32 addrLen,
                    const FxBool writePermP)
 {
+/* [dBorca] */
+#ifdef __DJGPP__
+  return FXTRUE;
+#else
   return DpmiLinearRangeSetPermission(addrBase, addrLen, writePermP);
+#endif
 }
 
 static FxBool
 pciSetPassThroughBaseDPMI(FxU32* baseAddr, FxU32 baseAddrLen)
 {
+/* [dBorca] */
+#ifdef __DJGPP__
+  return FXTRUE;
+#else
   return DpmiSetPassThroughBase(baseAddr, baseAddrLen);
+#endif
 }
 
