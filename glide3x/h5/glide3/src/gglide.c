@@ -2660,42 +2660,6 @@ GR_ENTRY(grBufferSwap, void, (FxU32 swapInterval))
   GDBG_INFO_MORE(gc->myLevel,"(%d)\n",swapInterval);
 
 #ifdef FX_GLIDE_NAPALM
-  {
-    FxU32 chipIndex, aaCtrl;
-    static FxU32 swapno = 0;
-    swapno ^= 1;
-    
-    for (chipIndex = 0; chipIndex < 2; chipIndex++) {
-
-      _grChipMask( 1 << chipIndex );
-
-      if(swapno) {
-        aaCtrl = (((signed char)(atof(PRIBUFVTXOFFX_2SMPL_CORRECT_DEF)*16.0f)+8)&0x7f << SST_AA_CONTROL_PRIMARY_X_OFFSET_SHIFT) |
-                 (((signed char)(atof(PRIBUFVTXOFFY_2SMPL_CORRECT_DEF)*16.0f)+8)&0x7f << SST_AA_CONTROL_PRIMARY_Y_OFFSET_SHIFT)/* |
-                 (((signed char)(atof(SECBUFVTXOFFX_2SMPL_CORRECT_DEF)*16.0f)+8)&0x7f << SST_AA_CONTROL_SECONDARY_X_OFFSET_SHIFT) |
-                 (((signed char)(atof(SECBUFVTXOFFY_2SMPL_CORRECT_DEF)*16.0f)+8)&0x7f << SST_AA_CONTROL_SECONDARY_Y_OFFSET_SHIFT) |
-                 ((gc->enableSecondaryBuffer) ? SST_AA_CONTROL_AA_ENABLE : 0) |
-                 ((FXTRUE) ? 0 : SST_AA_CONTROL_AA_DISABLE_FIRST)*/;
-      } else {
-        aaCtrl = (((signed char)(atof(SECBUFVTXOFFX_2SMPL_CORRECT_DEF)*16.0f)+8)&0x7f << SST_AA_CONTROL_PRIMARY_X_OFFSET_SHIFT) |
-                 (((signed char)(atof(SECBUFVTXOFFY_2SMPL_CORRECT_DEF)*16.0f)+8)&0x7f << SST_AA_CONTROL_PRIMARY_Y_OFFSET_SHIFT)/* |
-                 (xOffset[(chipIndex * 2 + 1)%8] << SST_AA_CONTROL_SECONDARY_X_OFFSET_SHIFT) |
-                 (yOffset[(chipIndex * 2 + 1)%8] << SST_AA_CONTROL_SECONDARY_Y_OFFSET_SHIFT) |
-                 ((gc->enableSecondaryBuffer) ? SST_AA_CONTROL_AA_ENABLE : 0) |
-                 ((FXTRUE) ? 0 : SST_AA_CONTROL_AA_DISABLE_FIRST)*/;
-      }
-
-      REG_GROUP_BEGIN(BROADCAST_ID, aaCtrl, 1, 0x1);
-      REG_GROUP_SET(hw, aaCtrl, aaCtrl);
-      REG_GROUP_END();
-
-    }
-
-    _grChipMask( gc->chipmask );
-
-    /* Force fogMode to be updated */
-    INVALIDATE(fogMode);
-  }
 #if !(GLIDE_PLATFORM & GLIDE_OS_UNIX) && !defined(__DJGPP__)
   /* Window hacky stuff */
   if (gc->windowed)
