@@ -31,7 +31,6 @@
 
 #include <fxdpmi.h>
 
-/* [dBorca] */
 #ifdef __DJGPP__
 #include <crt0.h>
 #include <dpmi.h>
@@ -107,7 +106,6 @@ pciPlatformInit(void)
 static FxBool
 pciInitializeDPMI(void)
 {
-/* [dBorca] */
 #ifdef __DJGPP__
  /* enable nearptr access */
  if (_crt0_startup_flags & _CRT0_FLAG_NEARPTR) {
@@ -125,7 +123,6 @@ pciInitializeDPMI(void)
 static FxBool
 pciShutdownDPMI(void)
 {
-/* [dBorca] */
 #ifdef __DJGPP__
  if (dirty) {
     __djgpp_nearptr_disable();
@@ -147,7 +144,6 @@ static FxBool
 pciMapLinearDPMI(FxU32 busNumber, FxU32 physical_addr,
                FxU32 *linear_addr, FxU32 *length)
 {
-/* [dBorca] */
 #ifdef __DJGPP__
  __dpmi_meminfo meminfo;
 
@@ -240,7 +236,6 @@ pciMapLinearDPMI(FxU32 busNumber, FxU32 physical_addr,
 static FxBool
 pciUnmapLinearDPMI( FxU32 linear_addr, FxU32 length ) 
 {
-/* [dBorca] */
 #ifdef __DJGPP__
  __dpmi_meminfo meminfo;
 
@@ -291,7 +286,6 @@ pciPortInLongDPMI(FxU16 port)
 static FxBool
 pciPortOutByteDPMI(FxU16 port, FxU8 data)
 {
-  /* [dBorca] */
   outp(port, data);
   return FXTRUE;
 }
@@ -299,7 +293,6 @@ pciPortOutByteDPMI(FxU16 port, FxU8 data)
 static FxBool
 pciPortOutWordDPMI(FxU16 port, FxU16 data)
 {
-  /* [dBorca] */
   outpw(port, data);
   return FXTRUE;
 }
@@ -307,7 +300,6 @@ pciPortOutWordDPMI(FxU16 port, FxU16 data)
 static FxBool
 pciPortOutLongDPMI(FxU16 port, FxU32 data)
 {
-  /* [dBorca] */
   outpd(port, data);
   return FXTRUE;
 }
@@ -315,7 +307,6 @@ pciPortOutLongDPMI(FxU16 port, FxU32 data)
 static FxBool 
 pciMsrGetDPMI(MSRInfo* in, MSRInfo* out)
 {
-/* [dBorca] */
 #if defined(__DJGPP__) || defined(__WATCOMC__)
   return FXTRUE;
 #else
@@ -326,7 +317,6 @@ pciMsrGetDPMI(MSRInfo* in, MSRInfo* out)
 static FxBool 
 pciMsrSetDPMI(MSRInfo* in, MSRInfo* out)
 {
-/* [dBorca] */
 #if defined(__DJGPP__) || defined(__WATCOMC__)
   return FXTRUE;
 #else
@@ -338,7 +328,6 @@ pciMsrSetDPMI(MSRInfo* in, MSRInfo* out)
 static FxBool
 pciOutputStringDPMI(const char* msg)
 {
-/* [dBorca] */
 #if defined(__DJGPP__) || defined(__WATCOMC__)
  printf("%s", msg);
  return FXTRUE;
@@ -351,7 +340,6 @@ static FxBool
 pciSetPermissionDPMI(const FxU32 addrBase, const FxU32 addrLen,
                    const FxBool writePermP)
 {
-/* [dBorca] */
 #if defined(__DJGPP__) || defined(__WATCOMC__)
   return FXTRUE;
 #else
@@ -362,7 +350,6 @@ pciSetPermissionDPMI(const FxU32 addrBase, const FxU32 addrLen,
 static FxBool
 pciSetPassThroughBaseDPMI(FxU32* baseAddr, FxU32 baseAddrLen)
 {
-/* [dBorca] */
 #if defined(__DJGPP__) || defined(__WATCOMC__)
   return FXTRUE;
 #else
