@@ -20,6 +20,9 @@
 ;; $Header$
 ;; $Revision$
 ;; $Log$
+;; Revision 1.1.1.1.8.1  2003/11/03 13:34:29  dborca
+;; Voodoo2 happiness (DJGPP & Linux)
+;;
 ;; Revision 1.1.1.1  1999/12/07 21:42:35  joseph
 ;; Initial checkin into SourceForge.
 ;;
@@ -91,6 +94,12 @@
     pfsubr    mm2, mm1              ; dyBC | dxBC
     pfsub     mm0, mm1              ; dyAB | dxAB
 
+;; E3DN
+;    pswapd    mm2, mm2              ; dxBC | dyBC
+;    pfmul     mm0, mm2              ; dxBC*dyAB | dxAB*dyBC
+;    pfnacc    mm0, mm0              ; dxAB*dyBC - dxBC*dyAB | dxAB*dyBC - dxBC*dyAB
+;    movd      intArea, mm0          ; vectored !
+
     movq      mm5, mm2              ; dyBC | dxBC
     punpckhdq mm2, mm2              ; dyBC | dyBC
 
@@ -107,10 +116,10 @@
     ; Zero Area Triangle Check
 
     test      intArea, 7fffffffh    ; if ((j & 0x7FFFFFFF) == 0)
-    jz        __cullFail            ; area zero, triangle culled
+    jz        .__cullFail            ; area zero, triangle culled
 
     xor       intArea, cull         ; if (j ^ (culltest << 31))
-    jge       __cullFail            ; triangle facing away from viewer, culled
+    jge       .__cullFail            ; triangle facing away from viewer, culled
 
     cmp       ebx, tempVal          ; fifo space required >= space available ?
     jge       .__triBegin            ; yup, push out triangle data to Voodoo
@@ -236,9 +245,9 @@
     add       dlp, 4                ; dlp++
 
     test      eax, eax              ; end of list ?
-    jz        __paramLoopDoneWBone1 ; yes, one DWORD in "write buffer"
+    jz        .__paramLoopDoneWBone1 ; yes, one DWORD in "write buffer"
           
-__paramLoop1a:
+.__paramLoop1a:
     movd      mm2, [eax+vertex]     ; get next parameter
     add       fifo, 8               ; fifoPtr += 2*sizeof(FxU32)
 
@@ -249,16 +258,16 @@ __paramLoop1a:
     test      eax, eax              ; at end of offset list (offset == 0) ?
   
     WRITE_MM1_FIFO_ALIGNED -8       ; PCI write current param | previous param
-    jz        __paramLoopDoneWBzero1; exit, "write buffer" empty
+    jz        .__paramLoopDoneWBzero1; exit, "write buffer" empty
 
     movd      mm1, [eax+vertex]     ; get next parameter
     mov       eax, [dlp-4]          ; offset = *(dlp + 1)
 
     test      eax, eax              ; at end of offset list (offset == 0) ?
-    jnz       __paramLoop1a         ; nope, copy next parameter
+    jnz       .__paramLoop1a         ; nope, copy next parameter
 
     nop                             ; filler
-    jmp       __paramLoopDoneWBone1 ; merge back into common stream
+    jmp       .__paramLoopDoneWBone1 ; merge back into common stream
 
 %ELSE ; ! GLIDE_PACK_RGB
 
@@ -350,14 +359,14 @@ __paramLoop1a:
     test      eax, eax              ; end of list ?
 
     nop                             ; filler
-    jz        __paramLoopDoneWBzero1; yes, "write buffer" is empty
+    jz        .__paramLoopDoneWBzero1; yes, "write buffer" is empty
 
-__paramLoop1b:
+.__paramLoop1b:
     movd      mm1, [eax+vertex]     ; get next parameter
     mov       eax, [dlp]            ; offset = *(dlp + 1)
 
     test      eax, eax              ; at end of offset list (offset == 0) ?
-    jz        __paramLoopDoneWBone1 ; exit, write buffer contains one DWORD
+    jz        .__paramLoopDoneWBone1 ; exit, write buffer contains one DWORD
 
     movd      mm2, [eax+vertex]     ; get next parameter
     add       dlp, 8                ; dlp += 2
@@ -369,10 +378,10 @@ __paramLoop1b:
     test      eax, eax              ; at end of offset list (offset == 0) ?
 
     WRITE_MM1_FIFO_ALIGNED -8       ; PCI write current param | previous param
-    jnz       __paramLoop1b         ; nope, copy next parameter
+    jnz       .__paramLoop1b         ; nope, copy next parameter
 
     nop                             ; filler
-    jmp       __paramLoopDoneWBzero1; write buffer empty
+    jmp       .__paramLoopDoneWBzero1; write buffer empty
 
 %ELSE ; !GLIDE_PACK_RGB
     mov       eax, [dlp]            ; get first offset from the data list
@@ -463,14 +472,14 @@ __paramLoop1b:
     test      eax, eax              ; end of list ?
 
     nop                             ; filler
-    jz        __paramLoopDoneWBzero2; yes, "write buffer" is empty
+    jz        .__paramLoopDoneWBzero2; yes, "write buffer" is empty
 
-__paramLoop2b:
+.__paramLoop2b:
     movd      mm1, [eax+vertex]     ; get next parameter
     mov       eax, [dlp]            ; offset = *(dlp + 1)
 
     test      eax, eax              ; at end of offset list (offset == 0) ?
-    jz        __paramLoopDoneWBone2 ; exit, write buffer contains one DWORD
+    jz        .__paramLoopDoneWBone2 ; exit, write buffer contains one DWORD
 
     movd      mm2, [eax+vertex]     ; get next parameter
     add       dlp, 8                ; dlp += 2
@@ -482,10 +491,10 @@ __paramLoop2b:
     test      eax, eax              ; at end of offset list (offset == 0) ?
 
     WRITE_MM1_FIFO_ALIGNED -8       ; PCI write current param | previous param
-    jnz       __paramLoop2b         ; nope, copy next parameter
+    jnz       .__paramLoop2b         ; nope, copy next parameter
 
     nop                             ; filler
-    jmp       __paramLoopDoneWBzero2; write buffer empty
+    jmp       .__paramLoopDoneWBzero2; write buffer empty
 
 %ELSE ; !GLIDE_PACK_RGB
     mov       eax, [dlp]            ; get first offset from the data list
@@ -571,9 +580,9 @@ __paramLoop2b:
     add       dlp, 4                ; dlp++
 
     test      eax, eax              ; end of list ?
-    jz        __paramLoopDoneWBone2 ; yes, one DWORD in "write buffer"
+    jz        .__paramLoopDoneWBone2 ; yes, one DWORD in "write buffer"
           
-__paramLoop2a:
+.__paramLoop2a:
     movd      mm2, [eax+vertex]     ; get next parameter
     add       fifo, 8               ; fifoPtr += 2*sizeof(FxU32)
 
@@ -584,16 +593,16 @@ __paramLoop2a:
     test      eax, eax              ; at end of offset list (offset == 0) ?
 
     WRITE_MM1_FIFO_ALIGNED -8       ; PCI write current param | previous param
-    jz        __paramLoopDoneWBzero2; exit, "write buffer" empty
+    jz        .__paramLoopDoneWBzero2; exit, "write buffer" empty
 
     movd      mm1, [eax+vertex]     ; get next parameter
     mov       eax, [dlp-4]          ; offset = *(dlp + 1)
 
     test      eax, eax              ; at end of offset list (offset == 0) ?
-    jnz       __paramLoop2a         ; nope, copy next parameter
+    jnz       .__paramLoop2a         ; nope, copy next parameter
 
     nop                             ; filler
-    jmp       __paramLoopDoneWBone2 ; merge back into common stream
+    jmp       .__paramLoopDoneWBone2 ; merge back into common stream
 
 %ELSE ; ! GLIDE_PACK_RGB
 
@@ -681,9 +690,9 @@ __paramLoop2a:
     add       dlp, 4                ; dlp++
 
     test      eax, eax              ; end of list ?
-    jz        __paramLoopDoneWBone3 ; yes, one DWORD in "write buffer"
+    jz        .__paramLoopDoneWBone3 ; yes, one DWORD in "write buffer"
           
-__paramLoop3a:
+.__paramLoop3a:
     movd      mm2, [eax+vertex]     ; get next parameter
     add       fifo, 8               ; fifoPtr += 2*sizeof(FxU32)
 
@@ -694,16 +703,16 @@ __paramLoop3a:
     punpckldq mm1, mm2              ; current param | previous param
   
     WRITE_MM1_FIFO_ALIGNED -8       ; PCI write current param | previous param
-    jz        __paramLoopDoneWBzero3; exit, "write buffer" empty
+    jz        .__paramLoopDoneWBzero3; exit, "write buffer" empty
 
     movd      mm1, [eax+vertex]     ; get next parameter
     mov       eax, [dlp-4]          ; offset = *(dlp + 1)
 
     test      eax, eax              ; at end of offset list (offset == 0) ?
-    jnz       __paramLoop3a         ; nope, copy next parameter
+    jnz       .__paramLoop3a         ; nope, copy next parameter
 
     nop                             ; filler
-    jmp       __paramLoopDoneWBone3 ; merge back into common stream
+    jmp       .__paramLoopDoneWBone3 ; merge back into common stream
 
 %ELSE ; ! GLIDE_PACK_RGB
 
@@ -802,14 +811,14 @@ __paramLoop3a:
     nop                             ; filler
 
     test      eax, eax              ; end of list ?
-    jz        __paramLoopDoneWBzero3; yes, "write buffer" is empty
+    jz        .__paramLoopDoneWBzero3; yes, "write buffer" is empty
 
-__paramLoop3b:
+.__paramLoop3b:
     movd      mm1, [eax+vertex]     ; get next parameter
     mov       eax, [dlp]            ; offset = *(dlp + 1)
 
     test      eax, eax              ; at end of offset list (offset == 0) ?
-    jz        __paramLoopDoneWBone3 ; exit, write buffer contains one DWORD
+    jz        .__paramLoopDoneWBone3 ; exit, write buffer contains one DWORD
 
     movd      mm2, [eax+vertex]     ; get next parameter
     add       dlp, 8                ; dlp++
@@ -821,10 +830,10 @@ __paramLoop3b:
     test      eax, eax              ; at end of offset list (offset == 0) ?
 
     WRITE_MM1_FIFO_ALIGNED -8       ; PCI write current param | previous param
-    jnz       __paramLoop3b         ; nope, copy next parameter
+    jnz       .__paramLoop3b         ; nope, copy next parameter
 
     nop                             ; filler
-    jmp       __paramLoopDoneWBzero3; write buffer empty
+    jmp       .__paramLoopDoneWBzero3; write buffer empty
 
 %ELSE ; !GLIDE_PACK_RGB
 
@@ -900,7 +909,7 @@ __paramLoop3b:
 
 
 %IF GLIDE_CULLING
-__cullFail:
+.__cullFail:
     mov       ebp, [_GlideRoot + trisProcessed]; triangles processed so far
     xor       eax, eax              ; return value = triangle not drawn
 
