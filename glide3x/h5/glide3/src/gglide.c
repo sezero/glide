@@ -3599,6 +3599,46 @@ GR_ENTRY(grDisableAllEffects, void, (void))
 } /* grDisableAllEffects */
 
 /*---------------------------------------------------------------------------
+** grStippleMode
+*/
+
+#ifdef __linux__
+GR_STATE_ENTRY(grStippleMode, void, (GrStippleMode_t mode))
+{
+#define FN_NAME "_grStippleMode"
+  FxU32 fbzMode;
+  GR_BEGIN_NOFIFOCHECK("_grStippleMode", 85);
+  GDBG_INFO_MORE(gc->myLevel, "(%d)\n", mode);
+
+  fbzMode = gc->state.shadow.fbzMode; 
+
+  fbzMode &= ~(SST_ENSTIPPLE | SST_ENSTIPPLEPATTERN);
+
+  switch (mode) {
+  case GR_STIPPLE_DISABLE:      
+    break;           
+                    
+  case GR_STIPPLE_PATTERN:
+    fbzMode |= (SST_ENSTIPPLE | SST_ENSTIPPLEPATTERN);
+    break;
+
+  case GR_STIPPLE_ROTATE:
+    fbzMode |= SST_ENSTIPPLE;
+    break;
+  }
+   
+  gc->state.shadow.fbzMode = fbzMode;
+
+#if !GLIDE3
+  GR_SET_EXPECTED_SIZE(sizeof(FxU32), 1);
+  GR_SET(BROADCAST_ID, hw, fbzMode,  fbzMode);
+  GR_CHECK_SIZE();
+#endif /* !GLIDE3 */
+#undef FN_NAME
+} /* grStippleMode */
+#endif /* __linux__ */
+
+/*---------------------------------------------------------------------------
 ** grDitherMode
 */
 

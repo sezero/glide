@@ -743,6 +743,7 @@ typedef struct  {
 #define combineModeBIT          FXBIT(13)
 #define renderModeBIT           FXBIT(14)
 #define tmuConfigBIT            FXBIT(15)
+#define stippleBIT              FXBIT(16)
 
 /* Similar bits for TMU registers */
 #define textureModeBIT          FXBIT(0)
@@ -1135,6 +1136,14 @@ typedef struct {
     struct {
       GrDitherMode_t mode;
     } grDitherModeArgs;
+#ifdef __linux__
+    struct {
+      GrStippleMode_t mode;
+    } grStippleModeArgs;
+    struct {
+      GrStipplePattern_t stipple;
+    } grStipplePatternArgs;
+#endif /* __linux__ */
     struct {
       GrBuffer_t buffer;
     } grRenderBufferArgs;
@@ -2328,6 +2337,12 @@ grStencilFunc(GrCmpFnc_t fnc, GrStencil_t ref, GrStencil_t mask);
 void FX_CALL 
 grStencilMask(GrStencil_t write_mask);
 
+#ifdef __linux__
+void FX_CALL
+grStipplePattern(
+            GrStipplePattern_t stipple);
+#endif /* __linux__ */
+
 void FX_CALL 
 grStencilOp(
             GrStencilOp_t stencil_fail,
@@ -2501,6 +2516,11 @@ _grDepthBufferMode( GrDepthBufferMode_t mode );
 
 void
 _grDitherMode( GrDitherMode_t mode );
+
+#ifdef __linux__
+void
+_grStippleMode( GrStippleMode_t mode );
+#endif /* __linux__ */
 
 void
 _grRenderBuffer( GrBuffer_t buffer );

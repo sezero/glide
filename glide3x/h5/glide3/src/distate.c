@@ -831,6 +831,32 @@ GR_EXT_ENTRY(grLfbConstantStencil, void , (GrStencil_t value) )
 } /* grLfbConstantStencil */
 
 /*-------------------------------------------------------------------
+  Function: grStipplePattern
+  Date: 23-Nov-2000
+  Implementor(s): alanh
+  Description:
+  
+  Arguments:
+  
+  Return:
+  -------------------------------------------------------------------*/
+#ifdef __linux__
+GR_EXT_ENTRY(grStipplePattern, void , (GrStipplePattern_t stipple))
+{
+ #define FN_NAME "grStipplePattern"
+
+  GR_BEGIN_NOFIFOCHECK("grStippleMode\n", 85);
+
+  INVALIDATE(stipple);
+
+  STOREARG(grStipplePattern, stipple);
+
+ #undef FN_NAME
+} /* grStipplePattern */
+#endif /* __linux__ */
+
+
+/*-------------------------------------------------------------------
   Function: grStencilOp
   Date: 03-June-99
   Implementor(s): atai
@@ -979,6 +1005,31 @@ GR_EXT_ENTRY(grAlphaCombineExt, void , (GrACUColor_t     a,
 } /* grAlphaCombineExt */
 
 #endif
+
+/*-------------------------------------------------------------------
+  Function: grStippleMode
+  Date: 23-Nov-2000
+  Implementor(s): alanh
+  Description:
+  
+  Arguments:
+  
+  Return:
+  -------------------------------------------------------------------*/
+#ifdef __linux__
+GR_DIENTRY(grStippleMode, void , (GrStippleMode_t mode) )
+{
+ #define FN_NAME "grStippleMode"
+
+  GR_BEGIN_NOFIFOCHECK("grStippleMode\n", 85);
+
+  INVALIDATE(fbzMode);
+
+  STOREARG(grStippleMode, mode);
+
+ #undef FN_NAME
+} /* grStippleMode */
+#endif /* __linux__ */
 
 /*-------------------------------------------------------------------
   Function: grDitherMode
@@ -2020,6 +2071,9 @@ _grValidateState()
     _grDepthBufferFunction(LOADARG(grDepthBufferFunction, fnc));
     _grDepthBufferMode(LOADARG(grDepthBufferMode, mode));
     _grDitherMode(LOADARG(grDitherMode, mode));
+#ifdef __linux__
+    _grStippleMode(LOADARG(grStippleMode, mode));
+#endif /* __linux__ */
     _grSstOrigin(LOADARG(grSstOrigin, origin));
     _grRenderBuffer(LOADARG(grRenderBuffer, buffer));
         /* tbext */
@@ -2231,6 +2285,17 @@ _grValidateState()
     }
     REG_GROUP_END();
   }
+
+#ifdef __linux__
+  if (NOTVALID(stipple)) {
+    gc->state.shadow.stipple = LOADARG(grStipplePattern, stipple);
+    REG_GROUP_BEGIN(BROADCAST_ID, stipple, 1, 0x01);
+    {
+      REG_GROUP_SET(hw, stipple, gc->state.shadow.stipple);
+    }
+    REG_GROUP_END();
+  }
+#endif /* __linux__ */
 
   if (NOTVALID(stencilOp)) {
     FxU32 stencilOp = gc->state.shadow.stencilOp;

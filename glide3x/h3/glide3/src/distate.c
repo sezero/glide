@@ -19,6 +19,9 @@
  **
  ** $Header$
  ** $Log$
+ ** Revision 1.1.1.1  1999/11/24 21:44:54  joseph
+ ** Initial checkin for SourceForge
+ **
 ** 
 ** 5     4/06/99 3:54p Dow
 ** Alt tab again.
@@ -536,6 +539,55 @@ GR_DIENTRY(grDepthBufferMode, void , (GrDepthBufferMode_t mode) )
  #undef FN_NAME
 } /* grDepthBufferMode */
 
+/*-------------------------------------------------------------------
+  Function: grStipplePattern
+  Date: 23-Nov-2000
+  Implementor(s): alanh
+  Description:
+  
+  Arguments:
+  
+  Return:
+  -------------------------------------------------------------------*/
+#ifdef __linux__
+GR_EXT_ENTRY(grStipplePattern, void , (GrStipplePattern_t stipple))
+{
+ #define FN_NAME "grStipplePattern"
+
+  GR_BEGIN_NOFIFOCHECK("grStippleMode\n", 85);
+
+  INVALIDATE(stipple);
+
+  STOREARG(grStipplePattern, stipple);
+
+ #undef FN_NAME
+} /* grStipplePattern */
+#endif /* __linux__ */
+
+ /*-------------------------------------------------------------------
+  Function: grStippleMode
+  Date: 23-Nov-2000
+  Implementor(s): alanh
+  Description:
+  
+  Arguments:
+  
+  Return:
+  -------------------------------------------------------------------*/
+#ifdef __linux__
+GR_DIENTRY(grStippleMode, void , (GrStippleMode_t mode) )
+{
+ #define FN_NAME "grStippleMode"
+
+  GR_BEGIN_NOFIFOCHECK("grStippleMode\n", 85);
+
+  INVALIDATE(fbzMode);
+
+  STOREARG(grStippleMode, mode);
+
+ #undef FN_NAME
+} /* grStippleMode */
+#endif /* __linux__ */
 
 /*-------------------------------------------------------------------
   Function: grDitherMode
@@ -896,6 +948,9 @@ _grValidateState()
     _grDepthBufferFunction(LOADARG(grDepthBufferFunction, fnc));
     _grDepthBufferMode(LOADARG(grDepthBufferMode, mode));
     _grDitherMode(LOADARG(grDitherMode, mode));
+#ifdef __linux__
+    _grStippleMode(LOADARG(grStippleMode, mode));
+#endif /* __linux__ */
     _grSstOrigin(LOADARG(grSstOrigin, origin));
     _grRenderBuffer(LOADARG(grRenderBuffer, buffer));
 
@@ -953,6 +1008,17 @@ _grValidateState()
     mask |= STATE_REG_MASK(fbzMode);
     reg_cnt++;
   }
+
+#ifdef __linux__
+  if (NOTVALID(stipple)) {
+    gc->state.shadow.stipple = LOADARG(grStipplePattern, stipple);
+    REG_GROUP_BEGIN(BROADCAST_ID, stipple, 1, 0x01);
+    {
+      REG_GROUP_SET(hw, stipple, gc->state.shadow.stipple);
+    }
+    REG_GROUP_END();
+  }
+#endif /* __linux__ */
 
   if (NOTVALID(lfbMode)) {
     FxU32
