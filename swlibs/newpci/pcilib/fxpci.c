@@ -470,7 +470,7 @@ pciOpen( void )
   */ 
 
 #ifdef __linux__
-  if (hasDev3DfxLinux) return pciOpenLinux();
+  if (hasDev3DfxLinux()) return pciOpenLinux();
 #endif /* defined(__linux__) */
 
   
