@@ -47,7 +47,7 @@
 #	general defines (user settable?)
 ###############################################################################
 
-GLIDE_LIB = libglid3.a
+GLIDE_LIB = libgld3x.a
 GLIDE_DXE = glide3x.dxe
 GLIDE_IMP = libgld3i.a
 

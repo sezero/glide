@@ -42,7 +42,7 @@ LDFLAGS = -s -L$(TOP)/$(FX_GLIDE_HW)/lib
 ifdef DXE
 LDLIBS = -lgld3i
 else
-LDLIBS = -lglid3
+LDLIBS = -lgld3x
 endif
 
 .c.o:
