@@ -396,6 +396,10 @@
 #include "gsfc.h"
 #include "rcver.h"
 
+#ifdef	__linux__
+#include "lindri.h"
+#endif	/* defined(__linux__) */
+
 #if (GLIDE_PLATFORM & GLIDE_SST_SIM)
 #if HAL_CSIM
 #include <csim.h>
@@ -598,10 +602,10 @@ GR_DIENTRY(grGet, FxU32, (FxU32 pname, FxU32 plength, FxI32 *params))
   case GR_NUM_FB:
     if (plength == 4) {
       GR_DCL_GC;
+      GR_DCL_NUMCHIPS;
 
-      if ((gc) &&
-          (gc->chipCount))
-        *params = gc->chipCount ;
+      if ((gc) && numChips)
+        *params = numChips;
        else
         *params = 1 ;
 

@@ -335,6 +335,10 @@
 #include "fxglide.h"
 #include "fxcmd.h"
 
+#ifdef	__linux__
+#include "lindri.h"
+#endif	/* defined(__linux__) */
+
 /*=============================================================================
 **  Replacement state routines.
 **
@@ -2492,10 +2496,11 @@ _grValidateState()
         REG_GROUP_SET(hw, fogMode, fogMode);
         REG_GROUP_END();
       } else {
+        GR_DCL_NUMCHIPS;
         /* Even chips use one rotation, odd chips use the other one */
         FxU32 chipIndex, fogMode;
         fogMode = gc->state.shadow.fogMode;
-        for(chipIndex = 0; chipIndex < gc->chipCount; chipIndex++) {
+        for(chipIndex = 0; chipIndex < numChips; chipIndex++) {
             if(chipIndex & 1) { /* Sample 1 */
             fogMode &= ~(SST_DITHER_ROTATE | SST_DITHER_ROTATE_BLEND | 
                         SST_DITHER_ROTATE_AA | SST_DITHER_ROTATE_BLEND_AA) ;
@@ -2520,8 +2525,9 @@ _grValidateState()
       }  
     } else if(gc->grPixelSample == 4) {
       FxU32 chipIndex, fogMode;
+      GR_DCL_NUMCHIPS;
       fogMode = gc->state.shadow.fogMode;
-      for(chipIndex = 0; chipIndex < gc->chipCount; chipIndex++) {
+      for(chipIndex = 0; chipIndex < numChips; chipIndex++) {
         if(chipIndex & 1) { /* Samples 2 and 3 */
           fogMode &= ~(SST_DITHER_ROTATE | SST_DITHER_ROTATE_BLEND | 
                        SST_DITHER_ROTATE_AA | SST_DITHER_ROTATE_BLEND_AA) ;

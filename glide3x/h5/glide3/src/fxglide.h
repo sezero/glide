@@ -2864,6 +2864,17 @@ assertDefaultState( void );
   #include <assert.h>
 #endif
 
+/*
+ * Declare the number of chips.  For Linux, we only use
+ * one chip unless we are fullscreen.
+ */
+#ifdef	__linux__
+#define GR_DCL_NUMCHIPS \
+    int numChips=(driInfo.isFullScreen ? gc->chipCount : 1)
+#else	/* defined(__linux__) */
+    int numChips = gc->chipCount
+#endif	/* defined(__linux__) */
+
 #define GR_DCL_GC GrGC *gc = (GrGC*)getThreadValueFast()
 
 #define GR_DCL_HW_INIT SstRegs *hw

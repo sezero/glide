@@ -18,11 +18,7 @@
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVE
 **
 ** 
-<<<<<<< gglide.c
 ** $Header$
-=======
-** $Header$
->>>>>>> 1.7
 ** $Log: 
 **  51   3dfx      1.41.1.6.1.110/11/00 Brent           Forced check in to enforce
 **       branching.
@@ -5053,80 +5049,97 @@ GR_EXT_ENTRY(grTBufferWriteMaskExt, void , (FxU32 tmask) )
 
   chipEnList = gc->chipmask;
 
-  for (chipIndex = 0; chipIndex < gc->chipCount; chipIndex++) {
-    /* In a two-chip config,  chip 0 does samples 0 and 1, and chip 1 does samples 2 and 3 */
-    /* In a four-chip config, chips 0 and 2 do samples 0 and 1, and chips 1 and 3 do samples 2 and 3 */
-    FxU32 chipaamode = (tmask >> ((chipIndex & 0x01) ? 2:0)) & 0x03;
-    switch (chipaamode) {
-    case 0:
-      /* disable the chip, don't care about the buffers */
-      chipEnList &= ~(1 << chipIndex);
-      break;
-    case 1:
-      /* We are only rendering to the primary buffer (sample 0 or 2) so just set up the 
-         primary buffer jitter values and disable the secondary buffer. */
-      chipEnList |= (1 << chipIndex);
-      _grChipMask(1 << chipIndex);
-      _grAAOffsetValue(defaultXOffset0, defaultYOffset0, 
-                       chipIndex, chipIndex, FXTRUE, FXFALSE);
-      /* setup color/aux buffer */
-      gc->state.shadow.colBufferAddr = gc->buffers0[gc->curBuffer];
-      gc->state.shadow.auxBufferAddr = gc->buffers0[gc->grColBuf];
-      REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 4, 0xf);
-      {
-        REG_GROUP_SET(hw, colBufferAddr, gc->state.shadow.colBufferAddr);
-        REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride);
-        REG_GROUP_SET(hw, auxBufferAddr, gc->state.shadow.auxBufferAddr);
-        REG_GROUP_SET(hw, auxBufferStride, gc->state.shadow.auxBufferStride); 
+  {
+    GR_DCL_NUMCHIPS;
+    for (chipIndex = 0; chipIndex < numChips; chipIndex++) {
+      /*
+       * In a two-chip config,  chip 0 does samples 0 and 1, and
+       * chip 1 does samples 2 and 3
+       *
+       * In a four-chip config, chips 0 and 2 do samples 0 and 1,
+       * and chips 1 and 3 do samples 2 and 3
+       */
+      FxU32 chipaamode = (tmask >> ((chipIndex & 0x01) ? 2:0)) & 0x03;
+      switch (chipaamode) {
+      case 0:
+        /*
+         * disable the chip, don't care about the buffers
+         */
+        chipEnList &= ~(1 << chipIndex);
+        break;
+      case 1:
+        /*
+         * We are only rendering to the primary buffer
+         * (sample 0 or 2) so just set up the primary buffer jitter
+         * values and disable the secondary buffer.
+         */
+        chipEnList |= (1 << chipIndex);
+        _grChipMask(1 << chipIndex);
+        _grAAOffsetValue(defaultXOffset0, defaultYOffset0, 
+                         chipIndex, chipIndex, FXTRUE, FXFALSE);
+        /* setup color/aux buffer */
+        gc->state.shadow.colBufferAddr = gc->buffers0[gc->curBuffer];
+        gc->state.shadow.auxBufferAddr = gc->buffers0[gc->grColBuf];
+        REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 4, 0xf);
+        {
+          REG_GROUP_SET(hw, colBufferAddr, gc->state.shadow.colBufferAddr);
+          REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride);
+          REG_GROUP_SET(hw, auxBufferAddr, gc->state.shadow.auxBufferAddr);
+          REG_GROUP_SET(hw, auxBufferStride, gc->state.shadow.auxBufferStride); 
+        }
+        REG_GROUP_END();      
+        break;
+      case 2:
+        /*
+         * We are only rendering to the secondary buffer
+         * (sample 1 or 3), so point the primary color buffer
+         * address at the secondary buffer, and use the secondary
+         * jitter values for this chip as the primary values, and
+         * disable the second
+         * buffer.
+         */
+        chipEnList |= (1 << chipIndex);
+        _grChipMask(1 << chipIndex);
+        _grAAOffsetValue(defaultXOffset0, defaultYOffset0, chipIndex, chipIndex, FXTRUE, FXFALSE);
+        /* setup color/aux buffer */
+        gc->state.shadow.colBufferAddr = gc->buffers1[gc->curBuffer];
+        gc->state.shadow.auxBufferAddr = gc->buffers1[gc->grColBuf];
+        REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 4, 0xf);
+        {
+          REG_GROUP_SET(hw, colBufferAddr, gc->state.shadow.colBufferAddr);
+          REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride);
+          REG_GROUP_SET(hw, auxBufferAddr, gc->state.shadow.auxBufferAddr);
+          REG_GROUP_SET(hw, auxBufferStride, gc->state.shadow.auxBufferStride); 
+        }
+        REG_GROUP_END();      
+        break;
+      case 3:
+        /* This chip is doing both 0 and 1 or 2 and 3, so enable both sets
+           of buffers. */
+        chipEnList |= (1 << chipIndex);
+        _grChipMask(1 << chipIndex);
+        _grAAOffsetValue(defaultXOffset0, defaultYOffset0, chipIndex, chipIndex, FXTRUE, gc->enableSecondaryBuffer);
+        /* setup color/aux buffer */
+        gc->state.shadow.colBufferAddr = gc->buffers0[gc->curBuffer];
+        gc->state.shadow.auxBufferAddr = gc->buffers0[gc->grColBuf];
+        REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 4, 0xf);
+        {
+          REG_GROUP_SET(hw, colBufferAddr, gc->state.shadow.colBufferAddr);
+          REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride);
+          REG_GROUP_SET(hw, auxBufferAddr, gc->state.shadow.auxBufferAddr);
+          REG_GROUP_SET(hw, auxBufferStride, gc->state.shadow.auxBufferStride); 
+        }
+        REG_GROUP_END();      
+        REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 4, 0xf);
+        {
+          REG_GROUP_SET(hw, colBufferAddr, gc->buffers1[gc->curBuffer] | SST_BUFFER_BASE_SELECT);
+          REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride);
+          REG_GROUP_SET(hw, auxBufferAddr, gc->buffers1[gc->grColBuf] | SST_BUFFER_BASE_SELECT);
+          REG_GROUP_SET(hw, auxBufferStride, gc->state.shadow.auxBufferStride); 
+        }
+        REG_GROUP_END();
+        break;
       }
-      REG_GROUP_END();      
-      break;
-    case 2:
-      /* We are only rendering to the secondary buffer (sample 1 or 3), so point the
-         primary color buffer address at the secondary buffer, and use the secondary
-         jitter values for this chip as the primary values, and disable the second
-         buffer. */
-      chipEnList |= (1 << chipIndex);
-      _grChipMask(1 << chipIndex);
-      _grAAOffsetValue(defaultXOffset0, defaultYOffset0, chipIndex, chipIndex, FXTRUE, FXFALSE);
-      /* setup color/aux buffer */
-      gc->state.shadow.colBufferAddr = gc->buffers1[gc->curBuffer];
-      gc->state.shadow.auxBufferAddr = gc->buffers1[gc->grColBuf];
-      REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 4, 0xf);
-      {
-        REG_GROUP_SET(hw, colBufferAddr, gc->state.shadow.colBufferAddr);
-        REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride);
-        REG_GROUP_SET(hw, auxBufferAddr, gc->state.shadow.auxBufferAddr);
-        REG_GROUP_SET(hw, auxBufferStride, gc->state.shadow.auxBufferStride); 
-      }
-      REG_GROUP_END();      
-      break;
-    case 3:
-      /* This chip is doing both 0 and 1 or 2 and 3, so enable both sets
-         of buffers. */
-      chipEnList |= (1 << chipIndex);
-      _grChipMask(1 << chipIndex);
-      _grAAOffsetValue(defaultXOffset0, defaultYOffset0, chipIndex, chipIndex, FXTRUE, gc->enableSecondaryBuffer);
-      /* setup color/aux buffer */
-      gc->state.shadow.colBufferAddr = gc->buffers0[gc->curBuffer];
-      gc->state.shadow.auxBufferAddr = gc->buffers0[gc->grColBuf];
-      REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 4, 0xf);
-      {
-        REG_GROUP_SET(hw, colBufferAddr, gc->state.shadow.colBufferAddr);
-        REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride);
-        REG_GROUP_SET(hw, auxBufferAddr, gc->state.shadow.auxBufferAddr);
-        REG_GROUP_SET(hw, auxBufferStride, gc->state.shadow.auxBufferStride); 
-      }
-      REG_GROUP_END();      
-      REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 4, 0xf);
-      {
-        REG_GROUP_SET(hw, colBufferAddr, gc->buffers1[gc->curBuffer] | SST_BUFFER_BASE_SELECT);
-        REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride);
-        REG_GROUP_SET(hw, auxBufferAddr, gc->buffers1[gc->grColBuf] | SST_BUFFER_BASE_SELECT);
-        REG_GROUP_SET(hw, auxBufferStride, gc->state.shadow.auxBufferStride); 
-      }
-      REG_GROUP_END();
-      break;
     }
   }
   

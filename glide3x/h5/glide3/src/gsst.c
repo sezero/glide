@@ -3271,8 +3271,8 @@ _grSstStatus(void)
   /* */
   {
     FxU32 chip ; 
-
-    if (gc->chipCount)
+    GR_DCL_NUMCHIPS;
+    if (numChips)
       for (chip = 0 ;
            chip < gc->chipCount - 1 ;
            chip++)
@@ -3794,53 +3794,56 @@ _grEnableSliCtrl(void)
   ** enable sli mode
   */
   
-//8xaa
-  if( gc-> chipCount == 2 )
-  	sliChipCountDivisor = (gc->grPixelSample == 4) ? 2 : 1;
-
-  if( gc-> chipCount == 4 )
-	sliChipCountDivisor = (gc->grPixelSample == 2) ? 2 : 1;
-
-
-  renderMask = (gc->chipCount / sliChipCountDivisor - 1) << gc->sliBandHeight;
-  scanMask = (1 << gc->sliBandHeight) - 1;
-  log2chipCount = 0;
-  
-  while (( 0x1UL << log2chipCount ) != (gc->chipCount / sliChipCountDivisor))
-    log2chipCount++;
-  
-  for (chipIndex = 0; chipIndex < gc->chipCount; chipIndex++) 
   {
-    FxU32 compareMask ;
-    FxU32 sliCtrl ;
+    GR_DCL_NUMCHIPS;
 
-    /* AJB- When YORIGIN swapping we have to swap the compareMask too--
-       Otherwise line ownership gets hosed. 'course winsim behaves 
-      completely differently, so this might need some fixing on 
-      real hardware.
-    */
-    if (gc->state.shadow.fbzMode & SST_YORIGIN)
-     compareMask = ((gc->chipCount - chipIndex - 1) / sliChipCountDivisor) << gc->sliBandHeight;
-    else
-     compareMask = (chipIndex / sliChipCountDivisor) << gc->sliBandHeight;
+    //8xaa
+    if( numChips == 2 )
+      sliChipCountDivisor = (gc->grPixelSample == 4) ? 2 : 1;
 
-    sliCtrl = 
-      ( (renderMask << SST_SLI_CONTROL_RENDER_MASK_SHIFT) |
-        (compareMask << SST_SLI_CONTROL_COMPARE_MASK_SHIFT) |
-        (scanMask << SST_SLI_CONTROL_SCAN_MASK_SHIFT) |
-        (log2chipCount << SST_SLI_CONTROL_LOG2_CHIP_COUNT_SHIFT) |
-        SST_SLI_CONTROL_SLI_ENABLE);
+    if( numChips == 4 )
+      sliChipCountDivisor = (gc->grPixelSample == 2) ? 2 : 1;
+
+
+    renderMask = (gc->chipCount / sliChipCountDivisor - 1) << gc->sliBandHeight;
+    scanMask = (1 << gc->sliBandHeight) - 1;
+    log2chipCount = 0;
+  
+    while (( 0x1UL << log2chipCount ) != (numChips / sliChipCountDivisor))
+      log2chipCount++;
+  
+    for (chipIndex = 0; chipIndex < numChips; chipIndex++) 
+      {
+        FxU32 compareMask ;
+        FxU32 sliCtrl ;
+
+        /* AJB- When YORIGIN swapping we have to swap the compareMask too--
+           Otherwise line ownership gets hosed. 'course winsim behaves 
+           completely differently, so this might need some fixing on 
+           real hardware.
+        */
+        if (gc->state.shadow.fbzMode & SST_YORIGIN)
+          compareMask = ((gc->chipCount - chipIndex - 1) / sliChipCountDivisor) << gc->sliBandHeight;
+        else
+          compareMask = (chipIndex / sliChipCountDivisor) << gc->sliBandHeight;
+
+        sliCtrl = 
+          ( (renderMask << SST_SLI_CONTROL_RENDER_MASK_SHIFT) |
+            (compareMask << SST_SLI_CONTROL_COMPARE_MASK_SHIFT) |
+            (scanMask << SST_SLI_CONTROL_SCAN_MASK_SHIFT) |
+            (log2chipCount << SST_SLI_CONTROL_LOG2_CHIP_COUNT_SHIFT) |
+            SST_SLI_CONTROL_SLI_ENABLE);
     
-    _grChipMask( 1 << chipIndex );
+        _grChipMask( 1 << chipIndex );
     
-    REG_GROUP_BEGIN(BROADCAST_ID, sliCtrl, 1, 0x1);
-    REG_GROUP_SET(hw, sliCtrl, sliCtrl);
-    REG_GROUP_END();
+        REG_GROUP_BEGIN(BROADCAST_ID, sliCtrl, 1, 0x1);
+        REG_GROUP_SET(hw, sliCtrl, sliCtrl);
+        REG_GROUP_END();
     
+      }
+  
+    _grChipMask( gc->chipmask );
   }
-  
-  _grChipMask( gc->chipmask );
-  
 #undef FN_NAME
 } /* _grEnableSliCtrl */
 
@@ -3853,16 +3856,20 @@ _grDisableSliCtrl(void)
 {
 #define FN_NAME "_grDisableSliCtrl"  
   FxU32 chipIndex;
+
   GR_BEGIN_NOFIFOCHECK("_grDisableSliCtrl", 85);
-  /*
-  ** disable sli mode
-  */
-  for (chipIndex = 0; chipIndex < gc->chipCount; chipIndex++) {
-    FxU32 sliCtrl = 0;    
-    _grChipMask( 1 << chipIndex );
-    REG_GROUP_BEGIN(BROADCAST_ID, sliCtrl, 1, 0x1);
-    REG_GROUP_SET(hw, sliCtrl, sliCtrl);
-    REG_GROUP_END();
+  {
+    GR_DCL_NUMCHIPS;
+    /*
+    ** disable sli mode
+    */
+    for (chipIndex = 0; chipIndex < numChips; chipIndex++) {
+      FxU32 sliCtrl = 0;    
+      _grChipMask( 1 << chipIndex );
+      REG_GROUP_BEGIN(BROADCAST_ID, sliCtrl, 1, 0x1);
+      REG_GROUP_SET(hw, sliCtrl, sliCtrl);
+      REG_GROUP_END();
+    }
   }
   _grChipMask( gc->chipmask );
   

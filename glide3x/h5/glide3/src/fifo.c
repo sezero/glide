@@ -198,6 +198,9 @@
 #include "fxglide.h"
 #include "fxcmd.h"
 
+#ifdef	__linux__
+#include <lindri.h>
+#endif	/* defined(__linux__) */
 
 #if GDBG_INFO_ON
 
@@ -645,7 +648,6 @@ _grSet32(volatile FxU32* const sstAddr, const FxU32 val)
 {
 #define FN_NAME "_grSet32"
   GR_DCL_GC;
-
   GR_ASSERT(sstAddr >= gc->base_ptr);
   GR_ASSERT(sstAddr <  &SST_TMU(gc->reg_ptr, GR_TMU0)->status);
 
@@ -724,8 +726,6 @@ void
 _FifoFlush( void ) 
 {
 #define FN_NAME "_FifoFlush"
-  GR_DCL_GC;
-  
   _grCommandTransportMakeRoom(0, __FILE__, __LINE__);
 #undef FN_NAME
 } /* _FifoFlush */
@@ -739,288 +739,258 @@ _grCommandTransportMakeRoom(const FxI32 blockSize, const char* fName, const int 
 
   GR_BEGIN_NOFIFOCHECK(FN_NAME, 400);
 
-  if ( gc->windowed ) {
+  {
+    GR_DCL_NUMCHIPS;
+    if ( gc->windowed ) {
 #if defined(GLIDE_INIT_HWC) && !defined(__linux__)
-    struct cmdTransportInfo*
-      gcFifo = &gc->cmdTransportInfo;
-    HwcWinFifo 
-      fifo = gc->cmdTransportInfo.hwcFifoInfo;
-    const FxU32
-      nextBufferIndex = gcFifo->curCommandBuf + gcFifo->numQueuedBuf,
-      cmdBufferOffset = (gcFifo->hwcFifoInfo.cmdBuf.allocUnit * gcFifo->curCommandBuf);
-    FxU32
-      buffersFree;
+      struct cmdTransportInfo*
+        gcFifo = &gc->cmdTransportInfo;
+      HwcWinFifo 
+        fifo = gc->cmdTransportInfo.hwcFifoInfo;
+      const FxU32
+        nextBufferIndex = gcFifo->curCommandBuf + gcFifo->numQueuedBuf,
+        cmdBufferOffset = (gcFifo->hwcFifoInfo.cmdBuf.allocUnit * gcFifo->curCommandBuf);
+      FxU32
+        buffersFree;
     
-    /* Update to the currently writing command buffer */
-    fifo.cmdBuf.baseAddr += cmdBufferOffset;
-    fifo.cmdBuf.hwOffset += cmdBufferOffset;
-    fifo.cmdBuf.size      = ((FxU32)gcFifo->fifoPtr - fifo.cmdBuf.baseAddr);
+      /* Update to the currently writing command buffer */
+      fifo.cmdBuf.baseAddr += cmdBufferOffset;
+      fifo.cmdBuf.hwOffset += cmdBufferOffset;
+      fifo.cmdBuf.size      = ((FxU32)gcFifo->fifoPtr - fifo.cmdBuf.baseAddr);
     
-    fifo.stateBuf.baseAddr  = (FxU32)gcFifo->stateBuffer;
-    fifo.stateBuf.hwOffset += (gcFifo->hwcFifoInfo.stateBuf.allocUnit * gcFifo->curCommandBuf);
-    fifo.stateBuf.size      = sizeof(GrStateBuffer);
+      fifo.stateBuf.baseAddr  = (FxU32)gcFifo->stateBuffer;
+      fifo.stateBuf.hwOffset += (gcFifo->hwcFifoInfo.stateBuf.allocUnit * gcFifo->curCommandBuf);
+      fifo.stateBuf.size      = sizeof(GrStateBuffer);
     
-    {
-      FxBool
-        issueP;
-      
-  __tryFifoExecute:
-      GR_WINFIFO_BEGIN();
       {
-        issueP = hwcExecuteWinFifo(gc->bInfo, 
-                                   gc->winContextId,
-                                   &fifo, 
-                                   gcFifo->serialNumber + gcFifo->numQueuedBuf);
-      }
-      GR_WINFIFO_END();
+        FxBool
+          issueP;
       
-      /* Did we execute? */
-      if (issueP) {
-        /* Update the issued command bookkeeping */
-        gcFifo->issuedSerialNumber = gcFifo->serialNumber + gcFifo->numQueuedBuf;
-        /* Update us to next serial number */
-        gcFifo->serialNumber += gcFifo->numQueuedBuf;
-        
-        /* See if we have free buffers available */
-        buffersFree = gcFifo->numCommandBuf - (gcFifo->serialNumber - gcFifo->committedSerialNumber);
-        
-        /* If no buffers are free, then we must wait for some space to become available. */
-        while((FxI32)buffersFree <= 0) {
-          gcFifo->committedSerialNumber = hwcExecuteStatusWinFifo(gc->bInfo,
-                                                                  &gcFifo->hwcFifoInfo,
-                                                                  gcFifo->serialNumber);
-          buffersFree = gcFifo->numCommandBuf - (gcFifo->serialNumber - gcFifo->committedSerialNumber);
-        }
-        
-        /* Do we have more buffers or do we need to wrap? */
-        GR_ASSERT(nextBufferIndex <= gcFifo->numCommandBuf);
-        
-        /* We should have at least one buffer free at this point */
-        if(nextBufferIndex == gcFifo->numCommandBuf)
-          gcFifo->curCommandBuf = 0;
-        else
-          gcFifo->curCommandBuf = nextBufferIndex;
-        
-        /* Set the current fifo ptr in allocation blocks */
-        gcFifo->fifoPtr = (FxU32*)(gcFifo->hwcFifoInfo.cmdBuf.baseAddr +
-                                   (gcFifo->hwcFifoInfo.cmdBuf.allocUnit * gcFifo->curCommandBuf));
-        
-        /* Set the state buffer to be the 'next' one in the ready
-         * list.  This is the same index as the next buffer in the
-         * command list.  
-         */
-        gcFifo->stateBuffer = (GrStateBuffer*)(gcFifo->hwcFifoInfo.stateBuf.baseAddr +
-                                               (gcFifo->hwcFifoInfo.stateBuf.allocUnit * gcFifo->curCommandBuf));
-        
-        /* Reset next execution size to be an allocation unit */
-        gcFifo->fifoRoom = gcFifo->hwcFifoInfo.cmdBuf.allocUnit - FIFO_END_ADJUST;
-        gcFifo->numQueuedBuf = 0x01UL;
-        
-        /* Copy the state at the end of the last submitted command
-         * buffer to be the state for the next command buffer.  
-         */
-#if __POWERPC__
+      __tryFifoExecute:
+        GR_WINFIFO_BEGIN();
         {
-          FxU32 *src, *dst, i;
-          src = (FxU32 *)&gc->state.shadow;
-          dst = (FxU32 *)gcFifo->stateBuffer;
-          for(i = 0; i < (sizeof(GrStateBuffer)/sizeof(FxU32)); i++) {
-            SET(*dst++,*src++);
-          }
+          issueP = hwcExecuteWinFifo(gc->bInfo, 
+                                     gc->winContextId,
+                                     &fifo, 
+                                     gcFifo->serialNumber + gcFifo->numQueuedBuf);
         }
+        GR_WINFIFO_END();
+      
+        /* Did we execute? */
+        if (issueP) {
+          /* Update the issued command bookkeeping */
+          gcFifo->issuedSerialNumber = gcFifo->serialNumber + gcFifo->numQueuedBuf;
+          /* Update us to next serial number */
+          gcFifo->serialNumber += gcFifo->numQueuedBuf;
+        
+          /* See if we have free buffers available */
+          buffersFree = gcFifo->numCommandBuf - (gcFifo->serialNumber - gcFifo->committedSerialNumber);
+        
+          /* If no buffers are free, then we must wait for some space to become available. */
+          while((FxI32)buffersFree <= 0) {
+            gcFifo->committedSerialNumber = hwcExecuteStatusWinFifo(gc->bInfo,
+                                                                    &gcFifo->hwcFifoInfo,
+                                                                    gcFifo->serialNumber);
+            buffersFree = gcFifo->numCommandBuf - (gcFifo->serialNumber - gcFifo->committedSerialNumber);
+          }
+        
+          /* Do we have more buffers or do we need to wrap? */
+          GR_ASSERT(nextBufferIndex <= gcFifo->numCommandBuf);
+        
+          /* We should have at least one buffer free at this point */
+          if(nextBufferIndex == gcFifo->numCommandBuf)
+            gcFifo->curCommandBuf = 0;
+          else
+            gcFifo->curCommandBuf = nextBufferIndex;
+        
+          /* Set the current fifo ptr in allocation blocks */
+          gcFifo->fifoPtr = (FxU32*)(gcFifo->hwcFifoInfo.cmdBuf.baseAddr +
+                                     (gcFifo->hwcFifoInfo.cmdBuf.allocUnit * gcFifo->curCommandBuf));
+        
+          /* Set the state buffer to be the 'next' one in the ready
+           * list.  This is the same index as the next buffer in the
+           * command list.  
+           */
+          gcFifo->stateBuffer = (GrStateBuffer*)(gcFifo->hwcFifoInfo.stateBuf.baseAddr +
+                                                 (gcFifo->hwcFifoInfo.stateBuf.allocUnit * gcFifo->curCommandBuf));
+        
+          /* Reset next execution size to be an allocation unit */
+          gcFifo->fifoRoom = gcFifo->hwcFifoInfo.cmdBuf.allocUnit - FIFO_END_ADJUST;
+          gcFifo->numQueuedBuf = 0x01UL;
+        
+          /* Copy the state at the end of the last submitted command
+           * buffer to be the state for the next command buffer.  
+           */
+#if __POWERPC__
+          {
+            FxU32 *src, *dst, i;
+            src = (FxU32 *)&gc->state.shadow;
+            dst = (FxU32 *)gcFifo->stateBuffer;
+            for(i = 0; i < (sizeof(GrStateBuffer)/sizeof(FxU32)); i++) {
+              SET(*dst++,*src++);
+            }
+          }
 #else
-        memcpy(gcFifo->stateBuffer, 
-               &gc->state.shadow, 
-               sizeof(GrStateBuffer));
+          memcpy(gcFifo->stateBuffer, 
+                 &gc->state.shadow, 
+                 sizeof(GrStateBuffer));
 #endif               
-      } else {
-        /* Didn't execute, but we can check to see if we have some
-         * room to keep going. Otherwise we need to check again to see
-         * if we can execute now.
-         */
+        } else {
+          /* Didn't execute, but we can check to see if we have some
+           * room to keep going. Otherwise we need to check again to see
+           * if we can execute now.
+           */
         
-        /* See if we have free buffers available */
-        buffersFree = (gcFifo->numCommandBuf - 
-                       ((gcFifo->serialNumber + gcFifo->numQueuedBuf) - gcFifo->committedSerialNumber));
-        
-        /* If no free buffers, get latest committed from memory (slow) and check again (but don't spin). */          
-        if((FxI32)buffersFree <= 0) {
-          gcFifo->committedSerialNumber = hwcExecuteStatusWinFifo(gc->bInfo,
-                                                                  &gcFifo->hwcFifoInfo,
-                                                                  gcFifo->serialNumber);
+          /* See if we have free buffers available */
           buffersFree = (gcFifo->numCommandBuf - 
                          ((gcFifo->serialNumber + gcFifo->numQueuedBuf) - gcFifo->committedSerialNumber));
-        }
         
-        /* If we have more free buffers and we can append, then do so */
-        if((buffersFree > 0) && (nextBufferIndex < gcFifo->numCommandBuf)) {
-          gcFifo->numQueuedBuf++;
-          gcFifo->fifoRoom += gcFifo->hwcFifoInfo.cmdBuf.allocUnit;
-        } else {
-          /* Well, we couldn't issue, and we didn't have any free space, so try 
-           * to issue again. 
-           */
-          goto __tryFifoExecute;
+          /* If no free buffers, get latest committed from memory (slow) and check again (but don't spin). */          
+          if((FxI32)buffersFree <= 0) {
+            gcFifo->committedSerialNumber = hwcExecuteStatusWinFifo(gc->bInfo,
+                                                                    &gcFifo->hwcFifoInfo,
+                                                                    gcFifo->serialNumber);
+            buffersFree = (gcFifo->numCommandBuf - 
+                           ((gcFifo->serialNumber + gcFifo->numQueuedBuf) - gcFifo->committedSerialNumber));
+          }
+        
+          /* If we have more free buffers and we can append, then do so */
+          if((buffersFree > 0) && (nextBufferIndex < gcFifo->numCommandBuf)) {
+            gcFifo->numQueuedBuf++;
+            gcFifo->fifoRoom += gcFifo->hwcFifoInfo.cmdBuf.allocUnit;
+          } else {
+            /* Well, we couldn't issue, and we didn't have any free space, so try 
+             * to issue again. 
+             */
+            goto __tryFifoExecute;
+          }
         }
       }
-    }
     
-    GR_SET_FIFO_PTR( 0, 0 );
+      GR_SET_FIFO_PTR( 0, 0 );
 #endif /* defined(GLIDE_INIT_HWC) && !defined(__linux__) */
-  } else {
-    /* Check here to see if we have a valid context since the last time
-     * we checked. This is to protect us from loosing our context before
-     * we wrap check the current hw fifo pointer which is going to be the
-     * 2d driver's fifo if we lost our context.
-     */
+    } else {
+      /* Check here to see if we have a valid context since the last time
+       * we checked. This is to protect us from loosing our context before
+       * we wrap check the current hw fifo pointer which is going to be the
+       * 2d driver's fifo if we lost our context.
+       */
 #if defined(GLIDE_INIT_HWC) && !defined(__linux__)
-    gc->contextP = !(*gc->lostContext) ;
+      gc->contextP = !(*gc->lostContext) ;
 #else /* defined(GLIDE_INIT_HWC) && !defined(__linux__) */
-    gc->contextP = 1; /* always has context in CSIM */
+      gc->contextP = 1; /* always has context in CSIM */
 #endif /* defined(GLIDE_INIT_HWC) && !defined(__linux__) */
-    if (gc->contextP) {
-      FxU32 wrapAddr = 0x00UL;
-      FxU32 checks;
+      if (gc->contextP) {
+        FxU32 wrapAddr = 0x00UL;
+        FxU32 checks;
 
-      GR_ASSERT(blockSize > 0);
-      GR_ASSERT((FxU32)blockSize < gc->cmdTransportInfo.fifoSize);
-      FIFO_ASSERT();
+        GR_ASSERT(blockSize > 0);
+        GR_ASSERT((FxU32)blockSize < gc->cmdTransportInfo.fifoSize);
+        FIFO_ASSERT();
       
-      /* Nasty performance testing hack */
-      if(_GlideRoot.environment.noHW) {
-        /* Cribbed from grSstWinOpen() */
-        struct cmdTransportInfo *gcFifo = &gc->cmdTransportInfo;        
-        gcFifo->roomToEnd = gcFifo->fifoSize - FIFO_END_ADJUST;
-        gcFifo->fifoRoom  = gcFifo->roomToReadPtr = gcFifo->roomToEnd - sizeof( FxU32 );
+        /* Nasty performance testing hack */
+        if(_GlideRoot.environment.noHW) {
+          /* Cribbed from grSstWinOpen() */
+          struct cmdTransportInfo *gcFifo = &gc->cmdTransportInfo;        
+          gcFifo->roomToEnd = gcFifo->fifoSize - FIFO_END_ADJUST;
+          gcFifo->fifoRoom  = gcFifo->roomToReadPtr = gcFifo->roomToEnd - sizeof( FxU32 );
     
-        /* Set initial fifo state. hw read and sw write pointers at
-        * start of the fifo.
-        */
-        gcFifo->fifoPtr  = gcFifo->fifoStart;
-        gcFifo->fifoRead = HW_FIFO_PTR( FXTRUE );
-        return;
-      }
+          /* Set initial fifo state. hw read and sw write pointers at
+           * start of the fifo.
+           */
+          gcFifo->fifoPtr  = gcFifo->fifoStart;
+          gcFifo->fifoRead = HW_FIFO_PTR( FXTRUE );
+          return;
+        }
         
-    /* Update the roomToXXX values w/ the # of writes since the last
-     * fifo stall/wrap.  
-     */
-      {
-        const FxI32 writes = (MIN(gc->cmdTransportInfo.roomToReadPtr, gc->cmdTransportInfo.roomToEnd) -
-                              gc->cmdTransportInfo.fifoRoom);
+        /* Update the roomToXXX values w/ the # of writes since the last
+         * fifo stall/wrap.  
+         */
+        {
+          const FxI32 writes = (MIN(gc->cmdTransportInfo.roomToReadPtr, gc->cmdTransportInfo.roomToEnd) -
+                                gc->cmdTransportInfo.fifoRoom);
         
-        gc->cmdTransportInfo.roomToReadPtr   -= writes;
-        gc->cmdTransportInfo.roomToEnd       -= writes;
+          gc->cmdTransportInfo.roomToReadPtr   -= writes;
+          gc->cmdTransportInfo.roomToEnd       -= writes;
         
 #if GDBG_INFO_ON
-        GDBG_INFO_MORE(gc->myLevel, ": (%s : %d)\n"
-                       "\tfifoBlock: (0x%X : 0x%X)\n"
-                       "\tfifoRoom: (0x%X : 0x%X) : (0x%X : 0x%X)\n"
-                       "\tfifo hw: (0x%X : 0x%X)\n",
-                       ((fName == NULL) ? "Unknown" : fName), fLine,
-                       (((FxU32)gc->cmdTransportInfo.fifoPtr - (FxU32)gc->cmdTransportInfo.fifoStart) + 
-                        (FxU32)gc->cmdTransportInfo.fifoOffset),
-                       blockSize,
-                       gc->cmdTransportInfo.roomToReadPtr, gc->cmdTransportInfo.roomToEnd, 
-                       gc->cmdTransportInfo.fifoRoom, writes,
-                       HW_FIFO_PTR(FXTRUE) - (FxU32)gc->rawLfb, gc->cmdTransportInfo.fifoRead);
+          GDBG_INFO_MORE(gc->myLevel, ": (%s : %d)\n"
+                         "\tfifoBlock: (0x%X : 0x%X)\n"
+                         "\tfifoRoom: (0x%X : 0x%X) : (0x%X : 0x%X)\n"
+                         "\tfifo hw: (0x%X : 0x%X)\n",
+                         ((fName == NULL) ? "Unknown" : fName), fLine,
+                         (((FxU32)gc->cmdTransportInfo.fifoPtr - (FxU32)gc->cmdTransportInfo.fifoStart) + 
+                          (FxU32)gc->cmdTransportInfo.fifoOffset),
+                         blockSize,
+                         gc->cmdTransportInfo.roomToReadPtr, gc->cmdTransportInfo.roomToEnd, 
+                         gc->cmdTransportInfo.fifoRoom, writes,
+                         HW_FIFO_PTR(FXTRUE) - (FxU32)gc->rawLfb, gc->cmdTransportInfo.fifoRead);
         
 #endif /* GDBG_INFO_ON */
         
-        ASSERT_FAULT_IMMED((gc->cmdTransportInfo.roomToReadPtr >= 0) && 
-                           (gc->cmdTransportInfo.roomToEnd >= 0));
-      }
+          ASSERT_FAULT_IMMED((gc->cmdTransportInfo.roomToReadPtr >= 0) && 
+                             (gc->cmdTransportInfo.roomToEnd >= 0));
+        }
       
       
-      /* Bump & Grind if called for */
-      if (!gc->cmdTransportInfo.autoBump)
-        GR_BUMP_N_GRIND;
+        /* Bump & Grind if called for */
+        if (!gc->cmdTransportInfo.autoBump)
+          GR_BUMP_N_GRIND;
       
-      checks = 0;
+        checks = 0;
       
-  again:
-      /* do we need to stall? */
-      {
-        FxU32 lastHwRead = gc->cmdTransportInfo.fifoRead;
-        FxI32 roomToReadPtr = gc->cmdTransportInfo.roomToReadPtr;
+      again:
+        /* do we need to stall? */
+        {
+          FxU32 lastHwRead = gc->cmdTransportInfo.fifoRead;
+          FxI32 roomToReadPtr = gc->cmdTransportInfo.roomToReadPtr;
         
-        while (roomToReadPtr < blockSize) {
-          FxU32 curReadPtr = HW_FIFO_PTR(FXTRUE);
-          FxU32 curReadDist = curReadPtr - lastHwRead;
+          while (roomToReadPtr < blockSize) {
+            FxU32 curReadPtr = HW_FIFO_PTR(FXTRUE);
+            FxU32 curReadDist = curReadPtr - lastHwRead;
 
-          /* Handle slave chips.  This code lifted from cvg and modified
-           * to deal with multiple slave chips. */
-          if(gc->chipCount > 1) {
-            FxU32 slave;
-            for(slave = 1; slave < gc->chipCount; slave++) {              
-              const FxU32 slaveReadPtr = _grHwFifoPtrSlave(slave, 0);
-              const FxU32 slaveReadDist = (slaveReadPtr - lastHwRead);
-              FxI32 distSlave = (FxI32)slaveReadDist;
-              FxI32 distMaster = (FxI32)curReadDist;
+            /* Handle slave chips.  This code lifted from cvg and modified
+             * to deal with multiple slave chips. */
+            if(numChips > 1) {
+              FxU32 slave;
+              GR_DCL_NUMCHIPS;
+              for(slave = 1; slave < numChips; slave++) {              
+                const FxU32 slaveReadPtr = _grHwFifoPtrSlave(slave, 0);
+                const FxU32 slaveReadDist = (slaveReadPtr - lastHwRead);
+                FxI32 distSlave = (FxI32)slaveReadDist;
+                FxI32 distMaster = (FxI32)curReadDist;
 
-              GR_ASSERT((slaveReadPtr >= (FxU32)gc->cmdTransportInfo.fifoStart) &&
-                        (slaveReadPtr < (FxU32)gc->cmdTransportInfo.fifoEnd));
+                GR_ASSERT((slaveReadPtr >= (FxU32)gc->cmdTransportInfo.fifoStart) &&
+                          (slaveReadPtr < (FxU32)gc->cmdTransportInfo.fifoEnd));
           
-              /* Get the actual absolute distance to the respective fifo ptrs */
-              if (distSlave < 0) distSlave += (FxI32)gc->cmdTransportInfo.fifoSize - FIFO_END_ADJUST;
-              if (distMaster < 0) distMaster += (FxI32)gc->cmdTransportInfo.fifoSize - FIFO_END_ADJUST;
+                /* Get the actual absolute distance to the respective fifo ptrs */
+                if (distSlave < 0) distSlave += (FxI32)gc->cmdTransportInfo.fifoSize - FIFO_END_ADJUST;
+                if (distMaster < 0) distMaster += (FxI32)gc->cmdTransportInfo.fifoSize - FIFO_END_ADJUST;
 
-              /* Is this slave closer than the master? */
-              if (distSlave < distMaster) {
+                /* Is this slave closer than the master? */
+                if (distSlave < distMaster) {
                 
-                curReadDist = slaveReadDist;
-                curReadPtr = slaveReadPtr;
+                  curReadDist = slaveReadDist;
+                  curReadPtr = slaveReadPtr;
+                }
               }
             }
-          }
 
-          checks++;
+            checks++;
           
 #ifdef GLIDE_DEBUG
-          if (checks > 1000) {
-            {
-            const FxU32
-              baseAddrL = GR_CAGP_GET(baseAddrL),
-              baseSize = GR_CAGP_GET(baseSize),
-              readPtrL = GR_CAGP_GET(readPtrL),
-              aMin = GR_CAGP_GET(aMin),
-              aMax = GR_CAGP_GET(aMax),
-              depth = GR_CAGP_GET(depth),
-              holeCount = GR_CAGP_GET(holeCount);
-            
-            GDBG_INFO(80,"Fifo check timeout:\n");
-            GDBG_INFO(80,"\tbaseAddrL = 0x%x\n", baseAddrL);
-            GDBG_INFO(80,"\tbaseSize  = 0x%x\n", baseSize);
-            GDBG_INFO(80,"\treadPtrL  = 0x%x\n", readPtrL);
-            GDBG_INFO(80,"\tdepth     = 0x%x\n", depth);
-            GDBG_INFO(80,"\tholeCount = 0x%x\n", holeCount);
-            GDBG_INFO(80,"\taMin      = 0x%x\n", aMin);
-            GDBG_INFO(80,"\taMax      = 0x%x\n", aMax);
-                
-            if ((readPtrL < (baseAddrL << 12)) ||
-                (readPtrL > ((baseAddrL + baseSize + 1) << 12))) {
-              GDBG_PRINTF("FATAL ERROR:  Read Pointer out of command buffer extents\n");
-              exit(-1);
-            }
-            }
-
-            if (gc->chipCount > 1)
-            {
-              FxU32 chip ;
-
-              for (chip = 0 ;
-                   chip < gc->chipCount - 1 ;
-                   chip++)
+            if (checks > 1000) {
               {
                 const FxU32
-                  baseAddrL = GR_SLAVE_CAGP_GET(chip, baseAddrL),
-                  baseSize = GR_SLAVE_CAGP_GET(chip, baseSize),
-                  readPtrL = GR_SLAVE_CAGP_GET(chip, readPtrL),
-                  aMin = GR_SLAVE_CAGP_GET(chip, aMin),
-                  aMax = GR_SLAVE_CAGP_GET(chip, aMax),
-                  depth = GR_SLAVE_CAGP_GET(chip, depth),
-                  holeCount = GR_SLAVE_CAGP_GET(chip, holeCount);
-                
-                GDBG_INFO(80,"Fifo check timeout slave 0x%x:\n", chip);
+                  baseAddrL = GR_CAGP_GET(baseAddrL),
+                  baseSize = GR_CAGP_GET(baseSize),
+                  readPtrL = GR_CAGP_GET(readPtrL),
+                  aMin = GR_CAGP_GET(aMin),
+                  aMax = GR_CAGP_GET(aMax),
+                  depth = GR_CAGP_GET(depth),
+                  holeCount = GR_CAGP_GET(holeCount);
+            
+                GDBG_INFO(80,"Fifo check timeout:\n");
                 GDBG_INFO(80,"\tbaseAddrL = 0x%x\n", baseAddrL);
                 GDBG_INFO(80,"\tbaseSize  = 0x%x\n", baseSize);
                 GDBG_INFO(80,"\treadPtrL  = 0x%x\n", readPtrL);
@@ -1028,139 +998,173 @@ _grCommandTransportMakeRoom(const FxI32 blockSize, const char* fName, const int 
                 GDBG_INFO(80,"\tholeCount = 0x%x\n", holeCount);
                 GDBG_INFO(80,"\taMin      = 0x%x\n", aMin);
                 GDBG_INFO(80,"\taMax      = 0x%x\n", aMax);
+                
+                if ((readPtrL < (baseAddrL << 12)) ||
+                    (readPtrL > ((baseAddrL + baseSize + 1) << 12))) {
+                  GDBG_PRINTF("FATAL ERROR:  Read Pointer out of command buffer extents\n");
+                  exit(-1);
+                }
               }
-            }
 
-            checks = 0;
-          }
+              if (numChips > 1)
+                {
+                  FxU32 chip ;
+
+                  for (chip = 0 ;
+                       chip < gc->chipCount - 1 ;
+                       chip++)
+                    {
+                      const FxU32
+                        baseAddrL = GR_SLAVE_CAGP_GET(chip, baseAddrL),
+                        baseSize = GR_SLAVE_CAGP_GET(chip, baseSize),
+                        readPtrL = GR_SLAVE_CAGP_GET(chip, readPtrL),
+                        aMin = GR_SLAVE_CAGP_GET(chip, aMin),
+                        aMax = GR_SLAVE_CAGP_GET(chip, aMax),
+                        depth = GR_SLAVE_CAGP_GET(chip, depth),
+                        holeCount = GR_SLAVE_CAGP_GET(chip, holeCount);
+                
+                      GDBG_INFO(80,"Fifo check timeout slave 0x%x:\n", chip);
+                      GDBG_INFO(80,"\tbaseAddrL = 0x%x\n", baseAddrL);
+                      GDBG_INFO(80,"\tbaseSize  = 0x%x\n", baseSize);
+                      GDBG_INFO(80,"\treadPtrL  = 0x%x\n", readPtrL);
+                      GDBG_INFO(80,"\tdepth     = 0x%x\n", depth);
+                      GDBG_INFO(80,"\tholeCount = 0x%x\n", holeCount);
+                      GDBG_INFO(80,"\taMin      = 0x%x\n", aMin);
+                      GDBG_INFO(80,"\taMax      = 0x%x\n", aMax);
+                    }
+                }
+
+              checks = 0;
+            }
 #endif /* GLIDE_DEBUG */
-          GR_ASSERT((curReadPtr >= (FxU32)gc->cmdTransportInfo.fifoStart) &&
-                    (curReadPtr < (FxU32)gc->cmdTransportInfo.fifoEnd));
+            GR_ASSERT((curReadPtr >= (FxU32)gc->cmdTransportInfo.fifoStart) &&
+                      (curReadPtr < (FxU32)gc->cmdTransportInfo.fifoEnd));
               
-          roomToReadPtr += curReadDist;
+            roomToReadPtr += curReadDist;
               
-          gc->stats.fifoStalls++;
-          gc->stats.fifoStallDepth += GR_CAGP_GET(depth);
+            gc->stats.fifoStalls++;
+            gc->stats.fifoStallDepth += GR_CAGP_GET(depth);
               
-          /* Have we wrapped yet? */
-          if (lastHwRead > curReadPtr) roomToReadPtr += (FxI32)gc->cmdTransportInfo.fifoSize - FIFO_END_ADJUST;
-          lastHwRead = curReadPtr;
+            /* Have we wrapped yet? */
+            if (lastHwRead > curReadPtr) roomToReadPtr += (FxI32)gc->cmdTransportInfo.fifoSize - FIFO_END_ADJUST;
+            lastHwRead = curReadPtr;
+          }
+          
+          GR_ASSERT((lastHwRead >= (FxU32)gc->cmdTransportInfo.fifoStart) &&
+                    (lastHwRead < (FxU32)gc->cmdTransportInfo.fifoEnd));
+          
+          /* Update cached copies */
+          gc->cmdTransportInfo.fifoRead = lastHwRead;
+          gc->cmdTransportInfo.roomToReadPtr = roomToReadPtr;
+          
+          GDBG_INFO(gc->myLevel + 10, 
+                    "  Wait: (0x%X : 0x%X) : 0x%X\n", 
+                    gc->cmdTransportInfo.roomToReadPtr, gc->cmdTransportInfo.roomToEnd,
+                    gc->cmdTransportInfo.fifoRead);
         }
-          
-        GR_ASSERT((lastHwRead >= (FxU32)gc->cmdTransportInfo.fifoStart) &&
-                  (lastHwRead < (FxU32)gc->cmdTransportInfo.fifoEnd));
-          
-        /* Update cached copies */
-        gc->cmdTransportInfo.fifoRead = lastHwRead;
-        gc->cmdTransportInfo.roomToReadPtr = roomToReadPtr;
-          
-        GDBG_INFO(gc->myLevel + 10, 
-                  "  Wait: (0x%X : 0x%X) : 0x%X\n", 
-                  gc->cmdTransportInfo.roomToReadPtr, gc->cmdTransportInfo.roomToEnd,
-                  gc->cmdTransportInfo.fifoRead);
-      }
       
-      /* Do we need to wrap to front? */
-      if (gc->cmdTransportInfo.roomToEnd <= blockSize) {
-        GDBG_INFO(gc->myLevel + 10, 
-                  "  Pre-Wrap: (0x%X : 0x%X) : 0x%X\n", 
-                  gc->cmdTransportInfo.roomToReadPtr, gc->cmdTransportInfo.roomToEnd,
-                  gc->cmdTransportInfo.fifoRead);
+        /* Do we need to wrap to front? */
+        if (gc->cmdTransportInfo.roomToEnd <= blockSize) {
+          GDBG_INFO(gc->myLevel + 10, 
+                    "  Pre-Wrap: (0x%X : 0x%X) : 0x%X\n", 
+                    gc->cmdTransportInfo.roomToReadPtr, gc->cmdTransportInfo.roomToEnd,
+                    gc->cmdTransportInfo.fifoRead);
           
-        /* Set the jsr packet. 
-         * NB: This command must be fenced.
-         */
-        FIFO_ASSERT();
-        {
-          P6FENCE;
-          if (!gc->cmdTransportInfo.autoBump) {
+          /* Set the jsr packet. 
+           * NB: This command must be fenced.
+           */
+          FIFO_ASSERT();
+          {
+            P6FENCE;
+            if (!gc->cmdTransportInfo.autoBump) {
 #if __POWERPC__ && PCI_BUMP_N_GRIND           
-            SET_FIFO(*gc->cmdTransportInfo.fifoPtr++, gc->cmdTransportInfo.fifoJmpHdr[0]);
-            FIFO_CACHE_FLUSH(gc->cmdTransportInfo.fifoPtr);
-            GR_CAGP_SET(bump, 1);
+              SET_FIFO(*gc->cmdTransportInfo.fifoPtr++, gc->cmdTransportInfo.fifoJmpHdr[0]);
+              FIFO_CACHE_FLUSH(gc->cmdTransportInfo.fifoPtr);
+              GR_CAGP_SET(bump, 1);
 #else /* !__POWERPC__ && !PCI_BUMP_N_GRIND */             
-            SET(*gc->cmdTransportInfo.fifoPtr++, gc->cmdTransportInfo.fifoJmpHdr[0]);
-            SET(*gc->cmdTransportInfo.fifoPtr++, gc->cmdTransportInfo.fifoJmpHdr[1]);
+              SET(*gc->cmdTransportInfo.fifoPtr++, gc->cmdTransportInfo.fifoJmpHdr[0]);
+              SET(*gc->cmdTransportInfo.fifoPtr++, gc->cmdTransportInfo.fifoJmpHdr[1]);
 #ifdef HAL_CSIM
-            GR_CAGP_SET(bump, 0);
+              GR_CAGP_SET(bump, 0);
 #else /* !defined(HAL_CSIM) */
-            GR_CAGP_SET(bump, 2);
+              GR_CAGP_SET(bump, 2);
 #endif
 #endif /* !__POWERPC__ && !PCI_BUMP_N_GRIND */
-            gc->cmdTransportInfo.lastBump = gc->cmdTransportInfo.fifoStart;
-          } else {
-            SET(*gc->cmdTransportInfo.fifoPtr, gc->cmdTransportInfo.fifoJmpHdr[0]);
+              gc->cmdTransportInfo.lastBump = gc->cmdTransportInfo.fifoStart;
+            } else {
+              SET(*gc->cmdTransportInfo.fifoPtr, gc->cmdTransportInfo.fifoJmpHdr[0]);
+            }
           }
-        }
           
-        P6FENCE;
+          P6FENCE;
     
-        wrapAddr = (FxU32)gc->cmdTransportInfo.fifoPtr;
+          wrapAddr = (FxU32)gc->cmdTransportInfo.fifoPtr;
           
-        /* Update roomXXX fields for the actual wrap */
-        gc->cmdTransportInfo.roomToReadPtr -= gc->cmdTransportInfo.roomToEnd;
-        gc->cmdTransportInfo.roomToEnd = gc->cmdTransportInfo.fifoSize - FIFO_END_ADJUST;
+          /* Update roomXXX fields for the actual wrap */
+          gc->cmdTransportInfo.roomToReadPtr -= gc->cmdTransportInfo.roomToEnd;
+          gc->cmdTransportInfo.roomToEnd = gc->cmdTransportInfo.fifoSize - FIFO_END_ADJUST;
           
 #if GLIDE_USE_DEBUG_FIFO
-        gc->stats.fifoWraps++;
-        gc->stats.fifoWrapDepth += GR_GET(hw->cmdFifoDepth);
+          gc->stats.fifoWraps++;
+          gc->stats.fifoWrapDepth += GR_GET(hw->cmdFifoDepth);
 #endif /* GLIDE_USE_DEBUG_FIFO */
           
-        /* Reset fifo ptr to start */ 
-        gc->cmdTransportInfo.fifoPtr = gc->cmdTransportInfo.fifoStart;
+          /* Reset fifo ptr to start */ 
+          gc->cmdTransportInfo.fifoPtr = gc->cmdTransportInfo.fifoStart;
           
-        /*  We havn't really fenced here, but we set the lastFence for */
-        /*  later calculations  */  
-        gc->cmdTransportInfo.lastFence = gc->cmdTransportInfo.fifoStart;
+          /*  We havn't really fenced here, but we set the lastFence for */
+          /*  later calculations  */  
+          gc->cmdTransportInfo.lastFence = gc->cmdTransportInfo.fifoStart;
 
-        GDBG_INFO(gc->myLevel + 10, 
-                  "  Post-Wrap: (0x%X : 0x%X) : 0x%X\n", 
-                  gc->cmdTransportInfo.roomToReadPtr, gc->cmdTransportInfo.roomToEnd,
-                  gc->cmdTransportInfo.fifoRead);
+          GDBG_INFO(gc->myLevel + 10, 
+                    "  Post-Wrap: (0x%X : 0x%X) : 0x%X\n", 
+                    gc->cmdTransportInfo.roomToReadPtr, gc->cmdTransportInfo.roomToEnd,
+                    gc->cmdTransportInfo.fifoRead);
           
-        goto again;
+          goto again;
+        }
+      
+        /* compute room left */
+        gc->cmdTransportInfo.fifoRoom = MIN(gc->cmdTransportInfo.roomToReadPtr, gc->cmdTransportInfo.roomToEnd);
+      
+        GDBG_INFO(gc->myLevel, FN_NAME"_Done:\n"
+                  "\tfifoBlock: (0x%X : 0x%X)\n"
+                  "\tfifoRoom: (0x%X : 0x%X : 0x%X)\n"
+                  "\tfifo hw: (0x%X : 0x%X) : (0x%X : 0x%X : 0x%X)\n",
+                  (((FxU32)gc->cmdTransportInfo.fifoPtr - (FxU32)gc->cmdTransportInfo.fifoStart) + 
+                   (FxU32)gc->cmdTransportInfo.fifoOffset),
+                  blockSize,
+                  gc->cmdTransportInfo.roomToReadPtr, 
+                  gc->cmdTransportInfo.roomToEnd, gc->cmdTransportInfo.fifoRoom,
+                  HW_FIFO_PTR(FXTRUE) - (FxU32)gc->rawLfb, gc->cmdTransportInfo.fifoRead, 
+                  GR_CAGP_GET(depth), GR_CAGP_GET(holeCount), GR_GET(hw->status));
+      
+        FIFO_ASSERT();
       }
+      else {
+        /*
+        ** reset the function pointers when the context is gone
+        */ 
+        GrTriSetupProcArchVector* 
+          curTriProcs = _GlideRoot.deviceArchProcs.curTriProcs;
+        GrVertexListProc*
+          curVertexListProcs = _GlideRoot.deviceArchProcs.curVertexListProcs;
       
-      /* compute room left */
-      gc->cmdTransportInfo.fifoRoom = MIN(gc->cmdTransportInfo.roomToReadPtr, gc->cmdTransportInfo.roomToEnd);
+        _GlideRoot.deviceArchProcs.curTriProcs        = _GlideRoot.deviceArchProcs.nullTriProcs;
+        _GlideRoot.deviceArchProcs.curVertexListProcs = _GlideRoot.deviceArchProcs.nullVertexListProcs;
       
-      GDBG_INFO(gc->myLevel, FN_NAME"_Done:\n"
-                "\tfifoBlock: (0x%X : 0x%X)\n"
-                "\tfifoRoom: (0x%X : 0x%X : 0x%X)\n"
-                "\tfifo hw: (0x%X : 0x%X) : (0x%X : 0x%X : 0x%X)\n",
-                (((FxU32)gc->cmdTransportInfo.fifoPtr - (FxU32)gc->cmdTransportInfo.fifoStart) + 
-                 (FxU32)gc->cmdTransportInfo.fifoOffset),
-                blockSize,
-                gc->cmdTransportInfo.roomToReadPtr, 
-                gc->cmdTransportInfo.roomToEnd, gc->cmdTransportInfo.fifoRoom,
-                HW_FIFO_PTR(FXTRUE) - (FxU32)gc->rawLfb, gc->cmdTransportInfo.fifoRead, 
-                GR_CAGP_GET(depth), GR_CAGP_GET(holeCount), GR_GET(hw->status));
+        _GlideRoot.deviceArchProcs.nullTriProcs        = curTriProcs;
+        _GlideRoot.deviceArchProcs.nullVertexListProcs = curVertexListProcs;
       
-      FIFO_ASSERT();
+        gc->archDispatchProcs.texDownloadProcs  = _GlideRoot.deviceArchProcs.nullTexProcs;
+        gc->archDispatchProcs.drawTrianglesProc = _GlideRoot.deviceArchProcs.nullDrawTrisProc;
+        gc->archDispatchProcs.coorModeTriVector = (*_GlideRoot.deviceArchProcs.curTriProcs) + GR_WINDOW_COORDS;
+        gc->archDispatchProcs.drawVertexList    = _GlideRoot.deviceArchProcs.curVertexListProcs[GR_WINDOW_COORDS];
+        gc->triSetupProc = CUR_TRI_PROC(FXFALSE, (gc->state.cull_mode != GR_CULL_DISABLE));
+      }
     }
-    else {
-      /*
-      ** reset the function pointers when the context is gone
-      */ 
-      GrTriSetupProcArchVector* 
-        curTriProcs = _GlideRoot.deviceArchProcs.curTriProcs;
-      GrVertexListProc*
-        curVertexListProcs = _GlideRoot.deviceArchProcs.curVertexListProcs;
-      
-      _GlideRoot.deviceArchProcs.curTriProcs        = _GlideRoot.deviceArchProcs.nullTriProcs;
-      _GlideRoot.deviceArchProcs.curVertexListProcs = _GlideRoot.deviceArchProcs.nullVertexListProcs;
-      
-      _GlideRoot.deviceArchProcs.nullTriProcs        = curTriProcs;
-      _GlideRoot.deviceArchProcs.nullVertexListProcs = curVertexListProcs;
-      
-      gc->archDispatchProcs.texDownloadProcs  = _GlideRoot.deviceArchProcs.nullTexProcs;
-      gc->archDispatchProcs.drawTrianglesProc = _GlideRoot.deviceArchProcs.nullDrawTrisProc;
-      gc->archDispatchProcs.coorModeTriVector = (*_GlideRoot.deviceArchProcs.curTriProcs) + GR_WINDOW_COORDS;
-      gc->archDispatchProcs.drawVertexList    = _GlideRoot.deviceArchProcs.curVertexListProcs[GR_WINDOW_COORDS];
-      gc->triSetupProc = CUR_TRI_PROC(FXFALSE, (gc->state.cull_mode != GR_CULL_DISABLE));
-    }
+    GR_TRACE_EXIT(FN_NAME);
   }
-  GR_TRACE_EXIT(FN_NAME);
 #undef FN_NAME
 }
 
@@ -1181,13 +1185,14 @@ _grHwFifoPtr(FxBool ignored)
   FxU32 status, readPtrL1, readPtrL2;
   FxU32 chip ; /* AJB SLI MAYHEM */
   GR_DCL_GC;
+  GR_DCL_NUMCHIPS;
 
   FXUNUSED(ignored);
 
   if ( gc->windowed ) {
     rVal = 0;
   } else {
-    if (0 && gc->chipCount > 1)
+    if (0 && numChips > 1)
     {
       /*
       do {
@@ -1428,6 +1433,7 @@ _grImportFifo(int fifoPtr, int fifoRead) {
   struct cmdTransportInfo* gcFifo;
   FxU32 readPos;
   GR_DCL_GC;
+  GR_DCL_NUMCHIPS;
   int i;
 
   int dummy, d;
@@ -1436,7 +1442,7 @@ _grImportFifo(int fifoPtr, int fifoRead) {
     dummy=GET(gc->cRegs->cmdFifo0.depth);
     d=GET(gc->cRegs->cmdFifo0.depth);
   } while (dummy || d);
-  for (i=1; i<gc->chipCount; i++) {
+  for (i=1; i<numChips; i++) {
     do {
       dummy=GET(gc->slaveCRegs[i-1]->cmdFifo0.depth);
       d=GET(gc->slaveCRegs[i-1]->cmdFifo0.depth);
@@ -1446,11 +1452,11 @@ _grImportFifo(int fifoPtr, int fifoRead) {
     dummy = GET(gc->cRegs->cmdFifo0.readPtrL);
     readPos = GET(gc->cRegs->cmdFifo0.readPtrL);
   } while (dummy!=readPos);
-  for (i=1; i<gc->chipCount; i++) {
+  for (i=1; i<numChips; i++) {
     dummy=GET(gc->slaveCRegs[i-1]->cmdFifo0.readPtrL);
   }
   dummy=GET(gc->sstRegs->status);
-  for (i=1; i<gc->chipCount; i++) {
+  for (i=1; i<numChips; i++) {
     dummy=GET(gc->slaveSstRegs[i-1]->status);
   }
   gcFifo=&gc->cmdTransportInfo;

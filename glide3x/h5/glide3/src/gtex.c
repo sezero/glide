@@ -416,6 +416,10 @@
 #include "minihwc.h"
 #endif
 
+#ifdef	__linux__
+#include <lindri.h>
+#endif	/* defined(__linux__) */
+
 /*-------------------------------------------------------------------
   Function: _grTexCalcBaseAddressTiled
   Date: 12-Dec-98
@@ -3560,67 +3564,70 @@ void g3LodBiasPerChip(void)
 
   	GR_BEGIN_NOFIFOCHECK("g3LodBiasPerChip", 88);
 
-	tmu = 0;
-	idx = gc->chipCount > 2;
+    {
+      GR_DCL_NUMCHIPS;
 
-	if ((gc->sliCount > 1) || (_GlideRoot.environment.texLodDither)) goto FORGET_IT;
+      tmu = 0;
+      idx = numChips > 2;
 
-	for (i = 0; i < gc->chipCount; i++)	
-	{
-	  	tLod = gc->state.tmuShadow[tmu].tLOD;
-  		tLod &= ~(SST_LODBIAS);
-		lodBias = chipLodBias[idx][i];
+      if ((gc->sliCount > 1) || (_GlideRoot.environment.texLodDither)) goto FORGET_IT;
 
-  		if(lodBias > 0x1f) lodBias = 0x1f;
-  		if(lodBias < -0x20) lodBias = -0x20;
-  		/* Mask it back off. */
-  		lodBias &= 0x3f;
-  		tLod |= lodBias << SST_LODBIAS_SHIFT;
+      for (i = 0; i < numChips; i++)	
+        {
+          tLod = gc->state.tmuShadow[tmu].tLOD;
+          tLod &= ~(SST_LODBIAS);
+          lodBias = chipLodBias[idx][i];
 
-  		if(!gc->state.mode2ppc || (tmu == gc->state.mode2ppcTMU)) {
+          if(lodBias > 0x1f) lodBias = 0x1f;
+          if(lodBias < -0x20) lodBias = -0x20;
+          /* Mask it back off. */
+          lodBias &= 0x3f;
+          tLod |= lodBias << SST_LODBIAS_SHIFT;
+
+          if(!gc->state.mode2ppc || (tmu == gc->state.mode2ppcTMU)) {
     		SstRegs* tmuHw = SST_TMU(hw, tmu);
        		_grChipMask( 1L << i );
     		REG_GROUP_BEGIN((0x02 << tmu), tLOD, 1, 0x1);
     		{
-      		REG_GROUP_SET(tmuHw, tLOD, tLod);
+              REG_GROUP_SET(tmuHw, tLOD, tLod);
     		}
    		 	REG_GROUP_END();
     		_grChipMask( gc->chipmask );
-  		} else {
+          } else {
     		INVALIDATE_TMU(tmu, textureMode);
-  		}
+          }
 
-	}
+        }
 
-	tmu = 1;
+      tmu = 1;
 
-	for (i = 0; i < gc->chipCount; i++)	
-	{
-	  	tLod = gc->state.tmuShadow[tmu].tLOD;
-  		tLod &= ~(SST_LODBIAS);
-		lodBias = chipLodBias[idx][i];
+      for (i = 0; i < numChips; i++)	
+        {
+          tLod = gc->state.tmuShadow[tmu].tLOD;
+          tLod &= ~(SST_LODBIAS);
+          lodBias = chipLodBias[idx][i];
 
-  		if(lodBias > 0x1f) lodBias = 0x1f;
-  		if(lodBias < -0x20) lodBias = -0x20;
-  		/* Mask it back off. */
-  		lodBias &= 0x3f;
-  		tLod |= lodBias << SST_LODBIAS_SHIFT;
+          if(lodBias > 0x1f) lodBias = 0x1f;
+          if(lodBias < -0x20) lodBias = -0x20;
+          /* Mask it back off. */
+          lodBias &= 0x3f;
+          tLod |= lodBias << SST_LODBIAS_SHIFT;
 
-  		if(!gc->state.mode2ppc || (tmu == gc->state.mode2ppcTMU)) {
+          if(!gc->state.mode2ppc || (tmu == gc->state.mode2ppcTMU)) {
     		SstRegs* tmuHw = SST_TMU(hw, tmu);
       		_grChipMask( 1L << i );
     		REG_GROUP_BEGIN((0x02 << tmu), tLOD, 1, 0x1);
     		{
-      		REG_GROUP_SET(tmuHw, tLOD, tLod);
+              REG_GROUP_SET(tmuHw, tLOD, tLod);
     		}
    		 	REG_GROUP_END();
     		_grChipMask( gc->chipmask );
-  		} else {
+          } else {
     		INVALIDATE_TMU(tmu, textureMode);
-  		}
+          }
 
-	}
-
+        }
+    }
 FORGET_IT:
   GR_END();
 #undef FN_NAME

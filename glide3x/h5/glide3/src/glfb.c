@@ -828,11 +828,14 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t type, GrBuffer_t buffer,
 
 #if LFB_DISABLE_SLAVE_FIFO
         /* Disable slave command FIFO */
-        if(gc->chipCount > 1) {
-          FxU32 depth;
-          do {
-            depth = GR_SLAVE_CAGP_GET(0, depth);
-          } while(depth != 0);
+        {
+          GR_DCL_NUMCHIPS;
+          if(numChips > 1) {
+            FxU32 depth;
+            do {
+              depth = GR_SLAVE_CAGP_GET(0, depth);
+            } while(depth != 0);
+          }
         }
         slaveBaseSize = GR_SLAVE_CAGP_GET(0, baseSize);
         GR_SLAVE_CAGP_SET(0, baseSize, 0);
@@ -903,8 +906,11 @@ GR_ENTRY(grLfbUnlock, FxBool, (GrLock_t type, GrBuffer_t buffer))
 
 #if LFB_DISABLE_SLAVE_FIFO    
     /* Enable slave command FIFO */
-    if(gc->chipCount > 1) {
-    GR_SLAVE_CAGP_SET(0, baseSize, slaveBaseSize);
+    {
+      GR_DCL_NUMCHIPS;
+      if (numChips > 1) {
+        GR_SLAVE_CAGP_SET(0, baseSize, slaveBaseSize);
+      }
     }
 #endif
 
