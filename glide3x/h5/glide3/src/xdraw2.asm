@@ -19,6 +19,9 @@
 ;; $Header$
 ;; $Revision$
 ;; $Log$
+;; Revision 1.1.8.7  2003/07/07 23:29:06  koolsmoky
+;; cleaned logs
+;;
 ;;
 ;; Revision 1.1  2000/06/15 00:27:43  joseph
 ;; Initial checkin into SourceForge.
@@ -270,7 +273,7 @@ PROC_TYPE clip_cull_invalid
 %undef GLIDE_VALIDATE_STATE
 
 endp
-        
+
             ALIGN    32
 PROC_TYPE clip_cull_valid
 
@@ -289,7 +292,7 @@ PROC_TYPE clip_cull_valid
 %undef GLIDE_VALIDATE_STATE
 
 endp
-    
+
             ALIGN    32
 PROC_TYPE clip_nocull_valid
 
@@ -392,6 +395,19 @@ proc _trisetup_clip_coor_thunk, 12
 %define procPtr eax
 %define vPtr    ecx
 %define gc      edx           ; Current graphics context passed implicitly through edx
+
+%IFDEF GLIDE_ALT_TAB
+    test gc, gc
+    je   .__contextLost
+;    mov  eax, [gc + windowed]
+;    test eax, 1
+;    jnz  .pastContextTest
+    mov  eax, DWORD [gc+lostContext]
+    mov  ecx, [eax]
+    test ecx, 1
+    jnz  .__contextLost
+;.pastContextTest:
+%ENDIF
     
     ;; Call through to the gc->curArchProcs.drawTrianglesProc w/o
     ;; adding extra stuff to the stack. I wish we could actually
@@ -410,6 +426,9 @@ __clipSpace:
 
     invoke  procPtr, 1, 3, vPtr ; (*gc->curArchProcs.drawTrianglesProc)(grDrawVertexArray, 3, vPtr)
 
+%IFDEF GLIDE_ALT_TAB
+.__contextLost:
+%ENDIF
     ret                         ; pop 3 dwords (vertex addrs) and return
 endp
 
@@ -422,6 +441,19 @@ proc _trisetup_SSE_clip_coor_thunk, 12
 %define procPtr eax
 %define vPtr    ecx
 %define gc      edx           ; Current graphics context passed implicitly through edx
+
+%IFDEF GLIDE_ALT_TAB
+    test    gc, gc
+    je      .__contextLost
+;    mov     eax, [gc + windowed]
+;    test    eax, 1
+;    jnz     .pastContextTest
+    mov     eax, DWORD [gc+lostContext]
+    mov     ecx, [eax]
+    test    ecx, 1
+    jnz     .__contextLost
+;.pastContextTest:
+%ENDIF
     
     ;; Call through to the gc->curArchProcs.drawTrianglesProc w/o
     ;; adding extra stuff to the stack. I wish we could actually
@@ -440,6 +472,9 @@ __clipSpace:
 
     invoke  procPtr, 1, 3, vPtr ; (*gc->curArchProcs.drawTrianglesProc)(grDrawVertexArray, 3, vPtr)
 
+%IFDEF GLIDE_ALT_TAB
+.__contextLost:
+%ENDIF
     ret                         ; pop 3 dwords (vertex addrs) and return
 endp
 
