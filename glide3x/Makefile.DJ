@@ -47,9 +47,9 @@
 #	general defines (user settable?)
 ###############################################################################
 
-GLIDE_LIB = libglide.a
+GLIDE_LIB = libglid3.a
 GLIDE_DXE = glide3x.dxe
-GLIDE_IMP = libglid3.a
+GLIDE_IMP = libgld3i.a
 
 FX_GLIDE_HW = h5
 FX_GLIDE_SW = swlibs

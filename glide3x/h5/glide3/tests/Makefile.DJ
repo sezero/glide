@@ -41,9 +41,9 @@ CFLAGS += -DFX_GLIDE_NAPALM=1
 LDFLAGS = -s -L$(TOP)/$(FX_GLIDE_HW)/lib
 
 ifdef DXE
-LDLIBS = -lglid3
+LDLIBS = -lgld3i
 else
-LDLIBS = -lglide
+LDLIBS = -lglid3
 endif
 
 .c.o:
