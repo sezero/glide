@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.7  2004/11/25 18:56:59  koolsmoky
+** support new cpuid
+**
 ** Revision 1.1.1.1.8.6  2004/10/07 07:48:49  dborca
 ** comment the GR_CDECL hack to prevent accidents
 **
@@ -3136,13 +3139,13 @@ _grErrorCallback(const char* const procName,
  *  2: 3DNow!(tm)
  */
 
-enum {
+/*enum {
   kCPUVendorIntel   = 0x0000,
   kCPUVendorAMD     = 0x8001,
   kCPUVendorUnknown = 0xFFFF
 };
 extern FxI32 GR_CDECL
-_cpu_detect_asm(void);
+_cpu_detect_asm(void);*/
 
 extern void GR_CDECL 
 single_precision_asm(void);
