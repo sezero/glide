@@ -466,7 +466,7 @@ pciOpen( void )
   */ 
 
 #ifdef __linux__
-  if (hasDev3DfxLinux) return pciOpenLinux();
+  if (hasDev3DfxLinux()) return pciOpenLinux();
 #endif
   
   for ( deviceNumber = 0; deviceNumber < MAX_PCI_DEVICES; deviceNumber++ ) {
