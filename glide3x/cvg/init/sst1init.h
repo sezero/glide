@@ -68,6 +68,8 @@
 #undef ATOF
 #undef SSCANF
 #undef POW
+#define INIT_PRINTF(A)
+#define INIT_INFO(A)
 #define GETENV(A) sst1InitGetenv(A)
 #define ATOI(A) atoi(A)
 #define ATOF(A) atof(A)
@@ -100,7 +102,8 @@
   #define INIT_PRINTF 1 ? (void) 0 : (void)
 #endif
 #define INIT_INFO(A)
-#define GETENV(A)  ddgetenv(A)
+/* #define GETENV(A)  ddgetenv(A) */
+#define GETENV(A) sst1InitGetenv(A)
 #define ATOI(A) ddatoi(A)
 #define ATOF(A) ddatof(A)
 #define FTOL(A) ddftol(A)

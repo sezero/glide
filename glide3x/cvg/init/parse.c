@@ -344,7 +344,7 @@ __errExit:
 }
 #endif
 
-#if defined(INIT_DOS) || defined(INIT_LINUX)
+#if defined(INIT_DOS) || defined(INIT_LINUX) || defined(__WIN32__)
 
 #if TEST
 /* void main(int argc, char **argv) */

@@ -128,7 +128,7 @@ ASFLAGS += $(CDEFS)
 # compiler
 CFLAGS  = -nologo -W3 -WX -D__MSC__=1
 
-LDLIBS = user32.lib kernel32.lib
+LDLIBS = user32.lib kernel32.lib advapi32.lib
 ifdef DEBUG
 CFLAGS += -Od -MTd -Zi
 LDFLAGS += -debugtype:both -debug
