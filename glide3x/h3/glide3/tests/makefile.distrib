@@ -1,5 +1,5 @@
 
-CFLAGS = -I. -I/usr/include/glide
+CFLAGS = -I. -I/usr/include/glide3
 
 SRCS = $(wildcard test*.c)
 OBJS = $(SRCS:.c=.o)
