@@ -276,7 +276,7 @@ proc _grDrawVertexList_3DNow_Window, 20
     pop       esi                        ; restore caller's register variable
     pop       edi                        ; restire caller's register variable
 
-    ret       20                         ; return, pop 5 DWORD parameters off stack
+    ret                                  ; return, pop 5 DWORD parameters off stack
 
 
 .fifo_aligned_ND:
@@ -375,7 +375,7 @@ proc _grDrawVertexList_3DNow_Window, 20
     pop       esi                        ; restore caller's register variable
     pop       edi                        ; restire caller's register variable
 
-    ret       20                         ; return, pop 5 DWORD parameters off stack
+    ret                                  ; return, pop 5 DWORD parameters off stack
 
     db        08dh,064h,024h,000h        ; filler (not reachable)
     
@@ -540,7 +540,7 @@ proc _grDrawVertexList_3DNow_Window, 20
     pop       esi                        ; restore caller's register variable
     pop       edi                        ; restire caller's register variable
 
-    ret       20                         ; return, pop 5 DWORD parameters off stack
+    ret                                  ; return, pop 5 DWORD parameters off stack
     mov       esp, esp                   ; filler (unreachable)
 
 .fifo_aligned_D:
@@ -640,7 +640,7 @@ proc _grDrawVertexList_3DNow_Window, 20
     pop       esi                        ; restore caller's register variable
     pop       edi                        ; restire caller's register variable
 
-    ret       20                         ; return, pop 5 DWORD parameters off stack
+    ret                                  ; return, pop 5 DWORD parameters off stack
 
 endp
 
@@ -1060,7 +1060,7 @@ proc _grDrawVertexList_3DNow_Clip, 20
     pop       esi                        ; restore caller's register variable
     pop       edi                        ; restore caller's register variable
 
-    ret       20                         ; return, pop 5 DWORD parameters off stack
+    ret                                  ; return, pop 5 DWORD parameters off stack
 
 endp
 
@@ -2140,7 +2140,7 @@ proc _grDrawTextureLine_3DNow, 8
     pop     edi                          ; restore caller's register variable
     pop     esi                          ; restore caller's register variable
 
-    ret     8                            ; return and pop 2 DWORD parameters
+    ret                                  ; return and pop 2 DWORD parameters
 endp
 
 proc _grDrawTriangles_3DNow, 12
@@ -2389,7 +2389,7 @@ proc _grDrawTriangles_3DNow, 12
     pop       esi                        ; restore caller's register variable
     pop       edi                        ; restore caller's register variable
 
-    ret       12                         ; return, pop 3 DWORD parameters off stack
+    ret                                  ; return, pop 3 DWORD parameters off stack
 
 .fifo_aligned_ND:
 
@@ -2471,7 +2471,7 @@ proc _grDrawTriangles_3DNow, 12
     pop       esi                        ; restore caller's register variable
     pop       edi                        ; restore caller's register variable
 
-    ret       12                         ; return, pop 3 DWORD parameters off stack
+    ret                                  ; return, pop 3 DWORD parameters off stack
 
 .deref_mode:
 
@@ -2597,7 +2597,7 @@ proc _grDrawTriangles_3DNow, 12
     pop       esi                        ; restore caller's register variable
     pop       edi                        ; restore caller's register variable
 
-    ret       12                         ; return, pop 3 DWORD parameters off stack
+    ret                                  ; return, pop 3 DWORD parameters off stack
 
 .fifo_aligned_D:
 
@@ -2679,7 +2679,7 @@ proc _grDrawTriangles_3DNow, 12
     pop       esi                        ; restore caller's register variable
     pop       edi                        ; restore caller's register variable
 
-    ret       12                         ; return, pop 3 DWORD parameters off stack
+    ret                                  ; return, pop 3 DWORD parameters off stack
 
     ALIGN     32
 
@@ -3422,7 +3422,7 @@ proc _grDrawTriangles_3DNow, 12
     pop       esi                        ; restore caller's register variable
     pop       edi                        ; restore caller's register variable
 
-    ret       12                         ; return, pop 5 DWORD parameters off stack
+    ret                                  ; return, pop 5 DWORD parameters off stack
 
 
     ALIGN     32
@@ -3785,7 +3785,7 @@ proc _grDrawTriangles_3DNow, 12
     pop       esi                        ; restore caller's register variable
     pop       edi                        ; restore caller's register variable
 
-    ret       12                         ; return, pop 3 DWORD parameters
+    ret                                  ; return, pop 3 DWORD parameters
 endp
 
 ;;--------------------------------------------------------------------------
