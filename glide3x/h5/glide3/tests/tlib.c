@@ -1532,6 +1532,7 @@ int _tlLoadTXS( const char   *filename,
 #if NAPALM_TEXTURES
       /* 4 bit, but treat as 8 bit for now */
     case GR_TEXFMT_ARGB_CMP_FXT1:
+    case GR_TEXFMT_ARGB_CMP_DXT1:
 #endif
 
     case GR_TEXFMT_RGB_332:
