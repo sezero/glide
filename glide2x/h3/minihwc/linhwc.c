@@ -1100,7 +1100,9 @@ hwcGammaTable(hwcBoardInfo *bInfo, FxU32 nEntries, FxU32 *r, FxU32 *g, FxU32 *b)
   FxU32 i;
   FxU32 vidProcCfg;
   FxU32 dacBase;
-  
+  FxU32 rDacBase;
+  FxU32 rDacData;
+
   /* Load the table into the Display driver as above */
   for (i = 0; i < nEntries; i++) {
     gRamp[i] =
@@ -1131,10 +1133,24 @@ hwcGammaTable(hwcBoardInfo *bInfo, FxU32 nEntries, FxU32 *r, FxU32 *g, FxU32 *b)
             FN_NAME, (vidProcCfg & SST_OVERLAY_CLUT_BYPASS) ? 1 : 0);
   
   for (i = 0; i < nEntries; i++) {
-    HWC_IO_STORE( bInfo->regInfo, dacAddr, dacBase + i);
-    P6FENCE;
-    HWC_IO_STORE( bInfo->regInfo, dacData, gRamp[i]);
-    P6FENCE;
+    int repeat = 100;
+    while (repeat) {
+      HWC_IO_STORE( bInfo->regInfo, dacAddr, dacBase + i);
+      P6FENCE;
+      HWC_IO_STORE( bInfo->regInfo, dacData, gRamp[i]);
+      P6FENCE;
+      HWC_IO_LOAD( bInfo->regInfo, dacAddr, rDacBase);
+      P6FENCE;
+      HWC_IO_LOAD( bInfo->regInfo, dacData, rDacData);
+      P6FENCE;
+      if ((rDacBase == (dacBase + i)) && (rDacData == gRamp[i]))
+	break;
+      repeat--;
+    }
+    if (!repeat) {
+      GDBG_INFO(0, "%s:Error Writting DacData [%d, %x]. DacBase =%d\n",
+		FN_NAME, i, gRamp[i], dacBase);
+    }
   }
 
   return FXTRUE;
