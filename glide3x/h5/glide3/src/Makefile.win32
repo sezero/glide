@@ -307,19 +307,19 @@ xtexdl_sse2.obj: xtexdl.asm
 $(GLIDE_OBJECTS): fxinline.h fxgasm.h fxbldno.h
 
 fxinline.h: fxgasm.exe
-	$< -inline > $@
+	./$< -inline > $@
 
 fxgasm.h: fxgasm.exe
-	$< -hex > $@
+	./$< -hex > $@
 
 fxgasm.exe: fxgasm.c ../../incsrc/gendate.h
 	$(CC) -o $@ $(CFLAGS) $<
 
 ../../incsrc/gendate.h: gendate.exe
-	$< > $@
+	./$< > $@
 
 fxbldno.h: fxbldno.exe
-	$< > $@
+	./$< > $@
 
 gendate.exe: ../../incsrc/gendate.c
 	$(CC) -o $@ $(CFLAGS) $<
