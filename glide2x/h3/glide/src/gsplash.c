@@ -19,6 +19,9 @@
  **
  ** $Header$
  ** $Log$
+ ** Revision 1.1.1.1  1999/12/07 21:49:28  joseph
+ ** Initial checkin into SourceForge.
+ **
 ** 
 ** 3     3/17/99 6:16p Dow
 ** Phantom Menace and other fixes.
@@ -239,9 +242,9 @@ static void
 downloadTexture(Texture *texture, Gu3dfInfo *info) 
 {
   texture->info.data        = info->data;
-  TEX_INFO(texture->info.,smallLod)    = info->header.small_lod;
-  TEX_INFO(texture->info.,largeLod)    = info->header.large_lod;
-  TEX_INFO(texture->info.,aspectRatio) = info->header.aspect_ratio;
+  TEX_INFO(texture->info,smallLod)    = info->header.small_lod;
+  TEX_INFO(texture->info,largeLod)    = info->header.large_lod;
+  TEX_INFO(texture->info,aspectRatio) = info->header.aspect_ratio;
   texture->info.format      = info->header.format;
 
   texture->addr = nextFreeBase;

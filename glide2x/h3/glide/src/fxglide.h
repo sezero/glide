@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/12/07 21:49:26  joseph
+** Initial checkin into SourceForge.
+**
 ** 
 ** 3     3/17/99 6:16p Dow
 ** Phantom Menace and other fixes.
@@ -3353,16 +3356,16 @@ double_precision_asm(void);
 //#define GLIDE3_DEBUG 1
 #endif
 #ifdef GLIDE3_DEBUG
-#define TEX_INFO(ptr,field)                         ptr##field
+#define TEX_INFO(ptr,field)                         ptr.field
 #define G3_LOD_TRANSLATE(lod)                       (lod)
 #define G3_ASPECT_TRANSLATE(aspect)                 (aspect)
 #else
-#define TEX_INFO(ptr,field)                         ptr##field##Log2
+#define TEX_INFO(ptr,field)                         ptr.field ## Log2
 #define G3_LOD_TRANSLATE(lod)                       (0x8-lod)
 #define G3_ASPECT_TRANSLATE(aspect)                 (0x3-(aspect))
 #endif /* GLIDE3_DEBUG */
 #else
-#define TEX_INFO(ptr,field)                         ptr##field
+#define TEX_INFO(ptr,field)                         ptr.field
 #define G3_LOD_TRANSLATE(lod)                       (lod)
 #define G3_ASPECT_TRANSLATE(aspect)                 (aspect)
 #endif
