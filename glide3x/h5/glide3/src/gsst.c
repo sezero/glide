@@ -1172,8 +1172,8 @@ initGC ( GrGC *gc )
     gc->bufferSwaps[t] = 0xffffffff;
   }
   
-  gc->bufferSwaps[0] = ((FxU32) gc->cmdTransportInfo.fifoPtr -
-                        (FxU32) gc->cmdTransportInfo.fifoStart);
+  gc->bufferSwaps[0] = ((AnyPtr) gc->cmdTransportInfo.fifoPtr -
+                        (AnyPtr) gc->cmdTransportInfo.fifoStart);
   
   gc->swapsPending = 1;
   
@@ -1383,7 +1383,7 @@ GR_ENTRY(grSstWinOpen, GrContext_t, ( FxU32                   hWnd,
    * current gc. This gc is valid for all threads in the fullscreen
    * context.
    */
-  setThreadValue( (FxU32)&_GlideRoot.GCs[_GlideRoot.current_sst] );
+  setThreadValue( (AnyPtr)&_GlideRoot.GCs[_GlideRoot.current_sst] );
   
   {
     /* Partial Argument Validation */
