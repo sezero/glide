@@ -20,6 +20,9 @@
 #			default = no
 #	USE_X86=1	use assembler triangle specializations; req by CVG
 #			default = no
+#	USE_MMX=1	allow MMX specializations. However, the true CPU
+#			capabilities are still checked at run-time to avoid
+#			crashes.
 #	USE_3DNOW=1	allow 3DNow! specializations. However, the true CPU
 #			capabilities are still checked at run-time to avoid
 #			crashes.
@@ -124,6 +127,11 @@ CFLAGS += $(CDEFS)
 
 override USE_X86 = 1
 
+ifeq ($(USE_MMX),1)
+CFLAGS += -DGL_MMX
+override USE_X86 = 1
+endif
+
 ifeq ($(USE_3DNOW),1)
 CFLAGS += -DGL_AMD3D
 override USE_X86 = 1
@@ -166,6 +174,10 @@ ifeq ($(USE_X86),1)
 GLIDE_OBJECTS += \
 	xdraw2_def.o \
 	xdraw3_def.o
+ifeq ($(USE_MMX),1)
+GLIDE_OBJECTS += \
+	xtexdl_mmx.obj
+endif
 ifeq ($(USE_3DNOW),1)
 GLIDE_OBJECTS += \
 	xdraw2_3dnow.o \
@@ -259,14 +271,16 @@ endif
 #	rules(2)
 ###############################################################################
 
-cpuid.o: cpudtect.asm
-	$(AS) -o $@ $(ASFLAGS) $<
+#cpuid.o: cpudtect.asm
+#	$(AS) -o $@ $(ASFLAGS) $<
 xdraw2_def.o: xdraw2.asm
 	$(AS) -o $@ $(ASFLAGS) $<
 xdraw3_def.o: xdraw3.asm
 	$(AS) -o $@ $(ASFLAGS) $<
 xtexdl_def.o: xtexdl.c
 	$(CC) -o $@ $(CFLAGS) -c $<
+xtexdl_mmx.obj: xtexdl.asm
+	$(AS) -o $@ $(ASFLAGS) -DGL_MMX=1 $<
 xdraw2_3dnow.o: xdraw2.asm
 	$(AS) -o $@ $(ASFLAGS) -DGL_AMD3D=1 $<
 xdraw3_3dnow.o: xdraw3.asm
