@@ -813,19 +813,35 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
 
       /* cfgSliLfbCtrl */
       if(sliEnable && (!aaEnable || !aaSampleHigh)) {
-        /* No aa or 2 sample AA w/SLI */
-        sliRenderMask = (numChips - 1) << sliBandHeightLog2;
-        sliCompareMask = chipNum << sliBandHeightLog2;
-        sliScanMask = sliBandHeight - 1;
+        if(numChips == 4 && aaEnable && !aaSampleHigh && analogSLI) {
+          /* 4 chip 2 sample AA. two 2-way SLI units with 1 subsample per SLI unit */
+          sliRenderMask = ((numChips >> 1) - 1) << sliBandHeightLog2;
+          sliCompareMask = (chipNum >> 1) << sliBandHeightLog2;
+          sliScanMask = sliBandHeight - 1;
 
-        temp = (sliRenderMask << SST_SLI_LFB_RENDERMASK_SHIFT) |
-                (sliCompareMask << SST_SLI_LFB_COMPAREMASK_SHIFT) |
-                (sliScanMask << SST_SLI_LFB_SCANMASK_SHIFT) |
-                (numChipsLog2 << SST_SLI_LFB_NUMCHIPS_LOG2_SHIFT) |
-                SST_SLI_LFB_CPU_WRITE_ENABLE | 
-                SST_SLI_LFB_DISPATCH_WRITE_ENABLE |
-                SST_SLI_LFB_READ_ENABLE;
-        CFG_WRITE(chipNum, cfgSliLfbCtrl, temp);
+          temp = (sliRenderMask << SST_SLI_LFB_RENDERMASK_SHIFT) |
+                  (sliCompareMask << SST_SLI_LFB_COMPAREMASK_SHIFT) |
+                  (sliScanMask << SST_SLI_LFB_SCANMASK_SHIFT) |
+                  ((numChipsLog2-1) << SST_SLI_LFB_NUMCHIPS_LOG2_SHIFT) |
+                  SST_SLI_LFB_CPU_WRITE_ENABLE | 
+                  SST_SLI_LFB_DISPATCH_WRITE_ENABLE |
+                  SST_SLI_LFB_READ_ENABLE;
+          CFG_WRITE(chipNum, cfgSliLfbCtrl, temp);
+        } else {
+          /* No aa or 2 sample AA w/SLI */
+          sliRenderMask = (numChips - 1) << sliBandHeightLog2;
+          sliCompareMask = chipNum << sliBandHeightLog2;
+          sliScanMask = sliBandHeight - 1;
+
+          temp = (sliRenderMask << SST_SLI_LFB_RENDERMASK_SHIFT) |
+                  (sliCompareMask << SST_SLI_LFB_COMPAREMASK_SHIFT) |
+                  (sliScanMask << SST_SLI_LFB_SCANMASK_SHIFT) |
+                  (numChipsLog2 << SST_SLI_LFB_NUMCHIPS_LOG2_SHIFT) |
+                  SST_SLI_LFB_CPU_WRITE_ENABLE | 
+                  SST_SLI_LFB_DISPATCH_WRITE_ENABLE |
+                  SST_SLI_LFB_READ_ENABLE;
+          CFG_WRITE(chipNum, cfgSliLfbCtrl, temp);
+        }
       } else if(!sliEnable && aaEnable) {
         /* SLI disabled, AA enabled */
         CFG_WRITE(chipNum, cfgSliLfbCtrl, 0);
@@ -1421,7 +1437,8 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
 
       /* Make sure that last chip properly waits for data to be xfered
         * over the PCI bus before driving... */
-      if(numChips == 4 && sliEnable && aaEnable && chipNum == 3) {
+      if((numChips == 4 && sliEnable && aaEnable && aaSampleHigh && chipNum == 3) ||
+         (numChips == 4 && sliEnable && aaEnable && !aaSampleHigh && analogSLI && chipNum == 3)) {
         temp = CFG_READ(chipNum, cfgSliAAMisc);
         temp |= SST_CFG_AA_LFB_RD_SLV_WAIT;
         CFG_WRITE(chipNum, cfgSliAAMisc, temp);
@@ -1435,7 +1452,7 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
          at all. Then, there is only handshaking between chips 0 & 1 so
          the Master stays happy.
        */
-      if(numChips == 4 && !sliEnable && aaEnable && aaSampleHigh && chipNum > 1) {
+      if(numChips == 4 && !sliEnable && aaEnable && aaSampleHigh && analogSLI && chipNum > 1) {
         temp = CFG_READ(chipNum, cfgAALfbCtrl);
         temp &= ~SST_AA_LFB_READ_ENABLE;
         CFG_WRITE(chipNum, cfgAALfbCtrl, temp);
