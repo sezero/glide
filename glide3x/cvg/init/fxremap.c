@@ -90,10 +90,10 @@ void fxremap_dowork(int argc,char **argv,int doit_silently)
 
    ProcessCommandLine(argv,argc);
 
-
-   
+#if !DIRECTX
    InitRemap();
-
+#endif
+  
    if (!FindNecessaryCards())
    {
       if (!silent) {
@@ -149,7 +149,9 @@ void fxremap_main(int argc,char **argv) {
 
 void InitRemap(void)
 {
+#if !DIRECTX
    pciOpen();
+#endif
 }
 
 void CloseRemap(void)

@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.5  2004/12/13 08:40:18  dborca
+** fixed splash DLL code (but partially left disabled)
+**
 ** Revision 1.1.1.1.8.4  2004/11/25 19:07:31  koolsmoky
 ** Prepare for newer splash screens
 **
@@ -469,12 +472,14 @@ __tryReOpen:
    */
   if (!gc->hwInitP) {
     FxU32* sstRegs = NULL;
-    
+
+#if !DIRECTX
     rv = pciOpen();
     if (!rv) {
       GDBG_INFO(gc->myLevel, "%s: pci bus could not be opened\n", FN_NAME);
       goto BAILOUT;
     }
+#endif
     
     sstRegs = sst1InitMapBoard(_GlideRoot.current_sst);  
     rv = (sstRegs != NULL);
@@ -891,12 +896,14 @@ __tryReOpen:
             gc->hwInitP = FXFALSE;
           }
 
+#if !DIRECTX
           /* dpc - 14 feb 1997 - HackAlert!!!!
            * The sst1InitShutdown above will close the pci library which
            * then prevents other pci library calls which we need to init
            * video next.
            */
           pciOpen();
+#endif
           
           /* Re-init the new master */
           {
