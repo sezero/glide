@@ -19,6 +19,7 @@
 **
 ** $Header$
 ** $Log$
+**
 ** Revision 1.1.2.1  2004/03/02 07:55:29  dborca
 ** Bastardised Glide3x for SST1
 **
@@ -397,8 +398,8 @@ GR_DIENTRY(grDrawVertexArray, void , (FxU32 mode, FxU32 Count, void *pointers) )
     break;
   case GR_LINES:
     /* [dBorca] "AA" is checked inside grDrawLine */
-    for (i = 2; i <= (FxI32)Count; i += 2) {
-        grDrawLine(vPtr[i-2], vPtr[i-1]);
+    for (i = 1; i < Count; i += 2) {
+        grDrawLine(vPtr[i-1], vPtr[i]);
     }
     break;
     
@@ -407,12 +408,12 @@ GR_DIENTRY(grDrawVertexArray, void , (FxU32 mode, FxU32 Count, void *pointers) )
     */
   case GR_TRIANGLE_STRIP:
     /* [dBorca] we need to cache the last TWO vertices */
-    for (i = 3; i <= Count; i++) {
+    for (i = 2; i < Count; i++) {
         /* CullFlip */
         if (i & 1) {
-           grDrawTriangle(vPtr[i-3], vPtr[i-2], vPtr[i-1]);
+           grDrawTriangle(vPtr[i-2], vPtr[i], vPtr[i-1]);
         } else {
-           grDrawTriangle(vPtr[i-3], vPtr[i-1], vPtr[i-2]);
+           grDrawTriangle(vPtr[i-2], vPtr[i-1], vPtr[i]);
         }
     }
     break;
@@ -436,12 +437,12 @@ GR_DIENTRY(grDrawVertexArray, void , (FxU32 mode, FxU32 Count, void *pointers) )
   case GR_TRIANGLES:
     /* [dBorca] jump to anti-aliased function if GR_AA_ORDERED */
     if (gc->state.grEnableArgs.primitive_smooth_mode & GR_AA_ORDERED_TRIANGLES_MASK) {
-       for (i = 3; i <= Count; i += 3) {
-           grAADrawTriangle(vPtr[i-3], vPtr[i-2], vPtr[i-1], FXTRUE, FXTRUE, FXTRUE);
+       for (i = 2; i < Count; i += 3) {
+           grAADrawTriangle(vPtr[i-2], vPtr[i-1], vPtr[i], FXTRUE, FXTRUE, FXTRUE);
        }
     } else {
-       for (i = 3; i <= Count; i += 3) {
-           grDrawTriangle(vPtr[i-3], vPtr[i-2], vPtr[i-1]);
+       for (i = 2; i < Count; i += 3) {
+           grDrawTriangle(vPtr[i-2], vPtr[i-1], vPtr[i]);
        }
     }
     break;
@@ -502,7 +503,7 @@ GR_DIENTRY(grDrawVertexArrayContiguous, void , (FxU32 mode, FxU32 Count, void *p
     break;
   case GR_LINES:
     /* [dBorca] "AA" is checked inside grDrawLine */
-    for (i = 2; i <= (FxI32)Count; i += 2) {
+    for (i = 1; i < Count; i += 2) {
         grDrawLine(vPtr, vPtr + stride);
         vPtr += stride * 2;
     }
@@ -510,12 +511,12 @@ GR_DIENTRY(grDrawVertexArrayContiguous, void , (FxU32 mode, FxU32 Count, void *p
     
   case GR_TRIANGLE_STRIP:
     /* [dBorca] we need to cache the last TWO vertices */
-    for (i = 3; i <= Count; i++) {
+    for (i = 2; i < Count; i++) {
         /* CullFlip */
         if (i & 1) {
-           grDrawTriangle(vPtr, vPtr + stride, vPtr + stride * 2);
-        } else {
            grDrawTriangle(vPtr, vPtr + stride * 2, vPtr + stride);
+        } else {
+           grDrawTriangle(vPtr, vPtr + stride, vPtr + stride * 2);
         }
         vPtr += stride;
     }
@@ -540,12 +541,12 @@ GR_DIENTRY(grDrawVertexArrayContiguous, void , (FxU32 mode, FxU32 Count, void *p
   case GR_TRIANGLES:
     /* [dBorca] jump to anti-aliased function if GR_AA_ORDERED */
     if (gc->state.grEnableArgs.primitive_smooth_mode & GR_AA_ORDERED_TRIANGLES_MASK) {
-       for (i = 3; i <= Count; i += 3) {
+       for (i = 2; i < Count; i += 3) {
            grAADrawTriangle(vPtr, vPtr + stride, vPtr + stride * 2, FXTRUE, FXTRUE, FXTRUE);
            vPtr += stride * 3;
        }
     } else {
-       for (i = 3; i <= Count; i += 3) {
+       for (i = 2; i < Count; i += 3) {
            grDrawTriangle(vPtr, vPtr + stride, vPtr + stride * 2);
            vPtr += stride * 3;
        }
