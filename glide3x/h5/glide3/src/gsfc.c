@@ -19,6 +19,8 @@
 **
 ** $Header$
 ** $Log: 
+**  20   3dfx      1.17.1.0.1.010/11/00 Brent           Forced check in to enforce
+**       branching.
 **  19   3dfx      1.17.1.0    06/20/00 Joseph Kain     Changes to support the
 **       Napalm Glide open source release.  Changes include cleaned up offensive
 **       comments and new legal headers.

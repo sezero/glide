@@ -19,6 +19,13 @@
 **
 ** $Header$
 ** $Log: 
+**  39   3dfx      1.34.1.0.1.211/14/00 Jonny Cochrane  Implement multisample LOD
+**       Dithering for 2x and 4x FSAA modes 
+**  38   3dfx      1.34.1.0.1.110/11/00 Brent           Forced check in to enforce
+**       branching.
+**  37   3dfx      1.34.1.0.1.007/11/00 Adam Briggs     fixed a state management
+**       bug where using the constant color extension was inadvertently turning on
+**       chroma range substitution
 **  36   3dfx      1.34.1.0    06/20/00 Joseph Kain     Changes to support the
 **       Napalm Glide open source release.  Changes include cleaned up offensive
 **       comments and new legal headers.
@@ -1028,6 +1035,9 @@ GR_ENTRY(grTexClampMode, void,
   } else {
     INVALIDATE_TMU(tmu, textureMode);
   }
+  
+	if(MultitextureAndTrilinear()) g3LodBiasPerChip();
+  
   GR_END();
 
 #undef FN_NAME
@@ -1797,6 +1807,15 @@ GR_EXT_ENTRY(grTexColorCombineExt, void,
   if(gc->state.tac_requires_constant_color[tmu] || gc->state.tcc_requires_constant_color[tmu])
     combineMode |= SST_CM_DISABLE_CHROMA_SUBSTITUTION;
 
+  /*
+   * AJB- If we are either turning on or turning off constant color
+   * combining, validateState will need to swap the values in
+   * chromaRange & chromaKey.
+   */
+  if ((combineMode & SST_CM_DISABLE_CHROMA_SUBSTITUTION) !=
+     (gc->state.tmuShadow[tmu].combineMode & SST_CM_DISABLE_CHROMA_SUBSTITUTION))
+    INVALIDATE_TMU(tmu, texchroma) ;
+
   /* Update shadows */
   INVALIDATE_TMU(tmu, textureMode);  
   gc->state.tmuShadow[tmu].tLOD        = tLod;
@@ -2151,6 +2170,15 @@ GR_EXT_ENTRY(grTexAlphaCombineExt, void,
   if(gc->state.tac_requires_constant_color[tmu] || gc->state.tcc_requires_constant_color[tmu])
     combineMode |= SST_CM_DISABLE_CHROMA_SUBSTITUTION;
 
+  /*
+   * AJB- If we are either turning on or turning off constant color
+   * combining, validateState will need to swap the values in
+   * chromaRange & chromaKey.
+   */
+  if ((combineMode & SST_CM_DISABLE_CHROMA_SUBSTITUTION) !=
+     (gc->state.tmuShadow[tmu].combineMode & SST_CM_DISABLE_CHROMA_SUBSTITUTION))
+    INVALIDATE_TMU(tmu, texchroma) ;
+
   /* Update shadows */
   INVALIDATE_TMU(tmu, textureMode);
   gc->state.tmuShadow[tmu].tLOD        = tLod;
@@ -2180,6 +2208,12 @@ GR_EXT_ENTRY(grTexAlphaCombineExt, void,
 
 /*---------------------------------------------------------------------------
 ** grConstantColorValueExt
+**
+** A sad, sad story:
+**
+** Whoever designed this api extension overlooked the fact that there are two
+** constant color inputs into the color combiner where here we only set one.
+** (actually we set them both to the same thing, but in effect we only set one).
 */
 GR_EXT_ENTRY(grConstantColorValueExt, void, 
           (GrChipID_t       tmu,
@@ -2260,6 +2294,7 @@ GR_ENTRY(grTexFilterMode, void,
     INVALIDATE_TMU(tmu, textureMode);
   }
 
+
   GR_END();
 #undef FN_NAME
 } /* grTexFilterMode */
@@ -2274,40 +2309,44 @@ GR_ENTRY(grTexLodBiasValue, void,
 #define FN_NAME "grTexLodBiasValue"
   FxU32 tLod;
   FxI32 lodBias;
-  
+
+
   GR_BEGIN_NOFIFOCHECK("grTexLodBiasValue",88);
   GDBG_INFO_MORE(gc->myLevel,"(%d,%g)\n",tmu,fvalue);
   GR_CHECK_TMU(FN_NAME, tmu);
   
-  tLod = gc->state.tmuShadow[tmu].tLOD;
-  tLod &= ~(SST_LODBIAS);
-  lodBias = _grTexFloatLODToFixedLOD(fvalue);
-  /* Sign extend it. */
-  lodBias = ((lodBias << (32-6)) >> (32-6));
-  lodBias += _GlideRoot.environment.lodBias;
-  if(lodBias > 0x1f) lodBias = 0x1f;
-  if(lodBias < -0x20) lodBias = -0x20;
-  /* Mask it back off. */
-  lodBias &= 0x3f;
-  tLod |= lodBias << SST_LODBIAS_SHIFT;
 
-  gc->state.tmuShadow[tmu].tLOD = tLod;
+  	tLod = gc->state.tmuShadow[tmu].tLOD;
+	tLod &= ~(SST_LODBIAS);
+ 	lodBias = _grTexFloatLODToFixedLOD(fvalue);
+  	/* Sign extend it. */
+  	lodBias = ((lodBias << (32-6)) >> (32-6));
+  	lodBias += _GlideRoot.environment.lodBias;
+  	if(lodBias > 0x1f) lodBias = 0x1f;
+  	if(lodBias < -0x20) lodBias = -0x20;
+  	/* Mask it back off. */
+  	lodBias &= 0x3f;
+  	tLod |= lodBias << SST_LODBIAS_SHIFT;
 
-  /* Update real shadows and update hardware immediately if we can. */
-  if(!gc->state.mode2ppc || (tmu == gc->state.mode2ppcTMU)) {
-    SstRegs* tmuHw = SST_TMU(hw, tmu);
+  	gc->state.tmuShadow[tmu].tLOD = tLod;
+
+  	/* Update real shadows and update hardware immediately if we can. */
+  	if(!gc->state.mode2ppc || (tmu == gc->state.mode2ppcTMU)) {
+    	SstRegs* tmuHw = SST_TMU(hw, tmu);
     
-    gc->state.shadow.tmuState[tmu].tLOD = tLod;
-    _grChipMask( SST_CHIP_MASK_ALL_CHIPS );
-    REG_GROUP_BEGIN((0x02 << tmu), tLOD, 1, 0x1);
-    {
-      REG_GROUP_SET(tmuHw, tLOD, gc->state.shadow.tmuState[tmu].tLOD);
-    }
-    REG_GROUP_END();
-    _grChipMask( gc->chipmask );
-  } else {
-    INVALIDATE_TMU(tmu, textureMode);
-  }
+    	gc->state.shadow.tmuState[tmu].tLOD = tLod;
+    	_grChipMask( SST_CHIP_MASK_ALL_CHIPS );
+    	REG_GROUP_BEGIN((0x02 << tmu), tLOD, 1, 0x1);
+    	{
+    	REG_GROUP_SET(tmuHw, tLOD, gc->state.shadow.tmuState[tmu].tLOD);
+    	}
+   	 	REG_GROUP_END();
+    		_grChipMask( gc->chipmask );
+  	} else {
+    	INVALIDATE_TMU(tmu, textureMode);
+  	}
+
+	if(MultitextureAndTrilinear()) g3LodBiasPerChip();
 
   GR_END();
 #undef FN_NAME
@@ -2437,6 +2476,7 @@ GR_ENTRY(grTexMipMapMode, void,
   gc->state.tmuShadow[tmu].tLOD        = tLod;
   gc->state.tmuShadow[tmu].textureMode = texMode;
 
+
   /* Update real shadows and update hardware immediately if we can. */
   if(!gc->state.mode2ppc || (tmu == gc->state.mode2ppcTMU)) {
     SstRegs* tmuHw = SST_TMU(hw, tmu);
@@ -2459,6 +2499,9 @@ GR_ENTRY(grTexMipMapMode, void,
     INVALIDATE_TMU(tmu, textureMode);
   }
 
+	
+
+
 #if GLIDE_CHECK_TRILINEAR
   /* Make sure that the trilinear blending bits are set in a
    * consistent manner across the tmu's.  This only really matters if
@@ -2472,6 +2515,8 @@ GR_ENTRY(grTexMipMapMode, void,
    */
   if (gc->num_tmu > 1) _grTexCheckTriLinear(tmu);
 #endif /* GLIDE_CHECK_TRILINEAR */
+
+	if(MultitextureAndTrilinear()) g3LodBiasPerChip();
 
   GR_END();
 #undef FN_NAME
@@ -2841,6 +2886,9 @@ GR_ENTRY(grTexSource, void,
     break;
   }
 
+
+	if(MultitextureAndTrilinear()) g3LodBiasPerChip();
+
   GR_END();
 #undef FN_NAME
 } /* grTexSource */
@@ -2895,6 +2943,9 @@ GR_ENTRY(grTexMultibase, void,
   } else {
     INVALIDATE_TMU(tmu, textureMode);
   }
+
+
+  if(MultitextureAndTrilinear()) g3LodBiasPerChip();
 
   GR_END();
 #undef FN_NAME
@@ -3473,4 +3524,140 @@ _g3LodXlat(const GrLOD_t someLOD, const FxBool tBig)
   }
 #undef FN_NAME
 } /* _g3LodXlat */
+
+
+/*-------------------------------------------------------------------
+  Function: 		_g3LodBiasPerChip
+
+  Date: 			14-Nov-2000
+
+  Implementor: 		Jonny Cochrane
+
+  Description: 		Sub sample LOD Dithering. Called if multitexturing and
+					trilinear filtereing and in NON SLI mode AND No. Units > 1 and 
+					mipmap dithereing NOT requested from tools.
+
+  Arguments:		None  
+
+  Return:			Yes
+  -------------------------------------------------------------------*/
+void g3LodBiasPerChip(void)
+{
+	#define FN_NAME "g3LodBiasPerChip"
+
+	FxI32 lodBias, tLod, tmu;
+	int idx = 0;
+	unsigned int i;
+
+  	int chipLodBias[2][4] =       // these values per Gary Tarolli
+				{
+				// 4.2 format for tLod register
+				//   0.00, 0.50, 0.00, 0.00 - 2 chip. last two values are not used
+					{0x00, 0x02, 0x00, 0x00},
+				//   0.00, 0.25, 0.50, 0.75 - 4 chip.
+					{0x00, 0x01, 0x02, 0x03}
+				};
+
+  	GR_BEGIN_NOFIFOCHECK("g3LodBiasPerChip", 88);
+
+	tmu = 0;
+	idx = gc->chipCount > 2;
+
+	if ((gc->sliCount > 1) || (_GlideRoot.environment.texLodDither)) goto FORGET_IT;
+
+	for (i = 0; i < gc->chipCount; i++)	
+	{
+	  	tLod = gc->state.tmuShadow[tmu].tLOD;
+  		tLod &= ~(SST_LODBIAS);
+		lodBias = chipLodBias[idx][i];
+
+  		if(lodBias > 0x1f) lodBias = 0x1f;
+  		if(lodBias < -0x20) lodBias = -0x20;
+  		/* Mask it back off. */
+  		lodBias &= 0x3f;
+  		tLod |= lodBias << SST_LODBIAS_SHIFT;
+
+  		if(!gc->state.mode2ppc || (tmu == gc->state.mode2ppcTMU)) {
+    		SstRegs* tmuHw = SST_TMU(hw, tmu);
+       		_grChipMask( 1L << i );
+    		REG_GROUP_BEGIN((0x02 << tmu), tLOD, 1, 0x1);
+    		{
+      		REG_GROUP_SET(tmuHw, tLOD, tLod);
+    		}
+   		 	REG_GROUP_END();
+    		_grChipMask( gc->chipmask );
+  		} else {
+    		INVALIDATE_TMU(tmu, textureMode);
+  		}
+
+	}
+
+	tmu = 1;
+
+	for (i = 0; i < gc->chipCount; i++)	
+	{
+	  	tLod = gc->state.tmuShadow[tmu].tLOD;
+  		tLod &= ~(SST_LODBIAS);
+		lodBias = chipLodBias[idx][i];
+
+  		if(lodBias > 0x1f) lodBias = 0x1f;
+  		if(lodBias < -0x20) lodBias = -0x20;
+  		/* Mask it back off. */
+  		lodBias &= 0x3f;
+  		tLod |= lodBias << SST_LODBIAS_SHIFT;
+
+  		if(!gc->state.mode2ppc || (tmu == gc->state.mode2ppcTMU)) {
+    		SstRegs* tmuHw = SST_TMU(hw, tmu);
+      		_grChipMask( 1L << i );
+    		REG_GROUP_BEGIN((0x02 << tmu), tLOD, 1, 0x1);
+    		{
+      		REG_GROUP_SET(tmuHw, tLOD, tLod);
+    		}
+   		 	REG_GROUP_END();
+    		_grChipMask( gc->chipmask );
+  		} else {
+    		INVALIDATE_TMU(tmu, textureMode);
+  		}
+
+	}
+
+FORGET_IT:
+  GR_END();
+#undef FN_NAME
+}
+
+
+/*-------------------------------------------------------------------
+  Function: 		MultitextureAndTrilinear
+
+  Date: 			14-Nov-2000
+
+  Implementor: 		Jonny Cochrane
+
+  Description: 		Determines if we are multitexturing and trilinear
+  					filtering
+  					
+  Arguments:		None  
+
+  Return:			BOOL
+  -------------------------------------------------------------------*/
+FxBool MultitextureAndTrilinear(void)
+{
+
+	#define FN_NAME "MultitextureAndTrilinear"
+
+	GR_DCL_GC;
+
+	FxBool retval = FXFALSE;
+
+   	if( (gc->state.per_tmu[0].evenOdd == 3) 										&& //both even and odd on each tmu
+   	    (gc->state.per_tmu[1].evenOdd == 3) 										&&	 
+	    (gc->state.tmuShadow[0].textureMode	& (SST_TMINFILTER | SST_TMAGFILTER)) 	&& //and bilinear for mag and min filter
+	    (gc->state.tmuShadow[1].textureMode	& (SST_TMINFILTER | SST_TMAGFILTER)))
+   	{
+		retval = FXTRUE;
+   	}
+
+	return retval;
+}
 

@@ -613,6 +613,9 @@ grSstWinOpen(
 FX_ENTRY FxBool FX_CALL
 grSstWinClose( GrContext_t context );
 
+FX_ENTRY void FX_CALL
+grSetNumPendingBuffers(FxI32 NumPendingBuffers);
+
 FX_ENTRY FxBool FX_CALL
 grSelectContext( GrContext_t context );
 

@@ -16,11 +16,15 @@
 ** THE UNITED STATES. 
 **
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
- */
+ *
 
-/*  $Header$ */
-/*  $Revision$ */
+/*  $Header$ *
+/*  $Revision$ *
 /*  $Log$
+/*  Revision 1.3  2000/11/15 23:32:54  joseph
+/*  Syncing up with 3dfx internal source repository.  These changes contain a
+/*  number of bug fixes.
+/*
 /*  Revision 1.1  2000/06/15 00:27:43  joseph
 /*  Initial checkin into SourceForge.
 /*

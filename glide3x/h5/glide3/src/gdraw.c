@@ -1,24 +1,28 @@
 /*
- ** THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONLY
- ** PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGHT
- ** TO USE THE GLIDE TRADEMARK WITHOUT PRIOR WRITTEN PERMISSION OF 3DFX
+ ** THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONL
+ ** PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGH
+ ** TO USE THE GLIDE TRADEMARK WITHOUT PRIOR WRITTEN PERMISSION OF 3DF
  ** INTERACTIVE, INC. A COPY OF THIS LICENSE MAY BE OBTAINED FROM THE
  ** DISTRIBUTOR OR BY CONTACTING 3DFX INTERACTIVE INC(info@3dfx.com).
  ** THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER
- ** EXPRESSED OR IMPLIED. SEE THE 3DFX GLIDE GENERAL PUBLIC LICENSE FOR A
+ ** EXPRESSED OR IMPLIED. SEE THE 3DFX GLIDE GENERAL PUBLIC LICENSE FOR 
  ** FULL TEXT OF THE NON-WARRANTY PROVISIONS. 
  **
- ** USE, DUPLICATION OR DISCLOSURE BY THE GOVERNMENT IS SUBJECT TO
- ** RESTRICTIONS AS SET FORTH IN SUBDIVISION (C)(1)(II) OF THE RIGHTS IN
- ** TECHNICAL DATA AND COMPUTER SOFTWARE CLAUSE AT DFARS 252.227-7013,
- ** AND/OR IN SIMILAR OR SUCCESSOR CLAUSES IN THE FAR, DOD OR NASA FAR
- ** SUPPLEMENT. UNPUBLISHED RIGHTS RESERVED UNDER THE COPYRIGHT LAWS OF
+ ** USE, DUPLICATION OR DISCLOSURE BY THE GOVERNMENT IS SUBJECT T
+ ** RESTRICTIONS AS SET FORTH IN SUBDIVISION (C)(1)(II) OF THE RIGHTS I
+ ** TECHNICAL DATA AND COMPUTER SOFTWARE CLAUSE AT DFARS 252.227-7013
+ ** AND/OR IN SIMILAR OR SUCCESSOR CLAUSES IN THE FAR, DOD OR NASA FA
+ ** SUPPLEMENT. UNPUBLISHED RIGHTS RESERVED UNDER THE COPYRIGHT LAWS O
  ** THE UNITED STATES. 
  ** 
- ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
+ ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVE
  **
  ** $Header$
  ** $Log: 
+ **  11   3dfx      1.5.1.2.1.1 10/11/00 Brent           Forced check in to enforce
+ **       branching.
+ **  10   3dfx      1.5.1.2.1.0 07/10/00 troy thornton   changed grDrawPoints to
+ **       draw points in FSAA
  **  9    3dfx      1.5.1.2     06/20/00 Joseph Kain     Fixed errors introduced by
  **       my previous merge.
  **  8    3dfx      1.5.1.1     06/20/00 Joseph Kain     Changes to support the
@@ -431,6 +435,7 @@ _grDrawPoints(FxI32 mode, FxI32 count, void *pointers)
    */
 #define kNumMantissaBits 12UL
   const float bias = (const float)(3UL << kNumMantissaBits);
+  
 
   GR_BEGIN_NOFIFOCHECK(FN_NAME, 90);
 
@@ -495,13 +500,13 @@ _grDrawPoints(FxI32 mode, FxI32 count, void *pointers)
            * triangle from the first packet sent.
            */
 
-          /* Mask off the real fractional bits from the mantissa */
+          /* Mask off the real fractional bits from the mantissa */          
           x = ((*(FxU32*)&gc->pool.ftemp1 & (0xFFFFFFFFUL << (22UL - kNumMantissaBits))) +
                (0x01UL << (22UL - kNumMantissaBits)));
           y = ((*(FxU32*)&gc->pool.ftemp2 & (0xFFFFFFFFUL << (22UL - kNumMantissaBits))) +
                (0x01UL << (22UL - kNumMantissaBits)));
-          
-          /* Lower right corner */          
+
+          /* Lower right corner */
           DA_SET(x);
           DA_SET(y);
 
@@ -516,8 +521,8 @@ _grDrawPoints(FxI32 mode, FxI32 count, void *pointers)
           
           /* Packet w/ actual point coordinate and parameter data */
           DA_CONT(kSetupStrip | kSetupCullDisable, gc->cmdTransportInfo.paramMask, 
-                         1, gc->state.vData.vSize, SSTCP_PKT3_DDDDDD);
-          
+                         1, gc->state.vData.vSize, SSTCP_PKT3_DDDDDD);                            
+
           i = gc->tsuDataList[dataElem];
           DA_SET(x);
           DA_SET(y);
@@ -540,7 +545,7 @@ _grDrawPoints(FxI32 mode, FxI32 count, void *pointers)
       float *vPtr;
       FxI32 k, i;
       FxI32 vcount = count >= POINTS_BUFFER ? POINTS_BUFFER : count;
-      GR_SET_EXPECTED_SIZE((3*gc->state.vData.vSize) * vcount, vcount);
+      GR_SET_EXPECTED_SIZE((gc->state.vData.vSize << 2) * vcount, vcount);
 
       /* begin points routine */
       DA_BEGIN;
@@ -560,20 +565,23 @@ _grDrawPoints(FxI32 mode, FxI32 count, void *pointers)
           FxU32 dataElem;
           
           DA_CONT(kSetupStrip | kSetupCullDisable, gc->cmdTransportInfo.paramMask, 
-                         3, -1/*NOT USED*//*gc->state.vData.vSize * 3*/, SSTCP_PKT3_BDDDDD);
+                         4, -1/*NOT USED*//*gc->state.vData.vSize * 3*/, SSTCP_PKT3_BDDDDD);
+          
+          x = FARRAY(vPtr, gc->state.vData.vertexInfo.offset) + 0.5f;
+          y = FARRAY(vPtr, gc->state.vData.vertexInfo.offset + 4) + 0.5f;
+
+          x += lbias;
+          y += lbias;
 
           /* Convert to 32-bit representation */
-          x = FARRAY(vPtr, gc->state.vData.vertexInfo.offset);
-          y = FARRAY(vPtr, gc->state.vData.vertexInfo.offset + 4);
-        
-          x += .5f;
-          y += .5f;
-          x = x + lbias;
-          y = y + lbias;
-          x = x - lbias;
-          y = y - lbias;
+          gc->pool.ftemp1 = (const float)x;
+          gc->pool.ftemp2 = (const float)y;
+
+          /* Correct the bias to get rid of the fractional bits */
+          x = (volatile float)gc->pool.ftemp1 - lbias;
+          y = (volatile float)gc->pool.ftemp2 - lbias;                    
           
-          /* Lower right corner */          
+          /* Lower right corner */
           DA_SETF(x);
           DA_SETF(y);
           dataElem = 0;
@@ -589,8 +597,8 @@ _grDrawPoints(FxI32 mode, FxI32 count, void *pointers)
             i = gc->tsuDataList[dataElem];
           }
 
-          /* Upper right corner */
-          y -= .5f;
+          /* Upper right corner */          
+          y -= 1.0f;                    
           DA_SETF(x);
           DA_SETF(y);
           dataElem = 0;
@@ -601,12 +609,11 @@ _grDrawPoints(FxI32 mode, FxI32 count, void *pointers)
             i = gc->tsuDataList[dataElem];
           }
 
-          /* Upper Left corner */
-          x -= .5f;
-          
+          /* Lower left corner */
+          y += 1.0f;
+          x -= 1.0f;
           DA_SETF(x);
           DA_SETF(y);
-
           dataElem = 0;
           i = gc->tsuDataList[dataElem];
           while (i != GR_DLIST_END) {
@@ -614,7 +621,19 @@ _grDrawPoints(FxI32 mode, FxI32 count, void *pointers)
             dataElem++;
             i = gc->tsuDataList[dataElem];
           }
-       }
+
+          /* Upper leftcorner */          
+          y += 1.0f;
+          DA_SETF(x);
+          DA_SETF(y);
+          dataElem = 0;
+          i = gc->tsuDataList[dataElem];
+          while (i != GR_DLIST_END) {
+            DA_SET(ARRAY(vPtr, i));
+            dataElem++;
+            i = gc->tsuDataList[dataElem];
+          }
+        }
       }
       DA_END;
       GR_CHECK_SIZE();
@@ -631,10 +650,11 @@ _grDrawPoints(FxI32 mode, FxI32 count, void *pointers)
     float oow;
     
     while (count > 0) {
+      float lbias = (float)( 3 << 22);
       float *vPtr;
       FxI32 k;
       FxI32 vcount = count >= POINTS_BUFFER ? POINTS_BUFFER : count;
-      GR_SET_EXPECTED_SIZE(((sizeof(FxU32) << 2) +  gc->state.vData.vSize) * vcount, vcount << 1);
+      GR_SET_EXPECTED_SIZE((gc->state.vData.vSize << 2) * vcount, vcount << 1);
 
       /* begin points routine */
       DA_BEGIN;
@@ -647,48 +667,59 @@ _grDrawPoints(FxI32 mode, FxI32 count, void *pointers)
         oow = 1.0f / FARRAY(vPtr, gc->state.vData.wInfo.offset);        
         (float *)pointers += stride;
         
-        {
-          FxU32 x, y;
+        {        
+          float fx, fy;
 
           DA_CONT(kSetupStrip | kSetupCullDisable, 0x00,
-                         0x02, sizeof(FxU32) << 1, SSTCP_PKT3_BDDDDD);
+                         0x03, sizeof(FxU32) << 1, SSTCP_PKT3_BDDDDD);
 
           /* Convert to 32-bit representation */
+
           gc->pool.ftemp1 = (FARRAY(vPtr, gc->state.vData.vertexInfo.offset) * 
                                     oow * 
                                     gc->state.Viewport.hwidth + 
-                                    gc->state.Viewport.ox + 
-                                    bias);
+                                    gc->state.Viewport.ox +
+                                    0.5f);
           gc->pool.ftemp2 = (FARRAY(vPtr, gc->state.vData.vertexInfo.offset + 4) * 
                                     oow *
                                     gc->state.Viewport.hheight + 
                                     gc->state.Viewport.oy +
-                                    bias);
+                                    0.5f);
 
-          /* Mask off the real fractional bits from the mantissa */
-          x = ((*(FxU32*)&gc->pool.ftemp1 & (0xFFFFFFFFUL << (22UL - kNumMantissaBits))) +
-               (0x01UL << (22UL - kNumMantissaBits)));
-          y = ((*(FxU32*)&gc->pool.ftemp2 & (0xFFFFFFFFUL << (22UL - kNumMantissaBits))) +
-               (0x01UL << (22UL - kNumMantissaBits)));
-          
-          /* Lower right cornder */
-          DA_SET(x);
-          DA_SET(y);
+          fx = gc->pool.ftemp1;
+          fy = gc->pool.ftemp2;
 
-          /* Upper right corner. */
-          y -= (0x01UL << (21UL - kNumMantissaBits));
-          DA_SET(x);
-          DA_SET(y);
+          gc->pool.ftemp1 += lbias;
+          gc->pool.ftemp2 += lbias;
 
-          /* Upper Left corner */
-          x -= (0x01UL << (21UL - kNumMantissaBits));
-          
+          fx = gc->pool.ftemp1 - lbias;
+          fy = gc->pool.ftemp2 - lbias;
+                    
+          /* Lower right corner */
+          DA_SETF(fx);
+          DA_SETF(fy);
+
+          /* Upper right corner. */          
+          fy -= 1.0f;
+          DA_SETF(fx);
+          DA_SETF(fy);
+
+          /* Lower left corner */          
+          fy += 1.0f;
+          fx -= 1.0f;
+          DA_SETF(fx);
+          DA_SETF(fy);
+
           /* Packet w/ actual point coordinate and parameter data */
           DA_CONT(kSetupStrip | kSetupCullDisable, gc->cmdTransportInfo.paramMask, 
                          1, gc->state.vData.vSize, SSTCP_PKT3_DDDDDD);
+
           
-          DA_SET(x);
-          DA_SET(y);
+          /*Upper left corner */          
+          fy -= 1.0f;
+          DA_SETF(fx);
+          DA_SETF(fy);
+
           DA_VP_SETFS(vPtr, oow);
         }
       }

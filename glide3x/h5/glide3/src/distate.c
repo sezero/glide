@@ -20,6 +20,14 @@
  **
  ** $Header$
  ** $Log: 
+ **  33   3dfx      1.25.1.2.1.311/14/00 Jonny Cochrane  Implement multisample LOD
+ **       Dithering for 2x and 4x FSAA modes 
+ **  32   3dfx      1.25.1.2.1.210/11/00 Brent           Forced check in to enforce
+ **       branching.
+ **  31   3dfx      1.25.1.2.1.109/26/00 Andy Hanson     Add environment variable of
+ **       glide group so they can do wacky things safely.
+ **  30   3dfx      1.25.1.2.1.009/19/00 Matt McClure    Added a call to win_mode.c
+ **       to enable OpenGL.
  **  29   3dfx      1.25.1.2    06/20/00 Joseph Kain     Fixed errors introduced by
  **       my previous merge.
  **  28   3dfx      1.25.1.1    06/20/00 Joseph Kain     Changes to support the
@@ -1481,6 +1489,8 @@ _grValidateTMUState()
 
   palletizedTexture = gc->state.palletizedTexture[0] | gc->state.palletizedTexture[1];
 
+  
+  
   for(tmu = 0; tmu < gc->num_tmu; tmu++) {
     tmuSource = tmu;
 
@@ -1618,7 +1628,8 @@ _grValidateTMUState()
       /* Mark TMU state as valid. */
       gc->state.tmuInvalid[tmu] = 0;
       
-    } else {
+  
+      } else {
 #if DEBUG_2PPC
       GDBG_PRINTF("TMU%d not required by downstream units or passthrough enabled\n",tmu);
 #endif
@@ -1785,6 +1796,7 @@ _grValidateTMUState()
         
       } else {
 #endif      
+
         /* Set LOD on TMU to 1x1. */
         SstRegs* tmuHw = SST_TMU(hw, tmu);
 
@@ -1804,7 +1816,11 @@ _grValidateTMUState()
       }
 #endif    
     }     
-  }
+
+	if(MultitextureAndTrilinear()) g3LodBiasPerChip();
+
+
+}
 #undef FN_NAME  
 }
 
@@ -2573,8 +2589,20 @@ GR_DIENTRY(grEnable, void , (GrEnableMode_t mode) )
     }
     break;
   case GR_OPENGL_MODE_EXT:
-    /* Set up some stuff that's affected by OpenGL's behaviour. */
-    _GlideRoot.environment.sliBandHeightForce = FXTRUE;
+    {
+#ifdef WIN32
+      /* EnableOpenGL - Win_Mode.c 
+      ** Allow minihwc to know about OpenGL 
+      */
+      void EnableOpenGL ( void );
+
+	  EnableOpenGL();
+     /* setup env to determine whether we are an OGL app */
+     _GlideRoot.environment.is_opengl=FXTRUE;
+#endif
+      /* Set up some stuff that's affected by OpenGL's behaviour. */
+      _GlideRoot.environment.sliBandHeightForce = FXTRUE;
+	}
     break;
 #endif
   }
@@ -2640,6 +2668,9 @@ GR_DIENTRY(grDisable, void , (GrEnableMode_t mode) )
   case GR_STENCIL_MODE_EXT:
     gc->state.grEnableArgs.stencil_mode = GR_MODE_DISABLE;
     INVALIDATE(stencilMode);
+    break;
+  case GR_OPENGL_MODE_EXT:
+    _GlideRoot.environment.is_opengl=FXFALSE;
     break;
 #ifdef FX_GLIDE_NAPALM
   case GR_AA_MULTI_SAMPLE:

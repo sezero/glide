@@ -16,13 +16,20 @@
 ** THE UNITED STATES. 
 **
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
- */
+ *
 
 /*  -*-asm-*- */
 
 /*  $Header$ *
 /*  $Revision$ *
 /*  $Log$
+/*  Revision 1.4  2000/11/15 23:32:54  joseph
+/*  Syncing up with 3dfx internal source repository.  These changes contain a
+/*  number of bug fixes.
+/*
+/*  Revision 1.2.2.1  2000/11/14 14:11:19  alanh
+/*  merge in trunk updates, fixup pci code, and fix texus2 code pointers.
+/*
 /*  Revision 1.3  2000/10/20 19:07:00  billwhite
 /*  1.) Added changes for AMD 3DNow instructions in h5/glide3 and
 /*      h3/glide3.
@@ -153,7 +160,7 @@
 	push %esi	/*  save caller's register variable */
 	push %ebx	/*  save caller's register variable  */
 
-	mov _gc-4(%esp) , gc
+	mov _gc(%esp) , gc
 	mov _vb-4(%esp) , fb	/*  get base address of vertex B */
 	push %ebp	/*  save frame pointer */
 

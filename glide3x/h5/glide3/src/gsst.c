@@ -1,25 +1,49 @@
 /* -*-c++-*- */
 /*
-** THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONLY
-** PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGHT
-** TO USE THE GLIDE TRADEMARK WITHOUT PRIOR WRITTEN PERMISSION OF 3DFX
+** THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONL
+** PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGH
+** TO USE THE GLIDE TRADEMARK WITHOUT PRIOR WRITTEN PERMISSION OF 3DF
 ** INTERACTIVE, INC. A COPY OF THIS LICENSE MAY BE OBTAINED FROM THE
 ** DISTRIBUTOR OR BY CONTACTING 3DFX INTERACTIVE INC(info@3dfx.com).
 ** THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER
-** EXPRESSED OR IMPLIED. SEE THE 3DFX GLIDE GENERAL PUBLIC LICENSE FOR A
+** EXPRESSED OR IMPLIED. SEE THE 3DFX GLIDE GENERAL PUBLIC LICENSE FOR 
 ** FULL TEXT OF THE NON-WARRANTY PROVISIONS. 
 **
-** USE, DUPLICATION OR DISCLOSURE BY THE GOVERNMENT IS SUBJECT TO
-** RESTRICTIONS AS SET FORTH IN SUBDIVISION (C)(1)(II) OF THE RIGHTS IN
-** TECHNICAL DATA AND COMPUTER SOFTWARE CLAUSE AT DFARS 252.227-7013,
-** AND/OR IN SIMILAR OR SUCCESSOR CLAUSES IN THE FAR, DOD OR NASA FAR
-** SUPPLEMENT. UNPUBLISHED RIGHTS RESERVED UNDER THE COPYRIGHT LAWS OF
+** USE, DUPLICATION OR DISCLOSURE BY THE GOVERNMENT IS SUBJECT T
+** RESTRICTIONS AS SET FORTH IN SUBDIVISION (C)(1)(II) OF THE RIGHTS I
+** TECHNICAL DATA AND COMPUTER SOFTWARE CLAUSE AT DFARS 252.227-7013
+** AND/OR IN SIMILAR OR SUCCESSOR CLAUSES IN THE FAR, DOD OR NASA FA
+** SUPPLEMENT. UNPUBLISHED RIGHTS RESERVED UNDER THE COPYRIGHT LAWS O
 ** THE UNITED STATES. 
 **
-** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
+** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVE
 **
 ** $Header$
 ** $Log: 
+**  69   3dfx      1.52.1.3.1.1111/08/00 Drew McMinn     Create initialise read and
+**       use useAppGamma flag, to allow us to disable applications changing gamma
+**       values.
+**  68   3dfx      1.52.1.3.1.1010/13/00 Matt McClure    Exposed
+**       grSetNumPendingBuffers for OGL.
+**  67   3dfx      1.52.1.3.1.910/11/00 Brent           Forced check in to enforce
+**       branching.
+**  66   3dfx      1.52.1.3.1.810/09/00 Jonny Cochrane  calculate chipScreenHeight
+**       correctly for 4 way SLI
+**  65   3dfx      1.52.1.3.1.709/26/00 Matt McClure    Changed opengl name to
+**       is_opengl instead of SliBandHeightForce.
+**  64   3dfx      1.52.1.3.1.609/25/00 Matt McClure    Added code to allow release
+**       of the Exclusive mode context on grSSTWinClose for OpenGL.
+**  63   3dfx      1.52.1.3.1.509/15/00 Jonny Cochrane  2x FSAA for 4500
+**  62   3dfx      1.52.1.3.1.408/31/00 Andy Hanson     Fix to allow digital SLI up
+**       through 1600 by X resolutions.
+**  61   3dfx      1.52.1.3.1.308/29/00 Jonny Cochrane  Some 8x FSAA code
+**  60   3dfx      1.52.1.3.1.208/01/00 Andy Hanson     Fixed issue with source
+**       ignoring setting of GLIDE_SPLASH define.
+**       Fixed issue with setting of splash state when it wasn't going to be run.
+**  59   3dfx      1.52.1.3.1.107/12/00 troy thornton   Cleaned up grSstWinOpen to
+**       always call grSstWinOpenExt
+**  58   3dfx      1.52.1.3.1.006/28/00 troy thornton   added code to allow app. to
+**       use correct jitter values only if AA is not forced
 **  57   3dfx      1.52.1.3    06/20/00 Joseph Kain     Fixed errors introduced by
 **       my previous merge.
 **  56   3dfx      1.52.1.2    06/20/00 Joseph Kain     Changes to support the
@@ -104,7 +128,7 @@
 **       properly greatly aids in 4-sample AA init
 **  22   3dfx      1.21        01/21/00 Adam Briggs     closer to working on 2 chip
 **       sli
-**  21   3dfx      1.20        01/20/00 Kenneth Dyke    Fixed unitialized variable
+**  21   3dfx      1.20        01/19/00 Kenneth Dyke    Fixed unitialized variable
 **       in command transport struct for grSstWinOpenExt.
 **  20   3dfx      1.19        01/18/00 Kenneth Dyke    Get proper AA jitter
 **       values.
@@ -1064,6 +1088,9 @@ doSplash( void )
   if(_GlideRoot.environment.sliBandHeightForce)
     return;
 
+  if (_GlideRoot.environment.noSplash == 0)
+  {
+
 #if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
   {
     FxBool
@@ -1108,7 +1135,6 @@ doSplash( void )
   }
 #endif /* (GLIDE_PLATFORM & GLIDE_OS_WIN32) */
 
-  if (_GlideRoot.environment.noSplash == 0) {
     grSplash(0.0f, 0.0f, 
              (float)gc->state.screen_width,
              (float)gc->state.screen_height,
@@ -1146,8 +1172,8 @@ initGC ( GrGC *gc )
     gc->bufferSwaps[t] = 0xffffffff;
   }
   
-  gc->bufferSwaps[0] = ((AnyPtr) gc->cmdTransportInfo.fifoPtr -
-                        (AnyPtr) gc->cmdTransportInfo.fifoStart);
+  gc->bufferSwaps[0] = ((FxU32) gc->cmdTransportInfo.fifoPtr -
+                        (FxU32) gc->cmdTransportInfo.fifoStart);
   
   gc->swapsPending = 1;
   
@@ -1342,11 +1368,10 @@ GR_ENTRY(grSstWinOpen, GrContext_t, ( FxU32                   hWnd,
   hwcBufferInfo *bufInfo = 0;
   hwcFifoInfo   *fInfo   = 0;
 #endif /* defined ( GLIDE_INIT_HAL ) */
-  int            buffer;
+  
   struct cmdTransportInfo *gcFifo = 0;
-  GrContext_t retVal = 0;
-  FxU32 
-    tramShift, tmu1Offset;
+  GrContext_t retVal = 0;  
+
 
 #ifndef		__linux__
   if (!hWnd)
@@ -1358,7 +1383,7 @@ GR_ENTRY(grSstWinOpen, GrContext_t, ( FxU32                   hWnd,
    * current gc. This gc is valid for all threads in the fullscreen
    * context.
    */
-  setThreadValue( (AnyPtr)&_GlideRoot.GCs[_GlideRoot.current_sst] );
+  setThreadValue( (FxU32)&_GlideRoot.GCs[_GlideRoot.current_sst] );
   
   {
     /* Partial Argument Validation */
@@ -1382,28 +1407,33 @@ GR_ENTRY(grSstWinOpen, GrContext_t, ( FxU32                   hWnd,
       if (_GlideRoot.environment.outputBpp == 32)
       {
         /* Force rendering to 32bpp */
-        if ((_GlideRoot.environment.aaSample == 4) &&
-            (gc->chipCount > 1))
-          thePixelFormat = GR_PIXFMT_AA_4_ARGB_8888 ;
+        if ((_GlideRoot.environment.aaSample == 8) &&	/* 8xaa */
+            	(gc->chipCount > 2))
+          		thePixelFormat = GR_PIXFMT_AA_8_ARGB_8888 ;
+        else if ((_GlideRoot.environment.aaSample == 4) &&
+            	(gc->chipCount > 1))
+          		thePixelFormat = GR_PIXFMT_AA_4_ARGB_8888 ;
+        else if (_GlideRoot.environment.aaSample == 2)
+            	thePixelFormat = GR_PIXFMT_AA_2_ARGB_8888 ;
         else
-          if (_GlideRoot.environment.aaSample == 2)
-            thePixelFormat = GR_PIXFMT_AA_2_ARGB_8888 ;
-          else
-            thePixelFormat = GR_PIXFMT_ARGB_8888 ;
+            	thePixelFormat = GR_PIXFMT_ARGB_8888 ;
       }
        else
       {
         /* default rendering to 16bpp */
-        if ((_GlideRoot.environment.aaSample == 4) &&
+        if ((_GlideRoot.environment.aaSample == 8) &&	/* 8xaa */
+            (gc->chipCount > 2))
+          	thePixelFormat = GR_PIXFMT_AA_8_RGB_565 ;
+		else if ((_GlideRoot.environment.aaSample == 4) &&
             (gc->chipCount > 1))
-          thePixelFormat = GR_PIXFMT_AA_4_RGB_565 ;
-        else
-          if (_GlideRoot.environment.aaSample == 2)
+          	thePixelFormat = GR_PIXFMT_AA_4_RGB_565 ;
+        else if (_GlideRoot.environment.aaSample == 2)
             thePixelFormat = GR_PIXFMT_AA_2_RGB_565 ;
-          else
+        else
             thePixelFormat = GR_PIXFMT_RGB_565 ;
       }
 #endif
+
       return ( grSstWinOpenExt(hWnd,
                                resolution, 
                                refresh, 
@@ -1413,705 +1443,20 @@ GR_ENTRY(grSstWinOpen, GrContext_t, ( FxU32                   hWnd,
                                nColBuffers,
                                nAuxBuffers) );
     }
-#endif
-    /*
-    ** check if the environment variable for triple buffering is on
-    */
-    if (_GlideRoot.environment.nColorBuffer != -1) {
-      if ((_GlideRoot.environment.nColorBuffer > 0) &&
-          (_GlideRoot.environment.nColorBuffer <= 3)
-          ){
-        nColBuffers = _GlideRoot.environment.nColorBuffer;
-      }
-    }
-    
-    resolution =
-      (((FxU32)resolution) > (sizeof(_resTable) / sizeof(ResEntry)))
-        ? GR_RESOLUTION_640x480 
-          : resolution;
 
-#ifdef __linux__
-    gc->state.screen_width = driInfo.screenWidth;
-    gc->state.screen_height = driInfo.screenHeight;
-#else	/* defined(__linux__) */
-    gc->state.screen_width  = _resTable[resolution].xres;
-    gc->state.screen_height = _resTable[resolution].yres;
-    GR_CHECK_F( FN_NAME, 
-                resolution != _resTable[resolution].resolution, 
-                "resolution table compilation incorrect" );
-    if ( gc->vidTimings ) {
-      gc->state.screen_width  = gc->vidTimings->xDimension;
-      gc->state.screen_height = gc->vidTimings->yDimension;
-    }
-#endif	/* defined(__linux__) */
-  
-    gc->state.origin             = origin;
-    gc->grSstRez                 = resolution;
-    gc->grSstRefresh             = refresh;
-    gc->grColBuf                 = gc->state.num_buffers = nColBuffers;
-    gc->grAuxBuf                 = nAuxBuffers;
-    gc->fbStride                 = gc->state.screen_width * BYTES_PER_PIXEL;
-    gc->grHwnd                   = (int) hWnd;
-    gc->grPixelSize              = 2;
-    gc->grPixelFormat            = GR_PIXFMT_RGB_565;
-    gc->grPixelSample            = 1;
-  
-    /* compute tile dimensions */
-    gc->strideInTiles  =
-      ( gc->state.screen_width  + ( TILE_WIDTH_PXLS - 1 ) ) / TILE_WIDTH_PXLS;
-    GDBG_INFO(80, "%s: strideInTiles = 0X%x\n", FN_NAME, gc->strideInTiles);
-    gc->heightInTiles  =
-      ( gc->state.screen_height + (TILE_HEIGHT_PXLS - 1 ) ) / TILE_HEIGHT_PXLS;
-    GDBG_INFO(80, "%s: heightInTiles = 0x%x\n", FN_NAME, gc->heightInTiles);
-    gc->bufferStride   = gc->strideInTiles * TILE_WIDTH_PXLS * BYTES_PER_PIXEL;
-    GDBG_INFO(80, "%s: bufferStride = 0x%x\n", FN_NAME, gc->bufferStride);
-    gc->bufSizeInTiles = gc->strideInTiles * gc->heightInTiles;
-    GDBG_INFO(80, "%s: bufSizeInTiles = 0x%x\n", FN_NAME, gc->bufSizeInTiles);
-    gc->bufSize =
-      gc->bufSizeInTiles * TILE_WIDTH_PXLS * TILE_HEIGHT_PXLS * BYTES_PER_PIXEL;
-    GDBG_INFO(80, "%s: bufSize = 0x%x\n", FN_NAME, gc->bufSize);
-  
-    /* Check for enough memory */
-#ifdef GLIDE_INIT_HWC
-    if ( ( gc->bufSize * ( gc->grColBuf + gc->grAuxBuf ) + MIN_TEXTURE_STORE + MIN_FIFO_SIZE) >
-         ( gc->bInfo->h3Mem << 20 ) ) {
-      GDBG_INFO( gc->myLevel, "Failed to open for insufficient memory\n" );
-      GrErrorCallback( "grSstWinOpen: not enough memory for requested buffers", FXFALSE );
-      return 0;
-    }
-#endif
-  
-    /* Allocate Color/Aux Buffers, Set Memory Layout */
-    gcFifo = &gc->cmdTransportInfo;
-  
-#if defined( USE_PACKET_FIFO )
-#if defined( GLIDE_INIT_HWC )
-    bInfo   = gc->bInfo;
-    vInfo   = &bInfo->vidInfo;
-    bufInfo = &bInfo->buffInfo;
-
-    /* If we closed down then the hw may have been un-mapped (on
-     * systems that actually support this) so we need to re-map the
-     * board and re-cache our hw pointers.  
-     */
-    if (!gc->bInfo->isMapped) {
-      if (!hwcMapBoard(bInfo, HWC_BASE_ADDR_MASK)) {
-        GDBG_INFO( gc->myLevel, "Failed to re-map the hw.\n" );
-        GrErrorCallback( FN_NAME": Failed to re-map the hw.", FXFALSE );
-        GR_RETURN( FXFALSE );
-      }
-
-      if (!hwcInitRegisters(bInfo)) {
-        GDBG_INFO( gc->myLevel, "Failed to re-initialize the hw.\n" );
-        GrErrorCallback( FN_NAME": Failed to re-initialize the hw.", FXFALSE );
-        GR_RETURN( FXFALSE );
-      }
-
-    }
-
-    /* Don't assume that because the board was still mapped that these
-       didn't move! */   
-    gc->sstRegs = (SstRegs*)bInfo->regInfo.sstBase;
-    gc->ioRegs  = (SstIORegs*)bInfo->regInfo.ioMemBase;
-    gc->cRegs   = (SstCRegs*)bInfo->regInfo.cmdAGPBase;
-    gc->lfb_ptr = (FxU32*)bInfo->regInfo.lfbBase;
-    gc->rawLfb  = (FxU32*)bInfo->regInfo.rawLfbBase;
-    gc->tex_ptr = (FxU32*)SST_TEX_ADDRESS(bInfo->regInfo.sstBase);
-  
-#ifdef	__linux__
-    vInfo->xRes	       = driInfo.w;
-    vInfo->yRes	       = driInfo.h;
-#else	/* defined(__linux__) */
-    vInfo->xRes              = gc->state.screen_width;
-    vInfo->yRes              = gc->state.screen_height;
-#endif	/* defined(__linux__) */
-
-    vInfo->refresh           = gc->grSstRefresh;
-    vInfo->tiled             = FXTRUE;
-    vInfo->initialized       = FXTRUE;
-    bufInfo->enable2ndbuffer = FXFALSE;
- 
-    gc->colTiled = gc->auxTiled = FXTRUE ; /* AJB - grBufferClear need to know this */
-
-    if ( hwcAllocBuffers( bInfo, nColBuffers, nAuxBuffers ) == FXFALSE ) {
-      GDBG_INFO( gc->myLevel, "hwcAllocBuffers failed\n" );
-      GrErrorCallback(hwcGetErrorString(), FXFALSE);
-      return 0;
-    }
-  
-    for (buffer = 0; buffer < nColBuffers; buffer++) {
-      gc->buffers0[buffer] = bufInfo->colBuffStart0[buffer];
-      GDBG_INFO(80, "Buffer %d:  Start: 0x%x\n", buffer, gc->buffers0[buffer]);
-      gc->lfbBuffers[buffer] = (AnyPtr)gc->rawLfb + bufInfo->lfbBuffAddr0[buffer];
-    }
-    if (nAuxBuffers != 0) {
-      gc->buffers0[buffer] = bufInfo->auxBuffStart0;
-      GDBG_INFO(80, "Aux Buffer:  Start: 0x%x\n", gc->buffers0[buffer]);
-      gc->lfbBuffers[buffer] = (AnyPtr)gc->rawLfb + bufInfo->lfbBuffAddr0[buffer];
-    }
-  
-    vInfo->hWnd     = gc->grHwnd;
-    vInfo->sRes     = gc->grSstRez;
-    vInfo->vRefresh = gc->grSstRefresh;
-  
-    if ( hwcInitVideo( bInfo, FXTRUE, gc->vidTimings, SST_OVERLAY_PIXEL_RGB565D, FXTRUE ) == FXFALSE ) {
-      GrErrorCallback(hwcGetErrorString(), FXFALSE);
-      GDBG_INFO( gc->myLevel, "hwcInitVideo failed\n" );
-      return 0;
-    }
-
-    /* Restore the function specializations if the user is trying to
-     * recover. This only resets the non-null environment. The actual
-     * function specializations are recovered later in the mainline
-     * code path for the open.
-     */
-    if (gc->open && !gc->contextP) {
-      GrTriSetupProcArchVector* 
-        curTriProcs = _GlideRoot.deviceArchProcs.curTriProcs;
-      GrVertexListProc*
-        curVertexListProcs = _GlideRoot.deviceArchProcs.curVertexListProcs;
-      
-      _GlideRoot.deviceArchProcs.curTriProcs        = _GlideRoot.deviceArchProcs.nullTriProcs;
-      _GlideRoot.deviceArchProcs.curVertexListProcs = _GlideRoot.deviceArchProcs.nullVertexListProcs;
-      
-      _GlideRoot.deviceArchProcs.nullTriProcs        = curTriProcs;
-      _GlideRoot.deviceArchProcs.nullVertexListProcs = curVertexListProcs;
-    }
-
-    /* This actually gets taken in hwcInitVideo */
-    gc->contextP = FXTRUE;
-
-#ifndef	__linux__
-    /* CSR - Set up flag for display driver to tell us that context was lost */
-    if ( !gc->open )  /* If we already have a context open, then lets not
-                         re-initialize the pointers                          */                                             
-    {
-      hwcShareContextData(gc->bInfo, &(gc->lostContext));
-      gc->cmdTransportInfo.ptrLostContext = &(gc->lostContext);
-    }
-
-    *gc->lostContext = FXFALSE;
-#endif	/* defined(__linux__) */
-
-    if (_GlideRoot.environment.gammaR != -1.f &&
-        _GlideRoot.environment.gammaG != -1.f &&
-        _GlideRoot.environment.gammaB != -1.f) {
-      hwcGammaRGB(gc->bInfo, 
-                  _GlideRoot.environment.gammaR, 
-                  _GlideRoot.environment.gammaG,
-                  _GlideRoot.environment.gammaB);
-    } else {
-      hwcGammaRGB(gc->bInfo, 1.3f, 1.3f, 1.3f);
-    }
-
-    /* Setup memory configuration */
-    gc->fbOffset = bInfo->fbOffset;
-
-    /*
-    ** if the environment variable is on, use the its texture memory size * 2
-    */
-    if ((_GlideRoot.environment.tmuMemory != -1) && (gc->fbOffset >= 0x200000))
-      bInfo->tramSize = _GlideRoot.environment.tmuMemory << 21;
-
-    GDBG_INFO(80, FN_NAME ": TMUs:  %d\n", gc->num_tmu);
-    GDBG_INFO(80, FN_NAME ": Total TMU Memory: 0x%x\n", bInfo->tramSize);
-    GDBG_INFO(80, FN_NAME ": Texture Memory Offset: 0x%x\n",bInfo->tramOffset);
-    /*
-    ** if we only have one TMU or we are using UMA, do similar things
-    */
-    if (
-      (gc->num_tmu < 1) ||
-      (gc->state.grEnableArgs.texture_uma_mode == GR_MODE_ENABLE)
-      ) {
-      tramShift = 0;
-      tmu1Offset = 0;
-      GDBG_INFO(80, FN_NAME ":  UMA ON\n");
-    } else {
-      tramShift = 1;
-      tmu1Offset = bInfo->tramSize >> 1;
-      GDBG_INFO(80, FN_NAME ":  UMA OFF\n");
-    }
-
-    switch (gc->num_tmu) {
-    case 2:
-      gc->tmuMemInfo[1].tramOffset = bInfo->tramOffset + tmu1Offset;
-      gc->tmuMemInfo[1].tramSize   = (bInfo->tramSize >> tramShift);
-      gc->tmu_state[1].total_mem   = gc->tmuMemInfo[1].tramSize;
-      GDBG_INFO(80, FN_NAME ":  TMU1:  Offset 0x%x, size 0x%x\n",
-                gc->tmuMemInfo[1].tramOffset, gc->tmuMemInfo[1].tramSize);
-      /* NOTE:  NO BREAK.  THIS IS ON PURPOSE */
-    case 1:
-    default:
-      gc->tmuMemInfo[0].tramOffset = bInfo->tramOffset;
-      gc->tmuMemInfo[0].tramSize = (bInfo->tramSize >> tramShift);
-      gc->tmu_state[0].total_mem = gc->tmuMemInfo[0].tramSize;
-      GDBG_INFO(80, FN_NAME ":  TMU0:  Offset 0x%x, size 0x%x\n",
-                gc->tmuMemInfo[0].tramOffset, gc->tmuMemInfo[0].tramSize);
-
-      break;
-    } /* gc->num_tmu */
-    
-    gc->tBuffer.bufType = HWC_BUFFER_TEXTUREBUFFER;
-    gc->tBuffer.bufOffset = bInfo->tramOffset;
-    gc->tBuffer.bufSize = bInfo->tramSize;
-    gc->tBuffer.tiled = FXFALSE;
-    gc->tBuffer.bufBPP = 0xffffffff; /* Don't matter to me */
-
-    GDBG_INFO(1, "autoBump: 0x%x\n", _GlideRoot.environment.autoBump);
-    /* The logic for this is hosed for PowerPC, where we disable auto-bump even
-       on PCI. */
-    if ((gc->cmdTransportInfo.autoBump = _GlideRoot.environment.autoBump)!=0) {
-      if (!hwcInitFifo( bInfo, gc->cmdTransportInfo.autoBump)) {
-        hwcRestoreVideo(bInfo);
-        GrErrorCallback(hwcGetErrorString(), FXFALSE);
-        GDBG_INFO(gc->myLevel, "hwcInitFifo failed\n");
-        GR_RETURN(FXFALSE);
-      }
-    } else {
-      /* %%KCD - I pass in true because I know this will just fall through to hwcInitFifo() */
-#if __POWERPC__
-      if (!hwcInitAGPFifo(bInfo, FXFALSE)) {
-#else
-      if (!hwcInitAGPFifo(bInfo, FXTRUE)) {
-#endif      
-        hwcRestoreVideo(bInfo);
-        GrErrorCallback(hwcGetErrorString(), FXFALSE);
-        GDBG_INFO(gc->myLevel, "hwcInitFifo failed\n");
-        GR_RETURN(FXFALSE);
-      }
-      /* Check to see where the command fifo was placed since the agp
-       * allocation might have failed for some reason, and fallen back
-       * to using the normal video command fifo.
-       */
-      gc->cmdTransportInfo.autoBump = ((GR_CAGP_GET(baseSize) & SST_CMDFIFO_DISABLE_HOLES) == 0);
-    }
-  
-    /* COMMAND FIFO SETUP */
-    fInfo  = &gc->bInfo->fifoInfo;
-  
-    /* Establish physical bounds of cmd fifo from HWC calculation */
-    gcFifo->fifoOffset = fInfo->fifoStart;
-    gcFifo->fifoSize   = fInfo->fifoLength;
-#elif defined( GLIDE_INIT_HAL ) 
-#if 0
-    gc->fbOffset               = 0x200000;
-    gc->tramOffset             = 0x0;
-    gc->tramSize             = gc->fbOffset;
-    gc->tmu_state[0].total_mem = gc->tramSize;
-#else
-    /* gc->fbOffset               = (FxU32)fxHalFbiGetMemory((SstRegs*)gc->reg_ptr); */
-    gc->fbOffset                  = (AnyPtr)gc->rawLfb;
-    gc->fbOffset                  = 0x0;
-    gc->tmuMemInfo[0].tramOffset  = 0x200000;
-    gc->tmuMemInfo[0].tramSize    = 0x200000;
-    gc->tmuMemInfo[1].tramOffset  = gc->tmuMemInfo[0].tramSize + gc->tmuMemInfo[0].tramOffset;
-    gc->tmuMemInfo[1].tramSize    = 0x200000;
-    gc->tmu_state[0].total_mem    = gc->tmuMemInfo[0].tramSize;
-    gc->tmu_state[1].total_mem    = gc->tmuMemInfo[1].tramSize;
-#endif
-  
-    for ( buffer = 0; buffer < nColBuffers; buffer++ ) {
-      gc->buffers0[buffer]    = gc->fbOffset + buffer * gc->bufSize;
-      /* XXXjdt: this is never initialized in the old code */
-      gc->lfbBuffers[buffer] = 0; 
-      GDBG_INFO(80, "%s: Buffer %d: 0x%x\n",
-                FN_NAME, buffer, gc->buffers0[buffer]);
-    }
-    if (nAuxBuffers != 0) {
-        gc->buffers0[buffer] = gc->fbOffset + buffer * gc->bufSize;
-        gc->lfbBuffers[buffer] = 0; 
-        GDBG_INFO(80, "Aux Buffer:  Start: 0x%x\n", gc->buffers0[buffer]);
-    }
-    if( !fxHalGetDeviceInfo((SstRegs*)gc->reg_ptr, &devInfo) ) {
-      GrErrorCallback("  XXXGetDeviceInfo failed.\n", FXFALSE);
-      GDBG_INFO( gc->myLevel, 
-                 "   XXXGetDeviceInfo failed. (0x%x)\n", 
-                 gc->reg_ptr );
-      return 0;
-    }
-    
-    /* COMMAND FIFO SETUP */
-#if 0
-    gcFifo->fifoOffset = gc->fbOffset + 
-        ( gc->bufSize * ( gc->grColBuf + gc->grAuxBuf ) );
-    gcFifo->fifoSize = 0x400000 - gcFifo->fifoOffset + gc->fbOffset;
-#else
-    gcFifo->fifoOffset = ( gc->bufSize * ( gc->grColBuf + gc->grAuxBuf ) );
-    gcFifo->fifoSize = 0x20000;
-#endif
-    
-    if ( !fxHalInitCmdFifo((SstRegs *) gc->reg_ptr,
-                           0,     /* which fifo - 0 for 3d cmd fifo */
-                           /* v fifoStart - offset from hw base v */
-                           gcFifo->fifoOffset, 
-                           gcFifo->fifoSize, /* size - in bytes */ 
-                           FXTRUE, /* directExec */
-                           FXFALSE, /* disableHoles */
-                           FXFALSE) /* agpEnable */ ) {
-#ifdef GLIDE_INIT_HWC
-      GrErrorCallBack( "fxHalInitCmdFifo failed.\n", FxFALSE );
-#endif
-      GDBG_INFO( 0, "Error: fxHalInitCmdFifo failed\n" );
-      return 0;
-    }
-    if ( !fxHalInitVideo( (SstRegs*) gc->reg_ptr,
-                          (resolution == GR_RESOLUTION_NONE) ? GR_RESOLUTION_640x480
-                          : (resolution), 
-                          refresh, 
-                          NULL ) ) {
-#ifdef GLIDE_INIT_HWC
-        GrErrorCallBack( "fxHalInitVideo failed.\n", FxFALSE );
-#endif
-        GDBG_INFO( 0, "Error: fxHalInitVideo failed\n" );
-        GR_RETURN( FXFALSE );
-    }
-    fxHalInitVideoOverlaySurface( (SstRegs*) gc->reg_ptr,     /* SstRegs */
-                                  FXTRUE,                     /* 1=enable Overlay surface*/
-                                  FXFALSE,                    /* 1=enable OS stereo, 0=disable*/
-                                  FXFALSE,                    /* 1=enable horizontal*/
-                                  0,                          /* horizontal scale factor (ignored if*/
-                                  FXFALSE,                    /* 1=enable vertical scaling,*/
-                                  0,                          /* vertical scale factor (ignored if not*/
-                                  0,                          /* duh*/
-                                  1,                          /* 0=OS linear, 1=tiled*/
-                                  SST_OVERLAY_PIXEL_RGB565U,  /* pixel format of OS*/
-                                  FXFALSE,                    /* bypass clut for OS?*/
-                                  FXFALSE,                    /* 0=lower 256 CLUT entries,*/
-                                  gc->buffers0[gc->curBuffer], /* board address of beginning of OS  */
-                                  gc->strideInTiles );        /* distance between scanlines of the OS, in*/
-
-#ifndef	__linux__
-    /*
-    ** initialize context checking
-    */
-    {
-      gc->lostContext = &lostcontext_csim;
-      *gc->lostContext = FXFALSE;
-      gc->contextP = 1;
-    }
-#endif	/* defined(__linux__) */
-
-#endif /*  defined( GLIDE_INIT_HAL )  */
-#else  /* !defined( USE_PACKET_FIFO ) */
-    gc->fbOffset                  = (AnyPtr)gc->rawLfb;
-    gc->fbOffset                  = 0x0;
-    gc->tmuMemInfo[0].tramOffset  = 0x200000;
-    gc->tmuMemInfo[0].tramSize    = 0x200000;
-    gc->tmuMemInfo[1].tramOffset  = gc->tmuMemInfo[0].tramSize + gc->tmuMemInfo[0].tramOffset;
-    gc->tmuMemInfo[1].tramSize    = 0x200000;
-    gc->tmu_state[0].total_mem    = gc->tmuMemInfo[0].tramSize;
-    gc->tmu_state[1].total_mem    = gc->tmuMemInfo[1].tramSize;
-    {
-      bInfo   = gc->bInfo;
-      vInfo   = &bInfo->vidInfo;
-      bufInfo = &bInfo->buffInfo;
-      
-      vInfo->xRes        = gc->state.screen_width;
-      vInfo->yRes        = gc->state.screen_height;
-      vInfo->refresh     = gc->grSstRefresh;
-      vInfo->tiled       = FXFALSE;
-      vInfo->initialized = FXTRUE;
-
-      gc->colTiled = gc->auxTiled = FXFALSE ; /* AJB- grBufferClear needs to know this */
-
-      if (GETENV("SST_FBI_MEM")) {
-        bInfo->h3Mem = atoi(GETENV("SST_FBI_MEM"));
-      }
-      else {
-        bInfo->h3Mem = 32;
-      }
-      bInfo->h3pixelSize = 2;
-      
-      bInfo->buffInfo.enable2ndbuffer = FXFALSE;
-
-      if ( hwcAllocBuffers( gc->bInfo, nColBuffers, nAuxBuffers ) == FXFALSE ) {
-      }
-      for ( buffer = 0; buffer < nColBuffers; buffer++ ) {
-        gc->buffers0[buffer] = bufInfo->colBuffStart0[buffer];
-        GDBG_INFO(80, "Buffer %d:  Start: 0x%x\n", buffer, gc->buffers0[buffer]);
-        gc->lfbBuffers[buffer] = (AnyPtr)gc->rawLfb + bufInfo->lfbBuffAddr0[buffer];
-        if (bInfo->buffInfo.enable2ndbuffer) {
-          gc->buffers1[buffer] = bufInfo->colBuffStart1[buffer];
-          GDBG_INFO(80, "Buffer %d:  Start: 0x%x\n", buffer, gc->buffers1[buffer]);
-        }
-      }
-      if (nAuxBuffers != 0) {
-        gc->buffers0[buffer] = bufInfo->auxBuffStart0;
-        GDBG_INFO(80, "Aux Buffer:  Start: 0x%x\n", gc->buffers0[buffer]);
-        gc->lfbBuffers[buffer] = (AnyPtr)gc->rawLfb + bufInfo->lfbBuffAddr0[buffer];
-        if (bInfo->buffInfo.enable2ndbuffer) {
-          gc->buffers1[buffer] = bufInfo->auxBuffStart1;
-          GDBG_INFO(80, "Aux Buffer:  Start: 0x%x\n", gc->buffers1[buffer]);
-        }
-      }
-    }
-    if( !fxHalGetDeviceInfo((SstRegs*)gc->reg_ptr, &devInfo) ) {
-        GrErrorCallback("  XXXGetDeviceInfo failed.\n", FXFALSE);
-        GDBG_INFO( gc->myLevel, 
-                   "   XXXGetDeviceInfo failed. (0x%x)\n", 
-                   gc->reg_ptr );
-        GR_RETURN( 0 );
-    }
-#if 0
-    /* COMMAND FIFO SETUP */
-    gcFifo->fifoOffset = gc->fbOffset + 
-        ( gc->bufSize * ( gc->grColBuf + gc->grAuxBuf ) );
-    gcFifo->fifoSize = 0x400000 - gcFifo->fifoOffset + gc->fbOffset;
-
-    if ( !fxHalInitCmdFifo((SstRegs *) gc->reg_ptr,
-                           0, /* which fifo - 0 for 3d cmd fifo */
-                           /* v fifoStart - offset from hw base v */
-                           gcFifo->fifoOffset, 
-                           gcFifo->fifoSize, /* size - in bytes */ 
-                           FXTRUE, /* directExec */
-                           FXFALSE, /* disableHoles */
-                           FXFALSE) /* agpEnable */ ) {
-#ifdef FX_FAIL_HWC
-        GrErrorCallBack( "fxHalInitCmdFifo failed.\n", FxFALSE );
-#endif
-        GDBG_INFO( 0, "Error: fxHalInitCmdFifo failed\n" );
-        GR_RETURN( 0 );
-    }
-#endif
-    if ( !fxHalInitVideo( (SstRegs*) gc->reg_ptr,
-                          (resolution == GR_RESOLUTION_NONE) ? GR_RESOLUTION_640x480
-                          : (resolution), 
-                          refresh, 
-                          NULL ) ) {
-        GR_RETURN( 0 );
-    }
-    fxHalInitVideoOverlaySurface( (SstRegs*) gc->reg_ptr,     /* SstRegs */
-                                  FXTRUE,                     /* 1=enable Overlay surface*/
-                                  FXFALSE,                    /* 1=enable OS stereo, 0=disable*/
-                                  FXFALSE,                    /* 1=enable horizontal*/
-                                  0,                          /* horizontal scale factor (ignored if*/
-                                  FXFALSE,                    /* 1=enable vertical scaling,*/
-                                  0,                          /* vertical scale factor (ignored if not*/
-                                  0,                          /* duh*/
-                                  1,                          /* 0=OS linear, 1=tiled*/
-                                  SST_OVERLAY_PIXEL_RGB565U,  /* pixel format of OS*/
-                                  FXFALSE,                    /* bypass clut for OS?*/
-                                  FXFALSE,                    /* 0=lower 256 CLUT entries,*/
-                                  gc->buffers0[gc->curBuffer], /* board address of beginning of OS  */
-                                  gc->strideInTiles );        /* distance between scanlines of the OS, in*/
-    _grReCacheFifo(0);
-#ifndef	__linux__
-    /*
-    ** initialize context checking
-    */
-    {
-      gc->lostContext = &lostcontext_csim;
-      *gc->lostContext = FXFALSE;
-      gc->contextP = 1;
-    }
-#endif	/* defined(__linux__) */
-#endif /* !defined( USE_PACKET_FIFO ) */
-  
-    /* Compute Virtual FIFO address extents */
-#ifdef GLIDE_INIT_HWC
-    if (bInfo->fifoInfo.agpFifo) {
-      gcFifo->fifoStart = (FxU32 *) bInfo->fifoInfo.agpVirtAddr;
-      gcFifo->fifoOffset = bInfo->fifoInfo.agpPhysAddr;
-    } else {
-#else
-    {
-#endif
-      gcFifo->fifoStart = gc->rawLfb + ( gcFifo->fifoOffset >> 2 );
-    }
-    gcFifo->fifoEnd   = gcFifo->fifoStart + ( gcFifo->fifoSize >> 2 );
-  
-    /* Adjust room values. 
-    ** RoomToEnd needs enough room for the jmp packet since we never
-    ** allow the hw to auto-wrap. RoomToRead needs to be adjusted so that
-    ** we never acutally write onto the read ptr.
-    **
-    ** fifoRoom is generally the min of roomToEnd and roomToRead, but we
-    ** 'know' here that roomToRead < roomToEnd.   
-    */
-#if USE_PACKET_FIFO
-    gcFifo->roomToEnd = gcFifo->fifoSize - FIFO_END_ADJUST;
-    gcFifo->fifoRoom  = gcFifo->roomToReadPtr = gcFifo->roomToEnd - sizeof( FxU32 );
-    
-    /* Set initial fifo state. hw read and sw write pointers at
-     * start of the fifo.
-     */
-    gcFifo->fifoPtr  = gcFifo->fifoStart;
-    gcFifo->fifoRead = HW_FIFO_PTR( FXTRUE );
-#endif /* !USE_PACKET_FIFO */
-    
-#ifndef	__linux__
-    if ( (void*)gcFifo->fifoPtr != (void*)gcFifo->fifoRead ) {
-#ifdef GLIDE_INIT_HWC
-      hwcRestoreVideo( bInfo );
-#endif
-      GDBG_INFO( gc->myLevel, "Initial fifo state is incorrect\n" );
-      return 0;
-    }
-#endif	/* defined(__linux__) */
-    
-#if __POWERPC__ && PCI_BUMP_N_GRIND
-    enableCopyBackCache((FxU32)gcFifo->fifoStart,gcFifo->fifoSize);
-#endif
-    
-    if (!gc->cmdTransportInfo.autoBump) {
-      gcFifo->bumpSize = _GlideRoot.environment.bumpSize;
-
-      gcFifo->lastBump = gcFifo->fifoPtr;
-      gcFifo->bumpPos = gcFifo->fifoPtr + gcFifo->bumpSize;
-#if __POWERPC__ && PCI_BUMP_N_GRIND
-      gcFifo->fifoJmpHdr[0] = 
-        ( SSTCP_PKT0_JMP_LOCAL |
-          ( gcFifo->fifoOffset << ( SSTCP_PKT0_ADDR_SHIFT - 2 )));
-#else
-      gcFifo->fifoJmpHdr[0] = 
-        ( SSTCP_PKT0_JMP_AGP |
-          ( gcFifo->fifoOffset << ( SSTCP_PKT0_ADDR_SHIFT - 2 )));
-      gcFifo->fifoJmpHdr[1] = (gcFifo->fifoOffset >> 25);
 #endif
 
-    } else {
-      gcFifo->fifoJmpHdr[0] = 
-        ( SSTCP_PKT0_JMP_LOCAL |
-          ( gcFifo->fifoOffset << ( SSTCP_PKT0_ADDR_SHIFT - 2 )));
-
-
-    }
-    
-    GDBG_INFO(80, "Command Fifo:\n"
-              "\tfifoStart:       0x%x\n"
-              "\tfifoEnd:         0x%x\n"
-              "\tfifoOffset:      0x%x\n"
-              "\tfifoSize:        0x%x\n"
-              "\tfifoPtr:         0x%x\n",
-              gcFifo->fifoStart, 
-              gcFifo->fifoEnd,
-              gcFifo->fifoOffset, 
-              gcFifo->fifoSize,
-              gcFifo->fifoPtr ); 
-    
-#ifdef __linux__
-    _grImportFifo((AnyPtr)*driInfo.fifoPtr, (AnyPtr)*driInfo.fifoRead);
-#endif
-
-    /* The hw is now in a usable state from the fifo macros.
-     * 
-     * NB: See the comment in fxglide.h for the difference between
-     * these flags.
-     */
-    gc->open = FXTRUE;
-
-    /* Setup the procs that we can do w/o any mode knowledge */
-    gc->archDispatchProcs.texDownloadProcs  = _GlideRoot.deviceArchProcs.curTexProcs;
-    gc->archDispatchProcs.drawTrianglesProc = _GlideRoot.deviceArchProcs.curDrawTrisProc;
-
-    /* Default render procs to window space */
-    gc->archDispatchProcs.coorModeTriVector = (*_GlideRoot.deviceArchProcs.curTriProcs) + GR_WINDOW_COORDS;
-    gc->archDispatchProcs.drawVertexList    = _GlideRoot.deviceArchProcs.curVertexListProcs[GR_WINDOW_COORDS];
-    
-    /*------------------------------------------------------
-      GC Init
-      ------------------------------------------------------*/
-    GDBG_INFO(gc->myLevel, "  GC Init\n");
-    initGC( gc );
-    
-    gc->orgSW = gc->state.screen_width;
-    gc->orgSH = gc->state.screen_height;
-    
-    /*------------------------------------------------------
-      3D State Init 
-      ------------------------------------------------------*/
-    GDBG_INFO( gc->myLevel, "  3D State Init\n");
-    
-    GDBG_INFO( gc->myLevel, "   Setting default register states\n" );
-    gc->state.shadow.fbzMode = ( SST_ENRECTCLIP | SST_ENZBIAS );
-  
-    GDBG_INFO( gc->myLevel, "   Setting up initial draw buffer state\n" );
-    REG_GROUP_BEGIN(BROADCAST_ID, leftOverlayBuf, 1, 0x1);
-    REG_GROUP_SET(hw, leftOverlayBuf, gc->buffers0[gc->frontBuffer]);
-    REG_GROUP_END();
-  
-    REG_GROUP_BEGIN(BROADCAST_ID, swapbufferCMD, 1, 0x1); 
-    REG_GROUP_SET(hw, swapbufferCMD, 0x0);
-    REG_GROUP_END();
-
-    gc->state.shadow.colBufferAddr = gc->buffers0[gc->curBuffer];
-    gc->state.shadow.colBufferStride = gc->strideInTiles | SST_BUFFER_MEMORY_TILED;
-    gc->state.shadow.auxBufferAddr = gc->buffers0[nColBuffers];
-    gc->state.shadow.auxBufferStride = gc->strideInTiles | SST_BUFFER_MEMORY_TILED;
-  
-#ifdef GLIDE_INIT_HWC    
-    REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 4, 0xf);
-    {
-      REG_GROUP_SET(hw, colBufferAddr, gc->state.shadow.colBufferAddr);
-#ifdef	__linux__
-      REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride :
-		    gc->state.shadow.colBufferStride);
-#else	/* defined(__linux__) */
-      REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride);
-#endif	/* defined(__linux__) */
-      REG_GROUP_SET(hw, auxBufferAddr, gc->state.shadow.auxBufferAddr);
-      REG_GROUP_SET(hw, auxBufferStride, gc->state.shadow.auxBufferStride); 
-    }
-    REG_GROUP_END();
-#else
-    /* enable all chip mask */
-
-    REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 4, 0xf); 
-    REG_GROUP_SET(hw, colBufferAddr, gc->buffers0[gc->curBuffer]);
-    REG_GROUP_SET(hw, colBufferStride, gc->state.screen_width*2 );
-    REG_GROUP_SET(hw, auxBufferAddr, gc->buffers0[nColBuffers]);
-    REG_GROUP_SET(hw, auxBufferStride, gc->state.screen_width*2 ); 
-    REG_GROUP_END();
-
-    if (_GlideRoot.environment.guardbandclipping) {
-      FxU32 renderMode = gc->state.shadow.renderMode;
-
-      renderMode |= SST_RM_ENGUARDBAND;
-      REG_GROUP_BEGIN(BROADCAST_ID, renderMode, 0x1, 0x1);
-      REG_GROUP_SET(hw, renderMode, renderMode);
-      REG_GROUP_END();
-
-      gc->state.shadow.renderMode = renderMode;
-    }
-#endif
-    
-    GDBG_INFO( gc->myLevel, "  Setting all Glide state\n" );
-    assertDefaultState();
-#ifdef __linux__
-    if (nColBuffers>1)
-	grRenderBuffer(GR_BUFFER_BACKBUFFER);
-    else
-	grRenderBuffer(GR_BUFFER_FRONTBUFFER);
-    grClipWindow(0, 0, gc->state.screen_width, gc->state.screen_height);
-#else	/* defined(__linux__) */
-    clearBuffers( gc );
-#endif	/* defined(__linux__) */
-    
-    /* tbext */
-    gc->textureBuffer.init = FXFALSE;
-    gc->textureBuffer.on = FXFALSE;
-    gc->textureBuffer.addr = 0;   
-    gc->textureBuffer.stride = 0; 
-    gc->textureBuffer.prevState.valid = FXFALSE;
-
-    /* The new splash know the color format so we move it above splash screen */
-    gc->state.color_format = format;
-
-    /* --------------------------------------------------------
-       Splash Screen
-       --------------------------------------------------------*/
-    doSplash();
-
-    gc->windowed = FXFALSE;
-    _GlideRoot.windowsInit++; /* to avoid race with grSstControl() */
-
-    retVal = (GrContext_t)gc;
-
-    GR_END();
+    return ( grSstWinOpenExt(hWnd,
+                           resolution, 
+                           refresh, 
+                           format, 
+                           origin, 
+                           GR_PIXFMT_RGB_565,
+                           nColBuffers,
+                           nAuxBuffers) );
   }
-  
-  return retVal;
-#undef FN_NAME
+
+  #undef FN_NAME
 } /* grSstWinOpen */
 
 #ifdef FX_GLIDE_NAPALM
@@ -2239,6 +1584,10 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
     }
 #endif	/* defined(__linux__) */
 
+    
+    /* this is a stupid hack but... */
+    gc->chipCount = 1;    
+    
     if (IS_NAPALM(gc->bInfo->pciInfo.deviceID)) 
     {
       /* I apologize for this hack:
@@ -2246,8 +1595,9 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
        * gc->chipCount was forced to one. 
        * It should be restored before we try to use it.
        */
+      
       gc->chipCount = gc->bInfo->pciInfo.numChips ;
-
+      
       /* All this stuff lets Joe bag-o-donuts force old apps */
       /* to render with 32bpp and AA modes. */
       /* Bear in mind: it is silly to try to force 16bpp */
@@ -2255,23 +1605,34 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
       /* apps Z or W values to fit in a 16 bit depth buffer. */
 
       if (_GlideRoot.environment.outputBpp == 32 || pixelformat == GR_PIXFMT_ARGB_8888)  {
-        if ((_GlideRoot.environment.aaSample == 4) &&
+        if ((_GlideRoot.environment.aaSample == 8) &&	/* 8xaa */
+            (gc->chipCount > 2))
+          pixelformat = GR_PIXFMT_AA_8_ARGB_8888 ;
+        else if ((_GlideRoot.environment.aaSample == 4) &&
             (gc->chipCount > 1))
           pixelformat = GR_PIXFMT_AA_4_ARGB_8888 ;
         else if (_GlideRoot.environment.aaSample == 2)
           pixelformat = GR_PIXFMT_AA_2_ARGB_8888 ;
         else
           pixelformat = GR_PIXFMT_ARGB_8888 ;
-      } else if (_GlideRoot.environment.outputBpp == 15 || pixelformat == GR_PIXFMT_ARGB_1555) {
-        if ((_GlideRoot.environment.aaSample == 4) &&
+      } 
+      else if (_GlideRoot.environment.outputBpp == 15 || pixelformat == GR_PIXFMT_ARGB_1555) {
+        if ((_GlideRoot.environment.aaSample == 8) &&	/* 8xaa */
+            (gc->chipCount > 2))
+          pixelformat = GR_PIXFMT_AA_8_ARGB_1555 ;
+        else if ((_GlideRoot.environment.aaSample == 4) &&
             (gc->chipCount > 1))
           pixelformat = GR_PIXFMT_AA_4_ARGB_1555 ;
         else if (_GlideRoot.environment.aaSample == 2)
           pixelformat = GR_PIXFMT_AA_2_ARGB_1555 ;
         else
           pixelformat = GR_PIXFMT_ARGB_1555 ;
-      } else if (pixelformat == GR_PIXFMT_RGB_565)  {
-        if ((_GlideRoot.environment.aaSample == 4) &&
+      } 
+      else if (pixelformat == GR_PIXFMT_RGB_565)  {
+        if ((_GlideRoot.environment.aaSample == 8) &&	/* 8xaa */
+            (gc->chipCount > 2))
+          pixelformat = GR_PIXFMT_AA_8_RGB_565;
+        else if ((_GlideRoot.environment.aaSample == 4) &&
             (gc->chipCount > 1))
           pixelformat = GR_PIXFMT_AA_4_RGB_565 ;
         else
@@ -2366,6 +1727,22 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
       gc->grPixelSize            = 4;
       hwPixelFormat              = SST_OVERLAY_PIXEL_RGB32U;
       break;
+    case GR_PIXFMT_AA_8_RGB_565:	/* 8xaa */
+      gc->grPixelSample          = 8;
+      gc->grPixelSize            = 2;
+      hwPixelFormat              = SST_OVERLAY_PIXEL_RGB565U;
+      break;
+    case GR_PIXFMT_AA_8_ARGB_1555:
+      gc->grPixelSample          = 8;
+      gc->grPixelSize            = 2;
+      hwPixelFormat              = SST_OVERLAY_PIXEL_RGB1555U;
+      break;
+    case GR_PIXFMT_AA_8_ARGB_8888:
+      gc->grPixelSample          = 8;
+      gc->grPixelSize            = 4;
+      hwPixelFormat              = SST_OVERLAY_PIXEL_RGB32U;
+      break;
+
     default:
       gc->grPixelSample          = 0;
       GDBG_INFO( gc->myLevel, "Unsupported Pixel Format = %d\n", pixelformat);
@@ -2374,6 +1751,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
       break;
     }
 
+#if 0 /* Old Way */
     gc->sliCount = gc->chipCount / ((gc->grPixelSample == 4) ? 2 : 1);
 
     /* Default for the SLI case... */
@@ -2409,18 +1787,151 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
       }  
     }    
 
+#else
+
+	switch( gc->chipCount )
+	{
+		case 4:
+			switch( gc->grPixelSample )
+			{
+				case 8:
+						gc->sliCount 			= 1;
+						gc->grSamplesPerChip 	= 2;
+				break;
+			
+				case 4:
+						gc->sliCount 			= 1;   /*no sli, 1 sample per chip */
+						gc->grSamplesPerChip 	= 1;
+				break;
+
+				case 2:
+			     	if(!_GlideRoot.environment.forceOldAA) {
+        				gc->grSamplesPerChip	= 1;  //2 way SLI, 1 sample per SLI unit
+        				gc->sliCount 			= 2;
+				        /* In this mode I think the video filter still works... */
+        				if(hwPixelFormat == SST_OVERLAY_PIXEL_RGB1555U) {
+				       		hwPixelFormat = SST_OVERLAY_PIXEL_RGB1555D;
+        				} 
+        				else if(hwPixelFormat == SST_OVERLAY_PIXEL_RGB565U) {
+          					hwPixelFormat = SST_OVERLAY_PIXEL_RGB565D;
+
+	       				}    
+      				}
+      				else {
+        				gc->grSamplesPerChip	= 2; /* 4 way SLI, 2 samples per SLI unit */
+        				gc->sliCount 			= 4; /* doesn't work yet */				  
+      				}  
+
+				break;
+
+				case 1:
+						gc->sliCount 			= 4;
+						gc->grSamplesPerChip 	= 1;
+				break;		
+			}
+		break;
+
+		case 2: 
+			switch( gc->grPixelSample )
+			{
+				case 4:
+						gc->sliCount 			= 1;
+						gc->grSamplesPerChip 	= 2;
+				break;
+
+				case 2:
+      				if(!_GlideRoot.environment.forceOldAA) {
+						gc->sliCount 			= 1;			/* no sli, 1 sample per chip */
+						gc->grSamplesPerChip 	= 1;
+		        		if(hwPixelFormat == SST_OVERLAY_PIXEL_RGB1555U) {
+          					hwPixelFormat = SST_OVERLAY_PIXEL_RGB1555D;
+        				} 
+        				else if(hwPixelFormat == SST_OVERLAY_PIXEL_RGB565U) {
+          					hwPixelFormat = SST_OVERLAY_PIXEL_RGB565D;
+        				}    
+					} 
+					else
+					{
+						gc->sliCount 			= 2;			/* 2 samples per SLI pair */
+						gc->grSamplesPerChip 	= 2;
+					}
+	
+				break;
+
+				case 1:
+						gc->sliCount 			= 2;
+						gc->grSamplesPerChip 	= 1;
+				break;
+			}
+		break;
+
+
+		case 1:
+			switch( gc->grPixelSample )
+			{
+				case 2:
+      					gc->sliCount 			= 1; 
+						gc->grSamplesPerChip 	= 2;
+				break;
+
+				case 1:
+						gc->sliCount 			= 1;
+						gc->grSamplesPerChip 	= 1;
+				break;
+			}
+		break;
+
+
+		default:
+						gc->sliCount 			= 1;
+						gc->grSamplesPerChip 	= 1;
+		break;
+
+	}
+
+#endif
+
     /* Yeesh. */
     gc->enableSecondaryBuffer = gc->grSamplesPerChip > 1 ? FXTRUE : FXFALSE;
 
     /* Precompute which table entries to use for per-chip primary and secondary AA offsets. */
-    /* Index 0 - No AA
+    /* Index 0 - No AA     
      * Index 1 - 2-sample AA, 2 samples per chip
      * Index 2 - 2-sample AA, 1 sample per chip
-     * Index 3 - 4-sample AA, 2 samples per chip
+     * Index 3 - 4-sample AA, 2 samples per chip  
+        
+     * Index 4 - 2-sample AA, 2 samples per chip - correct values
+     * Index 5 - 2-sample AA, 1 sample per chip - correct values
+     * Index 6 - 4-sample AA, 2 samples per chip - correct values
      */
-    gc->sampleOffsetIndex = gc->grPixelSample-1 + ((gc->grSamplesPerChip == 1) ? 1 : 0);
     
+//adjust offset index for 4 chip cards
+	if(  gc->chipCount == 4 )
+	{
+		switch ( gc->grPixelSample )
+		{
+			case 8:
+			gc->sampleOffsetIndex = 9;
+			break;
 
+			case 4:
+			gc->sampleOffsetIndex =	8;
+			break;
+
+			case 2:
+			gc->sampleOffsetIndex = 7;
+			break;
+		}
+	}
+	else
+	{
+    	gc->sampleOffsetIndex = gc->grPixelSample-1 + ((gc->grSamplesPerChip == 1) ? 1 : 0);
+    	if (!GETENV("FX_GLIDE_AA_SAMPLE") && gc->sampleOffsetIndex)
+      		gc->sampleOffsetIndex+=3;
+
+	}
+
+        
     if (gc->sliCount == 0) {
       GDBG_INFO( gc->myLevel, "Unsupported Pixel Format = %d\n", pixelformat);
       GDBG_INFO( gc->myLevel, "Number of chips = %d\n", gc->chipCount);
@@ -2450,10 +1961,10 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
         switch (gc->grSstRez) 
         {
           case GR_RESOLUTION_1600x1024:
-            gc->bInfo->h3analogSli = 1 ;
-            gc->do2ppc = FXTRUE;
-            break ;
+             gc->do2ppc = FXTRUE;
+             break ;
           case GR_RESOLUTION_1600x1200:
+             break;
           case GR_RESOLUTION_1792x1344:
           case GR_RESOLUTION_1856x1392:
           case GR_RESOLUTION_1920x1440:
@@ -2537,6 +2048,10 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
          gc->chipCount = 1 ;
        }
     }
+
+//enable analog for 8xaa 4 chip cards
+	if( gc->chipCount == 4 ) 
+		gc->bInfo->h3analogSli = 1 ;
       
     /* compute tile dimensions */
     gc->strideInTiles  = ( gc->state.screen_width * (gc->grPixelSize >> 1)  + ( TILE_WIDTH_PXLS - 1 ) ) / TILE_WIDTH_PXLS;
@@ -2562,7 +2077,10 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
         FxU32 sliBandHeightInPixels;
         FxU32 numBands;
                  
-        chipScreenHeight = gc->state.screen_height >> (gc->sliCount - 1);
+//        chipScreenHeight = gc->state.screen_height >> (gc->sliCount - 1);
+
+        chipScreenHeight = gc->state.screen_height/gc->sliCount;
+
 
         /* Find the biggest value that's still 
          * divisible by a power of two.  The check
@@ -2582,7 +2100,8 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
 
         /* Recompute buffer memory requirements */
         sliBandHeightInPixels = 1L << gc->sliBandHeight;
-        chipScreenHeight = gc->state.screen_height >> (gc->sliCount - 1);
+//        chipScreenHeight = gc->state.screen_height >> (gc->sliCount - 1);
+        chipScreenHeight = gc->state.screen_height / gc->sliCount;
 
         GDBG_INFO(80, "%s: SLI band height in pixels: %d\n",FN_NAME, sliBandHeightInPixels);
         numBands = (chipScreenHeight + (sliBandHeightInPixels - 1)) / sliBandHeightInPixels;
@@ -2649,13 +2168,15 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
     gc->tex_ptr = (FxU32*)SST_TEX_ADDRESS(bInfo->regInfo.sstBase);
   
 #ifdef FX_GLIDE_NAPALM
-    if (gc->chipCount) {
-      FxU32 chip ;
-      for (chip = 0 ;
-           chip < gc->chipCount - 1 ;
-           chip++) {
-        gc->slaveSstRegs[chip] = (SstRegs *) bInfo->regInfo.slaveSstBase[chip] ;
-        gc->slaveCRegs[chip] =   (SstCRegs *)bInfo->regInfo.slaveCmdBase[chip] ;
+    if (IS_NAPALM(gc->bInfo->pciInfo.deviceID)) {
+      if (gc->chipCount) {
+        FxU32 chip ;
+        for (chip = 0 ;
+             chip < gc->chipCount - 1 ;
+             chip++) {
+          gc->slaveSstRegs[chip] = (SstRegs *) bInfo->regInfo.slaveSstBase[chip] ;
+          gc->slaveCRegs[chip] =   (SstCRegs *)bInfo->regInfo.slaveCmdBase[chip] ;
+        }
       }
     }
 #endif
@@ -2859,9 +2380,11 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
     gc->fbOffset                  = 0;
     gc->tmuMemInfo[0].tramOffset  = 
       (pixelformat == GR_PIXFMT_ARGB_8888) ? 0x400000 : 0x200000;
-    gc->tmuMemInfo[0].tramSize    = 0x1600000;
+    gc->tmuMemInfo[0].tramSize = 
+      (IS_NAPALM(gc->bInfo->pciInfo.deviceID)) ? 0x1600000 : 0x0200000;
     gc->tmuMemInfo[1].tramOffset  = gc->tmuMemInfo[0].tramSize + gc->tmuMemInfo[0].tramOffset;
-    gc->tmuMemInfo[1].tramSize    = 0x1600000;
+    gc->tmuMemInfo[1].tramSize = 
+      (IS_NAPALM(gc->bInfo->pciInfo.deviceID)) ? 0x1600000 : 0x0200000;
     gc->tmu_state[0].total_mem    = gc->tmuMemInfo[0].tramSize;
     gc->tmu_state[1].total_mem    = gc->tmuMemInfo[1].tramSize;
 #endif
@@ -3046,9 +2569,10 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
       else {
         bInfo->h3Mem = 32;
       }
-
+      
       bInfo->h3pixelSize = gc->grPixelSize;
 
+      bInfo->buffInfo.enable2ndbuffer = FXFALSE;
       if (gc->grPixelSample > 1)
         bInfo->buffInfo.enable2ndbuffer = FXTRUE;
 
@@ -3276,12 +2800,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
     REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 4, 0xf);
     {
       REG_GROUP_SET(hw, colBufferAddr, gc->state.shadow.colBufferAddr);
-#ifdef __linux__
-      REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride : 
-		    gc->state.shadow.colBufferStride );
-#else
-      REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride );
-#endif
+      REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride);
       REG_GROUP_SET(hw, auxBufferAddr, gc->state.shadow.auxBufferAddr);
       REG_GROUP_SET(hw, auxBufferStride, gc->state.shadow.auxBufferStride); 
     }
@@ -3292,15 +2811,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
         REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 4, 0xf);
         {
             REG_GROUP_SET(hw, colBufferAddr, gc->buffers1[gc->curBuffer] | SST_BUFFER_BASE_SELECT);
-#ifdef __linux__
-	    REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride : 
-			  gc->state.shadow.colBufferStride );
-#else
-	    REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride );
-#endif
-
-
-
+            REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride);
             REG_GROUP_SET(hw, auxBufferAddr, gc->buffers1[nColBuffers] | SST_BUFFER_BASE_SELECT);
             REG_GROUP_SET(hw, auxBufferStride, gc->state.shadow.auxBufferStride); 
         }
@@ -3361,12 +2872,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
       REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 4, 0xf);
       {
         REG_GROUP_SET(hw, colBufferAddr, gc->state.shadow.colBufferAddr);
-#ifdef __linux__
-	REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride : 
-		      gc->state.shadow.colBufferStride );
-#else
-	REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride );
-#endif
+        REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride);
         REG_GROUP_SET(hw, auxBufferAddr, gc->state.shadow.auxBufferAddr);
         REG_GROUP_SET(hw, auxBufferStride, gc->state.shadow.auxBufferStride); 
       }
@@ -3375,12 +2881,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
         REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 4, 0xf);
         {
           REG_GROUP_SET(hw, colBufferAddr, gc->buffers1[gc->curBuffer] | SST_BUFFER_BASE_SELECT);
-#ifdef __linux__
-  REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride : 
-			gc->state.shadow.colBufferStride );
-#else
-  REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride );
-#endif
+          REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride);
           REG_GROUP_SET(hw, auxBufferAddr, gc->buffers1[nColBuffers] | SST_BUFFER_BASE_SELECT);
           REG_GROUP_SET(hw, auxBufferStride, gc->state.shadow.auxBufferStride); 
         }
@@ -3390,8 +2891,9 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
         */
         {
           /* Anti-aliasing default perturbation values */
-          FxU32 defaultXOffset[4] = {0x7a, 0x2, 0x7c, 0x4};
-          FxU32 defaultYOffset[4] = {0x7b, 0x4, 0x3, 0x7d};
+//8xaa
+          FxU32 defaultXOffset[8];// = {0x7a, 0x2, 0x7c, 0x4};
+          FxU32 defaultYOffset[8];// = {0x7b, 0x4, 0x3, 0x7d};
           _grAAOffsetValue(defaultXOffset, defaultYOffset, 
                            0, gc->chipCount - 1, FXTRUE, FXTRUE);
         }
@@ -3483,6 +2985,15 @@ GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
 
   if (!gc)
         return 0;
+
+  /* If we are OpenGL, we need to release Exclusive mode so other
+  ** OpenGL fullscreen apps can run.  If not, we will cause a lot
+  ** of problems.
+  */
+  if (_GlideRoot.environment.is_opengl == FXTRUE) {
+    hwcRestoreVideo(gc->bInfo);
+  }
+
 #ifndef	__linux__
   if (gc->lostContext) {
     if (*gc->lostContext)
@@ -3592,7 +3103,24 @@ GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
 #undef FN_NAME
 } /* grSstWinClose */
 
+/*-------------------------------------------------------------------
+  Function: grSetNumPendingBuffers
+  Date: 13-Oct-2000
+  Implementor(s): mmcclure
+  Description:
+  
+  Allow the application to supply the number of pending buffers
 
+  Arguments:
+
+  NumPendingBuffers - Sent to force number of pending buffers
+  
+  Return:
+  -------------------------------------------------------------------*/
+GR_DIENTRY(grSetNumPendingBuffers, void, (FxI32 NumPendingBuffers))
+{
+  _GlideRoot.environment.swapPendingCount = NumPendingBuffers;
+}
 
 /*-------------------------------------------------------------------
   Function: grSelectContext
@@ -3918,8 +3446,14 @@ GR_ENTRY(guGammaCorrectionRGB, void, (float r, float g, float b))
   ** Fifa99 calls this routine after they use grGlideShutdown.
   ** The game crashes here with a null gc.
   */
-  if (gc)
-    hwcGammaRGB(gc->bInfo, r, g, b);
+  if (_GlideRoot.environment.useAppGamma)
+  {
+  	if (gc)
+    	  hwcGammaRGB(gc->bInfo, r, g, b);
+  }
+  else
+	GDBG_INFO(69,"guGammaCorrectionRGB::hwcGammaRGB (%3.3f, %3.3f, %3.3f)  call ignored\n", r,g,b);
+
 #endif /* !GLIDE_INIT_HAL */
 
   GR_END();
@@ -3947,7 +3481,10 @@ GR_DIENTRY(grLoadGammaTable, void, (FxU32 nentries, FxU32 *red, FxU32 *green, Fx
     nentries = max;
 
 #ifdef GLIDE_INIT_HWC
-  hwcGammaTable(gc->bInfo, nentries, red, green, blue);  
+  if (_GlideRoot.environment.useAppGamma)
+   	hwcGammaTable(gc->bInfo, nentries, red, green, blue);  
+  else
+	GDBG_INFO(69, "grLoadGammaTable::hwcGammaRGB call ignored\n");
 #endif
 
   GR_END();
@@ -3998,8 +3535,11 @@ GR_ENTRY(grGammaCorrectionValue, void, (float gamma))
   fxHalInitGamma(hw, gamma);
 #else /* !GLIDE_INIT_HAL */
 
-  hwcGamma(gc->bInfo, gamma, gamma, gamma);
-
+ if (_GlideRoot.environment.useAppGamma)
+   	hwcGamma(gc->bInfo, gamma, gamma, gamma);
+ else
+	GDBG_INFO(69,"grGammaCorrectionValue::hwcGammaRGB (gamma = %3.3f) call ignored\n", gamma);
+ 
 #endif /* !GLIDE_INIT_HAL */
 
        GR_END();
@@ -4203,10 +3743,11 @@ _grAAOffsetValue(FxU32 *xOffset,
   
     _grChipMask( 1 << chipIndex);
 
-    aaCtrl = (xOffset[(chipIndex * 2)%4] << SST_AA_CONTROL_PRIMARY_X_OFFSET_SHIFT) |
-             (yOffset[(chipIndex * 2)%4] << SST_AA_CONTROL_PRIMARY_Y_OFFSET_SHIFT) |
-             (xOffset[(chipIndex * 2 + 1)%4] << SST_AA_CONTROL_SECONDARY_X_OFFSET_SHIFT) |
-             (yOffset[(chipIndex * 2 + 1)%4] << SST_AA_CONTROL_SECONDARY_Y_OFFSET_SHIFT) |
+//8xaa
+    aaCtrl = (xOffset[(chipIndex * 2)%8] << SST_AA_CONTROL_PRIMARY_X_OFFSET_SHIFT) |
+             (yOffset[(chipIndex * 2)%8] << SST_AA_CONTROL_PRIMARY_Y_OFFSET_SHIFT) |
+             (xOffset[(chipIndex * 2 + 1)%8] << SST_AA_CONTROL_SECONDARY_X_OFFSET_SHIFT) |
+             (yOffset[(chipIndex * 2 + 1)%8] << SST_AA_CONTROL_SECONDARY_Y_OFFSET_SHIFT) |
              ((enableSecondary) ? SST_AA_CONTROL_AA_ENABLE : 0) |
              ((enablePrimary) ? 0 : SST_AA_CONTROL_AA_DISABLE_FIRST);
 
@@ -4241,7 +3782,15 @@ _grEnableSliCtrl(void)
   /*
   ** enable sli mode
   */
-  sliChipCountDivisor = (gc->grPixelSample == 4) ? 2 : 1;
+  
+//8xaa
+  if( gc-> chipCount == 2 )
+  	sliChipCountDivisor = (gc->grPixelSample == 4) ? 2 : 1;
+
+  if( gc-> chipCount == 4 )
+	sliChipCountDivisor = (gc->grPixelSample == 2) ? 2 : 1;
+
+
   renderMask = (gc->chipCount / sliChipCountDivisor - 1) << gc->sliBandHeight;
   scanMask = (1 << gc->sliBandHeight) - 1;
   log2chipCount = 0;
@@ -4341,6 +3890,7 @@ _grRenderMode(FxU32 pixelformat)
   switch (pixelformat) {
   case GR_PIXFMT_AA_2_ARGB_1555:
   case GR_PIXFMT_AA_4_ARGB_1555:
+  case GR_PIXFMT_AA_8_ARGB_1555:	/* 8xaa */
     renderMode |= SST_RM_DITHER_ROTATION ;
   case GR_PIXFMT_ARGB_1555:
     renderMode |= SST_RM_15BPP;
@@ -4348,6 +3898,7 @@ _grRenderMode(FxU32 pixelformat)
   case GR_PIXFMT_ARGB_8888:
   case GR_PIXFMT_AA_2_ARGB_8888:
   case GR_PIXFMT_AA_4_ARGB_8888:
+  case GR_PIXFMT_AA_8_ARGB_8888:	/* 8xaa */
     renderMode |= SST_RM_32BPP;
     grColorMaskExt(gc->state.stateArgs.grColorMaskExtArgs.r,
                    gc->state.stateArgs.grColorMaskExtArgs.g,
@@ -4356,6 +3907,7 @@ _grRenderMode(FxU32 pixelformat)
     break;
   case GR_PIXFMT_AA_2_RGB_565:
   case GR_PIXFMT_AA_4_RGB_565:
+  case GR_PIXFMT_AA_8_RGB_565:		/* 8xaa */
     renderMode |= SST_RM_DITHER_ROTATION ;
   default:
     renderMode |= SST_RM_16BPP;

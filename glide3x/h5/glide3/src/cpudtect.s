@@ -20,6 +20,13 @@
 
 /*  $Header$ *
 /*  $Log$
+/*  Revision 1.3  2000/11/15 23:32:52  joseph
+/*  Syncing up with 3dfx internal source repository.  These changes contain a
+/*  number of bug fixes.
+/*
+/*  Revision 1.2.2.1  2000/08/30 08:37:51  alanh
+/*  Voodoo5 changes for 64bit architectures
+/*
 /*  Revision 1.2  2000/06/27 19:59:34  joseph
 /*  Previous checkin of asm files were already preprocessed.
 /*  Fixed build rules for 3DNow optimized assembly.

@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler Version 6.14.8444		    06/20/00 17:18:56
+Microsoft (R) Macro Assembler Version 6.14.8444		    06/30/00 13:01:25
 xtexdl.asm						     Page 1 - 1
 
 
@@ -23,6 +23,10 @@ xtexdl.asm						     Page 1 - 1
 				;; $Header$
 				;; $Revision$
 				;; $Log$
+				;; Revision 1.3  2000/11/15 23:32:54  joseph
+				;; Syncing up with 3dfx internal source repository.  These changes contain a
+				;; number of bug fixes.
+				;;
 				;; Revision 1.1  2000/06/15 00:27:43  joseph
 				;; Initial checkin into SourceForge.
 				;;
@@ -98,6 +102,7 @@ xtexdl.asm						     Page 1 - 1
  = 0078			      C reg_ptr			= 00000078h
  = 0080			      C lfb_ptr			= 00000080h
  = 01E0			      C cull_mode		= 000001e0h
+ = 96AC			      C checkPtr			= 000096ach
  = 0124			      C tsuDataList		= 00000124h
  = 0DD8			      C triPacketHdr	= 00000dd8h
  = 0DDC			      C cullStripHdr	= 00000ddch
@@ -238,11 +243,11 @@ ENDM ; GR_FIFO_WRITE
 				ENDIF
 				
  00000014  85 F6		    sub       curT, eax                 ; curT = maxT - minT
- 00000016  0F 84 0000012A	    mov       fifo, [gc + fifoPtr]      ; fifoPtr
+ 00000016  0F 84 0000013C	    mov       fifo, [gc + fifoPtr]      ; fifoPtr
  0000001C  8B 96 000096BC	
  00000022  8B 0A		    mov       curS, [esp + _maxS$]      ; curS = maxS 
  00000024  F7 C1 00000001	    add       curT, 1                   ; curT = maxT - minT + 1
- 0000002A  0F 85 00000116	
+ 0000002A  0F 85 00000128	
 				    femms                               ; we'll use MMX/3DNow!, make sure FPU register cleared
 				
  00000030  2B D8		    mov       edx, curS                 ; curS = maxS = scanline width in DWORDs
@@ -282,10 +287,10 @@ ENDM ; GR_FIFO_WRITE
 				ifdef USE_PACKET_FIFO
 				    push      @Line                     ; Line # inside this function
  00000075  F7 C5 00000004	    push      0                         ; NULL file name
- 0000007B  0F 84 0000009F	
+ 0000007B  0F 84 000000B1	
 				    push      4                         ; fifo space required (bytes)
  00000081  83 FA 04		    call      __grCommandTransportMakeRoom@12 ; make fifo room
- 00000084  7D 26		endif
+ 00000084  7D 2A		endif
 				    
 				    mov       fifo, [gc + fifoPtr]      ; fifoPtr modified by _grCommandTransportMakeRoom, reload
  00000086  68 000000C4		
@@ -301,23 +306,23 @@ ENDM ; GR_FIFO_WRITE
  000000A0  8B 4C 24 1C		    sub       fRoom, 4                  ; fifoRoom -= 4
 				
  000000A4  F7 C5 00000004	    mov       [gc + fifoRoom], fRoom    ; store new fifoRoom
- 000000AA  74 74		    add       fifo, 4                   ; fifoPtr += 4
+ 000000AA  0F 84 00000082	    add       fifo, 4                   ; fifoPtr += 4
 				
- 000000AC			IFDEF GLIDE_DEBUG
+ 000000B0			IFDEF GLIDE_DEBUG
 				    mov       [gc + checkPtr], fifo      ; checkPtr
- 000000AC  C7 45 00		ENDIF
+ 000000B0  C7 45 00		ENDIF
 	   00000000
- 000000B3  83 EA 04		
+ 000000B7  83 EA 04		
 				    mov       [gc + fifoPtr], fifo      ; store new fifoPtr
- 000000B6  89 96 00000DEC	    jmp       __startDownload           ; fifo aligned, download texture now
- 000000BC  83 C5 04		
+ 000000BA  89 96 00000DEC	    jmp       __startDownload           ; fifo aligned, download texture now
+ 000000C0  83 C5 04		
 				    align 32
 				
-				    ;; ebx = curT, edi = dataPtr, esi = gc, ebp = fifo, ecx = maxS = curS
+ 000000C3  89 AE 000096AC	    ;; ebx = curT, edi = dataPtr, esi = gc, ebp = fifo, ecx = maxS = curS
 				    ;; edx=fifoRoom, mm1 = texAddr|packetHdr, mm2 = TEX_ROW_ADDR_INCR(1)|0
 				
- 000000BF  89 AE 00000DE4	__loopT:
- 000000C5  EB 59		
+ 000000C9  89 AE 00000DE4	__loopT:
+ 000000CF  EB 61		
 				IFDEF GLIDE_DEBUG
 				
 				    ;; Make sure that we have a QWORD aligned fifoPtr; force GP if not aligned
@@ -330,93 +335,93 @@ ENDM ; GR_FIFO_WRITE
 				__alignmentOK:      
 				ENDIF ; GLIDE_DEBUG
 				
-				    ;; Compute packet header words
-				    ;;  hdr1: downloadSpace[31:30] numWords[21:3] packetType[2:0]
+ 000000E0  F7 C5 00000004	    ;; Compute packet header words
+ 000000E6  74 04		    ;;  hdr1: downloadSpace[31:30] numWords[21:3] packetType[2:0]
 				    ;;  hdr2: download address[29:0]
-				
-				    movq      [fifo], mm1               ; store hdr2 | hdr1
-				    add       fifo, 8                   ; increment fifo ptr (hdr1 + hdr2)
+ 000000E8  33 C0		
+ 000000EA  89 00		    movq      [fifo], mm1               ; store hdr2 | hdr1
+ 000000EC			    add       fifo, 8                   ; increment fifo ptr (hdr1 + hdr2)
 				
 				    ;; S coordinate inner loop unrolled for 8 texels a write
 				
 				__loopS:        
 				
 				    movq      mm0, [dataPtr]            ; load 64 bit data (8 texels)
- 000000E0  0F 7F 4D 00		    add       fifo, 8                   ; pre-increment fifoPtr += 2 * sizeof(FxU32)
- 000000E4  83 C5 08		
+ 000000EC  0F 7F 4D 00		    add       fifo, 8                   ; pre-increment fifoPtr += 2 * sizeof(FxU32)
+ 000000F0  83 C5 08		
 				    add       dataPtr, 8                ; dataPtr += 2 * sizeof(FxU32)
 				    sub       curS, 8                   ; curS -= 2 * sizeof(FxU32)
 				
- 000000E7			    movq      [fifo - 8], mm0           ; *fifoPtr = texelData[64 bits]
+ 000000F3			    movq      [fifo - 8], mm0           ; *fifoPtr = texelData[64 bits]
 				    jnz       __loopS                   ; loop while curS > 0
- 000000E7  0F 6F 07		
- 000000EA  83 C5 08		    mov       ecx, [gc + fifoPtr]       ; old fifo ptr
+ 000000F3  0F 6F 07		
+ 000000F6  83 C5 08		    mov       ecx, [gc + fifoPtr]       ; old fifo ptr
 				    nop                                 ; filler
- 000000ED  83 C7 08		
- 000000F0  83 E9 08		    mov       eax, fifo                 ; new fifo ptr
+ 000000F9  83 C7 08		
+ 000000FC  83 E9 08		    mov       eax, fifo                 ; new fifo ptr
 				    mov       [gc + fifoPtr], fifo      ; save new fifo ptr
- 000000F3  0F 7F 45 F8		
- 000000F7  75 EE		IFDEF GLIDE_DEBUG
+ 000000FF  0F 7F 45 F8		
+ 00000103  75 EE		IFDEF GLIDE_DEBUG
 				    mov       [gc + checkPtr], fifo      ; checkPtr
- 000000F9  8B 8E 00000DE4	ENDIF
- 000000FF  90			
+ 00000105  8B 8E 00000DE4	ENDIF
+ 0000010B  90			
 				    sub       eax, ecx                  ; new fifo ptr - old fifo ptr = fifo space used up
- 00000100  8B C5		    mov       curS, [esp + _maxS$]      ; curS = maxS = width of scanline (bytes)
- 00000102  89 AE 00000DE4	
+ 0000010C  8B C5		    mov       curS, [esp + _maxS$]      ; curS = maxS = width of scanline (bytes)
+ 0000010E  89 AE 00000DE4	
 				    sub       fRoom, eax                ; new fifo space available = old fifo space available - fifo space used up = new fifo space available
 				    sub       curT, 1                   ; curT--
-				
+ 00000114  89 AE 000096AC	
 				    mov       [gc + fifoRoom], fRoom    ; save new fifo space available 
 				    jz        __dlDone                  ; loop while curT > 0
- 00000108  2B C1		
- 0000010A  8B 4C 24 1C		    ;; Check for room to write the next texture scanline
+ 0000011A  2B C1		
+ 0000011C  8B 4C 24 1C		    ;; Check for room to write the next texture scanline
 				
- 0000010E  2B D0		    ;; ebx = curT, edi = dataPtr, esi = gc, ebp = fifo
- 00000110  83 EB 01		    ;; edx = fifoRoom, mm1 = texAddr|packetHdr, mm2 = TEX_ROW_ADDR_INCR(1)|0
+ 00000120  2B D0		    ;; ebx = curT, edi = dataPtr, esi = gc, ebp = fifo
+ 00000122  83 EB 01		    ;; edx = fifoRoom, mm1 = texAddr|packetHdr, mm2 = TEX_ROW_ADDR_INCR(1)|0
 				
- 00000113  89 96 00000DEC	    paddd     mm1, mm2                  ; texAddr+=TEX_ROW_ADDR_INCR(1) | packetHdr
- 00000119  74 2B		    mov       esp, esp                  ; filler
+ 00000125  89 96 00000DEC	    paddd     mm1, mm2                  ; texAddr+=TEX_ROW_ADDR_INCR(1) | packetHdr
+ 0000012B  74 2B		    mov       esp, esp                  ; filler
 				__startDownload:
 				    lea       eax, [curS+8]             ; fifo space needed = scan line width + header size
 				 
 				    cmp       fRoom, eax                ; fifo space available >= fifo space required ?
 				    jge       __loopT                   ; yup, write next scan line
 				
- 0000011B  0F FE CA		ifdef USE_PACKET_FIFO
- 0000011E  8B E4		    push      @Line                     ; Line # inside this function
- 00000120			    push      0h                        ; NULL file name
- 00000120  8D 41 08		
+ 0000012D  0F FE CA		ifdef USE_PACKET_FIFO
+ 00000130  8B E4		    push      @Line                     ; Line # inside this function
+ 00000132			    push      0h                        ; NULL file name
+ 00000132  8D 41 08		
 				    push      eax                       ; fifo space required
- 00000123  3B D0		    call      __grCommandTransportMakeRoom@12 ; make fifo room (if fifoPtr QWORD aligned before
- 00000125  7D B9		endif
+ 00000135  3B D0		    call      __grCommandTransportMakeRoom@12 ; make fifo room (if fifoPtr QWORD aligned before
+ 00000137  7D A7		endif
 				    
 				    mov       fifo, [gc + fifoPtr]      ; fifoPtr was modified by _grCommandTransportMakeRoom, reload
- 00000127  68 0000012A		
- 0000012C  6A 00		    mov       fRoom, [gc + fifoRoom]    ; fifoRoom was modified by _grCommandTransportMakeRoom, reload
+ 00000139  68 0000012A		
+ 0000013E  6A 00		    mov       fRoom, [gc + fifoRoom]    ; fifoRoom was modified by _grCommandTransportMakeRoom, reload
 				    mov       curS, [esp + _maxS$]      ; curS = maxS = width of scanline (bytes)
- 0000012E  50			    jmp       __loopT                   ; we now have enough fifo room, write next scanline
- 0000012F  E8 00000000 E	
+ 00000140  50			    jmp       __loopT                   ; we now have enough fifo room, write next scanline
+ 00000141  E8 00000000 E	
 				__dlDone:           
 				
- 00000134  8B AE 00000DE4	    femms                               ; exit 3DNow!(tm) state
+ 00000146  8B AE 00000DE4	    femms                               ; exit 3DNow!(tm) state
 				    
- 0000013A  8B 96 00000DEC	    pop       ebp                       ; restore caller's register variable
- 00000140  8B 4C 24 1C		    pop       edi                       ; restore caller's register variable
- 00000144  EB 9A		    
+ 0000014C  8B 96 00000DEC	    pop       ebp                       ; restore caller's register variable
+ 00000152  8B 4C 24 1C		    pop       edi                       ; restore caller's register variable
+ 00000156  EB 88		    
 				    pop       esi                       ; restore caller's register variable
- 00000146			    pop       ebx                       ; restore caller's register variable
+ 00000158			    pop       ebx                       ; restore caller's register variable
 				    
- 00000146  0F 0E		    ret       24                        ; pop 6 DWORD parameters and return
+ 00000158  0F 0E		    ret       24                        ; pop 6 DWORD parameters and return
 				
- 00000148  5D			__grTexDownload_3DNow_MMX@24 ENDP
- 00000149  5F			
+ 0000015A  5D			__grTexDownload_3DNow_MMX@24 ENDP
+ 0000015B  5F			
 				_TEXT ENDS
- 0000014A  5E			
- 0000014B  5B			END
- 0000014C  C2 0018
- 0000014F
- 014F
-Microsoft (R) Macro Assembler Version 6.14.8444		    06/20/00 17:18:56
+ 0000015C  5E			
+ 0000015D  5B			END
+ 0000015E  C2 0018
+ 00000161
+ 0161
+Microsoft (R) Macro Assembler Version 6.14.8444		    06/30/00 13:01:25
 xtexdl.asm						     Symbols 2 - 1
 
 
@@ -434,19 +439,20 @@ Segments and Groups:
                 N a m e                 Size     Length   Align   Combine Class
 
 FLAT . . . . . . . . . . . . . .	GROUP
-_TEXT  . . . . . . . . . . . . .	32 Bit	 014F	  Page	  Public  'CODE'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 0161	  Page	  Public  'CODE'	
 
 
 Procedures,  parameters and locals:
 
                 N a m e                 Type     Value    Attr
 
-__grTexDownload_3DNow_MMX@24 . .	P Near	 0000	  _TEXT	Length= 014F Public
-  __mmxAlignFifo . . . . . . . .	L Near	 00AC	  _TEXT	
+__grTexDownload_3DNow_MMX@24 . .	P Near	 0000	  _TEXT	Length= 0161 Public
+  __mmxAlignFifo . . . . . . . .	L Near	 00B0	  _TEXT	
   __loopT  . . . . . . . . . . .	L Near	 00E0	  _TEXT	
-  __loopS  . . . . . . . . . . .	L Near	 00E7	  _TEXT	
-  __startDownload  . . . . . . .	L Near	 0120	  _TEXT	
-  __dlDone . . . . . . . . . . .	L Near	 0146	  _TEXT	
+  __alignmentOK  . . . . . . . .	L Near	 00EC	  _TEXT	
+  __loopS  . . . . . . . . . . .	L Near	 00F3	  _TEXT	
+  __startDownload  . . . . . . .	L Near	 0132	  _TEXT	
+  __dlDone . . . . . . . . . . .	L Near	 0158	  _TEXT	
 
 
 Symbols:
@@ -455,7 +461,9 @@ Symbols:
 
 CPUType  . . . . . . . . . . . .	Number	 0010h	 
 CoordinateSpace  . . . . . . . .	Number	 0D98h	 
+GDBG_INFO_ON . . . . . . . . . .	Text   	 
 GLIDE_ALT_TAB  . . . . . . . . .	Text   	 
+GLIDE_DEBUG  . . . . . . . . . .	Text   	 
 GLIDE_INIT_HWC . . . . . . . . .	Text   	 
 GLIDE_PACKED_RGB . . . . . . . .	Text   	 0
 GLIDE_TRI_CULLING  . . . . . . .	Text   	 1
@@ -490,6 +498,7 @@ _minT$ . . . . . . . . . . . . .	Number	 0020h
 _texData$  . . . . . . . . . . .	Number	 0028h	 
 bInfo  . . . . . . . . . . . . .	Number	 011Ch	 
 base_ptr . . . . . . . . . . . .	Number	 0074h	 
+checkPtr . . . . . . . . . . . .	Number	 96ACh	 
 colorType  . . . . . . . . . . .	Number	 0B74h	 
 cullStripHdr . . . . . . . . . .	Number	 0DDCh	 
 cull_mode  . . . . . . . . . . .	Number	 01E0h	 

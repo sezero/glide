@@ -81,6 +81,10 @@ typedef FxU32 GrPixelFormat_t;
 #define GR_PIXFMT_AA_4_RGB_565                  0x0009
 #define GR_PIXFMT_AA_4_ARGB_1555                0x000a
 #define GR_PIXFMT_AA_4_ARGB_8888                0x000b
+#define GR_PIXFMT_AA_8_RGB_565                  0x000c 	/* 8xaa */
+#define GR_PIXFMT_AA_8_ARGB_1555                0x000d
+#define GR_PIXFMT_AA_8_ARGB_8888                0x000e
+
 
 #define GR_LFBWRITEMODE_Z32                     0x0008
 

@@ -1,25 +1,28 @@
 /*
-** THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONLY
-** PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGHT
+** THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONL
+** PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGH
 ** TO USE THE GLIDE TRADEMARK WITHOUT PRIOR WRITTEN PERMISSION OF 3DF
 ** INTERACTIVE, INC. A COPY OF THIS LICENSE MAY BE OBTAINED FROM THE
 ** DISTRIBUTOR OR BY CONTACTING 3DFX INTERACTIVE INC(info@3dfx.com).
 ** THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER
-** EXPRESSED OR IMPLIED. SEE THE 3DFX GLIDE GENERAL PUBLIC LICENSE FOR A
+** EXPRESSED OR IMPLIED. SEE THE 3DFX GLIDE GENERAL PUBLIC LICENSE FOR 
 ** FULL TEXT OF THE NON-WARRANTY PROVISIONS. 
 **
-** USE, DUPLICATION OR DISCLOSURE BY THE GOVERNMENT IS SUBJECT TO
-** RESTRICTIONS AS SET FORTH IN SUBDIVISION (C)(1)(II) OF THE RIGHTS IN
-** TECHNICAL DATA AND COMPUTER SOFTWARE CLAUSE AT DFARS 252.227-7013,
-** AND/OR IN SIMILAR OR SUCCESSOR CLAUSES IN THE FAR, DOD OR NASA FAR
-** SUPPLEMENT. UNPUBLISHED RIGHTS RESERVED UNDER THE COPYRIGHT LAWS OF
+** USE, DUPLICATION OR DISCLOSURE BY THE GOVERNMENT IS SUBJECT T
+** RESTRICTIONS AS SET FORTH IN SUBDIVISION (C)(1)(II) OF THE RIGHTS I
+** TECHNICAL DATA AND COMPUTER SOFTWARE CLAUSE AT DFARS 252.227-7013
+** AND/OR IN SIMILAR OR SUCCESSOR CLAUSES IN THE FAR, DOD OR NASA FA
+** SUPPLEMENT. UNPUBLISHED RIGHTS RESERVED UNDER THE COPYRIGHT LAWS O
 ** THE UNITED STATES. 
 **
-** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
+** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVE
 **
 ** 
 ** $Header$
 ** $Log: 
+**  51   3dfx      1.41.1.6.1.110/11/00 Brent           Forced check in to enforce
+**       branching.
+**  50   3dfx      1.41.1.6.1.008/29/00 Jonny Cochrane  Some 8x FSAA code
 **  49   3dfx      1.41.1.6    06/20/00 Joseph Kain     Fixed errors introduced by
 **       my previous merge.
 **  48   3dfx      1.41.1.5    06/20/00 Joseph Kain     Changes to support the
@@ -1816,12 +1819,7 @@ GR_ENTRY(grBufferClear, void, (GrColor_t color, GrAlpha_t alpha, FxU32 depth))
         } else {
         REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 2, 0x3);
         REG_GROUP_SET(hw, colBufferAddr, gc->buffers0[gc->windowed ? 0 : gc->curBuffer]);
-#ifdef __linux__
-	REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride : 
-		      gc->state.shadow.colBufferStride );
-#else
-	REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride );
-#endif
+        REG_GROUP_SET(hw, colBufferStride,gc->state.shadow.colBufferStride);
         REG_GROUP_END();
 #ifdef FX_GLIDE_NAPALM
         if (IS_NAPALM(gc->bInfo->pciInfo.deviceID)) {
@@ -2300,12 +2298,7 @@ GR_EXT_ENTRY(grBufferClearExt, void, (GrColor_t color, GrAlpha_t alpha, FxU32 de
             /* tbext */
             REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 2, 0x3) ;
             REG_GROUP_SET(hw, colBufferAddr, gc->state.shadow.auxBufferAddr) ;
-#ifdef __linux__
-	    REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride : 
-			  gc->state.shadow.auxBufferStride );
-#else
-	    REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.auxBufferStride );
-#endif
+            REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.auxBufferStride) ;
             REG_GROUP_END() ;
                 
 #ifdef FX_GLIDE_NAPALM
@@ -2350,12 +2343,7 @@ GR_EXT_ENTRY(grBufferClearExt, void, (GrColor_t color, GrAlpha_t alpha, FxU32 de
           } else {
             REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 2, 0x3) ;
             REG_GROUP_SET(hw, colBufferAddr, gc->buffers0[gc->windowed ? 0 : gc->curBuffer]) ;
-#ifdef __linux__
-	    REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride : 
-			  gc->state.shadow.colBufferStride );
-#else
-	    REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride );
-#endif
+            REG_GROUP_SET(hw, colBufferStride,gc->state.shadow.colBufferStride) ;
             REG_GROUP_END() ;
 
 #ifdef FX_GLIDE_NAPALM
@@ -5017,10 +5005,10 @@ GR_DDFUNC(_grACExtcombineMode, void, (GrACUColor_t     a,
 GR_EXT_ENTRY(grTBufferWriteMaskExt, void , (FxU32 tmask) )
 {
 #define FN_NAME "grTBufferWriteMaskExt"
-  FxU32 defaultXOffset0[4] = {0x7a, 0x2, 0x7c, 0x4};
-  FxU32 defaultYOffset0[4] = {0x7b, 0x4, 0x3, 0x7d};
-  FxU32 defaultXOffset1[4] = {0x2, 0x7a, 0x4, 0x7c};
-  FxU32 defaultYOffset1[4] = {0x4, 0x7b, 0x7d, 0x3};
+  /* increase arrays for 8xaa */
+  FxU32 defaultXOffset0[8] = {0x7a, 0x2, 0x7c, 0x4, 0x7a, 0x2, 0x7c, 0x4};
+  FxU32 defaultYOffset0[8] = {0x7b, 0x4, 0x3, 0x7d, 0x7a, 0x2, 0x7c, 0x4};
+
   FxU32 chipIndex, chipEnList, i;
   GR_BEGIN_NOFIFOCHECK("grTBufferWriteMaskExt",85);
   GDBG_INFO_MORE(gc->myLevel, "(0x%x)\n", tmask);
@@ -5038,12 +5026,12 @@ GR_EXT_ENTRY(grTBufferWriteMaskExt, void , (FxU32 tmask) )
   }
 
   /* This is sortof slow, but this function doesn't need to be that fast. */
-  for(i = 0; i < 4; i++) {
+  /* 8xaa - loop to load 8 sample offsets */
+  for(i = 0; i < 8; i++) {
     defaultXOffset0[i] = _GlideRoot.environment.aaXOffset[gc->grPixelSample - 1][i];
     defaultYOffset0[i] = _GlideRoot.environment.aaYOffset[gc->grPixelSample - 1][i];
-    defaultXOffset1[i] = _GlideRoot.environment.aaXOffset[gc->grPixelSample - 1][i^1];
-    defaultYOffset1[i] = _GlideRoot.environment.aaYOffset[gc->grPixelSample - 1][i^1];
   }  
+
   chipEnList = gc->chipmask;
 
   for (chipIndex = 0; chipIndex < gc->chipCount; chipIndex++) {
@@ -5068,12 +5056,7 @@ GR_EXT_ENTRY(grTBufferWriteMaskExt, void , (FxU32 tmask) )
       REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 4, 0xf);
       {
         REG_GROUP_SET(hw, colBufferAddr, gc->state.shadow.colBufferAddr);
-#ifdef __linux__
-	REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride : 
-		      gc->state.shadow.colBufferStride );
-#else
-	REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride );
-#endif
+        REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride);
         REG_GROUP_SET(hw, auxBufferAddr, gc->state.shadow.auxBufferAddr);
         REG_GROUP_SET(hw, auxBufferStride, gc->state.shadow.auxBufferStride); 
       }
@@ -5093,12 +5076,7 @@ GR_EXT_ENTRY(grTBufferWriteMaskExt, void , (FxU32 tmask) )
       REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 4, 0xf);
       {
         REG_GROUP_SET(hw, colBufferAddr, gc->state.shadow.colBufferAddr);
-#ifdef __linux__
-	REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride : 
-		      gc->state.shadow.colBufferStride );
-#else
-	REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride );
-#endif
+        REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride);
         REG_GROUP_SET(hw, auxBufferAddr, gc->state.shadow.auxBufferAddr);
         REG_GROUP_SET(hw, auxBufferStride, gc->state.shadow.auxBufferStride); 
       }
@@ -5116,12 +5094,7 @@ GR_EXT_ENTRY(grTBufferWriteMaskExt, void , (FxU32 tmask) )
       REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 4, 0xf);
       {
         REG_GROUP_SET(hw, colBufferAddr, gc->state.shadow.colBufferAddr);
-#ifdef __linux__
-	REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride : 
-		      gc->state.shadow.colBufferStride );
-#else
-	REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride );
-#endif
+        REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride);
         REG_GROUP_SET(hw, auxBufferAddr, gc->state.shadow.auxBufferAddr);
         REG_GROUP_SET(hw, auxBufferStride, gc->state.shadow.auxBufferStride); 
       }
@@ -5129,12 +5102,7 @@ GR_EXT_ENTRY(grTBufferWriteMaskExt, void , (FxU32 tmask) )
       REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 4, 0xf);
       {
         REG_GROUP_SET(hw, colBufferAddr, gc->buffers1[gc->curBuffer] | SST_BUFFER_BASE_SELECT);
-#ifdef __linux__
-	REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride : 
-		      gc->state.shadow.colBufferStride );
-#else
-	REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride );
-#endif
+        REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride);
         REG_GROUP_SET(hw, auxBufferAddr, gc->buffers1[gc->grColBuf] | SST_BUFFER_BASE_SELECT);
         REG_GROUP_SET(hw, auxBufferStride, gc->state.shadow.auxBufferStride); 
       }

@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler Version 6.14.8444		    06/20/00 17:18:57
+Microsoft (R) Macro Assembler Version 6.14.8444		    06/30/00 13:01:25
 xdraw3.asm						     Page 1 - 1
 
 
@@ -2209,6 +2209,7 @@ xdraw3.asm						     Page 1 - 1
  = 0078			      C reg_ptr			= 00000078h
  = 0080			      C lfb_ptr			= 00000080h
  = 01E0			      C cull_mode		= 000001e0h
+ = 96AC			      C checkPtr			= 000096ach
  = 0124			      C tsuDataList		= 00000124h
  = 0DD8			      C triPacketHdr	= 00000dd8h
  = 0DDC			      C cullStripHdr	= 00000ddch
@@ -3411,7 +3412,7 @@ xdraw3.asm						     Page 1 - 1
 				endif  ; !GL_AMD3D
 				
 				END
-Microsoft (R) Macro Assembler Version 6.14.8444		    06/20/00 17:18:57
+Microsoft (R) Macro Assembler Version 6.14.8444		    06/30/00 13:01:25
 xdraw3.asm						     Symbols 2 - 1
 
 
@@ -3502,7 +3503,9 @@ Symbols:
 
 CPUType  . . . . . . . . . . . .	Number	 0010h	 
 CoordinateSpace  . . . . . . . .	Number	 0D98h	 
+GDBG_INFO_ON . . . . . . . . . .	Text   	 
 GLIDE_ALT_TAB  . . . . . . . . .	Text   	 
+GLIDE_DEBUG  . . . . . . . . . .	Text   	 
 GLIDE_INIT_HWC . . . . . . . . .	Text   	 
 GLIDE_PACKED_RGB . . . . . . . .	Text   	 0
 GLIDE_TRI_CULLING  . . . . . . .	Text   	 1
@@ -3543,6 +3546,7 @@ _vc  . . . . . . . . . . . . . .	Number	 001Ch
 bInfo  . . . . . . . . . . . . .	Number	 011Ch	 
 base_ptr . . . . . . . . . . . .	Number	 0074h	 
 ccoow  . . . . . . . . . . . . .	DWord	 0004	  _DATA	
+checkPtr . . . . . . . . . . . .	Number	 96ACh	 
 colorType  . . . . . . . . . . .	Number	 0B74h	 
 cullStripHdr . . . . . . . . . .	Number	 0DDCh	 
 cull_mode  . . . . . . . . . . .	Number	 01E0h	 

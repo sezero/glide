@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler Version 6.14.8444		    06/20/00 17:18:57
+Microsoft (R) Macro Assembler Version 6.14.8444		    06/30/00 13:01:25
 xdraw2.asm						     Page 1 - 1
 
 
@@ -23,6 +23,10 @@ xdraw2.asm						     Page 1 - 1
 				;; $Header$
 				;; $Revision$
 				;; $Log$
+				;; Revision 1.3  2000/11/15 23:32:54  joseph
+				;; Syncing up with 3dfx internal source repository.  These changes contain a
+				;; number of bug fixes.
+				;;
 				;; Revision 1.1  2000/06/15 00:27:43  joseph
 				;; Initial checkin into SourceForge.
 				;;
@@ -111,6 +115,7 @@ xdraw2.asm						     Page 1 - 1
  = 0078			      C reg_ptr			= 00000078h
  = 0080			      C lfb_ptr			= 00000080h
  = 01E0			      C cull_mode		= 000001e0h
+ = 96AC			      C checkPtr			= 000096ach
  = 0124			      C tsuDataList		= 00000124h
  = 0DD8			      C triPacketHdr	= 00000dd8h
  = 0DDC			      C cullStripHdr	= 00000ddch
@@ -283,6 +288,10 @@ xdraw2.asm						     Page 1 - 1
 			      C ;; $Header$
 			      C ;; $Revision$
 			      C ;; $Log$
+			      C ;; Revision 1.3  2000/11/15 23:32:54  joseph
+			      C ;; Syncing up with 3dfx internal source repository.  These changes contain a
+			      C ;; number of bug fixes.
+			      C ;;
 			      C ;; Revision 1.1  2000/06/15 00:27:43  joseph
 			      C ;; Initial checkin into SourceForge.
 			      C ;;
@@ -952,8 +961,8 @@ xdraw2.asm						     Page 1 - 1
 			      C     ;;      either specialized or we thunk through to
 			      C     ;;      grDrawTriangles for the clipping etc.
 			      C IFDEF GLIDE_DEBUG    
-			      C     xor     eax, eax
-			      C     mov     [eax], eax
+ 00000000  33 C0	      C     xor     eax, eax
+ 00000002  89 00	      C     mov     [eax], eax
 			      C ENDIF    
 			      C ELSE        
 			      C     ;; Prologue stuff
@@ -1221,7 +1230,7 @@ xdraw2.asm						     Page 1 - 1
 			     1	        EXITM <__trisetup_3DNow_clip_nocull_invalid@12>
 			     1	    ELSE
 			     1	        EXITM <__trisetup_Default_clip_nocull_invalid@12>
- 00000000			            ALIGN  32
+ 00000004			            ALIGN  32
 				            PUBLIC   PROC_TYPE(clip_cull_invalid)
 				PROC_TYPE(clip_cull_invalid)   PROC    NEAR
 			     1	    IFDEF GL_AMD3D
@@ -1233,7 +1242,7 @@ xdraw2.asm						     Page 1 - 1
 			     1	        EXITM <__trisetup_3DNow_clip_cull_invalid@12>
 			     1	    ELSE
 			     1	        EXITM <__trisetup_Default_clip_cull_invalid@12>
- 00000000			GLIDE_VALIDATE_STATE textequ <1>
+ 00000020			GLIDE_VALIDATE_STATE textequ <1>
 				GLIDE_CLIP_COORDS    textequ <1>
  = 1				GLIDE_CULLING        textequ <1>
  = 1				GLIDE_PACK_RGB       textequ <0>
@@ -1264,6 +1273,10 @@ xdraw2.asm						     Page 1 - 1
 			      C ;; $Header$
 			      C ;; $Revision$
 			      C ;; $Log$
+			      C ;; Revision 1.3  2000/11/15 23:32:54  joseph
+			      C ;; Syncing up with 3dfx internal source repository.  These changes contain a
+			      C ;; number of bug fixes.
+			      C ;;
 			      C ;; Revision 1.1  2000/06/15 00:27:43  joseph
 			      C ;; Initial checkin into SourceForge.
 			      C ;;
@@ -1933,8 +1946,8 @@ xdraw2.asm						     Page 1 - 1
 			      C     ;;      either specialized or we thunk through to
 			      C     ;;      grDrawTriangles for the clipping etc.
 			      C IFDEF GLIDE_DEBUG    
-			      C     xor     eax, eax
-			      C     mov     [eax], eax
+ 00000020  33 C0	      C     xor     eax, eax
+ 00000022  89 00	      C     mov     [eax], eax
 			      C ENDIF    
 			      C ELSE        
 			      C     ;; Prologue stuff
@@ -2202,7 +2215,7 @@ xdraw2.asm						     Page 1 - 1
 			     1	        EXITM <__trisetup_3DNow_clip_cull_invalid@12>
 			     1	    ELSE
 			     1	        EXITM <__trisetup_Default_clip_cull_invalid@12>
- 00000000			            ALIGN    32
+ 00000024			            ALIGN    32
 				            PUBLIC   PROC_TYPE(clip_cull_valid)
 				PROC_TYPE(clip_cull_valid)  PROC    NEAR
 			     1	    IFDEF GL_AMD3D
@@ -2214,7 +2227,7 @@ xdraw2.asm						     Page 1 - 1
 			     1	        EXITM <__trisetup_3DNow_clip_cull_valid@12>
 			     1	    ELSE
 			     1	        EXITM <__trisetup_Default_clip_cull_valid@12>
- 00000000			GLIDE_VALIDATE_STATE textequ <0>
+ 00000040			GLIDE_VALIDATE_STATE textequ <0>
 				GLIDE_CLIP_COORDS    textequ <1>   
  = 0				GLIDE_CULLING        textequ <1>
  = 1				GLIDE_PACK_RGB       textequ <0>
@@ -2245,6 +2258,10 @@ xdraw2.asm						     Page 1 - 1
 			      C ;; $Header$
 			      C ;; $Revision$
 			      C ;; $Log$
+			      C ;; Revision 1.3  2000/11/15 23:32:54  joseph
+			      C ;; Syncing up with 3dfx internal source repository.  These changes contain a
+			      C ;; number of bug fixes.
+			      C ;;
 			      C ;; Revision 1.1  2000/06/15 00:27:43  joseph
 			      C ;; Initial checkin into SourceForge.
 			      C ;;
@@ -2914,8 +2931,8 @@ xdraw2.asm						     Page 1 - 1
 			      C     ;;      either specialized or we thunk through to
 			      C     ;;      grDrawTriangles for the clipping etc.
 			      C IFDEF GLIDE_DEBUG    
-			      C     xor     eax, eax
-			      C     mov     [eax], eax
+ 00000040  33 C0	      C     xor     eax, eax
+ 00000042  89 00	      C     mov     [eax], eax
 			      C ENDIF    
 			      C ELSE        
 			      C     ;; Prologue stuff
@@ -3183,7 +3200,7 @@ xdraw2.asm						     Page 1 - 1
 			     1	        EXITM <__trisetup_3DNow_clip_cull_valid@12>
 			     1	    ELSE
 			     1	        EXITM <__trisetup_Default_clip_cull_valid@12>
- 00000000			            ALIGN    32
+ 00000044			            ALIGN    32
 				            PUBLIC   PROC_TYPE(clip_nocull_valid)
 				PROC_TYPE(clip_nocull_valid)  PROC    NEAR
 			     1	    IFDEF GL_AMD3D
@@ -3195,7 +3212,7 @@ xdraw2.asm						     Page 1 - 1
 			     1	        EXITM <__trisetup_3DNow_clip_nocull_valid@12>
 			     1	    ELSE
 			     1	        EXITM <__trisetup_Default_clip_nocull_valid@12>
- 00000000			GLIDE_VALIDATE_STATE textequ <0>
+ 00000060			GLIDE_VALIDATE_STATE textequ <0>
 				GLIDE_CLIP_COORDS    textequ <1>   
  = 0				GLIDE_CULLING        textequ <0>
  = 1				GLIDE_PACK_RGB       textequ <0>
@@ -3226,6 +3243,10 @@ xdraw2.asm						     Page 1 - 1
 			      C ;; $Header$
 			      C ;; $Revision$
 			      C ;; $Log$
+			      C ;; Revision 1.3  2000/11/15 23:32:54  joseph
+			      C ;; Syncing up with 3dfx internal source repository.  These changes contain a
+			      C ;; number of bug fixes.
+			      C ;;
 			      C ;; Revision 1.1  2000/06/15 00:27:43  joseph
 			      C ;; Initial checkin into SourceForge.
 			      C ;;
@@ -3895,8 +3916,8 @@ xdraw2.asm						     Page 1 - 1
 			      C     ;;      either specialized or we thunk through to
 			      C     ;;      grDrawTriangles for the clipping etc.
 			      C IFDEF GLIDE_DEBUG    
-			      C     xor     eax, eax
-			      C     mov     [eax], eax
+ 00000060  33 C0	      C     xor     eax, eax
+ 00000062  89 00	      C     mov     [eax], eax
 			      C ENDIF    
 			      C ELSE        
 			      C     ;; Prologue stuff
@@ -4164,7 +4185,7 @@ xdraw2.asm						     Page 1 - 1
 			     1	        EXITM <__trisetup_3DNow_clip_nocull_valid@12>
 			     1	    ELSE
 			     1	        EXITM <__trisetup_Default_clip_nocull_valid@12>
- 00000000			            ALIGN    32
+ 00000064			            ALIGN    32
 				            PUBLIC   PROC_TYPE(win_nocull_invalid)
 				PROC_TYPE(win_nocull_invalid) PROC    NEAR
 			     1	    IFDEF GL_AMD3D
@@ -4176,7 +4197,7 @@ xdraw2.asm						     Page 1 - 1
 			     1	        EXITM <__trisetup_3DNow_win_nocull_invalid@12>
 			     1	    ELSE
 			     1	        EXITM <__trisetup_Default_win_nocull_invalid@12>
- 00000000			GLIDE_VALIDATE_STATE textequ <1>
+ 00000080			GLIDE_VALIDATE_STATE textequ <1>
 				GLIDE_CLIP_COORDS    textequ <0>
  = 1				GLIDE_CULLING        textequ <0>
  = 0				GLIDE_PACK_RGB       textequ <0>
@@ -4207,6 +4228,10 @@ xdraw2.asm						     Page 1 - 1
 			      C ;; $Header$
 			      C ;; $Revision$
 			      C ;; $Log$
+			      C ;; Revision 1.3  2000/11/15 23:32:54  joseph
+			      C ;; Syncing up with 3dfx internal source repository.  These changes contain a
+			      C ;; number of bug fixes.
+			      C ;;
 			      C ;; Revision 1.1  2000/06/15 00:27:43  joseph
 			      C ;; Initial checkin into SourceForge.
 			      C ;;
@@ -4881,11 +4906,11 @@ xdraw2.asm						     Page 1 - 1
 			      C ENDIF    
 			      C ELSE        
 			      C     ;; Prologue stuff
- 00000000  56		      C     push    esi
- 00000001  57		      C     push    edi
+ 00000080  56		      C     push    esi
+ 00000081  57		      C     push    edi
 			      C     
- 00000002  53		      C     push    ebx
- 00000003  55		      C     push    ebp
+ 00000082  53		      C     push    ebx
+ 00000083  55		      C     push    ebp
 			      C 
 			      C ;;   call    getThreadValueSLOW
 			      C ;;   mov     gc, eax    
@@ -4906,29 +4931,29 @@ xdraw2.asm						     Page 1 - 1
 			      C    add eax, DWORD PTR __GlideRoot + tlsOffset
 			      C    mov gc, [eax]
 			      C ELSE
- 00000004  8B F2	      C    mov gc, edx
+ 00000084  8B F2	      C    mov gc, edx
 			      C ENDIF
 			      C IFDEF GLIDE_ALT_TAB
- 00000006  85 F6	      C    test gc, gc
- 00000008  0F 84 000000DA     C    je   __triDone
- 0000000E  8B 96 000096C4     C    mov edx, [gc + windowed]
- 00000014  F7 C2 00000001     C    test edx, 1
- 0000001A  75 14	      C    jnz  pastContextTest         ; 
- 0000001C  8B 96 000096BC     C    mov  edx, DWORD PTR [gc+lostContext]
- 00000022  8B 1A	      C    mov ebx, [edx]
- 00000024  F7 C3 00000001     C    test ebx, 1
- 0000002A  0F 85 000000B8     C    jnz  __triDone
- 00000030		      C pastContextTest:    
+ 00000086  85 F6	      C    test gc, gc
+ 00000088  0F 84 000000DA     C    je   __triDone
+ 0000008E  8B 96 000096C4     C    mov edx, [gc + windowed]
+ 00000094  F7 C2 00000001     C    test edx, 1
+ 0000009A  75 14	      C    jnz  pastContextTest         ; 
+ 0000009C  8B 96 000096BC     C    mov  edx, DWORD PTR [gc+lostContext]
+ 000000A2  8B 1A	      C    mov ebx, [edx]
+ 000000A4  F7 C3 00000001     C    test ebx, 1
+ 000000AA  0F 85 000000B8     C    jnz  __triDone
+ 000000B0		      C pastContextTest:    
 			      C 
 			      C ENDIF
 			      C             align 4
 			      C IF GLIDE_VALIDATE_STATE
 			      C ;;;     GR_FLUSH_STATE()
- 00000030  8B 96 00000B78     C     mov     edx, DWORD PTR [gc+invalid]
- 00000036  85 D2	      C     test    edx, edx
- 00000038  74 05	      C     je      SHORT no_validatioin
- 0000003A  E8 00000000 E      C     call    __grValidateState
- 0000003F		      C no_validatioin:
+ 000000B0  8B 96 00000B78     C     mov     edx, DWORD PTR [gc+invalid]
+ 000000B6  85 D2	      C     test    edx, edx
+ 000000B8  74 05	      C     je      SHORT no_validatioin
+ 000000BA  E8 00000000 E      C     call    __grValidateState
+ 000000BF		      C no_validatioin:
 			      C ENDIF
 			      C             align 4
 			      C IF GLIDE_CULLING
@@ -5000,19 +5025,19 @@ xdraw2.asm						     Page 1 - 1
 			      C             align 4
 			      C     ;; Check to make sure that we have enough room for
 			      C     ;; the complete triangle packet.
- 00000040  8B 46 4C	      C     mov     eax, [gc + curTriSize]
- 00000043  8B 9E 00000DEC     C     mov     ebx, [gc + fifoRoom]
+ 000000C0  8B 46 4C	      C     mov     eax, [gc + curTriSize]
+ 000000C3  8B 9E 00000DEC     C     mov     ebx, [gc + fifoRoom]
 			      C 
- 00000049  83 C0 04	      C     add     eax, 4
- 0000004C  3B D8	      C     cmp     ebx, eax
+ 000000C9  83 C0 04	      C     add     eax, 4
+ 000000CC  3B D8	      C     cmp     ebx, eax
 			      C 
- 0000004E  7D 10	      C     jge     __triBegin
+ 000000CE  7D 10	      C     jge     __triBegin
 			      C     
- 00000050  68 00000338	      C     push    @Line
- 00000055  6A 00	      C     push    0h
+ 000000D0  68 00000338	      C     push    @Line
+ 000000D5  6A 00	      C     push    0h
 			      C     
- 00000057  50		      C     push    eax
- 00000058  E8 00000000 E      C     call    __grCommandTransportMakeRoom@12
+ 000000D7  50		      C     push    eax
+ 000000D8  E8 00000000 E      C     call    __grCommandTransportMakeRoom@12
 			      C 
 			      C     ;; Send triangle parameters
 			      C     
@@ -5051,12 +5076,12 @@ ENDM ; GR_FIFO_WRITE
 			      C     nop
 			      C 
 			      C     GR_FIFO_WRITE fifo, 0, eax          ; Write packet header to fifo    
- 00000060		      C     add     fifo, 4                     ; Advance fifo for hdr & x/y coordinate
- 00000060  8B AE 00000DE4     C 
- 00000066  B9 00000004	      C             align 32   
+ 000000E0		      C     add     fifo, 4                     ; Advance fifo for hdr & x/y coordinate
+ 000000E0  8B AE 00000DE4     C 
+ 000000E6  B9 00000004	      C             align 32   
 			      C __vertexStart:
- 0000006B  8B 86 00000DD8     C     mov     vertex, [esp + STKOFF + vOffset]    ; Current vertex
- 00000071  90		      C     add     fifo, 8    
+ 000000EB  8B 86 00000DD8     C     mov     vertex, [esp + STKOFF + vOffset]    ; Current vertex
+ 000000F1  90		      C     add     fifo, 8    
 			      C 
 			      C     nop                                         ; Avoid p5 agi w/ load of vertex ptr
 			     1C IFDEF HAL_CSIM
@@ -5072,20 +5097,20 @@ ENDM ; GR_FIFO_WRITE
 			     1C     popfd
 			     1C     popad
 			     1C ELSE
- 00000072  89 45 00	     1C     mov    [fifo + 0], eax
+ 000000F2  89 45 00	     1C     mov    [fifo + 0], eax
 			     1C ENDIF
- 00000075  83 C5 04	      C     nop
+ 000000F5  83 C5 04	      C     nop
 			      C     
 			      C     mov     eax, DWORD PTR [vertex]             ; X
- 00000080		      C     lea     dlp, [gc + tsuDataList]             ; Reset the dataList
- 00000080  8B 54 0C 10	      C 
- 00000084  83 C5 08	      C     GR_FIFO_WRITE fifo, -8, eax                 ; PCI write X
+ 00000100		      C     lea     dlp, [gc + tsuDataList]             ; Reset the dataList
+ 00000100  8B 54 0C 10	      C 
+ 00000104  83 C5 08	      C     GR_FIFO_WRITE fifo, -8, eax                 ; PCI write X
 			      C     mov     eax, DWORD PTR [vertex + 4]         ; Y 
- 00000087  90		      C 
- 00000088  90		      C     xor     packCol, packCol                    ; Clear packed color
+ 00000107  90		      C 
+ 00000108  90		      C     xor     packCol, packCol                    ; Clear packed color
 			      C     GR_FIFO_WRITE fifo, -4, eax                 ; PCI write Y
- 00000089  8B 02	      C 
- 0000008B  8D 9E 00000124     C __doParams:
+ 00000109  8B 02	      C 
+ 0000010B  8D 9E 00000124     C __doParams:
 			      C     mov     eax, DWORD PTR [dlp]                ; Get first offset from the data list
 			      C     add     dlp, 4                              ; dlp++
 			     1C IFDEF HAL_CSIM
@@ -5101,11 +5126,11 @@ ENDM ; GR_FIFO_WRITE
 			     1C     popfd
 			     1C     popad
 			     1C ELSE
- 00000091  89 45 F8	     1C     mov    [fifo + -8], eax
+ 00000111  89 45 F8	     1C     mov    [fifo + -8], eax
 			     1C ENDIF
- 00000094  8B 42 04	      C     
+ 00000114  8B 42 04	      C     
 			      C     cmp     eax, 0                              ; Are we done?
- 00000097  33 FF	      C     je      __nextVertex
+ 00000117  33 FF	      C     je      __nextVertex
 			      C 
 			     1C IFDEF HAL_CSIM
 			     1C     pushad
@@ -5120,29 +5145,29 @@ ENDM ; GR_FIFO_WRITE
 			     1C     popfd
 			     1C     popad
 			     1C ELSE
- 00000099  89 45 FC	     1C     mov    [fifo + -4], eax
+ 00000119  89 45 FC	     1C     mov    [fifo + -4], eax
 			     1C ENDIF
 			      C     ;; Not using align directive here because it sometimes
- 0000009C		      C     ;; introduces an agi for the eax use below.
- 0000009C  8B 03	      C     nop
- 0000009E  83 C3 04	      C     nop
+ 0000011C		      C     ;; introduces an agi for the eax use below.
+ 0000011C  8B 03	      C     nop
+ 0000011E  83 C3 04	      C     nop
 			      C         
- 000000A1  83 F8 00	      C __paramLoop:
- 000000A4  74 16	      C     mov     tempVal, DWORD PTR [eax + vertex]   ; Get the parameter from teh vertex
+ 00000121  83 F8 00	      C __paramLoop:
+ 00000124  74 16	      C     mov     tempVal, DWORD PTR [eax + vertex]   ; Get the parameter from teh vertex
 			      C     add     fifo, 4                             ; fifoPtr += sizeof(FxU32)
 			      C 
 			      C     mov     eax, DWORD PTR [dlp]                ; offset = *(dlp + 1)
- 000000A6  90		      C     add     dlp, 4                              ; dlp++
- 000000A7  90		      C     
+ 00000126  90		      C     add     dlp, 4                              ; dlp++
+ 00000127  90		      C     
 			      C     cmp     eax, 0                              ; Are we done?
- 000000A8		      C     GR_FIFO_WRITE fifo, -4, tempVal             ; *fifoPtr = data
- 000000A8  8B 3C 02	      C     
- 000000AB  83 C5 04	      C     jne     SHORT __paramLoop
+ 00000128		      C     GR_FIFO_WRITE fifo, -4, tempVal             ; *fifoPtr = data
+ 00000128  8B 3C 02	      C     
+ 0000012B  83 C5 04	      C     jne     SHORT __paramLoop
 			      C 
- 000000AE  8B 03	      C                 align 4        
- 000000B0  83 C3 04	      C __nextVertex:   
+ 0000012E  8B 03	      C                 align 4        
+ 00000130  83 C3 04	      C __nextVertex:   
 			      C     ;; On to the next vertex
- 000000B3  83 F8 00	      C     add     vOffset, 4
+ 00000133  83 F8 00	      C     add     vOffset, 4
 			      C 
 			     1C IFDEF HAL_CSIM
 			     1C     pushad
@@ -5157,48 +5182,48 @@ ENDM ; GR_FIFO_WRITE
 			     1C     popfd
 			     1C     popad
 			     1C ELSE
- 000000B6  89 7D FC	     1C     mov    [fifo + -4], tempVal
+ 00000136  89 7D FC	     1C     mov    [fifo + -4], tempVal
 			     1C ENDIF
 			      C     cmp     vOffset, 16                         ; Offset of one past last vertex?
- 000000B9  75 ED	      C     jne     __vertexStart
+ 00000139  75 ED	      C     jne     __vertexStart
 			      C 
 			      C     ;; Update gc->fifoPtr and gc->fifoRoom
- 000000BC		      C     mov     eax, fifo
+ 0000013C		      C     mov     eax, fifo
 			      C     mov     ebx, [gc + fifoPtr]
- 000000BC  83 C1 04	      C     
+ 0000013C  83 C1 04	      C     
 			      C     mov     [gc + fifoPtr], fifo
- 000000BF  83 F9 10	      C     sub     eax, ebx
- 000000C2  75 BC	      C 
+ 0000013F  83 F9 10	      C     sub     eax, ebx
+ 00000142  75 BC	      C 
 			      C     mov     ebx, [gc + trisDrawn]               ; _GlideRoot.stats.trisDrawn++;    
 			      C     sub     [gc + fifoRoom], eax
- 000000C4  8B C5	      C 
- 000000C6  8B 9E 00000DE4     C     add     ebx, 1
+ 00000144  8B C5	      C 
+ 00000146  8B 9E 00000DE4     C     add     ebx, 1
 			      C     mov     [gc + trisDrawn], ebx
- 000000CC  89 AE 00000DE4     C 
- 000000D2  2B C3	      C     ;; return 1 (triangle drawn)    
+ 0000014C  89 AE 00000DE4     C 
+ 00000152  2B C3	      C     ;; return 1 (triangle drawn)    
 			      C     mov     eax, 1h
- 000000D4  8B 5E 10	      C 
- 000000D7  29 86 00000DEC     C __triDone:    
+ 00000154  8B 5E 10	      C 
+ 00000157  29 86 00000DEC     C __triDone:    
 			      C     ;; Restore trashed registers
- 000000DD  83 C3 01	      C     mov     ecx, [gc + trisProcessed]
- 000000E0  89 5E 10	      C     pop     ebp
+ 0000015D  83 C3 01	      C     mov     ecx, [gc + trisProcessed]
+ 00000160  89 5E 10	      C     pop     ebp
 			      C         
 			      C     add     ecx, 1    ; _GlideRoot.stats.trisProcessed++;    
- 000000E3  B8 00000001	      C     pop     ebx
+ 00000163  B8 00000001	      C     pop     ebx
 			      C     
- 000000E8		      C     pop     edi
+ 00000168		      C     pop     edi
 			      C     mov     [gc + trisProcessed], ecx
- 000000E8  8B 4E 0C	      C         
- 000000EB  5D		      C     pop     esi
+ 00000168  8B 4E 0C	      C         
+ 0000016B  5D		      C     pop     esi
 			      C     ret     12
- 000000EC  83 C1 01	      C ENDIF ; !GLIDE_CLIP_COOR
- 000000EF  5B		      C ENDIF ; !GL_AMD3D
+ 0000016C  83 C1 01	      C ENDIF ; !GLIDE_CLIP_COOR
+ 0000016F  5B		      C ENDIF ; !GL_AMD3D
 			      C 
- 000000F0  5F		      C 
- 000000F1  89 4E 0C	      C 
+ 00000170  5F		      C 
+ 00000171  89 4E 0C	      C 
 			      C 
- 000000F4  5E		      C 
- 000000F5  C2 000C	      C 
+ 00000174  5E		      C 
+ 00000175  C2 000C	      C 
 			      C 
 			      C 
 			      C 
@@ -5213,7 +5238,7 @@ ENDM ; GR_FIFO_WRITE
 			     1	        EXITM <__trisetup_3DNow_win_nocull_invalid@12>
 			     1	    ELSE
 			     1	        EXITM <__trisetup_Default_win_nocull_invalid@12>
- 000000F8			            ALIGN    32
+ 00000178			            ALIGN    32
 				            PUBLIC   PROC_TYPE(win_cull_invalid)
 				
 			     1	    IFDEF GL_AMD3D
@@ -5226,7 +5251,7 @@ ENDM ; GR_FIFO_WRITE
 			     1	        EXITM <__trisetup_3DNow_win_cull_invalid@12>
 			     1	    ELSE
 			     1	        EXITM <__trisetup_Default_win_cull_invalid@12>
- 00000100			GLIDE_VALIDATE_STATE textequ <1>
+ 00000180			GLIDE_VALIDATE_STATE textequ <1>
 				GLIDE_CLIP_COORDS    textequ <0>
  = 1				GLIDE_CULLING        textequ <1>
  = 0				GLIDE_PACK_RGB       textequ <0>
@@ -5257,6 +5282,10 @@ ENDM ; GR_FIFO_WRITE
 			      C ;; $Header$
 			      C ;; $Revision$
 			      C ;; $Log$
+			      C ;; Revision 1.3  2000/11/15 23:32:54  joseph
+			      C ;; Syncing up with 3dfx internal source repository.  These changes contain a
+			      C ;; number of bug fixes.
+			      C ;;
 			      C ;; Revision 1.1  2000/06/15 00:27:43  joseph
 			      C ;; Initial checkin into SourceForge.
 			      C ;;
@@ -5931,11 +5960,11 @@ ENDM ; GR_FIFO_WRITE
 			      C ENDIF    
 			      C ELSE        
 			      C     ;; Prologue stuff
- 00000100  56		      C     push    esi
- 00000101  57		      C     push    edi
+ 00000180  56		      C     push    esi
+ 00000181  57		      C     push    edi
 			      C     
- 00000102  53		      C     push    ebx
- 00000103  55		      C     push    ebp
+ 00000182  53		      C     push    ebx
+ 00000183  55		      C     push    ebp
 			      C 
 			      C ;;   call    getThreadValueSLOW
 			      C ;;   mov     gc, eax    
@@ -5956,29 +5985,29 @@ ENDM ; GR_FIFO_WRITE
 			      C    add eax, DWORD PTR __GlideRoot + tlsOffset
 			      C    mov gc, [eax]
 			      C ELSE
- 00000104  8B F2	      C    mov gc, edx
+ 00000184  8B F2	      C    mov gc, edx
 			      C ENDIF
 			      C IFDEF GLIDE_ALT_TAB
- 00000106  85 F6	      C    test gc, gc
- 00000108  0F 84 0000015A     C    je   __triDone
- 0000010E  8B 96 000096C4     C    mov edx, [gc + windowed]
- 00000114  F7 C2 00000001     C    test edx, 1
- 0000011A  75 14	      C    jnz  pastContextTest         ; 
- 0000011C  8B 96 000096BC     C    mov  edx, DWORD PTR [gc+lostContext]
- 00000122  8B 1A	      C    mov ebx, [edx]
- 00000124  F7 C3 00000001     C    test ebx, 1
- 0000012A  0F 85 00000138     C    jnz  __triDone
- 00000130		      C pastContextTest:    
+ 00000186  85 F6	      C    test gc, gc
+ 00000188  0F 84 0000015A     C    je   __triDone
+ 0000018E  8B 96 000096C4     C    mov edx, [gc + windowed]
+ 00000194  F7 C2 00000001     C    test edx, 1
+ 0000019A  75 14	      C    jnz  pastContextTest         ; 
+ 0000019C  8B 96 000096BC     C    mov  edx, DWORD PTR [gc+lostContext]
+ 000001A2  8B 1A	      C    mov ebx, [edx]
+ 000001A4  F7 C3 00000001     C    test ebx, 1
+ 000001AA  0F 85 00000138     C    jnz  __triDone
+ 000001B0		      C pastContextTest:    
 			      C 
 			      C ENDIF
 			      C             align 4
 			      C IF GLIDE_VALIDATE_STATE
 			      C ;;;     GR_FLUSH_STATE()
- 00000130  8B 96 00000B78     C     mov     edx, DWORD PTR [gc+invalid]
- 00000136  85 D2	      C     test    edx, edx
- 00000138  74 05	      C     je      SHORT no_validatioin
- 0000013A  E8 00000000 E      C     call    __grValidateState
- 0000013F		      C no_validatioin:
+ 000001B0  8B 96 00000B78     C     mov     edx, DWORD PTR [gc+invalid]
+ 000001B6  85 D2	      C     test    edx, edx
+ 000001B8  74 05	      C     je      SHORT no_validatioin
+ 000001BA  E8 00000000 E      C     call    __grValidateState
+ 000001BF		      C no_validatioin:
 			      C ENDIF
 			      C             align 4
 			      C IF GLIDE_CULLING
@@ -5996,73 +6025,73 @@ ENDM ; GR_FIFO_WRITE
 			      C 
 			      C     ;; Pre-load the current culling mode before all of the
 			      C     ;; floating point area stuff.    
- 00000140  8B 44 24 14	      C     mov     fa, [esp + _va$]
- 00000144  8B 5C 24 18	      C     mov     fb, [esp + _vb$]
+ 000001C0  8B 44 24 14	      C     mov     fa, [esp + _va$]
+ 000001C4  8B 5C 24 18	      C     mov     fb, [esp + _vb$]
 			      C         
- 00000148  8B 96 000001E0     C     mov     cull, [gc + cull_mode]    
- 0000014E  8B 4C 24 1C	      C     mov     fc, [esp + _vc$]
+ 000001C8  8B 96 000001E0     C     mov     cull, [gc + cull_mode]    
+ 000001CE  8B 4C 24 1C	      C     mov     fc, [esp + _vc$]
 			      C 
- 00000152  85 D2	      C     test    cull, cull    
- 00000154  74 53	      C     jz      nocull
+ 000001D2  85 D2	      C     test    cull, cull    
+ 000001D4  74 53	      C     jz      nocull
 			      C 
- 00000156  C1 E2 1F	      C     shl     cull, 31                    ; culltest << 31    
+ 000001D6  C1 E2 1F	      C     shl     cull, 31                    ; culltest << 31    
 			      C         
- 00000159		      C Area_Computation:    
+ 000001D9		      C Area_Computation:    
 			      C ; 47-3
 			      C ; jmp ret_pop0f
- 00000159  D9 00	      C     flds    [fa + X]            ;  xa
- 0000015B  D8 23	      C     fsubs   [fb + X]            ;  dxAB
- 0000015D  D9 03	      C     flds    [fb + X]            ;  |    xb
- 0000015F  D8 21	      C     fsubs   [fc + X]            ;  |    dxBC
- 00000161  D9 43 04	      C     flds    [fb + Y]            ;  |    |    yb
- 00000164  D8 61 04	      C     fsubs   [fc + Y]            ;  |    |    dyBC
- 00000167  D9 40 04	      C     flds    [fa + Y]            ;  |    |    |    ya
- 0000016A  D8 63 04	      C     fsubs   [fb + Y]            ;  |    |    |    dyAB
- 0000016D  D9 C3	      C     fld     st(3)               ;  |    |    |    |    dxAB
- 0000016F  D8 CA	      C     fmul    st, st(2)           ;  |    |    |    |    t0         t0=dxAB*dyBC
- 00000171  D9 C3	      C     fld     st(3)               ;  |    |    |    |    |    dxBC
- 00000173  D8 CA	      C     fmul    st, st(2)           ;  |    |    |    |    |    t1    t1=dxBC*dyAB
- 00000175  DE E9	      C     fsubp   st(1),st            ;  |    |    |    |    area
- 00000177  D9 15 00000004 R   C     fst     zArea               ;  |    |    |    |    area
+ 000001D9  D9 00	      C     flds    [fa + X]            ;  xa
+ 000001DB  D8 23	      C     fsubs   [fb + X]            ;  dxAB
+ 000001DD  D9 03	      C     flds    [fb + X]            ;  |    xb
+ 000001DF  D8 21	      C     fsubs   [fc + X]            ;  |    dxBC
+ 000001E1  D9 43 04	      C     flds    [fb + Y]            ;  |    |    yb
+ 000001E4  D8 61 04	      C     fsubs   [fc + Y]            ;  |    |    dyBC
+ 000001E7  D9 40 04	      C     flds    [fa + Y]            ;  |    |    |    ya
+ 000001EA  D8 63 04	      C     fsubs   [fb + Y]            ;  |    |    |    dyAB
+ 000001ED  D9 C3	      C     fld     st(3)               ;  |    |    |    |    dxAB
+ 000001EF  D8 CA	      C     fmul    st, st(2)           ;  |    |    |    |    t0         t0=dxAB*dyBC
+ 000001F1  D9 C3	      C     fld     st(3)               ;  |    |    |    |    |    dxBC
+ 000001F3  D8 CA	      C     fmul    st, st(2)           ;  |    |    |    |    |    t1    t1=dxBC*dyAB
+ 000001F5  DE E9	      C     fsubp   st(1),st            ;  |    |    |    |    area
+ 000001F7  D9 15 00000004 R   C     fst     zArea               ;  |    |    |    |    area
 			      C 
 			      C     ;; Pop temp things from the sw culling off the fp stack
- 0000017D  DD D8	      C     fstp    st(0)   ; 4
- 0000017F  DD D8	      C     fstp    st(0)   ; 3
- 00000181  DD D8	      C     fstp    st(0)   ; 2
- 00000183  DD D8	      C     fstp    st(0)   ; 1
- 00000185  DD D8	      C     fstp    st(0)   ; 0    
+ 000001FD  DD D8	      C     fstp    st(0)   ; 4
+ 000001FF  DD D8	      C     fstp    st(0)   ; 3
+ 00000201  DD D8	      C     fstp    st(0)   ; 2
+ 00000203  DD D8	      C     fstp    st(0)   ; 1
+ 00000205  DD D8	      C     fstp    st(0)   ; 0    
 			      C 
- 00000187  8B 2D 00000004 R   C     mov     intArea, zArea        ; j = *(long *)&area
- 0000018D  33 C0	      C     xor     eax, eax              ; Clear the return value (0 == culled)
+ 00000207  8B 2D 00000004 R   C     mov     intArea, zArea        ; j = *(long *)&area
+ 0000020D  33 C0	      C     xor     eax, eax              ; Clear the return value (0 == culled)
 			      C 
 			      C     ; Zero Area Triangle Check
- 0000018F  81 E5 7FFFFFFF     C     and     intArea, 7fffffffh    ; if ((j & 0x7FFFFFFF) == 0)
- 00000195  0F 84 000000CD     C     jz      __triDone
+ 0000020F  81 E5 7FFFFFFF     C     and     intArea, 7fffffffh    ; if ((j & 0x7FFFFFFF) == 0)
+ 00000215  0F 84 000000CD     C     jz      __triDone
 			      C 
 			      C     ;; Triangle area check vs culling mode
- 0000019B  8B 2D 00000004 R   C     mov     intArea, zArea              ; reload area just in case we're culling
- 000001A1  33 EA	      C     xor     intArea, cull               ; if (j ^ (culltest << 31))
+ 0000021B  8B 2D 00000004 R   C     mov     intArea, zArea              ; reload area just in case we're culling
+ 00000221  33 EA	      C     xor     intArea, cull               ; if (j ^ (culltest << 31))
 			      C     
- 000001A3  0F 8D 000000BF     C     jge     __triDone
- 000001A9		      C nocull: 
+ 00000223  0F 8D 000000BF     C     jge     __triDone
+ 00000229		      C nocull: 
 			      C ENDIF ; GLIDE_CULLING    
 			      C 
 			      C             align 4
 			      C     ;; Check to make sure that we have enough room for
 			      C     ;; the complete triangle packet.
- 000001AC  8B 46 4C	      C     mov     eax, [gc + curTriSize]
- 000001AF  8B 9E 00000DEC     C     mov     ebx, [gc + fifoRoom]
+ 0000022C  8B 46 4C	      C     mov     eax, [gc + curTriSize]
+ 0000022F  8B 9E 00000DEC     C     mov     ebx, [gc + fifoRoom]
 			      C 
- 000001B5  83 C0 04	      C     add     eax, 4
- 000001B8  3B D8	      C     cmp     ebx, eax
+ 00000235  83 C0 04	      C     add     eax, 4
+ 00000238  3B D8	      C     cmp     ebx, eax
 			      C 
- 000001BA  7D 24	      C     jge     __triBegin
+ 0000023A  7D 24	      C     jge     __triBegin
 			      C     
- 000001BC  68 00000338	      C     push    @Line
- 000001C1  6A 00	      C     push    0h
+ 0000023C  68 00000338	      C     push    @Line
+ 00000241  6A 00	      C     push    0h
 			      C     
- 000001C3  50		      C     push    eax
- 000001C4  E8 00000000 E      C     call    __grCommandTransportMakeRoom@12
+ 00000243  50		      C     push    eax
+ 00000244  E8 00000000 E      C     call    __grCommandTransportMakeRoom@12
 			      C 
 			      C     ;; Send triangle parameters
 			      C     
@@ -6101,12 +6130,12 @@ ENDM ; GR_FIFO_WRITE
 			      C     nop
 			      C 
 			      C     GR_FIFO_WRITE fifo, 0, eax          ; Write packet header to fifo    
- 000001E0		      C     add     fifo, 4                     ; Advance fifo for hdr & x/y coordinate
- 000001E0  8B AE 00000DE4     C 
- 000001E6  B9 00000004	      C             align 32   
+ 00000260		      C     add     fifo, 4                     ; Advance fifo for hdr & x/y coordinate
+ 00000260  8B AE 00000DE4     C 
+ 00000266  B9 00000004	      C             align 32   
 			      C __vertexStart:
- 000001EB  8B 86 00000DD8     C     mov     vertex, [esp + STKOFF + vOffset]    ; Current vertex
- 000001F1  90		      C     add     fifo, 8    
+ 0000026B  8B 86 00000DD8     C     mov     vertex, [esp + STKOFF + vOffset]    ; Current vertex
+ 00000271  90		      C     add     fifo, 8    
 			      C 
 			      C     nop                                         ; Avoid p5 agi w/ load of vertex ptr
 			     1C IFDEF HAL_CSIM
@@ -6122,20 +6151,20 @@ ENDM ; GR_FIFO_WRITE
 			     1C     popfd
 			     1C     popad
 			     1C ELSE
- 000001F2  89 45 00	     1C     mov    [fifo + 0], eax
+ 00000272  89 45 00	     1C     mov    [fifo + 0], eax
 			     1C ENDIF
- 000001F5  83 C5 04	      C     nop
+ 00000275  83 C5 04	      C     nop
 			      C     
 			      C     mov     eax, DWORD PTR [vertex]             ; X
- 00000200		      C     lea     dlp, [gc + tsuDataList]             ; Reset the dataList
- 00000200  8B 54 0C 10	      C 
- 00000204  83 C5 08	      C     GR_FIFO_WRITE fifo, -8, eax                 ; PCI write X
+ 00000280		      C     lea     dlp, [gc + tsuDataList]             ; Reset the dataList
+ 00000280  8B 54 0C 10	      C 
+ 00000284  83 C5 08	      C     GR_FIFO_WRITE fifo, -8, eax                 ; PCI write X
 			      C     mov     eax, DWORD PTR [vertex + 4]         ; Y 
- 00000207  90		      C 
- 00000208  90		      C     xor     packCol, packCol                    ; Clear packed color
+ 00000287  90		      C 
+ 00000288  90		      C     xor     packCol, packCol                    ; Clear packed color
 			      C     GR_FIFO_WRITE fifo, -4, eax                 ; PCI write Y
- 00000209  8B 02	      C 
- 0000020B  8D 9E 00000124     C __doParams:
+ 00000289  8B 02	      C 
+ 0000028B  8D 9E 00000124     C __doParams:
 			      C     mov     eax, DWORD PTR [dlp]                ; Get first offset from the data list
 			      C     add     dlp, 4                              ; dlp++
 			     1C IFDEF HAL_CSIM
@@ -6151,11 +6180,11 @@ ENDM ; GR_FIFO_WRITE
 			     1C     popfd
 			     1C     popad
 			     1C ELSE
- 00000211  89 45 F8	     1C     mov    [fifo + -8], eax
+ 00000291  89 45 F8	     1C     mov    [fifo + -8], eax
 			     1C ENDIF
- 00000214  8B 42 04	      C     
+ 00000294  8B 42 04	      C     
 			      C     cmp     eax, 0                              ; Are we done?
- 00000217  33 FF	      C     je      __nextVertex
+ 00000297  33 FF	      C     je      __nextVertex
 			      C 
 			     1C IFDEF HAL_CSIM
 			     1C     pushad
@@ -6170,29 +6199,29 @@ ENDM ; GR_FIFO_WRITE
 			     1C     popfd
 			     1C     popad
 			     1C ELSE
- 00000219  89 45 FC	     1C     mov    [fifo + -4], eax
+ 00000299  89 45 FC	     1C     mov    [fifo + -4], eax
 			     1C ENDIF
 			      C     ;; Not using align directive here because it sometimes
- 0000021C		      C     ;; introduces an agi for the eax use below.
- 0000021C  8B 03	      C     nop
- 0000021E  83 C3 04	      C     nop
+ 0000029C		      C     ;; introduces an agi for the eax use below.
+ 0000029C  8B 03	      C     nop
+ 0000029E  83 C3 04	      C     nop
 			      C         
- 00000221  83 F8 00	      C __paramLoop:
- 00000224  74 16	      C     mov     tempVal, DWORD PTR [eax + vertex]   ; Get the parameter from teh vertex
+ 000002A1  83 F8 00	      C __paramLoop:
+ 000002A4  74 16	      C     mov     tempVal, DWORD PTR [eax + vertex]   ; Get the parameter from teh vertex
 			      C     add     fifo, 4                             ; fifoPtr += sizeof(FxU32)
 			      C 
 			      C     mov     eax, DWORD PTR [dlp]                ; offset = *(dlp + 1)
- 00000226  90		      C     add     dlp, 4                              ; dlp++
- 00000227  90		      C     
+ 000002A6  90		      C     add     dlp, 4                              ; dlp++
+ 000002A7  90		      C     
 			      C     cmp     eax, 0                              ; Are we done?
- 00000228		      C     GR_FIFO_WRITE fifo, -4, tempVal             ; *fifoPtr = data
- 00000228  8B 3C 02	      C     
- 0000022B  83 C5 04	      C     jne     SHORT __paramLoop
+ 000002A8		      C     GR_FIFO_WRITE fifo, -4, tempVal             ; *fifoPtr = data
+ 000002A8  8B 3C 02	      C     
+ 000002AB  83 C5 04	      C     jne     SHORT __paramLoop
 			      C 
- 0000022E  8B 03	      C                 align 4        
- 00000230  83 C3 04	      C __nextVertex:   
+ 000002AE  8B 03	      C                 align 4        
+ 000002B0  83 C3 04	      C __nextVertex:   
 			      C     ;; On to the next vertex
- 00000233  83 F8 00	      C     add     vOffset, 4
+ 000002B3  83 F8 00	      C     add     vOffset, 4
 			      C 
 			     1C IFDEF HAL_CSIM
 			     1C     pushad
@@ -6207,48 +6236,48 @@ ENDM ; GR_FIFO_WRITE
 			     1C     popfd
 			     1C     popad
 			     1C ELSE
- 00000236  89 7D FC	     1C     mov    [fifo + -4], tempVal
+ 000002B6  89 7D FC	     1C     mov    [fifo + -4], tempVal
 			     1C ENDIF
 			      C     cmp     vOffset, 16                         ; Offset of one past last vertex?
- 00000239  75 ED	      C     jne     __vertexStart
+ 000002B9  75 ED	      C     jne     __vertexStart
 			      C 
 			      C     ;; Update gc->fifoPtr and gc->fifoRoom
- 0000023C		      C     mov     eax, fifo
+ 000002BC		      C     mov     eax, fifo
 			      C     mov     ebx, [gc + fifoPtr]
- 0000023C  83 C1 04	      C     
+ 000002BC  83 C1 04	      C     
 			      C     mov     [gc + fifoPtr], fifo
- 0000023F  83 F9 10	      C     sub     eax, ebx
- 00000242  75 BC	      C 
+ 000002BF  83 F9 10	      C     sub     eax, ebx
+ 000002C2  75 BC	      C 
 			      C     mov     ebx, [gc + trisDrawn]               ; _GlideRoot.stats.trisDrawn++;    
 			      C     sub     [gc + fifoRoom], eax
- 00000244  8B C5	      C 
- 00000246  8B 9E 00000DE4     C     add     ebx, 1
+ 000002C4  8B C5	      C 
+ 000002C6  8B 9E 00000DE4     C     add     ebx, 1
 			      C     mov     [gc + trisDrawn], ebx
- 0000024C  89 AE 00000DE4     C 
- 00000252  2B C3	      C     ;; return 1 (triangle drawn)    
+ 000002CC  89 AE 00000DE4     C 
+ 000002D2  2B C3	      C     ;; return 1 (triangle drawn)    
 			      C     mov     eax, 1h
- 00000254  8B 5E 10	      C 
- 00000257  29 86 00000DEC     C __triDone:    
+ 000002D4  8B 5E 10	      C 
+ 000002D7  29 86 00000DEC     C __triDone:    
 			      C     ;; Restore trashed registers
- 0000025D  83 C3 01	      C     mov     ecx, [gc + trisProcessed]
- 00000260  89 5E 10	      C     pop     ebp
+ 000002DD  83 C3 01	      C     mov     ecx, [gc + trisProcessed]
+ 000002E0  89 5E 10	      C     pop     ebp
 			      C         
 			      C     add     ecx, 1    ; _GlideRoot.stats.trisProcessed++;    
- 00000263  B8 00000001	      C     pop     ebx
+ 000002E3  B8 00000001	      C     pop     ebx
 			      C     
- 00000268		      C     pop     edi
+ 000002E8		      C     pop     edi
 			      C     mov     [gc + trisProcessed], ecx
- 00000268  8B 4E 0C	      C         
- 0000026B  5D		      C     pop     esi
+ 000002E8  8B 4E 0C	      C         
+ 000002EB  5D		      C     pop     esi
 			      C     ret     12
- 0000026C  83 C1 01	      C ENDIF ; !GLIDE_CLIP_COOR
- 0000026F  5B		      C ENDIF ; !GL_AMD3D
+ 000002EC  83 C1 01	      C ENDIF ; !GLIDE_CLIP_COOR
+ 000002EF  5B		      C ENDIF ; !GL_AMD3D
 			      C 
- 00000270  5F		      C 
- 00000271  89 4E 0C	      C 
+ 000002F0  5F		      C 
+ 000002F1  89 4E 0C	      C 
 			      C 
- 00000274  5E		      C 
- 00000275  C2 000C	      C 
+ 000002F4  5E		      C 
+ 000002F5  C2 000C	      C 
 			      C 
 			      C 
 			      C 
@@ -6263,7 +6292,7 @@ ENDM ; GR_FIFO_WRITE
 			     1	        EXITM <__trisetup_3DNow_win_cull_invalid@12>
 			     1	    ELSE
 			     1	        EXITM <__trisetup_Default_win_cull_invalid@12>
- 00000278			            ALIGN    32
+ 000002F8			            ALIGN    32
 				            PUBLIC   PROC_TYPE(win_cull_valid)
 				PROC_TYPE(win_cull_valid)  PROC    NEAR
 			     1	    IFDEF GL_AMD3D
@@ -6275,7 +6304,7 @@ ENDM ; GR_FIFO_WRITE
 			     1	        EXITM <__trisetup_3DNow_win_cull_valid@12>
 			     1	    ELSE
 			     1	        EXITM <__trisetup_Default_win_cull_valid@12>
- 00000280			GLIDE_VALIDATE_STATE textequ <0>
+ 00000300			GLIDE_VALIDATE_STATE textequ <0>
 				GLIDE_CLIP_COORDS    textequ <0>   
  = 0				GLIDE_CULLING        textequ <1>
  = 0				GLIDE_PACK_RGB       textequ <0>
@@ -6306,6 +6335,10 @@ ENDM ; GR_FIFO_WRITE
 			      C ;; $Header$
 			      C ;; $Revision$
 			      C ;; $Log$
+			      C ;; Revision 1.3  2000/11/15 23:32:54  joseph
+			      C ;; Syncing up with 3dfx internal source repository.  These changes contain a
+			      C ;; number of bug fixes.
+			      C ;;
 			      C ;; Revision 1.1  2000/06/15 00:27:43  joseph
 			      C ;; Initial checkin into SourceForge.
 			      C ;;
@@ -6980,11 +7013,11 @@ ENDM ; GR_FIFO_WRITE
 			      C ENDIF    
 			      C ELSE        
 			      C     ;; Prologue stuff
- 00000280  56		      C     push    esi
- 00000281  57		      C     push    edi
+ 00000300  56		      C     push    esi
+ 00000301  57		      C     push    edi
 			      C     
- 00000282  53		      C     push    ebx
- 00000283  55		      C     push    ebp
+ 00000302  53		      C     push    ebx
+ 00000303  55		      C     push    ebp
 			      C 
 			      C ;;   call    getThreadValueSLOW
 			      C ;;   mov     gc, eax    
@@ -7005,19 +7038,19 @@ ENDM ; GR_FIFO_WRITE
 			      C    add eax, DWORD PTR __GlideRoot + tlsOffset
 			      C    mov gc, [eax]
 			      C ELSE
- 00000284  8B F2	      C    mov gc, edx
+ 00000304  8B F2	      C    mov gc, edx
 			      C ENDIF
 			      C IFDEF GLIDE_ALT_TAB
- 00000286  85 F6	      C    test gc, gc
- 00000288  0F 84 0000013A     C    je   __triDone
- 0000028E  8B 96 000096C4     C    mov edx, [gc + windowed]
- 00000294  F7 C2 00000001     C    test edx, 1
- 0000029A  75 14	      C    jnz  pastContextTest         ; 
- 0000029C  8B 96 000096BC     C    mov  edx, DWORD PTR [gc+lostContext]
- 000002A2  8B 1A	      C    mov ebx, [edx]
- 000002A4  F7 C3 00000001     C    test ebx, 1
- 000002AA  0F 85 00000118     C    jnz  __triDone
- 000002B0		      C pastContextTest:    
+ 00000306  85 F6	      C    test gc, gc
+ 00000308  0F 84 0000013A     C    je   __triDone
+ 0000030E  8B 96 000096C4     C    mov edx, [gc + windowed]
+ 00000314  F7 C2 00000001     C    test edx, 1
+ 0000031A  75 14	      C    jnz  pastContextTest         ; 
+ 0000031C  8B 96 000096BC     C    mov  edx, DWORD PTR [gc+lostContext]
+ 00000322  8B 1A	      C    mov ebx, [edx]
+ 00000324  F7 C3 00000001     C    test ebx, 1
+ 0000032A  0F 85 00000118     C    jnz  __triDone
+ 00000330		      C pastContextTest:    
 			      C 
 			      C ENDIF
 			      C             align 4
@@ -7045,73 +7078,73 @@ ENDM ; GR_FIFO_WRITE
 			      C 
 			      C     ;; Pre-load the current culling mode before all of the
 			      C     ;; floating point area stuff.    
- 000002B0  8B 44 24 14	      C     mov     fa, [esp + _va$]
- 000002B4  8B 5C 24 18	      C     mov     fb, [esp + _vb$]
+ 00000330  8B 44 24 14	      C     mov     fa, [esp + _va$]
+ 00000334  8B 5C 24 18	      C     mov     fb, [esp + _vb$]
 			      C         
- 000002B8  8B 96 000001E0     C     mov     cull, [gc + cull_mode]    
- 000002BE  8B 4C 24 1C	      C     mov     fc, [esp + _vc$]
+ 00000338  8B 96 000001E0     C     mov     cull, [gc + cull_mode]    
+ 0000033E  8B 4C 24 1C	      C     mov     fc, [esp + _vc$]
 			      C 
- 000002C2  85 D2	      C     test    cull, cull    
- 000002C4  74 53	      C     jz      nocull
+ 00000342  85 D2	      C     test    cull, cull    
+ 00000344  74 53	      C     jz      nocull
 			      C 
- 000002C6  C1 E2 1F	      C     shl     cull, 31                    ; culltest << 31    
+ 00000346  C1 E2 1F	      C     shl     cull, 31                    ; culltest << 31    
 			      C         
- 000002C9		      C Area_Computation:    
+ 00000349		      C Area_Computation:    
 			      C ; 47-3
 			      C ; jmp ret_pop0f
- 000002C9  D9 00	      C     flds    [fa + X]            ;  xa
- 000002CB  D8 23	      C     fsubs   [fb + X]            ;  dxAB
- 000002CD  D9 03	      C     flds    [fb + X]            ;  |    xb
- 000002CF  D8 21	      C     fsubs   [fc + X]            ;  |    dxBC
- 000002D1  D9 43 04	      C     flds    [fb + Y]            ;  |    |    yb
- 000002D4  D8 61 04	      C     fsubs   [fc + Y]            ;  |    |    dyBC
- 000002D7  D9 40 04	      C     flds    [fa + Y]            ;  |    |    |    ya
- 000002DA  D8 63 04	      C     fsubs   [fb + Y]            ;  |    |    |    dyAB
- 000002DD  D9 C3	      C     fld     st(3)               ;  |    |    |    |    dxAB
- 000002DF  D8 CA	      C     fmul    st, st(2)           ;  |    |    |    |    t0         t0=dxAB*dyBC
- 000002E1  D9 C3	      C     fld     st(3)               ;  |    |    |    |    |    dxBC
- 000002E3  D8 CA	      C     fmul    st, st(2)           ;  |    |    |    |    |    t1    t1=dxBC*dyAB
- 000002E5  DE E9	      C     fsubp   st(1),st            ;  |    |    |    |    area
- 000002E7  D9 15 00000004 R   C     fst     zArea               ;  |    |    |    |    area
+ 00000349  D9 00	      C     flds    [fa + X]            ;  xa
+ 0000034B  D8 23	      C     fsubs   [fb + X]            ;  dxAB
+ 0000034D  D9 03	      C     flds    [fb + X]            ;  |    xb
+ 0000034F  D8 21	      C     fsubs   [fc + X]            ;  |    dxBC
+ 00000351  D9 43 04	      C     flds    [fb + Y]            ;  |    |    yb
+ 00000354  D8 61 04	      C     fsubs   [fc + Y]            ;  |    |    dyBC
+ 00000357  D9 40 04	      C     flds    [fa + Y]            ;  |    |    |    ya
+ 0000035A  D8 63 04	      C     fsubs   [fb + Y]            ;  |    |    |    dyAB
+ 0000035D  D9 C3	      C     fld     st(3)               ;  |    |    |    |    dxAB
+ 0000035F  D8 CA	      C     fmul    st, st(2)           ;  |    |    |    |    t0         t0=dxAB*dyBC
+ 00000361  D9 C3	      C     fld     st(3)               ;  |    |    |    |    |    dxBC
+ 00000363  D8 CA	      C     fmul    st, st(2)           ;  |    |    |    |    |    t1    t1=dxBC*dyAB
+ 00000365  DE E9	      C     fsubp   st(1),st            ;  |    |    |    |    area
+ 00000367  D9 15 00000004 R   C     fst     zArea               ;  |    |    |    |    area
 			      C 
 			      C     ;; Pop temp things from the sw culling off the fp stack
- 000002ED  DD D8	      C     fstp    st(0)   ; 4
- 000002EF  DD D8	      C     fstp    st(0)   ; 3
- 000002F1  DD D8	      C     fstp    st(0)   ; 2
- 000002F3  DD D8	      C     fstp    st(0)   ; 1
- 000002F5  DD D8	      C     fstp    st(0)   ; 0    
+ 0000036D  DD D8	      C     fstp    st(0)   ; 4
+ 0000036F  DD D8	      C     fstp    st(0)   ; 3
+ 00000371  DD D8	      C     fstp    st(0)   ; 2
+ 00000373  DD D8	      C     fstp    st(0)   ; 1
+ 00000375  DD D8	      C     fstp    st(0)   ; 0    
 			      C 
- 000002F7  8B 2D 00000004 R   C     mov     intArea, zArea        ; j = *(long *)&area
- 000002FD  33 C0	      C     xor     eax, eax              ; Clear the return value (0 == culled)
+ 00000377  8B 2D 00000004 R   C     mov     intArea, zArea        ; j = *(long *)&area
+ 0000037D  33 C0	      C     xor     eax, eax              ; Clear the return value (0 == culled)
 			      C 
 			      C     ; Zero Area Triangle Check
- 000002FF  81 E5 7FFFFFFF     C     and     intArea, 7fffffffh    ; if ((j & 0x7FFFFFFF) == 0)
- 00000305  0F 84 000000BD     C     jz      __triDone
+ 0000037F  81 E5 7FFFFFFF     C     and     intArea, 7fffffffh    ; if ((j & 0x7FFFFFFF) == 0)
+ 00000385  0F 84 000000BD     C     jz      __triDone
 			      C 
 			      C     ;; Triangle area check vs culling mode
- 0000030B  8B 2D 00000004 R   C     mov     intArea, zArea              ; reload area just in case we're culling
- 00000311  33 EA	      C     xor     intArea, cull               ; if (j ^ (culltest << 31))
+ 0000038B  8B 2D 00000004 R   C     mov     intArea, zArea              ; reload area just in case we're culling
+ 00000391  33 EA	      C     xor     intArea, cull               ; if (j ^ (culltest << 31))
 			      C     
- 00000313  0F 8D 000000AF     C     jge     __triDone
- 00000319		      C nocull: 
+ 00000393  0F 8D 000000AF     C     jge     __triDone
+ 00000399		      C nocull: 
 			      C ENDIF ; GLIDE_CULLING    
 			      C 
 			      C             align 4
 			      C     ;; Check to make sure that we have enough room for
 			      C     ;; the complete triangle packet.
- 0000031C  8B 46 4C	      C     mov     eax, [gc + curTriSize]
- 0000031F  8B 9E 00000DEC     C     mov     ebx, [gc + fifoRoom]
+ 0000039C  8B 46 4C	      C     mov     eax, [gc + curTriSize]
+ 0000039F  8B 9E 00000DEC     C     mov     ebx, [gc + fifoRoom]
 			      C 
- 00000325  83 C0 04	      C     add     eax, 4
- 00000328  3B D8	      C     cmp     ebx, eax
+ 000003A5  83 C0 04	      C     add     eax, 4
+ 000003A8  3B D8	      C     cmp     ebx, eax
 			      C 
- 0000032A  7D 14	      C     jge     __triBegin
+ 000003AA  7D 14	      C     jge     __triBegin
 			      C     
- 0000032C  68 00000338	      C     push    @Line
- 00000331  6A 00	      C     push    0h
+ 000003AC  68 00000338	      C     push    @Line
+ 000003B1  6A 00	      C     push    0h
 			      C     
- 00000333  50		      C     push    eax
- 00000334  E8 00000000 E      C     call    __grCommandTransportMakeRoom@12
+ 000003B3  50		      C     push    eax
+ 000003B4  E8 00000000 E      C     call    __grCommandTransportMakeRoom@12
 			      C 
 			      C     ;; Send triangle parameters
 			      C     
@@ -7150,12 +7183,12 @@ ENDM ; GR_FIFO_WRITE
 			      C     nop
 			      C 
 			      C     GR_FIFO_WRITE fifo, 0, eax          ; Write packet header to fifo    
- 00000340		      C     add     fifo, 4                     ; Advance fifo for hdr & x/y coordinate
- 00000340  8B AE 00000DE4     C 
- 00000346  B9 00000004	      C             align 32   
+ 000003C0		      C     add     fifo, 4                     ; Advance fifo for hdr & x/y coordinate
+ 000003C0  8B AE 00000DE4     C 
+ 000003C6  B9 00000004	      C             align 32   
 			      C __vertexStart:
- 0000034B  8B 86 00000DD8     C     mov     vertex, [esp + STKOFF + vOffset]    ; Current vertex
- 00000351  90		      C     add     fifo, 8    
+ 000003CB  8B 86 00000DD8     C     mov     vertex, [esp + STKOFF + vOffset]    ; Current vertex
+ 000003D1  90		      C     add     fifo, 8    
 			      C 
 			      C     nop                                         ; Avoid p5 agi w/ load of vertex ptr
 			     1C IFDEF HAL_CSIM
@@ -7171,20 +7204,20 @@ ENDM ; GR_FIFO_WRITE
 			     1C     popfd
 			     1C     popad
 			     1C ELSE
- 00000352  89 45 00	     1C     mov    [fifo + 0], eax
+ 000003D2  89 45 00	     1C     mov    [fifo + 0], eax
 			     1C ENDIF
- 00000355  83 C5 04	      C     nop
+ 000003D5  83 C5 04	      C     nop
 			      C     
 			      C     mov     eax, DWORD PTR [vertex]             ; X
- 00000360		      C     lea     dlp, [gc + tsuDataList]             ; Reset the dataList
- 00000360  8B 54 0C 10	      C 
- 00000364  83 C5 08	      C     GR_FIFO_WRITE fifo, -8, eax                 ; PCI write X
+ 000003E0		      C     lea     dlp, [gc + tsuDataList]             ; Reset the dataList
+ 000003E0  8B 54 0C 10	      C 
+ 000003E4  83 C5 08	      C     GR_FIFO_WRITE fifo, -8, eax                 ; PCI write X
 			      C     mov     eax, DWORD PTR [vertex + 4]         ; Y 
- 00000367  90		      C 
- 00000368  90		      C     xor     packCol, packCol                    ; Clear packed color
+ 000003E7  90		      C 
+ 000003E8  90		      C     xor     packCol, packCol                    ; Clear packed color
 			      C     GR_FIFO_WRITE fifo, -4, eax                 ; PCI write Y
- 00000369  8B 02	      C 
- 0000036B  8D 9E 00000124     C __doParams:
+ 000003E9  8B 02	      C 
+ 000003EB  8D 9E 00000124     C __doParams:
 			      C     mov     eax, DWORD PTR [dlp]                ; Get first offset from the data list
 			      C     add     dlp, 4                              ; dlp++
 			     1C IFDEF HAL_CSIM
@@ -7200,11 +7233,11 @@ ENDM ; GR_FIFO_WRITE
 			     1C     popfd
 			     1C     popad
 			     1C ELSE
- 00000371  89 45 F8	     1C     mov    [fifo + -8], eax
+ 000003F1  89 45 F8	     1C     mov    [fifo + -8], eax
 			     1C ENDIF
- 00000374  8B 42 04	      C     
+ 000003F4  8B 42 04	      C     
 			      C     cmp     eax, 0                              ; Are we done?
- 00000377  33 FF	      C     je      __nextVertex
+ 000003F7  33 FF	      C     je      __nextVertex
 			      C 
 			     1C IFDEF HAL_CSIM
 			     1C     pushad
@@ -7219,29 +7252,29 @@ ENDM ; GR_FIFO_WRITE
 			     1C     popfd
 			     1C     popad
 			     1C ELSE
- 00000379  89 45 FC	     1C     mov    [fifo + -4], eax
+ 000003F9  89 45 FC	     1C     mov    [fifo + -4], eax
 			     1C ENDIF
 			      C     ;; Not using align directive here because it sometimes
- 0000037C		      C     ;; introduces an agi for the eax use below.
- 0000037C  8B 03	      C     nop
- 0000037E  83 C3 04	      C     nop
+ 000003FC		      C     ;; introduces an agi for the eax use below.
+ 000003FC  8B 03	      C     nop
+ 000003FE  83 C3 04	      C     nop
 			      C         
- 00000381  83 F8 00	      C __paramLoop:
- 00000384  74 16	      C     mov     tempVal, DWORD PTR [eax + vertex]   ; Get the parameter from teh vertex
+ 00000401  83 F8 00	      C __paramLoop:
+ 00000404  74 16	      C     mov     tempVal, DWORD PTR [eax + vertex]   ; Get the parameter from teh vertex
 			      C     add     fifo, 4                             ; fifoPtr += sizeof(FxU32)
 			      C 
 			      C     mov     eax, DWORD PTR [dlp]                ; offset = *(dlp + 1)
- 00000386  90		      C     add     dlp, 4                              ; dlp++
- 00000387  90		      C     
+ 00000406  90		      C     add     dlp, 4                              ; dlp++
+ 00000407  90		      C     
 			      C     cmp     eax, 0                              ; Are we done?
- 00000388		      C     GR_FIFO_WRITE fifo, -4, tempVal             ; *fifoPtr = data
- 00000388  8B 3C 02	      C     
- 0000038B  83 C5 04	      C     jne     SHORT __paramLoop
+ 00000408		      C     GR_FIFO_WRITE fifo, -4, tempVal             ; *fifoPtr = data
+ 00000408  8B 3C 02	      C     
+ 0000040B  83 C5 04	      C     jne     SHORT __paramLoop
 			      C 
- 0000038E  8B 03	      C                 align 4        
- 00000390  83 C3 04	      C __nextVertex:   
+ 0000040E  8B 03	      C                 align 4        
+ 00000410  83 C3 04	      C __nextVertex:   
 			      C     ;; On to the next vertex
- 00000393  83 F8 00	      C     add     vOffset, 4
+ 00000413  83 F8 00	      C     add     vOffset, 4
 			      C 
 			     1C IFDEF HAL_CSIM
 			     1C     pushad
@@ -7256,48 +7289,48 @@ ENDM ; GR_FIFO_WRITE
 			     1C     popfd
 			     1C     popad
 			     1C ELSE
- 00000396  89 7D FC	     1C     mov    [fifo + -4], tempVal
+ 00000416  89 7D FC	     1C     mov    [fifo + -4], tempVal
 			     1C ENDIF
 			      C     cmp     vOffset, 16                         ; Offset of one past last vertex?
- 00000399  75 ED	      C     jne     __vertexStart
+ 00000419  75 ED	      C     jne     __vertexStart
 			      C 
 			      C     ;; Update gc->fifoPtr and gc->fifoRoom
- 0000039C		      C     mov     eax, fifo
+ 0000041C		      C     mov     eax, fifo
 			      C     mov     ebx, [gc + fifoPtr]
- 0000039C  83 C1 04	      C     
+ 0000041C  83 C1 04	      C     
 			      C     mov     [gc + fifoPtr], fifo
- 0000039F  83 F9 10	      C     sub     eax, ebx
- 000003A2  75 BC	      C 
+ 0000041F  83 F9 10	      C     sub     eax, ebx
+ 00000422  75 BC	      C 
 			      C     mov     ebx, [gc + trisDrawn]               ; _GlideRoot.stats.trisDrawn++;    
 			      C     sub     [gc + fifoRoom], eax
- 000003A4  8B C5	      C 
- 000003A6  8B 9E 00000DE4     C     add     ebx, 1
+ 00000424  8B C5	      C 
+ 00000426  8B 9E 00000DE4     C     add     ebx, 1
 			      C     mov     [gc + trisDrawn], ebx
- 000003AC  89 AE 00000DE4     C 
- 000003B2  2B C3	      C     ;; return 1 (triangle drawn)    
+ 0000042C  89 AE 00000DE4     C 
+ 00000432  2B C3	      C     ;; return 1 (triangle drawn)    
 			      C     mov     eax, 1h
- 000003B4  8B 5E 10	      C 
- 000003B7  29 86 00000DEC     C __triDone:    
+ 00000434  8B 5E 10	      C 
+ 00000437  29 86 00000DEC     C __triDone:    
 			      C     ;; Restore trashed registers
- 000003BD  83 C3 01	      C     mov     ecx, [gc + trisProcessed]
- 000003C0  89 5E 10	      C     pop     ebp
+ 0000043D  83 C3 01	      C     mov     ecx, [gc + trisProcessed]
+ 00000440  89 5E 10	      C     pop     ebp
 			      C         
 			      C     add     ecx, 1    ; _GlideRoot.stats.trisProcessed++;    
- 000003C3  B8 00000001	      C     pop     ebx
+ 00000443  B8 00000001	      C     pop     ebx
 			      C     
- 000003C8		      C     pop     edi
+ 00000448		      C     pop     edi
 			      C     mov     [gc + trisProcessed], ecx
- 000003C8  8B 4E 0C	      C         
- 000003CB  5D		      C     pop     esi
+ 00000448  8B 4E 0C	      C         
+ 0000044B  5D		      C     pop     esi
 			      C     ret     12
- 000003CC  83 C1 01	      C ENDIF ; !GLIDE_CLIP_COOR
- 000003CF  5B		      C ENDIF ; !GL_AMD3D
+ 0000044C  83 C1 01	      C ENDIF ; !GLIDE_CLIP_COOR
+ 0000044F  5B		      C ENDIF ; !GL_AMD3D
 			      C 
- 000003D0  5F		      C 
- 000003D1  89 4E 0C	      C 
+ 00000450  5F		      C 
+ 00000451  89 4E 0C	      C 
 			      C 
- 000003D4  5E		      C 
- 000003D5  C2 000C	      C 
+ 00000454  5E		      C 
+ 00000455  C2 000C	      C 
 			      C 
 			      C 
 			      C 
@@ -7312,7 +7345,7 @@ ENDM ; GR_FIFO_WRITE
 			     1	        EXITM <__trisetup_3DNow_win_cull_valid@12>
 			     1	    ELSE
 			     1	        EXITM <__trisetup_Default_win_cull_valid@12>
- 000003D8			            ALIGN    32
+ 00000458			            ALIGN    32
 				            PUBLIC   PROC_TYPE(win_nocull_valid)
 				PROC_TYPE(win_nocull_valid)  PROC    NEAR
 			     1	    IFDEF GL_AMD3D
@@ -7324,7 +7357,7 @@ ENDM ; GR_FIFO_WRITE
 			     1	        EXITM <__trisetup_3DNow_win_nocull_valid@12>
 			     1	    ELSE
 			     1	        EXITM <__trisetup_Default_win_nocull_valid@12>
- 000003E0			GLIDE_VALIDATE_STATE textequ <0>
+ 00000460			GLIDE_VALIDATE_STATE textequ <0>
 				GLIDE_CLIP_COORDS    textequ <0>   
  = 0				GLIDE_CULLING        textequ <0>
  = 0				GLIDE_PACK_RGB       textequ <0>
@@ -7355,6 +7388,10 @@ ENDM ; GR_FIFO_WRITE
 			      C ;; $Header$
 			      C ;; $Revision$
 			      C ;; $Log$
+			      C ;; Revision 1.3  2000/11/15 23:32:54  joseph
+			      C ;; Syncing up with 3dfx internal source repository.  These changes contain a
+			      C ;; number of bug fixes.
+			      C ;;
 			      C ;; Revision 1.1  2000/06/15 00:27:43  joseph
 			      C ;; Initial checkin into SourceForge.
 			      C ;;
@@ -8029,11 +8066,11 @@ ENDM ; GR_FIFO_WRITE
 			      C ENDIF    
 			      C ELSE        
 			      C     ;; Prologue stuff
- 000003E0  56		      C     push    esi
- 000003E1  57		      C     push    edi
+ 00000460  56		      C     push    esi
+ 00000461  57		      C     push    edi
 			      C     
- 000003E2  53		      C     push    ebx
- 000003E3  55		      C     push    ebp
+ 00000462  53		      C     push    ebx
+ 00000463  55		      C     push    ebp
 			      C 
 			      C ;;   call    getThreadValueSLOW
 			      C ;;   mov     gc, eax    
@@ -8054,19 +8091,19 @@ ENDM ; GR_FIFO_WRITE
 			      C    add eax, DWORD PTR __GlideRoot + tlsOffset
 			      C    mov gc, [eax]
 			      C ELSE
- 000003E4  8B F2	      C    mov gc, edx
+ 00000464  8B F2	      C    mov gc, edx
 			      C ENDIF
 			      C IFDEF GLIDE_ALT_TAB
- 000003E6  85 F6	      C    test gc, gc
- 000003E8  0F 84 000000DA     C    je   __triDone
- 000003EE  8B 96 000096C4     C    mov edx, [gc + windowed]
- 000003F4  F7 C2 00000001     C    test edx, 1
- 000003FA  75 14	      C    jnz  pastContextTest         ; 
- 000003FC  8B 96 000096BC     C    mov  edx, DWORD PTR [gc+lostContext]
- 00000402  8B 1A	      C    mov ebx, [edx]
- 00000404  F7 C3 00000001     C    test ebx, 1
- 0000040A  0F 85 000000B8     C    jnz  __triDone
- 00000410		      C pastContextTest:    
+ 00000466  85 F6	      C    test gc, gc
+ 00000468  0F 84 000000DA     C    je   __triDone
+ 0000046E  8B 96 000096C4     C    mov edx, [gc + windowed]
+ 00000474  F7 C2 00000001     C    test edx, 1
+ 0000047A  75 14	      C    jnz  pastContextTest         ; 
+ 0000047C  8B 96 000096BC     C    mov  edx, DWORD PTR [gc+lostContext]
+ 00000482  8B 1A	      C    mov ebx, [edx]
+ 00000484  F7 C3 00000001     C    test ebx, 1
+ 0000048A  0F 85 000000B8     C    jnz  __triDone
+ 00000490		      C pastContextTest:    
 			      C 
 			      C ENDIF
 			      C             align 4
@@ -8148,19 +8185,19 @@ ENDM ; GR_FIFO_WRITE
 			      C             align 4
 			      C     ;; Check to make sure that we have enough room for
 			      C     ;; the complete triangle packet.
- 00000410  8B 46 4C	      C     mov     eax, [gc + curTriSize]
- 00000413  8B 9E 00000DEC     C     mov     ebx, [gc + fifoRoom]
+ 00000490  8B 46 4C	      C     mov     eax, [gc + curTriSize]
+ 00000493  8B 9E 00000DEC     C     mov     ebx, [gc + fifoRoom]
 			      C 
- 00000419  83 C0 04	      C     add     eax, 4
- 0000041C  3B D8	      C     cmp     ebx, eax
+ 00000499  83 C0 04	      C     add     eax, 4
+ 0000049C  3B D8	      C     cmp     ebx, eax
 			      C 
- 0000041E  7D 20	      C     jge     __triBegin
+ 0000049E  7D 20	      C     jge     __triBegin
 			      C     
- 00000420  68 00000338	      C     push    @Line
- 00000425  6A 00	      C     push    0h
+ 000004A0  68 00000338	      C     push    @Line
+ 000004A5  6A 00	      C     push    0h
 			      C     
- 00000427  50		      C     push    eax
- 00000428  E8 00000000 E      C     call    __grCommandTransportMakeRoom@12
+ 000004A7  50		      C     push    eax
+ 000004A8  E8 00000000 E      C     call    __grCommandTransportMakeRoom@12
 			      C 
 			      C     ;; Send triangle parameters
 			      C     
@@ -8199,12 +8236,12 @@ ENDM ; GR_FIFO_WRITE
 			      C     nop
 			      C 
 			      C     GR_FIFO_WRITE fifo, 0, eax          ; Write packet header to fifo    
- 00000440		      C     add     fifo, 4                     ; Advance fifo for hdr & x/y coordinate
- 00000440  8B AE 00000DE4     C 
- 00000446  B9 00000004	      C             align 32   
+ 000004C0		      C     add     fifo, 4                     ; Advance fifo for hdr & x/y coordinate
+ 000004C0  8B AE 00000DE4     C 
+ 000004C6  B9 00000004	      C             align 32   
 			      C __vertexStart:
- 0000044B  8B 86 00000DD8     C     mov     vertex, [esp + STKOFF + vOffset]    ; Current vertex
- 00000451  90		      C     add     fifo, 8    
+ 000004CB  8B 86 00000DD8     C     mov     vertex, [esp + STKOFF + vOffset]    ; Current vertex
+ 000004D1  90		      C     add     fifo, 8    
 			      C 
 			      C     nop                                         ; Avoid p5 agi w/ load of vertex ptr
 			     1C IFDEF HAL_CSIM
@@ -8220,20 +8257,20 @@ ENDM ; GR_FIFO_WRITE
 			     1C     popfd
 			     1C     popad
 			     1C ELSE
- 00000452  89 45 00	     1C     mov    [fifo + 0], eax
+ 000004D2  89 45 00	     1C     mov    [fifo + 0], eax
 			     1C ENDIF
- 00000455  83 C5 04	      C     nop
+ 000004D5  83 C5 04	      C     nop
 			      C     
 			      C     mov     eax, DWORD PTR [vertex]             ; X
- 00000460		      C     lea     dlp, [gc + tsuDataList]             ; Reset the dataList
- 00000460  8B 54 0C 10	      C 
- 00000464  83 C5 08	      C     GR_FIFO_WRITE fifo, -8, eax                 ; PCI write X
+ 000004E0		      C     lea     dlp, [gc + tsuDataList]             ; Reset the dataList
+ 000004E0  8B 54 0C 10	      C 
+ 000004E4  83 C5 08	      C     GR_FIFO_WRITE fifo, -8, eax                 ; PCI write X
 			      C     mov     eax, DWORD PTR [vertex + 4]         ; Y 
- 00000467  90		      C 
- 00000468  90		      C     xor     packCol, packCol                    ; Clear packed color
+ 000004E7  90		      C 
+ 000004E8  90		      C     xor     packCol, packCol                    ; Clear packed color
 			      C     GR_FIFO_WRITE fifo, -4, eax                 ; PCI write Y
- 00000469  8B 02	      C 
- 0000046B  8D 9E 00000124     C __doParams:
+ 000004E9  8B 02	      C 
+ 000004EB  8D 9E 00000124     C __doParams:
 			      C     mov     eax, DWORD PTR [dlp]                ; Get first offset from the data list
 			      C     add     dlp, 4                              ; dlp++
 			     1C IFDEF HAL_CSIM
@@ -8249,11 +8286,11 @@ ENDM ; GR_FIFO_WRITE
 			     1C     popfd
 			     1C     popad
 			     1C ELSE
- 00000471  89 45 F8	     1C     mov    [fifo + -8], eax
+ 000004F1  89 45 F8	     1C     mov    [fifo + -8], eax
 			     1C ENDIF
- 00000474  8B 42 04	      C     
+ 000004F4  8B 42 04	      C     
 			      C     cmp     eax, 0                              ; Are we done?
- 00000477  33 FF	      C     je      __nextVertex
+ 000004F7  33 FF	      C     je      __nextVertex
 			      C 
 			     1C IFDEF HAL_CSIM
 			     1C     pushad
@@ -8268,29 +8305,29 @@ ENDM ; GR_FIFO_WRITE
 			     1C     popfd
 			     1C     popad
 			     1C ELSE
- 00000479  89 45 FC	     1C     mov    [fifo + -4], eax
+ 000004F9  89 45 FC	     1C     mov    [fifo + -4], eax
 			     1C ENDIF
 			      C     ;; Not using align directive here because it sometimes
- 0000047C		      C     ;; introduces an agi for the eax use below.
- 0000047C  8B 03	      C     nop
- 0000047E  83 C3 04	      C     nop
+ 000004FC		      C     ;; introduces an agi for the eax use below.
+ 000004FC  8B 03	      C     nop
+ 000004FE  83 C3 04	      C     nop
 			      C         
- 00000481  83 F8 00	      C __paramLoop:
- 00000484  74 16	      C     mov     tempVal, DWORD PTR [eax + vertex]   ; Get the parameter from teh vertex
+ 00000501  83 F8 00	      C __paramLoop:
+ 00000504  74 16	      C     mov     tempVal, DWORD PTR [eax + vertex]   ; Get the parameter from teh vertex
 			      C     add     fifo, 4                             ; fifoPtr += sizeof(FxU32)
 			      C 
 			      C     mov     eax, DWORD PTR [dlp]                ; offset = *(dlp + 1)
- 00000486  90		      C     add     dlp, 4                              ; dlp++
- 00000487  90		      C     
+ 00000506  90		      C     add     dlp, 4                              ; dlp++
+ 00000507  90		      C     
 			      C     cmp     eax, 0                              ; Are we done?
- 00000488		      C     GR_FIFO_WRITE fifo, -4, tempVal             ; *fifoPtr = data
- 00000488  8B 3C 02	      C     
- 0000048B  83 C5 04	      C     jne     SHORT __paramLoop
+ 00000508		      C     GR_FIFO_WRITE fifo, -4, tempVal             ; *fifoPtr = data
+ 00000508  8B 3C 02	      C     
+ 0000050B  83 C5 04	      C     jne     SHORT __paramLoop
 			      C 
- 0000048E  8B 03	      C                 align 4        
- 00000490  83 C3 04	      C __nextVertex:   
+ 0000050E  8B 03	      C                 align 4        
+ 00000510  83 C3 04	      C __nextVertex:   
 			      C     ;; On to the next vertex
- 00000493  83 F8 00	      C     add     vOffset, 4
+ 00000513  83 F8 00	      C     add     vOffset, 4
 			      C 
 			     1C IFDEF HAL_CSIM
 			     1C     pushad
@@ -8305,48 +8342,48 @@ ENDM ; GR_FIFO_WRITE
 			     1C     popfd
 			     1C     popad
 			     1C ELSE
- 00000496  89 7D FC	     1C     mov    [fifo + -4], tempVal
+ 00000516  89 7D FC	     1C     mov    [fifo + -4], tempVal
 			     1C ENDIF
 			      C     cmp     vOffset, 16                         ; Offset of one past last vertex?
- 00000499  75 ED	      C     jne     __vertexStart
+ 00000519  75 ED	      C     jne     __vertexStart
 			      C 
 			      C     ;; Update gc->fifoPtr and gc->fifoRoom
- 0000049C		      C     mov     eax, fifo
+ 0000051C		      C     mov     eax, fifo
 			      C     mov     ebx, [gc + fifoPtr]
- 0000049C  83 C1 04	      C     
+ 0000051C  83 C1 04	      C     
 			      C     mov     [gc + fifoPtr], fifo
- 0000049F  83 F9 10	      C     sub     eax, ebx
- 000004A2  75 BC	      C 
+ 0000051F  83 F9 10	      C     sub     eax, ebx
+ 00000522  75 BC	      C 
 			      C     mov     ebx, [gc + trisDrawn]               ; _GlideRoot.stats.trisDrawn++;    
 			      C     sub     [gc + fifoRoom], eax
- 000004A4  8B C5	      C 
- 000004A6  8B 9E 00000DE4     C     add     ebx, 1
+ 00000524  8B C5	      C 
+ 00000526  8B 9E 00000DE4     C     add     ebx, 1
 			      C     mov     [gc + trisDrawn], ebx
- 000004AC  89 AE 00000DE4     C 
- 000004B2  2B C3	      C     ;; return 1 (triangle drawn)    
+ 0000052C  89 AE 00000DE4     C 
+ 00000532  2B C3	      C     ;; return 1 (triangle drawn)    
 			      C     mov     eax, 1h
- 000004B4  8B 5E 10	      C 
- 000004B7  29 86 00000DEC     C __triDone:    
+ 00000534  8B 5E 10	      C 
+ 00000537  29 86 00000DEC     C __triDone:    
 			      C     ;; Restore trashed registers
- 000004BD  83 C3 01	      C     mov     ecx, [gc + trisProcessed]
- 000004C0  89 5E 10	      C     pop     ebp
+ 0000053D  83 C3 01	      C     mov     ecx, [gc + trisProcessed]
+ 00000540  89 5E 10	      C     pop     ebp
 			      C         
 			      C     add     ecx, 1    ; _GlideRoot.stats.trisProcessed++;    
- 000004C3  B8 00000001	      C     pop     ebx
+ 00000543  B8 00000001	      C     pop     ebx
 			      C     
- 000004C8		      C     pop     edi
+ 00000548		      C     pop     edi
 			      C     mov     [gc + trisProcessed], ecx
- 000004C8  8B 4E 0C	      C         
- 000004CB  5D		      C     pop     esi
+ 00000548  8B 4E 0C	      C         
+ 0000054B  5D		      C     pop     esi
 			      C     ret     12
- 000004CC  83 C1 01	      C ENDIF ; !GLIDE_CLIP_COOR
- 000004CF  5B		      C ENDIF ; !GL_AMD3D
+ 0000054C  83 C1 01	      C ENDIF ; !GLIDE_CLIP_COOR
+ 0000054F  5B		      C ENDIF ; !GL_AMD3D
 			      C 
- 000004D0  5F		      C 
- 000004D1  89 4E 0C	      C 
+ 00000550  5F		      C 
+ 00000551  89 4E 0C	      C 
 			      C 
- 000004D4  5E		      C 
- 000004D5  C2 000C	      C 
+ 00000554  5E		      C 
+ 00000555  C2 000C	      C 
 			      C 
 			      C 
 			      C 
@@ -8361,7 +8398,7 @@ ENDM ; GR_FIFO_WRITE
 			     1	        EXITM <__trisetup_3DNow_win_nocull_valid@12>
 			     1	    ELSE
 			     1	        EXITM <__trisetup_Default_win_nocull_valid@12>
- 000004D8			IFDEF       GL_AMD3D    
+ 00000558			IFDEF       GL_AMD3D    
 				            ALIGN   32
 				            PUBLIC  __trisetup_clip_coor_thunk@12
 				__trisetup_clip_coor_thunk@12 PROC NEAR
@@ -8399,8 +8436,8 @@ ENDM ; GR_FIFO_WRITE
 				
 				_TEXT   ENDS
 				        END
- 04D8
-Microsoft (R) Macro Assembler Version 6.14.8444		    06/20/00 17:18:57
+ 0558
+Microsoft (R) Macro Assembler Version 6.14.8444		    06/30/00 13:01:25
 xdraw2.asm						     Symbols 2 - 1
 
 
@@ -8421,55 +8458,55 @@ Segments and Groups:
 CONST  . . . . . . . . . . . . .	32 Bit	 000C	  Para	  Private 
 FLAT . . . . . . . . . . . . . .	GROUP
 _DATA  . . . . . . . . . . . . .	32 Bit	 0008	  Para	  Private 
-_TEXT  . . . . . . . . . . . . .	32 Bit	 04D8	  Page	  Public  'CODE'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 0558	  Page	  Public  'CODE'	
 
 
 Procedures,  parameters and locals:
 
                 N a m e                 Type     Value    Attr
 
-__trisetup_Default_clip_cull_invalid@12  P Near	  0000	   _TEXT	Length= 0000 Public
-__trisetup_Default_clip_cull_valid@12 	P Near	 0000	  _TEXT	Length= 0000 Public
-__trisetup_Default_clip_nocull_invalid@12  P Near   0000     _TEXT	Length= 0000 Public
-__trisetup_Default_clip_nocull_valid@12  P Near	  0000	   _TEXT	Length= 0000 Public
-__trisetup_Default_win_cull_invalid@12 . P Near	  0100	   _TEXT	Length= 0178 Public
-  pastContextTest  . . . . . . .	L Near	 0130	  _TEXT	
-  no_validatioin . . . . . . . .	L Near	 013F	  _TEXT	
-  Area_Computation . . . . . . .	L Near	 0159	  _TEXT	
-  nocull . . . . . . . . . . . .	L Near	 01A9	  _TEXT	
-  __triBegin . . . . . . . . . .	L Near	 01E0	  _TEXT	
-  __vertexStart  . . . . . . . .	L Near	 0200	  _TEXT	
-  __doParams . . . . . . . . . .	L Near	 021C	  _TEXT	
-  __paramLoop  . . . . . . . . .	L Near	 0228	  _TEXT	
-  __nextVertex . . . . . . . . .	L Near	 023C	  _TEXT	
-  __triDone  . . . . . . . . . .	L Near	 0268	  _TEXT	
-__trisetup_Default_win_cull_valid@12 .	P Near	 0280	  _TEXT	Length= 0158 Public
-  pastContextTest  . . . . . . .	L Near	 02B0	  _TEXT	
-  Area_Computation . . . . . . .	L Near	 02C9	  _TEXT	
-  nocull . . . . . . . . . . . .	L Near	 0319	  _TEXT	
-  __triBegin . . . . . . . . . .	L Near	 0340	  _TEXT	
-  __vertexStart  . . . . . . . .	L Near	 0360	  _TEXT	
-  __doParams . . . . . . . . . .	L Near	 037C	  _TEXT	
-  __paramLoop  . . . . . . . . .	L Near	 0388	  _TEXT	
-  __nextVertex . . . . . . . . .	L Near	 039C	  _TEXT	
-  __triDone  . . . . . . . . . .	L Near	 03C8	  _TEXT	
-__trisetup_Default_win_nocull_invalid@12 . P Near   0000     _TEXT	Length= 00F8 Public
-  pastContextTest  . . . . . . .	L Near	 0030	  _TEXT	
-  no_validatioin . . . . . . . .	L Near	 003F	  _TEXT	
-  __triBegin . . . . . . . . . .	L Near	 0060	  _TEXT	
-  __vertexStart  . . . . . . . .	L Near	 0080	  _TEXT	
-  __doParams . . . . . . . . . .	L Near	 009C	  _TEXT	
-  __paramLoop  . . . . . . . . .	L Near	 00A8	  _TEXT	
-  __nextVertex . . . . . . . . .	L Near	 00BC	  _TEXT	
-  __triDone  . . . . . . . . . .	L Near	 00E8	  _TEXT	
-__trisetup_Default_win_nocull_valid@12 . P Near	  03E0	   _TEXT	Length= 00F8 Public
-  pastContextTest  . . . . . . .	L Near	 0410	  _TEXT	
-  __triBegin . . . . . . . . . .	L Near	 0440	  _TEXT	
-  __vertexStart  . . . . . . . .	L Near	 0460	  _TEXT	
-  __doParams . . . . . . . . . .	L Near	 047C	  _TEXT	
-  __paramLoop  . . . . . . . . .	L Near	 0488	  _TEXT	
-  __nextVertex . . . . . . . . .	L Near	 049C	  _TEXT	
-  __triDone  . . . . . . . . . .	L Near	 04C8	  _TEXT	
+__trisetup_Default_clip_cull_invalid@12  P Near	  0020	   _TEXT	Length= 0004 Public
+__trisetup_Default_clip_cull_valid@12 	P Near	 0040	  _TEXT	Length= 0004 Public
+__trisetup_Default_clip_nocull_invalid@12  P Near   0000     _TEXT	Length= 0004 Public
+__trisetup_Default_clip_nocull_valid@12  P Near	  0060	   _TEXT	Length= 0004 Public
+__trisetup_Default_win_cull_invalid@12 . P Near	  0180	   _TEXT	Length= 0178 Public
+  pastContextTest  . . . . . . .	L Near	 01B0	  _TEXT	
+  no_validatioin . . . . . . . .	L Near	 01BF	  _TEXT	
+  Area_Computation . . . . . . .	L Near	 01D9	  _TEXT	
+  nocull . . . . . . . . . . . .	L Near	 0229	  _TEXT	
+  __triBegin . . . . . . . . . .	L Near	 0260	  _TEXT	
+  __vertexStart  . . . . . . . .	L Near	 0280	  _TEXT	
+  __doParams . . . . . . . . . .	L Near	 029C	  _TEXT	
+  __paramLoop  . . . . . . . . .	L Near	 02A8	  _TEXT	
+  __nextVertex . . . . . . . . .	L Near	 02BC	  _TEXT	
+  __triDone  . . . . . . . . . .	L Near	 02E8	  _TEXT	
+__trisetup_Default_win_cull_valid@12 .	P Near	 0300	  _TEXT	Length= 0158 Public
+  pastContextTest  . . . . . . .	L Near	 0330	  _TEXT	
+  Area_Computation . . . . . . .	L Near	 0349	  _TEXT	
+  nocull . . . . . . . . . . . .	L Near	 0399	  _TEXT	
+  __triBegin . . . . . . . . . .	L Near	 03C0	  _TEXT	
+  __vertexStart  . . . . . . . .	L Near	 03E0	  _TEXT	
+  __doParams . . . . . . . . . .	L Near	 03FC	  _TEXT	
+  __paramLoop  . . . . . . . . .	L Near	 0408	  _TEXT	
+  __nextVertex . . . . . . . . .	L Near	 041C	  _TEXT	
+  __triDone  . . . . . . . . . .	L Near	 0448	  _TEXT	
+__trisetup_Default_win_nocull_invalid@12 . P Near   0080     _TEXT	Length= 00F8 Public
+  pastContextTest  . . . . . . .	L Near	 00B0	  _TEXT	
+  no_validatioin . . . . . . . .	L Near	 00BF	  _TEXT	
+  __triBegin . . . . . . . . . .	L Near	 00E0	  _TEXT	
+  __vertexStart  . . . . . . . .	L Near	 0100	  _TEXT	
+  __doParams . . . . . . . . . .	L Near	 011C	  _TEXT	
+  __paramLoop  . . . . . . . . .	L Near	 0128	  _TEXT	
+  __nextVertex . . . . . . . . .	L Near	 013C	  _TEXT	
+  __triDone  . . . . . . . . . .	L Near	 0168	  _TEXT	
+__trisetup_Default_win_nocull_valid@12 . P Near	  0460	   _TEXT	Length= 00F8 Public
+  pastContextTest  . . . . . . .	L Near	 0490	  _TEXT	
+  __triBegin . . . . . . . . . .	L Near	 04C0	  _TEXT	
+  __vertexStart  . . . . . . . .	L Near	 04E0	  _TEXT	
+  __doParams . . . . . . . . . .	L Near	 04FC	  _TEXT	
+  __paramLoop  . . . . . . . . .	L Near	 0508	  _TEXT	
+  __nextVertex . . . . . . . . .	L Near	 051C	  _TEXT	
+  __triDone  . . . . . . . . . .	L Near	 0548	  _TEXT	
 
 
 Symbols:
@@ -8482,9 +8519,11 @@ $T2006 . . . . . . . . . . . . .	DWord	 0008	  CONST
 Area . . . . . . . . . . . . . .	DWord	 0004	  _DATA	
 CPUType  . . . . . . . . . . . .	Number	 0010h	 
 CoordinateSpace  . . . . . . . .	Number	 0D98h	 
+GDBG_INFO_ON . . . . . . . . . .	Text   	 
 GLIDE_ALT_TAB  . . . . . . . . .	Text   	 
 GLIDE_CLIP_COORDS  . . . . . . .	Text   	 0
 GLIDE_CULLING  . . . . . . . . .	Text   	 0
+GLIDE_DEBUG  . . . . . . . . . .	Text   	 
 GLIDE_GENERIC_SETUP  . . . . . .	Text   	 0
 GLIDE_INIT_HWC . . . . . . . . .	Text   	 
 GLIDE_PACKED_RGB . . . . . . . .	Text   	 0
@@ -8525,6 +8564,7 @@ _vb$ . . . . . . . . . . . . . .	Number	 0018h
 _vc$ . . . . . . . . . . . . . .	Number	 001Ch	 
 bInfo  . . . . . . . . . . . . .	Number	 011Ch	 
 base_ptr . . . . . . . . . . . .	Number	 0074h	 
+checkPtr . . . . . . . . . . . .	Number	 96ACh	 
 colorType  . . . . . . . . . . .	Number	 0B74h	 
 cullStripHdr . . . . . . . . . .	Number	 0DDCh	 
 cull_mode  . . . . . . . . . . .	Number	 01E0h	 

@@ -3282,12 +3282,13 @@ update_fifo_ptr:
         mov     DWORD PTR [gc+trisProcessed], ebx; Store trisProcessed
                                 ; back to GC
     
-   ;; Clean up the stack
+   ;; Clean up the stack    // FIXED by JHunter (wrong order, trashed edi/esi and ebx)
         pop     ebp
+
+        pop     edi
         pop     esi
     
         pop     ebx
-        pop     edi
         
         ret     12                      ; 0000000cH
         
