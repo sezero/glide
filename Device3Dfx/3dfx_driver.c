@@ -986,6 +986,9 @@ long init_3dfx(long mem_start, long mem_end)
 MODULE_AUTHOR("Daryll Strauss et al.");
 MODULE_DESCRIPTION("3dfx glide kernel device driver");
 MODULE_LICENSE("GPL");
+#ifdef MODULE_VERSION
+MODULE_VERSION("2004.05.05");
+#endif
 #endif
 
 #if defined(DEBUG)
