@@ -179,6 +179,9 @@ if test "$FX_GLIDE_BUILD_ARCHITECTURE" = "alpha"; then
 FX_GLIDE_CTRISETUP=true
 FX_GLIDE_C_CPU_DETECT=true
 fi
+if test "$FX_GLIDE_BUILD_ARCHITECTURE" = "ia64"; then
+FX_GLIDE_CTRISETUP=true
+fi
 # Next, we read some configuration options
 # statically.  This is to avoid creating a bunch of
 # not-terribly-useful --enable options.
