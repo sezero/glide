@@ -1366,6 +1366,38 @@ _GlideInitEnvironment(void)
     hwcSetOSInfo(&_GlideRoot.OS);
   }
 #endif
+
+  /* Get CPU Info before we detect glide devices */
+  _cpuid (&_GlideRoot.CPUType);
+
+  /* Check for vendor specific optimization cases */
+  GDBG_INFO( 0,"   CPU Vendor: %s\n", _GlideRoot.CPUType.v_name);
+  GDBG_INFO(80,"   MMX Support: %c\n", _GlideRoot.CPUType.os_support&_CPU_FEATURE_MMX ? 'Y' : 'N');
+  GDBG_INFO(80,"   SSE Support: %c\n", _GlideRoot.CPUType.os_support&_CPU_FEATURE_SSE ? 'Y' : 'N');
+  GDBG_INFO(80,"  SSE2 Support: %c\n", _GlideRoot.CPUType.os_support&_CPU_FEATURE_SSE2 ? 'Y' : 'N');
+  GDBG_INFO(80," 3DNow Support: %c\n", _GlideRoot.CPUType.os_support&_CPU_FEATURE_3DNOW ? 'Y' : 'N');
+  GDBG_INFO(80,"  MMX+ Support: %c\n", _GlideRoot.CPUType.os_support&_CPU_FEATURE_MMXPLUS ? 'Y' : 'N');
+  GDBG_INFO(80,"3DNow+ Support: %c\n", _GlideRoot.CPUType.os_support&_CPU_FEATURE_3DNOWPLUS ? 'Y' : 'N');
+
+  /* Check for user environment tweaks */
+#define GLIDE_GETENV(__envVar, __defVal) \
+  (((envStr = GETENV(__envVar)) == NULL) ? (__defVal) : atol(envStr))
+#define GLIDE_FGETENV(__envVar, __defVal) \
+  (((envStr = GETENV(__envVar)) == NULL) ? (__defVal) : (float) atof(envStr))
+#define GLIDE_34GETENV(__envVar, __defVal) \
+  (((signed char)(atof(((envStr = GETENV(__envVar)) == NULL) ? (__defVal) : (envStr))*16.0f)+8)&0x7f)
+
+  /* No CPU Extensions Allowed */
+  if (GLIDE_GETENV("FX_GLIDE_NO_CPU_EXTENSIONS", 0L))
+  {
+    _GlideRoot.CPUType.feature = _GlideRoot.CPUType.os_support = 0;
+    GDBG_INFO(0,"CPU Extensions disabled\n");
+  }
+
+#if !DRI_BUILD
+  /* Pass retrieved CPU Info into minihwc */
+  hwcSetCPUInfo(&_GlideRoot.CPUType);
+#endif
   
   /* KoolSmoky - detect glide devices before we check for user 
   ** environment tweaks.
@@ -1381,41 +1413,9 @@ _GlideInitEnvironment(void)
 #endif
   }
 
-  /* Check for user environment tweaks */
-#define GLIDE_GETENV(__envVar, __defVal) \
-  (((envStr = GETENV(__envVar)) == NULL) ? (__defVal) : atol(envStr))
-#define GLIDE_FGETENV(__envVar, __defVal) \
-  (((envStr = GETENV(__envVar)) == NULL) ? (__defVal) : (float) atof(envStr))
-#define GLIDE_34GETENV(__envVar, __defVal) \
-  (((signed char)(atof(((envStr = GETENV(__envVar)) == NULL) ? (__defVal) : (envStr))*16.0f)+8)&0x7f)
-
   /*
    * Setup the basic proc tables based on the cpu type.
    */
-  
-  /* Get CPU Info */
-  _cpuid (&_GlideRoot.CPUType);
-
-  /* Check for vendor specific optimization cases */
-  GDBG_INFO( 0,"   CPU Vendor: %s\n", _GlideRoot.CPUType.v_name);
-  GDBG_INFO(80,"   MMX Support: %c\n", _GlideRoot.CPUType.os_support&_CPU_FEATURE_MMX ? 'Y' : 'N');
-  GDBG_INFO(80,"   SSE Support: %c\n", _GlideRoot.CPUType.os_support&_CPU_FEATURE_SSE ? 'Y' : 'N');
-  GDBG_INFO(80,"  SSE2 Support: %c\n", _GlideRoot.CPUType.os_support&_CPU_FEATURE_SSE2 ? 'Y' : 'N');
-  GDBG_INFO(80," 3DNow Support: %c\n", _GlideRoot.CPUType.os_support&_CPU_FEATURE_3DNOW ? 'Y' : 'N');
-  GDBG_INFO(80,"  MMX+ Support: %c\n", _GlideRoot.CPUType.os_support&_CPU_FEATURE_MMXPLUS ? 'Y' : 'N');
-  GDBG_INFO(80,"3DNow+ Support: %c\n", _GlideRoot.CPUType.os_support&_CPU_FEATURE_3DNOWPLUS ? 'Y' : 'N');
-  
-  /* No CPU Extensions Allowed */
-  if (GLIDE_GETENV("FX_GLIDE_NO_CPU_EXTENSIONS", 0L))
-  {
-    _GlideRoot.CPUType.feature = _GlideRoot.CPUType.os_support = 0;
-    GDBG_INFO(0,"CPU Extensions disabled\n");
-  }
-
-#if !DRI_BUILD
-  /* Pass retrieved CPU Info into minihwc */
-  hwcSetCPUInfo(&_GlideRoot.CPUType);
-#endif
 
   /* Default case - rasterization routines */
   _GlideRoot.deviceArchProcs.curTriProcs        = _triSetupProcs + 0;
@@ -1944,7 +1944,7 @@ _GlideInitEnvironment(void)
   _GlideRoot.environment.sliBandHeightForce = GLIDE_GETENV("FX_GLIDE_FORCE_SLI_BAND_HEIGHT", 0L);
   GDBG_INFO(80," sliBandHeightForce : %d\n",_GlideRoot.environment.sliBandHeightForce);
   
-  _GlideRoot.environment.swapPendingCount  = GLIDE_GETENV("FX_GLIDE_SWAPPENDINGCOUNT", 1L);
+  _GlideRoot.environment.swapPendingCount  = GLIDE_GETENV("FX_GLIDE_SWAPPENDINGCOUNT", 3L);
   if (_GlideRoot.environment.swapPendingCount > 3)
     _GlideRoot.environment.swapPendingCount = 3;
   if (_GlideRoot.environment.swapPendingCount < 0)
@@ -1961,7 +1961,6 @@ _GlideInitEnvironment(void)
   _GlideRoot.environment.autoBump = FXFALSE;
 #else  
   _GlideRoot.environment.autoBump = (GETENV("FX_GLIDE_BUMP") == NULL);
-  _GlideRoot.environment.forceAutoBump = (GETENV("FX_GLIDE_FORCEBUMP") == NULL);
 #if CHECK_SLAVE_SWAPCMD
   _GlideRoot.environment.checkSlaveSwapCMD = GLIDE_GETENV("FX_GLIDE_CHECKSLAVESWAPCMD", 0L);
 #endif
