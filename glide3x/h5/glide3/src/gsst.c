@@ -1390,106 +1390,8 @@ GR_ENTRY(grSstWinOpen, GrContext_t, ( FxU32                   hWnd,
                                       int                     nAuxBuffers) )
 {
 #define FN_NAME "grSstWinOpen"
-#define TILE_WIDTH_PXLS   64
-#define TILE_HEIGHT_PXLS  32
-#define BYTES_PER_PIXEL   2
-#define MIN_TEXTURE_STORE 0x200000
-#define MIN_FIFO_SIZE     0x10000
-#if defined( GLIDE_INIT_HWC )
-  hwcBoardInfo  *bInfo   = 0;
-  hwcVidInfo    *vInfo   = 0;
-  hwcBufferInfo *bufInfo = 0;
-  hwcFifoInfo   *fInfo   = 0;
-#elif defined( GLIDE_INIT_HAL )
-  FxDeviceInfo   devInfo;
-  hwcBoardInfo  *bInfo   = 0;
-  hwcVidInfo    *vInfo   = 0;
-  hwcBufferInfo *bufInfo = 0;
-  hwcFifoInfo   *fInfo   = 0;
-#endif /* defined ( GLIDE_INIT_HAL ) */
-  
-  struct cmdTransportInfo *gcFifo = 0;
-  GrContext_t retVal = 0;
 
-#if !(GLIDE_PLATFORM & GLIDE_OS_UNIX) && !defined(__DJGPP__)
-  if (!hWnd) hWnd = (FxU32) GetActiveWindow();
-  if (!hWnd)
-    GrErrorCallback("grSstWinOpen: need to use a valid window handle",
-                    FXTRUE);
-/*
-  GDBG_INFO(80, "Setting hwnd to foreground.\n");
-  SetForegroundWindow((HWND)hWnd);
-*/
-#endif	/* (GLIDE_PLATFORM & GLIDE_OS_UNIX) || defined(__DJGPP__) */
-
-  /* NB: TLS must be setup before the 'declaration' which grabs the
-   * current gc. This gc is valid for all threads in the fullscreen
-   * context.
-   */
-  setThreadValue( (FxU32)&_GlideRoot.GCs[_GlideRoot.current_sst] );
-  
-  {
-    /* Partial Argument Validation */
-    GR_BEGIN_NOFIFOCHECK_NORET("grSstWinOpen",80);
-    GDBG_INFO_MORE(gc->myLevel,
-                   "(rez=%d,ref=%d,cformat=%d,origin=%s,#bufs=%d, #abufs=%d)\n",
-                   resolution,refresh,format,
-                   origin ? "LL" : "UL",
-                   nColBuffers, nAuxBuffers);
-    GR_CHECK_F(FN_NAME, !gc, "no SST selected as current (gc==NULL)");
-  
-#ifdef FX_GLIDE_NAPALM
-    if (IS_NAPALM(gc->bInfo->pciInfo.deviceID)) {
-      GrPixelFormat_t  thePixelFormat = GR_PIXFMT_RGB_565 ; 
-#if 0
-
-      /**/
-      /* All this stuff lets Joe bag-o-donuts force old apps */
-      /* to render with 32bpp and AA modes. */
-      /* */
-      if (_GlideRoot.environment.outputBpp == 32)
-      {
-        /* Force rendering to 32bpp */
-        if ((_GlideRoot.environment.aaSample == 8) &&	/* 8xaa */
-            	(gc->chipCount > 2))
-          		thePixelFormat = GR_PIXFMT_AA_8_ARGB_8888 ;
-        else if ((_GlideRoot.environment.aaSample == 4) &&
-            	(gc->chipCount > 1))
-          		thePixelFormat = GR_PIXFMT_AA_4_ARGB_8888 ;
-        else if (_GlideRoot.environment.aaSample == 2)
-            	thePixelFormat = GR_PIXFMT_AA_2_ARGB_8888 ;
-        else
-            	thePixelFormat = GR_PIXFMT_ARGB_8888 ;
-      }
-       else
-      {
-        /* default rendering to 16bpp */
-        if ((_GlideRoot.environment.aaSample == 8) &&	/* 8xaa */
-            (gc->chipCount > 2))
-          	thePixelFormat = GR_PIXFMT_AA_8_RGB_565 ;
-		else if ((_GlideRoot.environment.aaSample == 4) &&
-            (gc->chipCount > 1))
-          	thePixelFormat = GR_PIXFMT_AA_4_RGB_565 ;
-        else if (_GlideRoot.environment.aaSample == 2)
-            thePixelFormat = GR_PIXFMT_AA_2_RGB_565 ;
-        else
-            thePixelFormat = GR_PIXFMT_RGB_565 ;
-      }
-      
-#endif
-
-      return ( grSstWinOpenExt(hWnd,
-                               resolution, 
-                               refresh, 
-                               format, 
-                               origin, 
-                               thePixelFormat,
-                               nColBuffers,
-                               nAuxBuffers) );
-    }
-#endif
-
-    return ( grSstWinOpenExt(hWnd,
+  return ( grSstWinOpenExt(hWnd,
                            resolution, 
                            refresh, 
                            format, 
@@ -1497,9 +1399,8 @@ GR_ENTRY(grSstWinOpen, GrContext_t, ( FxU32                   hWnd,
                            GR_PIXFMT_RGB_565,
                            nColBuffers,
                            nAuxBuffers) );
-  }
 
-  #undef FN_NAME
+#undef FN_NAME
 } /* grSstWinOpen */
 
 #ifdef FX_GLIDE_NAPALM
@@ -2168,7 +2069,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
       {
         switch (gc->grSstRez) 
         {
-		case GR_RESOLUTION_1600x1200:
+        case GR_RESOLUTION_1600x1200:
         case GR_RESOLUTION_1600x1024:
         case GR_RESOLUTION_1280x1024:
         case GR_RESOLUTION_1280x960:
