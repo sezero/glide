@@ -1,16 +1,20 @@
 Build instructions
 ------------------
 
-When building for 2.4.x or earlier kernels, just do:
+The new build system supports Linux kernel legacy build systems
+as used on 2.4.x or earlier and the new kbuild system used on 2.6
+and up.
 
-	$ make
+Current make targets are:
 
-When building this module for 2.6.x kernels, just do:
+	modules
+	clean
+	install
 
-	$ make -C kbuild
+If your kernel source is in some place different than /usr/src/linux
+specify the KSRC variable, like:
 
-If your kernel source is someplace different than /usr/src/linux specify
-the KSRC variable, like:
+	$ make KSRC=~/src/linux
 
-	$ make -C kbuild KSRC=~/src/linux
+If you want to install in a different base dir specify DESTDIR.
 
