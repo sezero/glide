@@ -137,7 +137,7 @@ pciFetchRegisterLinux( FxU32 cmd, FxU32 size, FxU32 device)
   default:
     return 0;
   }
-  if (ioctl(linuxDevFd, _IOR('3', 3, sizeof(struct pioData)), &desc)==-1)
+  if (ioctl(linuxDevFd, _IOR('3', 3, struct pioData), &desc)==-1)
     return 0;
   switch (size) {
   case 1:
@@ -161,7 +161,7 @@ pciUpdateRegisterLinux(FxU32 cmd, FxU32 data, FxU32 size, FxU32 device)
   desc.size=size;
   desc.device=device;
   desc.value=&data;
-  if (ioctl(linuxDevFd, _IOW('3', 4, sizeof(struct pioData)), &desc)==-1)
+  if (ioctl(linuxDevFd, _IOW('3', 4, struct pioData), &desc)==-1)
     return FXFALSE;
   return FXTRUE;
 }
@@ -272,7 +272,7 @@ pciPortInByteLinux(unsigned short port)
   desc.size=sizeof(tmp);
   desc.value=&tmp;
   /* fprintf(stderr, "Read byte desc at %x tmp at %x\n", &desc, &tmp); */
-  ioctl(linuxDevFd, _IOR(0, 0, sizeof(struct pioData)), &desc);
+  ioctl(linuxDevFd, _IOR(0, 0, struct pioData), &desc);
   /* fprintf(stderr, "Got byte %d versus %d\n", tmp, inb(port)); */
   return tmp;
 }
@@ -292,7 +292,7 @@ pciPortInWordLinux(unsigned short port)
   desc.size=sizeof(tmp);
   desc.value=&tmp;
   /* fprintf(stderr, "Read word desc at %x tmp at %x\n", &desc, &tmp); */
-  ioctl(linuxDevFd, _IOR(0, 0, sizeof(struct pioData)), &desc);
+  ioctl(linuxDevFd, _IOR(0, 0, struct pioData), &desc);
   /* fprintf(stderr, "Got word %d versus %d\n", tmp, inw(port)); */
   return tmp;
 }
@@ -312,7 +312,7 @@ pciPortInLongLinux(unsigned short port)
   desc.size=sizeof(tmp);
   desc.value=&tmp;
   /* fprintf(stderr, "Read long desc at %x tmp at %x\n", &desc, &tmp); */
-  ioctl(linuxDevFd, _IOR(0, 0, sizeof(struct pioData)), &desc);
+  ioctl(linuxDevFd, _IOR(0, 0, struct pioData), &desc);
   /* fprintf(stderr, "Got long %x versus %x\n", tmp, inl(port)); */
   return tmp;
 }
@@ -334,7 +334,7 @@ pciPortOutByteLinux(unsigned short port, FxU8 data)
   desc.port=port;
   desc.size=sizeof(data);
   desc.value=&data;
-  return ioctl(linuxDevFd, _IOW(0, 1, sizeof(struct pioData)), &desc)!=-1;
+  return ioctl(linuxDevFd, _IOW(0, 1, struct pioData), &desc)!=-1;
 }
 
 static FxBool 
@@ -354,7 +354,7 @@ pciPortOutWordLinux(unsigned short port, FxU16 data)
   desc.port=port;
   desc.size=sizeof(data);
   desc.value=&data;
-  return ioctl(linuxDevFd, _IOW(0, 1, sizeof(struct pioData)), &desc)!=-1;
+  return ioctl(linuxDevFd, _IOW(0, 1, struct pioData), &desc)!=-1;
 }
 
 static FxBool 
@@ -374,7 +374,7 @@ pciPortOutLongLinux(unsigned short port, FxU32 data)
   desc.port=port;
   desc.size=sizeof(data);
   desc.value=&data;
-  return ioctl(linuxDevFd, _IOW(0, 1, sizeof(struct pioData)), &desc)!=-1;
+  return ioctl(linuxDevFd, _IOW(0, 1, struct pioData), &desc)!=-1;
 }
 
 static FxBool
