@@ -27,16 +27,6 @@ if GLIDE_DEBUG
 GLIDE_DEBUG_VDEFS = -DGDBG_INFO_ON
 endif
 
-if DRI_BUILD
-linhwc.c: $(top_srcdir)/h3/minihwc/linhwc.c.dri
-	rm -f linhwc.c
-	ln -s $(top_srcdir)/h3/minihwc/linhwc.c.dri linhwc.c
-else
-linhwc.c: $(top_srcdir)/h3/minihwc/linhwc.c.save
-	rm -f linhwc.c
-	ln -s $(top_srcdir)/h3/minihwc/linhwc.c.save linhwc.c
-endif
-
 #
 # This should really be conditionally defined, depending on
 # the operating system.  Since this is only configured for

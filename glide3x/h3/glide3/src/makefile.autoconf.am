@@ -159,31 +159,6 @@ xtexdl_3dnow.o xtexdl_3dnow.lo: xtexdl.S fxgasm.h
 
 endif
 
-if DRI_BUILD
-gglide.c: $(top_srcdir)/h3/glide3/src/gglide.c.dri
-	rm -f gglide.c
-	ln -sf $(top_srcdir)/h3/glide3/src/gglide.c.dri gglide.c
-
-gsst.c: $(top_srcdir)/h3/glide3/src/gsst.c.dri
-	rm -f gglide.c
-	ln -sf $(top_srcdir)/h3/glide3/src/gsst.c.dri gsst.c
-
-glfb.c: $(top_srcdir)/h3/glide3/src/glfb.c.dri
-	rm -f gglide.c
-	ln -sf $(top_srcdir)/h3/glide3/src/glfb.c.dri glfb.c
-else
-gglide.c: $(top_srcdir)/h3/glide3/src/gglide.c.save
-	rm -f gglide.c
-	ln -sf $(top_srcdir)/h3/glide3/src/gglide.c.save gglide.c
-
-gsst.c: $(top_srcdir)/h3/glide3/src/gsst.c.save
-	rm -f gglide.c
-	ln -sf $(top_srcdir)/h3/glide3/src/gsst.c.save gsst.c
-
-glfb.c: $(top_srcdir)/h3/glide3/src/glfb.c.save
-	rm -f gglide.c
-	ln -sf $(top_srcdir)/h3/glide3/src/glfb.c.save glfb.c
-endif
 #
 # Library definitions.
 #
