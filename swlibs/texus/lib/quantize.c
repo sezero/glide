@@ -30,10 +30,10 @@
 #include "texusint.h"
 
 static int 
-dithmat[4][4] = {       0,  8,  2, 10, 
-                           12,  4, 14,  6, 
-                            3, 11,  1,  9, 
-                           15,  7, 13,  5 };
+dithmat[4][4] = {       {  0,  8,  2, 10 }, 
+						{ 12,  4, 14,  6 }, 
+						{  3, 11,  1,  9 }, 
+						{ 15,  7, 13,  5 }};
 
 // for error diffusion.
 static int      errR[MAX_TEXWIDTH], errG[MAX_TEXWIDTH], errB[MAX_TEXWIDTH];     
@@ -498,7 +498,7 @@ _txPixQuantize_AI88( unsigned long argb, int x, int y, int w)
 static void
 _txImgQuantize(char *dst, char *src, int w, int h, FxU32 format, FxU32 dither)
 {
-    int (*quantizer)(unsigned long argb, int x, int y, int w);
+    int (*quantizer)(unsigned long argb, int x, int y, int w) = NULL;
     int         x, y;
 
     dither &= TX_DITHER_MASK;

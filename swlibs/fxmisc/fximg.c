@@ -197,7 +197,7 @@ FxBool _imgGuessType( FILE *stream, ImgType *type )
       	case 0xDA01:
 			*type = IMG_RGT;
 			break;
-      	case 'EL':
+      	case (('E' << 8) | 'L'):
 	  cookie = 0;
 	  if ( ( c = fgetc( stream ) ) == EOF )
 	    {
@@ -211,7 +211,7 @@ FxBool _imgGuessType( FILE *stream, ImgType *type )
 	      return FXFALSE;
 	    }
 	  cookie = (cookie << 8) | c;
-	  if (cookie == 'RS')
+	  if (cookie == (('R' << 8) | 'S'))
 	    *type = IMG_SRLE;
 	  break;
       	default: // Might Be TGA
@@ -1409,7 +1409,7 @@ FxBool _imgReadSRLEData( FILE *stream, const SrleInfo *info, ImgData *data )
 {
     int   numPixels;
     FxU16 color;
-    FxU8  r,g,b,a;
+    FxU8  r = 0, g = 0, b = 0, a = 0;
     FxU8  ctl, repeat, run;
     FxBool flag;
     
@@ -1470,9 +1470,9 @@ FxBool _imgWriteP6Header( FILE *stream, const P6Info *info )
 {
 	imgErrorString = "Image write error.";
 	if ( 0 > fprintf( stream, "P6\n" ) ) return FXFALSE;
-	if ( 0 > fprintf( stream, "# PPM Comment\n", info->width ) ) return FXFALSE;
-	if ( 0 > fprintf( stream, "%d ", info->width ) ) return FXFALSE;
-	if ( 0 > fprintf( stream, "%d\n", info->height ) ) return FXFALSE;
+	if ( 0 > fprintf( stream, "# PPM Comment\n" ) ) return FXFALSE;
+	if ( 0 > fprintf( stream, "%ld ", info->width ) ) return FXFALSE;
+	if ( 0 > fprintf( stream, "%ld\n", info->height ) ) return FXFALSE;
 	if ( 0 > fprintf( stream, "255\n" ) ) return FXFALSE;
 	imgErrorString = "No error.";
 	return FXTRUE;
@@ -1487,11 +1487,11 @@ FxBool _imgWriteSbiHeader( FILE *stream, const SbiInfo *info )
 	imgErrorString = "Image write error.";
 	if ( 0 > fprintf( stream, "P9\n" ) ) return FXFALSE;
 	if ( 0 > !fprintf( stream, "Y%c\n", info->yOrigin? '+' : '-' ) ) return FXFALSE;
-	if ( 0 > !fprintf( stream, "%d ", info->width ) ) return FXFALSE;
-	if ( 0 > !fprintf( stream, "%d\n", info->height ) ) return FXFALSE;
-	if ( 0 > !fprintf( stream, "R %d ", info->redBits ) ) return FXFALSE;
-	if ( 0 > !fprintf( stream, "G %d ", info->greenBits ) ) return FXFALSE;
-	if ( 0 > !fprintf( stream, "B %d\n", info->blueBits ) ) return FXFALSE;
+	if ( 0 > !fprintf( stream, "%ld ", info->width ) ) return FXFALSE;
+	if ( 0 > !fprintf( stream, "%ld\n", info->height ) ) return FXFALSE;
+	if ( 0 > !fprintf( stream, "R %ld ", info->redBits ) ) return FXFALSE;
+	if ( 0 > !fprintf( stream, "G %ld ", info->greenBits ) ) return FXFALSE;
+	if ( 0 > !fprintf( stream, "B %ld\n", info->blueBits ) ) return FXFALSE;
 	imgErrorString = "No Error.";
 	return FXTRUE;
 }
@@ -1948,11 +1948,11 @@ FxBool imgReadFile(const char *filename, ImgInfo *info)
 	if (prefix) {					// if there's a path prefix
 	    char buf[1024], *p;
 	    strcpy(buf,prefix);			// copy and replace semicolon
-	    if (p = strchr(buf,';')) *p = '\0';
+	    if ((p = strchr(buf,';'))) *p = '\0';
 	    fprintf(stderr,buf);
 	    fprintf(stderr,"/");
 	}
-	fprintf (stderr,"%s (%dx%d) ...", filename, info->any.width,info->any.height);
+	fprintf (stderr,"%s (%ldx%ld) ...", filename, info->any.width,info->any.height);
 	fflush(stderr);
 
 	if ( imgReadData( file, info ) == FXFALSE ) {
@@ -1981,7 +1981,7 @@ FxBool imgWriteFile(const char *filename, const ImgInfo *info, const ImgType typ
 	exit(2);
     }
     tempInfo.any.type = type;		// set the new type
-    fprintf(stderr,"Storing %s image file %s (%dx%d) ...",
+    fprintf(stderr,"Storing %s image file %s (%ldx%ld) ...",
 		imgTypeName(&tempInfo), filename, info->any.width,info->any.height);
     fflush(stderr);
 

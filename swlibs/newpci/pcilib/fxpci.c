@@ -108,7 +108,7 @@ static PCIErr pciError[] = {
 FX_ENTRY FxU8 FX_CALL
 pioInByte ( unsigned short port )
 {
-  FxU8 data;
+  FxU8 data = 0;
 
   if (pciHwcCallbacks.pioInByte)
     data = pciHwcCallbacks.pioInByte(port);
@@ -120,7 +120,7 @@ pioInByte ( unsigned short port )
 FX_ENTRY FxU16 FX_CALL
 pioInWord ( unsigned short port )
 {
-  FxU16 data;
+  FxU16 data = 0;
 
   if (pciHwcCallbacks.pioInWord)
     data = pciHwcCallbacks.pioInWord(port);
@@ -132,7 +132,7 @@ pioInWord ( unsigned short port )
 FX_ENTRY FxU32 FX_CALL
 pioInLong ( unsigned short port )
 {
-  FxU32 data;
+  FxU32 data = 0;
 
   if (pciHwcCallbacks.pioInLong)
     data = pciHwcCallbacks.pioInLong(port);
@@ -245,14 +245,14 @@ static void printDeviceList(pciDeviceNode *head)
 
   while(head)
     {      
-      printf("bus %d  slot %d  function %d  vendorID 0x%x  deviceID 0x%x\n",
+      printf("bus %ld  slot %ld  function %ld  vendorID 0x%lx  deviceID 0x%lx\n",
 	    head->bus, head->slot, head->function, head->vendorID,
 	     head->deviceID);
       
       for(index=0; index<MAX_PCI_BASEADDRESSES; index++)
 	{
 	  if(head->addresses[index].mapped)
-	    printf("   %s  virtual address: 0x%x\n", baseName[index],
+	    printf("   %s  virtual address: 0x%lx\n", baseName[index],
 		   head->addresses[index].virtualAddress);
 	}
       
@@ -479,7 +479,7 @@ pciGetErrorString( void )
 {
   static char vxdErrString[120];
   if (pciErrorCode == PCI_ERR_WRONGVXD) {
-    sprintf(vxdErrString, "Expected VXD version V%d.%d, got V%d.%d\n",
+    sprintf(vxdErrString, "Expected VXD version V%d.%d, got V%ld.%ld\n",
             FX_MAJOR_VER, FX_MINOR_VER,
             BYTE1(pciVxdVer), BYTE0(pciVxdVer));
     return vxdErrString;

@@ -27,7 +27,7 @@
 #include <stdlib.h>
 #include "linutil.h"
 
-static init_done=0;
+static int init_done=0;
 static struct termios save_termdata;
 
 static void reset_term() {
