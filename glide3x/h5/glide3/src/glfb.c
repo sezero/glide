@@ -379,8 +379,8 @@ static FxBool _grLfbLock (GrLock_t type, GrBuffer_t buffer,
 
   /* Pray that no one has made any glide calls that touch the hardware... */
 #ifdef FX_GLIDE_NAPALM
-  if((gc->sliCount > 1) &&
-     (type == GR_LFB_READ_ONLY)) {
+  if((gc->sliCount > 1)/* &&
+     (type == GR_LFB_READ_ONLY)*/) {
     hwcSLIReadDisable(gc->bInfo);
   }
 #endif
@@ -901,8 +901,8 @@ static FxBool _grLfbLock (GrLock_t type, GrBuffer_t buffer,
         }
         /* Pray that no one makes any glide calls that touch the hardware... */
 #ifdef FX_GLIDE_NAPALM
-        if((gc->sliCount > 1) &&
-           (type == GR_LFB_READ_ONLY)) {
+        if((gc->sliCount > 1)/* &&
+           (type == GR_LFB_READ_ONLY)*/) {
             hwcSLIReadEnable(gc->bInfo);
         }
 #endif
@@ -1114,8 +1114,8 @@ static FxBool _grLfbUnlock (GrLock_t type, GrBuffer_t buffer)
     gc->lockPtrs[type] = (FxU32)-1;
 
 #ifdef FX_GLIDE_NAPALM
-    if((gc->sliCount > 1) &&
-       (type == GR_LFB_READ_ONLY)) {
+    if((gc->sliCount > 1)/* &&
+       (type == GR_LFB_READ_ONLY)*/) {
       hwcSLIReadDisable(gc->bInfo);
     }
 #endif
@@ -1171,8 +1171,8 @@ static FxBool _grLfbUnlock (GrLock_t type, GrBuffer_t buffer)
     gc->cmdTransportInfo.lfbLockCount = lockCount - 1;
   
 #ifdef FX_GLIDE_NAPALM
-    if((gc->sliCount > 1) &&
-       (type == GR_LFB_READ_ONLY)) {
+    if((gc->sliCount > 1)/* &&
+       (type == GR_LFB_READ_ONLY)*/) {
       if(gc->cmdTransportInfo.lfbLockCount != 0) {
         grFinish();
         hwcSLIReadEnable(gc->bInfo);
