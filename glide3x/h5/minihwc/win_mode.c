@@ -156,9 +156,7 @@ ddEnumCbEx( GUID FAR *guid, LPSTR desc, LPSTR name, LPVOID ctx, HMONITOR hmon )
 
 typedef struct _emcStruct {
   FxU32 xRes, yRes, Refresh;
-#ifdef FX_GLIDE_NAPALM
   FxU32 bpp;
-#endif
   FxBool modeOK;
 } EMCData;
 
@@ -620,6 +618,7 @@ setVideoMode( HWND hwnd, int xRes, int yRes, int h3pixelSize, int refresh, void 
   emcData.yRes = yRes;
   emcData.Refresh = refresh;
   emcData.modeOK = FXFALSE;
+  emcData.bpp = bpp;
   
   hResult = IDirectDraw2_EnumDisplayModes(lpDD, 0, &ddsd, 
                                           (LPVOID) &emcData, enumModesCallback);
