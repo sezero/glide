@@ -119,8 +119,8 @@ void grDRIOpen(char *pFB, char *pRegs, int deviceID, int width, int height,
   driInfo.depthOffset=depthOffset;
   driInfo.textureOffset=textureOffset;
   driInfo.textureSize=textureSize;
-  driInfo.fifoPtr=fifoPtr;
-  driInfo.fifoRead=fifoRead;
+  driInfo.fifoPtr=(volatile int **)fifoPtr;
+  driInfo.fifoRead=(volatile int **)fifoRead;
 }
 
 void grDRIPosition(int x, int y, int w, int h, 
@@ -138,7 +138,8 @@ static void loadEnvFile() {
   char data[128];
   char *env, *val;
   envitem *item;
-  int first=1;
+  unsigned int sawError=0;
+  envitem *first=(envitem *)0;
 
   if (envinit) return;
   envinit=1;
@@ -150,9 +151,9 @@ static void loadEnvFile() {
     if (*data=='\n') continue;
     val=strchr(data, '=');
     if (!val) {
-      if (first) {
+      if (sawError) {
 	fprintf(stderr, "In config file /etc/conf.3dfx/voodoo3:\n");
-	first=0;
+	sawError=1;
       }
       fprintf(stderr, "Malformed line: %s\n", data);
       continue;
@@ -223,6 +224,8 @@ hwcInit(FxU32 vID, FxU32 dID) {
     return 0;
   }
 }
+
+extern int getpid();
 
 FxBool
 hwcMapBoard(hwcBoardInfo *bInfo, FxU32 bAddrMask) {
@@ -324,6 +327,11 @@ hwcBufferLfbAddr(const hwcBoardInfo *bInfo, FxU32 physAddress)
   FxU32 tileScanline;
   FxU32 tileRow;
   FxU32 lfbAddress;
+  /*
+   * This is the tile aperture stride.  It should be
+   * a power of two between 1k and 16k.
+   */
+  FxU32 lfbBufferStride = bInfo->buffInfo.bufLfbStride;
   FxU32 lfbYOffset;
 
   if (bInfo->vidInfo.tiled) {    
@@ -357,7 +365,7 @@ hwcBufferLfbAddr(const hwcBoardInfo *bInfo, FxU32 physAddress)
     lfbYOffset = ((tileRow * 32 + tileScanline) << (bInfo->h3nwaySli >> 1));
 
     /* Compute LFB address of tile start */
-    lfbAddress =  bInfo->primaryOffset + lfbYOffset * HWC_LFB_STRIDE + tileXOffset * 128;
+    lfbAddress =  bInfo->primaryOffset + lfbYOffset * lfbBufferStride + tileXOffset * 128;
 
     GDBG_INFO(80, "\tlfbAddress: %08lx\n", lfbAddress);
     retVal = lfbAddress;
@@ -365,6 +373,20 @@ hwcBufferLfbAddr(const hwcBoardInfo *bInfo, FxU32 physAddress)
     retVal = physAddress;
   }
   return retVal;
+}
+
+static FxU32
+calculateLfbStride(FxU32 screenWidth)
+{
+#if	1
+    int TileAperturePitch;
+    for (TileAperturePitch = 1024;
+         (TileAperturePitch < (16 << 10)) && (TileAperturePitch < screenWidth);
+         TileAperturePitch <<= 1);
+    return(TileAperturePitch);
+#else
+    return(0x1000);
+#endif
 }
 
 FxBool
@@ -395,6 +417,7 @@ hwcAllocBuffers(hwcBoardInfo *bInfo, FxU32 nColBuffers, FxU32 nAuxBuffers)
 
   bInfo->buffInfo.bufStride = bufStride;
   bInfo->buffInfo.bufSize = bufSize;
+  bInfo->buffInfo.bufLfbStride = calculateLfbStride(bufStride);
 
   if (bInfo->vidInfo.tiled) {
     bInfo->buffInfo.bufStrideInTiles = (bufStride >> 7);
@@ -451,6 +474,7 @@ hwcAllocBuffers(hwcBoardInfo *bInfo, FxU32 nColBuffers, FxU32 nAuxBuffers)
   GDBG_INFO(80, "\tbufStride:       0x%x\n", bInfo->buffInfo.bufStride);
   GDBG_INFO(80, "\tbufStrideInTiles:0x%x\n", bInfo->buffInfo.bufStrideInTiles);
   GDBG_INFO(80, "\tbufHeightInTiles:0x%x\n", bInfo->buffInfo.bufHeightInTiles);
+  GDBG_INFO(80, "\tbufLfbStride    :0x%x\n", bInfo->buffInfo.bufLfbStride);
   GDBG_INFO(80, "\tnColBuffers:     0x%x\n", bInfo->buffInfo.nColBuffers);
   GDBG_INFO(80, "\tcolBuffStart0[0]:    0x%x\n", bInfo->buffInfo.colBuffStart0[0]);
   GDBG_INFO(80, "\tcolBuffEnd0[0]:      0x%x\n", bInfo->buffInfo.colBuffEnd0[0]);
@@ -575,7 +599,7 @@ calcBufferStride(hwcBoardInfo *bInfo, FxU32 xres, FxBool tiled)
   if (tiled == FXTRUE) {
     /* Calculate tile width stuff */
     strideInTiles = (xres << shift) >> 7;
-    if ((xres << 1) & (HWC_TILE_WIDTH - 1))
+    if ((xres << shift) & (HWC_TILE_WIDTH - 1))
       strideInTiles++;
     
     return (strideInTiles * HWC_TILE_WIDTH);
