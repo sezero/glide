@@ -46,7 +46,7 @@ Hiya,
 This is the first cut of Glide3x for Voodoo Graphics / Voodoo Rush.
 It is a funky combination of Glide2x.SST1 and Glide3x.CVG! While it
 is by no means a complete (super-optimized) Glide3, it provides full
-compatibility with Mesa.
+compatibility with MesaFX.
 
 The main things that I had to change during porting:
  - Glide3 programmable vertex layout
@@ -59,13 +59,7 @@ ToDo list:
  - stipple
  - clip coordinates
  - {STRIP|FAN}_CONTINUE
-
-Caveats:
- - grDrawLine doesn't work for VoodooRush
- - unlike the rest of Voodoo family, Rush
-   doesn't support ZBUFFER format with
-   WBUFFER functions. This is a special
-   case of depth buffering used in Mesa!
+ - testing, compatibility (especially for Rush)
 
 Special note:
 The GCC optimizer sometimes delays FSTP in order to achieve

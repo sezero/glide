@@ -66,20 +66,20 @@ CP = cp
 ###############################################################################
 
 # platform
-CDEFS = -D__linux__ -DINIT_LINUX
+CDEFS = -DINIT_LINUX
 
 # general
-CDEFS += -DGLIDE3 -DGLIDE_HARDWARE
+CDEFS += -DGLIDE3 -DGLIDE3_ALPHA -DGLIDE_HARDWARE
 
 # subsystem
 ifeq ($(FX_GLIDE_HW),sst1)
 CDEFS += -DSST1
-#CDEFS += -DGLIDE_USE_ALT_REGMAP
 else
 ifeq ($(FX_GLIDE_HW),sst96)
 CDEFS += -DSST96
 CDEFS += -DSST96_FIFO
 #CDEFS += -DSST96_ALT_FIFO_WRAP
+CDEFS += -DGLIDE_USE_ALT_REGMAP
 endif
 endif
 
@@ -166,7 +166,7 @@ ifeq ($(FX_GLIDE_HW),sst96)
 GLIDE_OBJECTS += \
 	sst96.o \
 	../../init/init96/init96.o \
-	../../init/init96/dxdrvr.o \
+	../../init/init96/lindrvr.o \
 	../../init/init96/initat3d.o \
 	../../init/init96/initmcrx.o
 endif
