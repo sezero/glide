@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/12/07 21:49:27  joseph
+** Initial checkin into SourceForge.
+**
 ** 
 ** 3     3/17/99 6:16p Dow
 ** Phantom Menace and other fixes.
@@ -61,6 +64,7 @@
 */
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 
 #include <3dfx.h>
 

@@ -35,7 +35,7 @@ static const char name[]    = "test03";
 static const char purpose[] = "draws gouraud shaded lines";
 static const char usage[]   = "-n <frames> -r <res> -d <filename>";
 
-void main( int argc, char **argv) {
+int main( int argc, char **argv) {
     char match; 
     char **remArgs;
     int  rv;
@@ -48,13 +48,13 @@ void main( int argc, char **argv) {
     char                 filename[256];
 
     /* Process Command Line Arguments */
-    while( rv = tlGetOpt( argc, argv, "nrd", &match, &remArgs ) ) {
+    while( (rv = tlGetOpt( argc, argv, "nrd", &match, &remArgs )) ) {
         if ( rv == -1 ) {
             printf( "Unrecognized command line argument\n" );
             printf( "%s %s\n", name, usage );
             printf( "Available resolutions:\n%s\n",
                     tlGetResolutionList() );
-            return;
+	    exit(1);
         }
         switch( match ) {
         case 'n':
@@ -142,7 +142,7 @@ void main( int argc, char **argv) {
     }
     
     grGlideShutdown();
-    return;
+    exit(0);
 }
 
 

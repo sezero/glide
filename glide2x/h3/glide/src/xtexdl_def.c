@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/12/07 21:49:31  joseph
+** Initial checkin into SourceForge.
+**
 ** 
 ** 3     3/17/99 6:17p Dow
 ** Phantom Menace and other fixes.
@@ -97,8 +100,8 @@ _grTexDownload_Default_8_1(struct GrGC_s* gc, const FxU32 tmuBaseAddr,
     FxI32
       shiftTexel = 0;
     FxU32
-      shiftData,
-      shiftMask;
+      shiftData = 0,
+      shiftMask = 0;
       
     for(; t <= maxT; t++) {
       texData |= (*src8++ << (texShift << 3UL));

@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/12/07 21:49:28  joseph
+** Initial checkin into SourceForge.
+**
 ** 
 ** 3     3/17/99 6:16p Dow
 ** Phantom Menace and other fixes.
@@ -1097,10 +1100,10 @@ GR_ENTRY(grTexMultibaseAddress, void,
   /* Write relevant registers out to hardware and shadows */
   {
     GrLOD_t
-      largeLevelLod;
+      largeLevelLod = 0;
     FxU32
-      baseAddrRegIndex,
-      *addrRegShadow;
+      baseAddrRegIndex = 0,
+      *addrRegShadow = 0;
 
     switch (range) {
     case GR_TEXBASE_256:

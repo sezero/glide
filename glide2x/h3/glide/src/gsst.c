@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/12/07 21:49:28  joseph
+** Initial checkin into SourceForge.
+**
 ** 
 ** 4     3/17/99 6:16p Dow
 ** Phantom Menace and other fixes.
@@ -458,30 +461,30 @@ typedef struct {
 } ResEntry;
 
 static ResEntry _resTable[] = {
-  GR_RESOLUTION_320x200, 320, 200, /* 0x0 */
-  GR_RESOLUTION_320x240, 320,  240, /*   0x1 */
-  GR_RESOLUTION_400x256, 400,  256, /*   0x2 */
-  GR_RESOLUTION_512x384, 512,  384, /*   0x3 */
-  GR_RESOLUTION_640x200, 640,  200, /*   0x4 */
-  GR_RESOLUTION_640x350, 640,  350, /*   0x5 */
-  GR_RESOLUTION_640x400, 640,  400, /*   0x6 */
-  GR_RESOLUTION_640x480, 640,  480, /*   0x7 */
-  GR_RESOLUTION_800x600, 800,  600, /*   0x8 */
-  GR_RESOLUTION_960x720, 960,  720, /*   0x9 */
-  GR_RESOLUTION_856x480, 856,  480, /*   0xa */
-  GR_RESOLUTION_512x256, 512,  256, /*   0xb */
-  GR_RESOLUTION_1024x768, 1024,  768, /*  0xC */
-  GR_RESOLUTION_1280x1024, 1280,  1024, /* 0xD */
-  GR_RESOLUTION_1600x1200, 1600,  1200, /* 0xE */
-  GR_RESOLUTION_400x300, 400,  300, /*   0xF */
-  GR_RESOLUTION_1152x864, 1152,  864, /*  0x10 */
-  GR_RESOLUTION_1280x960, 1280,  960, /*  0x11 */
-  GR_RESOLUTION_1600x1024, 1600,  1024, /* 0x12 */
-  GR_RESOLUTION_1792x1344, 1792,  1344, /* 0x13 */
-  GR_RESOLUTION_1856x1392, 1856,  1392, /* 0x14 */
-  GR_RESOLUTION_1920x1440, 1920,  1440, /* 0x15 */
-  GR_RESOLUTION_2048x1536, 2048,  1536, /* 0x16 */
-  GR_RESOLUTION_2048x2048, 2048,  2048 /* 0x17 */
+  {GR_RESOLUTION_320x200, 320, 200}, /* 0x0 */
+  {GR_RESOLUTION_320x240, 320,  240}, /*   0x1 */
+  {GR_RESOLUTION_400x256, 400,  256}, /*   0x2 */
+  {GR_RESOLUTION_512x384, 512,  384}, /*   0x3 */
+  {GR_RESOLUTION_640x200, 640,  200}, /*   0x4 */
+  {GR_RESOLUTION_640x350, 640,  350}, /*   0x5 */
+  {GR_RESOLUTION_640x400, 640,  400}, /*   0x6 */
+  {GR_RESOLUTION_640x480, 640,  480}, /*   0x7 */
+  {GR_RESOLUTION_800x600, 800,  600}, /*   0x8 */
+  {GR_RESOLUTION_960x720, 960,  720}, /*   0x9 */
+  {GR_RESOLUTION_856x480, 856,  480}, /*   0xa */
+  {GR_RESOLUTION_512x256, 512,  256}, /*   0xb */
+  {GR_RESOLUTION_1024x768, 1024,  768}, /*  0xC */
+  {GR_RESOLUTION_1280x1024, 1280,  1024}, /* 0xD */
+  {GR_RESOLUTION_1600x1200, 1600,  1200}, /* 0xE */
+  {GR_RESOLUTION_400x300, 400,  300}, /*   0xF */
+  {GR_RESOLUTION_1152x864, 1152,  864}, /*  0x10 */
+  {GR_RESOLUTION_1280x960, 1280,  960}, /*  0x11 */
+  {GR_RESOLUTION_1600x1024, 1600,  1024}, /* 0x12 */
+  {GR_RESOLUTION_1792x1344, 1792,  1344}, /* 0x13 */
+  {GR_RESOLUTION_1856x1392, 1856,  1392}, /* 0x14 */
+  {GR_RESOLUTION_1920x1440, 1920,  1440}, /* 0x15 */
+  {GR_RESOLUTION_2048x1536, 2048,  1536}, /* 0x16 */
+  {GR_RESOLUTION_2048x2048, 2048,  2048 /* 0x17 */}
 };
 
 
@@ -992,7 +995,7 @@ GR_ENTRY(grSstWinOpen, FxBool, ( FxU32                   hWnd,
       ** This is a hack for gamma setting.
       */
       char *gammastr;
-      if (gammastr = GETENV("SSTV2_GAMMA")) {
+      if ((gammastr = GETENV("SSTV2_GAMMA"))) {
         _GlideRoot.environment.gammaR 
           = _GlideRoot.environment.gammaG 
           = _GlideRoot.environment.gammaB 

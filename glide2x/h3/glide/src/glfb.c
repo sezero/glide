@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/12/07 21:49:27  joseph
+** Initial checkin into SourceForge.
+**
 ** 
 ** 4     3/17/99 6:16p Dow
 ** Phantom Menace and other fixes.
@@ -395,7 +398,7 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t type, GrBuffer_t buffer,
     /* Get the current lfb buffer */
     {
       /* FixMe: Is this true if we're triple buffering? */
-      FxU32 colBufferIndex;
+      FxU32 colBufferIndex = 0;
       
       switch(buffer) {
       case GR_BUFFER_FRONTBUFFER:

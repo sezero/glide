@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/12/07 21:49:28  joseph
+** Initial checkin into SourceForge.
+**
 ** 
 ** 3     3/17/99 6:16p Dow
 ** Phantom Menace and other fixes.
@@ -1004,7 +1007,7 @@ _GlideInitEnvironment(void)
             _GlideRoot.environment.autoBump ? "FXTRUE" : "FXFALSE");
   
   if (GETENV("FX_GLIDE_BUMPSIZE"))
-    sscanf(GETENV("FX_GLIDE_BUMPSIZE"), "%x",
+    sscanf(GETENV("FX_GLIDE_BUMPSIZE"), "%lx",
            &_GlideRoot.environment.bumpSize);
   else
     _GlideRoot.environment.bumpSize = 0x10000;

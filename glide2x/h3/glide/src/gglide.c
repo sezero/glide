@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/12/07 21:49:27  joseph
+** Initial checkin into SourceForge.
+**
 ** 
 ** 3     3/17/99 6:16p Dow
 ** Phantom Menace and other fixes.
@@ -578,83 +581,6 @@ GR_STATE_ENTRY(grAlphaTestReferenceValue, void, (GrAlpha_t value))
 #endif /* !GLIDE3 */
 #undef FN_NAME
 } /* grAlphaTestReferenceValue */
-
-
-
-static void
-_grBufferClear2D(const FxU32 buffOffset, 
-                 const FxU32 clipLeft, const FxU32 clipTop,
-                 const FxU32 width, const FxU32 height, 
-                 const FxU32 color) 
-{
-#define FN_NAME "_grBufferClear2D"
-  FxU32                   /* Registers we use */
-    clip0min, clip0max, dstBaseAddr, dstFormat, commandEx, colorFore, command;
-  FxU32
-    regMask = 0L;
-
-  GR_BEGIN_NOFIFOCHECK("_grBufferClear2D", 86);
-
-#define ADDWAXMASK(mask, reg, base) mask |= (1 << ((offsetof(SstGRegs, reg) - offsetof(SstGRegs, base)) >> 2))
-
-  ADDWAXMASK(regMask, clip0min, clip0min);
-  ADDWAXMASK(regMask, clip0max, clip0min);
-  ADDWAXMASK(regMask, dstBaseAddr, clip0min);        
-  ADDWAXMASK(regMask, dstFormat, clip0min);
-  ADDWAXMASK(regMask, commandEx, clip0min);
-
-  REG_GROUP_BEGIN_WAX(clip0min, 5, regMask);
-
-  /* Setup clipping rectangle based on top left origin */
-  clip0min = ((clipTop << 16) | clipLeft);
-  clip0max = ((clipLeft + width) | ((clipTop + height) << 16));
-  REG_GROUP_SET_WAX(hw, clip0min, clip0min);
-  REG_GROUP_SET_WAX(hw, clip0max, clip0max);
-
-  /* Set buffer address and or in the tiled bit */
-  dstBaseAddr = buffOffset | (1 << 31);
-  REG_GROUP_SET_WAX(hw, dstBaseAddr, dstBaseAddr);
-  
-  /* Build up dstFormat (Should this be done globally?) */
-  dstFormat = gc->strideInTiles;
-  dstFormat |= (0x3 << 16); 
-  REG_GROUP_SET_WAX(hw, dstFormat, dstFormat);
-  
-  /* Setup Command extra */
-  commandEx = 0;
-  REG_GROUP_SET_WAX(hw, commandEx, commandEx);
-        
-  REG_GROUP_END();
-
-
-  regMask = 0L;
-
-  ADDWAXMASK(regMask, colorFore, colorFore);
-  ADDWAXMASK(regMask, dstSize, colorFore);
-  ADDWAXMASK(regMask, dstXY, colorFore);
-  ADDWAXMASK(regMask, command, colorFore);
-
-  REG_GROUP_BEGIN_WAX(colorFore, 4, regMask);
-
-  /* Setup colorFore */
-  colorFore = color;
-  REG_GROUP_SET_WAX(hw, colorFore, colorFore);
-
-  /* Setup dstSize - height/width */
-  REG_GROUP_SET_WAX(hw, dstSize, clip0max);
-
-  /* Setup dstXY - starting coordinate */
-  REG_GROUP_SET_WAX(hw, dstXY, clip0min);
-
-  /* Setup command */
-  command = 0x5;              /* rectangle fill */
-  command |= FXBIT(8);        /* Initiate immediately */
-  command |= 0xcc000000;      /* Src ROP */
-
-  REG_GROUP_SET_WAX(hw, command, command);
-  REG_GROUP_END();
-#undef FN_NAME
-} /* _grBufferClear2D */
 
 
 /*---------------------------------------------------------------------------

@@ -32,6 +32,7 @@
 
 #endif
 #include <fxdll.h>
+#include <minihwc.h>
 
 #define GDBG_MAX_LEVELS 512
 
@@ -46,9 +47,23 @@
 // if debug info turned on then GDBG_INFO does something
 #ifdef GDBG_INFO_ON
 
+// Standard C provides no clean way to do this, but the GNU C tools do..
+#ifdef __GNUC__
+
+#define GDBG_INFO(level, format, args...)	\
+    gdbg_info(level, format , ## args)
+#define GDBG_INFO_MORE(level, format, args...)	\
+    gdbg_info_more(level, format , ## args)
+#define GDBG_PRINTF(format, args...)		\
+    gdbg_printf(format , ## args)
+
+#else
+
 #define GDBG_INFO gdbg_info
 #define GDBG_INFO_MORE gdbg_info_more
 #define GDBG_PRINTF gdbg_printf
+
+#endif
 
 #define GDBG_ERROR_SET_CALLBACK   gdbg_error_set_callback
 #define GDBG_ERROR_CLEAR_CALLBACK gdbg_error_clear_callback
@@ -71,6 +86,15 @@
 #pragma disable_message (111, 201, 302)
 #endif /* defined(__WATCOMC__) || defined(__WATCOM_CPLUSPLUS__) */
 
+// Standard C provides no clean way to do this, but the GNU C tools do..
+#ifdef __GNUC__
+
+#define GDBG_INFO(level, format, args...)
+#define GDBG_INFO_MORE(level, format, args...)
+#define GDBG_PRINTF(format, args...)
+
+#else
+
 #define GDBG_INFO      0 && (unsigned long)
 #define GDBG_INFO_MORE 0 && (unsigned long)
 #define GDBG_PRINTF    0 && (unsigned long)
@@ -78,8 +102,11 @@
 #define GDBG_ERROR_SET_CALLBACK   0 && (unsigned long)
 #define GDBG_ERROR_CLEAR_CALLBACK 0 && (unsigned long)
 
+#endif
+
 #define GDBG_GET_DEBUGLEVEL(x) 0
 #define GDBG_SET_DEBUGLEVEL(a,b)
+
 
 #endif
 

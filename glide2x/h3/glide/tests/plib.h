@@ -99,20 +99,6 @@ void plPopLod( hTexId_t hCurrTexture, mipMapEnd_t mipMapEnd );
 void plPushLod( hTexId_t hCurrTexture, mipMapEnd_t mipMapEnd );
 void plCreateTlTexture( TlTexture *disTlTexture, FxU16 daColors[] );
 
-/* static helper prototypes */
-static void prSetBeenPopd( hTexId_t deTexId, FxBool bBeenPopd );
-static FxU32 prGetLodSize( GrTexInfo *const disTexInfo, GrLOD_t disLOD );
-static FxU32 prTexMultiMemRequired( FxU32 deMipMask, GrTexBaseRange_t deRange,
-																		GrTexInfo* deTexInfo );
-static void prGetLod( GrTexInfo *lpTexInfo, GrLOD_t deLod, void *data );
-static void prPopLod( GrTexInfo *lpDeTexInfo, mipMapEnd_t deMipMapEnd );
-static void prPushLod( GrTexInfo *lpDeTexInfo, mipMapEnd_t deMipMapEnd );
-static FxU32 prGetTxMnAdd( hTexId_t deTexId, GrLOD_t deLod );
-static int prGetLodWidth( GrLOD_t lod, GrAspectRatio_t aspect );
-static int prGetLodHeight( GrLOD_t lod, GrAspectRatio_t aspect );
-static FxU32 prGetMultiMemBump( const GrTexInfo *const deTexInfo, 
-                                  GrTexBaseRange_t deTexBase,
-                                  FxU32 deMipMask );
 
 
 

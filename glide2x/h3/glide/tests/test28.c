@@ -90,7 +90,7 @@ static const char name[]    = "test28";
 static const char purpose[] = "planar polygon test";
 static const char usage[]   = "-n <frames> -r <res>";
 
-void main( int argc, char **argv) {
+int main( int argc, char **argv) {
     char match; 
     char **remArgs;
     int  rv;
@@ -107,13 +107,13 @@ void main( int argc, char **argv) {
     RGB hues[NHUE];
     
     /* Process Command Line Arguments */
-    while( rv = tlGetOpt( argc, argv, "nr", &match, &remArgs ) ) {
+    while( (rv = tlGetOpt( argc, argv, "nr", &match, &remArgs )) ) {
         if ( rv == -1 ) {
             printf( "Unrecognized command line argument\n" );
             printf( "%s %s\n", name, usage );
             printf( "Available resolutions:\n%s\n",
                     tlGetResolutionList() );
-            return;
+            exit(1);
         }
         switch( match ) {
         case 'n':
@@ -222,5 +222,5 @@ void main( int argc, char **argv) {
     }
     
     grGlideShutdown();
-    return;
+    exit(0);
 }

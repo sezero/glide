@@ -164,7 +164,7 @@ static int screenFulls[] = {
 #define NFRAMES 20
 #define NVERTS 3
 
-void main( int argc, char **argv) {
+int main( int argc, char **argv) {
   char match; 
   char **remArgs;
   int  rv;
@@ -187,7 +187,7 @@ void main( int argc, char **argv) {
     y_angle = 0.0f;             /* rotation amount */
     
   int
-    firstTime;                  /* Used for performance calculations */
+    firstTime = 0;              /* Used for performance calculations */
 
   GrPassthruMode_t
     passthruMode = GR_PASSTHRU_SHOW_SST1; /* For toggling passthru */
@@ -211,7 +211,7 @@ void main( int argc, char **argv) {
     swapDelay = 1,              /* Arg to grBufferSwap */
     trisDrawn,                  /* # triangles drawn */
     trisProcessed,              /* # triangles through pipeline */
-    lastFrame,                  /* Number of last frame we did perf stats */
+    lastFrame = 0,              /* Number of last frame we did perf stats */
     frameNum = 0L;              /* id of each frame drawn */
     
   GrCullMode_t
@@ -238,13 +238,13 @@ void main( int argc, char **argv) {
 
 
   /* Process Command Line Arguments */
-  while( rv = tlGetOpt( argc, argv, "nrbtea", &match, &remArgs ) ) {
+  while( (rv = tlGetOpt( argc, argv, "nrbtea", &match, &remArgs )) ) {
     if ( rv == -1 ) {
       printf( "Unrecognized command line argument\n" );
       printf( "%s %s\n", name, usage );
       printf( "Available resolutions:\n%s\n",
              tlGetResolutionList() );
-      return;
+      exit(1);
     }
     switch( match ) {
     case 'n':
@@ -872,7 +872,7 @@ void main( int argc, char **argv) {
         {
           char str[256];
           swapDelay = (int) c - 0x30;
-          sprintf(str, "Swapdelay = %d\n", swapDelay);
+          sprintf(str, "Swapdelay = %ld\n", swapDelay);
           tlConOutput(str);
         }
         break;
@@ -891,4 +891,5 @@ void main( int argc, char **argv) {
       break;
   }
   grGlideShutdown();
+  exit(0);
 }

@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/12/07 21:49:43  joseph
+** Initial checkin into SourceForge.
+**
 ** 
 ** 3     3/17/99 6:14p Dow
 ** Fixes Phantom Menace, OGL, and others.
@@ -34,6 +37,7 @@
 /*
 **  I/O Macros
 */
+#warning Here!
 #define HWC_IO_LOAD(regInfo, reg, val)
 GDBG_INFO(120, "%s:  Storing 0x%x to IO Register %s\n", 
 ((SstIORegs *) regInfo.ioMemBase)->

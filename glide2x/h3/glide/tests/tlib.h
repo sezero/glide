@@ -32,10 +32,7 @@ extern "C" {
  * so that it is a harmless wrapper rather than ((void)0) as in <assert.h>
  */
 #ifndef DEBUG
-#ifdef assert
-#undef assert
-#endif
-#define assert(exp) (exp)
+#define NDEBUG
 #endif
 
 int tlGetOpt( int argc, char *argv[], const char *tags, char *match, char **remArgs[] );

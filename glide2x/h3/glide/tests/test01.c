@@ -35,7 +35,7 @@ static const char name[]    = "test01";
 static const char purpose[] = "draws a diagonal line of points from top-left to bottom-right";
 static const char usage[]   = "-n <frames> -r <res> -d <filename>";
 
-void
+int
 main( int argc, char **argv) {
   char match; 
   char **remArgs;
@@ -49,13 +49,13 @@ main( int argc, char **argv) {
   char                 filename[256];
   
   /* Process Command Line Arguments */
-  while( rv = tlGetOpt( argc, argv, "nrd", &match, &remArgs ) ) {
+  while( (rv = tlGetOpt( argc, argv, "nrd", &match, &remArgs )) ) {
     if ( rv == -1 ) {
       printf( "Unrecognized command line argument\n" );
       printf( "%s %s\n", name, usage );
       printf( "Available resolutions:\n%s\n",
              tlGetResolutionList() );
-      return;
+      exit(1);
     }
     switch( match ) {
     case 'n':
@@ -145,7 +145,7 @@ main( int argc, char **argv) {
   }
   
   grGlideShutdown();
-  return;
+  exit(0);
 }
 
 
