@@ -3,12 +3,93 @@
 ;
 ; $Header$
 ; $Log$
+; Revision 1.1.2.1  2003/06/07 09:53:25  dborca
+; initial checkin for NASM sources
 ;
 
-%undef STDCALL
+;---------------------------------------
+; platform defines
+;---------------------------------------
+%define XOS_DJGPP 1
+%define XOS_LINUX 2
+%define XOS_WIN32 4
 
-%ifdef __WIN32__
+%define STDCALL   0
+
+;---------------------------------------
+; pick up the right OS
+;---------------------------------------
+%ifdef __DJGPP__
+%define XOS XOS_DJGPP
+%elifdef __linux__
+%define XOS XOS_LINUX
+%elifdef __WIN32__
+%define XOS XOS_WIN32
 %define STDCALL 1
+%else
+%error Unknown OS
+%endif
+
+;---------------------------------------
+; general purpose macros
+;---------------------------------------
+%macro	extrn	1-2 0
+	%if (XOS == XOS_WIN32) && STDCALL && (%2 > 0)
+		%define %1 %1@%2
+	%endif
+		extern	%1
+%endmacro
+
+%macro	globl	1-2 0
+	%if (XOS == XOS_WIN32) && STDCALL && (%2 > 0)
+		%define %1 %1@%2
+	%endif
+		global	%1
+%endmacro
+
+%macro		proc	1-2 0
+	%push	proc
+	%if STDCALL && (%2 > 0)
+		%define	%$ret	RET %2
+	%else
+		%define	%$ret	RET
+	%endif
+	globl	%1, %2
+%1:
+%endmacro
+
+%macro		endp	0
+	%ifnctx	proc
+		%error	Mismatched `endp'/`proc'
+	%else
+		%pop
+	%endif
+%endmacro
+
+%macro		ret	0
+	%ifnctx	proc
+		RET
+	%else
+		%$ret
+	%endif
+%endmacro
+
+%macro invoke 1-*
+	%rep	%0 - 1
+	%rotate -1
+	push	%1
+	%endrep
+	%rotate -1
+	call	%1
+%if (STDCALL == 0) && (%0 > 1)
+	add	esp, 4 * (%0 - 1)
+%endif
+%endmacro
+
+;---------------------------------------
+; Windows
+;---------------------------------------
+%if XOS == XOS_WIN32
 
 %define TEXT  .text   align=32
 %define DATA  .data   align=32
@@ -28,13 +109,16 @@
 
 %endif
 
-%ifdef __DJGPP__
+;---------------------------------------
+; DJGPP
+;---------------------------------------
+%if XOS == XOS_DJGPP
 
 %define TEXT  .text
 %define DATA  .data
 %define CONST .rodata
 
-extern threadValueDJGPP
+extrn threadValueDJGPP
 
 %macro SET_TLSBASE 1
 %endmacro
@@ -45,15 +129,19 @@ extern threadValueDJGPP
 %macro GET_GC 2
 	mov	gc, [threadValueDJGPP]
 %endmacro
+
 %endif
 
-%ifdef __linux__
+;---------------------------------------
+; Linux
+;---------------------------------------
+%if XOS == XOS_LINUX
 
 %define TEXT  .text   align=32
 %define DATA  .data   align=32
 %define CONST .rodata align=32
 
-extern threadValueLinux
+extrn threadValueLinux
 
 %macro SET_TLSBASE 1
 %endmacro
@@ -64,26 +152,5 @@ extern threadValueLinux
 %macro GET_GC 2
 	mov	gc, [threadValueLinux]
 %endmacro
-%endif
 
-%macro ret 0-1
-%ifdef STDCALL
-	ret	%1
-%else
-	ret
 %endif
-%endmacro
-
-%macro invoke 1-*
-	%rep	%0 - 1
-	%rotate -1
-	push	%1
-	%endrep
-	%rotate -1
-	call	%1
-%ifndef STDCALL
-%if	%0 > 1
-	add	esp, 4 * (%0 - 1)
-%endif
-%endif
-%endmacro

@@ -6,6 +6,8 @@
 #
 # $Header$
 # $Log$
+# Revision 1.1.2.1  2003/06/07 09:53:25  dborca
+# initial checkin for NASM sources
 #
 
 
@@ -30,7 +32,7 @@ TOP = ../../..
 CPU ?= k6
 
 CC = mingw32-gcc
-CFLAGS = -Wall -O2 -ffast-math -mcpu=k6
+CFLAGS = -Wall -O2 -ffast-math -mcpu=$(CPU)
 CFLAGS += -I$(TOP)/$(FX_GLIDE_HW)/glide3/src -I$(TOP)/$(FX_GLIDE_HW)/incsrc
 CFLAGS += -I$(TOP)/swlibs/fxmisc
 CFLAGS += -D__WIN32__ -DH3

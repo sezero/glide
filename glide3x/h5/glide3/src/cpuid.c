@@ -1,3 +1,11 @@
+/*
+ * CPU detection code
+ *
+ * $Header$
+ * $Log$
+ */
+
+
 #include <signal.h>
 #include <setjmp.h>
 #include <string.h>
@@ -20,23 +28,30 @@ typedef unsigned long word32;
 #define _3DNOWPLUS_FEATURE_BIT	0x40000000
 #define _MMXPLUS_FEATURE_BIT	0x00400000
 
-/* Testing code */
+/* Testing code:
+ * TEST_SSE       = xorps xmm0, xmm0
+ * TEST_SSE2      = xorpd xmm0, xmm0
+ * TEST_3DNOW     = femms
+ * TEST_MMX       = emms
+ * TEST_3DNOWPLUS = femms | pswapd mm0, mm0 | femms
+ * TEST_MMXPLUS   = emms | pminsw mm0, mm0 | emms
+ */
 #ifdef __GNUC__
 #define TEST_CPUID(f)    __asm __volatile ("cpuid"::"a"(f):"%ebx", "%ecx", "%edx")
-#define TEST_SSE()       __asm __volatile ("xorps %xmm0, %xmm0")
-#define TEST_SSE2()      __asm __volatile ("xorpd %xmm0, %xmm0")
-#define TEST_3DNOW()     __asm __volatile ("femms")
-#define TEST_MMX()       __asm __volatile ("emms")
-#define TEST_3DNOWPLUS() __asm __volatile ("femms; pswapd %mm0, %mm0; femms")
-#define TEST_MMXPLUS()   __asm __volatile ("emms; pminsw %mm0, %mm0; emms")
+#define TEST_SSE()       __asm __volatile (".byte 0x0f, 0x57, 0xc0")
+#define TEST_SSE2()      __asm __volatile (".byte 0x66, 0x0f, 0x57, 0xc0")
+#define TEST_3DNOW()     __asm __volatile (".byte 0x0f, 0x0e")
+#define TEST_MMX()       __asm __volatile (".byte 0x0f, 0x77")
+#define TEST_3DNOWPLUS() __asm __volatile (".byte 0x0f, 0x0e, 0x0f, 0x0f, 0xc0, 0xbb, 0x0f, 0x0e")
+#define TEST_MMXPLUS()   __asm __volatile (".byte 0x0f, 0x77, 0x0f, 0xea, 0xc0, 0x0f, 0x77")
 #else
 #define TEST_CPUID(f)    __asm { _asm mov eax, f _asm cpuid }
 #define TEST_SSE()       __asm { _asm _emit 0x0f _asm _emit 0x57 _asm _emit 0xc0 }
 #define TEST_SSE2()      __asm { _asm _emit 0x66 _asm _emit 0x0f _asm _emit 0x57 _asm _emit 0xc0 }
 #define TEST_3DNOW()     __asm { _asm _emit 0x0f _asm _emit 0x0e }
-#define TEST_MMX()       __asm { _asm emms }
+#define TEST_MMX()       __asm { _asm _emit 0x0f _asm _emit 0x77 }
 #define TEST_3DNOWPLUS() __asm { _asm _emit 0x0f _asm _emit 0x0e _asm _emit 0x0f _asm _emit 0x0f _asm _emit 0xc0 _asm _emit 0xbb _asm _emit 0x0f _asm _emit 0x0e }
-#define TEST_MMXPLUS()   __asm { _asm emms _asm _emit 0x0f _asm _emit 0xea _asm _emit 0xc0 _asm emms }
+#define TEST_MMXPLUS()   __asm { _asm _emit 0x0f _asm _emit 0x77 _asm _emit 0x0f _asm _emit 0xea _asm _emit 0xc0 _asm _emit 0x0f _asm _emit 0x77 }
 #endif
 
 
@@ -116,12 +131,14 @@ static int has_feature (int feature)
 
 
 
-/***
-*
-* void map_mname(int, int, const char *, char *) maps family and model to processor name
-*
-****************************************************/
-static void map_mname (int family, int model, const char * v_name, char *m_name)
+/* Desc: maps family and model to processor name
+ *
+ * In  : family, model, vendor, ptr to store name
+ * Out : -
+ *
+ * Note: incomplete
+ */
+static void map_mname (int family, int model, const char *v_name, char *m_name)
 {
  if (!strncmp("AuthenticAMD", v_name, 12)) {
     switch (family) { /* extract family code */
@@ -160,10 +177,12 @@ static void map_mname (int family, int model, const char * v_name, char *m_name)
                 }
                 break;
            case 6: /* Athlon */
-                switch (model) { /* No model numbers are currently defined */
-                       case 1:
+                switch (model) { /* extract model code */
+                       case 3:
+                            strcpy (m_name,"AMD Duron");
+                            break;
                        default:
-                            strcpy (m_name,"AMD ATHLON");
+                            strcpy (m_name,"AMD Athlon");
                 }
                 break;
     }
@@ -244,19 +263,13 @@ static void map_mname (int family, int model, const char * v_name, char *m_name)
 
 
 
-/***
-*
-* int _cpuid (_p_info *pinfo)
-* 
-* Entry:
-*
-*   pinfo: pointer to _p_info.
-*
-* Exit:
-*
-*   Returns int with capablity bit set even if pinfo = NULL
-*
-****************************************************/
+/* Desc: get CPU info
+ *
+ * In  : pointer to _p_info
+ * Out : features
+ *
+ * Note: -
+ */
 int _cpuid (_p_info *pinfo)
 {
  word32 dwStandard = 0;

@@ -19,6 +19,9 @@
 ;; $Header$
 ;; $Revision$
 ;; $Log$
+;; Revision 1.1.8.3  2003/06/07 09:53:24  dborca
+;; initial checkin for NASM sources
+;;
 ;; Revision 1.1.8.1  2003/04/06 18:23:09  koolsmoky
 ;; initial checkin of dos win32 glide
 ;;
@@ -93,16 +96,12 @@
 ;;; Definitions of cvg regs and glide root structures.
 %INCLUDE "fxgasm.h"
 
-extern _GlideRoot
-extern _grValidateState
-%IFDEF __WIN32__
-extern _grCommandTransportMakeRoom@12
-%ELSE
-extern _grCommandTransportMakeRoom
-%ENDIF
+extrn _GlideRoot
+extrn _grCommandTransportMakeRoom, 12
+extrn _grValidateState
 
 %IFDEF HAL_CSIM
-extern halStore32
+extrn halStore32, 8
 %ENDIF
     
 %MACRO GR_FIFO_WRITE 3
@@ -219,31 +218,11 @@ Y       equ 4
 
 %MACRO PROC_TYPE 1
     %IFDEF GL_AMD3D
-        %IFDEF __WIN32__
-            global _trisetup_3DNow_%1@12
-            _trisetup_3DNow_%1@12:
-        %ELSE
-            global _trisetup_3DNow_%1
-            _trisetup_3DNow_%1:
-        %ENDIF
+        proc _trisetup_3DNow_%1, 12
+    %ELIFDEF GL_SSE
+        proc _trisetup_SSE_%1, 12
     %ELSE
-        %IFDEF GL_SSE
-            %IFDEF __WIN32__
-                global _trisetup_SSE_%1@12
-                _trisetup_SSE_%1@12:
-            %ELSE
-                global _trisetup_SSE_%1
-                _trisetup_SSE_%1:
-            %ENDIF
-        %ELSE
-            %IFDEF __WIN32__
-                global _trisetup_Default_%1@12
-                _trisetup_Default_%1@12:
-            %ELSE
-                global _trisetup_Default_%1
-                _trisetup_Default_%1:
-            %ENDIF
-        %ENDIF
+        proc _trisetup_Default_%1, 12
     %ENDIF
 %ENDM
 
@@ -278,6 +257,8 @@ PROC_TYPE clip_nocull_invalid
 %undef GLIDE_CLIP_COORDS
 %undef GLIDE_VALIDATE_STATE
 
+endp
+
             ALIGN  32
 PROC_TYPE clip_cull_invalid
 
@@ -294,6 +275,8 @@ PROC_TYPE clip_cull_invalid
 %undef GLIDE_CULLING
 %undef GLIDE_CLIP_COORDS
 %undef GLIDE_VALIDATE_STATE
+
+endp
         
             ALIGN    32
 PROC_TYPE clip_cull_valid
@@ -311,6 +294,8 @@ PROC_TYPE clip_cull_valid
 %undef GLIDE_CULLING
 %undef GLIDE_CLIP_COORDS
 %undef GLIDE_VALIDATE_STATE
+
+endp
     
             ALIGN    32
 PROC_TYPE clip_nocull_valid
@@ -329,6 +314,8 @@ PROC_TYPE clip_nocull_valid
 %undef GLIDE_CLIP_COORDS
 %undef GLIDE_VALIDATE_STATE
 
+endp
+
             ALIGN    32
 PROC_TYPE win_nocull_invalid
          
@@ -345,6 +332,8 @@ PROC_TYPE win_nocull_invalid
 %undef GLIDE_CULLING
 %undef GLIDE_CLIP_COORDS
 %undef GLIDE_VALIDATE_STATE
+
+endp
 
             ALIGN    32
 PROC_TYPE win_cull_invalid
@@ -363,6 +352,8 @@ PROC_TYPE win_cull_invalid
 %undef GLIDE_CLIP_COORDS
 %undef GLIDE_VALIDATE_STATE
 
+endp
+
             ALIGN    32
 PROC_TYPE win_cull_valid
 
@@ -379,6 +370,8 @@ PROC_TYPE win_cull_valid
 %undef GLIDE_CULLING
 %undef GLIDE_CLIP_COORDS
 %undef GLIDE_VALIDATE_STATE
+
+endp
     
             ALIGN    32
 PROC_TYPE win_nocull_valid
@@ -397,15 +390,11 @@ PROC_TYPE win_nocull_valid
 %undef GLIDE_CLIP_COORDS
 %undef GLIDE_VALIDATE_STATE
 
+endp
+
 %IFDEF       GL_AMD3D
             ALIGN   32
-%IFDEF __WIN32__
-            global  _trisetup_clip_coor_thunk@12
-_trisetup_clip_coor_thunk@12:
-%ELSE
-            global  _trisetup_clip_coor_thunk
-_trisetup_clip_coor_thunk:
-%ENDIF
+proc _trisetup_clip_coor_thunk, 12
 
 %define procPtr eax
 %define vPtr    ecx
@@ -419,8 +408,7 @@ _trisetup_clip_coor_thunk:
 
     ;; If debugging make sure that we're in clip coordinates
 %IFDEF GLIDE_DEBUG
-    mov     eax, [gc + CoordinateSpace]
-    test    eax, 1
+    test    dword [gc + CoordinateSpace], 1
     jnz     __clipSpace
     xor     eax, eax
     mov     [eax], eax
@@ -429,19 +417,14 @@ __clipSpace:
 
     invoke  procPtr, 1, 3, vPtr ; (*gc->curArchProcs.drawTrianglesProc)(grDrawVertexArray, 3, vPtr)
 
-    ret     12                  ; pop 3 dwords (vertex addrs) and return    
+    ret                         ; pop 3 dwords (vertex addrs) and return
+endp
 
 %ENDIF ; GL_AMD3D
 
 %IFDEF GL_SSE
             ALIGN   32
-%IFDEF __WIN32__
-            global  _trisetup_SSE_clip_coor_thunk@12
-_trisetup_SSE_clip_coor_thunk@12:
-%ELSE
-            global  _trisetup_SSE_clip_coor_thunk
-_trisetup_SSE_clip_coor_thunk:
-%ENDIF
+proc _trisetup_SSE_clip_coor_thunk, 12
 
 %define procPtr eax
 %define vPtr    ecx
@@ -455,8 +438,7 @@ _trisetup_SSE_clip_coor_thunk:
 
     ;; If debugging make sure that we're in clip coordinates
 %IFDEF GLIDE_DEBUG
-    mov     eax, [gc + CoordinateSpace]
-    test    eax, 1
+    test    dword [gc + CoordinateSpace], 1
     jnz     __clipSpace
     xor     eax, eax
     mov     [eax], eax
@@ -465,6 +447,7 @@ __clipSpace:
 
     invoke  procPtr, 1, 3, vPtr ; (*gc->curArchProcs.drawTrianglesProc)(grDrawVertexArray, 3, vPtr)
 
-    ret     12                  ; pop 3 dwords (vertex addrs) and return    
+    ret                         ; pop 3 dwords (vertex addrs) and return
+endp
 
 %ENDIF ; GL_SSE

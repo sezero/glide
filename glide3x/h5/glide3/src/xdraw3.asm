@@ -21,13 +21,9 @@
 
 %include "xos.inc"
 
-extern _GlideRoot
-extern _grValidateState
-%IFDEF __WIN32__
-extern _grCommandTransportMakeRoom@12
-%ELSE
-extern _grCommandTransportMakeRoom
-%ENDIF
+extrn _GlideRoot
+extrn _grValidateState
+extrn _grCommandTransportMakeRoom, 12
 
 %ifdef GL_AMD3D
 
@@ -54,19 +50,10 @@ vertices        DD    0
 segment		TEXT
 
             ALIGN 32
-%IFDEF __WIN32__
-global  _grDrawTriangles_3DNow@12
-%ELSE
-global  _grDrawTriangles_3DNow
-%ENDIF
+proc _grDrawTriangles_3DNow, 12
 %define _mode     20
 %define _count    24
 %define _pointers 28
-%IFDEF __WIN32__
-_grDrawTriangles_3DNow@12:
-%ELSE
-_grDrawTriangles_3DNow:
-%ENDIF
 
 ; 930  : {
 ; 931  : #define FN_NAME "_grDrawTriangles"
@@ -198,11 +185,7 @@ _grDrawTriangles_3DNow:
     cmp       eax, ecx                   ; fifo space avail >= packet size ?
     jge       .win_tri_begin_ND          ; yup, start writing triangle data
 
-%IFDEF __WIN32__
-    invoke    _grCommandTransportMakeRoom@12, ecx, 0, __LINE__; note: updates fifoPtr
-%ELSE
     invoke    _grCommandTransportMakeRoom, ecx, 0, __LINE__; note: updates fifoPtr
-%ENDIF
 
         align   32
 .win_tri_begin_ND:
@@ -316,7 +299,7 @@ _grDrawTriangles_3DNow:
     pop       esi                        ; restore caller's register variable
     pop       edi                        ; restore caller's register variable
 
-    ret       12                         ; return, pop 3 DWORD parameters off stack
+    ret                                  ; return, pop 3 DWORD parameters off stack
 
 .fifo_aligned_ND:
 
@@ -398,7 +381,7 @@ _grDrawTriangles_3DNow:
     pop       esi                        ; restore caller's register variable
     pop       edi                        ; restore caller's register variable
 
-    ret       12                         ; return, pop 3 DWORD parameters off stack
+    ret                                  ; return, pop 3 DWORD parameters off stack
 
     align 32
 
@@ -427,11 +410,7 @@ _grDrawTriangles_3DNow:
     cmp       eax, ecx                   ; fifo space avail >= packet size ?
     jge       .win_tri_begin_D           ; yup, start writing triangle data
 
-%IFDEF __WIN32__
-    invoke    _grCommandTransportMakeRoom@12, ecx, 0, __LINE__ ; note: updates fifoPtr
-%ELSE
     invoke    _grCommandTransportMakeRoom, ecx, 0, __LINE__ ; note: updates fifoPtr
-%ENDIF
 
         align 32
 .win_tri_begin_D:
@@ -523,7 +502,7 @@ _grDrawTriangles_3DNow:
     pop       esi                        ; restore caller's register variable
     pop       edi                        ; restore caller's register variable
 
-    ret       12                         ; return, pop 3 DWORD parameters off stack
+    ret                                  ; return, pop 3 DWORD parameters off stack
 
 .fifo_aligned_D:
 
@@ -605,7 +584,7 @@ _grDrawTriangles_3DNow:
     pop       esi                        ; restore caller's register variable
     pop       edi                        ; restore caller's register variable
 
-    ret       12                         ; return, pop 3 DWORD parameters off stack
+    ret                                  ; return, pop 3 DWORD parameters off stack
 
     ALIGN     32
 
@@ -671,11 +650,7 @@ _grDrawTriangles_3DNow:
     cmp       eax, ecx                   ; fifo space avail >= packet size ?
     jge       .clip_tri_begin            ; yup, start writing triangle data
 
-%IFDEF __WIN32__
-    invoke    _grCommandTransportMakeRoom@12, ecx, 0, __LINE__ ; note: updates fifoPtr
-%ELSE
     invoke    _grCommandTransportMakeRoom, ecx, 0, __LINE__ ; note: updates fifoPtr
-%ENDIF
 
         align 32
 .clip_tri_begin:
@@ -1098,7 +1073,8 @@ _grDrawTriangles_3DNow:
     pop       esi                        ; restore caller's register variable
     pop       edi                        ; restore caller's register variable
 
-    ret       12                         ; return, pop 3 DWORD parameters
+    ret                                  ; return, pop 3 DWORD parameters
+endp
 
 _pktype   equ 20
 _type     equ 24
@@ -1118,13 +1094,8 @@ _type     equ 24
 %define Y 4
 
                   ALIGN  32
-%IFDEF __WIN32__
-    global  _grDrawVertexList_3DNow_Window@20
-_grDrawVertexList_3DNow_Window@20:
-%ELSE
-    global  _grDrawVertexList_3DNow_Window
-_grDrawVertexList_3DNow_Window:
-%ENDIF
+
+proc _grDrawVertexList_3DNow_Window, 20
 ; 132  : {
 
     SET_TLSBASE edx                      ; get thread local storage base pointer
@@ -1205,11 +1176,7 @@ _grDrawVertexList_3DNow_Window:
     cmp       eax, ecx                   ; fifo space avail >= packet size ?
     jge       .win_strip_begin_ND        ; yup, start writing strip data
 
-%IFDEF __WIN32__
-    invoke    _grCommandTransportMakeRoom@12, ecx, 0, __LINE__; note: updates fifoPtr
-%ELSE
     invoke    _grCommandTransportMakeRoom, ecx, 0, __LINE__; note: updates fifoPtr
-%ENDIF
 
         align 32
 .win_strip_begin_ND:
@@ -1338,7 +1305,7 @@ _grDrawVertexList_3DNow_Window:
     pop       esi                        ; restore caller's register variable
     pop       edi                        ; restire caller's register variable
 
-    ret       20                         ; return, pop 5 DWORD parameters off stack
+    ret                                  ; return, pop 5 DWORD parameters off stack
 
     ALIGN 32
 
@@ -1438,7 +1405,7 @@ _grDrawVertexList_3DNow_Window:
     pop       esi                        ; restore caller's register variable
     pop       edi                        ; restire caller's register variable
 
-    ret       20                         ; return, pop 5 DWORD parameters off stack
+    ret                                  ; return, pop 5 DWORD parameters off stack
 
     ALIGN 32
     
@@ -1466,11 +1433,7 @@ _grDrawVertexList_3DNow_Window:
     cmp       eax, ecx                   ; fifo space avail >= packet size ?
     jge       .win_strip_begin_D         ; yup, start writing strip data
 
-%IFDEF __WIN32__
-    invoke    _grCommandTransportMakeRoom@12, ecx, 0, __LINE__; note: updates fifoPtr
-%ELSE
     invoke    _grCommandTransportMakeRoom, ecx, 0, __LINE__; note: updates fifoPtr
-%ENDIF
 
         align 32
 .win_strip_begin_D:
@@ -1600,7 +1563,7 @@ _grDrawVertexList_3DNow_Window:
     pop       esi                        ; restore caller's register variable
     pop       edi                        ; restire caller's register variable
 
-    ret       20                         ; return, pop 5 DWORD parameters off stack
+    ret                                  ; return, pop 5 DWORD parameters off stack
 
     ALIGN 32
 
@@ -1701,20 +1664,15 @@ _grDrawVertexList_3DNow_Window:
     pop       esi                        ; restore caller's register variable
     pop       edi                        ; restire caller's register variable
 
-    ret       20                         ; return, pop 5 DWORD parameters off stack
+    ret                                  ; return, pop 5 DWORD parameters off stack
+endp
 
 
    
 
     ALIGN 32
 
-%IFDEF __WIN32__
-    global  _grDrawVertexList_3DNow_Clip@20
-_grDrawVertexList_3DNow_Clip@20:
-%ELSE
-    global  _grDrawVertexList_3DNow_Clip
-_grDrawVertexList_3DNow_Clip:
-%ENDIF
+proc _grDrawVertexList_3DNow_Clip, 20
 ; 132  : {
 
     SET_TLSBASE edx                      ; get thread local storage base pointer
@@ -1794,11 +1752,7 @@ _grDrawVertexList_3DNow_Clip:
     cmp       eax, ecx                   ; fifo space avail >= packet size ?
     jge       .clip_strip_begin          ; yup, start writing strip data
 
-%IFDEF __WIN32__
-    invoke    _grCommandTransportMakeRoom@12, ecx, 0, __LINE__; note: updates fifoPtr
-%ELSE
     invoke    _grCommandTransportMakeRoom, ecx, 0, __LINE__; note: updates fifoPtr
-%ENDIF
 
         align 32
 .clip_strip_begin:
@@ -2184,7 +2138,8 @@ _grDrawVertexList_3DNow_Clip:
     pop       esi                        ; restore caller's register variable
     pop       edi                        ; restore caller's register variable
 
-    ret       20                         ; return, pop 5 DWORD parameters off stack
+    ret                                  ; return, pop 5 DWORD parameters off stack
+endp
 
 ;;--------------------------------------------------------------------------
 ;; end AMD3D version
@@ -2216,19 +2171,10 @@ vertices        DD    0
 segment		TEXT
 
             ALIGN 32
-%IFDEF __WIN32__
-global  _grDrawTriangles_SSE@12
-%ELSE
-global  _grDrawTriangles_SSE
-%ENDIF
+proc _grDrawTriangles_SSE, 12
 %define _mode     20
 %define _count    24
 %define _pointers 28
-%IFDEF __WIN32__
-_grDrawTriangles_SSE@12:
-%ELSE
-_grDrawTriangles_SSE:
-%ENDIF
 
 ; 930  : {
 ; 931  : #define FN_NAME "_grDrawTriangles"
@@ -2367,11 +2313,7 @@ _grDrawTriangles_SSE:
     cmp       eax, ecx                   ; fifo space avail >= packet size ?
     jge       .win_tri_begin_ND          ; yup, start writing triangle data
 
-%IFDEF __WIN32__
-    invoke    _grCommandTransportMakeRoom@12, ecx, 0, __LINE__; note: updates fifoPtr
-%ELSE
     invoke    _grCommandTransportMakeRoom, ecx, 0, __LINE__; note: updates fifoPtr
-%ENDIF
 
         align   32
 .win_tri_begin_ND:
@@ -2483,7 +2425,7 @@ _grDrawTriangles_SSE:
     pop       esi                        ; restore caller's register variable
     pop       edi                        ; restore caller's register variable
 
-    ret       12                         ; return, pop 3 DWORD parameters off stack
+    ret                                  ; return, pop 3 DWORD parameters off stack
 
 .fifo_aligned_ND:
 
@@ -2577,7 +2519,7 @@ _grDrawTriangles_SSE:
     pop       esi                        ; restore caller's register variable
     pop       edi                        ; restore caller's register variable
 
-    ret       12                         ; return, pop 3 DWORD parameters off stack
+    ret                                  ; return, pop 3 DWORD parameters off stack
 
     align 32
 
@@ -2606,11 +2548,7 @@ _grDrawTriangles_SSE:
     cmp       eax, ecx                   ; fifo space avail >= packet size ?
     jge       .win_tri_begin_D           ; yup, start writing triangle data
 
-%IFDEF __WIN32__
-    invoke    _grCommandTransportMakeRoom@12, ecx, 0, __LINE__; note: updates fifoPtr
-%ELSE
     invoke    _grCommandTransportMakeRoom, ecx, 0, __LINE__; note: updates fifoPtr
-%ENDIF
 
         align 32
 .win_tri_begin_D:
@@ -2700,7 +2638,7 @@ _grDrawTriangles_SSE:
     pop       esi                        ; restore caller's register variable
     pop       edi                        ; restore caller's register variable
 
-    ret       12                         ; return, pop 3 DWORD parameters off stack
+    ret                                  ; return, pop 3 DWORD parameters off stack
 
 .fifo_aligned_D:
 
@@ -2797,7 +2735,7 @@ _grDrawTriangles_SSE:
     pop       esi                        ; restore caller's register variable
     pop       edi                        ; restore caller's register variable
 
-    ret       12                         ; return, pop 3 DWORD parameters off stack
+    ret                                  ; return, pop 3 DWORD parameters off stack
 
     ALIGN     32
 
@@ -2863,11 +2801,7 @@ _grDrawTriangles_SSE:
     cmp       eax, ecx                   ; fifo space avail >= packet size ?
     jge       .clip_tri_begin            ; yup, start writing triangle data
 
-%IFDEF __WIN32__
-    invoke    _grCommandTransportMakeRoom@12, ecx, 0, __LINE__; note: updates fifoPtr
-%ELSE
     invoke    _grCommandTransportMakeRoom, ecx, 0, __LINE__; note: updates fifoPtr
-%ENDIF
 
         align 32
 .clip_tri_begin:
@@ -3289,7 +3223,8 @@ _grDrawTriangles_SSE:
     pop       esi                        ; restore caller's register variable
     pop       edi                        ; restore caller's register variable
 
-    ret       12                         ; return, pop 3 DWORD parameters
+    ret                                  ; return, pop 3 DWORD parameters
+endp
 
 _pktype   equ 20
 _type     equ 24
@@ -3310,13 +3245,7 @@ _type     equ 24
 
                   ALIGN  32
 
-%IFDEF __WIN32__
-    global  _grDrawVertexList_SSE_Window@20
-_grDrawVertexList_SSE_Window@20:
-%ELSE
-    global  _grDrawVertexList_SSE_Window
-_grDrawVertexList_SSE_Window:
-%ENDIF
+proc _grDrawVertexList_SSE_Window, 20
 ; 132  : {
 
     SET_TLSBASE edx                      ; get thread local storage base pointer
@@ -3404,11 +3333,7 @@ _grDrawVertexList_SSE_Window:
     cmp       eax, ecx                   ; fifo space avail >= packet size ?
     jge       .win_strip_begin_ND        ; yup, start writing strip data
 
-%IFDEF __WIN32__
-    invoke    _grCommandTransportMakeRoom@12, ecx, 0, __LINE__; note: updates fifoPtr
-%ELSE
     invoke    _grCommandTransportMakeRoom, ecx, 0, __LINE__; note: updates fifoPtr
-%ENDIF
 
         align 32
 .win_strip_begin_ND:
@@ -3535,7 +3460,7 @@ _grDrawVertexList_SSE_Window:
     pop       esi                        ; restore caller's register variable
     pop       edi                        ; restire caller's register variable
 
-    ret       20                         ; return, pop 5 DWORD parameters off stack
+    ret                                  ; return, pop 5 DWORD parameters off stack
 
     ALIGN 32
 
@@ -3647,7 +3572,7 @@ _grDrawVertexList_SSE_Window:
     pop       esi                        ; restore caller's register variable
     pop       edi                        ; restire caller's register variable
 
-    ret       20                         ; return, pop 5 DWORD parameters off stack
+    ret                                  ; return, pop 5 DWORD parameters off stack
 
     ALIGN 32
     
@@ -3682,11 +3607,7 @@ _grDrawVertexList_SSE_Window:
     cmp       eax, ecx                   ; fifo space avail >= packet size ?
     jge       .win_strip_begin_D         ; yup, start writing strip data
 
-%IFDEF __WIN32__
-    invoke    _grCommandTransportMakeRoom@12, ecx, 0, __LINE__; note: updates fifoPtr
-%ELSE
     invoke    _grCommandTransportMakeRoom, ecx, 0, __LINE__; note: updates fifoPtr
-%ENDIF
 
         align 32
 .win_strip_begin_D:
@@ -3814,7 +3735,7 @@ _grDrawVertexList_SSE_Window:
     pop       esi                        ; restore caller's register variable
     pop       edi                        ; restire caller's register variable
 
-    ret       20                         ; return, pop 5 DWORD parameters off stack
+    ret                                  ; return, pop 5 DWORD parameters off stack
 
     ALIGN 32
 
@@ -3930,20 +3851,15 @@ _grDrawVertexList_SSE_Window:
     pop       esi                        ; restore caller's register variable
     pop       edi                        ; restire caller's register variable
 
-    ret       20                         ; return, pop 5 DWORD parameters off stack
+    ret                                  ; return, pop 5 DWORD parameters off stack
+endp
 
 
    
 
     ALIGN 32
 
-%IFDEF __WIN32__
-    global  _grDrawVertexList_SSE_Clip@20
-_grDrawVertexList_SSE_Clip@20:
-%ELSE
-    global  _grDrawVertexList_SSE_Clip
-_grDrawVertexList_SSE_Clip:
-%ENDIF
+proc _grDrawVertexList_SSE_Clip, 20
 ; 132  : {
 
     SET_TLSBASE edx                      ; get thread local storage base pointer
@@ -4023,11 +3939,7 @@ _grDrawVertexList_SSE_Clip:
     cmp       eax, ecx                   ; fifo space avail >= packet size ?
     jge       .clip_strip_begin          ; yup, start writing strip data
 
-%IFDEF __WIN32__
-    invoke    _grCommandTransportMakeRoom@12, ecx, 0, __LINE__; note: updates fifoPtr
-%ELSE
     invoke    _grCommandTransportMakeRoom, ecx, 0, __LINE__; note: updates fifoPtr
-%ENDIF
 
         align 32
 .clip_strip_begin:
@@ -4412,7 +4324,8 @@ _grDrawVertexList_SSE_Clip:
     pop       esi                        ; restore caller's register variable
     pop       edi                        ; restore caller's register variable
 
-    ret       20                         ; return, pop 5 DWORD parameters off stack
+    ret                                  ; return, pop 5 DWORD parameters off stack
+endp
 
 ;;--------------------------------------------------------------------------
 ;; end SSE version
@@ -4465,13 +4378,7 @@ _pointers equ 36
 
         ALIGN 32
 
-%IFDEF __WIN32__
-        global _drawvertexlist@20
-_drawvertexlist@20:
-%ELSE
-        global _drawvertexlist
-_drawvertexlist:
-%ENDIF
+proc _drawvertexlist, 20
 ; 132  : {
 
         SET_TLSBASE eax              ; get thread local storage base pointer
@@ -4543,11 +4450,7 @@ _drawvertexlist:
         add     eax, 4
         cmp     ecx, eax
         jge     .win_strip_begin
-%IFDEF __WIN32__
-        invoke  _grCommandTransportMakeRoom@12, eax, 0, __LINE__
-%ELSE
         invoke  _grCommandTransportMakeRoom, eax, 0, __LINE__
-%ENDIF
         
         align 4
 .win_strip_begin:
@@ -4664,7 +4567,8 @@ _drawvertexlist:
           pop     ebx
         pop     edi
           pop     esi
-        ret     20                      ; 00000014H
+        ret                             ; 00000014H
+endp
 
 %define gc                 esi       ; points to graphics context
 %define fifo               ecx       ; points to next entry in fifo
@@ -4672,13 +4576,7 @@ _drawvertexlist:
 
         ALIGN 32    
 
-%IFDEF __WIN32__
-        global _vpdrawvertexlist@20
-_vpdrawvertexlist@20:
-%ELSE
-        global _vpdrawvertexlist
-_vpdrawvertexlist:
-%ENDIF
+proc _vpdrawvertexlist, 20
 
         SET_TLSBASE eax              ; tls base pointer
         push    esi
@@ -4749,11 +4647,7 @@ _vpdrawvertexlist:
         add     eax, 4
         cmp     ecx, eax
         jge     .clip_strip_begin
-%IFDEF __WIN32__
-        invoke  _grCommandTransportMakeRoom@12, eax, 0, __LINE__
-%ELSE        
         invoke  _grCommandTransportMakeRoom, eax, 0, __LINE__
-%ENDIF
 
             align 4
 .clip_strip_begin:
@@ -5121,7 +5015,8 @@ _vpdrawvertexlist:
         pop     edi
         pop     esi
     
-        ret     20                      ; 00000014H
+        ret                             ; 00000014H
+endp
 
 %define gc                 esi       ; points to graphics context
 %define fifo               ecx       ; points to next entry in fifo
@@ -5136,13 +5031,7 @@ _vpdrawvertexlist:
 
         ALIGN 32    
 
-%IFDEF __WIN32__
-    global  _vptrisetup_cull@12
-_vptrisetup_cull@12:
-%ELSE
-    global  _vptrisetup_cull
-_vptrisetup_cull:
-%ENDIF
+proc _vptrisetup_cull, 12
 _va equ 20
 _vb equ 24
 _vc equ 28
@@ -5198,12 +5087,8 @@ _vc equ 28
         
         cmp     ecx, eax
         jge     .setup_pkt_hdr
-
-%IFDEF __WIN32__
-        invoke  _grCommandTransportMakeRoom@12, eax, 0, __LINE__
-%ELSE        
+        
         invoke  _grCommandTransportMakeRoom, eax, 0, __LINE__
-%ENDIF
 
         align 4
 .setup_pkt_hdr:
@@ -5534,7 +5419,8 @@ _vc equ 28
     
         pop     ebx
         
-        ret     12                      ; 0000000cH
+        ret                             ; 0000000cH
+endp
 
 %endif  ; !GL_SSE
 %endif  ; !GL_MMX

@@ -20,6 +20,9 @@
 ;; $Header$
 ;; $Revision$
 ;; $Log$
+;; Revision 1.1.8.3  2003/06/07 09:53:24  dborca
+;; initial checkin for NASM sources
+;;
 ;; Revision 1.1.8.1  2003/04/06 18:23:09  koolsmoky
 ;; initial checkin of dos win32 glide
 ;;
@@ -120,7 +123,7 @@
     pop       esi                   ; restore caller's register variable
     pop       edi                   ; restore caller's register variable
 
-    ret       12                    ; return, pop 3 DWORD arguments off stack
+    ret                             ; return, pop 3 DWORD arguments off stack
 
 win_coordinates:
 %endif  ; GLIDE_CLIP_COORDS
@@ -191,11 +194,7 @@ win_coordinates:
     cmp       ebx, tempVal          ; fifo space required >= space available ?
     jge       .__triBegin           ; yup, push out triangle data to Voodoo
 
-%IFDEF __WIN32__
-    invoke    _grCommandTransportMakeRoom@12, tempVal, 0, __LINE__; note: updates fifoPtr
-%ELSE
     invoke    _grCommandTransportMakeRoom, tempVal, 0, __LINE__; note: updates fifoPtr
-%ENDIF
     
     jmp       .__triBegin           ; merge back with short path
 
@@ -213,11 +212,7 @@ win_coordinates:
     cmp       ebx, tempVal          ; fifo spce available >= space needed ?
     jge       .__triBegin           ; yup, ready to draw triangle
 
-%IFDEF __WIN32__
-    invoke    _grCommandTransportMakeRoom@12, tempVal, 0, __LINE__; note: updates fifoPtr
-%ELSE
     invoke    _grCommandTransportMakeRoom, tempVal, 0, __LINE__; note: updates fifoPtr
-%ENDIF
 %ELSE   ; !GLIDE_CULLING
 
     ;; Prologue stuff
@@ -252,7 +247,7 @@ win_coordinates:
     pop       esi                   ; restore caller's register variable
     pop       edi                   ; restore caller's register variable
 
-    ret       12                    ; return, pop 3 DWORD arguments off stack
+    ret                             ; return, pop 3 DWORD arguments off stack
 
     ALIGN  16
 win_coordinates:
@@ -278,11 +273,7 @@ no_validation:
     cmp       ebx, tempVal          ; fifo spce available >= space needed ?
     jge       .__triBegin           ; yup, ready to draw triangle
 
-%IFDEF __WIN32__
-    invoke    _grCommandTransportMakeRoom@12, tempVal, 0, __LINE__; note: updates fifoPtr
-%ELSE
     invoke    _grCommandTransportMakeRoom, tempVal, 0, __LINE__; note: updates fifoPtr
-%ENDIF    
     
     jmp       .__triBegin           ; large distance due to alignment
 %endif ; GLIDE_CULLING
@@ -580,7 +571,7 @@ no_validation:
 
     femms                           ; no more AMD3D code, clear FPU/MMX regs
 
-    ret       12                    ; return to caller
+    ret                             ; return to caller
 
 
 %IF GLIDE_CULLING
@@ -601,7 +592,7 @@ no_validation:
     pop       esi
     pop       edi
 
-    ret       12
+    ret
 %ENDIF ; GLIDE_CULLING
 %ENDIF ; !GLIDE_CLIP_COORDS
 
@@ -672,7 +663,7 @@ no_validation:
     pop       esi                   ; restore caller's register variable
     pop       edi                   ; restore caller's register variable
 
-    ret       12                    ; return, pop 3 DWORD arguments off stack
+    ret                             ; return, pop 3 DWORD arguments off stack
 
 win_coordinates:
 %endif  ; GLIDE_CLIP_COORDS
@@ -755,11 +746,7 @@ win_coordinates:
     cmp       ebx, tempVal          ; fifo space required >= space available ?
     jge       .__triBegin           ; yup, push out triangle data to Voodoo
 
-%IFDEF __WIN32__
-    invoke    _grCommandTransportMakeRoom@12, tempVal, 0, __LINE__; note: updates fifoPtr
-%ELSE
     invoke    _grCommandTransportMakeRoom, tempVal, 0, __LINE__; note: updates fifoPtr
-%ENDIF
     
     jmp       .__triBegin           ; merge back with short path
 
@@ -777,11 +764,7 @@ win_coordinates:
     cmp       ebx, tempVal          ; fifo spce available >= space needed ?
     jge       .__triBegin           ; yup, ready to draw triangle
 
-%IFDEF __WIN32__
-    invoke    _grCommandTransportMakeRoom@12, tempVal, 0, __LINE__; note: updates fifoPtr
-%ELSE
     invoke    _grCommandTransportMakeRoom, tempVal, 0, __LINE__; note: updates fifoPtr
-%ENDIF
 %ELSE   ; !GLIDE_CULLING
 
     ;; Prologue stuff
@@ -816,7 +799,7 @@ win_coordinates:
     pop       esi                   ; restore caller's register variable
     pop       edi                   ; restore caller's register variable
 
-    ret       12                    ; return, pop 3 DWORD arguments off stack
+    ret                             ; return, pop 3 DWORD arguments off stack
 
     ALIGN  16
 win_coordinates:
@@ -849,11 +832,7 @@ no_validation:
     cmp       ebx, tempVal          ; fifo spce available >= space needed ?
     jge       .__triBegin           ; yup, ready to draw triangle
 
-%IFDEF __WIN32__
-    invoke    _grCommandTransportMakeRoom@12, tempVal, 0, __LINE__; note: updates fifoPtr
-%ELSE
     invoke    _grCommandTransportMakeRoom, tempVal, 0, __LINE__; note: updates fifoPtr
-%ENDIF
     
     jmp       .__triBegin           ; large distance due to alignment
 %endif ; GLIDE_CULLING
@@ -1149,7 +1128,7 @@ no_validation:
     pop       esi                   ; restore caller's register variable
     pop       edi                   ; restore caller's register variable
 
-    ret       12                    ; return to caller
+    ret                             ; return to caller
 
 
 %IF GLIDE_CULLING
@@ -1168,7 +1147,7 @@ no_validation:
     pop       esi
     pop       edi
 
-    ret       12
+    ret
 %ENDIF ; GLIDE_CULLING
 %ENDIF ; !GLIDE_CLIP_COORDS
 
@@ -1322,12 +1301,8 @@ no_validation:
     cmp     ebx, eax
 
     jge     .__triBegin
-
-%IFDEF __WIN32__    
-    invoke  _grCommandTransportMakeRoom@12, eax, 0, __LINE__
-%ELSE
+    
     invoke  _grCommandTransportMakeRoom, eax, 0, __LINE__
-%ENDIF
 
     ;; Send triangle parameters
     
@@ -1427,7 +1402,7 @@ no_validation:
     mov     [gc + trisProcessed], ecx
         
     pop     esi
-    ret     12
+    ret
 %ENDIF ; !GLIDE_CLIP_COOR
 %ENDIF ; !GL_SSE
 %ENDIF ; !GL_AMD3D
