@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.2  2001/03/05 15:02:18  alanh
+** Set FX_GLIDE_SWAPINTERVAL to 0 by default
+**
 ** Revision 1.1.1.1  1999/11/24 21:44:57  joseph
 ** Initial checkin for SourceForge
 **
@@ -893,6 +896,8 @@ _GlideInitEnvironment(void)
   GDBG_INFO(80,"      swapInterval: %d\n",_GlideRoot.environment.swapInterval);
   _GlideRoot.environment.snapshot          = GLIDE_GETENV("FX_SNAPSHOT", -1L);
   GDBG_INFO(80,"          snapshot: %d\n",_GlideRoot.environment.snapshot);
+
+  _GlideRoot.environment.swapPendingCount  = 3;
 
   _GlideRoot.environment.gammaR = GLIDE_FGETENV("SSTH3_RGAMMA", -1.f);
   _GlideRoot.environment.gammaG = GLIDE_FGETENV("SSTH3_GGAMMA", -1.f);

@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.1  2003/11/03 13:34:29  dborca
+** Voodoo2 happiness (DJGPP & Linux)
+**
 ** Revision 1.1.1.1  1999/12/07 21:42:33  joseph
 ** Initial checkin into SourceForge.
 **
@@ -1703,10 +1706,7 @@ GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
   -------------------------------------------------------------------*/
 GR_DIENTRY(grSetNumPendingBuffers, void, (FxI32 NumPendingBuffers))
 {
-  /* [dBorca] TODO
-   *
   _GlideRoot.environment.swapPendingCount = NumPendingBuffers;
-   */
 }
 
 /*-------------------------------------------------------------------

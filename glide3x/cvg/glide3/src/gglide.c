@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/12/07 21:42:32  joseph
+** Initial checkin into SourceForge.
+**
 ** 
 ** 1     10/08/98 11:30a Brent
 ** 
@@ -975,17 +978,14 @@ GR_ENTRY(grBufferSwap, void, (FxU32 swapInterval))
              (swapInterval > 255) || (swapInterval < 0),
              "swap_interval out of range");
 
-  /* wait until there's 6 or fewer buffer swaps pending */
-  /* the hardware counter is only 3 bits so we don't want it to overflow */
-  /* also the latency gets too long */
 #if defined(GLIDE3) && defined(GLIDE3_ALPHA)
-  while (_grBufferNumPending() > 4)
+  while (_grBufferNumPending() > _GlideRoot.environment.swapPendingCount)
     ;
 #else
   while (grBufferNumPending() > 6)
     ;
 #endif
-  
+
   /* if the interval is non-zero turn on VSYNC waiting */
   vSync = (swapInterval > 0);
   

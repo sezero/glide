@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.2  2003/12/08 13:13:11  dborca
+** better Texus2 integration
+**
 ** Revision 1.1.1.1.8.1  2003/11/03 13:34:29  dborca
 ** Voodoo2 happiness (DJGPP & Linux)
 **
@@ -920,6 +923,7 @@ static GrExtensionTuple _extensionTable[] = {
     { "txImgQuantize", (GrProc)txImgQuantize },
     { "txPalToNcc", (GrProc)txPalToNcc },
 #endif
+    { "grSetNumPendingBuffers", (GrProc)grSetNumPendingBuffers},
     { 0, 0 }
 };
 

@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.1  2003/11/07 13:38:38  dborca
+** unite the clans
+**
 ** Revision 1.5  2000/11/24 18:36:48  alanh
 ** Add new grStippleMode and grStipplePattern functions for both Voodoo3 and
 ** Voodoo5 hardware.
@@ -1065,7 +1068,7 @@ GR_ENTRY(grBufferSwap, void, (FxU32 swapInterval))
       swapInterval = ((swapInterval - 1) << 1) | 1; /* Format for hw */
   }
   
-  while(_grBufferNumPending() > 3);
+  while(_grBufferNumPending() > _GlideRoot.environment.swapPendingCount);
 
   /* Cycle the buffer indices */
   {
@@ -1184,7 +1187,7 @@ GR_ENTRY(grDRIBufferSwap, void, (FxU32 swapInterval))
       swapInterval = ((swapInterval - 1) << 1) | 1; /* Format for hw */
   }
   
-  while(_grBufferNumPending() > 3);
+  while(_grBufferNumPending() > _GlideRoot.environment.swapPendingCount);
 
 #if USE_PACKET_FIFO
   {

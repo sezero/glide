@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.2.4.4  2003/11/07 13:38:38  dborca
+** unite the clans
+**
 ** Revision 1.2.4.3  2003/07/25 07:13:41  dborca
 ** removed debris
 **
@@ -1433,6 +1436,7 @@ struct _GlideRoot_s {
     FxBool texLodDither;        /* Always do lod-dithering      */
     FxI32  tmuMemory;           /* tmuMemory */
     float  gammaR, gammaG, gammaB; /* Gamma settings */
+    FxI32  swapPendingCount;    /* pending buffer swap count    */
 
     /* Force alternate buffer strategy */
     FxI32  nColorBuffer;
@@ -2276,5 +2280,9 @@ extern const FxU32 _gr_aspect_xlate_table[];
 GR_EXT_ENTRY(grTexDownloadTableExt,
          void,
          (GrChipID_t tmu, GrTexTable_t type,  void *data));
+
+GR_ENTRY(grSetNumPendingBuffers,
+         void,
+         (FxI32 NumPendingBuffers));
 
 #endif /* __FXGLIDE_H__ */

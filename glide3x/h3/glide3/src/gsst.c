@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.1  2003/11/07 13:38:38  dborca
+** unite the clans
+**
 ** Revision 1.1.1.1.6.1  2003/06/29 18:43:27  guillemj
 ** Fix compilation warnings.
 **
@@ -1684,10 +1687,7 @@ GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
   -------------------------------------------------------------------*/
 GR_DIENTRY(grSetNumPendingBuffers, void, (FxI32 NumPendingBuffers))
 {
-  /* [dBorca] TODO
-   *
   _GlideRoot.environment.swapPendingCount = NumPendingBuffers;
-   */
 }
 
 /*-------------------------------------------------------------------

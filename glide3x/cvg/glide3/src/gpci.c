@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/12/07 21:42:33  joseph
+** Initial checkin into SourceForge.
+**
 ** 
 ** 2     10/08/98 3:04p Atai
 ** added clip coords tri cull version
@@ -644,7 +647,12 @@ _GlideInitEnvironment(void)
     if ((envStr != NULL) && (_GlideRoot.environment.swapInterval < 0)) {
       _GlideRoot.environment.swapInterval = 0;
     }
-    
+
+    /* wait until there's 6 or fewer buffer swaps pending */
+    /* the hardware counter is only 3 bits so we don't want it to overflow */
+    /* also the latency gets too long */
+    _GlideRoot.environment.swapPendingCount  = 4;
+
     _GlideRoot.environment.snapshot          = GLIDE_GETENV("FX_SNAPSHOT", 0);
     
     GDBG_INFO(80,"    triBoundsCheck: %d\n",_GlideRoot.environment.triBoundsCheck);

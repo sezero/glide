@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.4  2004/01/20 14:04:10  dborca
+** compilation and some other minor fixes to aid in debugging
+**
 ** Revision 1.1.1.1.8.3  2003/11/03 13:34:29  dborca
 ** Voodoo2 happiness (DJGPP & Linux)
 **
@@ -1351,6 +1354,7 @@ struct _GlideRoot_s {
     FxU32  snapshot;            /* register trace snapshot      */
     FxBool disableDitherSub;    /* Turn off dither subtraction? */
     FxBool texLodDither;        /* Always do lod-dithering      */
+    FxI32  swapPendingCount;    /* pending buffer swap count    */
 
     /* Force alternate buffer strategy */
     FxI32  nColorBuffer;
@@ -3371,6 +3375,10 @@ _grSliOriginClear(void);
 GR_ENTRY(grTexDownloadTableExt,
          void,
          (GrChipID_t tmu, GrTexTable_t type,  void *data));
+
+GR_ENTRY(grSetNumPendingBuffers,
+         void,
+         (FxI32 NumPendingBuffers));
 
 #endif /* __FXGLIDE_H__ */
 
