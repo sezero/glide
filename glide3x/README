@@ -1,17 +1,21 @@
 Here are a few notes about building Glide3x from CVS.
 
 The Glide source trees are branced by platform and the platform names are
-internal names used at 3dfx.  Since these name may not make sense to others
+internal names used at 3dfx.  Since theses name may not make sense to others
 here is a quick list.
 
 sst1:  Voodoo Graphics
 sst96: Voodoo Rush
 cvg:   Voodoo 2
 h3:    Voodoo Banshee/Voodoo 3
+h5:    The VSA-100 chipset used in the Voodoo4 and Voodoo5 line of products.
 
-There is a single toplevel makefile for glide3x.  To select a build for
-either cvg or h3 set FX_GLIDE_HW to either cvg or h3.  The default is to
-build for h3.  There is no Glide3x project for sst1 or sst96.
+There is a single toplevel makefile for glide3x.  To select a build
+for either cvg or h3 set FX_GLIDE_HW to either cvg, h3, or h5.  The
+default is to build for h3.  Note that the h5 tree has a special build
+script, swlibs/include/make/napalmbuild.linux.  This script should be
+made executable and run to build the h5 glide library.  There is no
+Glide3x project for sst1 or sst96.
 
 All glide source trees use a common set of libraries kept in the
 swlibs branch.  In order to build any glide library the swlibs branch
@@ -50,3 +54,7 @@ symlinks:
   h3/glide3/src/glfb.c.save   --> h3/glide3/src/glfb.c
 
 Support to make this happen automatically will be added in the future.
+
+A special not about H5: 
+The Glide3 H5 source can only be built as a DRI client, so the
+symlinks necessary for the H3 tree are not necessary for the H3 tree.
