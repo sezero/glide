@@ -59,28 +59,11 @@ kinfo: kinfo.c
 kinfo.h: kinfo
 	./kinfo
 
-ifneq ($(KERNEL_VERSION_MAJOR),2.0)
-
 ###############################################################################
 # kernel 2.1+
 
 3dfx.o: kinfo.h 3dfx_driver.c Makefile
 	$(CC) $(CFLAGS) -c -o $@ 3dfx_driver.c
-
-else
-
-###############################################################################
-# Kernel 2.0 
-
-OBJS = 3dfx_driver.o
-ifneq ($(HAVE_MTRR),)
-OBJS += mtrrs.o
-endif
-
-3dfx.o: kinfo.h $(OBJS) Makefile
-	$(LD) -r -o $@ $(OBJS)
-
-endif
 
 ###############################################################################
 
@@ -119,7 +102,7 @@ clean:
 	$(CC) $(CFLAGS) -S -c 3dfx_driver.c
 
 tar:
-	tar czf ../../SOURCES/Dev3Dfx-2.5.tar.gz 3dfx_driver.c mtrrs.c Makefile
+	tar czf ../../SOURCES/Dev3Dfx-2.5.tar.gz 3dfx_driver.c Makefile
 
 
 debug:

@@ -85,28 +85,22 @@
  */
 
 /* Include this first as it defines things that affect the kernel headers */
-#include "kinfo.h"
+#include <linux/autoconf.h>
 #include <linux/version.h>
 
 #ifndef KERNEL_VERSION
 #define KERNEL_VERSION(a,b,c) (((a) << 16) + ((b) << 8) + (c))
 #endif
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 1, 0)
-#define KERNEL_VER_2_1
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 1, 115)
+#define KERNEL_MIN_VER(a,b,c)	(LINUX_VERSION_CODE >= KERNEL_VERSION(a,b,c))
+
+#if !KERNEL_MIN_VER (2, 1, 115)
 /* It might work with smaller kernels, but I never tested that */
 #error "Upgrade your kernel"
-#endif
-#else
-#define copy_to_user memcpy_tofs
-#define copy_from_user memcpy_fromfs
-#define pci_present pcibios_present
 #endif
 
 #ifdef MODULE
 #include <linux/module.h>
-#include <linux/autoconf.h>
 #if defined(CONFIG_MODVERSIONS) && !defined(MODVERSIONS)
 #define MODVERSIONS
 #endif
@@ -123,27 +117,15 @@
 #include <linux/mm.h>
 #include <linux/errno.h>
 #include <linux/pci.h>
-#ifndef KERNEL_VER_2_1
-#include <linux/bios32.h>
-#endif
 #include <asm/segment.h>
 #include <asm/ioctl.h>
 #include <asm/io.h>
 #include <asm/pgtable.h>
 #include <asm/processor.h>
 
-#ifdef KERNEL_VER_2_1
 #include <asm/uaccess.h>
-#endif
 #ifdef HAVE_MTRR
-#ifdef KERNEL_VER_2_1
 #include <asm/mtrr.h>
-#else
-extern int mtrr_add(unsigned long base, unsigned long size, unsigned int type, char increment);
-extern int mtrr_del(int reg, unsigned long base, unsigned long size);
-#define MTRR_TYPE_UNCACHABLE 0
-#define MTRR_TYPE_WRCOMB     1
-#endif
 #endif
 
 #define MAJOR_3DFX 107
@@ -198,7 +180,7 @@ extern int mtrr_del(int reg, unsigned long base, unsigned long size);
 
 /* This macro is for accessing vma->vm_offset or vma->vm_pgoff depending
  * on kernel version */
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 3, 14)
+#if !KERNEL_MIN_VER(2, 3, 14)
 #define VM_OFFSET(vma) (vma->vm_offset)
 #else
 #define VM_OFFSET(vma) (vma->vm_pgoff << PAGE_SHIFT)
@@ -239,21 +221,12 @@ static int numCards = 0;
 
 static void findCardType(int vendor, int device)
 {
-#ifdef KERNEL_VER_2_1
 	struct pci_dev *dev = NULL;
 	while (numCards < MAXCARDS && (dev = pci_find_device(vendor, device, dev))) {
 		pci_read_config_dword(dev, PCI_BASE_ADDRESS_0, &cards[numCards].addr0);
 		pci_read_config_dword(dev, PCI_BASE_ADDRESS_1, &cards[numCards].addr1);
 		cards[numCards].bus = dev->bus->number;
 		cards[numCards].dev = dev->devfn;
-#else
-	int i;
-	for (i = 0; numCards < MAXCARDS; i++) {
-		if (pcibios_find_device(vendor, device, i, &cards[numCards].bus, &cards[numCards].dev))
-			return;
-		pcibios_read_config_dword(cards[numCards].bus, cards[numCards].dev, PCI_BASE_ADDRESS_0, &cards[numCards].addr0);
-		pcibios_read_config_dword(cards[numCards].bus, cards[numCards].dev, PCI_BASE_ADDRESS_1, &cards[numCards].addr1);
-#endif
 
 		cards[numCards].addr0 &= ~0xF;
 		cards[numCards].addr1 &= ~0xF;
@@ -292,11 +265,7 @@ static int open_3dfx(struct inode *inode, struct file *file)
 	return 0;
 }
 
-#ifdef KERNEL_VER_2_1
 static int release_3dfx(struct inode *inode, struct file *file)
-#else
-static void release_3dfx(struct inode *inode, struct file *file)
-#endif
 {
 	int i;
 
@@ -306,16 +275,10 @@ static void release_3dfx(struct inode *inode, struct file *file)
 			cards[i].curFile = 0;
 	MOD_DEC_USE_COUNT;
 
-#ifdef KERNEL_VER_2_1
 	return 0;
-#endif
 }
 
-#ifdef KERNEL_VER_2_1
 static int mmap_3dfx(struct file *file, struct vm_area_struct *vma)
-#else
-static int mmap_3dfx(struct inode *inode, struct file *file, struct vm_area_struct *vma)
-#endif
 {
 	size_t len;
 	int i;
@@ -332,7 +295,7 @@ static int mmap_3dfx(struct inode *inode, struct file *file, struct vm_area_stru
 		return -EPERM;
 	}
 	/* This one is a special case, the macro doesn't help */
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 3, 14)
+#if !KERNEL_MIN_VER(2, 3, 14)
 	if ((vma->vm_offset) & ~PAGE_MASK) {
 		DEBUGMSG(("3dfx: Map request not page aligned\n"));
 		return -ENXIO;
@@ -356,10 +319,6 @@ static int mmap_3dfx(struct inode *inode, struct file *file, struct vm_area_stru
 		DEBUGMSG(("3dfx: Page remap failed\n"));
 		return -EAGAIN;
 	}
-#ifndef KERNEL_VER_2_1
-	vma->vm_inode = inode;
-	inode->i_count++;
-#endif
 	return 0;
 }
 
@@ -607,7 +566,6 @@ int setmtrr_3dfx(void)
 	unsigned char dlc;
 
 	/* First do a bios fixup if this system has a 82441FX chipset */
-#ifdef KERNEL_VER_2_1
 	struct pci_dev *dev = NULL;
 	if ((dev = pci_find_device(PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82371SB_0, dev))) {
 		pci_read_config_byte(dev, 0x82, &dlc);
@@ -617,17 +575,6 @@ int setmtrr_3dfx(void)
 			printk("3dfx: PIIX3: Enabling Passive Release\n");
 		}
 	}
-#else
-	unsigned char bus, dev_fn;
-	if (!pcibios_find_device(PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82371SB_0, i, &bus, &dev_fn)) {
-		pcibios_read_config_byte(bus, dev_fn, 0x82, &dlc);
-		if (!(dlc & 1 << 1)) {
-			dlc |= 1 << 1;
-			pcibios_write_config_byte(bus, dev_fn, 0x82, dlc);
-			printk("3dfx: PIIX3: Enabling Passive Release\n");
-		}
-	}
-#endif
 
 	/* Set up the mtrr's */
 	if (numCards == 0)
@@ -707,7 +654,7 @@ int resetmtrr_3dfx(void)
 #endif /* HAVE_MTRR */
 
 static struct file_operations fops_3dfx = {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 4, 0)
+#if KERNEL_MIN_VER(2, 4, 0)
 	owner:			THIS_MODULE,
 #endif
 	ioctl:			ioctl_3dfx,		/* ioctl */
@@ -734,8 +681,10 @@ int init_module(void)
 	if (ret < 0)
 	{
 	  DEBUGMSG(("setmtrr_3dfx() failed, returned %d\n", ret));
+	  /*
 	  unregister_chrdev(MAJOR_3DFX, "3dfx");
 	  return ret;
+	  */
 	}
 #endif
 
@@ -771,7 +720,7 @@ long init_3dfx(long mem_start, long mem_end)
 #endif /* !MODULE */
 
 
-#if defined(DEBUG) && defined(KERNEL_VER_2_1)
+#if defined(DEBUG)
 /*
  * Kludge to get rid of:
  * ./3dfx.o: unresolved symbol inb
