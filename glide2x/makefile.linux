@@ -52,7 +52,7 @@ endif
 # Other variables we need to set
 #
 export FX_HW_PROJECTS=glide
-ifeq ($HAL_HW,)
+ifeq ($(HAL_HW),)
   export HAL_HW=1
 endif
 export FX_NO_GET_BOF=1
