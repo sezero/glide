@@ -6,6 +6,9 @@
 #
 # $Header$
 # $Log$
+# Revision 1.1.2.5  2003/06/21 12:43:04  dborca
+# h3cinit cleanup
+#
 # Revision 1.1.2.4  2003/06/13 07:22:57  dborca
 # more fixes to NASM sources
 #
@@ -102,7 +105,8 @@ endif
 endif
 
 # other
-#CDEFS += -DGLIDE_LIB -DGLIDE_PLUG
+CDEFS += -DGLIDE_PLUG -DGLIDE_SPLASH
+#CDEFS += -DGLIDE_LIB
 
 ###############################################################################
 #	C flags

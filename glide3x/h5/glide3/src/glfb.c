@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.7.4.11  2003/07/08 18:43:37  koolsmoky
+** removed unused local variables
+**
 ** Revision 1.7.4.10  2003/07/08 08:06:45  dborca
 ** updates to MMX/FPU specializations
 **

@@ -6,6 +6,9 @@
 #
 # $Header$
 # $Log$
+# Revision 1.1.2.3  2003/07/01 11:13:34  dborca
+# enabled NAPALM for tests
+#
 # Revision 1.1.2.2  2003/06/13 07:22:59  dborca
 # more fixes to NASM sources
 #
