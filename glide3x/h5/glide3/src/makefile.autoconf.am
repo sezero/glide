@@ -206,8 +206,8 @@ noinst_HEADERS         = fxcmd.h     fxsplash.h  \
                          qmodes.h    tv.h        \
                          fxgasm.h    fxinline.h
 fxgasm_SOURCES         = fxgasm.c
-# gthread.c
-# fxgasm_DEPENDENCIES    = gthread.lo
+fxgasm_LDADD           = gthread.lo
+fxgasm_DEPENDENCIES    = gthread.lo
 
 lib_LTLIBRARIES        = libglide3.la
 libglide3_la_SOURCES   = fxinline.h fxgasm.h \
