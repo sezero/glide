@@ -379,6 +379,12 @@ calculateLfbStride(FxU32 screenWidth)
 }
 
 
+#if	0
+/*
+ * 3Dfx WORKHERE:
+ *     This needs to be revisited.  Why is it here, and
+ *     why does it not seem to be used.
+ */
 FxBool hwcSetupBufferFullscreen(hwcBoardInfo *bInfo, FxU32 nColBuffers,
 				FxU32 nAuxBuffers) 
 {
@@ -453,11 +459,11 @@ FxBool hwcSetupBufferFullscreen(hwcBoardInfo *bInfo, FxU32 nColBuffers,
 
 #undef FN_NAME
 }
-
+#endif	/* 0 */
 FxBool
 hwcSetupBuffersWindowed(hwcBoardInfo *bInfo, FxU32 nColBuffers, FxU32 nAuxBuffers) 
 {
-#define FN_NAME "hwcAllocBuffersWindowed"
+#define FN_NAME "hwcSetupBuffersWindowed"
   FxU32 bufStride, bufSize;
 
   if (bInfo->vidInfo.initialized == FXFALSE) {
@@ -509,8 +515,7 @@ hwcSetupBuffersWindowed(hwcBoardInfo *bInfo, FxU32 nColBuffers, FxU32 nAuxBuffer
   bInfo->primaryOffset = driInfo.sPriv->backOffset;
 
   bInfo->buffInfo.colBuffStart0[0] = driInfo.sPriv->fbOffset;
-  bInfo->buffInfo.colBuffEnd0[0] = driInfo.sPriv->fbOffset +
-    driInfo.sPriv->height*driInfo.sPriv->stride;
+  bInfo->buffInfo.colBuffEnd0[0] = driInfo.sPriv->fbOffset + bufSize;
 
   bInfo->buffInfo.colBuffStart0[1] = driInfo.sPriv->backOffset;
   bInfo->buffInfo.colBuffEnd0[1] = driInfo.sPriv->backOffset+bufSize;
@@ -519,14 +524,15 @@ hwcSetupBuffersWindowed(hwcBoardInfo *bInfo, FxU32 nColBuffers, FxU32 nAuxBuffer
   bInfo->buffInfo.auxBuffEnd0 = driInfo.sPriv->depthOffset+bufSize;
 
   bInfo->buffInfo.lfbBuffAddr0[0] = bInfo->buffInfo.colBuffStart0[0];
-  bInfo->buffInfo.lfbBuffAddr0[1] = bInfo->buffInfo.colBuffStart0[1];
+  bInfo->buffInfo.lfbBuffAddr0[1] =
+      hwcBufferLfbAddr(bInfo, bInfo->buffInfo.colBuffStart0[1]);
   bInfo->buffInfo.lfbBuffAddr0[2] = 
-    hwcBufferLfbAddr(bInfo, bInfo->buffInfo.auxBuffStart0);
+      hwcBufferLfbAddr(bInfo, bInfo->buffInfo.auxBuffStart0);
 
   return FXTRUE;
 
 #undef FN_NAME
-} /* hwcAllocBuffersWindowed */
+} /* hwcSetupBuffersWindowed */
 
 FxBool
 hwcAllocBuffers(hwcBoardInfo *bInfo, FxU32 nColBuffers, FxU32 nAuxBuffers) 
@@ -688,85 +694,90 @@ hwcInitFifo(hwcBoardInfo *bInfo, FxBool enableHoleCounting)
 #undef FN_NAME
 } /* hwcInitFifo */
 
-static void
-hwcInitVideoOverlaySurface(
-  hwcRegInfo *rInfo,
-    FxU32 enable,               /* 1=enable Overlay surface (OS), 1=disable */
-    FxU32 stereo,               /* 1=enable OS stereo, 0=disable */
-    FxU32 horizScaling,         /* 1=enable horizontal scaling, 0=disable */
-    FxU32 dudx,                 /* horizontal scale factor (ignored if not */
-      /* scaling) */
-    FxU32 verticalScaling,      /* 1=enable vertical scaling, 0=disable */
-    FxU32 dvdy,                 /* vertical scale factor (ignored if not */
-      /* scaling) */
-    FxU32 filterMode,           /* duh */
-    FxU32 tiled,                /* 0=OS linear, 1=tiled */
-    FxU32 pixFmt,               /* pixel format of OS */
-    FxU32 clutBypass,           /* bypass clut for OS? */
-    FxU32 clutSelect,           /* 0=lower 256 CLUT entries, 1=upper 256 */
-    FxU32 startAddress,         /* board address of beginning of OS */
-    FxU32 stride)               /* distance between scanlines of the OS, in */
-  /* units of bytes for linear OS's and tiles for */
-  /* tiled OS's */
+static FxBool
+hwcInitVideoDesktopAndOverlaySurface(hwcRegInfo *rInfo,
+                                     FxU32 *vidProcCfgAddr,
+                                     FxU32 pixFmt,
+                                     FxU32 desktopStartAddress,
+                                     FxU32 desktopTiledStride,
+                                     FxU32 overlayStartAddress,
+                                     FxU32 overlayTiledStride)
 {
   FxU32 doStride;
-  FxU32 vidProcCfg;
-
-  HWC_IO_LOAD((*rInfo), vidProcCfg, vidProcCfg);
-
-  vidProcCfg &= ~(SST_OVERLAY_TILED_EN |
-    SST_OVERLAY_STEREO_EN |  
-    SST_OVERLAY_HORIZ_SCALE_EN |
-    SST_OVERLAY_VERT_SCALE_EN |
-    SST_OVERLAY_TILED_EN |
-    SST_OVERLAY_PIXEL_FORMAT |
-    SST_OVERLAY_CLUT_BYPASS |
-    SST_OVERLAY_CLUT_SELECT);
-
-  if (enable)
-    vidProcCfg |= SST_OVERLAY_EN;
-
-  if (stereo)
-    vidProcCfg |= SST_OVERLAY_STEREO_EN;
-
-  if (horizScaling)
-    vidProcCfg |= SST_OVERLAY_HORIZ_SCALE_EN;
-
-  if (verticalScaling)
-    vidProcCfg |= SST_OVERLAY_VERT_SCALE_EN;
-
-  if (tiled) {
-    vidProcCfg |= SST_OVERLAY_TILED_EN;
+  FxU32 vidProcCfg = *vidProcCfgAddr;
+  FxU32 vidScreenSize = 0;
+  int desktopBpp = driInfo.cpp;
+  int lg2desktopBpp;
+  switch (desktopBpp) {
+  case 2:
+      lg2desktopBpp = 1;
+      break;
+  case 3:
+      desktopBpp = 4;
+     /*
+      * Allez Oop.
+      */
+  case 4:
+      lg2desktopBpp = 2;
+      break;
+  default:
+     /*
+      * This cannot happen.
+      */
+      fprintf(stderr,
+              "Bad desktop BPP value %d in hwcSetupFullScreen\n",
+              desktopBpp);
+      return FXFALSE;
   }
-
-  vidProcCfg |= pixFmt;
-
-  vidProcCfg &= ~SST_CURSOR_EN; /* Turn off HW Cursor */
-
-  if (clutBypass)
-    vidProcCfg |= SST_OVERLAY_CLUT_BYPASS;
-
-  if (clutSelect)
-    vidProcCfg |= SST_OVERLAY_CLUT_SELECT;
-
   HWC_IO_STORE((*rInfo), vidProcCfg, vidProcCfg);
+ /*
+  * Set up the desktop.
+  */
+  HWC_IO_STORE((*rInfo), vidDesktopStartAddr,
+               desktopStartAddress & SST_VIDEO_START_ADDR);
+ /*
+  * Set up the overlay.
+  */
+  vidProcCfg |= pixFmt;
+  vidProcCfg |= (pixFmt >> 21) << 18;
+  vidProcCfg &= ~SST_CURSOR_EN; /* Turn off HW Cursor */
+ /*
+  * These are kind of guesswork.
+  *
+  * Bypass both cluts.
+  * Select the upper CLUT for the overlay, and the lower CLUT
+  * for the desktop.
+  */
+  vidProcCfg |= SST_OVERLAY_CLUT_BYPASS|SST_DESKTOP_CLUT_BYPASS;
+  vidProcCfg |= SST_OVERLAY_CLUT_SELECT;
+  vidProcCfg |= SST_OVERLAY_EN | SST_DESKTOP_EN;
+  vidProcCfg |= SST_DESKTOP_TILED_EN | SST_OVERLAY_TILED_EN;
 
   /* */
-  HWC_IO_LOAD((*rInfo), vidDesktopOverlayStride, doStride);
-  doStride &= ~(SST_OVERLAY_LINEAR_STRIDE | SST_OVERLAY_TILE_STRIDE);
-
-  stride <<= SST_OVERLAY_STRIDE_SHIFT;
-  if (tiled)
-    stride &= SST_OVERLAY_TILE_STRIDE;
-  else
-    stride &= SST_OVERLAY_LINEAR_STRIDE;
-  doStride |= stride;
-
+  doStride = SST_OVERLAY_TILE_STRIDE
+             | SST_DESKTOP_TILE_STRIDE
+             | (desktopTiledStride << SST_DESKTOP_STRIDE_SHIFT)
+             | (overlayTiledStride << SST_OVERLAY_STRIDE_SHIFT);
   HWC_IO_STORE((*rInfo), vidDesktopOverlayStride, doStride);
 
+  HWC_IO_STORE((*rInfo), vidOverlayStartCoords, 0);
+  HWC_IO_STORE((*rInfo), vidOverlayEndScreenCoord,
+               (driInfo.sPriv->height  << SST_OVERLAY_Y_SHIFT) |
+               (driInfo.sPriv->width & SST_OVERLAY_X) );
+  HWC_IO_STORE((*rInfo), vidOverlayDudx, driInfo.screenWidth);
+  HWC_IO_STORE((*rInfo), vidOverlayDvdy, 0);
+  HWC_IO_LOAD((*rInfo), vidScreenSize, vidScreenSize);
+  vidScreenSize &= ~SST_VIDEO_SCREEN_DESKTOPADDR_FIFO_ENABLE;
+  HWC_IO_STORE((*rInfo), vidScreenSize, vidScreenSize);
+  HWC_IO_STORE((*rInfo), vidOverlayDudxOffsetSrcWidth,
+               ((driInfo.sPriv->width << lg2desktopBpp)
+                         << SST_OVERLAY_FETCH_SIZE_SHIFT)
+                
+                   & SST_OVERLAY_FETCH_SIZE);
   finalVidDesktopOverlayStride = doStride;
-
-} /* hwcInitVideoOverlaySurface */
+  *vidProcCfgAddr = vidProcCfg;
+  return(FXTRUE);
+} /* hwcInitVideoDesktopAndOverlaySurface */
 
 FxBool
 hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo
@@ -838,18 +849,14 @@ static FxU32
 calcBufferStride(hwcBoardInfo *bInfo, FxU32 xres, FxBool tiled)
 {
   FxU32 strideInTiles;
-  FxU32 shift = (bInfo->h3pixelSize>>1);
+  FxU32 cpp = (bInfo->h3pixelSize == 3) ? 4 : bInfo->h3pixelSize;
 
   if (tiled == FXTRUE) {
     /* Calculate tile width stuff */
-    strideInTiles = (xres << shift) >> 7;
-    if ((xres << shift) & (HWC_TILE_WIDTH - 1))
-      strideInTiles++;
-    
+    strideInTiles = (xres * cpp + HWC_TILE_WIDTH - 1)/HWC_TILE_WIDTH;
     return (strideInTiles * HWC_TILE_WIDTH);
-
   } else {
-    return (xres << shift);
+    return (xres * cpp);
   }
 } /* calcBufferStride */
 
@@ -1234,33 +1241,8 @@ void grDRIResetSAREA() {
 Bool hwcSetupFullScreen(hwcBoardInfo *bInfo, FxBool state) {
   driInfo.isFullScreen=state;
   if (state) {
-    int vidScreenSize;
-    int desktopBpp = driInfo.cpp;
-    int lg2desktopBpp;
-
-    switch (desktopBpp) {
-    case 2:
-        lg2desktopBpp = 1;
-        break;
-    case 3:
-        desktopBpp = 4;
-       /*
-        * Allez Oop.
-        */
-    case 4:
-        lg2desktopBpp = 2;
-        break;
-    default:
-       /*
-        * This cannot happen.
-        */
-        fprintf(stderr,
-                "Bad desktop BPP value %d in hwcSetupFullScreen\n",
-                desktopBpp);
-        return FXFALSE;
-    }
-    HWC_IO_STORE(bInfo->regInfo, vidOverlayDudxOffsetSrcWidth,
-		 ((driInfo.sPriv->width << lg2desktopBpp) << 19));
+    FxU32 desktopTiledStride, overlayTiledStride;
+    FxU32 vidProcCfg = 0;
 
     /* Video pixel buffer threshold */
     {
@@ -1279,33 +1261,23 @@ Bool hwcSetupFullScreen(hwcBoardInfo *bInfo, FxBool state) {
     }
 
     driInfo.stride=driInfo.fullScreenStride;
-    hwcInitVideoOverlaySurface(
+    if (driInfo.sliCount > 1) {
+        vidProcCfg = BIT(28) | BIT(29);
+    }
+   /*
+    * We place the desktop over the windowed front buffer.
+    * We place the back buffer over the windowed back buffer.
+    */
+    desktopTiledStride = bInfo->buffInfo.bufStrideInTiles;
+    overlayTiledStride = bInfo->buffInfo.bufStrideInTiles;
+    hwcInitVideoDesktopAndOverlaySurface(
       &bInfo->regInfo,
-      FXTRUE,                   /* 1=enable Overlay surface (OS), 1=disable */
-      FXFALSE,                  /* 1=enable OS stereo, 0=disable */
-      FXFALSE,                  /* 1=enable horizontal scaling, 0=disable */
-      0,                        /* horizontal scale factor (ignored if not) */
-      FXFALSE,                  /* 1=enable vertical scaling, 0=disable */
-      0,                        /* vertical scale factor (ignored if not) */
-      0,                        /* Filter mode */
-      FXTRUE,                  /* tiled */
-      driInfo.fullScreenPixFmt, /* pixel format of OS */
-      FXTRUE,                   /* bypass clut for OS? */
-      1,                        /* 0=lower 256 CLUT entries, 1=upper 256 */
-      bInfo->buffInfo.colBuffStart0[0],/* board address of beginning of OS */
-      driInfo.stride);          /* distance between scanlines of the OS, in
-                                   units of bytes for linear OS's and tiles for
-                                   tiled OS's */
-    HWC_IO_STORE(bInfo->regInfo, vidOverlayStartCoords, 0);
-    HWC_IO_STORE(bInfo->regInfo, vidOverlayEndScreenCoord,
-		 (driInfo.sPriv->height  << SST_OVERLAY_Y_SHIFT) |
-		 (driInfo.sPriv->width & SST_OVERLAY_X) );
-    HWC_IO_STORE(bInfo->regInfo, vidOverlayDudx, driInfo.screenWidth);
-    HWC_IO_STORE(bInfo->regInfo, vidOverlayDvdy, 0);
-    HWC_IO_LOAD(bInfo->regInfo, vidScreenSize, vidScreenSize);
-    vidScreenSize &= ~SST_VIDEO_SCREEN_DESKTOPADDR_FIFO_ENABLE;
-    HWC_IO_STORE(bInfo->regInfo, vidScreenSize, vidScreenSize);
-
+      &vidProcCfg,              /* video processor configuration value */
+      driInfo.fullScreenPixFmt, /* pixel format of OS and DS */
+      bInfo->buffInfo.colBuffStart0[0],
+      desktopTiledStride,
+      bInfo->buffInfo.colBuffStart0[1],
+      overlayTiledStride);
     {
       int chipNum, locLFBMemCfg, lfbTileCompare;
 
@@ -1326,34 +1298,38 @@ Bool hwcSetupFullScreen(hwcBoardInfo *bInfo, FxBool state) {
 	}
       }
     }
-#if	0
     HWC_IO_STORE( bInfo->regInfo, vidDesktopOverlayStride,
 		  ( driInfo.stride << 16 ) |
                   driInfo.stride );
-#endif
     grSetSliCount(driInfo.sPriv->numChips, driInfo.sliCount);
+#if	0
+   /*
+    * We do this in the X server.
+    */
     if (driInfo.sliCount > 1) {
         _grEnableSliCtrl();
     }
+#endif
+   /*
+    * Ok, we are all set up, so enable the video processor, and
+    * we're on our way.
+    */
+    vidProcCfg |= SST_VIDEO_PROCESSOR_EN;
+    HWC_IO_STORE(bInfo->regInfo, vidProcCfg, vidProcCfg);
   } else {
-    hwcInitVideoOverlaySurface(
-      &bInfo->regInfo,
-      FXFALSE,                  /* 1=enable Overlay surface (OS), 1=disable */
-      FXFALSE,                  /* 1=enable OS stereo, 0=disable */
-      FXFALSE,                  /* 1=enable horizontal scaling, 0=disable */
-      0,                        /* horizontal scale factor (ignored if not) */
-      FXFALSE,                  /* 1=enable vertical scaling, 0=disable */
-      0,                        /* vertical scale factor (ignored if not) */
-      0,                        /* Filter mode */
-      FXTRUE,                    /* tiled */
-      driInfo.windowedPixFmt, /* pixel format of OS */
-      FXTRUE,                   /* bypass clut for OS? */
-      1,                        /* 0=lower 256 CLUT entries, 1=upper 256 */
-      bInfo->buffInfo.colBuffStart0[0],/* board address of beginning of OS */
-      bInfo->buffInfo.bufStrideInTiles);/* distance between scanlines of the OS, in
-                                   units of bytes for linear OS's and tiles for
-                                   tiled OS's */
+    FxU32 vidProcCfg = 0;
+   /*
+    * Just disable the video processor.
+    */
+    HWC_IO_LOAD(bInfo->regInfo, vidProcCfg, vidProcCfg);
+    vidProcCfg &= ~SST_VIDEO_PROCESSOR_EN;
+    HWC_IO_STORE(bInfo->regInfo, vidProcCfg, vidProcCfg);
+#if	0
+   /*
+    * We will do this in the X server.
+    */
     _grDisableSliCtrl();
+#endif
     grSetSliCount(1, 1);
     driInfo.stride=driInfo.windowedStride;
   }

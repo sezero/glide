@@ -1768,12 +1768,7 @@ GR_ENTRY(grBufferClear, void, (GrColor_t color, GrAlpha_t alpha, FxU32 depth))
                 /* tbext */
         REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 2, 0x3);
         REG_GROUP_SET(hw, colBufferAddr, gc->state.shadow.auxBufferAddr );
-#ifdef __linux__
-          REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer)? driInfo.stride :
-			gc->state.shadow.auxBufferStride);
-#else	/* defined(__linux__) */
-          REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.auxBufferStride );
-#endif	/* defined(__linux__) */
+          REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.auxBufferStride);
         REG_GROUP_END();
 #ifdef FX_GLIDE_NAPALM
         if (IS_NAPALM(gc->bInfo->pciInfo.deviceID)) 
@@ -2624,7 +2619,6 @@ GR_ENTRY(grBufferSwap, void, (FxU32 swapInterval))
       *bufPtrs[i] = curBufIndex;
     }
   }
-
 #if USE_PACKET_FIFO
   {
     int i, j = -1;
@@ -4121,8 +4115,7 @@ GR_STATE_ENTRY(grRenderBuffer, void, (GrBuffer_t buffer))
 #ifdef __linux__
       REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 2, 0x3); 
       REG_GROUP_SET(hw, colBufferAddr, gc->buffers0[gc->curBuffer]);
-      REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride :
-		    gc->state.shadow.colBufferStride);
+      REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride);
       REG_GROUP_END();
 #else	/* defined(__linux__) */
       REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 1, 0x1); 
