@@ -37,6 +37,12 @@
 /* UNIX */
 #define SEPARATOR2 '/'
 
+static HWND	hwndApp = 0;
+
+/* Direct Draw stuff */
+LPDIRECTDRAW            lpDD1 = NULL;
+LPDIRECTDRAW2           lpDD  = NULL;
+
 /*
  * parseFilename
  *
@@ -70,7 +76,7 @@ ddEnumCbEx( GUID FAR *guid, LPSTR desc, LPSTR name, LPVOID ctx, HMONITOR hmon )
   
   if ( target == hmon ) {
     if ( guid ) {
-      fooGuid = *guid;
+      GUID fooGuid = *guid;
       data[1] = (DWORD)&fooGuid;
     } else {
       /* guid for primary display device */
@@ -256,7 +262,7 @@ setVideoMode( HWND hwnd, int xRes, int yRes, int refresh, void *hmon )
     bpp = 8;
   }
 
-  checkSpecialList();
+  //checkSpecialList(); /* [dBorca] disable for now */
   if (lpDD == NULL) {
     /* only create directdraw object once */
     if ( DirectDrawCreate( ddGuid, &lpDD1, NULL ) != DD_OK) {
@@ -654,7 +660,7 @@ checkResolutions(FxBool *supportedByResolution, void *hmon)
     }
   }
   
-  checkSpecialList();
+  // checkSpecialList(); /* [dBorca] disable for now */
   if (lpDD == NULL) {
     /* only create directdraw object once */
     if ( DirectDrawCreate( ddGuid, &lpDD1, NULL ) != DD_OK) {
