@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/11/24 21:44:57  joseph
+** Initial checkin for SourceForge
+**
 ** 
 ** 4     4/06/99 3:54p Dow
 ** Alt tab again.
@@ -146,7 +149,7 @@ _grDrawVertexList(FxU32 pktype, FxU32 type, FxI32 mode, FxI32 count, void *point
   ** simplified code
   */
   FxU32 vSize;
-  FxI32 stride = mode;
+  FxI32 stride;
 
   GR_BEGIN_NOFIFOCHECK(FN_NAME, 90);
 
@@ -156,8 +159,10 @@ _grDrawVertexList(FxU32 pktype, FxU32 type, FxI32 mode, FxI32 count, void *point
   GR_FLUSH_STATE();
 
   vSize = gc->state.vData.vSize;
-  if (stride == 0)
+  if (mode == 0)
     stride = gc->state.vData.vStride;
+  else
+    stride = sizeof (float *) / sizeof (float);
 
   /* Draw the first (or possibly only) set.  This is necessary because
      the packet is 3_BDDDDDD, and in the next set, the packet is
