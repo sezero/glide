@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/11/24 21:45:02  joseph
+** Initial checkin for SourceForge
+**
 ** 
 ** 6     5/12/99 10:39p Stb_gkincade
 ** Adding user support for turning on/off dither substraction
@@ -1160,7 +1163,7 @@ _grBufferNumPending(void)
     do {
       depth0 = GET(gc->cRegs->cmdFifo0.depth);
       depth1 = GET(gc->cRegs->cmdFifo0.depth);
-    } while (readPtr0 != readPtr1);
+    } while (depth0 != depth1);
 
     if (depth0 == 0) {
       for (i = 0; i < MAX_BUFF_PENDING; i++)
