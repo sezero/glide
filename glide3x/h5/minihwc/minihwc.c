@@ -9004,7 +9004,7 @@ getRegPath()
 
 #if __WIN32__
 char *
-hwcGetenv(char *a) 
+hwcGetenv(const char *a) 
 {
   char *retVal = NULL;
   static char *regPath;
@@ -9062,7 +9062,7 @@ hwcGetenv(char *a)
   return (char*)retVal;
 #else
 char *
-hwcGetenv(char *a) 
+hwcGetenv(const char *a) 
 {
   return getenv(a);
 #endif
@@ -9070,7 +9070,7 @@ hwcGetenv(char *a)
 
 #if __WIN32__
 char *
-hwcGetenvEx(char *a, char *b) 
+hwcGetenvEx(const char *a, char *b) 
 {
   char *retVal = NULL;
   char regPath[255];
