@@ -1134,21 +1134,27 @@ hwcGammaTable(hwcBoardInfo *bInfo, FxU32 nEntries, FxU32 *r, FxU32 *g, FxU32 *b)
   
   for (i = 0; i < nEntries; i++) {
     int repeat = 100;
-    while (repeat) {
+    do {
       HWC_IO_STORE( bInfo->regInfo, dacAddr, dacBase + i);
-      P6FENCE;
-      HWC_IO_STORE( bInfo->regInfo, dacData, gRamp[i]);
       P6FENCE;
       HWC_IO_LOAD( bInfo->regInfo, dacAddr, rDacBase);
       P6FENCE;
+      repeat--;
+    } while (repeat && rDacBase != dacBase + i);
+    if (!repeat) {
+      GDBG_INFO(0, "%s:Error Writting DacAddr %d. DacBase =%d\n",
+		FN_NAME, dacBase+i, dacBase);
+    }
+    repeat = 100;
+    do {
+      HWC_IO_STORE( bInfo->regInfo, dacData, gRamp[i]);
+      P6FENCE;
       HWC_IO_LOAD( bInfo->regInfo, dacData, rDacData);
       P6FENCE;
-      if ((rDacBase == (dacBase + i)) && (rDacData == gRamp[i]))
-	break;
       repeat--;
-    }
+    } while (repeat && rDacData != gRamp[i]);
     if (!repeat) {
-      GDBG_INFO(0, "%s:Error Writting DacData [%d, %x]. DacBase =%d\n",
+      GDBG_INFO(0, "%s:Error Writting Data [%d, %x]. DacBase =%d\n",
 		FN_NAME, i, gRamp[i], dacBase);
     }
   }
