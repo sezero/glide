@@ -586,8 +586,8 @@ _grDrawPoints(FxI32 mode, FxI32 count, void *pointers)
           gc->pool.ftemp2 = (const float)y;
 
           /* Correct the bias to get rid of the fractional bits */
-          x = (volatile float)gc->pool.ftemp1 - lbias;
-          y = (volatile float)gc->pool.ftemp2 - lbias;                    
+          x = /*(volatile float)*/gc->pool.ftemp1 - lbias;
+          y = /*(volatile float)*/gc->pool.ftemp2 - lbias;                    
           
           /* Lower right corner */
           DA_SETF(x);
