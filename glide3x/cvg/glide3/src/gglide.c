@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.2  2004/11/25 19:04:25  koolsmoky
+** Always allow user to override swapInterval (vsync) but force vsync on with swapbuffer interval set to 0x0 when triple buffering is enabled.
+**
 ** Revision 1.1.1.1.8.1  2004/02/16 07:42:15  dborca
 ** grSetNumPendingBuffers visible with grGetProcAddress
 **
@@ -973,13 +976,9 @@ GR_ENTRY(grBufferSwap, void, (FxU32 swapInterval))
    * any better. If, however, the user has not chosen, but the app
    * wants something other than 0 then we need to honor their choice.  
    */
-  /*swapInterval = ((_GlideRoot.environment.swapInterval >= 0)
+  swapInterval = ((_GlideRoot.environment.swapInterval >= 0)
                   ? _GlideRoot.environment.swapInterval
-                  : (gc->scanline_interleaved ? MAX(swapInterval, 1) : swapInterval));*/
-  /* always allow user override */
-  if (_GlideRoot.environment.swapInterval >= 0) {
-    swapInterval = _GlideRoot.environment.swapInterval;
-  }
+                  : (gc->scanline_interleaved ? MAX(swapInterval, 1) : swapInterval));
   
   GR_CHECK_F(myName,
              (swapInterval > 255) || (swapInterval < 0),
