@@ -36,6 +36,11 @@
 #include <sst1vid.h>
 #include <sst1init.h>
 
+#if __WIN32__
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#endif /* __WIN32__ */
+
 static int sst1InitFgets(char *, FILE *);
 static int sst1InitFgetc(FILE *);
 static int sst1InitParseFieldDac(char *);
@@ -220,10 +225,6 @@ __errExit:
 #endif
 
 #if defined(INIT_DOS) || defined(INIT_LINUX)
-
-#if __WIN32__
-#include <windows.h>
-#endif /* __WIN32__ */
 
 /* Get the definition of myGetenv for glide builds */
 #include <init.h>
