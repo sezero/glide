@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/12/07 21:42:34  joseph
+** Initial checkin into SourceForge.
+**
 ** 
 ** 1     10/08/98 11:30a Brent
 ** 
@@ -1156,10 +1159,10 @@ GR_ENTRY(grTexMultibaseAddress, void,
   GR_BEGIN("grTexMultibaseAddress",88,4,1);
   GDBG_INFO_MORE(gc->myLevel,"(%d,%d,0x%x)\n",tmu,range,startAddress);
   GR_CHECK_TMU(FN_NAME, tmu);
-  GR_CHECK_F(FN_NAME, range > GR_TEXBASE_32_TO_1, "invalid range");
+  GR_CHECK_F(FN_NAME, range > GR_TEXBASE_256, "invalid range");
   GR_CHECK_F(FN_NAME, startAddress >= gc->tmu_state[tmu].total_mem, "invalid startAddress");
   GR_CHECK_F(FN_NAME, evenOdd > 0x3, "evenOdd mask invalid");
-  GR_CHECK_F(FN_NAME, info, "invalid info pointer");
+  GR_CHECK_F(FN_NAME, !info, "invalid info pointer");
   
 
   /* Write relevant registers out to hardware and shadows */
