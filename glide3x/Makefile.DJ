@@ -30,6 +30,8 @@
 #			default = no
 #	USE_SSE2=1	(see USE_3DNOW)
 #			default = no
+#	TEXUS2=1	embed Texus2 functions into Glide3.
+#			default = no
 #
 #    Targets:
 #	all:		build everything
@@ -243,7 +245,9 @@ TEXUS_SOURCES = \
 	$(FX_GLIDE_SW)/texus2/lib/eigen.c \
 	$(FX_GLIDE_SW)/texus2/lib/bitcoder.c
 
+ifeq ($(TEXUS2),1)
 GLIDE_OBJECTS += $(TEXUS_SOURCES:.c=.o)
+endif
 
 ###############################################################################
 #	rules
@@ -274,7 +278,11 @@ else
 endif
 
 $(TEXUS_EXEDIR)/$(TEXUS_EXE): $(FX_GLIDE_SW)/texus2/cmd/cmd.c $(GLIDE_LIBDIR)/$(GLIDE_LIB)
+ifeq ($(TEXUS2),1)
 	$(CC) -o $@ -s $(CFLAGS) -L$(GLIDE_LIBDIR) $< -lgld3x
+else
+	$(warning Texus2 not enabled... Skipping $(TEXUS_EXE))
+endif
 
 ###############################################################################
 #	rules(2)
