@@ -1220,9 +1220,9 @@ _grSstDetectResources(void)
 
       /* Clear the tmu state */
       for (tmu = 0; tmu < GC.num_tmu; tmu++) {
-        memset(&GC.tmu_state[0], 0, sizeof(GC.tmu_state[0]));       
-        GC.tmu_state[0].total_mem = (0x2 << 20);
-        GC.tmu_state[0].ncc_mmids[0] = GC.tmu_state[0].ncc_mmids[1] = GR_NULL_MIPMAP_HANDLE;
+        memset(&GC.tmu_state[tmu], 0, sizeof(GC.tmu_state[0]));       
+        GC.tmu_state[tmu].total_mem = (0x2 << 20);
+        GC.tmu_state[tmu].ncc_mmids[0] = GC.tmu_state[tmu].ncc_mmids[1] = GR_NULL_MIPMAP_HANDLE;
       }
 
     } /* iterate through boards found */
@@ -1738,7 +1738,12 @@ _GlideInitEnvironment(int which)
   ** AJB-  This lets Joe bag-o-donuts force 32bpp & AA rendering
   **       for apps that call grSstWinOpen.
   */
-  _GlideRoot.environment.outputBpp = GLIDE_GETENV("FX_GLIDE_BPP", GC.bInfo->RegPath, 0L) ;
+  _GlideRoot.environment.outputBpp = GLIDE_GETENV("FX_GLIDE_BPP", GC.bInfo->RegPath, 0L);
+  /* check for a valid value */
+  if(_GlideRoot.environment.outputBpp != 32 ||
+     _GlideRoot.environment.outputBpp != 15) {
+    _GlideRoot.environment.outputBpp = 0;
+  }
 
   /* Note- If the old school Glide env. vars for AA sample & Num chips
    * are active, they should ALWAYS override the control panel variable
@@ -1808,8 +1813,8 @@ _GlideInitEnvironment(int which)
   _GlideRoot.environment.oglLfbLockHack = GLIDE_GETENV("FX_GL_LFBLOCK_HACK", GC.bInfo->RegPath, 1L) ;
   GDBG_INFO(80,"     oglLfbLockHack: %d\n",_GlideRoot.environment.oglLfbLockHack );
   
-  /* 0 = None, 1 = grLfbReadRegion(), 2 = grLfbLock(), 3 = Both (default) */
-  _GlideRoot.environment.useHwcAAforLfbRead = GLIDE_GETENV("FX_GLIDE_USE_HWC_AA_FOR_LFB_READ", GC.bInfo->RegPath, 3L) ;
+  /* 0 = None (default), 1 = grLfbReadRegion(), 2 = grLfbLock(), 3 = Both */
+  _GlideRoot.environment.useHwcAAforLfbRead = GLIDE_GETENV("FX_GLIDE_USE_HWC_AA_FOR_LFB_READ", GC.bInfo->RegPath, 0L) ;
   GDBG_INFO(80," useHwcAAforLfbRead: %d\n",_GlideRoot.environment.useHwcAAforLfbRead );
 	
   /* 0 = No dithering when doing HWC AA dumps, 1 = error diffusion dithering enabled (default) */

@@ -1579,10 +1579,18 @@ FxU32
 _grTexTextureMemRequired( GrLOD_t small_lod, GrLOD_t large_lod, 
                           GrAspectRatio_t aspect, GrTextureFormat_t format,
                           FxU32 evenOdd,
-                          FxBool roundP ) 
+                          FxBool roundP,
+                          FxBool systemMem ) 
 {
 #define FN_NAME "_grTexTextureMemRequired"
   FxU32 memrequired;
+
+  GDBG_INFO(80,"_grTexTextureMemRequired(%d,%d, %d,%d, %d, %d, %d)\n",
+                 small_lod, large_lod,
+                 aspect, format,
+                 evenOdd,
+                 roundP,
+                 systemMem);
 
   GR_CHECK_W(FN_NAME, 
              small_lod > large_lod,
@@ -1594,7 +1602,6 @@ _grTexTextureMemRequired( GrLOD_t small_lod, GrLOD_t large_lod,
 
   switch(format) {
   case GR_TEXFMT_ARGB_CMP_FXT1:
-  case GR_TEXFMT_ARGB_CMP_DXT1:
     /* In this case, do not mirror the aspect ratios, as the minimum
      * size of a mipmap level is 8x4, so the tables are not symmetric
      * w.r.t. sign of the aspect ratio, so keep the sign. */
@@ -1617,6 +1624,48 @@ _grTexTextureMemRequired( GrLOD_t small_lod, GrLOD_t large_lod,
     }
     break;
 
+  case GR_TEXFMT_ARGB_CMP_DXT1: /* XXX check this! */
+    if(systemMem) {
+      /* calculating for system memory */
+      /* In this case, do not mirror the aspect ratios, as the minimum
+       * size of a mipmap level is 8x4, so the tables are not symmetric
+       * w.r.t. sign of the aspect ratio, so keep the sign. */
+      if ( evenOdd == GR_MIPMAPLEVELMASK_BOTH ) {
+        memrequired  = _grMipMapOffsetCmp4Bit[G3_ASPECT_TRANSLATE(aspect)][small_lod];
+        memrequired -= _grMipMapOffsetCmp4Bit[G3_ASPECT_TRANSLATE(aspect)][large_lod+1];
+      } else {
+        memrequired = 0;
+        /* construct XOR mask   */
+        evenOdd = (evenOdd == GR_MIPMAPLEVELMASK_EVEN) ? 1 : 0;
+        while (large_lod >= small_lod) {    /* sum up all the mipmap levels */
+          if ((large_lod ^ evenOdd) & 1) {  /* that match the XOR mask      */
+            memrequired += _grMipMapSizeCmp4Bit[G3_ASPECT_TRANSLATE(aspect)][large_lod];
+          }
+          large_lod--;
+        }
+      }
+    } else {
+      /* for texture memory on hardware */
+      /* allows us to mirror the aspect ratios because the table entries are the same */
+      if (aspect < GR_ASPECT_LOG2_1x1) {
+        aspect = -aspect;
+      }
+      if ( evenOdd == GR_MIPMAPLEVELMASK_BOTH ) {
+        memrequired  = _grMipMapOffsetDXT[G3_ASPECT_TRANSLATE(aspect)][small_lod];
+        memrequired -= _grMipMapOffsetDXT[G3_ASPECT_TRANSLATE(aspect)][large_lod+1];
+      } else {
+        memrequired = 0;
+        /* construct XOR mask   */
+        evenOdd = (evenOdd == GR_MIPMAPLEVELMASK_EVEN) ? 1 : 0;
+        while (large_lod >= small_lod) {    /* sum up all the mipmap levels */
+          if ((large_lod ^ evenOdd) & 1) {  /* that match the XOR mask      */
+            memrequired += _grMipMapSizeDXT[G3_ASPECT_TRANSLATE(aspect)][large_lod];
+          }
+          large_lod--;
+        }
+      }
+    }
+    break;
   case GR_TEXFMT_ARGB_CMP_DXT2:
   case GR_TEXFMT_ARGB_CMP_DXT3:
   case GR_TEXFMT_ARGB_CMP_DXT4:
@@ -1709,7 +1758,6 @@ _grTexCalcBaseAddress( FxU32 start, GrLOD_t large_lod,
 
   switch(format) {
   case GR_TEXFMT_ARGB_CMP_FXT1:
-  case GR_TEXFMT_ARGB_CMP_DXT1:
      /* FXT1 format: Don't mirror the aspect ratios, because of the 8x4 limit */
     if ( odd_even_mask == GR_MIPMAPLEVELMASK_BOTH ) {
       sum_of_lod_sizes = _grMipMapOffsetCmp4Bit[aspect]
@@ -1726,6 +1774,7 @@ _grTexCalcBaseAddress( FxU32 start, GrLOD_t large_lod,
     }
     break;
 
+  case GR_TEXFMT_ARGB_CMP_DXT1: /* XXX check this! */
   case GR_TEXFMT_ARGB_CMP_DXT2:
   case GR_TEXFMT_ARGB_CMP_DXT3:
   case GR_TEXFMT_ARGB_CMP_DXT4:
@@ -1793,7 +1842,8 @@ GR_DIENTRY(grTexCalcMemRequired, FxU32,
   memrequired = _grTexTextureMemRequired(small_lod, large_lod, 
                                          aspect, format,
                                          GR_MIPMAPLEVELMASK_BOTH,
-                                         FXTRUE);
+                                         FXTRUE,
+                                         FXFALSE);
   GDBG_INFO(88,"grTexCalcMemRequired(%d,%d,%d,%d) => 0x%x(%d)\n",
                 small_lod,large_lod,aspect,format,memrequired,memrequired);
   return memrequired;
@@ -1986,7 +2036,8 @@ GR_DIENTRY(grTexTextureMemRequired, FxU32,
                                           info->aspectRatioLog2,
                                           info->format,
                                           evenOdd,
-                                          FXTRUE );
+                                          FXTRUE,
+                                          FXFALSE );
                         
   GDBG_INFO(88,"grTexTextureMemRequired(%d,0x%x) => 0x%x(%d)\n",
                 evenOdd,info,memrequired,memrequired);
@@ -2189,7 +2240,7 @@ GR_DIENTRY(grTexDownloadMipMapLevel, void,
 
    /* Note: Unlike in other places, we put DXT1 here because it's min size
     * according to the app is actually 4x4 like the other DXTC mode
-	*/
+    */
   case GR_TEXFMT_ARGB_CMP_DXT1:
   case GR_TEXFMT_ARGB_CMP_DXT2:
   case GR_TEXFMT_ARGB_CMP_DXT3:

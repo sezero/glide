@@ -1206,7 +1206,7 @@ initGC ( GrGC *gc )
 #endif	/* defined(DRI_BUILD) */
   gc->backBuffer  = (gc->grColBuf > 2) ? 2 : gc->curBuffer;
   
-  for (t = 0; t < 7; t++) {
+  for (t = 0; t < MAX_BUFF_PENDING; t++) {
     gc->bufferSwaps[t] = 0xffffffff;
   }
   
@@ -1669,51 +1669,49 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
       /* rendering since we don't want to scale down the */
       /* apps Z or W values to fit in a 16 bit depth buffer. */
 
-      if (_GlideRoot.environment.outputBpp == 32 || pixelformat == GR_PIXFMT_ARGB_8888)  {
-        
+      if (_GlideRoot.environment.outputBpp == 32 || pixelformat == GR_PIXFMT_ARGB_8888) {
         // App requested 16 bit, but we are giving 32. Need to remember for framebuffer access
-        if (pixelformat == GR_PIXFMT_ARGB_1555 || pixelformat == GR_PIXFMT_AA_2_ARGB_1555 || 
-            pixelformat == GR_PIXFMT_AA_4_ARGB_1555 || pixelformat == GR_PIXFMT_AA_8_ARGB_1555) {
+        if (pixelformat == GR_PIXFMT_ARGB_1555 ||
+            pixelformat == GR_PIXFMT_AA_2_ARGB_1555 ||
+            pixelformat == GR_PIXFMT_AA_4_ARGB_1555 ||
+            pixelformat == GR_PIXFMT_AA_8_ARGB_1555) {
           gc->state.forced32BPP = 15;
-        }
-        else if (pixelformat == GR_PIXFMT_RGB_565 || pixelformat == GR_PIXFMT_AA_2_RGB_565 || 
-                 pixelformat == GR_PIXFMT_AA_4_RGB_565 || pixelformat == GR_PIXFMT_AA_8_RGB_565) {
+        } else if (pixelformat == GR_PIXFMT_RGB_565 ||
+                   pixelformat == GR_PIXFMT_AA_2_RGB_565 ||
+                   pixelformat == GR_PIXFMT_AA_4_RGB_565 ||
+                   pixelformat == GR_PIXFMT_AA_8_RGB_565) {
           gc->state.forced32BPP = 16;
         }
         
-        if ((_GlideRoot.environment.aaSample == 8) &&	/* 8xaa */
-            (gc->chipCount > 2))
-          pixelformat = GR_PIXFMT_AA_8_ARGB_8888 ;
-        else if ((_GlideRoot.environment.aaSample == 4) &&
-            (gc->chipCount > 1))
-          pixelformat = GR_PIXFMT_AA_4_ARGB_8888 ;
-        else if (_GlideRoot.environment.aaSample == 2)
-          pixelformat = GR_PIXFMT_AA_2_ARGB_8888 ;
-        else
-          pixelformat = GR_PIXFMT_ARGB_8888 ;
-      } 
-      else if (_GlideRoot.environment.outputBpp == 15 || pixelformat == GR_PIXFMT_ARGB_1555) {
-        if ((_GlideRoot.environment.aaSample == 8) &&	/* 8xaa */
-            (gc->chipCount > 2))
-          pixelformat = GR_PIXFMT_AA_8_ARGB_1555 ;
-        else if ((_GlideRoot.environment.aaSample == 4) &&
-            (gc->chipCount > 1))
-          pixelformat = GR_PIXFMT_AA_4_ARGB_1555 ;
-        else if (_GlideRoot.environment.aaSample == 2)
-          pixelformat = GR_PIXFMT_AA_2_ARGB_1555 ;
-        else
-          pixelformat = GR_PIXFMT_ARGB_1555 ;
-      } 
-      else if (pixelformat == GR_PIXFMT_RGB_565)  {
-        if ((_GlideRoot.environment.aaSample == 8) &&	/* 8xaa */
-            (gc->chipCount > 2))
+        if ((_GlideRoot.environment.aaSample == 8) && /* 8xaa */ (gc->chipCount > 2)) {
+          pixelformat = GR_PIXFMT_AA_8_ARGB_8888;
+        } else if ((_GlideRoot.environment.aaSample == 4) && (gc->chipCount > 1)) {
+          pixelformat = GR_PIXFMT_AA_4_ARGB_8888;
+        } else if (_GlideRoot.environment.aaSample == 2) {
+          pixelformat = GR_PIXFMT_AA_2_ARGB_8888;
+        } else {
+          pixelformat = GR_PIXFMT_ARGB_8888;
+        }
+      } else if (_GlideRoot.environment.outputBpp == 15 || pixelformat == GR_PIXFMT_ARGB_1555) {
+        if ((_GlideRoot.environment.aaSample == 8) && /* 8xaa */ (gc->chipCount > 2)) {
+          pixelformat = GR_PIXFMT_AA_8_ARGB_1555;
+        } else if ((_GlideRoot.environment.aaSample == 4) && (gc->chipCount > 1)) {
+          pixelformat = GR_PIXFMT_AA_4_ARGB_1555;
+        } else if (_GlideRoot.environment.aaSample == 2) {
+          pixelformat = GR_PIXFMT_AA_2_ARGB_1555;
+        } else {
+          pixelformat = GR_PIXFMT_ARGB_1555;
+        }
+      } else if (pixelformat == GR_PIXFMT_RGB_565) {
+        if ((_GlideRoot.environment.aaSample == 8) && /* 8xaa */ (gc->chipCount > 2)) {
           pixelformat = GR_PIXFMT_AA_8_RGB_565;
-        else if ((_GlideRoot.environment.aaSample == 4) &&
-            (gc->chipCount > 1))
-          pixelformat = GR_PIXFMT_AA_4_RGB_565 ;
-        else
-          if (_GlideRoot.environment.aaSample == 2)
-            pixelformat = GR_PIXFMT_AA_2_RGB_565 ;
+        } else if ((_GlideRoot.environment.aaSample == 4) && (gc->chipCount > 1)) {
+          pixelformat = GR_PIXFMT_AA_4_RGB_565;
+        } else if (_GlideRoot.environment.aaSample == 2) {
+          pixelformat = GR_PIXFMT_AA_2_RGB_565;
+        } else {
+          pixelformat = GR_PIXFMT_RGB_565;
+        }
       }
     }
 
@@ -3219,6 +3217,7 @@ GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
           }
           if (gc->sliCount > 1)
             _grDisableSliCtrl();
+          
           /* Idle the 3D pipe. */
           grFinish();
         }

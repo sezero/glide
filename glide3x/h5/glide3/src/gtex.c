@@ -702,12 +702,12 @@ _grTexCalcMipmapLevelOffsetTiled(GrChipID_t tmu,
         {
           switch(fmt) {
           case GR_TEXFMT_ARGB_CMP_FXT1:
-          case GR_TEXFMT_ARGB_CMP_DXT1:
             /* For these, we offset the LOD height * texture stride */
             if (evenOdd & GR_MIPMAPLEVELMASK_ODD) {
               tileY += HEIGHT_BY_ASPECT_LOD_FXT1(aspect, GR_LOD_LOG2_16);
             }
             break;
+          case GR_TEXFMT_ARGB_CMP_DXT1:
           case GR_TEXFMT_ARGB_CMP_DXT2:
           case GR_TEXFMT_ARGB_CMP_DXT3:
           case GR_TEXFMT_ARGB_CMP_DXT4:
@@ -732,12 +732,12 @@ _grTexCalcMipmapLevelOffsetTiled(GrChipID_t tmu,
         {
           switch(fmt) {
           case GR_TEXFMT_ARGB_CMP_FXT1:
-          case GR_TEXFMT_ARGB_CMP_DXT1:
             /* For these, we offset the LOD height * texture stride */
             if (evenOdd & GR_MIPMAPLEVELMASK_EVEN) {
               tileY += HEIGHT_BY_ASPECT_LOD_FXT1(aspect, GR_LOD_LOG2_8);
             }
             break;
+          case GR_TEXFMT_ARGB_CMP_DXT1:
           case GR_TEXFMT_ARGB_CMP_DXT2:
           case GR_TEXFMT_ARGB_CMP_DXT3:
           case GR_TEXFMT_ARGB_CMP_DXT4:
@@ -762,12 +762,12 @@ _grTexCalcMipmapLevelOffsetTiled(GrChipID_t tmu,
         {
           switch(fmt) {
           case GR_TEXFMT_ARGB_CMP_FXT1:
-          case GR_TEXFMT_ARGB_CMP_DXT1:
             /* For these, we offset the LOD height * texture stride */
             if (evenOdd & GR_MIPMAPLEVELMASK_ODD) {
               tileY += HEIGHT_BY_ASPECT_LOD_FXT1(aspect, GR_LOD_LOG2_4);
             }
             break;
+          case GR_TEXFMT_ARGB_CMP_DXT1:
           case GR_TEXFMT_ARGB_CMP_DXT2:
           case GR_TEXFMT_ARGB_CMP_DXT3:
           case GR_TEXFMT_ARGB_CMP_DXT4:
@@ -792,12 +792,12 @@ _grTexCalcMipmapLevelOffsetTiled(GrChipID_t tmu,
         {
           switch(fmt) {
           case GR_TEXFMT_ARGB_CMP_FXT1:
-          case GR_TEXFMT_ARGB_CMP_DXT1:
             /* For these, we offset the LOD height * texture stride */
             if (evenOdd & GR_MIPMAPLEVELMASK_EVEN) {
               tileY += HEIGHT_BY_ASPECT_LOD_FXT1(aspect, GR_LOD_LOG2_2);
             }
             break;
+          case GR_TEXFMT_ARGB_CMP_DXT1:
           case GR_TEXFMT_ARGB_CMP_DXT2:
           case GR_TEXFMT_ARGB_CMP_DXT3:
           case GR_TEXFMT_ARGB_CMP_DXT4:
@@ -2785,7 +2785,8 @@ GR_ENTRY(grTexSource, void,
                                                     info->aspectRatioLog2,
                                                     info->format,
                                                     evenOdd,
-                                                    FXTRUE)
+                                                    FXTRUE,
+                                                    FXFALSE)
                            > gc->tmu_state[tmu].total_mem)),
                          "insufficient texture ram at startAddress");
   GR_CHECK_F(FN_NAME, evenOdd > 0x3 || evenOdd == 0, "evenOdd mask invalid");
@@ -3495,7 +3496,8 @@ GR_DIENTRY(grTextureBuffer, void,
   else
     offset = _grTexTextureMemRequired( thisLOD+1, largeLOD, 
                                        aspectRatio, format,
-                                       odd_even_mask, FXTRUE);
+                                       odd_even_mask, FXTRUE,
+                                       FXFALSE );
 
   /* How do we deal with UMA?
   The tmu only makes sense when the UMA is not turned on.
@@ -3594,7 +3596,8 @@ GR_DIENTRY(grTextureAuxBuffer, void,
   else
     offset = _grTexTextureMemRequired( thisLOD+1, largeLOD, 
                                        aspectRatio, format,
-                                       odd_even_mask, FXTRUE);
+                                       odd_even_mask, FXTRUE,
+                                       FXFALSE );
 
   /* How do we deal with UMA?
   The tmu only makes sense when the UMA is not turned on.

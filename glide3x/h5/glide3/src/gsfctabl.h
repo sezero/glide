@@ -1204,8 +1204,8 @@ static const FxU16 boundingBoxWH[3][7][12][12][2] =
       },
     },
   },
-  { /* FXT1, DXT1 texture format */
-    { /* 8:1 aspect ratio; FXT1, DXT1 texture format */
+  { /* FXT1 texture format */
+    { /* 8:1 aspect ratio; FXT1 texture format */
       { /* largeLod:  0 */
         {   8,   4},
         {   0,   0},
@@ -1375,7 +1375,7 @@ static const FxU16 boundingBoxWH[3][7][12][12][2] =
         {2048, 256},
       },
     },
-    { /* 4:1 aspect ratio; FXT1, DXT1 texture format */
+    { /* 4:1 aspect ratio; FXT1 texture format */
       { /* largeLod:  0 */
         {   8,   4},
         {   0,   0},
@@ -1475,7 +1475,7 @@ static const FxU16 boundingBoxWH[3][7][12][12][2] =
         {   0,   0},
       },
       { /* largeLod:  7 */
-        { 128,  52},/* KoolSmoky - is this correct? */
+        { 128,  52},
         { 128,  48},
         { 128,  48},
         { 128,  48},
@@ -1545,7 +1545,7 @@ static const FxU16 boundingBoxWH[3][7][12][12][2] =
         {2048, 512},
       },
     },
-    { /* 2:1 aspect ratio; FXT1, DXT1 texture format */
+    { /* 2:1 aspect ratio; FXT1 texture format */
       { /* largeLod:  0 */
         {   8,   4},
         {   0,   0},
@@ -1715,7 +1715,7 @@ static const FxU16 boundingBoxWH[3][7][12][12][2] =
         {2048,1024},
       },
     },
-    { /* 1:1 aspect ratio; FXT1, DXT1 texture format */
+    { /* 1:1 aspect ratio; FXT1 texture format */
       { /* largeLod:  0 */
         {   8,   4},
         {   0,   0},
@@ -1885,7 +1885,7 @@ static const FxU16 boundingBoxWH[3][7][12][12][2] =
         {2048,2048},
       },
     },
-    { /* 1:2 aspect ratio; FXT1, DXT1 texture format */
+    { /* 1:2 aspect ratio; FXT1 texture format */
       { /* largeLod:  0 */
         {   8,   4},
         {   0,   0},
@@ -2055,7 +2055,7 @@ static const FxU16 boundingBoxWH[3][7][12][12][2] =
         {1024,2048},
       },
     },
-    { /* 1:4 aspect ratio; FXT1, DXT1 texture format */
+    { /* 1:4 aspect ratio; FXT1 texture format */
       { /* largeLod:  0 */
         {   8,   4},
         {   0,   0},
@@ -2225,7 +2225,7 @@ static const FxU16 boundingBoxWH[3][7][12][12][2] =
         { 512,2048},
       },
     },
-    { /* 1:8 aspect ratio; FXT1, DXT1 texture format */
+    { /* 1:8 aspect ratio; FXT1 texture format */
       { /* largeLod:  0 */
         {   8,   4},
         {   0,   0},
@@ -2396,8 +2396,8 @@ static const FxU16 boundingBoxWH[3][7][12][12][2] =
       },
     },
   },
-  { /* DXT2,3,4,5 texture format */
-    { /* 8:1 aspect ratio; DXT2,3,4,5 texture format */
+  { /* DXT1,2,3,4,5 texture format */
+    { /* 8:1 aspect ratio; DXT1,2,3,4,5 texture format */
       { /* largeLod:  0 */
         {   4,   4},
         {   0,   0},
@@ -2567,7 +2567,7 @@ static const FxU16 boundingBoxWH[3][7][12][12][2] =
         {2048, 256},
       },
     },
-    { /* 4:1 aspect ratio; DXT2,3,4,5 texture format */
+    { /* 4:1 aspect ratio; DXT1,2,3,4,5 texture format */
       { /* largeLod:  0 */
         {   4,   4},
         {   0,   0},
@@ -2667,7 +2667,7 @@ static const FxU16 boundingBoxWH[3][7][12][12][2] =
         {   0,   0},
       },
       { /* largeLod:  7 */
-        { 128,  52}, /* KoolSmoky - is this correct? */
+        { 128,  52},
         { 128,  48},
         { 128,  48},
         { 128,  48},
@@ -2737,7 +2737,7 @@ static const FxU16 boundingBoxWH[3][7][12][12][2] =
         {2048, 512},
       },
     },
-    { /* 2:1 aspect ratio; DXT2,3,4,5 texture format */
+    { /* 2:1 aspect ratio; DXT1,2,3,4,5 texture format */
       { /* largeLod:  0 */
         {   4,   4},
         {   0,   0},
@@ -2907,7 +2907,7 @@ static const FxU16 boundingBoxWH[3][7][12][12][2] =
         {2048,1024},
       },
     },
-    { /* 1:1 aspect ratio; DXT2,3,4,5 texture format */
+    { /* 1:1 aspect ratio; DXT1,2,3,4,5 texture format */
       { /* largeLod:  0 */
         {   4,   4},
         {   0,   0},
@@ -3077,7 +3077,7 @@ static const FxU16 boundingBoxWH[3][7][12][12][2] =
         {2048,2048},
       },
     },
-    { /* 1:2 aspect ratio; DXT2,3,4,5 texture format */
+    { /* 1:2 aspect ratio; DXT1,2,3,4,5 texture format */
       { /* largeLod:  0 */
         {   4,   4},
         {   0,   0},
@@ -3247,7 +3247,7 @@ static const FxU16 boundingBoxWH[3][7][12][12][2] =
         {1024,2048},
       },
     },
-    { /* 1:4 aspect ratio; DXT2,3,4,5 texture format */
+    { /* 1:4 aspect ratio; DXT1,2,3,4,5 texture format */
       { /* largeLod:  0 */
         {   4,   4},
         {   0,   0},
@@ -3417,7 +3417,7 @@ static const FxU16 boundingBoxWH[3][7][12][12][2] =
         { 512,2048},
       },
     },
-    { /* 1:8 aspect ratio; DXT2,3,4,5 texture format */
+    { /* 1:8 aspect ratio; DXT1,2,3,4,5 texture format */
       { /* largeLod:  0 */
         {   4,   4},
         {   0,   0},
@@ -3517,11 +3517,11 @@ static const FxU16 boundingBoxWH[3][7][12][12][2] =
         {   0,   0},
       },
       { /* largeLod:  7 */
-        {  16, 192},
-        {  16, 192},
-        {  16, 192},
-        {  16, 192},
-        {  16, 192},
+        {  20, 192},
+        {  20, 192},
+        {  20, 192},
+        {  20, 192},
+        {  20, 192},
         {  16, 192},
         {  16, 192},
         {  16, 128},
@@ -3531,11 +3531,11 @@ static const FxU16 boundingBoxWH[3][7][12][12][2] =
         {   0,   0},
       },
       { /* largeLod:  8 */
-        {  48, 256},
-        {  48, 256},
-        {  48, 256},
-        {  48, 256},
-        {  48, 256},
+        {  52, 256},
+        {  52, 256},
+        {  52, 256},
+        {  52, 256},
+        {  52, 256},
         {  48, 256},
         {  48, 256},
         {  48, 256},
@@ -3545,11 +3545,11 @@ static const FxU16 boundingBoxWH[3][7][12][12][2] =
         {   0,   0},
       },
       { /* largeLod:  9 */
-        { 112, 512},
-        { 112, 512},
-        { 112, 512},
-        { 112, 512},
-        { 112, 512},
+        { 116, 512},
+        { 116, 512},
+        { 116, 512},
+        { 116, 512},
+        { 116, 512},
         { 112, 512},
         { 112, 512},
         { 112, 512},

@@ -543,7 +543,8 @@ GR_DIENTRY(gu3dfGetInfo, FxBool,
                                                   Info->header.aspect_ratio,
                                                   Info->header.format,
                                                   GR_MIPMAPLEVELMASK_BOTH,
-                                                  FXFALSE);
+                                                  FXFALSE,
+                                                  FXTRUE);
   }
 
   GDBG_INFO(81,"gu3dfGetInfo(%s,0x%x) -> %i tex memory required\n",FileName,Info, Info->mem_required);

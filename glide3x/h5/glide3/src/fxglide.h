@@ -1803,7 +1803,7 @@ typedef struct GrGC_s
     FxI32  roomToReadPtr;/* Bytes until last known hw ptr */
     FxI32  roomToEnd;    /* # of bytes until last usable address before fifoEnd */
 
-    FxBool lfbLockCount; /* Have we done an lfb lock? Count of the locks. */
+    FxU32 lfbLockCount; /* Have we done an lfb lock? Count of the locks. */
 
 #if GLIDE_INIT_HWC
     GrStateBuffer* 
@@ -2130,7 +2130,6 @@ struct _GlideRoot_s {
     FxU32  oglLfbLockHack;	    /* Enables disable hack to get around forced 32bit problems in OpenGL */
     FxU32  useHwcAAforLfbRead;  /* Specifies whether to use HwcAAReadRegion for read Locks and LfbReadRegion calls */
     FxU32  ditherHwcAA;		    /* Specifies whether to use HwcAAReadRegion should dither */
-	FxI32  lockCounter;
   } environment;
 
   GrHwConfiguration     hwConfig;
@@ -2942,7 +2941,8 @@ FxU32
 _grTexTextureMemRequired(GrLOD_t small_lod, GrLOD_t large_lod, 
                          GrAspectRatio_t aspect, GrTextureFormat_t format,
                          FxU32 evenOdd,
-                         FxBool roundP);
+                         FxBool roundP,
+                         FxBool systemMem);
 void FX_CSTYLE
 _grUpdateParamIndex(void);
 

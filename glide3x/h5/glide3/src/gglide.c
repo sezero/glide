@@ -2659,9 +2659,6 @@ GR_ENTRY(grBufferSwap, void, (FxU32 swapInterval))
   GR_BEGIN_NOFIFOCHECK(FN_NAME,86);
   GDBG_INFO_MORE(gc->myLevel,"(%d)\n",swapInterval);
 
-  // First thing first. Decrement the lockCounter
-  if (_GlideRoot.environment.lockCounter > -10) _GlideRoot.environment.lockCounter--;
-
 #ifdef FX_GLIDE_NAPALM
 #if !(GLIDE_PLATFORM & GLIDE_OS_UNIX) && !defined(__DJGPP__)
   /* Window hacky stuff */
