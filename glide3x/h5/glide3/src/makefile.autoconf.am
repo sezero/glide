@@ -224,7 +224,7 @@ noinst_HEADERS         = fxcmd.h     fxsplash.h  \
 fxgasm_SOURCES         = fxgasm.c gthread.c
 fxgasm_DEPENDENCIES    = gthread.lo
 
-lib_LTLIBRARIES        = libglide3x.la
+lib_LTLIBRARIES        = libglide3.la
 libglide3x_la_SOURCES   = fxinline.h fxgasm.h \
                           gsplash.c g3df.c  gu.c gthread.c \
                           gpci.c diglide.c disst.c ditex.c \
