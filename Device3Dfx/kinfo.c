@@ -25,9 +25,29 @@ main (int argc, char **argv)
   if (argc == 1)
   {
     FILE *f = fopen ("kinfo.h", "w");
+    FILE *p = NULL;
+    char temp[1000];
 
 #ifdef CONFIG_MTRR
-    fprintf (f, "#define HAVE_MTRR\n");
+    /* It is not enough to just check if the kernel supports MTRRs, if the 
+     * processor doesn't have MTRRs then its possible (and likely) that
+     * the kernel was still compiled with MTRR support.  So we also have to
+     * check the processor has MTRRs. */
+
+    p = popen ("grep poop /proc/cpuinfo", "r");
+
+    /* See if grep found anything */
+
+    fscanf (p, "%s" temp);
+    printf ("temp = %d\n", temp);
+
+    if (!feof (p))
+    {
+      fprintf (f, "#define HAVE_MTRR\n");
+    }
+    /* All done, cleanup */
+    pclose (p);
+
 #endif
     
 #ifdef CONFIG_SMP
