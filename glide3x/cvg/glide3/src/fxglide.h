@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.6  2004/10/07 07:48:49  dborca
+** comment the GR_CDECL hack to prevent accidents
+**
 ** Revision 1.1.1.1.8.5  2004/02/16 07:42:15  dborca
 ** grSetNumPendingBuffers visible with grGetProcAddress
 **
@@ -355,6 +358,7 @@
 #include <3dfx.h>
 #include <glidesys.h>
 #include <gdebug.h>
+#include <cpuid.h>
 
 #define MAX_NUM_SST 4
 
@@ -1046,6 +1050,13 @@ extern void FX_CALL _grTexDownload_3DNow_MMX(struct GrGC_s* gc, const FxU32 tmuB
                                              const FxU32 maxS, const FxU32 minT, const FxU32 maxT,
                                              void* texData);
 #endif /* GL_AMD3D */
+
+#if GL_MMX
+/* xtexdl.asm */
+extern void FX_CALL _grTexDownload_MMX(struct GrGC_s* gc, const FxU32 tmuBaseAddr,
+                                       const FxU32 maxS, const FxU32 minT, const FxU32 maxT,
+                                       void* texData);
+#endif /* GL_MMX */
 #endif /* GLIDE_DISPATCH_DOWNLOAD */
 
 typedef struct GrGC_s
@@ -1303,7 +1314,7 @@ typedef struct GrGC_s
 struct _GlideRoot_s {
   int p6Fencer;                 /* xchg to here to keep this in cache!!! */
   int current_sst;
-  FxU32 CPUType;
+  _p_info CPUType;              /* CPUID */
   GrGC *curGC;                  /* point to the current GC      */
   FxU32 packerFixAddress;       /* address to write packer fix to */
   FxBool    windowsInit;        /* Is the Windows part of glide initialized? */
