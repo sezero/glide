@@ -1,7 +1,7 @@
 # Win32 Makefile for 3dfx Glide3x
 # 
 # Copyright (c) 2003 - Hiroshi Morii
-# Email: koolsmoky@3dfxzone.it
+# Email: koolsmoky@users.sourceforge.net
 # URL  : http://www.3dfxzone.it/koolsmoky
 #
 # Debug build                : nmake -f Makefile.win32 DEBUG=1
@@ -251,9 +251,6 @@ FLAGS = $(FLAGS) -DGLIDE_SANITY_SIZE=1
 FLAGS = $(FLAGS) -DGLIDE_SANITY_ASSERT=1
 !endif
 
-# win32 exclusives
-FLAGS = $(FLAGS) -DHWC_ACCESS_DDRAW=1 -DHWC_EXT_INIT=1 -DGLIDE_INIT_HWC=1
-
 # Obsolete. We now use WINXP_ALT_TAB_FIX
 # FLAGS = $(FLAGS) -DIS_ALT_TAB=1 -DGLIDE_ALT_TAB=1
 #
@@ -294,6 +291,9 @@ FLAGS = $(FLAGS) -DWINXP_FASTER_ALT_TAB_FIX=1 -DWINXP_SAFER_FASTER_ALT_TAB_FIX=1
 FLAGS = $(FLAGS) -DGLIDE_LIB=1
 FLAGS = $(FLAGS) -DFX_DLL_ENABLE=1
 
+# win32 exclusives
+FLAGS = $(FLAGS) -DHWC_ACCESS_DDRAW=1 -DHWC_EXT_INIT=1 -DGLIDE_INIT_HWC=1 -DNEED_MSGFILE_ASSIGN
+
 ##################################
 # compiler setup
 ##################################
@@ -302,16 +302,19 @@ LINK = link
 AR   = lib
 AS   = nasmw
 
-CFLAGS  = -Ox -G6 -W3 -WX -c -D__MSC__=1 -D_X86_=1 -DNULL=0 -D_MBCS -D_LIBS -D_WIN32 -DWIN32=1 -D__WIN32__=1 -DSTRICT
-LFLAGS  = -nologo /DLL /SUBSYSTEM:WINDOWS,4.00 /OPT:WIN98 /MACHINE:IX86 /NODEFAULTLIB
+CFLAGS  = -G6 -W3 -WX -c -D__MSC__=1 -D_X86_=1 -DNULL=0 -D_WIN32=1 -DWIN32=1 -D__WIN32__=1 -DSTRICT
+LFLAGS  = -nologo /DLL /OPT:WIN98 /MACHINE:IX86 /NODEFAULTLIB
 ARFLAGS = -nologo
-ASFLAGS = -O2 -fwin32 -D__WIN32__ --prefix _
+ASFLAGS = -fwin32 -D__WIN32__ --prefix _
 
 !if "$(DEBUG)"== "1"
-CFLAGS  = $(CFLAGS) -DDEBUG=1
+CFLAGS  = $(CFLAGS) -Od -LDd -MLd -DDEBUG=1 -D_DEBUG
 LFLAGS  = $(LFLAGS) -debugtype:both /DEBUG
 ARFLAGS = $(ARFLAGS) -debugtype:both
-ASFLAGS = $(ASFLAGS) -DDEBUG=1
+ASFLAGS = $(ASFLAGS) -Od -DDEBUG=1
+!else
+CFLAGS  = $(CFLAGS) -Ox -LD -ML
+ASFLAGS = $(ASFLAGS) -O2
 !endif
 
 # So that we can get reasonable stuff from SoftIce etc even
@@ -407,16 +410,16 @@ INCS =\
 	-I$(FX_GLIDE_SWLIBS)\fxmisc\
 	-I$(FX_GLIDE_SWLIBS)\newpci\pcilib\
 	-I$(FX_GLIDE_HW)\incsrc\
-	-I$(FX_GLIDE_HW)\$(FX_HW_PROJECTS)\src\
+	-I$(FX_GLIDE_HW)\$(FX_HW_PROJECTS)\src
 	
 DX_LIB = ddraw.lib dxguid.lib
 
 DEP_LIB = user32.lib gdi32.lib advapi32.lib kernel32.lib
 
 !if "$(DEBUG)" == "1"
-STD_LIB = libcmtd.lib
+STD_LIB = libcd.lib
 !else
-STD_LIB = libcmt.lib
+STD_LIB = libc.lib
 !endif
 
 #################################
