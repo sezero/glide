@@ -1167,13 +1167,12 @@ GR_DIENTRY(grRenderBuffer, void , (GrBuffer_t buffer) )
         // AJB: Turn AA back on if necessary
         //
 #ifdef FX_GLIDE_NAPALM
-        if (gc->grPixelSample > 1) 
-        {
-			if (!gc->state.grEnableArgs.aaMultisampleDisableCount) {
-				_grAAOffsetValue(_GlideRoot.environment.aaXOffset[gc->sampleOffsetIndex],
-								 _GlideRoot.environment.aaYOffset[gc->sampleOffsetIndex],
-								 0, gc->chipCount - 1, FXTRUE, gc->enableSecondaryBuffer) ;
-			}
+        if (gc->grPixelSample > 1) {
+          if (!gc->state.grEnableArgs.aaMultisampleDisableCount) {
+            _grAAOffsetValue(_GlideRoot.environment.aaXOffset[gc->sampleOffsetIndex],
+                             _GlideRoot.environment.aaYOffset[gc->sampleOffsetIndex],
+                             0, gc->chipCount - 1, FXTRUE, gc->enableSecondaryBuffer) ;
+          }
         }
 #endif
 
@@ -2682,8 +2681,9 @@ GR_DIENTRY(grEnable, void , (GrEnableMode_t mode) )
 #ifdef FX_GLIDE_NAPALM
   case GR_AA_MULTI_SAMPLE:
     {
-      if (gc->state.grEnableArgs.aaMultisampleDisableCount)
+      if (gc->state.grEnableArgs.aaMultisampleDisableCount) {
         gc->state.grEnableArgs.aaMultisampleDisableCount--;
+      }
       
       if (!gc->state.grEnableArgs.aaMultisampleDisableCount) {
         _grAAOffsetValue(_GlideRoot.environment.aaXOffset[gc->sampleOffsetIndex],
@@ -2779,15 +2779,12 @@ GR_DIENTRY(grDisable, void , (GrEnableMode_t mode) )
 #ifdef FX_GLIDE_NAPALM
   case GR_AA_MULTI_SAMPLE:
     {
-		if (!gc->state.grEnableArgs.aaMultisampleDisableCount)
-		{
-            _grAAOffsetValue(_GlideRoot.environment.aaXOffset[0],
-							 _GlideRoot.environment.aaYOffset[0],
-							 0, gc->chipCount - 1, FXTRUE, gc->enableSecondaryBuffer) ;
-		}
-
-		gc->state.grEnableArgs.aaMultisampleDisableCount++;
-      
+      if (!gc->state.grEnableArgs.aaMultisampleDisableCount) {
+        _grAAOffsetValue(_GlideRoot.environment.aaXOffset[0],
+                         _GlideRoot.environment.aaYOffset[0],
+                         0, gc->chipCount - 1, FXTRUE, gc->enableSecondaryBuffer) ;
+      }
+      gc->state.grEnableArgs.aaMultisampleDisableCount++;
     }
     break;
 #endif
