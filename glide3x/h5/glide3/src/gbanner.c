@@ -373,9 +373,6 @@ FxBool fxSplashInit (FxU32 hWnd,
              /* replicate pixels */
              b0 &= 0x7f;
              decoded = *(unsigned short *)&tga_16rle[k];
-             decoded = ((decoded & 0x7c00) << 1)
-                     | ((decoded & 0x03e0) << 1)
-                     |  (decoded & 0x001f);
              k += 2;
              for (i = 0; i <= b0; i++) {
                  fxPlugData[j++] = decoded;
@@ -384,9 +381,6 @@ FxBool fxSplashInit (FxU32 hWnd,
              /* read pixels */
              for (i = 0; i <= b0; i++) {
                  decoded = *(unsigned short *)&tga_16rle[k];
-                 decoded = ((decoded & 0x7c00) << 1)
-                         | ((decoded & 0x03e0) << 1)
-                         |  (decoded & 0x001f);
                  k += 2;
                  fxPlugData[j++] = decoded;
              }
