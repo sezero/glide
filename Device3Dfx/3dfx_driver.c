@@ -21,6 +21,10 @@
 
    ChangeLog
 
+   2004-01-22   Guillem Jover   <guillem@debian.org>
+
+   * Ported to 2.6 kernels.
+
    2002/05/05   Guillem Jover   <guillem@hadrons.org>
 
    * Re-included VOODOO pci id, accidentally removed in last patch,
