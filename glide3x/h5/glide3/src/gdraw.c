@@ -810,16 +810,16 @@ _grDrawLineStrip(FxI32 mode, FxI32 ltype, FxI32 count, void *pointers)
         ** compute absolute deltas and draw from low Y to high Y
         */
         ADY = FARRAY(b, gc->state.vData.vertexInfo.offset+4) - FARRAY(a, gc->state.vData.vertexInfo.offset+4);
-        i = *(long *)&ADY;
+        i = *(int *)&ADY;
         if (i < 0) {
           float *tv;
           tv = a; a = b; b = tv;
           i ^= 0x80000000;            /* ady = -ady; */
-          (*(long *)&ADY) = i;
+          (*(int *)&ADY) = i;
         }
         
         DX = FARRAY(b, gc->state.vData.vertexInfo.offset) - FARRAY(a, gc->state.vData.vertexInfo.offset);
-        j = *(long *)&DX;
+        j = *(int *)&DX;
         if (j < 0) {
           j ^= 0x80000000;            /* adx = -adx; */
         }
@@ -989,7 +989,7 @@ _grDrawLineStrip(FxI32 mode, FxI32 ltype, FxI32 count, void *pointers)
         ** compute absolute deltas and draw from low Y to high Y
         */
         ADY = tmp2 - tmp1;
-        i = *(long *)&ADY;
+        i = *(int *)&ADY;
         if (i < 0) {
           float *tv;          
           owa = oowb; owb = oowa;
@@ -997,7 +997,7 @@ _grDrawLineStrip(FxI32 mode, FxI32 ltype, FxI32 count, void *pointers)
           fby = tmp1;
           tv = a; a = b; b = tv;
           i ^= 0x80000000;            /* ady = -ady; */
-          (*(long *)&ADY) = i;
+          (*(int *)&ADY) = i;
         }
         fax = FARRAY(a, gc->state.vData.vertexInfo.offset)
           *owa*gc->state.Viewport.hwidth+gc->state.Viewport.ox;
@@ -1005,7 +1005,7 @@ _grDrawLineStrip(FxI32 mode, FxI32 ltype, FxI32 count, void *pointers)
           *owb*gc->state.Viewport.hwidth+gc->state.Viewport.ox;
         
         DX = fbx - fax;
-        j = *(long *)&DX;
+        j = *(int *)&DX;
         if (j < 0) {
           j ^= 0x80000000;            /* adx = -adx; */
         }
