@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.6.5  2004/09/27 09:05:22  dborca
+** aligned aux buffer correctly (maybe)
+**
 ** Revision 1.1.1.1.6.4  2004/03/02 07:30:58  dborca
 ** changed the build process to make the branches independent
 ** made glide.h consistent across all branches
@@ -3457,7 +3460,7 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
                 ( bInfo->buffInfo.bufStrideInTiles << 16 ) |
                   bInfo->buffInfo.bufStrideInTiles );
 
-#if defined(__DJGPP__) || defined(__linux__)
+#if defined(__DJGPP__) || defined(__linux__) || defined(__WATCOMC__)
   HWC_IO_STORE(bInfo->regInfo, vidProcCfg, vidProcCfg | SST_VIDEO_PROCESSOR_EN);
 #endif
 
@@ -4293,7 +4296,7 @@ hwcShareContextData(hwcBoardInfo *bInfo, FxU32 **data)
             ctxRes.optData.shareContextDWORDRes.contextDWORD); 
 
 /* [dBorca] that must be initialized to something... */
-#elif defined(__DJGPP__) || defined(__linux__)
+#elif defined(__DJGPP__) || defined(__linux__) || defined(__WATCOMC__)
  *data = &dummyContextDWORD;
 #endif
   return retVal;
