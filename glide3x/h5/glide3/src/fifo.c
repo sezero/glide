@@ -1,21 +1,18 @@
 /*
-** THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONLY
-** PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGHT
-** TO USE THE GLIDE TRADEMARK WITHOUT PRIOR WRITTEN PERMISSION OF 3DFX
-** INTERACTIVE, INC. A COPY OF THIS LICENSE MAY BE OBTAINED FROM THE 
-** DISTRIBUTOR OR BY CONTACTING 3DFX INTERACTIVE INC(info@3dfx.com). 
-** THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER 
-** EXPRESSED OR IMPLIED. SEE THE 3DFX GLIDE GENERAL PUBLIC LICENSE FOR A
-** FULL TEXT OF THE NON-WARRANTY PROVISIONS.  
-** 
-** USE, DUPLICATION OR DISCLOSURE BY THE GOVERNMENT IS SUBJECT TO
-** RESTRICTIONS AS SET FORTH IN SUBDIVISION (C)(1)(II) OF THE RIGHTS IN
-** TECHNICAL DATA AND COMPUTER SOFTWARE CLAUSE AT DFARS 252.227-7013,
-** AND/OR IN SIMILAR OR SUCCESSOR CLAUSES IN THE FAR, DOD OR NASA FAR
-** SUPPLEMENT. UNPUBLISHED RIGHTS RESERVED UNDER THE COPYRIGHT LAWS OF
-** THE UNITED STATES.  
-** 
-** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
+ ** Copyright (c) 1995, 3Dfx Interactive, Inc
+ ** All Rights Reserved
+ *
+ ** This is UNPUBLISHED PROPRIETARY SOURCE CODE of 3Dfx Interactive, Inc.
+ ** the contents of this file may not be disclosed to third parties, copied o
+ ** duplicated in any form, in whole or in part, without the prior writte
+ ** permission of 3Dfx Interactive, Inc
+ *
+ ** RESTRICTED RIGHTS LEGEND
+ ** Use, duplication or disclosure by the Government is subject to restriction
+ ** as set forth in subdivision (c)(1)(ii) of the Rights in Technical Dat
+ ** and Computer Software clause at DFARS 252.227-7013, and/or in similar o
+ ** successor clauses in the FAR, DOD or NASA FAR Supplement. Unpublished 
+ ** rights reserved under the Copyright Laws of the United States
  *
  ** $Header$
  ** $Log: 
@@ -1369,31 +1366,97 @@ _reg_group_begin_internal_wax( FxU32 __regBase,
 #ifdef __linux__
 
 void
+FifoCheck() {
+  GR_DCL_GC;
+  static readPos=0;
+  static count=0;
+  int i, d0, d1;
+  unsigned int c;
+
+#if 0
+  d1=GET(gc->slaveCRegs[0]->cmdFifo0.readPtrL);
+  if (d1!=readPos) {
+    count=0;
+    readPos=d1;
+    return;
+  }
+  count++;
+  if (count<5) return;
+#endif
+#if 0
+  for (i=0; i<20; i++) {
+    c=*((long*)((int)driInfo.pFB+gc->cmdTransportInfo.fifoStart)+i);
+    fprintf(stderr, "%x ", c);
+  }
+  fprintf(stderr, "\r\n");
+  for (i=readPos-20; i<readPos+20; i++) {
+    c=*((long*)((int)driInfo.pFB+gc->cmdTransportInfo.fifoStart)+i);
+    if (i==readPos) fprintf(stderr, " . ");
+    if (i==gc->cmdTransportInfo.fifoPtr-gc->cmdTransportInfo.fifoStart)
+      fprintf(stderr, " x ");
+    fprintf(stderr, "%x ", c);
+  }
+  fprintf(stderr, "\r\n");
+#endif
+  d0=GET(gc->sstRegs->status);
+  d1=GET(gc->slaveSstRegs[0]->status);
+  fprintf(stderr, "Status: %x %x\r\n", d0, d1);
+  d0=GET(gc->cRegs->cmdFifo0.unusedB);
+  d1=GET(gc->slaveCRegs[0]->cmdFifo0.unusedB);
+  fprintf(stderr, "Fifo status: %x %x\r\n", d0, d1);
+  d0=GET(gc->cRegs->cmdFifo0.readPtrL);
+  d1=GET(gc->slaveCRegs[0]->cmdFifo0.readPtrL);
+  fprintf(stderr, "ReadPtr: %x %x\r\n", d0, d1);
+  d0=GET(gc->cRegs->cmdFifo0.depth);
+  d1=GET(gc->slaveCRegs[0]->cmdFifo0.depth);
+  fprintf(stderr, "Depth: %d %d\r\n", d0, d1);
+  d0=GET(gc->cRegs->cmdFifo0.aMin);
+  d1=GET(gc->slaveCRegs[0]->cmdFifo0.aMin);
+  fprintf(stderr, "AMin: %x %x\r\n", d0, d1);
+  d0=GET(gc->cRegs->cmdFifo0.aMax);
+  d1=GET(gc->slaveCRegs[0]->cmdFifo0.aMax);
+  fprintf(stderr, "AMax: %x %x\r\n", d0, d1);
+  d0=GET(gc->cRegs->cmdFifo0.holeCount);
+  d1=GET(gc->slaveCRegs[0]->cmdFifo0.holeCount);
+  fprintf(stderr, "Holes: %x %x\r\n", d0, d1);
+  fprintf(stderr, "Software: %x\r\n", gc->cmdTransportInfo.fifoPtr-gc->cmdTransportInfo.fifoStart);
+  fprintf(stderr, "-----\r\n");
+}
+
+void
 _grImportFifo(int fifoPtr, int fifoRead) {
   struct cmdTransportInfo* gcFifo;
   FxU32 readPos;
   GR_DCL_GC;
+  int i;
 
-#if 1
   int dummy, d;
 
   do {
     dummy=GET(gc->cRegs->cmdFifo0.depth);
     d=GET(gc->cRegs->cmdFifo0.depth);
   } while (dummy || d);
+  for (i=1; i<gc->chipCount; i++) {
+    do {
+      dummy=GET(gc->slaveCRegs[i-1]->cmdFifo0.depth);
+      d=GET(gc->slaveCRegs[i-1]->cmdFifo0.depth);
+    } while (dummy || d);
+  }
   do {
     dummy = GET(gc->cRegs->cmdFifo0.readPtrL);
     readPos = GET(gc->cRegs->cmdFifo0.readPtrL);
   } while (dummy!=readPos);
+  for (i=1; i<gc->chipCount; i++) {
+    dummy=GET(gc->slaveCRegs[i-1]->cmdFifo0.readPtrL);
+  }
+  dummy=GET(gc->sstRegs->status);
+  for (i=1; i<gc->chipCount; i++) {
+    dummy=GET(gc->slaveSstRegs[i-1]->status);
+  }
   gcFifo=&gc->cmdTransportInfo;
   readPos=readPos-gcFifo->fifoOffset;
   gcFifo->fifoPtr = gcFifo->fifoStart + (readPos>>2);
   gcFifo->fifoRead = (FxU32)gcFifo->fifoPtr;
-#else
-  gcFifo=&gc->cmdTransportInfo;
-  gcFifo->fifoPtr = gc->rawLfb+(fifoPtr>>2);
-  gcFifo->fifoRead = ((int)gc->rawLfb)+fifoRead;
-#endif
   gcFifo->roomToReadPtr = gcFifo->fifoRead-((int)gcFifo->fifoPtr)-FIFO_END_ADJUST-sizeof(FxU32);
   if (gcFifo->roomToReadPtr<0) gcFifo->roomToReadPtr+=gcFifo->fifoSize;
   gcFifo->roomToEnd = gcFifo->fifoSize - 
@@ -1419,6 +1482,16 @@ int
 grFifoGetStalls() {
   GR_DCL_GC;
   return gc->stats.fifoStalls;
+}
+
+GR_ENTRY(NopCmd, void, ()) {
+#define FN_NAME "NopCmd"
+  GR_BEGIN_NOFIFOCHECK("NopCmd", 85);
+
+  GR_SET_EXPECTED_SIZE(4, 1);
+  GR_SET(BROADCAST_ID, hw, nopCMD, 0);
+  GR_END();
+#undef FN_NAME
 }
 
 #endif  /* defined(__linux__) */

@@ -29,15 +29,9 @@
 /*
 /*  Revision 1.1  2000/06/15 00:27:43  joseph
 /*  Initial checkin into SourceForge.
-/*
+/
 /*  Revision 1.1.1.1  2000/04/26 20:35:32  poppa
 /*  Initial Napalm Glide from Precision Insight
-/*
-/*  Revision 1.3  2000/10/20 19:07:00  billwhite
-/*  1.) Added changes for AMD 3DNow instructions in h5/glide3 and
-/*      h3/glide3.
-/*  2.) Fixed a typographical error in configure.in.  The default
-/*      texture utility library is texus2, not texus.
 /*
 /*  Revision 1.2  2000/04/18 15:58:15  poppa
 /*  h5/glide3/src/glide.h: Define grSwapBuffers as grDRISwapBuffers.  This
@@ -153,7 +147,7 @@
 	push %esi	/*  save caller's register variable */
 	push %ebx	/*  save caller's register variable  */
 
-	mov _gc-4(%esp), gc
+	mov _gc(%esp), gc
 	mov _vb-4(%esp) , fb	/*  get base address of vertex B */
 	push %ebp	/*  save frame pointer */
 

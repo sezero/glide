@@ -199,6 +199,8 @@ if files_are_equal "${PWD}" "${BUILD_DIRECTORY}" ; then
     BUILD_IS_DOT=YES
 fi
 if [ "$DO_CONFIGURE" = YES ] ; then
+    SRCDIR="${PWD}"
+    CFGDIR=${SRCIDR}
     if [ "$BUILD_IS_DOT" = NO ] ; then
         #
         # Get rid of the build directory.
@@ -206,6 +208,12 @@ if [ "$DO_CONFIGURE" = YES ] ; then
         echo -n 'Getting rid of the old build directory...'
         /bin/rm -rf $BUILD_DIRECTORY
         echo 'Done.'
+        #
+        # Now, create a new build directory with lndir.
+        #
+        mkdir -p $BUILD_DIRECTORY
+        (cd $BUILD_DIRECTORY; lndir -silent -ignorelinks $SRCDIR)
+        CFGDIR="."
     else
         echo 'Old build directory is current directory.'
     fi
@@ -221,8 +229,7 @@ if [ "$DO_CONFIGURE" = YES ] ; then
     # Configure.
     #
     echo -n "Configuring..."
-    SRCDIR="${PWD}"
-    (cd $BUILD_DIRECTORY; ${SRCDIR}/configure --quiet $CONFIGURE_OPTIONS)
+    (cd $BUILD_DIRECTORY; ${CFGDIR}/configure --quiet $CONFIGURE_OPTIONS)
     echo 'Done.'
 fi
 if [ "$DO_BUILD" = YES ] ; then

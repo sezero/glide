@@ -27,31 +27,59 @@ typedef struct _XF86DRIClipRect {
     unsigned short	y2;
 } XF86DRIClipRectRec, *XF86DRIClipRectPtr;
 
-typedef struct dri_t {
-  int screenWidth;
-  int screenHeight;
-  int memory;
-  int x;
-  int y;
-  int w;
-  int h;
-  char *pFB;
-  char *pRegs;
+#define MAX_CHIPS 4
+
+typedef unsigned long drmHandle,   *drmHandlePtr;   /* To mapped regions    */
+typedef unsigned int  drmSize,     *drmSizePtr;	    /* For mapped regions   */
+typedef void          *drmAddress, **drmAddressPtr; /* For mapped regions   */
+
+typedef struct {
+  drmHandle handle;
+  drmSize size;
+  drmAddress map;
+} tdfxRegion, *tdfxRegionPtr;
+
+typedef struct {
+  tdfxRegion regs[MAX_CHIPS];
   int deviceID;
+  int width;
+  int height;
+  int mem;
   int cpp;
   int stride;
-  int fbOffset;
   int fifoOffset;
   int fifoSize;
+  int fbOffset;
   int backOffset;
   int depthOffset;
   int textureOffset;
   int textureSize;
-  int holeCounting;
+  int numChips;
+  int numSamples;
+  void *driScrnPriv;
+} tdfxScreenPrivate;
+
+typedef struct dri_t {
+  char *pFB;
+  tdfxScreenPrivate *sPriv;
+  int screenWidth;
+  int screenHeight;
+  int cpp;
+  int x;
+  int y;
+  int w;
+  int h;
+  int stride;
+  int windowedStride;
+  int fullScreenStride;
   int numClip;
   XF86DRIClipRectPtr pClip;
-  volatile int **fifoPtr;
-  volatile int **fifoRead;
+  volatile int *fifoPtr;
+  volatile int *fifoRead;
+  int fullScreenPixFmt;
+  int windowedPixFmt; 
+  int sliCount;
+  int isFullScreen;
 } DRIDef;
 
 extern DRIDef driInfo;

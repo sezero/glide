@@ -76,9 +76,11 @@ static FxU32 fenceVar;
 #define HWC_TILED_BUFFER_BYTES    0x1000UL  /* 128 Bytes x 32 lines */
 #define HWC_TILED_BUFFER_Y_ALIGN  0x20000UL
 #define HWC_TILED_BUFFER_X_ADJUST 0x80UL
+#define HWC_RAW_LFB_STRIDE SST_RAW_LFB_ADDR_STRIDE_8K
 
 static hwcInfo hInfo;
 static char errorString[1024];
+static int finalVidDesktopOverlayStride;
 
 static FxU32 calcBufferStride(hwcBoardInfo *bInfo, FxU32 xres, FxBool tiled);
 static FxU32 calcBufferSize(hwcBoardInfo *bInfo, FxU32 xres, FxU32 yres, 
@@ -97,30 +99,21 @@ typedef struct envitem_t {
 static envitem *first=0;
 static int envinit=0;
 
-DRIDef driInfo={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+DRIDef driInfo={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
-void grDRIOpen(char *pFB, char *pRegs, int deviceID, int width, int height, 
-	       int mem, int cpp, int stride, int fifoOffset, int fifoSize, 
-	       int fbOffset, int backOffset, int depthOffset, 
-	       int textureOffset, int textureSize, 
+void grDRIOpen(char *pFB, tdfxScreenPrivate *sPriv,
 	       volatile int *fifoPtr, volatile int *fifoRead) {
   driInfo.pFB=pFB;
-  driInfo.pRegs=pRegs;
-  driInfo.deviceID=deviceID;
-  driInfo.screenWidth=width;
-  driInfo.screenHeight=height;
-  driInfo.memory=mem;
-  driInfo.cpp=cpp;
-  driInfo.stride=stride;
-  driInfo.fifoOffset=fifoOffset;
-  driInfo.fifoSize = fifoSize;
-  driInfo.fbOffset=fbOffset;
-  driInfo.backOffset=backOffset;
-  driInfo.depthOffset=depthOffset;
-  driInfo.textureOffset=textureOffset;
-  driInfo.textureSize=textureSize;
+  driInfo.sPriv=(tdfxScreenPrivate*)malloc(sizeof(tdfxScreenPrivate));
+  memcpy(driInfo.sPriv, sPriv, sizeof(tdfxScreenPrivate));
   driInfo.fifoPtr=(volatile int **)fifoPtr;
   driInfo.fifoRead=(volatile int **)fifoRead;
+  /* These are the fields used in glide src */
+  driInfo.cpp=sPriv->cpp;
+  driInfo.screenWidth=sPriv->width;
+  driInfo.screenHeight=sPriv->height;
+  driInfo.stride=driInfo.windowedStride=sPriv->stride;
+  driInfo.isFullScreen=0;
 }
 
 void grDRIPosition(int x, int y, int w, int h, 
@@ -138,8 +131,7 @@ static void loadEnvFile() {
   char data[128];
   char *env, *val;
   envitem *item;
-  unsigned int sawError=0;
-  envitem *first=(envitem *)0;
+  int first=1;
 
   if (envinit) return;
   envinit=1;
@@ -151,9 +143,9 @@ static void loadEnvFile() {
     if (*data=='\n') continue;
     val=strchr(data, '=');
     if (!val) {
-      if (sawError) {
+      if (first) {
 	fprintf(stderr, "In config file /etc/conf.3dfx/voodoo3:\n");
-	sawError=1;
+	first=0;
       }
       fprintf(stderr, "Malformed line: %s\n", data);
       continue;
@@ -201,7 +193,7 @@ hwcInit(FxU32 vID, FxU32 dID) {
   errorString[0] = '\0';
 
   if (!driInfo.pFB) return 0;
-  if (dID!=driInfo.deviceID) return 0;
+  if (dID!=driInfo.sPriv->deviceID) return 0;
   hInfo.boardInfo[0].pciInfo.initialized = FXFALSE;
   hInfo.nBoards++;
   hInfo.boardInfo[0].boardNum = 0;
@@ -209,13 +201,14 @@ hwcInit(FxU32 vID, FxU32 dID) {
   hInfo.boardInfo[0].pciInfo.initialized = FXTRUE;;
   hInfo.boardInfo[0].pciInfo.vendorID = vID;
   hInfo.boardInfo[0].pciInfo.deviceID = dID;
-  hInfo.boardInfo[0].h3Mem = driInfo.memory>>20;
-  if (driInfo.cpp==3 || driInfo.cpp==4) { /* 24 or 32 bpp modes */
+  hInfo.boardInfo[0].h3Mem = driInfo.sPriv->mem>>20;
+  if (driInfo.sPriv->cpp==3 || driInfo.sPriv->cpp==4) { /* 24 or 32 bpp modes */
     hInfo.boardInfo[0].h3pixelSize=4;
   } else {
     hInfo.boardInfo[0].h3pixelSize=2;
   }
-  hInfo.boardInfo[0].h3nwaySli=1;
+  hInfo.boardInfo[0].h3nwaySli=driInfo.sPriv->numChips;
+  hInfo.boardInfo[0].h3pixelSample=driInfo.sPriv->numSamples;
 
   if (hInfo.nBoards) {
     return &hInfo;
@@ -225,10 +218,11 @@ hwcInit(FxU32 vID, FxU32 dID) {
   }
 }
 
-extern int getpid();
-
 FxBool
 hwcMapBoard(hwcBoardInfo *bInfo, FxU32 bAddrMask) {
+  extern int getpid();
+  int i;
+
   if (bInfo->pciInfo.initialized == FXFALSE) {
     sprintf(errorString, "hwcMapBoard: Called before hwcInit\n");
     return FXFALSE;
@@ -237,8 +231,10 @@ hwcMapBoard(hwcBoardInfo *bInfo, FxU32 bAddrMask) {
   bInfo->linearInfo.initialized = FXTRUE;
   bInfo->osNT = FXFALSE;
   bInfo->procHandle = getpid();
-  bInfo->linearInfo.linearAddress[0]=(FxU32)driInfo.pRegs;
-  bInfo->linearInfo.linearAddress[1]=(FxU32)driInfo.pFB;
+  for (i=0; i<driInfo.sPriv->numChips; i++) {
+    bInfo->linearInfo.linearAddress[(i<<2)+0]=(FxU32)driInfo.sPriv->regs[i].map;
+    bInfo->linearInfo.linearAddress[(i<<2)+1]=(FxU32)driInfo.pFB;
+  }
   return FXTRUE;
 }
 
@@ -250,6 +246,7 @@ hwcUnmapBoard(hwcBoardInfo *bInfo) {
 FxBool
 hwcInitRegisters(hwcBoardInfo *bInfo) {
   int dramInit1;
+  int i;
 
   if (bInfo->linearInfo.initialized == FXFALSE) {
     printf(errorString, "hwcInitRegisters Called before hwcMapBoard\n");
@@ -280,24 +277,18 @@ hwcInitRegisters(hwcBoardInfo *bInfo) {
   else
     bInfo->sdRAM = FXFALSE;
 
-  {
-    FxU32 
-      pciInit0,
-      pciCommandReg =
-        BIT(0) |              /* enable i/o decode */
-        BIT(1);               /* enable memory decode */
-  
-    /* Enable PCI memory and I/O decode */
-    pciSetConfigData(PCI_COMMAND, bInfo->deviceNum, &pciCommandReg);
-    
-    HWC_IO_LOAD(bInfo->regInfo, pciInit0, pciInit0);
-    pciInit0 |= SST_PCI_READ_WS | SST_PCI_WRITE_WS;
-    HWC_IO_STORE(bInfo->regInfo, pciInit0, pciInit0);  
-  }
-
   /* Determine the number of chips on the board XXX */
-  bInfo->pciInfo.numChips=1;
-
+  bInfo->pciInfo.numChips=driInfo.sPriv->numChips;
+  if (driInfo.sPriv->numChips>1) {
+    for (i=1; i<driInfo.sPriv->numChips; i++) {
+      bInfo->regInfo.slaveSstBase[i-1] =
+	bInfo->linearInfo.linearAddress[(i<<2)+0] + SST_3D_OFFSET;
+      bInfo->regInfo.slaveCmdBase[i-1] =
+	bInfo->linearInfo.linearAddress[(i<<2)+0] + SST_CMDAGP_OFFSET;
+      bInfo->regInfo.slaveIOBase[i-1] =
+	bInfo->linearInfo.linearAddress[(i<<2)+0];
+    }
+  }
   return FXTRUE;
 }
 
@@ -327,11 +318,6 @@ hwcBufferLfbAddr(const hwcBoardInfo *bInfo, FxU32 physAddress)
   FxU32 tileScanline;
   FxU32 tileRow;
   FxU32 lfbAddress;
-  /*
-   * This is the tile aperture stride.  It should be
-   * a power of two between 1k and 16k.
-   */
-  FxU32 lfbBufferStride = bInfo->buffInfo.bufLfbStride;
   FxU32 lfbYOffset;
 
   if (bInfo->vidInfo.tiled) {    
@@ -365,7 +351,7 @@ hwcBufferLfbAddr(const hwcBoardInfo *bInfo, FxU32 physAddress)
     lfbYOffset = ((tileRow * 32 + tileScanline) << (bInfo->h3nwaySli >> 1));
 
     /* Compute LFB address of tile start */
-    lfbAddress =  bInfo->primaryOffset + lfbYOffset * lfbBufferStride + tileXOffset * 128;
+    lfbAddress =  bInfo->primaryOffset + lfbYOffset * HWC_LFB_STRIDE + tileXOffset * 128;
 
     GDBG_INFO(80, "\tlfbAddress: %08lx\n", lfbAddress);
     retVal = lfbAddress;
@@ -389,10 +375,11 @@ calculateLfbStride(FxU32 screenWidth)
 #endif
 }
 
-FxBool
-hwcAllocBuffers(hwcBoardInfo *bInfo, FxU32 nColBuffers, FxU32 nAuxBuffers) 
+
+FxBool hwcSetupBufferFullscreen(hwcBoardInfo *bInfo, FxU32 nColBuffers,
+				FxU32 nAuxBuffers) 
 {
-#define FN_NAME "hwcAllocBuffers"
+#define FN_NAME "hwcAllocBuffersFullscreen"
   FxU32 bufStride, bufSize;
 
   if (bInfo->vidInfo.initialized == FXFALSE) {
@@ -408,57 +395,142 @@ hwcAllocBuffers(hwcBoardInfo *bInfo, FxU32 nColBuffers, FxU32 nAuxBuffers)
   bInfo->vidInfo.tripleBuffering = (nColBuffers > 2);
 
   bInfo->vidInfo.stride = bufStride = 
-    calcBufferStride(bInfo, driInfo.screenWidth, bInfo->vidInfo.tiled);   
+    calcBufferStride(bInfo, bInfo->vidInfo.xRes, bInfo->vidInfo.tiled);   
 
   /* We want to place the FIFO after the tram but before the color
      buffers with some pad */
-  bufSize = calcBufferSize(bInfo, driInfo.screenWidth, driInfo.screenHeight, 
-			   bInfo->vidInfo.tiled); 
+  bufSize = calcBufferSize(bInfo, bInfo->vidInfo.xRes, bInfo->vidInfo.yRes, 
+			   bInfo->vidInfo.tiled);
 
   bInfo->buffInfo.bufStride = bufStride;
   bInfo->buffInfo.bufSize = bufSize;
-  bInfo->buffInfo.bufLfbStride = calculateLfbStride(bufStride);
 
   if (bInfo->vidInfo.tiled) {
-    bInfo->buffInfo.bufStrideInTiles = (bufStride >> 7);
+    driInfo.fullScreenStride=bInfo->buffInfo.bufStrideInTiles = (bufStride >> 7);
     bInfo->buffInfo.bufSizeInTiles =
-      calcBufferSizeInTiles(bInfo, driInfo.screenWidth, driInfo.screenHeight);
+      calcBufferSizeInTiles(bInfo, bInfo->vidInfo.xRes, bInfo->vidInfo.yRes);
     bInfo->buffInfo.bufHeightInTiles =
-      calcBufferHeightInTiles(bInfo, driInfo.screenHeight);
+      calcBufferHeightInTiles(bInfo, bInfo->vidInfo.yRes);
   }
 
   bInfo->buffInfo.initialized = FXTRUE;
   bInfo->buffInfo.nColBuffers = nColBuffers;
   bInfo->buffInfo.nAuxBuffers = nAuxBuffers;
 
-  bInfo->fbOffset =  driInfo.fbOffset;
+  bInfo->fbOffset =  driInfo.sPriv->fbOffset;
 
-  bInfo->fifoInfo.fifoStart = driInfo.fifoOffset;
-  bInfo->fifoInfo.fifoLength = driInfo.fifoSize;
+  bInfo->fifoInfo.fifoStart = driInfo.sPriv->fifoOffset;
+  bInfo->fifoInfo.fifoLength = driInfo.sPriv->fifoSize;
 
-  bInfo->tramOffset = driInfo.textureOffset;
-  bInfo->tramSize = driInfo.textureSize;
+  bInfo->tramOffset = driInfo.sPriv->textureOffset;
 
   /* !!! This needs to be reworked to support second col and aux buffers */
 
-  bInfo->primaryOffset = driInfo.backOffset;
+  bInfo->primaryOffset = (bInfo->h3Mem<<20) - (bufSize*3+0x1000);
+  bInfo->tramSize = bInfo->primaryOffset-bInfo->tramOffset;
 
-  bInfo->buffInfo.colBuffStart0[0] = driInfo.fbOffset;
-  bInfo->buffInfo.colBuffEnd0[0] = driInfo.fbOffset +
-    driInfo.screenHeight*driInfo.stride;
+  bInfo->buffInfo.colBuffStart0[0] = bInfo->primaryOffset;
+  bInfo->buffInfo.colBuffEnd0[0] = bInfo->buffInfo.colBuffStart0[0]+bufSize;
 
-  bInfo->buffInfo.colBuffStart0[1] = driInfo.backOffset;
-  bInfo->buffInfo.colBuffEnd0[1] = driInfo.backOffset+bufSize;
+  bInfo->buffInfo.colBuffStart0[1] = bInfo->buffInfo.colBuffEnd0[0];
+  bInfo->buffInfo.colBuffEnd0[1] = bInfo->buffInfo.colBuffStart0[1]+bufSize;
 
-  bInfo->buffInfo.auxBuffStart0 = driInfo.depthOffset;
-  bInfo->buffInfo.auxBuffEnd0 = driInfo.depthOffset+bufSize;
+  bInfo->buffInfo.auxBuffStart0 = bInfo->buffInfo.colBuffEnd0[1];
+  if (!(bInfo->buffInfo.auxBuffStart0&0x1000)) 
+    bInfo->buffInfo.auxBuffStart0+=0x1000;
+  bInfo->buffInfo.auxBuffEnd0 = bInfo->buffInfo.auxBuffStart0+bufSize;
+
+  bInfo->buffInfo.lfbBuffAddr0[0] = bInfo->buffInfo.colBuffStart0[0];
+  bInfo->buffInfo.lfbBuffAddr0[1] = 
+    hwcBufferLfbAddr(bInfo, bInfo->buffInfo.colBuffStart0[1]);
+  bInfo->buffInfo.lfbBuffAddr0[2] = 
+    hwcBufferLfbAddr(bInfo, bInfo->buffInfo.auxBuffStart0);
+
+  return FXTRUE;
+
+#undef FN_NAME
+}
+
+FxBool
+hwcSetupBuffersWindowed(hwcBoardInfo *bInfo, FxU32 nColBuffers, FxU32 nAuxBuffers) 
+{
+#define FN_NAME "hwcAllocBuffersWindowed"
+  FxU32 bufStride, bufSize;
+
+  if (bInfo->vidInfo.initialized == FXFALSE) {
+    sprintf(errorString, "%s:  Called before video initialization\n", FN_NAME);
+    return FXFALSE;
+  }
+
+  GDBG_INFO(80, "%s(0x%x, 0x%x, 0x%x)\n", FN_NAME, bInfo, nColBuffers, nAuxBuffers);
+
+  /* I've decided on > 2 instead of == 3 because we may support more
+    than 3 buffers in the future, and want 4 to set the
+    triple-buffering bit in dramInit1, also */
+  bInfo->vidInfo.tripleBuffering = (nColBuffers > 2);
+
+  bInfo->vidInfo.stride = bufStride = 
+    calcBufferStride(bInfo, driInfo.sPriv->width, bInfo->vidInfo.tiled);   
+
+  /* We want to place the FIFO after the tram but before the color
+     buffers with some pad */
+  bufSize = calcBufferSize(bInfo, driInfo.sPriv->width, 
+			   driInfo.sPriv->height, bInfo->vidInfo.tiled); 
+
+  bInfo->buffInfo.bufStride = bufStride;
+  bInfo->buffInfo.bufSize = bufSize;
+
+  if (bInfo->vidInfo.tiled) {
+    driInfo.fullScreenStride=bInfo->buffInfo.bufStrideInTiles = (bufStride >> 7);
+    bInfo->buffInfo.bufSizeInTiles =
+      calcBufferSizeInTiles(bInfo, driInfo.sPriv->width, driInfo.sPriv->height);
+    bInfo->buffInfo.bufHeightInTiles =
+      calcBufferHeightInTiles(bInfo, driInfo.sPriv->height);
+  }
+
+  bInfo->buffInfo.initialized = FXTRUE;
+  bInfo->buffInfo.nColBuffers = nColBuffers;
+  bInfo->buffInfo.nAuxBuffers = nAuxBuffers;
+
+  bInfo->fbOffset =  driInfo.sPriv->fbOffset;
+
+  bInfo->fifoInfo.fifoStart = driInfo.sPriv->fifoOffset;
+  bInfo->fifoInfo.fifoLength = driInfo.sPriv->fifoSize;
+
+  bInfo->tramOffset = driInfo.sPriv->textureOffset;
+  bInfo->tramSize = driInfo.sPriv->textureSize;
+
+  /* !!! This needs to be reworked to support second col and aux buffers */
+
+  bInfo->primaryOffset = driInfo.sPriv->backOffset;
+
+  bInfo->buffInfo.colBuffStart0[0] = driInfo.sPriv->fbOffset;
+  bInfo->buffInfo.colBuffEnd0[0] = driInfo.sPriv->fbOffset +
+    driInfo.sPriv->height*driInfo.sPriv->stride;
+
+  bInfo->buffInfo.colBuffStart0[1] = driInfo.sPriv->backOffset;
+  bInfo->buffInfo.colBuffEnd0[1] = driInfo.sPriv->backOffset+bufSize;
+
+  bInfo->buffInfo.auxBuffStart0 = driInfo.sPriv->depthOffset;
+  bInfo->buffInfo.auxBuffEnd0 = driInfo.sPriv->depthOffset+bufSize;
 
   bInfo->buffInfo.lfbBuffAddr0[0] = bInfo->buffInfo.colBuffStart0[0];
   bInfo->buffInfo.lfbBuffAddr0[1] = bInfo->buffInfo.colBuffStart0[1];
   bInfo->buffInfo.lfbBuffAddr0[2] = 
     hwcBufferLfbAddr(bInfo, bInfo->buffInfo.auxBuffStart0);
 
-  GDBG_INFO(80, "%s:  Board Info:\n", FN_NAME);
+  return FXTRUE;
+
+#undef FN_NAME
+} /* hwcAllocBuffersWindowed */
+
+FxBool
+hwcAllocBuffers(hwcBoardInfo *bInfo, FxU32 nColBuffers, FxU32 nAuxBuffers) 
+{
+  FxBool result;
+
+  result=hwcSetupBuffersWindowed(bInfo, nColBuffers, nAuxBuffers);
+  GDBG_INFO(80, "%s:  Board Info:\n", "hwcAllocBuffers");
   GDBG_INFO(80, "\thdc:             0x%x\n", bInfo->hdc);
   GDBG_INFO(80, "\textContextID:    0x%x\n", bInfo->extContextID);
   GDBG_INFO(80, "\tdevRev:          0x%x\n", bInfo->devRev);
@@ -468,13 +540,12 @@ hwcAllocBuffers(hwcBoardInfo *bInfo, FxU32 nColBuffers, FxU32 nAuxBuffers)
   GDBG_INFO(80, "\tboardNum:        0x%x\n", bInfo->boardNum);
   GDBG_INFO(80, "\tdeviceNum:       0x%x\n", bInfo->deviceNum);
 
-  GDBG_INFO(80, "%s:  Buffer Info:\n", FN_NAME);
+  GDBG_INFO(80, "%s:  Buffer Info:\n", "hwcAllocBuffers");
   GDBG_INFO(80, "\tbufSize:         0x%x\n", bInfo->buffInfo.bufSize);
   GDBG_INFO(80, "\tbufSizeInTiles:  0x%x\n", bInfo->buffInfo.bufSizeInTiles);
   GDBG_INFO(80, "\tbufStride:       0x%x\n", bInfo->buffInfo.bufStride);
   GDBG_INFO(80, "\tbufStrideInTiles:0x%x\n", bInfo->buffInfo.bufStrideInTiles);
   GDBG_INFO(80, "\tbufHeightInTiles:0x%x\n", bInfo->buffInfo.bufHeightInTiles);
-  GDBG_INFO(80, "\tbufLfbStride    :0x%x\n", bInfo->buffInfo.bufLfbStride);
   GDBG_INFO(80, "\tnColBuffers:     0x%x\n", bInfo->buffInfo.nColBuffers);
   GDBG_INFO(80, "\tcolBuffStart0[0]:    0x%x\n", bInfo->buffInfo.colBuffStart0[0]);
   GDBG_INFO(80, "\tcolBuffEnd0[0]:      0x%x\n", bInfo->buffInfo.colBuffEnd0[0]);
@@ -489,13 +560,71 @@ hwcAllocBuffers(hwcBoardInfo *bInfo, FxU32 nColBuffers, FxU32 nAuxBuffers)
   GDBG_INFO(80, "\tlfbBuffAddr0[1]   0x%x\n", bInfo->buffInfo.lfbBuffAddr0[1]);
   GDBG_INFO(80, "\tlfbBuffAddr0[2]   0x%x\n", bInfo->buffInfo.lfbBuffAddr0[2]);
 
-  GDBG_INFO(80, "%s:  FIFO Info:\n", FN_NAME);
+  GDBG_INFO(80, "%s:  FIFO Info:\n", "hwcAllocBuffers");
   GDBG_INFO(80, "\tfifoStart:       0x%x\n", bInfo->fifoInfo.fifoStart);
   GDBG_INFO(80, "\tfifoLength:      0x%x\n", bInfo->fifoInfo.fifoLength);
-  return FXTRUE;
+  return result;
+}
 
-#undef FN_NAME
-} /* hwcAllocBuffers */
+void hwcIdleHardwareWithTimeout(hwcBoardInfo *bInfo)
+{
+  FxU32 
+    miscInit0, miscInit1, status, statusSlave, idle, timeout, i;
+
+  /* Wait for hardware to idle. */
+  idle = 0;
+  timeout = 0;
+
+checkforidle:
+  do {
+    if(idle > 0) {
+      GDBG_INFO(80,"waiting for idle...\n");
+    }
+    HWC_IO_LOAD(bInfo->regInfo, status, status);
+    for(i = 1; i < bInfo->pciInfo.numChips; i++) {
+      HWC_IO_LOAD_SLAVE(i, bInfo->regInfo, status, statusSlave);
+      status |= statusSlave;
+    }
+    /* Make sure we see an idle 3 times in a row from all chips. */
+    if(status & SST_BUSY) {
+     idle = 0;
+    } else {
+     idle++;
+    }
+    timeout++;
+    /* Nothing the hardware does should take as long as reading the
+     * status registers a billion times... */
+    if(timeout >= 1000000000) {
+      break;
+    }        
+  } while(idle < 3);  
+
+  if(timeout >= 1000000000) {
+    GDBG_INFO(80,"Hardware timeout on idle, resetting...\n");
+    /* Reset FBI, 2D, and command streams. */
+    HWC_IO_LOAD(bInfo->regInfo, miscInit0, miscInit0);
+    /* Also be sure to make sure miscInit1's addressing is correct on Napalm */
+    HWC_IO_STORE(bInfo->regInfo, miscInit0, (miscInit0 & ~BIT(30)) | SST_GRX_RESET | SST_2D_RESET);
+    HWC_IO_LOAD(bInfo->regInfo, miscInit1, miscInit1);
+    HWC_IO_STORE(bInfo->regInfo, miscInit1, miscInit1 | SST_CMDSTREAM_RESET);
+
+    /* Give it a little time to propagate */
+    for(idle = 0; idle < 100; idle++) {
+      HWC_IO_LOAD(bInfo->regInfo, status, status);    
+    }  
+    /* Let hardware out of reset */
+    HWC_IO_STORE(bInfo->regInfo, miscInit1, miscInit1);
+    HWC_IO_STORE(bInfo->regInfo, miscInit0, miscInit0);
+    
+    /* Give it a little time to propagate */
+    for(idle = 0; idle < 100; idle++) {
+      HWC_IO_LOAD(bInfo->regInfo, status, status);    
+    }  
+
+    /* And make sure it's really idle... */
+    goto checkforidle;
+  }
+}
 
 FxBool
 hwcInitFifo(hwcBoardInfo *bInfo, FxBool enableHoleCounting)
@@ -516,13 +645,123 @@ hwcInitFifo(hwcBoardInfo *bInfo, FxBool enableHoleCounting)
   hwcInitFifoRegs(enableHoleCounting);
 #endif
 
+  hwcIdleHardwareWithTimeout(bInfo);
+
+  /* disable the CMD fifo */
+  HWC_CAGP_STORE(bInfo->regInfo, cmdFifo0.baseSize, 0);
+
+  HWC_CAGP_STORE(bInfo->regInfo, cmdFifo0.baseAddrL, bInfo->fifoInfo.fifoStart>>12);
+  HWC_CAGP_STORE(bInfo->regInfo, cmdFifo0.readPtrL, bInfo->fifoInfo.fifoStart);
+  HWC_CAGP_STORE(bInfo->regInfo, cmdFifo0.readPtrH, 0);
+  HWC_CAGP_STORE(bInfo->regInfo, cmdFifo0.aMin, bInfo->fifoInfo.fifoStart-4);
+  HWC_CAGP_STORE(bInfo->regInfo, cmdFifo0.aMax, bInfo->fifoInfo.fifoStart-4);
+  
+  HWC_CAGP_STORE(bInfo->regInfo, cmdFifo0.depth, 0);
+  HWC_CAGP_STORE(bInfo->regInfo, cmdFifo0.holeCount, 0);
+  /* Fifo LWM /HWM/ THRESHOLD */
+  if (bInfo->pciInfo.deviceID == SST_DEVICE_ID_H3) { /* banshee */
+    HWC_CAGP_STORE(bInfo->regInfo, cmdFifoThresh,
+                   (0x09 << SST_HIGHWATER_SHIFT) | 0x2);
+  } else if (IS_NAPALM(bInfo->pciInfo.deviceID)) {
+    HWC_CAGP_STORE(bInfo->regInfo, cmdFifoThresh,
+		   (0x20 << SST_HIGHWATER_SHIFT) | 0x8);
+  } else {
+    HWC_CAGP_STORE(bInfo->regInfo, cmdFifoThresh,
+                   (0xf << SST_HIGHWATER_SHIFT) | 0x8);
+  }
+
+  HWC_CAGP_STORE(bInfo->regInfo, cmdFifo0.baseSize, 
+		 (((bInfo->fifoInfo.fifoLength >> 12) - 1) | 
+		  SST_EN_CMDFIFO |
+		  (enableHoleCounting ? 0 : SST_CMDFIFO_DISABLE_HOLES)));
+
   GDBG_INFO(80 ,"%s:  CMD FIFO placed at physical addr 0x%x size 0x%0x\n", 
-	    FN_NAME, driInfo.fifoOffset, driInfo.fifoSize);
+	    FN_NAME, driInfo.sPriv->fifoOffset, driInfo.sPriv->fifoSize);
 
   return FXTRUE;
 
 #undef FN_NAME
 } /* hwcInitFifo */
+
+static void
+hwcInitVideoOverlaySurface(
+  hwcRegInfo *rInfo,
+    FxU32 enable,               /* 1=enable Overlay surface (OS), 1=disable */
+    FxU32 stereo,               /* 1=enable OS stereo, 0=disable */
+    FxU32 horizScaling,         /* 1=enable horizontal scaling, 0=disable */
+    FxU32 dudx,                 /* horizontal scale factor (ignored if not */
+      /* scaling) */
+    FxU32 verticalScaling,      /* 1=enable vertical scaling, 0=disable */
+    FxU32 dvdy,                 /* vertical scale factor (ignored if not */
+      /* scaling) */
+    FxU32 filterMode,           /* duh */
+    FxU32 tiled,                /* 0=OS linear, 1=tiled */
+    FxU32 pixFmt,               /* pixel format of OS */
+    FxU32 clutBypass,           /* bypass clut for OS? */
+    FxU32 clutSelect,           /* 0=lower 256 CLUT entries, 1=upper 256 */
+    FxU32 startAddress,         /* board address of beginning of OS */
+    FxU32 stride)               /* distance between scanlines of the OS, in */
+  /* units of bytes for linear OS's and tiles for */
+  /* tiled OS's */
+{
+  FxU32 doStride;
+  FxU32 vidProcCfg;
+
+  HWC_IO_LOAD((*rInfo), vidProcCfg, vidProcCfg);
+
+  vidProcCfg &= ~(SST_OVERLAY_TILED_EN |
+    SST_OVERLAY_STEREO_EN |  
+    SST_OVERLAY_HORIZ_SCALE_EN |
+    SST_OVERLAY_VERT_SCALE_EN |
+    SST_OVERLAY_TILED_EN |
+    SST_OVERLAY_PIXEL_FORMAT |
+    SST_OVERLAY_CLUT_BYPASS |
+    SST_OVERLAY_CLUT_SELECT);
+
+  if (enable)
+    vidProcCfg |= SST_OVERLAY_EN;
+
+  if (stereo)
+    vidProcCfg |= SST_OVERLAY_STEREO_EN;
+
+  if (horizScaling)
+    vidProcCfg |= SST_OVERLAY_HORIZ_SCALE_EN;
+
+  if (verticalScaling)
+    vidProcCfg |= SST_OVERLAY_VERT_SCALE_EN;
+
+  if (tiled) {
+    vidProcCfg |= SST_OVERLAY_TILED_EN;
+  }
+
+  vidProcCfg |= pixFmt;
+
+  vidProcCfg &= ~SST_CURSOR_EN; /* Turn off HW Cursor */
+
+  if (clutBypass)
+    vidProcCfg |= SST_OVERLAY_CLUT_BYPASS;
+
+  if (clutSelect)
+    vidProcCfg |= SST_OVERLAY_CLUT_SELECT;
+
+  HWC_IO_STORE((*rInfo), vidProcCfg, vidProcCfg);
+
+  /* */
+  HWC_IO_LOAD((*rInfo), vidDesktopOverlayStride, doStride);
+  doStride &= ~(SST_OVERLAY_LINEAR_STRIDE | SST_OVERLAY_TILE_STRIDE);
+
+  stride <<= SST_OVERLAY_STRIDE_SHIFT;
+  if (tiled)
+    stride &= SST_OVERLAY_TILE_STRIDE;
+  else
+    stride &= SST_OVERLAY_LINEAR_STRIDE;
+  doStride |= stride;
+
+  HWC_IO_STORE((*rInfo), vidDesktopOverlayStride, doStride);
+
+  finalVidDesktopOverlayStride = doStride;
+
+} /* hwcInitVideoOverlaySurface */
 
 FxBool
 hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo
@@ -569,7 +808,7 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo
 
   /* Clear out relavent bits */
   miscInit0 &= ~SST_YORIGIN_TOP;
-  miscInit0 |= ((driInfo.screenHeight - 1)  << SST_YORIGIN_TOP_SHIFT);
+  miscInit0 |= ((driInfo.sPriv->height - 1)  << SST_YORIGIN_TOP_SHIFT);
   HWC_IO_STORE(bInfo->regInfo, miscInit0, miscInit0);
 
   /* Set up dramInit1 for triple or double buffering */
@@ -599,7 +838,7 @@ calcBufferStride(hwcBoardInfo *bInfo, FxU32 xres, FxBool tiled)
   if (tiled == FXTRUE) {
     /* Calculate tile width stuff */
     strideInTiles = (xres << shift) >> 7;
-    if ((xres << shift) & (HWC_TILE_WIDTH - 1))
+    if ((xres << 1) & (HWC_TILE_WIDTH - 1))
       strideInTiles++;
     
     return (strideInTiles * HWC_TILE_WIDTH);
@@ -890,7 +1129,7 @@ hwcResolutionSupported(hwcBoardInfo *bInfo, GrScreenResolution_t res,
 {
 #define FN_NAME "hwcResolutionSupported"
 
-  /* For now we're just going to retur TRUE. We should check with
+  /* For now we're just going to return TRUE. We should check with
      vmode extension to see if the requested size is available */
   return FXTRUE;
 
@@ -983,8 +1222,115 @@ void grDRIInvalidateAll() {
   _grInvalidateAll();
 }
 
-void grDRIResetSAREA()
-{
+void grDRIResetSAREA() {
   _grExportFifo(driInfo.fifoPtr, driInfo.fifoRead);
 }
 
+void hwcSetupFullScreen(hwcBoardInfo *bInfo, FxBool state) {
+  driInfo.isFullScreen=state;
+  if (state) {
+    int vidScreenSize, lfbMemoryConfig;
+
+    HWC_IO_STORE(bInfo->regInfo, vidOverlayDudxOffsetSrcWidth,
+		 ((driInfo.sPriv->width << 1) << 19));
+
+    /* Video pixel buffer threshold */
+    {
+      FxU32 vidPixelBufThold;
+      FxU32 thold = 32;
+
+      if (getenv("SSTVB_PIXTHOLD")) {
+	thold = atoi(getenv("SSTVB_PIXTHOLD"));
+      }
+
+      thold &= 0x3f;
+
+      vidPixelBufThold = (thold | (thold << 6) | (thold << 12));
+
+      HWC_IO_STORE(bInfo->regInfo, vidPixelBufThold, vidPixelBufThold);
+    }
+
+    driInfo.stride=driInfo.fullScreenStride;
+    hwcInitVideoOverlaySurface(
+      &bInfo->regInfo,
+      FXTRUE,                   /* 1=enable Overlay surface (OS), 1=disable */
+      FXFALSE,                  /* 1=enable OS stereo, 0=disable */
+      FXFALSE,                  /* 1=enable horizontal scaling, 0=disable */
+      0,                        /* horizontal scale factor (ignored if not) */
+      FXFALSE,                  /* 1=enable vertical scaling, 0=disable */
+      0,                        /* vertical scale factor (ignored if not) */
+      0,                        /* Filter mode */
+      FXTRUE,                  /* tiled */
+      driInfo.fullScreenPixFmt, /* pixel format of OS */
+      FXTRUE,                   /* bypass clut for OS? */
+      1,                        /* 0=lower 256 CLUT entries, 1=upper 256 */
+      bInfo->buffInfo.colBuffStart0[0],/* board address of beginning of OS */
+      driInfo.stride);          /* distance between scanlines of the OS, in
+                                   units of bytes for linear OS's and tiles for
+                                   tiled OS's */
+    lfbMemoryConfig =
+      SST_RAW_LFB_TILE_BEGIN_PAGE_MUNGE((bInfo->buffInfo.colBuffStart0[0] >> 12))
+      | HWC_RAW_LFB_STRIDE
+      | (bInfo->buffInfo.bufStrideInTiles << SST_RAW_LFB_TILE_STRIDE_SHIFT);
+
+    HWC_IO_STORE(bInfo->regInfo, lfbMemoryConfig, lfbMemoryConfig);
+
+    HWC_IO_STORE(bInfo->regInfo, vidOverlayStartCoords, 0);
+    HWC_IO_STORE(bInfo->regInfo, vidOverlayEndScreenCoord,
+		 (driInfo.sPriv->height  << SST_OVERLAY_Y_SHIFT) |
+		 (driInfo.sPriv->width & SST_OVERLAY_X) );
+    HWC_IO_STORE(bInfo->regInfo, vidOverlayDudx, 0);
+    HWC_IO_STORE(bInfo->regInfo, vidOverlayDvdy, 0);
+    HWC_IO_LOAD(bInfo->regInfo, vidScreenSize, vidScreenSize);
+    vidScreenSize &= ~SST_VIDEO_SCREEN_DESKTOPADDR_FIFO_ENABLE;
+    HWC_IO_STORE(bInfo->regInfo, vidScreenSize, vidScreenSize);
+
+    {
+      int chipNum, locLFBMemCfg, lfbTileCompare;
+
+      for(chipNum = 0; chipNum < bInfo->pciInfo.numChips; chipNum++) {
+	/* Load */
+	if(chipNum == 0) {
+	  HWC_IO_STORE(bInfo->regInfo, lfbMemoryConfig, SST_RAW_LFB_UPDATE_CONTROL);
+	  HWC_IO_LOAD(bInfo->regInfo, lfbMemoryConfig, locLFBMemCfg);
+	  HWC_IO_STORE(bInfo->regInfo, lfbMemoryConfig, SST_RAW_LFB_UPDATE_CONTROL|SST_RAW_LFB_READ_CONTROL);
+	  HWC_IO_LOAD(bInfo->regInfo, lfbMemoryConfig, lfbTileCompare);
+	  HWC_IO_STORE(bInfo->regInfo, lfbMemoryConfig, SST_RAW_LFB_UPDATE_CONTROL);
+	} else {
+	  HWC_IO_STORE_SLAVE(chipNum, bInfo->regInfo, lfbMemoryConfig, SST_RAW_LFB_UPDATE_CONTROL);
+	  HWC_IO_LOAD_SLAVE(chipNum, bInfo->regInfo, lfbMemoryConfig, locLFBMemCfg);
+	  HWC_IO_STORE_SLAVE(chipNum, bInfo->regInfo, lfbMemoryConfig, SST_RAW_LFB_UPDATE_CONTROL|SST_RAW_LFB_READ_CONTROL);
+	  HWC_IO_LOAD_SLAVE(chipNum, bInfo->regInfo, lfbMemoryConfig, lfbTileCompare);
+	  HWC_IO_STORE_SLAVE(chipNum, bInfo->regInfo, lfbMemoryConfig, SST_RAW_LFB_UPDATE_CONTROL);        
+	}
+      }
+    }
+    HWC_IO_STORE( bInfo->regInfo, vidDesktopOverlayStride,
+		  ( driInfo.stride << 16 ) |
+                  driInfo.stride );
+
+    grSetSliCount(driInfo.sPriv->numChips, driInfo.sliCount);
+    _grEnableSliCtrl();
+  } else {
+    hwcInitVideoOverlaySurface(
+      &bInfo->regInfo,
+      FXFALSE,                  /* 1=enable Overlay surface (OS), 1=disable */
+      FXFALSE,                  /* 1=enable OS stereo, 0=disable */
+      FXFALSE,                  /* 1=enable horizontal scaling, 0=disable */
+      0,                        /* horizontal scale factor (ignored if not) */
+      FXFALSE,                  /* 1=enable vertical scaling, 0=disable */
+      0,                        /* vertical scale factor (ignored if not) */
+      0,                        /* Filter mode */
+      FXTRUE,                    /* tiled */
+      driInfo.windowedPixFmt, /* pixel format of OS */
+      FXTRUE,                   /* bypass clut for OS? */
+      1,                        /* 0=lower 256 CLUT entries, 1=upper 256 */
+      bInfo->buffInfo.colBuffStart0[0],/* board address of beginning of OS */
+      bInfo->buffInfo.bufStrideInTiles);/* distance between scanlines of the OS, in
+                                   units of bytes for linear OS's and tiles for
+                                   tiled OS's */
+    _grDisableSliCtrl();
+    grSetSliCount(1, 1);
+    driInfo.stride=driInfo.windowedStride;
+  }
+}

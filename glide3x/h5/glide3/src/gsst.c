@@ -2181,6 +2181,17 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
     }
 #endif
 
+#ifdef __linux__
+    /* At this point we force SLI mode off. It'll be turned on later */
+    driInfo.fullScreenPixFmt = hwPixelFormat;
+    if (driInfo.cpp==2) driInfo.windowedPixFmt = GR_PIXFMT_RGB_565;
+    else driInfo.windowedPixFmt = GR_PIXFMT_ARGB_8888;
+    driInfo.sliCount=gc->sliCount;
+    hwPixelFormat=driInfo.windowedPixFmt;
+    gc->sliCount=1;
+    /* gc->chipCount=1; */
+#endif
+
 #ifdef	__linux__
     vInfo->xRes              = driInfo.w;
     vInfo->yRes              = driInfo.h;
@@ -2800,12 +2811,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
     REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 4, 0xf);
     {
       REG_GROUP_SET(hw, colBufferAddr, gc->state.shadow.colBufferAddr);
-#ifdef __linux__
-      REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride : 
-		    gc->state.shadow.colBufferStride );
-#else
-      REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride );
-#endif
+      REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride);
       REG_GROUP_SET(hw, auxBufferAddr, gc->state.shadow.auxBufferAddr);
       REG_GROUP_SET(hw, auxBufferStride, gc->state.shadow.auxBufferStride); 
     }
@@ -2816,15 +2822,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
         REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 4, 0xf);
         {
             REG_GROUP_SET(hw, colBufferAddr, gc->buffers1[gc->curBuffer] | SST_BUFFER_BASE_SELECT);
-#ifdef __linux__
-	    REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride : 
-			  gc->state.shadow.colBufferStride );
-#else
-	    REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride );
-#endif
-
-
-
+            REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride);
             REG_GROUP_SET(hw, auxBufferAddr, gc->buffers1[nColBuffers] | SST_BUFFER_BASE_SELECT);
             REG_GROUP_SET(hw, auxBufferStride, gc->state.shadow.auxBufferStride); 
         }
@@ -2885,12 +2883,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
       REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 4, 0xf);
       {
         REG_GROUP_SET(hw, colBufferAddr, gc->state.shadow.colBufferAddr);
-#ifdef __linux__
-	REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride : 
-		      gc->state.shadow.colBufferStride );
-#else
-	REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride );
-#endif
+        REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride);
         REG_GROUP_SET(hw, auxBufferAddr, gc->state.shadow.auxBufferAddr);
         REG_GROUP_SET(hw, auxBufferStride, gc->state.shadow.auxBufferStride); 
       }
@@ -2899,12 +2892,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
         REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 4, 0xf);
         {
           REG_GROUP_SET(hw, colBufferAddr, gc->buffers1[gc->curBuffer] | SST_BUFFER_BASE_SELECT);
-#ifdef __linux__
-  REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride : 
-			gc->state.shadow.colBufferStride );
-#else
-  REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride );
-#endif
+          REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride);
           REG_GROUP_SET(hw, auxBufferAddr, gc->buffers1[nColBuffers] | SST_BUFFER_BASE_SELECT);
           REG_GROUP_SET(hw, auxBufferStride, gc->state.shadow.auxBufferStride); 
         }
@@ -3944,6 +3932,25 @@ _grRenderMode(FxU32 pixelformat)
 
 #undef FN_NAME
 } /* _grRenderMode */
+
+#ifdef __linux__
+
+void grDRISetupFullScreen(FxBool state) {
+  GR_DCL_GC;
+
+  /* hwcInitFifo(gc->bInfo, FXFALSE); */
+  _grImportFifo(*driInfo.fifoPtr, *driInfo.fifoRead);
+  hwcSetupFullScreen(gc->bInfo, state);
+}
+
+void grSetSliCount(int chips, int sli) {
+  GR_DCL_GC;
+
+  gc->chipCount=chips;
+  gc->sliCount=sli;
+}
+
+#endif
 
 #endif /* FX_GLIDE_NAPALM */
 
