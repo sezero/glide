@@ -25,7 +25,7 @@
 #
 export BUILD_ROOT = $(TOPDIR)
 export BUILD_ROOT_SWLIBS = $(TOPDIR)/swlibs
-export BUILD_ROOT_HW = $(TOPDIR)/h3
+export BUILD_ROOT_HW = $(TOPDIR)/$(FX_GLIDE_HW)
 
 #
 # determine the OS type
