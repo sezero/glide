@@ -73,6 +73,10 @@ while [ ! -z "$1" ] && [ "$DONE" != YES ] ; do
         echo '    --texus2             Add configuration option to use'
         echo '                         the texus2 library.  (Do not use this'
         echo '                         unless you know what you are doing.)'
+        echo '    --architecture=arch  Configure for the given architecture.'
+        echo '                         Equivalent to giving'
+        echo '                             --enable-build-architecture=arch'
+        echo '                         to "configure".'
         echo '    --generate:          Generate configure script and'
         echo '                         makefile.autoconf.in files.'
         echo '                         This is essentially just:'
@@ -110,6 +114,10 @@ while [ ! -z "$1" ] && [ "$DONE" != YES ] ; do
         ;;
     --generate)
         DO_GENERATE=YES
+        shift
+        ;;
+    --arch*=*)
+        CONFIGURE_OPTIONS="$CONFIGURE_OPTIONS --enable-build-architecture=`echo $1 | sed s/--arch[^=]*=//`"
         shift
         ;;
     --configure)

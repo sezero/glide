@@ -75,6 +75,9 @@ However, there are some small wrinkles.
                                   library to use.  The default value,
                                   texus, is the only one which is
                                   currently functional.
+      --enable-build-architecture Choose which architecture to build
+                                  for.  The legal values are i[3456]86,
+                                  or the alpha.
 4.) There is a script, build.3dfx, which is installed by the
     configure script at the root of every build directory.  It
     is essentially the single line:
