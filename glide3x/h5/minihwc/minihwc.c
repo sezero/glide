@@ -841,7 +841,7 @@ extern void (*GrErrorCallback)(const char *string, FxBool fatal);
 typedef struct dioc_data {
    DWORD dwDevNode;           // Device that we are interested in
    DWORD dwSpare;             // Spare DWORD currently used to pass IMASK
-   } DIOC_DATA, * PDIOC_DATA;
+} DIOC_DATA, * PDIOC_DATA;
 
 typedef struct _sli_aa_chipinfo {
    DWORD dwChips;       // dwChips: Number of chips in multi-chip configuration (1-4)
@@ -1086,15 +1086,6 @@ static hwcBoardInfo *curBI = NULL;
 
 #ifdef HWC_EXT_INIT
 
-typedef struct {
-  HDC dc;
-  HMONITOR mon;
-  char RegPath[256];
-  char DeviceName[32];
-  int  boardNum;
-} DevEnumRec;
-static int num_monitor = 0;
-
 static void
 getRegPath(char *regpath) 
 {
@@ -1106,7 +1097,7 @@ getRegPath(char *regpath)
     char strval[256];
     DWORD szData = sizeof(strval) ;
 
-	GDBG_INFO(80, "getRegPath: get registry path on NT4\n");
+    GDBG_INFO(80, "getRegPath: get registry path on NT4\n");
 
     /* Go fishing for the registry path on WinNT4 */
     if (RegOpenKey(HKEY_LOCAL_MACHINE, "HARDWARE\\DEVICEMAP\\VIDEO", &hKey) == ERROR_SUCCESS) {
@@ -1116,33 +1107,33 @@ getRegPath(char *regpath)
            * $/devel/swtools/bansheecp2 */
           strcpy(regpath, "SYSTEM\\CurrentControlSet\\Services\\3Dfx\\Device0");
         } else {
-		  LPTSTR find = strstr(strval, "\\REGISTRY\\Machine\\");
-		  if(find != NULL) {
-			strcpy(regpath, strval);
-		  } else {
+          LPTSTR find = strstr(strval, "\\REGISTRY\\Machine\\");
+          if(find != NULL) {
+            strcpy(regpath, strval);
+          } else {
             strcpy(regpath, "SYSTEM\\CurrentControlSet\\Services\\3Dfx\\Device0");
-		  }
+          }
         }
-	  } else {
+      } else {
         strcpy(regpath, "SYSTEM\\CurrentControlSet\\Services\\3Dfx\\Device0");
       }
       RegCloseKey(hKey);
     }
   } else if ((OS == OS_WIN32_2K) || (OS == OS_WIN32_XP)) {
-	HKEY hKey;
-	
-	GDBG_INFO(80, "getRegPath: get registry path on 2K/XP\n");
+    HKEY hKey;
+    
+    GDBG_INFO(80, "getRegPath: get registry path on 2K/XP\n");
 
-	/* XXX Incomplete. Always use Device0. We only get here when gdebug calls getenv. */
-	if (RegOpenKey(HKEY_LOCAL_MACHINE, "SYSTEM\\CurrentControlSet\\Services\\banshee\\Device0", &hKey) == ERROR_SUCCESS) {
-	   RegCloseKey(hKey);
-	   strcpy(regpath, "SYSTEM\\CurrentControlSet\\Services\\banshee\\Device0");
-	} else if (RegOpenKey(HKEY_LOCAL_MACHINE, "SYSTEM\\CurrentControlSet\\Services\\3dfxvs\\Device0", &hKey) == ERROR_SUCCESS) {
-	   RegCloseKey(hKey);
-	   strcpy(regpath, "SYSTEM\\CurrentControlSet\\Services\\3dfxvs\\Device0");
-	} else {
-	  strcpy(regpath, "SYSTEM\\CurrentControlSet\\Services\\3dfxvs\\Device0");
-	}
+    /* XXX Incomplete. Always use Device0. We only get here when gdebug calls getenv. */
+    if (RegOpenKey(HKEY_LOCAL_MACHINE, "SYSTEM\\CurrentControlSet\\Services\\banshee\\Device0", &hKey) == ERROR_SUCCESS) {
+      RegCloseKey(hKey);
+      strcpy(regpath, "SYSTEM\\CurrentControlSet\\Services\\banshee\\Device0");
+    } else if (RegOpenKey(HKEY_LOCAL_MACHINE, "SYSTEM\\CurrentControlSet\\Services\\3dfxvs\\Device0", &hKey) == ERROR_SUCCESS) {
+      RegCloseKey(hKey);
+      strcpy(regpath, "SYSTEM\\CurrentControlSet\\Services\\3dfxvs\\Device0");
+    } else {
+      strcpy(regpath, "SYSTEM\\CurrentControlSet\\Services\\3dfxvs\\Device0");
+    }
   } else {
     QDEVNODE QDevNode;
     QIN Qin;
@@ -1160,15 +1151,15 @@ getRegPath(char *regpath)
     }
 
     if ( status > 0 ) {
-	  char strval[256];
-	  strval[0] = '\0';
-	  GDBG_INFO(80, "QDevNode.dwDevNode = %d\n", QDevNode.dwDevNode);
-	  // CM_REGISTRY_HARDWARE for deivce's key under Enum
+      char strval[256];
+      strval[0] = '\0';
+      GDBG_INFO(80, "QDevNode.dwDevNode = %d\n", QDevNode.dwDevNode);
+      // CM_REGISTRY_HARDWARE for deivce's key under Enum
       // CM_REGISTRY_SOFTWARE for device's key under System\CurrentControlSet
       CM_Get_DevNode_Key( QDevNode.dwDevNode, NULL, 
                           strval, sizeof(strval), 
-					      CM_REGISTRY_SOFTWARE );
-	  strcpy(regpath, strval);
+                          CM_REGISTRY_SOFTWARE );
+      strcpy(regpath, strval);
     }
   }
 
@@ -1181,23 +1172,66 @@ hwcInit(FxU32 vID, FxU32 dID)
 {
 #define FN_NAME "hwcInit"
 #ifdef HWC_EXT_INIT
-  {
-    DevEnumRec data[HWC_MAX_BOARDS];
-    int monitor;
-    FxI32 OS = hwcGetOS();
-
-	typedef struct {
-      DWORD  cb;
-      BYTE   DeviceName[32]; /* 32 = CCHDEVICENAME */
-      BYTE   DeviceString[128];
-      DWORD  StateFlags;
-      CHAR   DeviceID[128];
-      CHAR   DeviceKey[128];
-    } DISPLAY_DEVICE, *PDISPLAY_DEVICE;
-    typedef BOOL (CALLBACK* EnumDisplayDevicesProc)(LPCTSTR, DWORD, PDISPLAY_DEVICE, DWORD);
-	EnumDisplayDevicesProc enumDisplayDevicesProc;
-
-	typedef struct { 
+  HMODULE user32;
+  FxI32 vendorID;
+  
+  typedef struct {
+    HDC dc;
+    HMONITOR mon;
+    char RegPath[256];
+    char DeviceName[32];
+    int  boardNum;
+  } DEVENUMREC;
+  DEVENUMREC data[HWC_MAX_BOARDS];
+  
+  typedef struct {
+    DWORD  cb;
+    BYTE   DeviceName[32]; /* 32 = CCHDEVICENAME */
+    BYTE   DeviceString[128];
+    DWORD  StateFlags;
+    CHAR   DeviceID[128];
+    CHAR   DeviceKey[128];
+  } DISPLAY_DEVICE, *PDISPLAY_DEVICE;
+  typedef BOOL (CALLBACK* EnumDisplayDevicesProc)(LPCTSTR, DWORD, PDISPLAY_DEVICE, DWORD);
+  
+  EnumDisplayDevicesProc enumDisplayDevicesProc;
+  int monitor;
+  int num_monitor = 0; /* number of 3Dfx devices */
+  FxI32 OS = hwcGetOS();
+  
+  GDBG_INFO(80, "%s\n", FN_NAME);
+  errorString[0] = '\0';
+  
+  user32 = GetModuleHandle( "user32.dll" );
+  if ( user32 == NULL ) {
+    GDBG_INFO(80, "hwcInit: Failed to find user32.dll\n");
+    sprintf(errorString, "%s: Failed to find user32.dll\n", FN_NAME);
+    return NULL;
+  }
+  GDBG_INFO(80, "hwcInit: Found user32.dll\n");
+  
+  /* initialize */
+  for (monitor = 0; monitor < HWC_MAX_BOARDS; monitor++) {
+    data[monitor].boardNum      = 0;
+    data[monitor].dc            = NULL;
+    data[monitor].mon           = NULL;
+    data[monitor].RegPath[0]    = '\0';
+    data[monitor].DeviceName[0] = '\0';
+    hInfo.boardInfo[monitor].hwcProtocol = -1;
+    hInfo.boardInfo[monitor].devNode = 0;
+    HWCEXT_ESCAPE(monitor) = 0;
+  }
+  
+  /* find glide compatible devices */
+  GDBG_INFO(80, "%s:  Finding Glide compatible devices\n", FN_NAME);
+  
+  enumDisplayDevicesProc = (EnumDisplayDevicesProc)GetProcAddress(user32,"EnumDisplayDevicesA");
+  if( enumDisplayDevicesProc != NULL ) { /* for win98/Me/win2k/xp, multi-monitor capable */
+    RECT rcMonitor;
+    DISPLAY_DEVICE DispDev;
+    int nDeviceIndex = 0;
+    
+    typedef struct { 
       BCHAR  dmDeviceName[32]; 
       WORD   dmSpecVersion; 
       WORD   dmDriverVersion; 
@@ -1242,433 +1276,392 @@ hwcInit(FxU32 vID, FxU32 dID)
       DWORD  dmPanningHeight;
     } DEVMODEEX, *LPDEVMODEEX;
     typedef BOOL (CALLBACK* EnumDisplaySettingsProc)(LPCTSTR, DWORD, LPDEVMODEEX);
-	EnumDisplaySettingsProc enumDisplaySettingsProc;
+    EnumDisplaySettingsProc enumDisplaySettingsProc = NULL;
 
-	typedef HMONITOR (CALLBACK* MonitorFromRectProc)(LPCRECT, DWORD);
-	MonitorFromRectProc monitorFromRectProc;
-
-	typedef HMONITOR (CALLBACK* MonitorFromWindowProc)(HWND, DWORD);
-	MonitorFromWindowProc monitorFromWindowProc;
-
-    GDBG_INFO(80, "%s\n", FN_NAME);
-    errorString[0] = '\0';
-	num_monitor = 0; // initialize monitor
-
-    /* find glide compatible devices */
-    GDBG_INFO(80, "%s:  Finding Glide compatible devices\n", FN_NAME);
-    {
-      HMODULE user32 = GetModuleHandle( "user32.dll" );
-
-      for (monitor = 0; monitor < HWC_MAX_BOARDS; monitor++) {
-		data[monitor].boardNum = 0;
-        data[monitor].dc  = NULL;
-        data[monitor].mon = NULL;
-        data[monitor].RegPath[0] = '\0';
-        data[monitor].DeviceName[0] = '\0';
-      }
-
-      if ( user32 != NULL ) {
-		GDBG_INFO(80, "hwcInit: user32 passed.\n");
-
-        enumDisplayDevicesProc = (EnumDisplayDevicesProc)GetProcAddress(user32,"EnumDisplayDevicesA");
+    typedef HMONITOR (CALLBACK* MonitorFromRectProc)(LPCRECT, DWORD);
+    MonitorFromRectProc monitorFromRectProc = NULL;
+    
+    GDBG_INFO(80, "%s: Found EnumDisplayDevicesA in user32.dll\n", FN_NAME);
+    GDBG_INFO(80, "%s: multi-monitor capable OS ( NT2K/XP/W98/ME )\n", FN_NAME);
+    
+    enumDisplaySettingsProc = (EnumDisplaySettingsProc)GetProcAddress(user32, "EnumDisplaySettingsA");
+    if( enumDisplaySettingsProc == NULL ) {
+      GDBG_INFO(80, "hwcInit: Failed to find EnumDisplaySettingsA in user32.dll\n");
+      sprintf(errorString, "%s: Failed to find EnumDisplaySettingsA in user32.dll\n", FN_NAME);
+      return NULL;
+    }
+    GDBG_INFO(80, "hwcInit: Found EnumDisplaySettingsA in user32.dll\n");
+    
+    monitorFromRectProc = (MonitorFromRectProc)GetProcAddress(user32, "MonitorFromRect");
+    if (monitorFromRectProc == NULL ) {
+      GDBG_INFO(80, "hwcInit: Failed to find MonitorFromRect in user32.dll\n");
+      sprintf(errorString, "%s: Failed to find MonitorFromRect in user32.dll\n", FN_NAME);
+      return NULL;
+    }
+    GDBG_INFO(80, "hwcInit: Found MonitorFromRect in user32.dll\n");
+    
+    /* enumerate display devices */
+    ZeroMemory(&DispDev, sizeof(DISPLAY_DEVICE));
+    DispDev.cb = sizeof(DISPLAY_DEVICE);
+    while( enumDisplayDevicesProc(NULL, nDeviceIndex, &DispDev, 0) != 0 && (num_monitor < HWC_MAX_BOARDS) ) {
+      DEVMODEEX devModeEx;
+      HMONITOR handle = NULL;
+      HDC hdc = NULL;
+      
+      ZeroMemory(&devModeEx, sizeof(DEVMODEEX));
+      devModeEx.dmSize = sizeof(DEVMODEEX);
+      devModeEx.dmDriverExtra = 0;
+      
+      if( DispDev.StateFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP ) {
+        enumDisplaySettingsProc( DispDev.DeviceName, ENUM_CURRENT_SETTINGS, &devModeEx );
+        if( DispDev.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE ) {
+          /* For some reason devmode.dmPosition is not always (0, 0)
+           * for the primary display, so force it.
+           */
+          rcMonitor.left = 0;
+          rcMonitor.top  = 0;
+        } else {
+          rcMonitor.left = devModeEx.dmPosition.x;
+          rcMonitor.top = devModeEx.dmPosition.y;
+        }
+        rcMonitor.right = rcMonitor.left + devModeEx.dmPelsWidth;
+        rcMonitor.bottom = rcMonitor.top + devModeEx.dmPelsHeight;
         
-        if( enumDisplayDevicesProc != NULL ) { /* for win98/Me/win2k/xp, multi-monitor capable */
-		  GDBG_INFO(80, "hwcInit: enumDisplayDevices passed.\n");
-
-		  enumDisplaySettingsProc = (EnumDisplaySettingsProc)GetProcAddress(user32, "EnumDisplaySettingsA");
-
-		  if( enumDisplaySettingsProc != NULL ) {
-		    RECT rcMonitor;
-            DISPLAY_DEVICE DispDev;
-            DEVMODEEX devModeEx;
-            int nDeviceIndex = 0;
-            HMONITOR handle = NULL;
-            HDC hdc = NULL;
-
-            GDBG_INFO(80, "hwcInit: enumDisplaySettings passed.\n");
-
-            ZeroMemory(&DispDev, sizeof(DISPLAY_DEVICE));
-            DispDev.cb = sizeof(DISPLAY_DEVICE);
-
-            while(enumDisplayDevicesProc(NULL, nDeviceIndex, &DispDev, 0) && (num_monitor < HWC_MAX_BOARDS) ) {
-              ZeroMemory(&devModeEx, sizeof(DEVMODEEX));
-              devModeEx.dmSize = sizeof(DEVMODEEX);
-              devModeEx.dmDriverExtra = 0;
-
-              if( DispDev.StateFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP ) {
-				enumDisplaySettingsProc( DispDev.DeviceName, ENUM_CURRENT_SETTINGS, &devModeEx );
-                
-                if( DispDev.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE ) {
-                  /* For some reason devmode.dmPosition is not always (0, 0)
-                   * for the primary display, so force it.
-                   */
-                  rcMonitor.left = 0;
-                  rcMonitor.top = 0;
-                } else {
-                  rcMonitor.left = devModeEx.dmPosition.x;
-                  rcMonitor.top = devModeEx.dmPosition.y;
-                }
-                
-                rcMonitor.right = rcMonitor.left + devModeEx.dmPelsWidth;
-                rcMonitor.bottom = rcMonitor.top + devModeEx.dmPelsHeight;
-				monitorFromRectProc = (MonitorFromRectProc)GetProcAddress(user32, "MonitorFromRect");
-                handle = monitorFromRectProc( &rcMonitor, MONITOR_DEFAULTTONULL );
-                GDBG_INFO(80, "rcmonitor left %d top %d right %d bottom %d hmonitor %d\n", rcMonitor.left, rcMonitor.top, rcMonitor.right, rcMonitor.bottom, handle);
-                
-                hdc = CreateDC(NULL, DispDev.DeviceName, NULL, NULL);
-                GDBG_INFO(80, "DeviceName: %s DeviceString: %s\n", DispDev.DeviceName, DispDev.DeviceString);
-                
-                {
-                  hwcExtRequest_t ctxReq;
-                  hwcExtResult_t ctxRes;
-                  
-                  ctxReq.which = HWCEXT_GETDEVICECONFIG;
-                  ctxReq.optData.deviceConfigReq.dc = hdc;
-                  ctxReq.optData.deviceConfigReq.devNo = num_monitor;
-                  
-                  /*
-                   * AJB- Figure out which escape code the display driver is using.
-                   *      This will allow yo-yos like me to use a new Glide DLL on
-                   *      an old (H3, for example) display driver.
-                   */
-                  if (ExtEscape((HDC)hdc, EXT_HWC, sizeof(ctxReq), (LPSTR) &ctxReq, sizeof(ctxRes), (LPSTR) &ctxRes)) 
-                    HWCEXT_ESCAPE(num_monitor) = EXT_HWC ;
-                  else if (ExtEscape((HDC)hdc, EXT_HWC_OLD, sizeof(ctxReq), (LPSTR) &ctxReq, sizeof(ctxRes), (LPSTR) &ctxRes)) 
-                    HWCEXT_ESCAPE(num_monitor) = EXT_HWC_OLD ;
-                  else
-                    HWCEXT_ESCAPE(num_monitor) = 0 ; /* if we don't have a display driver, we're hosed */
-
-                  GDBG_INFO(80, "HWCEXT_ESCAPE(num_monitor) = 0x%x\n", HWCEXT_ESCAPE(num_monitor));
-                  
-                  if (HWCEXT_ESCAPE(num_monitor)) {
-                    GDBG_INFO(80, "%s: HWCEXT_ESCAPE passed\n", FN_NAME);
-                    
-                    if ( ctxRes.optData.deviceConfigRes.vendorID == 0x121a ) {
-                      GDBG_INFO(80, "%s: target is 3dfx\n", FN_NAME);
-                      GDBG_INFO(80, "%s: multi-monitor capable OS ( NT2K/XP/W98/ME )\n", FN_NAME);
-
-                      data[num_monitor].boardNum = num_monitor;
-                      data[num_monitor].mon = handle;
-                      data[num_monitor].dc = hdc;
-                      strcpy(data[num_monitor].DeviceName, DispDev.DeviceName);
-
-					  if ( (OS == OS_WIN32_98) || (OS == OS_WIN32_ME) ) {
-                          strcpy(data[num_monitor].RegPath, DispDev.DeviceKey);
-					  } else {
-                          char *pdest;
-                          pdest = strstr(DispDev.DeviceKey, "\\Service");
-                          strcpy(data[num_monitor].RegPath, "SYSTEM\\CurrentControlSet");
-                          strcat(data[num_monitor].RegPath,  pdest);
-					  }
-                        
-                      GDBG_INFO(80, "DeviceKey: %s\n", data[num_monitor].RegPath);
-                      
-                      /* XXX AJB MAYHEM XXX
-                       * (Try) to get the devnode of this device
-                       * so we can use DevIoctls to talk to the
-                       * minivdd.
-                       */
-                      {
-                        QDEVNODE QDevNode;
-                        QIN Qin;
-                        
-                        Qin.dwSubFunc = QUERYDEVNODE;
-                        hInfo.boardInfo[num_monitor].hwcProtocol = -1;
-                        
-                        if (ExtEscape((HDC)hdc, QUERYESCMODE, sizeof(Qin), (LPSTR) &Qin, sizeof(QDevNode), (LPSTR) &QDevNode)) 
-                          hInfo.boardInfo[num_monitor].devNode = QDevNode.dwDevNode ;
-                        else
-                          hInfo.boardInfo[num_monitor].devNode = 0 ;
-
-                        GDBG_INFO(80, "DevNode: %s\n", hInfo.boardInfo[num_monitor].devNode);
-                        
-                      }
-                      
-                      num_monitor++;
-                      
-                    } else {
-                      GDBG_INFO(80, "%s: target not 3dfx\n", FN_NAME);
-                      DeleteDC(hdc);
-                    }
-                  } else {
-                    GDBG_INFO(80, "%s: HWCEXT_ESCAPE failed\n", FN_NAME);
-                    DeleteDC(hdc);
-                  }
-                }
-              }
-              nDeviceIndex++;
-            }
-
-			/*
-            ** use the active window display (if there is one yet
-            ** associated w/ the current thread) as sst 0 
-            */
-			{
-			  HWND curWindow = GetActiveWindow();
-              if(curWindow != NULL) {
-                monitorFromWindowProc = (MonitorFromWindowProc)GetProcAddress(user32, "MonitorFromWindow");
-		        if(monitorFromWindowProc != NULL) {
-                  HMONITOR curWindowMon = monitorFromWindowProc(curWindow, MONITOR_DEFAULTTONEAREST);
-                  if(curWindowMon != NULL) {
-                    int i;
-                    for(i = 0; i < num_monitor; i++) {
-                      if((data[i].mon == curWindowMon)) {
-                        char tmpRegPath[256];
-                        HDC tmpDC = data[i].dc;
-              
-                        GDBG_INFO(80, "%s: Associating active window as sst 0\n", FN_NAME);
-
-                        data[0].boardNum = data[i].boardNum;
-                        data[i].boardNum = 0;
-                        data[i].dc  = data[0].dc;
-                        data[i].mon = data[0].mon;
-                        strcpy(tmpRegPath, data[i].RegPath);
-                        strcpy(data[i].RegPath, data[0].RegPath);
-
-                        data[0].dc  = tmpDC;
-                        data[0].mon = curWindowMon;
-                        strcpy(data[0].RegPath, tmpRegPath);
-                      }
-                    }
-                  }
-                }
-			  }
-            }
-
-          } /* enumDisplaySettingsProc */
-          
-        } else { /* for win95/nt4, assume we have one board */
+        handle = monitorFromRectProc( &rcMonitor, MONITOR_DEFAULTTONULL );
+        GDBG_INFO(80, "rcmonitor left %d top %d right %d bottom %d hmonitor %d\n", rcMonitor.left, rcMonitor.top, rcMonitor.right, rcMonitor.bottom, handle);
+        
+        hdc = CreateDC(NULL, DispDev.DeviceName, NULL, NULL);
+        GDBG_INFO(80, "DeviceName: %s DeviceString: %s\n", DispDev.DeviceName, DispDev.DeviceString);
+        
+        /*
+         * AJB- Figure out which escape code the display driver is using.
+         *      This will allow yo-yos like me to use a new Glide DLL on
+         *      an old (H3, for example) display driver.
+         */
+        {
           hwcExtRequest_t ctxReq;
           hwcExtResult_t ctxRes;
-		  GDBG_INFO(80, "%s:  single-monitor OS ( NT4/W95 )\n", FN_NAME);
-
-          hInfo.boardInfo[0].hwcProtocol = -1;
           ctxReq.which = HWCEXT_GETDEVICECONFIG;
-          ctxReq.optData.deviceConfigReq.devNo = 0;
-
-          /*
-           * AJB- Figure out which escape code the display driver is using.
-           *      This will allow yo-yos like me to use a new Glide DLL on
-           *      an old (H3, for example) display driver.
-           */
-		  {
-            HDC hdc = GetDC(NULL); /* grab DC of desktop */
-            ctxReq.optData.deviceConfigReq.dc = hdc;
-            if (ExtEscape((HDC)hdc, EXT_HWC, sizeof(ctxReq), (LPSTR) &ctxReq, sizeof(ctxRes), (LPSTR) &ctxRes)) {
-              HWCEXT_ESCAPE(0) = EXT_HWC ;
-            } else if (ExtEscape((HDC)hdc, EXT_HWC_OLD, sizeof(ctxReq), (LPSTR) &ctxReq, sizeof(ctxRes), (LPSTR) &ctxRes)) {
-              HWCEXT_ESCAPE(0) = EXT_HWC_OLD ;
-            } else {
-              HWCEXT_ESCAPE(0) = 0 ; /* if we don't have a display driver, we're hosed */
-            }
-			ReleaseDC(NULL, hdc);
-          }
-
-          GDBG_INFO(80, "HWCEXT_ESCAPE(0) = 0x%x\n", HWCEXT_ESCAPE(0));
- 
-          if (HWCEXT_ESCAPE(0))
-          {
-            FxI32 vendorID;
-            GDBG_INFO(80, "HWCEXT_ESCAPE: passed\n");
-            vendorID = ctxRes.optData.deviceConfigRes.vendorID;
-
-            if ( vendorID == 0x121a ) {
-	          GDBG_INFO(80, "found vendorID 0x121a\n");
-
-              /* XXX AJB MAYHEM XXX
-               * (Try) to get the devnode of this device
-               * so we can use DevIoctls to talk to the
-               * minivdd.
-               */
-              {
-                QDEVNODE QDevNode;
-                QIN Qin;
-                Qin.dwSubFunc = QUERYDEVNODE;
-                {
-                  HDC hdc = GetDC(NULL); /* grab DC of desktop */
-                  if (ExtEscape((HDC)hdc, QUERYESCMODE, sizeof(Qin), (LPSTR) &Qin, sizeof(QDevNode), (LPSTR) &QDevNode)) {
-                    hInfo.boardInfo[0].devNode = QDevNode.dwDevNode ;
-                  } else {
-                    hInfo.boardInfo[0].devNode = 0 ;
-                  }
-                  ReleaseDC(NULL, hdc);
-                }
-				GDBG_INFO(80, "hInfo.boardInfo[0].devNode = %d\n", hInfo.boardInfo[0].devNode);
-              }
-    
-              /* Make a private 'copy' of the dc so that we're not affected by
-               * other people dorking with dc's etc. 
-               *
-               * FixMe: Is there a better way to do this? I did not see a
-               * CopyDC or anything like that.  
-               */
-              /* KoolSmoky - Microsoft states this is the right way */
-              data[0].dc  = CreateDC("DISPLAY", NULL, NULL, NULL);
-              data[0].mon = NULL;
-              num_monitor = 1;
-            }
-
+          ctxReq.optData.deviceConfigReq.dc = hdc;
+          ctxReq.optData.deviceConfigReq.devNo = num_monitor;
+          if (ExtEscape((HDC)hdc, EXT_HWC, sizeof(ctxReq), (LPSTR) &ctxReq, sizeof(ctxRes), (LPSTR) &ctxRes)) {
+            HWCEXT_ESCAPE(num_monitor) = EXT_HWC ;
+          } else if (ExtEscape((HDC)hdc, EXT_HWC_OLD, sizeof(ctxReq), (LPSTR) &ctxReq, sizeof(ctxRes), (LPSTR) &ctxRes)) {
+            HWCEXT_ESCAPE(num_monitor) = EXT_HWC_OLD ;
           } else {
-             GDBG_INFO(80, "HWCEXT_ESCAPE: not passed\n");
+            HWCEXT_ESCAPE(num_monitor) = 0 ; /* if we don't have a display driver, we're hosed */
           }
-
-		  /* get registry path for this device */
-          getRegPath(data[0].RegPath);
+          GDBG_INFO(80, "HWCEXT_ESCAPE(num_monitor) = 0x%x\n", HWCEXT_ESCAPE(num_monitor));
+          vendorID = ctxRes.optData.deviceConfigRes.vendorID;
         }
-      }
-
-    }
-
-    /* KoolSmoky - temporary hack to enable secondary and beyond sst devices
-    ** FX_GLIDE_FORCE_SST0=1 to force device as sst0
-    */
-    for (monitor = 0; monitor < num_monitor; monitor++) {
-      if (GETENV("FX_GLIDE_FORCE_SST0", data[monitor].RegPath)) {
-        if(atoi(GETENV("FX_GLIDE_FORCE_SST0", data[monitor].RegPath)) == 1) {
-          char tmpRegPath[256];
-          HMONITOR tmpMon = data[0].mon;
-          HDC tmpDC = data[0].dc;
-          int tmpboardNum = data[0].boardNum;
-          strcpy(tmpRegPath, data[0].RegPath);
-
-          data[0].boardNum = data[monitor].boardNum;
-          data[0].mon = data[monitor].mon;
-          data[0].dc =  data[monitor].dc;
-          strcpy(data[0].RegPath, data[monitor].RegPath);
-
-          data[monitor].boardNum = tmpboardNum;
-          data[monitor].mon = tmpMon;
-          data[monitor].dc = tmpDC;
-          strcpy(data[monitor].RegPath, tmpRegPath);
+        
+        if ( HWCEXT_ESCAPE(num_monitor) &&
+             vendorID == 0x121a ) {
+          GDBG_INFO(80, "%s: Found 3Dfx device\n", FN_NAME);
+          
+          data[num_monitor].boardNum = num_monitor;
+          data[num_monitor].mon = handle;
+          data[num_monitor].dc = hdc;
+          strcpy(data[num_monitor].DeviceName, DispDev.DeviceName);
+          
+          if ( (OS == OS_WIN32_98) || (OS == OS_WIN32_ME) ) {
+            strcpy(data[num_monitor].RegPath, DispDev.DeviceKey);
+          } else {
+            char *pdest;
+            pdest = strstr(DispDev.DeviceKey, "\\Service");
+            strcpy(data[num_monitor].RegPath, "SYSTEM\\CurrentControlSet");
+            strcat(data[num_monitor].RegPath,  pdest);
+          }
+          
+          GDBG_INFO(80, "DeviceKey: %s\n", data[num_monitor].RegPath);
+          
+          /* XXX AJB MAYHEM XXX
+           * (Try) to get the devnode of this device
+           * so we can use DevIoctls to talk to the
+           * minivdd.
+           */
+          {
+            QDEVNODE QDevNode;
+            QIN Qin;
+            Qin.dwSubFunc = QUERYDEVNODE;
+            if (ExtEscape((HDC)hdc, QUERYESCMODE, sizeof(Qin), (LPSTR) &Qin, sizeof(QDevNode), (LPSTR) &QDevNode)) {
+              hInfo.boardInfo[num_monitor].devNode = QDevNode.dwDevNode ;
+            } else {
+              hInfo.boardInfo[num_monitor].devNode = 0 ;
+            }
+            GDBG_INFO(80, "DevNode: %s\n", hInfo.boardInfo[num_monitor].devNode);
+          }
+          
+          num_monitor++;
+        } else {
+          DeleteDC(hdc);
         }
+        
       }
+      
+      nDeviceIndex++;
     }
     
-    hInfo.nBoards = 0;
-    for (monitor = 0; monitor < num_monitor; monitor++) {
+  } else { /* for win95/nt4, assume we have one board */
+    GDBG_INFO(80, "%s:  single-monitor OS ( NT4/W95 )\n", FN_NAME);
+    
+    /*
+     * AJB- Figure out which escape code the display driver is using.
+     *      This will allow yo-yos like me to use a new Glide DLL on
+     *      an old (H3, for example) display driver.
+     */
+    {
       hwcExtRequest_t ctxReq;
-      hwcExtResult_t  ctxRes;
-      HDC hdc;
-      HMONITOR hmon;
-      int status;
-      int boardNum;
-
-      boardNum = data[monitor].boardNum;
-      hdc = data[monitor].dc;
-      hmon = data[monitor].mon;
-      strcpy(hInfo.boardInfo[monitor].RegPath, data[monitor].RegPath);
-      strcpy(hInfo.boardInfo[monitor].DeviceName, data[monitor].DeviceName);
-
-      hInfo.nBoards++;
-      hInfo.boardInfo[monitor].boardNum     = boardNum;
-      hInfo.boardInfo[monitor].hdc          = hdc;
-      hInfo.boardInfo[monitor].hMon         = hmon;
-
-      GDBG_INFO(80,"hInfo : [%d] boardNum: %d\n", monitor, hInfo.boardInfo[monitor].boardNum);
-      GDBG_INFO(80,"hInfo : [%d] hdc: %d\n", monitor, hInfo.boardInfo[monitor].hdc);
-      GDBG_INFO(80,"hInfo : [%d] hmon: %d\n", monitor, hInfo.boardInfo[monitor].hMon);
-      GDBG_INFO(80,"hInfo : [%d] RegPath: %s\n", monitor, hInfo.boardInfo[monitor].RegPath);
-      GDBG_INFO(80,"hInfo : [%d] DeviceName: %s\n", monitor, hInfo.boardInfo[monitor].DeviceName);
-/*      hInfo.boardInfo[monitor].extContextID = ctxRes.Ext.optData.allocContextRes.contextID; */
-
+      hwcExtResult_t ctxRes;
+      HDC hdc = GetDC(NULL); /* grab DC of desktop */
       ctxReq.which = HWCEXT_GETDEVICECONFIG;
+      ctxReq.optData.deviceConfigReq.devNo = 0;
       ctxReq.optData.deviceConfigReq.dc = hdc;
-      ctxReq.optData.deviceConfigReq.devNo = boardNum;
-      GDBG_INFO(80, FN_NAME ":  ExtEscape:HWCEXT_GETDEVICECONFIG.\n");
-
-      status = ExtEscape((HDC)hdc,
-                         HWCEXT_ESCAPE(boardNum),
-                         sizeof(ctxReq), (LPSTR) &ctxReq,
-                         sizeof(ctxRes), (LPSTR) &ctxRes);
-      
-      if(!status) return NULL;
-      
-      hInfo.boardInfo[monitor].pciInfo.vendorID = 
-        ctxRes.optData.deviceConfigRes.vendorID;
-      hInfo.boardInfo[monitor].pciInfo.deviceID = 
-        ctxRes.optData.deviceConfigRes.deviceID;
-      hInfo.boardInfo[monitor].devRev = 
-        ctxRes.optData.deviceConfigRes.chipRev;
-      hInfo.boardInfo[monitor].h3Mem = 
-        (ctxRes.optData.deviceConfigRes.fbRam >> 20);
-      GDBG_INFO(80, FN_NAME ":  vendorID %i deviceID %i ChipRev %i fbRam %i\n",
-                hInfo.boardInfo[monitor].pciInfo.vendorID,
-                hInfo.boardInfo[monitor].pciInfo.deviceID,
-                hInfo.boardInfo[monitor].devRev,
-                hInfo.boardInfo[monitor].h3Mem);
-
-#ifdef FX_GLIDE_NAPALM
-
-      if (GETENV("FX_GLIDE_DEVICEID", hInfo.boardInfo[monitor].RegPath)) {
-        FxU32 deviceid = atoi(GETENV("FX_GLIDE_DEVICEID", hInfo.boardInfo[monitor].RegPath));
-        hInfo.boardInfo[monitor].pciInfo.deviceID = deviceid;
+      if (ExtEscape((HDC)hdc, EXT_HWC, sizeof(ctxReq), (LPSTR) &ctxReq, sizeof(ctxRes), (LPSTR) &ctxRes)) {
+        HWCEXT_ESCAPE(0) = EXT_HWC ;
+      } else if (ExtEscape((HDC)hdc, EXT_HWC_OLD, sizeof(ctxReq), (LPSTR) &ctxReq, sizeof(ctxRes), (LPSTR) &ctxRes)) {
+        HWCEXT_ESCAPE(0) = EXT_HWC_OLD ;
+      } else {
+        HWCEXT_ESCAPE(0) = 0 ; /* if we don't have a display driver, we're hosed */
       }
-
-      GDBG_INFO(80, "devNum: %d\n", ctxRes.optData.deviceConfigRes.devNum);
-      GDBG_INFO(80, "isMaster: %d\n", ctxRes.optData.deviceConfigRes.isMaster);
-      GDBG_INFO(80, "numChips: %d\n", ctxRes.optData.deviceConfigRes.numChips);
-
-      if (IS_NAPALM(hInfo.boardInfo[monitor].pciInfo.deviceID))
+      ReleaseDC(NULL, hdc); /* release DC */
+      GDBG_INFO(80, "HWCEXT_ESCAPE(0) = 0x%x\n", HWCEXT_ESCAPE(0));
+      vendorID = ctxRes.optData.deviceConfigRes.vendorID;
+    }
+    
+    if ( HWCEXT_ESCAPE(0) &&
+         vendorID == 0x121a) {
+      GDBG_INFO(80, "%s: Found 3Dfx device\n", FN_NAME);
+      
+      /* XXX AJB MAYHEM XXX
+       * (Try) to get the devnode of this device
+       * so we can use DevIoctls to talk to the
+       * minivdd.
+       */
       {
-        hInfo.boardInfo[monitor].pciInfo.devNum =
-           ctxRes.optData.deviceConfigRes.devNum;
-        hInfo.boardInfo[monitor].pciInfo.isMaster =
-           ctxRes.optData.deviceConfigRes.isMaster;
-        hInfo.boardInfo[monitor].pciInfo.numChips =
-           ctxRes.optData.deviceConfigRes.numChips;
-        if (!((hInfo.boardInfo[monitor].pciInfo.numChips <= 4) && 
-              (hInfo.boardInfo[monitor].pciInfo.numChips >= 0)))
-          hInfo.boardInfo[monitor].pciInfo.numChips = 0;
-          /* Napalm framebuffer is unified, where the framebuffer
-          ** bound to each chip is effectively divided by SLI mode.
-          ** (framebuffer of one chip) = (total framebuffer / SLI mode)
-          ** h3Mem is the amount of video ram dedicated for one chip.
-          */
-      }
-#endif /* FX_GLIDE_NAPALM */
-            
-      hInfo.boardInfo[monitor].pciInfo.initialized = 1;
-      hInfo.boardInfo[monitor].h3pixelSize = 2;
-      hInfo.boardInfo[monitor].h3nwaySli = 1;
-
-      if (hInfo.boardInfo[monitor].h3Mem == 8) {
-        hInfo.boardInfo[monitor].pciInfo.deviceID = SST_DEVICE_ID_H3 ; /* HACK ALERT: restricting to single TMU for Velocity? */
+        QDEVNODE QDevNode;
+        QIN Qin;
+        Qin.dwSubFunc = QUERYDEVNODE;
+        {
+          HDC hdc = GetDC(NULL); /* grab DC of desktop */
+          if (ExtEscape((HDC)hdc, QUERYESCMODE, sizeof(Qin), (LPSTR) &Qin, sizeof(QDevNode), (LPSTR) &QDevNode)) {
+            hInfo.boardInfo[0].devNode = QDevNode.dwDevNode ;
+          } else {
+            hInfo.boardInfo[0].devNode = 0 ;
+          }
+          ReleaseDC(NULL, hdc); /* release DC */
+        }
+        GDBG_INFO(80, "hInfo.boardInfo[0].devNode = %d\n", hInfo.boardInfo[0].devNode);
       }
       
-      hInfo.boardInfo[monitor].min_tramSize = 
-        ((hInfo.boardInfo[monitor].h3Mem == 4 ) ||
-         (hInfo.boardInfo[monitor].pciInfo.deviceID == SST_DEVICE_ID_H3)) ? 0x200000 : 0x400000;
+      /* Make a private 'copy' of the dc so that we're not affected by
+       * other people dorking with dc's etc. 
+       *
+       * FixMe: Is there a better way to do this? I did not see a
+       * CopyDC or anything like that.  
+       */
+      /* KoolSmoky - Microsoft states this is the right way */
+      data[0].dc  = CreateDC("DISPLAY", NULL, NULL, NULL);
+      data[0].mon = NULL;
+      num_monitor = 1; /* remember to bump up the device number */
       
-      if (GETENV("FX_GLIDE_TMU_MEMSIZE", hInfo.boardInfo[monitor].RegPath)) {
-        FxU32 tmu_mem = atoi(GETENV("FX_GLIDE_TMU_MEMSIZE", hInfo.boardInfo[monitor].RegPath));
-        if (tmu_mem == 1) {
-          hInfo.boardInfo[monitor].min_tramSize = 0x200000;
+      /* get registry path for this device */
+      getRegPath(data[0].RegPath);
+    }
+    
+  }
+  
+  if (num_monitor == 0) {
+    GDBG_INFO(80, "%s: 3Dfx device not found!\n", FN_NAME);
+    sprintf(errorString, "%s: 3Dfx device not found!\n", FN_NAME);
+    return NULL;
+  }
+  
+  /*
+   ** use the active window display (if there is one yet
+   ** associated w/ the current thread) as sst 0 
+   */
+  /* [koolsmoky] We may not have a window at this point.
+  {
+    HWND curWindow = GetActiveWindow();
+    if(curWindow != NULL) {
+      monitorFromWindowProc = (MonitorFromWindowProc)GetProcAddress(user32, "MonitorFromWindow");
+      if(monitorFromWindowProc != NULL) {
+        HMONITOR curWindowMon = monitorFromWindowProc(curWindow, MONITOR_DEFAULTTONEAREST);
+        if(curWindowMon != NULL) {
+          int i;
+          for(i = 0; i < num_monitor; i++) {
+            if((data[i].mon == curWindowMon)) {
+              char tmpRegPath[256];
+              HDC tmpDC = data[i].dc;
+              
+              GDBG_INFO(80, "%s: Associating active window as sst 0\n", FN_NAME);
+              
+              data[0].boardNum = data[i].boardNum;
+              data[i].boardNum = 0;
+              data[i].dc  = data[0].dc;
+              data[i].mon = data[0].mon;
+              strcpy(tmpRegPath, data[i].RegPath);
+              strcpy(data[i].RegPath, data[0].RegPath);
+              
+              data[0].dc  = tmpDC;
+              data[0].mon = curWindowMon;
+              strcpy(data[0].RegPath, tmpRegPath);
+            }
+          }
         }
       }
-
-      // Save realNumChips
-      hInfo.boardInfo[monitor].pciInfo.realNumChips = hInfo.boardInfo[monitor].pciInfo.numChips;
-
-      if(GETENV("FX_GLIDE_NUM_CHIPS", hInfo.boardInfo[monitor].RegPath)) {
-        FxU32 numChips;
-        numChips = atoi(GETENV("FX_GLIDE_NUM_CHIPS", hInfo.boardInfo[monitor].RegPath));
-        /* Don't do anything stupid... */
-        if(numChips < 1)
-          numChips = 1;
-        if(numChips <= hInfo.boardInfo[monitor].pciInfo.numChips) {
-          hInfo.boardInfo[monitor].pciInfo.numChips = numChips;
-        }
+    }
+  }*/
+  
+  /* KoolSmoky - temporary hack to enable secondary and beyond sst devices
+  ** FX_GLIDE_FORCE_SST0=1 to force device as sst0
+  */
+  for (monitor = 0; monitor < num_monitor; monitor++) {
+    if (GETENV("FX_GLIDE_FORCE_SST0", data[monitor].RegPath)) {
+      if(atoi(GETENV("FX_GLIDE_FORCE_SST0", data[monitor].RegPath)) == 1) {
+        char tmpRegPath[256];
+        HMONITOR tmpMon = data[0].mon;
+        HDC tmpDC = data[0].dc;
+        int tmpboardNum = data[0].boardNum;
+        strcpy(tmpRegPath, data[0].RegPath);
+        
+        data[0].boardNum = data[monitor].boardNum;
+        data[0].mon = data[monitor].mon;
+        data[0].dc =  data[monitor].dc;
+        strcpy(data[0].RegPath, data[monitor].RegPath);
+        
+        data[monitor].boardNum = tmpboardNum;
+        data[monitor].mon = tmpMon;
+        data[monitor].dc = tmpDC;
+        strcpy(data[monitor].RegPath, tmpRegPath);
       }
-
-      if (GETENV("FX_GLIDE_FBRAM", hInfo.boardInfo[monitor].RegPath)) {
-        hInfo.boardInfo[monitor].h3Mem = atoi(GETENV("FX_GLIDE_FBRAM", hInfo.boardInfo[monitor].RegPath));      
-      }
-
-      checkResolutions((int *) resolutionSupported[monitor], 
-                       (FxU32) sizeof(resolutionSupported[0][0]) / sizeof(FxBool),
-                       (void *) hInfo.boardInfo[monitor].hMon);
     }
   }
+  
+  hInfo.nBoards = 0;
+  for (monitor = 0; monitor < num_monitor; monitor++) {
+    hwcExtRequest_t ctxReq;
+    hwcExtResult_t  ctxRes;
+    HDC hdc;
+    HMONITOR hmon;
+    int status;
+    int boardNum;
+    
+    boardNum = data[monitor].boardNum;
+    hdc = data[monitor].dc;
+    hmon = data[monitor].mon;
+    strcpy(hInfo.boardInfo[monitor].RegPath, data[monitor].RegPath);
+    strcpy(hInfo.boardInfo[monitor].DeviceName, data[monitor].DeviceName);
+    
+    hInfo.nBoards++;
+    hInfo.boardInfo[monitor].boardNum     = boardNum;
+    hInfo.boardInfo[monitor].hdc          = hdc;
+    hInfo.boardInfo[monitor].hMon         = hmon;
+    
+    GDBG_INFO(80,"hInfo : [%d] boardNum: %d\n", monitor, hInfo.boardInfo[monitor].boardNum);
+    GDBG_INFO(80,"hInfo : [%d] hdc: %d\n", monitor, hInfo.boardInfo[monitor].hdc);
+    GDBG_INFO(80,"hInfo : [%d] hmon: %d\n", monitor, hInfo.boardInfo[monitor].hMon);
+    GDBG_INFO(80,"hInfo : [%d] RegPath: %s\n", monitor, hInfo.boardInfo[monitor].RegPath);
+    GDBG_INFO(80,"hInfo : [%d] DeviceName: %s\n", monitor, hInfo.boardInfo[monitor].DeviceName);
+    /* hInfo.boardInfo[monitor].extContextID = ctxRes.Ext.optData.allocContextRes.contextID; */
+    
+    ctxReq.which = HWCEXT_GETDEVICECONFIG;
+    ctxReq.optData.deviceConfigReq.dc = hdc;
+    ctxReq.optData.deviceConfigReq.devNo = boardNum;
+    GDBG_INFO(80, FN_NAME ":  ExtEscape:HWCEXT_GETDEVICECONFIG.\n");
+    
+    status = ExtEscape((HDC)hdc,
+                       HWCEXT_ESCAPE(boardNum),
+                       sizeof(ctxReq), (LPSTR) &ctxReq,
+                       sizeof(ctxRes), (LPSTR) &ctxRes);
+    
+    if(!status) return NULL;
+    
+    hInfo.boardInfo[monitor].pciInfo.vendorID = 
+      ctxRes.optData.deviceConfigRes.vendorID;
+    hInfo.boardInfo[monitor].pciInfo.deviceID = 
+      ctxRes.optData.deviceConfigRes.deviceID;
+    hInfo.boardInfo[monitor].devRev = 
+      ctxRes.optData.deviceConfigRes.chipRev;
+    hInfo.boardInfo[monitor].h3Mem = 
+      (ctxRes.optData.deviceConfigRes.fbRam >> 20);
+    GDBG_INFO(80, FN_NAME ":  vendorID %i deviceID %i ChipRev %i fbRam %i\n",
+              hInfo.boardInfo[monitor].pciInfo.vendorID,
+              hInfo.boardInfo[monitor].pciInfo.deviceID,
+              hInfo.boardInfo[monitor].devRev,
+              hInfo.boardInfo[monitor].h3Mem);
+    
+#ifdef FX_GLIDE_NAPALM
+    if (GETENV("FX_GLIDE_DEVICEID", hInfo.boardInfo[monitor].RegPath)) {
+      FxU32 deviceid = atoi(GETENV("FX_GLIDE_DEVICEID", hInfo.boardInfo[monitor].RegPath));
+      hInfo.boardInfo[monitor].pciInfo.deviceID = deviceid;
+    }
+    
+    GDBG_INFO(80, "devNum: %d\n", ctxRes.optData.deviceConfigRes.devNum);
+    GDBG_INFO(80, "isMaster: %d\n", ctxRes.optData.deviceConfigRes.isMaster);
+    GDBG_INFO(80, "numChips: %d\n", ctxRes.optData.deviceConfigRes.numChips);
+    
+    if (IS_NAPALM(hInfo.boardInfo[monitor].pciInfo.deviceID)) {
+      hInfo.boardInfo[monitor].pciInfo.devNum =
+        ctxRes.optData.deviceConfigRes.devNum;
+      hInfo.boardInfo[monitor].pciInfo.isMaster =
+        ctxRes.optData.deviceConfigRes.isMaster;
+      hInfo.boardInfo[monitor].pciInfo.numChips =
+        ctxRes.optData.deviceConfigRes.numChips;
+      if (!((hInfo.boardInfo[monitor].pciInfo.numChips <= 4) && 
+            (hInfo.boardInfo[monitor].pciInfo.numChips >= 0)))
+        hInfo.boardInfo[monitor].pciInfo.numChips = 0;
+      /* Napalm framebuffer is unified, where the framebuffer
+      ** bound to each chip is effectively divided by SLI mode.
+      ** (framebuffer of one chip) = (total framebuffer / SLI mode)
+      ** h3Mem is the amount of video ram dedicated for one chip.
+      */
+    }
+#endif /* FX_GLIDE_NAPALM */
+    
+    hInfo.boardInfo[monitor].pciInfo.initialized = 1;
+    hInfo.boardInfo[monitor].h3pixelSize = 2;
+    hInfo.boardInfo[monitor].h3nwaySli = 1;
+    
+    if (hInfo.boardInfo[monitor].h3Mem == 8) {
+      hInfo.boardInfo[monitor].pciInfo.deviceID = SST_DEVICE_ID_H3 ; /* HACK ALERT: restricting to single TMU for Velocity? */
+    }
+    
+    hInfo.boardInfo[monitor].min_tramSize = 
+      ((hInfo.boardInfo[monitor].h3Mem == 4 ) ||
+       (hInfo.boardInfo[monitor].pciInfo.deviceID == SST_DEVICE_ID_H3)) ? 0x200000 : 0x400000;
+    
+    if (GETENV("FX_GLIDE_TMU_MEMSIZE", hInfo.boardInfo[monitor].RegPath)) {
+      FxU32 tmu_mem = atoi(GETENV("FX_GLIDE_TMU_MEMSIZE", hInfo.boardInfo[monitor].RegPath));
+      if (tmu_mem == 1) {
+        hInfo.boardInfo[monitor].min_tramSize = 0x200000;
+      }
+    }
+    
+    // Save realNumChips
+    hInfo.boardInfo[monitor].pciInfo.realNumChips = hInfo.boardInfo[monitor].pciInfo.numChips;
+    
+    if(GETENV("FX_GLIDE_NUM_CHIPS", hInfo.boardInfo[monitor].RegPath)) {
+      FxU32 numChips;
+      numChips = atoi(GETENV("FX_GLIDE_NUM_CHIPS", hInfo.boardInfo[monitor].RegPath));
+      /* Don't do anything stupid... */
+      if(numChips < 1)
+        numChips = 1;
+      if(numChips <= hInfo.boardInfo[monitor].pciInfo.numChips) {
+        hInfo.boardInfo[monitor].pciInfo.numChips = numChips;
+      }
+    }
+    
+    if (GETENV("FX_GLIDE_FBRAM", hInfo.boardInfo[monitor].RegPath)) {
+      hInfo.boardInfo[monitor].h3Mem = atoi(GETENV("FX_GLIDE_FBRAM", hInfo.boardInfo[monitor].RegPath));      
+    }
+    
+    checkResolutions((int *) resolutionSupported[monitor], 
+                     (FxU32) sizeof(resolutionSupported[0][0]) / sizeof(FxBool),
+                     (void *) hInfo.boardInfo[monitor].hMon);
+  }
+  
 #elif defined(HWC_GDX_INIT)
    {
       FxU32 i, j = 0, numTargets;
@@ -3009,24 +3002,24 @@ hwcGetSurfaceInfo(const hwcBoardInfo* bInfo,
      * hw address for packet offsets and color buffer stuff.  
      */ 
 
-        ctxReq.which = HWCEXT_LINEAR_MAP_OFFSET;
-        ctxReq.optData.mapInfoReq.mapAddr = lfbBase;
-        ctxReq.optData.mapInfoReq.remapAddr = lpSurface;
-        GDBG_INFO(80, FN_NAME ":  ExtEscape:HWCEXT_LINEAR_MAP_OFFSET\n");
+    ctxReq.which = HWCEXT_LINEAR_MAP_OFFSET;
+    ctxReq.optData.mapInfoReq.mapAddr = lfbBase;
+    ctxReq.optData.mapInfoReq.remapAddr = lpSurface;
+    GDBG_INFO(80, FN_NAME ":  ExtEscape:HWCEXT_LINEAR_MAP_OFFSET\n");
     
-      retVal = (ExtEscape((HDC)bInfo->hdc, HWCEXT_ESCAPE(bInfo->boardNum),     /**/
-                          sizeof(ctxReq), (LPCSTR)&ctxReq,
-                          sizeof(ctxRes), (LPSTR)&ctxRes) > 0);
-      if (!retVal) {
-        hwc_errncpy(errorString, "HWCEXT_LINEAR_MAP_OFFSET failed");
-        GDBG_INFO(80, "%s: %s.\n", FN_NAME, errorString);
-      }
-      
-      /* lpSurface is now an address relative to the 2d driver's base
-       * address as returned by the HWCEXT_GETLINEARADDR callback.  
-       */
-      
-        lpSurface = (lfbBase + ctxRes.optData.mapInfoRes.linAddrOffset);
+    retVal = (ExtEscape((HDC)bInfo->hdc, HWCEXT_ESCAPE(bInfo->boardNum),     /**/
+                        sizeof(ctxReq), (LPCSTR)&ctxReq,
+                        sizeof(ctxRes), (LPSTR)&ctxRes) > 0);
+    if (!retVal) {
+      hwc_errncpy(errorString, "HWCEXT_LINEAR_MAP_OFFSET failed");
+      GDBG_INFO(80, "%s: %s.\n", FN_NAME, errorString);
+    }
+    
+    /* lpSurface is now an address relative to the 2d driver's base
+     * address as returned by the HWCEXT_GETLINEARADDR callback.  
+     */
+    
+    lpSurface = (lfbBase + ctxRes.optData.mapInfoRes.linAddrOffset);
   }
   if (!retVal) goto __errExit;
 
@@ -4239,9 +4232,9 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
 #endif
   FxI32 useV56KdacFix = 2;
   
-   {
-      FxU32 refresh;
-      static FxU32 refConstToRefreshHz[] =
+  {
+    FxU32 refresh;
+    static FxU32 refConstToRefreshHz[] =
       {
          60,                       /* GR_REFRESH_60Hz   */
          70,                       /* GR_REFRESH_70Hz   */
@@ -4255,80 +4248,70 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
          0
       };
 
-#if 0
-      if (bInfo->vidInfo.vRefresh > GR_REFRESH_120Hz)
-         refresh = 0;
-      else
-         refresh = bInfo->vidInfo.vRefresh;
-
-      refresh = refConstToRefreshHz[refresh]; /* Make sure we use the table, otherwise
-                                               we will always pass 0Hz to setVideoMode */
-#else
-     if (bInfo->vidInfo.vRefresh > GR_REFRESH_120Hz || bInfo->vidInfo.vRefresh < GR_REFRESH_60Hz)
-         refresh = 60;
-      else
-         refresh = refConstToRefreshHz[bInfo->vidInfo.vRefresh];
-#endif
-     
-      if (GETENV("FX_GLIDE_REFRESH", bInfo->RegPath))
-         refresh = atoi(GETENV("FX_GLIDE_REFRESH", bInfo->RegPath));
-
-      GDBG_INFO( 80, "selected refresh rate: %iHz\n", refresh );
+    /* Make sure we use the table, otherwise we will always pass 60Hz to setVideoMode */
+    if (bInfo->vidInfo.vRefresh > GR_REFRESH_120Hz || bInfo->vidInfo.vRefresh < GR_REFRESH_60Hz) {
+      refresh = 60;
+    } else {
+      refresh = refConstToRefreshHz[bInfo->vidInfo.vRefresh]; 
+    }
+    
+    if (GETENV("FX_GLIDE_REFRESH", bInfo->RegPath))
+      refresh = atoi(GETENV("FX_GLIDE_REFRESH", bInfo->RegPath));
+    
+    GDBG_INFO( 80, "selected refresh rate: %iHz\n", refresh );
 
 #ifdef HWC_DXDRVR
-      if ( !dxOpen( (FxU32)bInfo->vidInfo.hWnd,		/* hWindow */
-	          bInfo->vidInfo.sRes,			/* sRes */
-	          bInfo->vidInfo.vRefresh,		/* vRefresh */
-	          HWC_COLORFORMAT_ARGB,			/* cFormat */
-	          HWC_ORIGIN_UPPER_LEFT,		/* yOrigin */
-	          bInfo->buffInfo.nColBuffers,		/* nColBuffers */
+    if ( !dxOpen( (FxU32)bInfo->vidInfo.hWnd,		/* hWindow */
+                  bInfo->vidInfo.sRes,			/* sRes */
+                  bInfo->vidInfo.vRefresh,		/* vRefresh */
+                  HWC_COLORFORMAT_ARGB,			/* cFormat */
+                  HWC_ORIGIN_UPPER_LEFT,		/* yOrigin */
+                  bInfo->buffInfo.nColBuffers,		/* nColBuffers */
 	          bInfo->buffInfo.nAuxBuffers,		/* nAuxBuffers */
-                  				/* return values */
+                                                        /* return values */
 	          &bInfo->buffInfo.buffers, 		/* pBufDesc */
 	          &bInfo->vidInfo.xRes,			/* width */
 	          &bInfo->vidInfo.yRes,			/* height */
         	  swapType,				/* swapType */
 	          bInfo->hMon ) )			/* hmon */
-        {
-          GDBG_INFO(80, "%s:  dxOpen() failed!\n", FN_NAME);
-          return FXFALSE;
-        }
+      {
+        GDBG_INFO(80, "%s:  dxOpen() failed!\n", FN_NAME);
+        return FXFALSE;
+      }
 #else
-      if ( !setVideoMode( (void *)bInfo->vidInfo.hWnd, 
-                          bInfo->vidInfo.xRes,
-                          bInfo->vidInfo.yRes,
-                          bInfo->h3pixelSize,
-                          refresh,
-                          bInfo->hMon,
-                          (char *)bInfo->RegPath,
-                          (char *)bInfo->DeviceName) )
-        {
-          GDBG_INFO(80, "%s:  setVideoMode() failed!\n", FN_NAME);
-          return FXFALSE;
-        }
+    if ( !setVideoMode( (void *)bInfo->vidInfo.hWnd, 
+                        bInfo->vidInfo.xRes,
+                        bInfo->vidInfo.yRes,
+                        bInfo->h3pixelSize,
+                        refresh,
+                        bInfo->hMon,
+                        (char *)bInfo->RegPath,
+                        (char *)bInfo->DeviceName) )
+      {
+        GDBG_INFO(80, "%s:  setVideoMode() failed!\n", FN_NAME);
+        return FXFALSE;
+      }
 #endif /* HWC_DXDRVR */
-      
+
 #if SET_SWIZZLEHACK
-      setLfbSwizzleMode(bInfo->regInfo.rawLfbBase,bInfo->regInfo.ioMemBase,8);
+    setLfbSwizzleMode(bInfo->regInfo.rawLfbBase,bInfo->regInfo.ioMemBase,8);
 #endif
-   }
+  }
 
 #ifdef HWC_EXT_INIT
-   ctxReq.which = HWCEXT_HWCSETEXCLUSIVE;
+  ctxReq.which = HWCEXT_HWCSETEXCLUSIVE;
+  ctxReq.optData.linearAddrReq.devNum = bInfo->boardNum;
+  GDBG_INFO(80, FN_NAME ":  ExtEscape:HWCEXT_HWCSETEXCLUSIVE\n");
   
-   ctxReq.optData.linearAddrReq.devNum = bInfo->boardNum;
-   GDBG_INFO(80, FN_NAME ":  ExtEscape:HWCEXT_HWCSETEXCLUSIVE\n");
-  
-   ExtEscape((HDC) bInfo->hdc, HWCEXT_ESCAPE(bInfo->boardNum), sizeof(ctxReq), (LPSTR) &ctxReq, /**/
+  ExtEscape((HDC) bInfo->hdc, HWCEXT_ESCAPE(bInfo->boardNum), sizeof(ctxReq), (LPSTR) &ctxReq, /**/
             sizeof(ctxRes), (LPSTR) &ctxRes);
   
-   status = ctxRes.resStatus;
+  status = ctxRes.resStatus;
   
-   if (status != 1)
-   {
-      hwc_errncpy(errorString,"HWCEXT_HWCSETEXCLUSIVE Failed");
-      return FXFALSE;
-   }
+  if (status != 1) {
+    hwc_errncpy(errorString,"HWCEXT_HWCSETEXCLUSIVE Failed");
+    return FXFALSE;
+  }
 #else
   /* This is off for now until the rest of the alt-tab type things are done. */
 #if 0
@@ -4373,7 +4356,7 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
    }
 
    HWC_IO_STORE(bInfo->regInfo, vidOverlayDudxOffsetSrcWidth,
-      ((bInfo->vidInfo.xRes << pixelShift) << 19));
+                ((bInfo->vidInfo.xRes << pixelShift) << 19));
 
    /* Video pixel buffer threshold */
    {
@@ -4696,7 +4679,7 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
   }
   
 
-  /* Filthy memclock hack */
+  /* Filthy memclock hack *//* XXX [koolsmoky] do we really need this? */
   if (GETENV("H3_MEM_CLOCK", bInfo->RegPath)) {
     int mHz;
     FxU32 pllVal;
@@ -5497,8 +5480,8 @@ hwcRestoreVideo(hwcBoardInfo *bInfo)
 
       GDBG_INFO(80, FN_NAME ": HWC_MINIVDD_HACK: ExEscape:HWCEXT_SLI_AA_REQUEST\n");
       retVal = ExtEscape((HDC)bInfo->hdc, HWCEXT_ESCAPE(bInfo->boardNum), 
-                sizeof(ctxReq), (LPSTR) &ctxReq,
-                sizeof(ctxRes), (LPSTR) &ctxRes);
+                         sizeof(ctxReq), (LPSTR) &ctxReq,
+                         sizeof(ctxRes), (LPSTR) &ctxRes);
       GDBG_INFO(80, FN_NAME ":  ExEscape retVal=%x\n", retVal);
 
     }
@@ -5758,7 +5741,7 @@ hwcRestoreVideo(hwcBoardInfo *bInfo)
   GDBG_INFO(90, FN_NAME ":  ExtEscape:HWCEXT_HWCRLSEXCLUSIVE\n");
 
   retVal = ExtEscape((HDC) bInfo->hdc, HWCEXT_ESCAPE(bInfo->boardNum), sizeof(ctxReq), (LPSTR) &ctxReq, /**/
-      sizeof(ctxRes), (LPSTR) &ctxRes);
+                     sizeof(ctxRes), (LPSTR) &ctxRes);
 
    GDBG_INFO(80, "%s:  sizeof(ctxRes) = %d\n", FN_NAME, sizeof(ctxRes));
    GDBG_INFO(80, "%s:  sizeof(ctxRes) = %d\n", FN_NAME, sizeof(ctxRes));
@@ -6152,7 +6135,7 @@ hwcInitAGPFifo(hwcBoardInfo *bInfo, FxBool enableHoleCounting)
   GDBG_INFO(80, FN_NAME ":  ExtEscape:HWCEXT_GETAGPINFO\n");
 
   ExtEscape((HDC) bInfo->hdc, HWCEXT_ESCAPE(bInfo->boardNum), sizeof(ctxReq), (LPSTR) &ctxReq, /**/
-    sizeof(ctxRes), (LPSTR) &ctxRes);
+            sizeof(ctxRes), (LPSTR) &ctxRes);
 
   status = ctxRes.resStatus;
   agpLAddr = ctxRes.optData.agpInfoRes.lAddr;
@@ -6264,7 +6247,7 @@ hwcAllocAuxRenderingBuffer(hwcBoardInfo *bInfo, hwcBufferDesc *bp, int width,
 #undef FN_NAME
 } /* hwcAllocAuxRenderingBuffer */
 
-/* now we use Colourless's optimized FB grabber */
+
 static void hwcReadRegion565(hwcBoardInfo *bInfo, FxU32 src, FxU32 src_x, FxU32 src_y, FxU32 src_width, FxU32 src_height, FxU32 strideInBytes, FxU16 *dst, FxU32 renderMask, FxU32 compareMask)
 {
   FxU32 end_x, end_y;
