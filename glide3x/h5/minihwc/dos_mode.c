@@ -591,6 +591,12 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
 
   /* Enable AA and/or SLI */
   if(sliEnable || aaEnable) {
+
+    /* v56k has an external clock! */
+    if (bInfo->pciInfo.realNumChips == 4) {
+       extern unsigned long gpio_6k_clock(hwcBoardInfo *bInfo);
+       gpio_6k_clock(bInfo);
+    }
     
     /* First, init all chips */
     for(chipNum = 1; chipNum < numChips; chipNum++) {
