@@ -1,5 +1,5 @@
-# Win32 Makefile for 3dfx Glide3x
-# 
+# Win32 Makefile for 3Dfx Glide3x
+#
 # Copyright (c) 2003 - Hiroshi Morii
 # Email: koolsmoky@users.sourceforge.net
 # URL  : http://www.3dfxzone.it/koolsmoky
@@ -25,6 +25,12 @@
 #            +-swlibs-+-fxmisc
 #                     |
 #                     +-newpci---pcilib
+#
+# Compilers:
+#
+# VC++ 6.0
+# Windows 98 DDK
+# NASM 0.98.36 (win32)
 #
 
 ##################################
@@ -323,7 +329,7 @@ LFLAGS = $(LFLAGS) /MAP:glide3x.map /DEBUG
 # OS commands
 #################################
 RM = @del /f
-MV = mv
+MV = move
 
 #################################
 # objects, path, dependency
@@ -493,10 +499,10 @@ glide3x.dll: $(FX_GLIDE_HW)\lib\minihwc.lib $(GLIDE3_OBJ) $(GLIDE3_RES)
 	$(MV) $(FX_GLIDE_HW)\lib\glide3x.dll $(FX_GLIDE_HW)\bin\glide3x.dll
 
 $(FX_GLIDE_HW)\glide3\src\xdraw2_def.obj: $(FX_GLIDE_HW)\glide3\src\xdraw2.asm
-	$(AS) $(ASFLAGS) $(INCS) -o $@ $(FX_GLIDE_HW)\glide3\src\xdraw2.asm
+	$(AS) $(ASFLAGS) $(INCS) -DUSE_PACKET_FIFO=1 -o $@ $(FX_GLIDE_HW)\glide3\src\xdraw2.asm
 
 $(FX_GLIDE_HW)\glide3\src\xdraw3_def.obj: $(FX_GLIDE_HW)\glide3\src\xdraw3.asm
-	$(AS) $(ASFLAGS) $(INCS) -o $@ $(FX_GLIDE_HW)\glide3\src\xdraw3.asm
+	$(AS) $(ASFLAGS) $(INCS) -DUSE_PACKET_FIFO=1 -o $@ $(FX_GLIDE_HW)\glide3\src\xdraw3.asm
 
 $(FX_GLIDE_HW)\glide3\src\xdraw2_3dnow.obj: $(FX_GLIDE_HW)\glide3\src\xdraw2.asm
 	$(AS) $(ASFLAGS) $(INCS) -DGL_AMD3D=1 -DUSE_PACKET_FIFO=1 -o $@ $(FX_GLIDE_HW)\glide3\src\xdraw2.asm
