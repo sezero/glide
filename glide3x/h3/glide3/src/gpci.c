@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.2.1  2000/08/30 08:47:03  alanh
+** Changes for Voodoo3 for 64bit architectures
+**
 ** Revision 1.1.1.1  1999/11/24 21:44:57  joseph
 ** Initial checkin for SourceForge
 **
@@ -889,7 +892,7 @@ _GlideInitEnvironment(void)
   GDBG_INFO(80,"        nAuxBuffer: %d\n",_GlideRoot.environment.nAuxBuffer);
   _GlideRoot.environment.swFifoLWM         = GLIDE_GETENV("FX_GLIDE_LWM", -1L);
   GDBG_INFO(80,"         swFifoLWM: %d\n",_GlideRoot.environment.swFifoLWM);
-  _GlideRoot.environment.swapInterval      = GLIDE_GETENV("FX_GLIDE_SWAPINTERVAL", -1L);
+  _GlideRoot.environment.swapInterval      = GLIDE_GETENV("FX_GLIDE_SWAPINTERVAL", 0);
   GDBG_INFO(80,"      swapInterval: %d\n",_GlideRoot.environment.swapInterval);
   _GlideRoot.environment.snapshot          = GLIDE_GETENV("FX_SNAPSHOT", -1L);
   GDBG_INFO(80,"          snapshot: %d\n",_GlideRoot.environment.snapshot);

@@ -1543,7 +1543,7 @@ _GlideInitEnvironment(void)
   GDBG_INFO(80,"        nAuxBuffer: %d\n",_GlideRoot.environment.nAuxBuffer);
   _GlideRoot.environment.swFifoLWM         = GLIDE_GETENV("FX_GLIDE_LWM", -1L);
   GDBG_INFO(80,"         swFifoLWM: %d\n",_GlideRoot.environment.swFifoLWM);
-  _GlideRoot.environment.swapInterval      = GLIDE_GETENV("FX_GLIDE_SWAPINTERVAL", -1L);
+  _GlideRoot.environment.swapInterval      = GLIDE_GETENV("FX_GLIDE_SWAPINTERVAL", 0);
   GDBG_INFO(80,"      swapInterval: %d\n",_GlideRoot.environment.swapInterval);
   _GlideRoot.environment.snapshot          = GLIDE_GETENV("FX_SNAPSHOT", -1L);
   GDBG_INFO(80,"          snapshot: %d\n",_GlideRoot.environment.snapshot);
