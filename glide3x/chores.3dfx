@@ -170,6 +170,13 @@ if [ "$DO_GENERATE" = YES ] ; then
     # Regenerate everything.
     #
     echo -n 'Regenerating everything...'
+    echo -n 'Libtoolize...'
+    if libtoolize --copy --force ; then
+        do_nothing
+    else
+        echo 'Failed!!'
+        exit 100
+    fi
     echo -n 'Aclocal...'
     if aclocal ; then
         do_nothing
