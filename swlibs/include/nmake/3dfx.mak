@@ -33,16 +33,20 @@ CPP            = $(CC)
 CPLUSPLUS      = $(CPP)
 !endif
 CDEBUG         = -Z7
-CNODEBUG       = /Ox
+CNODEBUG       = /Ox -DNDEBUG
 LDEBUG         = $(CDEBUG)
 LNODEBUG       = $(CNODEBUG)
 LINK           = $(CC)
 GCOPTS         = /nologo /G6 /W3 /c
-GCDEFS         = -D__MSC__=1 -D_X86_=1 -DNULL=0
+GCDEFS         = -D__MSC__=1 -D_X86_=1 -DNULL=0 -D_MBCS -D_LIBS -D_WIN32 -DWIN32=1 -D__WIN32__=1
 !ifdef DEBUG
 GLDOPTS        = -link -debugtype:both
 !else
+!if "$(FX_TARGET_MINOR)" == "WIN95"
+GLDOPTS        = -nologo /link /map -pdb:none -incremental:no -release
+!else
 GLDOPTS        = -link -incremental:no -release
+!endif
 !endif
 GCINCS         = -I$(BUILD_ROOT_SWLIBS)\include 
 
@@ -68,8 +72,6 @@ ADEBUG   = $(ANODEBUG)
 #
 # target environment configs:
 #
-GCDEFS     = $(GCDEFS) -D_WIN32 -DWIN32=1 -D__WIN32__=1
-
 !ifdef COMPILE_DLL
 GCDEFS     = $(GCDEFS) -DFX_DLL_ENABLE=1
 !endif
