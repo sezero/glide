@@ -19,6 +19,10 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.2.2.2  2004/12/23 20:45:56  koolsmoky
+** converted to nasm syntax
+** added x86 asm, 3dnow! triangle and mmx, 3dnow! texture download optimizations
+**
 ** Revision 1.2.2.1  2004/12/12 15:24:40  koolsmoky
 ** grDitherMode(): force 2x2 dithering for 4x1 dither
 ** grBufferSwap(): enable vsync and set swapbufferinterval to 0 for tripple buffering.
@@ -771,13 +775,9 @@ GR_ENTRY(grBufferSwap, void, (int swapInterval))
    * any better. If, however, the user has not chosen, but the app
    * wants something other than 0 then we need to honor their choice.  
    */
-  /*swapInterval = ((_GlideRoot.environment.swapInterval >= 0)
+  swapInterval = ((_GlideRoot.environment.swapInterval >= 0)
                   ? _GlideRoot.environment.swapInterval
-                  : (gc->scanline_interleaved ? MAX(swapInterval, 1) : swapInterval));*/
-  /* always allow user override */
-  if (_GlideRoot.environment.swapInterval >= 0) {
-    swapInterval = _GlideRoot.environment.swapInterval;
-  }
+                  : (gc->scanline_interleaved ? MAX(swapInterval, 1) : swapInterval));
   
   GR_CHECK_F(myName,
              (swapInterval > 255) || (swapInterval < 0),
