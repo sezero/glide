@@ -37,7 +37,29 @@
  * macros for creating assembler offset files
  *----------------------------------------------------------------------*/
 
-#ifndef __linux__
+#if 1	/* defined(NASM) - default */
+#define NEWLINE printf("\n")
+#define COMMENT printf(";----------------------------------------------------------------------\n")
+
+#define HEADER(str)     NEWLINE; COMMENT; \
+                        printf("; Assembler offsets for %s struct\n",str);\
+                        COMMENT; NEWLINE
+
+#define OFFSET(p,o,pname) if (hex) \
+        printf("%s\tequ %08xh\n",pname,((int)&p.o)-(int)&p); \
+    else printf("%s\tequ %10d\n",pname,((int)&p.o)-(int)&p)
+
+#define OFFSET2(p,o,pname) if (hex) \
+        printf("%s\tequ %08xh\n",pname,((int)&o)-(int)&p); \
+    else printf("%s\tequ %10d\n",pname,((int)&o)-(int)&p)
+
+#define SIZEOF(p,pname) if (hex) \
+        printf("SIZEOF_%s\tequ %08lxh\n",pname,sizeof(p)); \
+    else printf("SIZEOF_%s\tequ %10ld\n",pname,sizeof(p))
+
+#else	/* !NASM */
+
+#if !defined(__linux__) && !defined(__DJGPP__)
 #define NEWLINE printf("\n")
 #define COMMENT printf(";----------------------------------------------------------------------\n")
 
@@ -57,7 +79,7 @@
         printf("SIZEOF_%s\t= %08xh\n",pname,sizeof(p)); \
     else printf("SIZEOF_%s\t= %10d\n",pname,sizeof(p))
 
-#else
+#else   /* defined(__linux__) || defined(__DJGPP__) */
 
 #define NEWLINE printf("\n");
 #define COMMENT printf("/*----------------------------------------------------------------------*/\n")
@@ -67,17 +89,19 @@
                         COMMENT; NEWLINE
 
 #define OFFSET(p,o,pname) if (hex) \
-        printf("#define %s %08x\n",pname,((int)&p.o)-(int)&p); \
+        printf("#define %s 0x%08x\n",pname,((int)&p.o)-(int)&p); \
     else printf("#define %s %10d\n",pname,((int)&p.o)-(int)&p)
 
 #define OFFSET2(p,o,pname) if (hex) \
-        printf("#define %s %08x\n",pname,((int)&o)-(int)&p); \
+        printf("#define %s 0x%08x\n",pname,((int)&o)-(int)&p); \
     else printf("#define %s %10d\n",pname,((int)&o)-(int)&p)
 
 #define SIZEOF(p,pname) if (hex) \
-        printf("#define SIZEOF_%s %08x\n",pname,sizeof(p)); \
+        printf("#define SIZEOF_%s 0x%08x\n",pname,sizeof(p)); \
     else printf("#define SIZEOF_%s %10d\n",pname,sizeof(p))
-#endif
+#endif  /* defined(__linux__) || defined(__DJGPP__) */
+
+#endif  /* defined(NASM)*/
 
 int
 main (int argc, char **argv)
@@ -87,7 +111,7 @@ main (int argc, char **argv)
     static GrGC gc;
 
 #if !GLIDE_HW_TRI_SETUP
-    static Sstregs sst;
+    static SstRegs sst;
     static struct dataList_s dl;
 #endif /* !GLIDE_HW_TRI_SETUP */
 
@@ -99,18 +123,18 @@ main (int argc, char **argv)
         printf("#define __FX_INLINE_H__\n");
         printf("\n");
 
-        printf("#define kCurGCOffset   0x%XUL\n",
+        printf("#define kCurGCOffset   0x%lXUL\n",
                offsetof(struct _GlideRoot_s, curGC));
 
 #if GLIDE_DISPATCH_SETUP
-        printf("#define kTriProcOffset 0x%XUL\n",
+        printf("#define kTriProcOffset 0x%lXUL\n",
                offsetof(struct GrGC_s, curArchProcs.triSetupProc));
-	printf("#define kGCStateInvalid 0x%XUL\n",
+	printf("#define kGCStateInvalid 0x%lXUL\n",
 	       offsetof(struct GrGC_s, state.invalid));
 #endif /* GLIDE_DISPATCH_SETUP */
         
         printf("/* The # of 2-byte entries in the hw fog table */\n");
-        printf("#define kInternalFogTableEntryCount 0x%XUL\n",
+        printf("#define kInternalFogTableEntryCount 0x%lXUL\n",
                sizeof(dummyRegs.fogTable) >> 1);
 
         printf("\n");

@@ -1,4 +1,4 @@
-# Linux tests makefile for Glide3
+# DOS/DJGPP tests makefile for Glide3
 #
 #  Copyright (c) 2002 - Borca Daniel
 #  Email : dborca@users.sourceforge.net
@@ -14,6 +14,8 @@
 #    Environment variables:
 #	CPU		optimize for the given processor.
 #			default = pentium
+#	DXE=1		use DXE modules.
+#			default = no
 #
 #    Targets:
 #	<file.exe>	build a specific file
@@ -32,12 +34,16 @@ CC = gcc
 CFLAGS = -Wall -O2 -ffast-math -mcpu=$(CPU)
 CFLAGS += -I$(TOP)/$(FX_GLIDE_HW)/glide3/src -I$(TOP)/$(FX_GLIDE_HW)/incsrc
 CFLAGS += -I$(TOP)/swlibs/fxmisc
-CFLAGS += -DCVG
+CFLAGS += -D__DOS__ -DCVG
+CFLAGS += -D__DOS32__
 
 LDFLAGS = -s -L$(TOP)/$(FX_GLIDE_HW)/lib
 
-LDLIBS = -lglide3
-LDLIBS += -lm
+ifdef DXE
+LDLIBS = -lgld3i
+else
+LDLIBS = -lgld3x
+endif
 
 .c.o:
 	$(CC) -o $@ $(CFLAGS) -c $<

@@ -19,8 +19,45 @@
 ;; $Header$
 ;; $Revision$
 ;; $Log$
+;; Revision 1.1.8.7  2003/09/12 05:08:35  koolsmoky
+;; preparing for graphic context checks
+;;
+;; Revision 1.1.8.6  2003/07/07 23:29:06  koolsmoky
+;; cleaned logs
+;;
+;;
+;; Revision 1.1  2000/06/15 00:27:43  joseph
+;; Initial checkin into SourceForge.
 ;; 
-;; 1     10/08/98 11:30a Brent
+;; 10    8/17/99 6:35p Atai
+;; fixed amd debug mode
+;; 
+;; 9     4/08/99 1:22p Atai
+;; added contect check for _grTexDownload_3DNow_MMX
+;; 
+;; 8     3/19/99 11:26a Peter
+;; expose direct fifo for gl
+;; 
+;; 7     2/02/99 4:36p Peter
+;; download through lfb rather than texture port
+;; 
+;; 6     12/17/98 2:36p Atai
+;; check in Norbert's fix for texture download width correction
+;; 
+;; 5     12/07/98 11:33a Peter
+;; norbert's re-fixes of my merge
+;; 
+;; 4     11/02/98 5:34p Atai
+;; merge direct i/o code
+;; 
+;; 3     10/20/98 5:34p Atai
+;; added #ifdefs for hwc
+;; 
+;; 2     10/14/98 12:05p Peter
+;; fixed my effed up assumption about non-volatile regs
+;; 
+;; 1     10/09/98 6:48p Peter
+;; 3DNow!(tm) version of wide texture downloads
 ;; 
 ;; 3     10/07/98 9:43p Peter
 ;; triangle procs for 3DNow!(tm)
@@ -32,247 +69,646 @@
 ;; mmx stuff for 3DNow!(tm) capable processors
 ;; 
 
-TITLE   xtexdl.asm
-OPTION OLDSTRUCTS
+%include "xos.inc"
 
-.586P
-.MMX
-.K3D
-    
-EXTRN   __FifoMakeRoom: NEAR
+extrn _FifoMakeRoom
+
+%MACRO _grCommandTransportMakeRoom 3
+    push %3
+    push %2
+    push %1
+    call _FifoMakeRoom
+    add  esp, 12
+%ENDMACRO ; _grCommandTransportMakeRoom
 
 ;;; Definitions of cvg regs and glide root structures.
-INCLUDE fxgasm.h
+%INCLUDE "fxgasm.h"
 
-; Arguments (STKOFF = 12 from 3 dword pushes)
-STACKOFFSET = 12
-_gc$	    =  4 + STACKOFFSET
-_baseAddr$  =  8 + STACKOFFSET
-_maxS$	    = 12 + STACKOFFSET
-_minT$	    = 16 + STACKOFFSET
-_maxT$	    = 20 + STACKOFFSET
-_texData$   = 24 + STACKOFFSET
+; Arguments (STKOFF = 16 from 4 dword pushes)
+STACKOFFSET equ 16
+_gc$        equ  4 + STACKOFFSET
+_baseAddr$  equ  8 + STACKOFFSET
+_maxS$      equ 12 + STACKOFFSET
+_minT$      equ 16 + STACKOFFSET
+_maxT$      equ 20 + STACKOFFSET
+_texData$   equ 24 + STACKOFFSET
 
-    ;; NB: The first set of registers (eax-edx) are volatile across
+    ;; NB: The first set of registers (eax, ecx, and edx) are volatile across
     ;; function calls. The remaining registers are supposedly non-volatile
     ;; so they only store things that are non-volatile across the call.
-fifo	TEXTEQU <eax>		; Current fifo ptr in inner loop
-texAddr TEXTEQU <ebx>		; Physical download address of the current scanline    
-gc	TEXTEQU	<ecx>		; Current graphics context
-curS	TEXTEQU	<edx>		; Current texture scanline
-    
-maxT	TEXTEQU	<esi>		; Max scanline line value (inclusive)
-dataPtr TEXTEQU <edi>		; Current user texture data ptr
-curT	TEXTEQU	<ebp>		; Current s coordinate in inner loop
 
-temp1	TEXTEQU	curS
-temp2	TEXTEQU texAddr
-temp3	TEXTEQU	gc    
-    
-GR_FIFO_WRITE   MACRO __addr, __offset, __data
-    mov    [__addr + __offset], __data
-ENDM ; GR_FIFO_WRITE
+%define fifo    ebp         ; fifo ptr in inner loop
+%define gc      esi         ; graphics context
+%define dataPtr edi         ; pointer to exture data to be downloaded
+%define curT    ebx         ; counter for texture scan lines (t-coordinate)
+%define curS    ecx         ; texture s-coordinate
+%define fRoom   edx         ; room available in fifo (in bytes)
 
 ;--------------------------------------------------------------------------
-_TEXT       SEGMENT PAGE PUBLIC USE32 'CODE'
-            ASSUME DS: FLAT, SS: FLAT
 
-            ALIGN  32
+%IFNDEF GL_SSE2
 
-	    PUBLIC __grTexDownload_3DNow_MMX@24
-__grTexDownload_3DNow_MMX@24 PROC NEAR
+;--------------------------------------------------------------------------
+;
+; GL_AMD3D, GL_MMX
+;
+;--------------------------------------------------------------------------
 
-    ;; Function prologue type things
-    ;; NB:   We are not bothering to preserve the contents
-    ;;	     of eax, ebx, ecx, edx because they are volatile
-    ;;	     by convention.
+segment		TEXT
+
+              ALIGN  32
+
+%IFDEF GL_AMD3D
+proc _grTexDownload_3DNow_MMX, 24
+%ENDIF
+%IFDEF GL_MMX
+proc _grTexDownload_MMX, 24
+%ENDIF
+
+    push      ebx                       ; save caller's register variable
+    mov       curT, [esp + _maxT$ - 12] ; curT = maxT
+
+    push      esi                       ; save caller's register variable
+    mov       eax, [esp + _minT$ - 8]   ; minT
+
+    push      edi                       ; save caller's register variable
+    mov       gc, [esp + _gc$ - 4]      ; gc
+
+    push      ebp                       ; save caller's register variable
+    mov       dataPtr, [esp + _texData$]; dataPtr
+
+%IFDEF GLIDE_ALT_TAB
+    test      gc, gc
+    je        .dlDone
+;    mov       edx, [gc + windowed]
+;    test      edx, 1
+;    jnz       .pastContextTest
+    mov       edx, DWORD [gc+lostContext]
+    mov       ecx, [edx]
+    test      ecx, 1
+    jnz       .dlDone
+;.pastContextTest:
+%ENDIF
+
+    sub       curT, eax                 ; curT = maxT - minT
+    mov       fifo, [gc + fifoPtr]      ; fifoPtr
+
+    mov       curS, [esp + _maxS$]      ; curS = maxS 
+    add       curT, 1                   ; curT = maxT - minT + 1
+
+%IFDEF GL_AMD3D
+    femms                               ; we'll use MMX/3DNow!, make sure FPU register cleared
+%ENDIF
+%IFDEF GL_MMX
+    emms                                ; we'll use MMX
+%ENDIF
+
+    mov       edx, curS                 ; curS = maxS = scanline width in DWORDs
+    movd      mm3, [esp + _baseAddr$]   ; 0 | address of texture to download
+
+    shl       curS, 2                   ; scan line width (in bytes)
+    mov       eax, [esp + _minT$]       ; 0 | minT
+
+    mov       [esp + _maxS$], curS      ; save scan line width (in bytes)
+    shl       edx, 3                    ; packetHdr<21:3> = maxS = scanline width in DWORDs
+
+    imul      eax, curS                 ; TEX_ROW_ADDR_INCR(minT) = minT * TEX_ROW_ADDR_INCR(1)
+
+    movd      mm2, curS                 ; 0 | TEX_ROW_ADDR_INCR(1)
+    or        edx, 00000005h            ; packetHdr<31:30> = lfb port
+                                        ; packetHdr<21:3>  = maxS
+                                        ; packetHdr<2:0>   = packetType 5 
+
+    movd      mm1, edx                  ; 0 | packetHdr
+    movd      mm4, eax                  ; 0 | TEX_ROW_ADDR_INCR(minT)
+
+    psllq     mm2, 32                   ; TEX_ROW_ADDR_INCR(1) | 0
+    paddd     mm3, mm4                  ; 0 | texAddr = texBaseAddr + TEX_ROW_ADDR_INCR(minT)
+
+    mov       fRoom, [gc + fifoRoom]    ; get available fifoRoom (in bytes)
+    punpckldq mm1, mm3                  ; hdr2 = texAddr | hdr1 = packetHdr
+
+    ;; ebx = curT, edi = dataPtr, esi = gc, ebp = fifo, ecx = curS = maxS
+    ;; edx = fifoRoom, mm1 = texAddr|packetHdr, mm2 = TEX_ROW_ADDR_INCR(1)|0
+
+    test      fifo, 4                   ; is fifo QWORD aligned ?
+    jz        .startDownload            ; yup, start texture download
+
+    cmp       fRoom, 4                  ; enough room for NULL packet in fifo?
+    jge       .mmxAlignFifo             ; yes, write NULL packet to align fifo
+
+%ifdef USE_PACKET_FIFO
+    _grCommandTransportMakeRoom 4, 0, __LINE__; make fifo room
+%endif
     
-    ;; Enter 3DNow!(tm) state for the duration of the function
-    ;; because we don't use or call anything that uses fp.
-    femms
-    
-    mov	    gc, [esp + _gc$ - STACKOFFSET + 0]
-    push    esi
-    
-    mov	    maxT, [esp + _maxT$ - STACKOFFSET + 4]
-    push    edi
+    mov       fifo, [gc + fifoPtr]      ; fifoPtr modified by _grCommandTransportMakeRoom, reload
 
-    shl	    maxT, 9		; Convert maxT to rowAddr format
-    push    ebp
-        
-    mov	    dataPtr, [esp + _texData$]
-    mov	    curT, [esp + _minT$]    
+    mov       fRoom, [gc + fifoRoom]    ; fifoRoom modified by _grCommandTransportMakeRoom, reload
+    mov       curS, [esp + _maxS$]      ; reload maxS (destroyed by call to _grCommandTransportMakeRoom)
 
-    ;; Pad out fifo so that we can use mmx writes the whole way w/o
-    ;; any intermediate tests in the inner loop for fifo alignment.
-    ;; Conveniently, the packet header is 2 dwords which matches
-    ;; the size of the mmx write.
-    mov	    fifo, [gc + fifoPtr]; Cache fifo ptr
-    mov	    texAddr, [esp + _baseAddr$]; Texture physical address
+    test      fifo, 4                   ; new fifoPtr QWORD aligned ?
+    jz        .startDownload            ; yup, start texture download
 
-    mov	    temp1, [esp + _maxS$]; Pre-convert maxS into packet 5 field format
-    sub	    texAddr, [gc + tex_ptr]; Convert to hw base relative address            
+.mmxAlignFifo:
 
-    shl	    temp1, 2		; Write size dwords -> bytes
-    mov	    [esp + _baseAddr$], texAddr
+    mov       DWORD [fifo], 0           ; write NULL packet
+    sub       fRoom, 4                  ; fifoRoom -= 4
 
-    shl	    curT, 9		; curT = TEX_ROW_ADDR_INCR(curT)      
-    mov	    [esp + _maxS$], temp1; Write back converted s coordinate
+    mov       [gc + fifoRoom], fRoom    ; store new fifoRoom
+    add       fifo, 4                   ; fifoPtr += 4
 
-    shl	    temp1, 1		; Write size to packet 5 field format
-    test    fifo, 4h		; Aligned fifo ptr?
-    
-    mov	    temp2, [gc + fifoRoom]; temp2 = gc->fifoRoom
-    mov	    [esp + _maxT$], temp1; Write back converted field format size
-    
-    jz	    __loopT
+%IFDEF GLIDE_DEBUG
+    mov       [gc + checkPtr], fifo      ; checkPtr
+%ENDIF
 
-    ;; Check to make sure there's room in the fifo. If not then
-    ;; we'll wrap and then it should be aligned for the remainder of
-    ;; this function invocation.
-    cmp	    temp2, 4h
-    jg	    __mmxAlignFifo
+    mov       [gc + fifoPtr], fifo      ; store new fifoPtr
+    jmp       .startDownload            ; fifo aligned, download texture now
 
-    push    @Line		; Line # inside this function
-    push    0h			; NULL file name
+    align 32
 
-    push    4h			; fifo space required
-    call    __FifoMakeRoom	; Get fifo room
+    ;; ebx = curT, edi = dataPtr, esi = gc, ebp = fifo, ecx = maxS = curS
+    ;; edx=fifoRoom, mm1 = texAddr|packetHdr, mm2 = TEX_ROW_ADDR_INCR(1)|0
 
-    ;; Calling out to external code means that our registers can get
-    ;; trashed in the same way that we trash things. Plus we need to
-    ;; re-cache the fifoPtr since we may have wrapped.
+.loopT:
 
-    add	    esp, 12		; Pop the 3 DWORDs for the fifoWrap parameters
-    mov	    gc, [esp + _gc$]
+%IFDEF GLIDE_DEBUG
 
-    ;; Setup the regs to do the alignment
-    mov	    fifo, [gc + fifoPtr]
-    test    fifo, 4h
-    
-    mov	    temp2, [gc + fifoRoom]
-    jz	    __loopT
+    ;; Make sure that we have a QWORD aligned fifoPtr; force GP if not aligned
 
-__mmxAlignFifo:	    
-    add	    fifo, 4h		; packetPtr++
-    xor	    temp1, temp1	; Clear the nop packet
-    
-    mov	    [gc + fifoPtr], fifo; gc->fifoPtr = packetPtr
-    sub	    temp2, 4h		; fifoRoom -= 4
+    test      fifo, 4                   ; is fifoPtr QWORD aligned ?
+    jz        .alignmentOK              ; yup, continue
 
-    mov	    [gc + fifoRoom], temp2; gc->fifoRoom = fifoRoom
-    GR_FIFO_WRITE fifo, -4, temp1; NOP packet(0)
+    xor       eax, eax                  ; create 0
+    mov       [eax], eax                ; move to DS:[0] forces GP 
+.alignmentOK:      
+%ENDIF ; GLIDE_DEBUG
 
-	    align 4
-__loopT:
-    ;; Check for room to write the current texture scanline    
-    mov	    temp1, [esp + _maxS$]; temp1 = width of scanline (bytes)
-    mov	    temp2, [gc + fifoRoom]; temp2 = gc->fifoRoom (bytes)
-
-    add	    temp1, 0Ch		; scanline width + sizeof(packet hdr) (bytes) + nop packet to mmx align
-    cmp	    temp2, temp1	; fifo space required >= space availible ?
-    
-    jge	    __dlBegin		; Yes, start download now w/ no more checking
-
-    push    @Line		; Line # inside this function
-    push    0h			; NULL file name
-
-    push    temp1		; fifo space required
-    call    __FifoMakeRoom	; Get fifo room
-
-    add	    esp, 12		; Pop the 3 DWORDs for the fifoWrap parameters
-    nop
-    
-    ;; Calling out to external code means that our registers can get
-    ;; trashed in the same way that we trash things. Plus we need to
-    ;; re-cache the fifoPtr since we may have wrapped.
-    mov	    gc, [esp + _gc$]        
-    mov	    fifo, [gc + fifoPtr]
-
-IFDEF GLIDE_DEBUG
-    ;; Make sure that we have an mmx happy aligned fifoPtr
-    test    fifo, 4
-    jz	    @1
-
-    ;; Fault right away because this would be a huge suck
-    xor	    eax, eax
-    mov	    [eax], eax
-@1:      
-ENDIF ; GLIDE_DEBUG    
-
-    	    align 4
-__dlBegin:
-
-IFDEF GLIDE_DEBUG
-    ;; Make sure that we have an mmx happy aligned fifoPtr
-    test    fifo, 4
-    jz	    @2
-
-    ;; Fault right away because this would be a huge suck
-    xor	    eax, eax
-    mov	    [eax], eax
-@2:      
-ENDIF ; GLIDE_DEBUG
-    
     ;; Compute packet header words
-    ;;	hdr1: downloadSpace[31:30] numWords[21:3] packetType[2:0]
+    ;;  hdr1: downloadSpace[31:30] numWords[21:3] packetType[2:0]
     ;;  hdr2: download address[29:0]
-    mov	    texAddr, [esp + _baseAddr$]; Download base address
-    mov	    temp1, [esp + _maxT$]; Pre-Converted # of words per packet/scanline
-    
-    mov	    temp3, 0C0000005h	; Base packet header (texture port | packet type 5)
-    add	    fifo, 8		; Pre-increment fifo ptr (hdr1)
-    
-    or	    temp3, temp1	; Base packet hdr | # of words
-    add	    texAddr, curT	; texAddr = texBaseAddr + TEX_ROW_ADDR_INCR(curT)
-    
-    GR_FIFO_WRITE fifo, -8, temp3; Write hdr1
-    add	    curT, 200h		; curT += TEX_ROW_ADDR_INCR(1)
-    
-    GR_FIFO_WRITE fifo, -4, texAddr; write hdr2
-    mov	    curS, [esp + _maxS$]; curS = maxS
 
-	    align 4
+    movq      [fifo], mm1               ; store hdr2 | hdr1
+    add       fifo, 8                   ; increment fifo ptr (hdr1 + hdr2)
+
     ;; S coordinate inner loop unrolled for 8 texels a write
-__loopS:        
-    movq    mm0, [dataPtr]	; load (mmx) 64 bit data (8 texels)
-    add	    fifo, 8h		; pre-increment fifoPtr += 2 * sizeof(FxU32)
 
-    add	    dataPtr, 8h		; dataPtr += 2 * sizeof(FxU32)
-    sub	    curS, 8h		; curS -= 2 * sizeof(FxU32)
+.loopS:        
 
-    movq    [fifo - 8], mm0	; *fifoPtr = texelData[64 bits]
-    jnz	    __loopS		; if curS > 0
+    movq      mm0, [dataPtr]            ; load 64 bit data (8 texels)
+    add       fifo, 8                   ; pre-increment fifoPtr += 2 * sizeof(FxU32)
 
-    mov	    gc, [esp + _gc$]	; Re-cache gc which was trashed in the dl loop
-    mov	    temp1, fifo
+    add       dataPtr, 8                ; dataPtr += 2 * sizeof(FxU32)
+    sub       curS, 8                   ; curS -= 2 * sizeof(FxU32)
 
-    ;; Update gc->fifoPtr and gc->fifoRoom for the wrap/stall check
-    mov	    temp2, [gc + fifoPtr]
-    sub	    temp1, temp2	; # of bytes written to the fifo
+    movq      [fifo - 8], mm0           ; *fifoPtr = texelData[64 bits]
+    jnz       .loopS                    ; loop while curS > 0
 
-    mov	    [gc + fifoPtr], fifo; gc->fifoPtr = packetPtr
-    mov	    temp2, [gc + fifoRoom]
+    mov       ecx, [gc + fifoPtr]       ; old fifo ptr
+    nop                                 ; filler
+
+    mov       eax, fifo                 ; new fifo ptr
+    mov       [gc + fifoPtr], fifo      ; save new fifo ptr
+
+%IFDEF GLIDE_DEBUG
+    mov       [gc + checkPtr], fifo      ; checkPtr
+%ENDIF
+
+    sub       eax, ecx                  ; new fifo ptr - old fifo ptr = fifo space used up
+    mov       curS, [esp + _maxS$]      ; curS = maxS = width of scanline (bytes)
+
+    sub       fRoom, eax                ; new fifo space available = old fifo space available - fifo space used up = new fifo space available
+    sub       curT, 1                   ; curT--
+
+    mov       [gc + fifoRoom], fRoom    ; save new fifo space available 
+    jz        .dlDone                   ; loop while curT > 0
+
+    ;; Check for room to write the next texture scanline
+
+    ;; ebx = curT, edi = dataPtr, esi = gc, ebp = fifo
+    ;; edx = fifoRoom, mm1 = texAddr|packetHdr, mm2 = TEX_ROW_ADDR_INCR(1)|0
+
+    paddd     mm1, mm2                  ; texAddr+=TEX_ROW_ADDR_INCR(1) | packetHdr
+    mov       esp, esp                  ; filler
+.startDownload:
+    lea       eax, [curS+8]             ; fifo space needed = scan line width + header size
+ 
+    cmp       fRoom, eax                ; fifo space available >= fifo space required ?
+    jge       .loopT                    ; yup, write next scan line
+
+%ifdef USE_PACKET_FIFO
+    _grCommandTransportMakeRoom eax, 0, __LINE__; make fifo room (if fifoPtr QWORD aligned before
+%endif
     
-    sub	    temp2, temp1	; # of bytes left in fifo
-    cmp	    curT, maxT		; if (curT <= maxT) ?    
+    mov       fifo, [gc + fifoPtr]      ; fifoPtr was modified by _grCommandTransportMakeRoom, reload
 
-    mov	    [gc + fifoRoom], temp2
-    jle	    __loopT
+    mov       fRoom, [gc + fifoRoom]    ; fifoRoom was modified by _grCommandTransportMakeRoom, reload
+    mov       curS, [esp + _maxS$]      ; curS = maxS = width of scanline (bytes)
+    jmp       .loopT                    ; we now have enough fifo room, write next scanline
 
-__dlDone:	    
-	    align 4
+.dlDone:           
+%IFDEF GL_AMD3D
+    femms                               ; exit 3DNow!(tm) state
+%ENDIF
+%IFDEF GL_MMX
+    emms                                ; exit MMX state
+%ENDIF
 
-    femms			; Exit 3DNow!(tm) state    
-    pop	    ebp
+    pop       ebp                       ; restore caller's register variable
+    pop       edi                       ; restore caller's register variable
     
-    pop	    edi
-    pop	    esi
+    pop       esi                       ; restore caller's register variable
+    pop       ebx                       ; restore caller's register variable
     
-    ret 18h			; Pop 6 parameters and return
+    ret                                 ; pop 6 DWORD parameters and return
+endp
 
-__grTexDownload_3DNow_MMX@24 ENDP
+%ELSE ; !GL_SSE2
 
-_TEXT ENDS
+;--------------------------------------------------------------------------
+;
+; GL_SSE2
+;
+;--------------------------------------------------------------------------
 
-END
+segment		TEXT
+
+              ALIGN  32
+
+proc _grTexDownload_SSE2_64, 24
+
+    push      ebx                       ; save caller's register variable
+    mov       curT, [esp + _maxT$ - 12] ; curT = maxT
+
+    push      esi                       ; save caller's register variable
+    mov       eax, [esp + _minT$ - 8]   ; minT
+
+    push      edi                       ; save caller's register variable
+    mov       gc, [esp + _gc$ - 4]      ; gc
+
+    push      ebp                       ; save caller's register variable
+    mov       dataPtr, [esp + _texData$]; dataPtr
+
+%IFDEF GLIDE_ALT_TAB
+    test      gc, gc
+    je        .dlDone
+;    mov       edx, [gc + windowed]
+;    test      edx, 1
+;    jnz       .pastContextTest
+    mov       edx, DWORD [gc+lostContext]
+    mov       ecx, [edx]
+    test      ecx, 1
+    jnz       .dlDone
+;.pastContextTest:
+%ENDIF
+
+    sub       curT, eax                 ; curT = maxT - minT
+    mov       fifo, [gc + fifoPtr]      ; fifoPtr
+
+    mov       curS, [esp + _maxS$]      ; curS = maxS 
+    add       curT, 1                   ; curT = maxT - minT + 1
+
+    mov       edx, curS                 ; curS = maxS = scanline width in DWORDs
+    movd      xmm3,[esp + _baseAddr$]   ; 0 | 0 | 0 | address of texture to download
+
+    shl       curS, 2                   ; scan line width (in bytes)
+    mov       eax, [esp + _minT$]       ; 0 | 0 | 0 | minT
+
+    mov       [esp + _maxS$], curS      ; save scan line width (in bytes)
+    shl       edx, 3                    ; packetHdr<21:3> = maxS = scanline width in DWORDs
+
+    imul      eax, curS                 ; TEX_ROW_ADDR_INCR(minT) = minT * TEX_ROW_ADDR_INCR(1)
+
+    movd      xmm2,curS                 ; 0 | 0 | TEX_ROW_ADDR_INCR(1)
+    or        edx, 00000005h            ; packetHdr<31:30> = lfb port
+                                        ; packetHdr<21:3>  = maxS
+                                        ; packetHdr<2:0>   = packetType 5 
+
+    movd      xmm1,edx                  ; 0 | 0 | packetHdr
+    movd      xmm4,eax                  ; 0 | 0 | TEX_ROW_ADDR_INCR(minT)
+
+    psllq     xmm2,32                   ; 0 | 0 | TEX_ROW_ADDR_INCR(1) | 0
+    paddd     xmm3,xmm4                 ; 0 | 0 | texAddr = texBaseAddr + TEX_ROW_ADDR_INCR(minT)
+
+    mov       fRoom, [gc + fifoRoom]    ; get available fifoRoom (in bytes)
+    punpckldq xmm1,xmm3                 ; 0 | 0 | hdr2 = texAddr | hdr1 = packetHdr
+
+    ;; ebx = curT, edi = dataPtr, esi = gc, ebp = fifo, ecx = curS = maxS
+    ;; edx = fifoRoom, xmm1 = texAddr|packetHdr, xmm2 = TEX_ROW_ADDR_INCR(1)|0
+
+    test      fifo, 4                   ; is fifo QWORD aligned ?
+    jz        .startDownload            ; yup, start texture download
+
+    cmp       fRoom, 4                  ; enough room for NULL packet in fifo?
+    jge       .xmmAlignFifo             ; yes, write NULL packet to align fifo
+
+%ifdef USE_PACKET_FIFO
+    _grCommandTransportMakeRoom 4, 0, __LINE__; make fifo room
+%endif
+    
+    mov       fifo, [gc + fifoPtr]      ; fifoPtr modified by _grCommandTransportMakeRoom, reload
+
+    mov       fRoom, [gc + fifoRoom]    ; fifoRoom modified by _grCommandTransportMakeRoom, reload
+    mov       curS, [esp + _maxS$]      ; reload maxS (destroyed by call to _grCommandTransportMakeRoom)
+
+    test      fifo, 4                   ; new fifoPtr QWORD aligned ?
+    jz        .startDownload            ; yup, start texture download
+
+.xmmAlignFifo:
+
+    mov       DWORD [fifo], 0           ; write NULL packet
+    sub       fRoom, 4                  ; fifoRoom -= 4
+
+    mov       [gc + fifoRoom], fRoom    ; store new fifoRoom
+    add       fifo, 4                   ; fifoPtr += 4
+
+%IFDEF GLIDE_DEBUG
+    mov       [gc + checkPtr], fifo      ; checkPtr
+%ENDIF
+
+    mov       [gc + fifoPtr], fifo      ; store new fifoPtr
+    jmp       .startDownload            ; fifo aligned, download texture now
+
+    align 32
+
+    ;; ebx = curT, edi = dataPtr, esi = gc, ebp = fifo, ecx = maxS = curS
+    ;; edx=fifoRoom, xmm1 = texAddr|packetHdr, xmm2 = TEX_ROW_ADDR_INCR(1)|0
+
+.loopT:
+
+%IFDEF GLIDE_DEBUG
+
+    ;; Make sure that we have a QWORD aligned fifoPtr; force GP if not aligned
+
+    test      fifo, 4                   ; is fifoPtr QWORD aligned ?
+    jz        .alignmentOK              ; yup, continue
+
+    xor       eax, eax                  ; create 0
+    mov       [eax], eax                ; move to DS:[0] forces GP 
+.alignmentOK:      
+%ENDIF ; GLIDE_DEBUG
+
+    ;; Compute packet header words
+    ;;  hdr1: downloadSpace[31:30] numWords[21:3] packetType[2:0]
+    ;;  hdr2: download address[29:0]
+
+    movq      [fifo],xmm1               ; store hdr2 | hdr1
+    add       fifo, 8                   ; increment fifo ptr (hdr1 + hdr2)
+
+    ;; S coordinate inner loop unrolled for 8 texels a write
+
+.loopS:        
+
+    movq      xmm0,[dataPtr]            ; load 64 bit data (8 texels)
+    add       fifo, 8                   ; pre-increment fifoPtr += 2 * sizeof(FxU32)
+
+    add       dataPtr, 8                ; dataPtr += 2 * sizeof(FxU32)
+    sub       curS, 8                   ; curS -= 2 * sizeof(FxU32)
+
+    movq      [fifo - 8],xmm0           ; *fifoPtr = texelData[64 bits]
+    jnz       .loopS                    ; loop while curS > 0
+
+    mov       ecx, [gc + fifoPtr]       ; old fifo ptr
+    nop                                 ; filler
+
+    mov       eax, fifo                 ; new fifo ptr
+    mov       [gc + fifoPtr], fifo      ; save new fifo ptr
+
+%IFDEF GLIDE_DEBUG
+    mov       [gc + checkPtr], fifo      ; checkPtr
+%ENDIF
+
+    sub       eax, ecx                  ; new fifo ptr - old fifo ptr = fifo space used up
+    mov       curS, [esp + _maxS$]      ; curS = maxS = width of scanline (bytes)
+
+    sub       fRoom, eax                ; new fifo space available = old fifo space available - fifo space used up = new fifo space available
+    sub       curT, 1                   ; curT--
+
+    mov       [gc + fifoRoom], fRoom    ; save new fifo space available 
+    jz        .dlDone                   ; loop while curT > 0
+
+    ;; Check for room to write the next texture scanline
+
+    ;; ebx = curT, edi = dataPtr, esi = gc, ebp = fifo
+    ;; edx = fifoRoom, xmm1 = texAddr|packetHdr, xmm2 = TEX_ROW_ADDR_INCR(1)|0
+
+    paddd     xmm1,xmm2                 ; 0 | 0 | texAddr+=TEX_ROW_ADDR_INCR(1) | packetHdr
+    mov       esp, esp                  ; filler
+.startDownload:
+    lea       eax, [curS+8]             ; fifo space needed = scan line width + header size
+ 
+    cmp       fRoom, eax                ; fifo space available >= fifo space required ?
+    jge       .loopT                    ; yup, write next scan line
+
+%ifdef USE_PACKET_FIFO
+    _grCommandTransportMakeRoom eax, 0, __LINE__; make fifo room (if fifoPtr QWORD aligned before
+%endif
+    
+    mov       fifo, [gc + fifoPtr]      ; fifoPtr was modified by _grCommandTransportMakeRoom, reload
+
+    mov       fRoom, [gc + fifoRoom]    ; fifoRoom was modified by _grCommandTransportMakeRoom, reload
+    mov       curS, [esp + _maxS$]      ; curS = maxS = width of scanline (bytes)
+    jmp       .loopT                    ; we now have enough fifo room, write next scanline
+
+.dlDone:
+    pop       ebp                       ; restore caller's register variable
+    pop       edi                       ; restore caller's register variable
+    
+    pop       esi                       ; restore caller's register variable
+    pop       ebx                       ; restore caller's register variable
+    
+    ret                                 ; pop 6 DWORD parameters and return
+endp
+
+
+
+segment		TEXT
+
+              ALIGN  32
+
+proc _grTexDownload_SSE2_128, 24
+
+    push      ebx                       ; save caller's register variable
+    mov       curT, [esp + _maxT$ - 12] ; curT = maxT
+
+    push      esi                       ; save caller's register variable
+    mov       eax, [esp + _minT$ - 8]   ; minT
+
+    push      edi                       ; save caller's register variable
+    mov       gc, [esp + _gc$ - 4]      ; gc
+
+    push      ebp                       ; save caller's register variable
+    mov       dataPtr, [esp + _texData$]; dataPtr
+
+%IFDEF GLIDE_ALT_TAB
+    test      gc, gc
+    je        .dlDone
+;    mov       edx, [gc + windowed]
+;    test      edx, 1
+;    jnz       .pastContextTest
+    mov       edx, DWORD [gc+lostContext]
+    mov       ecx, [edx]
+    test      ecx, 1
+    jnz       .dlDone
+;.pastContextTest:
+%ENDIF
+
+    sub       curT, eax                 ; curT = maxT - minT
+    mov       fifo, [gc + fifoPtr]      ; fifoPtr
+
+    mov       curS, [esp + _maxS$]      ; curS = maxS 
+    add       curT, 1                   ; curT = maxT - minT + 1
+
+    mov       edx, curS                 ; curS = maxS = scanline width in DWORDs
+    movd      xmm3,[esp + _baseAddr$]   ; 0 | 0 | 0 | address of texture to download
+
+    shl       curS, 2                   ; scan line width (in bytes)
+    mov       eax, [esp + _minT$]       ; 0 | minT
+
+    mov       [esp + _maxS$], curS      ; save scan line width (in bytes)
+    shl       edx, 3                    ; packetHdr<21:3> = maxS = scanline width in DWORDs
+
+    imul      eax, curS                 ; TEX_ROW_ADDR_INCR(minT) = minT * TEX_ROW_ADDR_INCR(1)
+
+    movd      xmm2,curS                 ; 0 | 0 | 0 | TEX_ROW_ADDR_INCR(1)
+    or        edx, 00000005h            ; packetHdr<31:30> = lfb port
+                                        ; packetHdr<21:3>  = maxS
+                                        ; packetHdr<2:0>   = packetType 5 
+
+    movd      xmm1,edx                  ; 0 | 0 | 0 | packetHdr
+    movd      xmm4,eax                  ; 0 | 0 | 0 | TEX_ROW_ADDR_INCR(minT)
+
+    psllq     xmm2,32                   ; 0 | 0 | TEX_ROW_ADDR_INCR(1) | 0
+    paddd     xmm3,xmm4                 ; 0 | 0 | 0 | texAddr = texBaseAddr + TEX_ROW_ADDR_INCR(minT)
+
+    mov       fRoom, [gc + fifoRoom]    ; get available fifoRoom (in bytes)
+    punpckldq xmm1,xmm3                 ; 0 | 0 | hdr2 = texAddr | hdr1 = packetHdr
+
+    ;; ebx = curT, edi = dataPtr, esi = gc, ebp = fifo, ecx = curS = maxS
+    ;; edx = fifoRoom, xmm1 = texAddr|packetHdr, xmm2 = TEX_ROW_ADDR_INCR(1)|0
+
+    test      fifo, 4                   ; is fifo QWORD aligned ?
+    jz        .startDownload            ; yup, start texture download
+
+    cmp       fRoom, 4                  ; enough room for NULL packet in fifo?
+    jge       .xmmAlignFifo             ; yes, write NULL packet to align fifo
+
+%ifdef USE_PACKET_FIFO
+    _grCommandTransportMakeRoom 4, 0, __LINE__; make fifo room
+%endif
+    
+    mov       fifo, [gc + fifoPtr]      ; fifoPtr modified by _grCommandTransportMakeRoom, reload
+
+    mov       fRoom, [gc + fifoRoom]    ; fifoRoom modified by _grCommandTransportMakeRoom, reload
+    mov       curS, [esp + _maxS$]      ; reload maxS (destroyed by call to _grCommandTransportMakeRoom)
+
+    test      fifo, 4                   ; new fifoPtr QWORD aligned ?
+    jz        .startDownload            ; yup, start texture download
+
+.xmmAlignFifo:
+
+    mov       DWORD [fifo], 0           ; write NULL packet
+    sub       fRoom, 4                  ; fifoRoom -= 4
+
+    mov       [gc + fifoRoom], fRoom    ; store new fifoRoom
+    add       fifo, 4                   ; fifoPtr += 4
+
+%IFDEF GLIDE_DEBUG
+    mov       [gc + checkPtr], fifo      ; checkPtr
+%ENDIF
+
+    mov       [gc + fifoPtr], fifo      ; store new fifoPtr
+    jmp       .startDownload            ; fifo aligned, download texture now
+
+    align 32
+
+    ;; ebx = curT, edi = dataPtr, esi = gc, ebp = fifo, ecx = maxS = curS
+    ;; edx=fifoRoom, xmm1 = texAddr|packetHdr, xmm2 = TEX_ROW_ADDR_INCR(1)|0
+
+.loopT:
+
+%IFDEF GLIDE_DEBUG
+
+    ;; Make sure that we have a QWORD aligned fifoPtr; force GP if not aligned
+
+    test      fifo, 4                   ; is fifoPtr QWORD aligned ?
+    jz        .alignmentOK              ; yup, continue
+
+    xor       eax, eax                  ; create 0
+    mov       [eax], eax                ; move to DS:[0] forces GP 
+.alignmentOK:      
+%ENDIF ; GLIDE_DEBUG
+
+    ;; Compute packet header words
+    ;;  hdr1: downloadSpace[31:30] numWords[21:3] packetType[2:0]
+    ;;  hdr2: download address[29:0]
+
+    movq      [fifo],xmm1               ; store hdr2 | hdr1
+    add       fifo, 8                   ; increment fifo ptr (hdr1 + hdr2)
+
+    ;; S coordinate inner loop unrolled for 8 texels a write
+
+.loopS:        
+
+    movdqu    xmm0, [dataPtr]           ; load 128 bit data (8 texels) ; isn't 16 bytes aligned?
+    add       fifo, 16                  ; pre-increment fifoPtr += 4 * sizeof(FxU32)
+
+    add       dataPtr, 16               ; dataPtr += 4 * sizeof(FxU32)
+    sub       curS, 16                  ; curS -= 4 * sizeof(FxU32)
+
+    movdqu    [fifo - 16], xmm0         ; *fifoPtr = texelData[128 bits] ; isn't 16 bytes aligned?
+    jnz       .loopS                    ; loop while curS > 0
+
+    mov       ecx, [gc + fifoPtr]       ; old fifo ptr
+    nop                                 ; filler
+
+    mov       eax, fifo                 ; new fifo ptr
+    mov       [gc + fifoPtr], fifo      ; save new fifo ptr
+
+%IFDEF GLIDE_DEBUG
+    mov       [gc + checkPtr], fifo      ; checkPtr
+%ENDIF
+
+    sub       eax, ecx                  ; new fifo ptr - old fifo ptr = fifo space used up
+    mov       curS, [esp + _maxS$]      ; curS = maxS = width of scanline (bytes)
+
+    sub       fRoom, eax                ; new fifo space available = old fifo space available - fifo space used up = new fifo space available
+    sub       curT, 1                   ; curT--
+
+    mov       [gc + fifoRoom], fRoom    ; save new fifo space available 
+    jz        .dlDone                   ; loop while curT > 0
+
+    ;; Check for room to write the next texture scanline
+
+    ;; ebx = curT, edi = dataPtr, esi = gc, ebp = fifo
+    ;; edx = fifoRoom, xmm1 = texAddr|packetHdr, xmm2 = TEX_ROW_ADDR_INCR(1)|0
+
+    paddd     xmm1,xmm2                 ; 0 | 0 | texAddr+=TEX_ROW_ADDR_INCR(1) | packetHdr
+    mov       esp, esp                  ; filler
+.startDownload:
+    lea       eax, [curS+8]             ; fifo space needed = scan line width + header size
+ 
+    cmp       fRoom, eax                ; fifo space available >= fifo space required ?
+    jge       .loopT                    ; yup, write next scan line
+
+%ifdef USE_PACKET_FIFO
+    _grCommandTransportMakeRoom eax, 0, __LINE__; make fifo room (if fifoPtr QWORD aligned before
+%endif
+    
+    mov       fifo, [gc + fifoPtr]      ; fifoPtr was modified by _grCommandTransportMakeRoom, reload
+
+    mov       fRoom, [gc + fifoRoom]    ; fifoRoom was modified by _grCommandTransportMakeRoom, reload
+    mov       curS, [esp + _maxS$]      ; curS = maxS = width of scanline (bytes)
+    jmp       .loopT                    ; we now have enough fifo room, write next scanline
+
+.dlDone:
+    pop       ebp                       ; restore caller's register variable
+    pop       edi                       ; restore caller's register variable
+    
+    pop       esi                       ; restore caller's register variable
+    pop       ebx                       ; restore caller's register variable
+    
+    ret                                 ; pop 6 DWORD parameters and return
+endp
+
+
+%ENDIF ; GL_SSE2

@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/12/07 21:42:33  joseph
+** Initial checkin into SourceForge.
+**
 ** 
 ** 1     10/08/98 11:30a Brent
 ** 
@@ -1683,6 +1686,28 @@ GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
   return retVal;
 #undef FN_NAME
 } /* grSstWinClose */
+
+/*-------------------------------------------------------------------
+  Function: grSetNumPendingBuffers
+  Date: 13-Oct-2000
+  Implementor(s): mmcclure
+  Description:
+  
+  Allow the application to supply the number of pending buffers
+
+  Arguments:
+
+  NumPendingBuffers - Sent to force number of pending buffers
+  
+  Return:
+  -------------------------------------------------------------------*/
+GR_DIENTRY(grSetNumPendingBuffers, void, (FxI32 NumPendingBuffers))
+{
+  /* [dBorca] TODO
+   *
+  _GlideRoot.environment.swapPendingCount = NumPendingBuffers;
+   */
+}
 
 /*-------------------------------------------------------------------
   Function: grSelectContext

@@ -19,6 +19,9 @@
  **
  ** $Header$
  ** $Log$
+ ** Revision 1.1.1.1.8.1  2003/06/29 18:45:55  guillemj
+ ** Fixed preprocessor invalid token errors.
+ **
  ** Revision 1.1.1.1  1999/12/07 21:42:31  joseph
  ** Initial checkin into SourceForge.
  **
@@ -507,6 +510,57 @@ GR_DIENTRY(grDepthBufferMode, void , (GrDepthBufferMode_t mode) )
  #undef FN_NAME
 } /* grDepthBufferMode */
 
+/*-------------------------------------------------------------------
+  Function: grStipplePattern
+  Date: 23-Nov-2000
+  Implementor(s): alanh
+  Description:
+  
+  Arguments:
+  
+  Return:
+  -------------------------------------------------------------------*/
+GR_DIENTRY(grStipplePattern, void , (GrStipplePattern_t stipple))
+{
+ #define FN_NAME "grStipplePattern"
+
+  /* [dBorca] TODO
+   *
+  GR_BEGIN_NOFIFOCHECK("grStipplePattern\n", 85);
+
+  INVALIDATE(stipple);
+
+  STOREARG(grStipplePattern, stipple);
+   */
+
+ #undef FN_NAME
+} /* grStipplePattern */
+
+/*-------------------------------------------------------------------
+  Function: grStippleMode
+  Date: 23-Nov-2000
+  Implementor(s): alanh
+  Description:
+  
+  Arguments:
+  
+  Return:
+  -------------------------------------------------------------------*/
+GR_DIENTRY(grStippleMode, void , (GrStippleMode_t mode) )
+{
+ #define FN_NAME "grStippleMode"
+
+  /* [dBorca] TODO
+   *
+  GR_BEGIN_NOFIFOCHECK("grStippleMode\n", 85);
+
+  INVALIDATE(fbzMode);
+
+  STOREARG(grStippleMode, mode);
+   */
+
+ #undef FN_NAME
+} /* grStippleMode */
 
 /*-------------------------------------------------------------------
   Function: grDitherMode

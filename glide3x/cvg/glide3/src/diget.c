@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/12/07 21:42:30  joseph
+** Initial checkin into SourceForge.
+**
 ** 
 ** 1     10/08/98 11:30a Brent
 ** 
@@ -476,10 +479,10 @@ GR_DIENTRY(grGet, FxU32, (FxU32 pname, FxU32 plength, FxI32 *params))
       switch(hwc->SSTs[_GlideRoot.current_sst].type) {
       case GR_SSTTYPE_VOODOO:
       case GR_SSTTYPE_Voodoo2:
-        *params = hwc->SSTs[_GlideRoot.current_sst].sstBoard.VoodooConfig.fbRam;
+        *params = hwc->SSTs[_GlideRoot.current_sst].sstBoard.VoodooConfig.fbRam << 20;
         break;
       case GR_SSTTYPE_SST96:
-        *params = hwc->SSTs[_GlideRoot.current_sst].sstBoard.SST96Config.fbRam;
+        *params = hwc->SSTs[_GlideRoot.current_sst].sstBoard.SST96Config.fbRam << 20;
         break;
       default:
         *params = 0;    /* XXX UMA architecture */
@@ -493,10 +496,10 @@ GR_DIENTRY(grGet, FxU32, (FxU32 pname, FxU32 plength, FxI32 *params))
       switch(hwc->SSTs[_GlideRoot.current_sst].type) {
       case GR_SSTTYPE_VOODOO:
       case GR_SSTTYPE_Voodoo2:
-        *params = hwc->SSTs[_GlideRoot.current_sst].sstBoard.VoodooConfig.tmuConfig[0].tmuRam;
+        *params = hwc->SSTs[_GlideRoot.current_sst].sstBoard.VoodooConfig.tmuConfig[0].tmuRam << 20;
         break;
       case GR_SSTTYPE_SST96:
-        *params = hwc->SSTs[_GlideRoot.current_sst].sstBoard.SST96Config.tmuConfig.tmuRam;
+        *params = hwc->SSTs[_GlideRoot.current_sst].sstBoard.SST96Config.tmuConfig.tmuRam << 20;
         break;
       default:
         *params = 0;    /* XXX UMA architecture */
@@ -773,6 +776,32 @@ GR_DIENTRY(grGetString, const char *, (FxU32 pname))
 } /* grGetString */
 
 /*-------------------------------------------------------------------
+  Function: grGetRegistryOrEnvironmentStringExt
+  Date: 4/17/2000       
+  Implementor(s): atom
+  Description: 
+
+    This is here so the spooky code for finding the correct registry
+    tweak path in 9x/NT/2K does not have to be duplicated in 3dfxogl.
+
+  Arguments: char* to the name of the setting to check for.
+  
+  Return: char* to the requested entry either from the registry
+          or the environment settings.  NULL on error.
+  -------------------------------------------------------------------*/
+GR_DIENTRY(grGetRegistryOrEnvironmentString, char*, (char* theEntry))
+{
+#define FN_NAME "grGetRegistryOrEnvironmentString"
+  char*  retval ;
+
+  retval = getenv(theEntry) ;
+
+  return retval ;
+
+#undef FN_NAME
+} /* grGetRegistryOrEnvironmentString */
+
+/*-------------------------------------------------------------------
   Function: grReset
   Date: 16-Dec-97
   Implementor(s): atai
@@ -881,6 +910,10 @@ GR_DIENTRY(grGetProcAddress, GrProc, (char *procName))
       return (GrProc)_GlideRoot.deviceArchProcs.curLineProc;
     if (!strcmp(procName, "guQueryResolutionXYExt"))
       return (GrProc)guQueryResolutionXY;
+    if (!strcmp(procName, "grGetRegistryOrEnvironmentStringExt"))
+      return (GrProc)grGetRegistryOrEnvironmentString;
+    if (!strcmp(procName, "grTexDownloadTableExt"))
+      return (GrProc)grTexDownloadTableExt;
   }
   return NULL;
 

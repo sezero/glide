@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.2  2003/07/25 07:13:41  dborca
+** removed debris
+**
 ** Revision 1.1.1.1.8.1  2003/06/29 18:45:55  guillemj
 ** Fixed preprocessor invalid token errors.
 **
@@ -2937,7 +2940,7 @@ do { \
 #define REG_GROUP_SETF_CLAMP(__regBase, __regAddr, __val) \
 do { \
   const FxU32 fpClampVal = FP_FLOAT_CLAMP(__val); \
-  REG_GROUP_ASSERT(__regAddr, fpClampVal, FXTRUE); \  
+  REG_GROUP_ASSERT(__regAddr, fpClampVal, FXTRUE); \
   SET(((FxU32*)(__regBase))[offsetof(SstRegs, __regAddr) >> 2], fpClampVal); \
   GR_INC_SIZE(sizeof(FxU32)); \
 } while(0)
@@ -3359,6 +3362,10 @@ double_precision_asm(void);
 extern void 
 _grSliOriginClear(void); 
 #endif /* (GLIDE_PLATFORM & GLIDE_HW_CVG) */
+
+GR_ENTRY(grTexDownloadTableExt,
+         void,
+         (GrChipID_t tmu, GrTexTable_t type,  void *data));
 
 #endif /* __FXGLIDE_H__ */
 

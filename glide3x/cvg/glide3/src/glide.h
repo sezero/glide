@@ -52,6 +52,7 @@ extern "C" {
 typedef FxU32 GrColor_t;
 typedef FxU8  GrAlpha_t;
 typedef FxU32 GrMipMapId_t;
+typedef FxU32 GrStipplePattern_t;
 typedef FxU8  GrFog_t;
 typedef FxU32 GrContext_t;
 typedef int (FX_CALL *GrProc)();
@@ -239,6 +240,11 @@ typedef FxI32 GrDitherMode_t;
 #define GR_DITHER_DISABLE       0x0
 #define GR_DITHER_2x2           0x1
 #define GR_DITHER_4x4           0x2
+
+typedef FxI32 GrStippleMode_t;
+#define GR_STIPPLE_DISABLE	0x0
+#define GR_STIPPLE_PATTERN	0x1
+#define GR_STIPPLE_ROTATE	0x2
 
 typedef FxI32 GrFogMode_t;
 #define GR_FOG_DISABLE                     0x0

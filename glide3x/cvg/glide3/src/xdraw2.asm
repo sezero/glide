@@ -19,6 +19,9 @@
 ;; $Header$
 ;; $Revision$
 ;; $Log$
+;; Revision 1.1.1.1  1999/12/07 21:42:35  joseph
+;; Initial checkin into SourceForge.
+;;
 ;; 
 ;; 1     10/08/98 11:30a Brent
 ;; 
@@ -60,117 +63,127 @@
 ; B4 Chip field fix.
 ;;
 
-TITLE   xdraw2.asm
-OPTION OLDSTRUCTS       
+%include "xos.inc"
 
-.586P
-.MMX
-.K3D
+extrn   _GlideRoot
+extrn   _FifoMakeRoom
+    
+%MACRO GR_FIFO_WRITE 3
+    mov     [%1 + %2], %3
+%ENDMACRO ; GR_FIFO_WRITE
 
-EXTRN   __GlideRoot	    : DWORD
-EXTRN   __FifoMakeRoom	    : NEAR
+%MACRO WRITE_MM1_FIFO_ALIGNED 1
 
-_DATA   SEGMENT
-    One         DD  03f800000r
+; 3DNow!
+%ifdef GL_AMD3D
+    movq      [fifo+%1], mm1        ; store current param | previous param
+%endif
+
+%ENDMACRO ; WRITE_MM1_FIFO_ALIGNED
+
+%MACRO WRITE_MM1LOW_FIFO 0
+
+; 3DNow
+%ifdef GL_AMD3D
+    movd      [fifo], mm1           ; store current param | previous param
+%endif
+
+%ENDMACRO ; WRITE_MM1LOW_FIFO
+
+segment		DATA
+    One         DD  1.0
     Area        DD  0
-_DATA   ENDS    
 
 ;;; Definitions of cvg regs and glide root structures.
-INCLUDE fxgasm.h
+%INCLUDE "fxgasm.h"
 
 ;; enables/disables trisProcessed and trisDrawn counters
-STATS = 1
+%define STATS 1
 
 ; Arguments (STKOFF = 16 from 4 pushes)
-STKOFF  = 16
-_va$    =  4 + STKOFF
-_vb$    =  8 + STKOFF
-_vc$    = 12 + STKOFF    
+STKOFF  equ 16
+_va$    equ  4 + STKOFF
+_vb$    equ  8 + STKOFF
+_vc$    equ 12 + STKOFF
 
     ;; coordinate offsets into vertex.
     ;; NB:  These are constants and are not
     ;;	    user settable like the rest of the
     ;;	    parameter offset. Weird.
-X       = 0
-Y       = 4
+X       equ 0
+Y       equ 4
 
-CONST   SEGMENT
-$T2003  DD  046400000r          ; 12288
-$T2005  DD  03f800000r          ; 1
-$T2006  DD  043800000r          ; 256
-CONST   ENDS
+segment		CONST
+T2003  DD  12288.0      ; 12288
+T2005  DD  1.0          ; 1
+T2006  DD  256.0        ; 256
 
-PROC_TYPE MACRO procType:=<Default>
-    IFDEF GL_AMD3D
-	EXITM <__trisetup_3DNow_&procType&@12>
-    ELSE
-	EXITM <__trisetup_Default_&procType&@12>
-    ENDIF
-    ENDM    
+%MACRO PROC_TYPE 1
+    %IFDEF GL_AMD3D
+        proc _trisetup_3DNow_%1, 12
+    %ELSE
+        proc _trisetup_Default_%1, 12
+    %ENDIF
+%ENDM
 
 ;--------------------------------------------------------------------------
 
-_TEXT       SEGMENT PAGE PUBLIC USE32 'CODE'
-            ASSUME DS: FLAT, SS: FLAT
+segment		TEXT
 
             ALIGN  32
 
-            PUBLIC  PROC_TYPE(cull)
-PROC_TYPE(cull)  PROC    NEAR
+PROC_TYPE cull
 
-GLIDE_CULLING       textequ <1>
-GLIDE_PACK_RGB      textequ <0>
-GLIDE_PACK_ALPHA    textequ <0>
-GLIDE_GENERIC_SETUP textequ <0>
-INCLUDE xdraw2.inc
-GLIDE_GENERIC_SETUP textequ <0>    
-GLIDE_PACK_ALPHA    textequ <0>
-GLIDE_PACK_RGB      textequ <0>    
-GLIDE_CULLING       textequ <0>
+%define GLIDE_CULLING       1
+%define GLIDE_PACK_RGB      0
+%define GLIDE_PACK_ALPHA    0
+%define GLIDE_GENERIC_SETUP 0
+%INCLUDE "xdraw2.inc"
+%undef GLIDE_GENERIC_SETUP
+%undef GLIDE_PACK_ALPHA
+%undef GLIDE_PACK_RGB
+%undef GLIDE_CULLING
 
-PROC_TYPE(cull) ENDP
+endp
 
             ALIGN  32
 
-            PUBLIC  PROC_TYPE()
-PROC_TYPE()  PROC    NEAR
+PROC_TYPE Default
 
-GLIDE_CULLING       textequ <0>
-GLIDE_PACK_RGB      textequ <0>
-GLIDE_PACK_ALPHA    textequ <0>
-GLIDE_GENERIC_SETUP textequ <0>
-INCLUDE xdraw2.inc
-GLIDE_GENERIC_SETUP textequ <0>    
-GLIDE_PACK_ALPHA    textequ <0>
-GLIDE_PACK_RGB      textequ <0>    
-GLIDE_CULLING       textequ <0>
+%define GLIDE_CULLING       0
+%define GLIDE_PACK_RGB      0
+%define GLIDE_PACK_ALPHA    0
+%define GLIDE_GENERIC_SETUP 0
+%INCLUDE "xdraw2.inc"
+%undef GLIDE_GENERIC_SETUP
+%undef GLIDE_PACK_ALPHA
+%undef GLIDE_PACK_RGB
+%undef GLIDE_CULLING
 
-PROC_TYPE() ENDP
+endp
 
-IFNDEF GL_AMD3D    
+%IFNDEF GL_AMD3D
 	    ALIGN   32
-	    PUBLIC  __trisetup_clip_coor_thunk@12
-__trisetup_clip_coor_thunk@12 PROC NEAR
+proc _trisetup_clip_coor_thunk, 12
 
-gc	TEXTEQU	<eax>		; Current graphics context
-procPtr TEXTEQU <ebx>    
-vPtr	TEXTEQU	<ecx>
+%define gc	eax		; Current graphics context
+%define procPtr edx
+%define vPtr	ecx
     
     ;; Call through to the gc->curArchProcs.drawTrianglesProc w/o
     ;; adding extra stuff to the stack. I wish we could actually
     ;; do a direct return here w/o too much work.
     lea	    vPtr, [esp + _va$ - STKOFF]	; Get vertex pointer address
-    mov     gc, [__GlideRoot + curGC]; GR_DCL_GC
+    mov     gc, [_GlideRoot + curGC]; GR_DCL_GC
 
     ;; If debugging make sure that we're in clip coordinates
-IFDEF GLIDE_DEBUG
-    mov     ebx, [gc + CoordinateSpace]
-    test    ebx, 1
+%IFDEF GLIDE_DEBUG
+    test    dword [gc + CoordinateSpace], 1
     jnz	    __clipSpace
     xor	    eax, eax
     mov	    [eax], eax
 __clipSpace:    
-ENDIF ; GLIDE_DEBUG
+%ENDIF ; GLIDE_DEBUG
 
     mov	    procPtr, [gc + drawTrianglesProc]; Prefetch drawTriangles proc addr
     push    vPtr		; vertex array address
@@ -180,10 +193,7 @@ ENDIF ; GLIDE_DEBUG
 
     call    procPtr		; (*gc->curArchProcs.drawTrianglesProc)(grDrawVertexArray, 3, vPtr)
 
-    ret	    12			; pop 3 dwords (vertex addrs) and return    
-__trisetup_clip_coor_thunk@12 ENDP
+    ret				; pop 3 dwords (vertex addrs) and return
+endp
 
-ENDIF ; !GL_AMD3D
-    
-_TEXT	ENDS
-	END
+%ENDIF ; !GL_AMD3D
