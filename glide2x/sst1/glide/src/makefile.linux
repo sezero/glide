@@ -1,0 +1,197 @@
+#
+# THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONLY
+# PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGHT
+# TO USE THE GLIDE TRADEMARK WITHOUT PRIOR WRITTEN PERMISSION OF 3DFX
+# INTERACTIVE, INC. A COPY OF THIS LICENSE MAY BE OBTAINED FROM THE 
+# DISTRIBUTOR OR BY CONTACTING 3DFX INTERACTIVE INC(info@3dfx.com). 
+# THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER 
+# EXPRESSED OR IMPLIED. SEE THE 3DFX GLIDE GENERAL PUBLIC LICENSE FOR A
+# FULL TEXT OF THE NON-WARRANTY PROVISIONS.  
+# 
+# USE, DUPLICATION OR DISCLOSURE BY THE GOVERNMENT IS SUBJECT TO
+# RESTRICTIONS AS SET FORTH IN SUBDIVISION (C)(1)(II) OF THE RIGHTS IN
+# TECHNICAL DATA AND COMPUTER SOFTWARE CLAUSE AT DFARS 252.227-7013,
+# AND/OR IN SIMILAR OR SUCCESSOR CLAUSES IN THE FAR, DOD OR NASA FAR
+# SUPPLEMENT. UNPUBLISHED RIGHTS RESERVED UNDER THE COPYRIGHT LAWS OF
+# THE UNITED STATES.  
+# 
+# COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
+#
+
+# local defines, options, includes
+
+# Stuff for debugging
+ifneq ($(DEBUG),)
+DBGOPTS		 = -DGLIDE_DEBUG -DGDBG_INFO_ON
+GLIDE_SANITY_ALL = 1
+endif
+
+# Display Options (Hardware)
+DSPOPTS         =       -DGLIDE_HARDWARE 
+
+# Compile for specific hardware
+ifeq ($(FX_GLIDE_HW),SST96)
+HWSPEC          = sst96.c
+LCDEFS          += -DSST96 -DGLIDE_USE_ALT_REGMAP
+
+ASMTRISETUP	= xdraw96.s
+LIBOBJS		= xdraw96.o
+
+FX_GLIDE_FIFO96 = 1
+FX_GLIDE_GROUP_WRITE=1
+
+# Turn on the alternate fifo handling code
+ifeq ($(FX_SST96_ALT_FIFO),1)
+LCDEFS          += -DSST96_ALT_FIFO_WRAP
+endif
+
+else # Default to SST1
+LCDEFS          +=       -DSST1
+LADEFS          +=       /DSST1
+ASMTRISETUP	= xdraw.s
+LIBOBJS		= xdraw.o
+endif
+
+# Optimization Options
+# This is for turning on and off algorithmic optimizations,
+# not flags to the C compiler.  Usually this involves
+# enabling/disabling assembly language code, but it can also   
+# change the way C code works, or how C code generates data to be 
+# used by various pieces of code.
+# Usually these are set with environment variables or arguments to 
+# nmake.
+#
+
+# SST96 has no notion of alternate register mapping
+ifneq ($(FX_GLIDE_HW),SST96)
+# Turn on/off alt register set. (G lide R eg M ap OPTS)
+ifeq ($(FX_GLIDE_REG_MAP),ORIG)
+GRMOPTS         =       -DGLIDE_USE_ALT_REGMAP
+ASM_REGMAP_DEFS =       -DGLIDE_USE_ALT_REGMAP
+else
+endif
+endif
+
+# Turn on/off assembly language trisetup code.
+# (C on is Assembly off) (A ssembly T ri S etup OPTS)
+ifeq ($(FX_GLIDE_CTRISETUP),1)
+ASMTRISETUP	=
+ATSOPTS         =       -DGLIDE_USE_C_TRISETUP
+LIBOBJS		=
+endif
+
+OPTOPTS         =       $(GRMOPTS) $(OTSOPTS) $(ATSOPTS)
+
+# local defines, begin with basics and then add on
+LCDEFS		   += -DGLIDE_LIB
+
+# Turn Off/On compilation of shameless plug
+ifneq ($(FX_GLIDE_NO_PLUG),1)
+LCDEFS          +=       -DGLIDE_PLUG
+endif
+
+# Turn Off/On splash screen
+ifneq ($(FX_GLIDE_NO_SPLASH),1)
+LCDEFS          +=       -DGLIDE_SPLASH
+endif
+
+# Turn On group writes
+ifneq ($(FX_GLIDE_GROUP_WRITE),)
+LCDEFS          +=       -DGROUP_WRITE
+endif
+
+ifeq ($(FX_GLIDE_FIFO96),1)
+LCDEFS          +=       -DSST96_FIFO
+endif
+
+ifdef GLIDE_SANITY_ALL
+GLIDE_SANITY_SIZE = $(GLIDE_SANITY_ALL)
+GLIDE_SANITY_ASSERT = $(GLIDE_SANITY_ALL)
+endif
+
+ifdef GLIDE_SANITY_SIZE
+LCDEFS          +=        -DGLIDE_SANITY_SIZE
+endif
+ifdef GLIDE_SANITY_ASSERT
+LCDEFS          +=       -DGLIDE_SANITY_ASSERT
+endif
+
+# Local Defs, Includes, and Options (C)
+LCINCS          =       -I$(SST1INC)
+LCOPTS          =       $(DBGOPTS) $(DSPOPTS) $(OPTOPTS)
+
+# Local Defs, Includes, and Options (ASM)
+LADEFS          +=       $(ASM_REGMAP_DEFS)
+LAINCS          =       -I$(SST1INC)
+LAOPTS          =       $(DBGOPTS) $(DSPOPTS) $(OPTOPTS)
+
+AFILES          =       $(ASMTRISETUP)
+
+# sources
+HEADERS         =       glide.h gump.h glidesys.h glideutl.h
+PRIVATE_HEADERS =       fxglide.h gsstdef.h 
+INSTALL_DESTINATION =   $(BUILD_ROOT_HW)
+
+CFILES          =	gsplash.c g3df.c  gu.c guclip.c gpci.c gump.c\
+                        diglide.c disst.c ditex.c gbanner.c gerror.c\
+                        gmovie.c digutex.c ddgump.c gaa.c gdraw.c\
+                        gglide.c glfb.c gsst.c gtex.c gtexdl.c\
+                        gutex.c gxdraw.c $(HWSPEC) \
+			cpudetect.c
+
+OFILES		=	$(CFILES:.c=.o)
+
+OTHER_CFILES    =	fxgasm.c 
+
+CODFILES        =       $(CFILES:.c=.cod)
+
+SST1INC         =       $(BUILD_ROOT_HW)/include
+SWLIBSINC       =       $(BUILD_ROOT_SWLIBS)/include
+
+# sublibs for hardware
+SUBLIBRARIES	= \
+			$(BUILD_ROOT_SWLIBS)/lib/libfxmisc.a \
+			$(BUILD_ROOT_SWLIBS)/lib/libfxpci.a \
+			$(BUILD_ROOT_HW)/lib/libinit.a \
+			$(BUILD_ROOT_HW)/lib/libsst1.a \
+			$(BUILD_ROOT_HW)/lib/libinit96.a
+
+
+LINKLIBRARIES+=-lm
+ifeq ($(FX_GLIDE_HW),SST96)
+LINKLIBRARIES    +=	-L$(XLOCATION)/lib -lX11 -lXext \
+	-lXxf86rush -lXxf86dga -lXxf86vm
+endif
+
+# targets
+LDIRT     = fxgasm.o fxgasm fxgasm.h
+
+LIBRARIES	    = libglide2x.a
+SHARED_LIBRARY      = libglide2x.so
+
+include $(BUILD_ROOT_SWLIBS)/include/make/3dfx.mak
+
+fxgasm : fxgasm.c $(HEADERS) $(PRIVATE_HEADERS)
+	$(CC) -o $@ fxgasm.c $(GCDEFS) $(LCDEFS) $(VCDEFS) $(LCOPTS) \
+	-I$(BUILD_ROOT_HW)/include -I$(BUILD_ROOT_SWLIBS)/include $(LDFLAGS)
+
+fxgasm.h : fxgasm
+	./fxgasm > fxgasm.h
+
+fxinline.h : fxgasm
+	./fxgasm -inline > fxinline.h
+
+ASM_DEFINES = -DGLIDE_HARDWARE=1 
+ifneq ($(DEBUG),)
+ASM_DEFINES += -DGLIDE_DEBUG=1
+else
+ASM_DEFINES += -DGLIDE_DEBUG=0
+endif
+
+xdraw.o : fxgasm.h xdraw.s
+	gasp xdraw.s $(ASM_DEFINES) | as -V -Qy -o xdraw.o
+
+xdraw96.o : fxgasm.h xdraw96.s
+	gasp xdraw96.s $(ASM_DEFINES) | as -V -Qy -o xdraw96.o
+
+gsplash.o : gsplash.c splshdat.c fxinline.h
