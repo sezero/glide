@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.2  2003/06/21 12:43:04  dborca
+** h3cinit cleanup
+**
 ** Revision 1.1.1.1.8.1  2003/05/05 07:12:47  dborca
 ** no message
 **
@@ -51,6 +54,8 @@
 #include <i86.h>
 #endif
 #include <gdebug.h>
+
+#include <h3cinit.h>
 
 static FxU16 oldVidMode;
 
