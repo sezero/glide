@@ -101,9 +101,7 @@
 */
 #include <stdio.h>
 #include <string.h>
-#ifdef __GNUC__
 #include <ctype.h>
-#endif
 #include <3dfx.h>
 
 #define FX_DLL_DEFINITION
