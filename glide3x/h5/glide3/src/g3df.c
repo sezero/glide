@@ -127,6 +127,7 @@ static FxU16 ReadDataShort(FILE *);
 static FxU32 ReadDataLong(FILE *);
 static void  Read4Bit(FxU8 *dst, FILE *image, int small_lod, int large_lod, GrAspectRatio_t aspect);
 static void  Read8Bit(FxU8 *dst, FILE *image, int small_lod, int large_lod, GrAspectRatio_t aspect);
+static void  ReadDXT4Bit(FxU8 *dst, FILE *image, int small_lod, int large_lod, GrAspectRatio_t aspect);
 static void  ReadDXT8Bit(FxU8 *dst, FILE *image, int small_lod, int large_lod, GrAspectRatio_t aspect);
 static void  Read16Bit(FxU16 *dst, FILE *image, int small_lod, int large_lod, GrAspectRatio_t aspect);
 static void  Read32Bit(FxU32 *dst, FILE *image, int small_lod, int large_lod, GrAspectRatio_t aspect);
@@ -230,7 +231,7 @@ GR_DIENTRY(gu3dfGetInfo, FxBool,
     { "AP88",     GR_TEXFMT_AP_88,              FXTRUE },
     { "ARGB8888", GR_TEXFMT_ARGB_8888,          FXTRUE },
 #ifdef FX_GLIDE_NAPALM
-    /* KoolSmoky - other texture formats. */
+    /* other texture formats. */
     { "FXT1",        GR_TEXFMT_ARGB_CMP_FXT1,   FXTRUE },
     { "FXT1_HI",     GR_TEXFMT_ARGB_CMP_FXT1,   FXTRUE },
     { "FXT1_MIXED",  GR_TEXFMT_ARGB_CMP_FXT1,   FXTRUE },
@@ -243,11 +244,12 @@ GR_DIENTRY(gu3dfGetInfo, FxBool,
     { "YUYV422",  GR_TEXFMT_YUYV_422,           FXTRUE },
     { "UYVY22",   GR_TEXFMT_UYVY_422,           FXTRUE },
     { "AYUV444",  GR_TEXFMT_AYUV_444,           FXTRUE },
+  /* TODO: to support DXTn, we need to read .dds files.
     { "DXT1",     GR_TEXFMT_ARGB_CMP_DXT1,      FXTRUE },
     { "DXT2",     GR_TEXFMT_ARGB_CMP_DXT2,      FXTRUE },
     { "DXT3",     GR_TEXFMT_ARGB_CMP_DXT3,      FXTRUE },
     { "DXT4",     GR_TEXFMT_ARGB_CMP_DXT4,      FXTRUE },
-    { "DXT5",     GR_TEXFMT_ARGB_CMP_DXT5,      FXTRUE },
+    { "DXT5",     GR_TEXFMT_ARGB_CMP_DXT5,      FXTRUE },*/
 #endif
     { 0, 0, FXFALSE }
   };
@@ -543,8 +545,7 @@ GR_DIENTRY(gu3dfGetInfo, FxBool,
                                                   Info->header.aspect_ratio,
                                                   Info->header.format,
                                                   GR_MIPMAPLEVELMASK_BOTH,
-                                                  FXFALSE,
-                                                  FXTRUE);
+                                                  FXFALSE);
   }
 
   GDBG_INFO(81,"gu3dfGetInfo(%s,0x%x) -> %i tex memory required\n",FileName,Info, Info->mem_required);
@@ -848,11 +849,17 @@ GR_DIENTRY(gu3dfLoad, FxBool, (const char *filename, Gu3dfInfo *info))
     break;
     
   case GR_TEXFMT_ARGB_CMP_FXT1:
-  case GR_TEXFMT_ARGB_CMP_DXT1:
     Read4Bit(info->data, image_file, 
              info->header.small_lod, 
              info->header.large_lod, 
              G3_ASPECT_TRANSLATE(info->header.aspect_ratio));
+    break;
+/* TODO: to support DXTn, we need to read .dds files
+  case GR_TEXFMT_ARGB_CMP_DXT1:
+    ReadDXT4Bit(info->data, image_file, 
+                info->header.small_lod, 
+                info->header.large_lod, 
+                G3_ASPECT_TRANSLATE(info->header.aspect_ratio));
     break;
 
   case GR_TEXFMT_ARGB_CMP_DXT2:
@@ -864,7 +871,7 @@ GR_DIENTRY(gu3dfLoad, FxBool, (const char *filename, Gu3dfInfo *info))
                 info->header.large_lod, 
                 G3_ASPECT_TRANSLATE(info->header.aspect_ratio));
     break;
-
+*/
   case GR_TEXFMT_INTENSITY_8:
   case GR_TEXFMT_ALPHA_8:
   case GR_TEXFMT_ALPHA_INTENSITY_44:
@@ -918,15 +925,13 @@ GR_DIENTRY(gu3dfLoad, FxBool, (const char *filename, Gu3dfInfo *info))
 }
 
 /*
-** Read4Bit
+** Read4Bit (FXT1)
 **
 ** Read in a 4-bit Compressed texture map.  Luckily the minimum mipmap
 ** size is 8x4 texels so we never have to worry about where the high
 ** or low nibble is.
 ** Take advantage of the fact that the minimum size is 16 bytes
 ** during the fread() call.
-** FXT1,DXT1
-** DXT1 has 2 side by side 4x4 microtiles thus 8x4 texels
 */
 static void 
 Read4Bit(FxU8 *data, FILE *image_file, int small_lod, int large_lod,
@@ -944,26 +949,53 @@ Read4Bit(FxU8 *data, FILE *image_file, int small_lod, int large_lod,
     thisMipMapByteCount = (width * height) >> 5;
 
     fread(data, 16, thisMipMapByteCount, image_file);
-    data += thisMipMapByteCount;
+    data += (16 * thisMipMapByteCount);
   }
 }
 
 /*
-** ReadDXT8Bit
+** ReadDXT4Bit (DXT1)
+**
+** Read in a 4-bit Compressed texture map.
+** Take advantage of the fact that the minimum size is 8 bytes
+** during the fread() call.
+** Note: the smallest DXT1 mipmap has 2 side-by-side 4x4 microtiles
+** but we only read one of them.
+*/
+static void 
+ReadDXT4Bit(FxU8 *data, FILE *image_file, int small_lod, int large_lod,
+            GrAspectRatio_t aspect_ratio)
+{
+  int lod;
+  int width, height, thisMipMapByteCount;
+
+  for (lod = small_lod; lod <= large_lod; lod++) {
+    width  = _grMipMapHostWHDXT[aspect_ratio][lod][0];
+    height = _grMipMapHostWHDXT[aspect_ratio][lod][1];
+
+    /* Divide the WxH by 16 to read 8 bytes at a time. */
+    thisMipMapByteCount = (width * height) >> 4;
+
+    fread(data, 8, thisMipMapByteCount, image_file);
+    data += (8 * thisMipMapByteCount);
+  }
+}
+
+/*
+** ReadDXT8Bit (DXT2,3,4,5)
 **
 ** Read in a 8-bit Compressed texture map. the minimum mipmap
 ** size is 4x4 texels
 ** Take advantage of the fact that the minimum size is 16 bytes
 ** during the fread() call.
-** dxt2,3,4,5
 */
 static void 
 ReadDXT8Bit(FxU8 *data, FILE *image_file, 
-         int small_lod, int large_lod, 
-         GrAspectRatio_t aspect_ratio)
+            int small_lod, int large_lod, 
+            GrAspectRatio_t aspect_ratio)
 {
   int lod;
-  int width, height,thisMipMapByteCount;
+  int width, height, thisMipMapByteCount;
 
   for (lod = small_lod; lod <= large_lod; lod++) {
     width  = _grMipMapHostWHDXT[aspect_ratio][lod][0];
@@ -974,7 +1006,7 @@ ReadDXT8Bit(FxU8 *data, FILE *image_file,
     thisMipMapByteCount = (width * height) >> 4;
 
     fread(data, 16, thisMipMapByteCount, image_file);
-    data += thisMipMapByteCount;
+    data += (16 * thisMipMapByteCount);
   }
 
 }
@@ -990,14 +1022,16 @@ Read8Bit(FxU8 *data, FILE *image_file,
          GrAspectRatio_t aspect_ratio)
 {
   int lod;
-  int width, height;
+  int width, height, thisMipMapByteCount;
 
   for (lod = small_lod; lod <= large_lod; lod++) {
     width  = _grMipMapHostWH[aspect_ratio][lod][0];
     height = _grMipMapHostWH[aspect_ratio][lod][1];
 
-    fread(data, sizeof(char), width*height, image_file);
-    data += width*height;
+    thisMipMapByteCount = width * height;
+
+    fread(data, sizeof(char), thisMipMapByteCount, image_file);
+    data += thisMipMapByteCount;
   }
 }
 

@@ -2785,8 +2785,7 @@ GR_ENTRY(grTexSource, void,
                                                     info->aspectRatioLog2,
                                                     info->format,
                                                     evenOdd,
-                                                    FXTRUE,
-                                                    FXFALSE)
+                                                    FXTRUE)
                            > gc->tmu_state[tmu].total_mem)),
                          "insufficient texture ram at startAddress");
   GR_CHECK_F(FN_NAME, evenOdd > 0x3 || evenOdd == 0, "evenOdd mask invalid");
@@ -3464,10 +3463,10 @@ GR_DIENTRY(grTextureBuffer, void,
   /*
    * AJB- Last I checked we couldn't render to an FXT1 surface...
    *
-  if (format == GR_TEXFMT_ARGB_CMP_FXT1 || format == GR_TEXFMT_ARGB_CMP_DXT1) {
+  if (format == GR_TEXFMT_ARGB_CMP_FXT1) {
     width = _grMipMapHostWHCmp4Bit[G3_ASPECT_TRANSLATE(aspectRatio)][thisLOD][0];
     height = _grMipMapHostWHCmp4Bit[G3_ASPECT_TRANSLATE(aspectRatio)][thisLOD][1];
-  } else if (format >= GR_TEXFMT_ARGB_CMP_DXT2 && format <= GR_TEXFMT_ARGB_CMP_DXT5) {
+  } else if (format >= GR_TEXFMT_ARGB_CMP_DXT1 && format <= GR_TEXFMT_ARGB_CMP_DXT5) {
     width = _grMipMapHostWHDXT[G3_ASPECT_TRANSLATE(aspectRatio)][thisLOD][0];
     height = _grMipMapHostWHDXT[G3_ASPECT_TRANSLATE(aspectRatio)][thisLOD][1];
   } else {
@@ -3496,8 +3495,7 @@ GR_DIENTRY(grTextureBuffer, void,
   else
     offset = _grTexTextureMemRequired( thisLOD+1, largeLOD, 
                                        aspectRatio, format,
-                                       odd_even_mask, FXTRUE,
-                                       FXFALSE );
+                                       odd_even_mask, FXTRUE );
 
   /* How do we deal with UMA?
   The tmu only makes sense when the UMA is not turned on.
@@ -3573,10 +3571,10 @@ GR_DIENTRY(grTextureAuxBuffer, void,
   /*
    * AJB- Using FXT1 for an aux buffer looks like it would be a mistake to me as well.
    *
-  if (format == GR_TEXFMT_ARGB_CMP_FXT1 || format == GR_TEXFMT_ARGB_CMP_DXT1) {
+  if (format == GR_TEXFMT_ARGB_CMP_FXT1) {
     width = _grMipMapHostWHCmp4Bit[G3_ASPECT_TRANSLATE(aspectRatio)][thisLOD][0];
     height = _grMipMapHostWHCmp4Bit[G3_ASPECT_TRANSLATE(aspectRatio)][thisLOD][1];
-  } else if (format >= GR_TEXFMT_ARGB_CMP_DXT2 && format <= GR_TEXFMT_ARGB_CMP_DXT5) {
+  } else if (format >= GR_TEXFMT_ARGB_CMP_DXT1 && format <= GR_TEXFMT_ARGB_CMP_DXT5) {
     width = _grMipMapHostWHDXT[G3_ASPECT_TRANSLATE(aspectRatio)][thisLOD][0];
     height = _grMipMapHostWHDXT[G3_ASPECT_TRANSLATE(aspectRatio)][thisLOD][1];
   } else {
@@ -3596,8 +3594,7 @@ GR_DIENTRY(grTextureAuxBuffer, void,
   else
     offset = _grTexTextureMemRequired( thisLOD+1, largeLOD, 
                                        aspectRatio, format,
-                                       odd_even_mask, FXTRUE,
-                                       FXFALSE );
+                                       odd_even_mask, FXTRUE );
 
   /* How do we deal with UMA?
   The tmu only makes sense when the UMA is not turned on.
