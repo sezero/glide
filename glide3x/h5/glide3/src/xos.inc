@@ -1,10 +1,8 @@
 ;
-; compulsory header for h5/glide3/xdraw* assembly specializations (NASM)
+; compulsory header for glide3/xdraw* assembly specializations (NASM)
 ;
 ; $Header$
 ; $Log$
-; Revision 1.1.2.2  2003/06/13 07:22:59  dborca
-; more fixes to NASM sources
 ;
 ; Revision 1.1.2.1  2003/06/07 09:53:25  dborca
 ; initial checkin for NASM sources
@@ -16,6 +14,7 @@
 %define XOS_DJGPP 1
 %define XOS_LINUX 2
 %define XOS_WIN32 4
+%define XOS_WATCD 8
 
 %define STDCALL   0
 %define ELFTYPE   0
@@ -32,6 +31,10 @@
 %define XOS XOS_WIN32
 %define STDCALL 1
 %define USE_STANDARD_TLS_FUNC 0
+%elifdef __WATCOMD__
+%define XOS XOS_WATCD
+%define STDCALL 1
+%else
 %else
 %error Unknown OS
 %endif
@@ -40,14 +43,14 @@
 ; general purpose macros
 ;---------------------------------------
 %macro	extrn	1-2 0
-	%if (XOS == XOS_WIN32) && STDCALL && (%2 > 0)
+	%if STDCALL && (%2 > 0)
 		%define %1 %1@%2
 	%endif
 		extern	%1
 %endmacro
 
 %macro	globl	1-2 0
-	%if (XOS == XOS_WIN32) && STDCALL && (%2 > 0)
+	%if STDCALL && (%2 > 0)
 		%define %1 %1@%2
 	%endif
 		global	%1
@@ -180,6 +183,29 @@ extrn threadValueLinux
 
 %macro GET_GC 2
 	mov	gc, [threadValueLinux]
+%endmacro
+
+%endif
+
+;---------------------------------------
+; WATCOM/DOS
+;---------------------------------------
+%if XOS == XOS_WATCD
+
+%define TEXT  _TEXT	align=1 public use32 class=CODE FLAT
+%define DATA  _DATA	align=4 public use32 class=DATA FLAT
+%define CONST CONST2	align=4 public use32 class=DATA FLAT
+
+extrn threadValueDJGPP
+
+%macro SET_TLSBASE 1
+%endmacro
+
+%macro SET_TLSOFFSET 1
+%endmacro
+
+%macro GET_GC 2
+	mov	gc, [threadValueDJGPP]
 %endmacro
 
 %endif
