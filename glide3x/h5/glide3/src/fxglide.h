@@ -2020,19 +2020,14 @@ typedef struct GrGC_s
 **  stuff near the top is accessed a lot
 */
 struct _GlideRoot_s {
-  int p6Fencer;                 /* xchg to here to keep this in cache!!! */
-  FxU32
-    tlsIndex,
-    tlsOffset;
+  int   p6Fencer;           /* xchg to here to keep this in cache!!! */
+  FxU32 tlsIndex;
+  FxU32 tlsOffset;
 
-  int current_sst;
-  _p_info
-    CPUType;            /* Colourless's CPUID */
-  FxBool
-    OSWin95;
-  FxI32
-    windowsInit;        /* Is the fullscreen part of glide initialized? */
+  int   current_sst;
+  FxI32 windowsInit;        /* Is the fullscreen part of glide initialized? */
 
+  _p_info CPUType;          /* CPUID */
 
 #if !GLIDE_HW_TRI_SETUP || !GLIDE_PACKET3_TRI_SETUP
   FxU32 paramCount;
@@ -2041,9 +2036,9 @@ struct _GlideRoot_s {
 #endif /* !GLIDE_HW_TRI_SETUP || !GLIDE_PACKET3_TRI_SETUP */
 
 #if GLIDE_MULTIPLATFORM
-  GrGCFuncs
-    curGCFuncs;                 /* Current dd Function pointer table */
+  GrGCFuncs curGCFuncs;                 /* Current dd Function pointer table */
 #endif
+
   int initialized;
 
   struct {                      /* constant pool (minimizes cache misses) */
@@ -2159,6 +2154,16 @@ struct _GlideRoot_s {
     GrVertexListProc*         nullVertexListProcs;
     GrTexDownloadProcVector*  nullTexProcs;    
   } deviceArchProcs;
+
+#if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
+#define OS_WIN32_95  0
+#define OS_WIN32_98  1
+#define OS_WIN32_ME  2
+#define OS_WIN32_NT4 3
+#define OS_WIN32_2K  4
+#define OS_WIN32_XP  5
+  FxI32 OS;
+#endif
 
 };
 
@@ -3181,57 +3186,6 @@ _grErrorCallback(const char* const procName,
                  const char* const format,
                  va_list           args);
 #endif
-
-#if 0  /* we now use Colourless's CPUID */
-/* Returns 16:16 pair indicating the cpu's manufacturer and its
- * capabilities. Non-Intel processors should have a vendor id w/ the
- * high bit set so that it appears to be a negative #. The value of
- * the capability field is assumed to be a monotonically increasing
- * inclusive set.
- *
- * Unknown:
- *   0xFFFF:0xFFFF
- *
- * Intel: 0x0000
- *  4: 486 and lower
- *  5: Pentium
- *  6: P6 Core or better
- *  7: p6 Core w/ katmai (instructions/write buffers)
- *
- * AMD: 0x8001
- *  1: MMX
- *  2: 3DNow!(tm)
- *  4: K6-type MTRRs
- *  8: P2-type MTRRs
- *
- * Cyrix: 0x8002
- *  1: MMX
- *  2: 3DNow!(tm)
- *
- * IDT: 0x8003
- *  1: MMX
- *  2: 3DNow!(tm)
- *  
- */
-
-enum {
-  kCPUVendorIntel     = 0x0000,
-  kCPUVendorAMD       = 0x8001,
-  kCPUVendorCyrix     = 0x8002,
-  kCPUVendorIDT       = 0x8003,
-  kCPUVendorTransmeta = 0x8004,
-  kCPUVendorUnknown   = 0xFFFF
-};
-
-extern FxI32 GR_CDECL
-_cpu_detect_asm(void);
-
-extern void GR_CDECL 
-single_precision_asm(void);
-
-extern void GR_CDECL 
-double_precision_asm(void);
-#endif /* we now use Colourless's CPUID */
 
 /* The translation macros convert from the reasonable log2 formats to
  * the somewhat whacked (For those of us coming back to sst1 things

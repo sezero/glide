@@ -3097,15 +3097,9 @@ GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
   ** OpenGL fullscreen apps can run.  If not, we will cause a lot
   ** of problems.
   */
-#if 0
   if (_GlideRoot.environment.is_opengl == FXTRUE) {
-    /* KoolSmoky- don't release Exclusive mode if we're running 
-     * in NT5.1. This may cause probems. but, ohwell.
-     * Fix me! */
-     if( !gc->bInfo->osNT51 )
-      hwcRestoreVideo(gc->bInfo);
+	hwcRestoreVideo(gc->bInfo);
   }
-#endif
 
 #ifndef	__linux__
   if (gc->lostContext) {
@@ -3222,10 +3216,13 @@ GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
     
 #if (GLIDE_OS & GLIDE_OS_WIN32)
   if (_GlideRoot.environment.is_opengl != FXTRUE) {
-    if ( gc->bInfo->osNT )
-      hwcUnmapMemory();
-    else
-      hwcUnmapMemory9x ( gc->bInfo );
+    if ((_GlideRoot.OS == OS_WIN32_95) ||
+	    (_GlideRoot.OS == OS_WIN32_98) ||
+		(_GlideRoot.OS == OS_WIN32_ME)) {
+        hwcUnmapMemory9x ( gc->bInfo );
+	} else {
+		hwcUnmapMemory();
+	}
   }
 #endif
 

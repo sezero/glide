@@ -57,11 +57,14 @@ initThreadStorage( void )
     threadInit = 1;
     _GlideRoot.tlsIndex = TlsAlloc();
   }
-  if (_GlideRoot.OSWin95)
-    _GlideRoot.tlsOffset = W95_TLS_INDEX_TO_OFFSET(_GlideRoot.tlsIndex);
-  else
-    _GlideRoot.tlsOffset = WNT_TLS_INDEX_TO_OFFSET(_GlideRoot.tlsIndex);
 
+  if ((_GlideRoot.OS == OS_WIN32_95) ||
+      (_GlideRoot.OS == OS_WIN32_98) ||
+	  (_GlideRoot.OS == OS_WIN32_ME)) {
+    _GlideRoot.tlsOffset = W95_TLS_INDEX_TO_OFFSET(_GlideRoot.tlsIndex);
+  } else {
+    _GlideRoot.tlsOffset = WNT_TLS_INDEX_TO_OFFSET(_GlideRoot.tlsIndex);
+  }
 } /* initThreadStorage */
 
 void setThreadValue( FxU32 value ) {

@@ -1026,6 +1026,7 @@ static __inline int min (int x, int y)
 #define HWC_RAW_LFB_STRIDE SST_RAW_LFB_ADDR_STRIDE_8K
 
 hwcInfo hInfo;
+_p_info *CPUInfo = NULL;
 
 #define MAX_ERROR_SIZE 1024
 static char errorString[MAX_ERROR_SIZE];
@@ -1190,15 +1191,6 @@ static hwcBoardInfo *curBI = NULL;
 
 #ifdef HWC_EXT_INIT
 
-#if 0
-#if !defined(HMONITOR_DECLARED) // AJB- Make def compatible w/ vc6 headers
-
-typedef void *HMONITOR;
-//DECLARE_HANDLE(HMONITOR);
-
-#define HMONITOR_DECLARED
-#endif
-#endif
 typedef BOOL (CALLBACK* MONITORENUMPROC)(HMONITOR, HDC, LPRECT, LPARAM);
 typedef WINUSERAPI BOOL WINAPI
 EnumDisplayMonitors_func( HDC             hdc,
@@ -1219,11 +1211,12 @@ static char *
 getRegPathEx() 
 {
   char *retVal = NULL;
-  OSVERSIONINFO ovi;
-  
-  ovi.dwOSVersionInfoSize = sizeof ( ovi );
-  GetVersionEx ( &ovi );
-  if (ovi.dwPlatformId == VER_PLATFORM_WIN32_NT) {
+  FxI32 OS = hwcGetOS();
+
+  if ((OS == OS_WIN32_NT4) ||
+      (OS == OS_WIN32_2K)  ||
+      (OS == OS_WIN32_XP)) 
+  {
     HKEY hKey;
     DWORD type ;
     static char strval[255];
@@ -1327,10 +1320,6 @@ monitorEnum( HMONITOR handle, HDC dc, LPRECT rect, LPARAM param )
       LPCSTR
         drvName = "DISPLAY",
         devName = NULL;
-
-      OSVERSIONINFO ovi;
-      ovi.dwOSVersionInfoSize = sizeof ( ovi );
-      GetVersionEx ( &ovi );
 
       /* If we're on a multi-mon capable system then we may have
        * different display type devices so we have to get the device
@@ -1471,11 +1460,7 @@ hwcInit(FxU32 vID, FxU32 dID)
     DevEnumRec
       data[HWC_MAX_BOARDS*2];
     int monitor;
-    _p_info CPUInfo;
-    OSVERSIONINFO ovi;
-
-    ovi.dwOSVersionInfoSize = sizeof ( ovi );
-    GetVersionEx ( &ovi );
+    FxI32 OS = hwcGetOS();
 
     GDBG_INFO(80, "%s\n", FN_NAME);
     errorString[0] = '\0';
@@ -1642,25 +1627,16 @@ hwcInit(FxU32 vID, FxU32 dID)
                       data[num_monitor].dc = hdc;
                       strcpy(data[num_monitor].DeviceName, DispDev.DeviceName);
 
-                      switch(ovi.dwPlatformId) {
-                      case VER_PLATFORM_WIN32_NT:
-                        {
-                          // win2k/xp
+					  if (OS == OS_WIN32_95) {
+                          strcpy(data[num_monitor].RegPath, getRegPathEx());
+					  } else if ( (OS == OS_WIN32_98) || (OS == OS_WIN32_ME) ) {
+                          strcpy(data[num_monitor].RegPath, DispDev.DeviceKey);
+					  } else {
                           char *pdest;
                           pdest = strstr(DispDev.DeviceKey, "\\Service");
                           strcpy(data[num_monitor].RegPath, "SYSTEM\\CurrentControlSet");
                           strcat(data[num_monitor].RegPath,  pdest);
-                        }
-                        break;
-                      case VER_PLATFORM_WIN32_WINDOWS:
-                        {
-                          if(ovi.dwMinorVersion < 10)
-                            strcpy(data[num_monitor].RegPath, getRegPathEx()); // win95
-                          else
-                            strcpy(data[num_monitor].RegPath, DispDev.DeviceKey); // win98/me
-                        }
-                        break;
-                      }
+					  }
                         
                       GDBG_INFO(80, "DeviceKey: %s\n", data[num_monitor].RegPath);
                       
@@ -1772,16 +1748,6 @@ hwcInit(FxU32 vID, FxU32 dID)
         }
       }
     }
-
-    /* Colourless - Get CPUInfo */
-    _cpuid (&CPUInfo);
-    {
-      /* No CPU Extensions Allowed */
-      for (monitor = 0; monitor < num_monitor; monitor++) {
-        const char *no_cpu_ext = GETENV("FX_GLIDE_NO_CPU_EXTENSIONS", data[monitor].RegPath);
-        if (no_cpu_ext && atoi(no_cpu_ext)) CPUInfo.feature = CPUInfo.os_support = 0;
-      }
-    }
     
     hInfo.nBoards = 0;
     for (monitor = 0; monitor < num_monitor; monitor++) {
@@ -1809,21 +1775,6 @@ hwcInit(FxU32 vID, FxU32 dID)
       GDBG_INFO(80,"hInfo : [%d] RegPath: %s\n", monitor, hInfo.boardInfo[monitor].RegPath);
       GDBG_INFO(80,"hInfo : [%d] DeviceName: %s\n", monitor, hInfo.boardInfo[monitor].DeviceName);
 /*      hInfo.boardInfo[monitor].extContextID = ctxRes.Ext.optData.allocContextRes.contextID; */
-
-      if (ovi.dwPlatformId == VER_PLATFORM_WIN32_NT) {
-        hInfo.boardInfo[monitor].osNT = FXTRUE;
-        if ( ovi.dwMajorVersion >= 5 && ovi.dwMinorVersion >= 1) {
-          hInfo.boardInfo[monitor].osNT51 = FXTRUE;
-          GDBG_INFO(80, FN_NAME ":  OS:  NT5.1\n");
-        } else {
-          hInfo.boardInfo[monitor].osNT51 = FXFALSE;
-          GDBG_INFO(80, FN_NAME ":  OS:  NT\n");
-        }
-      } else {
-        hInfo.boardInfo[monitor].osNT = FXFALSE;
-        hInfo.boardInfo[monitor].osNT51 = FXFALSE;
-        GDBG_INFO(80, FN_NAME ":  OS:  9X\n");
-      }
 
       ctxReq.which = HWCEXT_GETDEVICECONFIG;
       ctxReq.optData.deviceConfigReq.dc = hdc;
@@ -1870,19 +1821,14 @@ hwcInit(FxU32 vID, FxU32 dID)
            ctxRes.optData.deviceConfigRes.isMaster;
         hInfo.boardInfo[monitor].pciInfo.numChips =
            ctxRes.optData.deviceConfigRes.numChips;
-        if /*(*/(hInfo.boardInfo[monitor].pciInfo.numChips > 4)/* || 
-            (hInfo.boardInfo[monitor].pciInfo.numChips < 0))*//* KoolSmoky */ {
+        if ((hInfo.boardInfo[monitor].pciInfo.numChips > 4) || 
+            (hInfo.boardInfo[monitor].pciInfo.numChips < 0))
           hInfo.boardInfo[monitor].pciInfo.numChips = 0;
-        } //else {
-          /* KoolSmoky - Napalm framebuffer is unified, where the framebuffer
+          /* Napalm framebuffer is unified, where the framebuffer
           ** bound to each chip is effectively divided by SLI mode.
           ** (framebuffer of one chip) = (total framebuffer / SLI mode)
-          ** 2 chip device can have 1-way-SLI or 2-way-SLI
           ** h3Mem is the amount of video ram dedicated for one chip.
-          hInfo.boardInfo[monitor].h3Mem = 
-            (ctxRes.optData.deviceConfigRes.fbRam >> 20);
           */
-        //}
       }
 #endif /* FX_GLIDE_NAPALM */
             
@@ -1936,9 +1882,6 @@ hwcInit(FxU32 vID, FxU32 dID)
                        (FxU32) sizeof(resolutionSupported[0][0]) / sizeof(FxBool),
                        (void *) hInfo.boardInfo[monitor].hMon);
 #endif
-
-      /* Colourless - CPUInfo */
-      hInfo.boardInfo[monitor].CPUInfo = CPUInfo;
     }
   }
 #elif defined(HWC_GDX_INIT)
@@ -2153,6 +2096,7 @@ hwcInit(FxU32 vID, FxU32 dID)
   
   }
 #endif /* HWC_EXT_INIT */
+
   if (hInfo.nBoards)
     return &hInfo;
   else
@@ -4503,6 +4447,7 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
 #ifdef HWC_EXT_INIT 
     hwcExtRequest_t ctxReq;
     hwcExtResult_t  ctxRes;
+	FxI32 OS = hwcGetOS();
 #endif
   
    {
@@ -5045,7 +4990,9 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
 
     GDBG_INFO(80, FN_NAME ": HWC_MINIVDD_HACK\n");
 
-    if (bInfo->osNT)
+	if ((OS == OS_WIN32_NT4) ||
+		(OS == OS_WIN32_2K)  ||
+		(OS == OS_WIN32_XP))
     {
       FxU32 retVal = FXTRUE;
       ctxReq.which = HWCEXT_SLI_AA_REQUEST ;
@@ -5703,6 +5650,11 @@ FxBool
 hwcRestoreVideo(hwcBoardInfo *bInfo)
 {
 #define FN_NAME "hwcRestoreVideo"
+
+#ifdef HWC_EXT_INIT
+	FxI32 OS = hwcGetOS();
+#endif
+
   #if 1
   hwcIdleHardwareWithTimeout(bInfo);
 
@@ -5727,7 +5679,9 @@ hwcRestoreVideo(hwcBoardInfo *bInfo)
 
     GDBG_INFO(80, FN_NAME ": HWC_MINIVDD_HACK\n");
 
-    if (bInfo->osNT)
+	if ((OS == OS_WIN32_NT4) ||
+		(OS == OS_WIN32_2K)  ||
+		(OS == OS_WIN32_XP))
     {
       hwcExtRequest_t ctxReq ;
       hwcExtResult_t  ctxRes ;
@@ -6542,7 +6496,7 @@ static void hwcReadRegion565(hwcBoardInfo *bInfo, FxU32 src, FxU32 src_x, FxU32 
 
   stride_diff = strideInBytes - (src_width*2);
   
-  if (bInfo->CPUInfo.os_support & _CPU_FEATURE_MMX)
+  if (CPUInfo && (CPUInfo->os_support & _CPU_FEATURE_MMX))
     {
       /* MMX Optimized Loop */
 #ifdef __DJGPP__
@@ -6698,7 +6652,7 @@ static void hwcReadRegion1555(hwcBoardInfo *bInfo, FxU32 src, FxU32 src_x, FxU32
 
   stride_diff = strideInBytes - (src_width*2);
   
-  if (bInfo->CPUInfo.os_support & _CPU_FEATURE_MMX)
+  if (CPUInfo && (CPUInfo->os_support & _CPU_FEATURE_MMX))
     {
       /* MMX Optimized Loop */
 #ifdef __DJGPP__
@@ -6854,7 +6808,7 @@ static void hwcReadRegion8888(hwcBoardInfo *bInfo, FxU32 src, FxU32 src_x, FxU32
 
   stride_diff = strideInBytes - (src_width*4);
   
-  if (bInfo->CPUInfo.os_support & _CPU_FEATURE_MMX)
+  if (CPUInfo && (CPUInfo->os_support & _CPU_FEATURE_MMX))
     {
       /* MMX Optimized Loop */
 #ifdef __DJGPP__
@@ -7188,7 +7142,7 @@ static void hwcCopyBuffer8888Flipped(hwcBoardInfo *bInfo, FxU16 *source, int w, 
   FxU8 *endline = dst+w*4;
   w*= 4;
   
-  if (bInfo->CPUInfo.os_support & _CPU_FEATURE_MMX)
+  if (CPUInfo && (CPUInfo->os_support & _CPU_FEATURE_MMX))
     {
       /* MMX Optimized Loop */
 #ifdef __DJGPP__
@@ -7323,7 +7277,7 @@ static void hwcCopyBuffer8888FlippedShifted(hwcBoardInfo *bInfo, FxU16 *source, 
   FxU8 *endline = dst+w*4;
   w *= 4;
   
-  if (bInfo->CPUInfo.os_support & _CPU_FEATURE_MMX)
+  if (CPUInfo && (CPUInfo->os_support & _CPU_FEATURE_MMX))
     {
       /* MMX Optimized Loop */
 #ifdef __DJGPP__
@@ -7471,9 +7425,9 @@ static void hwcCopyBuffer8888FlippedDithered(hwcBoardInfo *bInfo, FxU16 *source,
   val_max = (0xFF << aaShift);
   dither_mask = ~((~0) << aaShift);
   
-  if (bInfo->CPUInfo.os_support & _CPU_FEATURE_MMX)
+  if (CPUInfo && (CPUInfo->os_support & _CPU_FEATURE_MMX))
     {
-      FxU32 sse_mmxplus = bInfo->CPUInfo.os_support & (_CPU_FEATURE_MMXPLUS|_CPU_FEATURE_SSE);
+      FxU32 sse_mmxplus = CPUInfo->os_support & (_CPU_FEATURE_MMXPLUS|_CPU_FEATURE_SSE);
 
       /* MMX Optimized Loop */
 #ifdef __DJGPP__
@@ -8074,7 +8028,7 @@ static void hwcCopyBuffer565Shifted(hwcBoardInfo *bInfo, FxU16 *src, int w, int 
   rshift = 8 - aaShift;
 
 
-  if (bInfo->CPUInfo.os_support & _CPU_FEATURE_MMX)
+  if (CPUInfo && (CPUInfo->os_support & _CPU_FEATURE_MMX))
   {
 	  /* MMX Optimized Loop */
 #ifdef __DJGPP__
@@ -8989,11 +8943,12 @@ static char *
 getRegPath() 
 {
   char *retVal = NULL;
-  OSVERSIONINFO ovi;
+  FxI32 OS = hwcGetOS();
   
-  ovi.dwOSVersionInfoSize = sizeof ( ovi );
-  GetVersionEx ( &ovi );
-  if (ovi.dwPlatformId == VER_PLATFORM_WIN32_NT) {
+  if ((OS == OS_WIN32_NT4) ||
+	  (OS == OS_WIN32_2K)  ||
+	  (OS == OS_WIN32_XP))
+  {
     HKEY hKey;
     DWORD type ;
     static char strval[255];
@@ -9324,6 +9279,7 @@ hwcShareContextData(hwcBoardInfo *bInfo, FxU32 **data)
 #if HWC_EXT_INIT
   hwcExtRequest_t ctxReq;
   hwcExtResult_t  ctxRes;
+  FxI32 OS = hwcGetOS();
 
   GDBG_INFO(80, FN_NAME "\n");  
 
@@ -9331,7 +9287,10 @@ hwcShareContextData(hwcBoardInfo *bInfo, FxU32 **data)
   
   if( HWCEXT_PROTOCOL( bInfo->boardNum ) )
   {
-    if (bInfo->osNT) {
+	if ((OS == OS_WIN32_NT4) ||
+		(OS == OS_WIN32_2K)  ||
+		(OS == OS_WIN32_XP))
+	{
       hwcExtRequest_t
         ctxReq;
       hwcExtResult_t
@@ -9394,7 +9353,9 @@ hwcShareContextData(hwcBoardInfo *bInfo, FxU32 **data)
        * check the retVal and the pointer. This also screws with ALT-TAB.
        */
       GDBG_INFO(80, FN_NAME ":  ExtEscape retVal=%d, dwordOffset=%d, contextDWORD=%d\n", retVal, ctxRes.optData.contextDwordNTRes.dwordOffset, ctxRes.optData.shareContextDWORDRes.contextDWORD);
-      if( (retVal <= 0) || (ctxRes.optData.contextDwordNTRes.dwordOffset == 0) || (bInfo->osNT51)) { /* make exceptions for winxp escapecalls */
+      if( (retVal <= 0) || 
+		  (ctxRes.optData.contextDwordNTRes.dwordOffset == 0) || 
+		  (OS == OS_WIN32_XP)) { /* make exceptions for winxp escapecalls */
 #if (WINXP_ALT_TAB_FIX || WINXP_FASTER_ALT_TAB_FIX)
         cLostPointer =
 #endif
@@ -9494,9 +9455,13 @@ hwcUnmapMemory()
   FxU32 i;
   hwcExtRequest_t ctxReq;
   hwcExtResult_t  ctxRes;
+  FxI32 OS = hwcGetOS();
 
   if ( curBI ) {
-    if ( curBI->osNT ) {
+    if ((OS == OS_WIN32_NT4) ||
+		(OS == OS_WIN32_2K)  ||
+		(OS == OS_WIN32_XP))
+	{
       hwcExtRequest_t
         ctxReq;
       hwcExtResult_t
@@ -9508,7 +9473,7 @@ hwcUnmapMemory()
       */
       ctxReq.optData.unmapMemoryReq.procHandle = (ULONG)GetCurrentProcessId();
       
-          ExtEscape((HDC)curBI->hdc, HWCEXT_ESCAPE(curBI->boardNum), 
+      ExtEscape((HDC)curBI->hdc, HWCEXT_ESCAPE(curBI->boardNum), 
                     sizeof(ctxReq), (LPSTR) &ctxReq,
                     sizeof(ctxRes), (LPSTR) &ctxRes);
       curBI->isMapped = FXFALSE;
@@ -10016,3 +9981,72 @@ static  FxI32 valarray[SST_SIPROCESS_OSC_CNTR + 1];    // is this how you do an 
   HWC_IO_STORE(bInfo->regInfo, pllCtrl1, pllCtrl1_save);
 
 }
+
+void
+hwcSetCPUInfo(_p_info *CPUInfo_)
+{
+  CPUInfo = CPUInfo_;
+} /* hwcSetCPUInfo */
+
+#ifdef __WIN32__
+FxI32
+hwcGetOS()
+{
+  static FxI32 OS = -1;
+  OSVERSIONINFO ovi;
+  
+  if ( OS != -1 ) return OS;
+
+  ovi.dwOSVersionInfoSize = sizeof ( ovi );
+  GetVersionEx ( &ovi );
+
+  if (ovi.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS) {
+    if(ovi.dwMajorVersion == 4) {
+	  if (ovi.dwMinorVersion >= 90) {
+	    OS = OS_WIN32_ME;
+	  } else if (ovi.dwMinorVersion >= 10) {
+	    OS = OS_WIN32_98;
+	  } else {
+	    OS = OS_WIN32_95;
+	  }
+	}
+  } else if (ovi.dwPlatformId == VER_PLATFORM_WIN32_NT) {
+    if(ovi.dwMajorVersion == 4) {
+	  OS = OS_WIN32_NT4;
+	} else if(ovi.dwMajorVersion >= 5) {
+	  if (ovi.dwMinorVersion >= 1) {
+	    OS = OS_WIN32_XP;
+	  } else {
+	    OS = OS_WIN32_2K;
+	  }
+	}
+  }
+  
+  switch(OS) {
+	case OS_WIN32_95:
+	  GDBG_INFO(0, "hwcGetOS:  OS = win95\n");
+	  break;
+	case OS_WIN32_98:
+	  GDBG_INFO(0, "hwcGetOS:  OS = win98\n");
+	  break;
+	case OS_WIN32_ME:
+	  GDBG_INFO(0, "hwcGetOS:  OS = winme\n");
+	  break;
+	case OS_WIN32_NT4:
+	  GDBG_INFO(0, "hwcGetOS:  OS = winnt4.0\n");
+	  break;
+	case OS_WIN32_2K:
+	  GDBG_INFO(0, "hwcGetOS:  OS = win2k\n");
+	  break;
+	case OS_WIN32_XP:
+	  GDBG_INFO(0, "hwcGetOS:  OS = winxp\n");
+	  break;
+	default:
+	  GDBG_INFO(0, "hwcGetOS:  OS = unknown\n");
+	  break;
+  }
+
+  return OS;
+#undef FN_NAME
+} /* hwcGetOS */
+#endif /* __WIN32__ */

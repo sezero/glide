@@ -418,8 +418,10 @@ GR_EXT_ENTRY(grSurfaceReleaseContext, void , (GrContext_t ctx) )
        * context by yanking out the hardware mapping!  %%KCD
        */
 #if (GLIDE_OS & GLIDE_OS_WIN32)
-      if ( !gc->bInfo->osNT )
-        hwcUnmapMemory9x ( gc->bInfo );
+	  if ((_GlideRoot.OS == OS_WIN32_95) ||
+		  (_GlideRoot.OS == OS_WIN32_98) ||
+		  (_GlideRoot.OS == OS_WIN32_ME))
+		  hwcUnmapMemory9x ( gc->bInfo );
 #endif
 
       /* Free any windowed fifo associated w/ the context */

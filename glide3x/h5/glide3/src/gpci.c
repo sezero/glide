@@ -1318,16 +1318,12 @@ void
 _GlideInitEnvironment(int which)
 {
 #define FN_NAME "_GlideInitEnvironment"
-  /* int i; */
+  int i;
   FxU32 ditherMode;
   const char* envStr;
   FxU32 ctx = which;
   double pi = 3.1415926535;
   const char* envStr2;
-
-#if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
-  OSVERSIONINFO ovi;
-#endif
 
   if (_GlideRoot.initialized) /* only execute once */
     return;
@@ -1338,15 +1334,7 @@ _GlideInitEnvironment(int which)
 
   
 #if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
-
-  ovi.dwOSVersionInfoSize = sizeof ( ovi );
-  GetVersionEx ( &ovi );
-  if (ovi.dwPlatformId == VER_PLATFORM_WIN32_NT)
-    _GlideRoot.OSWin95 = 0;
-  else
-    _GlideRoot.OSWin95 = 1;
-  GDBG_INFO(80, "%s:  OS = %s\n", FN_NAME, _GlideRoot.OSWin95 ? "W9X" : "WNT");
-
+  _GlideRoot.OS = hwcGetOS();
 #if defined(FX_DLL_ENABLE) && (GLIDE_PLATFORM & GLIDE_OS_WIN32)
   { /* GMT: display the DLL pathname for sanity checking */
     char buf[132] = "failed";
@@ -1908,129 +1896,14 @@ _GlideInitEnvironment(int which)
   
   _GlideRoot.environment.useAppGamma  = GLIDE_GETENV("FX_GLIDE_USE_APP_GAMMA", GC.bInfo->RegPath, 1L);
 
-#if 0 /* use Colourless's CPUID */
-  _GlideRoot.CPUType                       = GLIDE_GETENV("FX_CPU", GC.bInfo->RegPath, _cpu_detect_asm() );
-  /* The FP part of SSE introduces a new architectural state and therefore
-     requires support from the operating system. So even if CPUID indicates
-     support for SSE FP, the application might not be able to use it. If
-     CPUID indicates support for SSE FP, check here whether it is also
-     supported by the OS, and turn off the SSE FP feature bit if there 
-     is no OS support for SSE FP.
-    
-     Operating systems that do not support SSE FP return an illegal
-     instruction exception if execution of an SSE FP instruction is performed. 
-     Here, a sample SSE FP instruction is executed, and is checked for an 
-     exception using the (non-standard) __try/__except mechanism 
-     of Microsoft Visual C.
 
-     Although CR0 can be called from ring3, CR4 must be called from ring0
-     which prevents us from using the CR0.EM and the CR4.OSFXSR bits. The
-     main reason for this indirect method.
-  */
-  if((_GlideRoot.CPUType & 0x10L) == 0x10UL) {
-    __try {
-      __asm _emit 0x0f 
-      __asm _emit 0x56 
-      __asm _emit 0xC0    ;; orps xmm0, xmm0
-    }
-    __except(EXCEPTION_EXECUTE_HANDLER) {
-      GDBG_INFO(0,"SSE is not supported by OS\n");
-      _GlideRoot.CPUType &= ~0x10UL;
-    }
-  }
-  if((_GlideRoot.CPUType & 0x40L) == 0x40UL) {
-    __try {
-      __asm _emit 0x66 
-      __asm _emit 0x0f 
-      __asm _emit 0x57 
-      __asm _emit 0xc0    ;; xorpd xmm0, xmm0
-    }
-    __except(EXCEPTION_EXECUTE_HANDLER) {
-      GDBG_INFO(0,"SSE2 is not supported by OS\n");
-      _GlideRoot.CPUType &= ~0x40UL;
-    }
-  }
-  GDBG_INFO(0,"               cpu: 0x%x\n",_GlideRoot.CPUType);
-
-  /* Setup the basic proc tables based on the cpu type. */
-  {
-    /* Default case - rasterization routines */
-    _GlideRoot.deviceArchProcs.curTriProcs        = _triSetupProcs + 0;
-    _GlideRoot.deviceArchProcs.curDrawTrisProc    = _grDrawTriangles_Default;
-    _GlideRoot.deviceArchProcs.curVertexListProcs = _vertexListProcs[0];
-
-    /* Default case - texture download procs */
-    _GlideRoot.deviceArchProcs.curTexProcs = _texDownloadProcs + 0;
-
-    /* null proc case */
-#define ARRAY_LAST(__array) ((sizeof(__array) / sizeof((__array)[0])) - 1)
-    _GlideRoot.deviceArchProcs.nullTriProcs        = _triSetupProcs + ARRAY_LAST(_triSetupProcs);
-    _GlideRoot.deviceArchProcs.nullDrawTrisProc    = _grDrawTriangles_null;
-    _GlideRoot.deviceArchProcs.nullVertexListProcs = _vertexListProcs[ARRAY_LAST(_vertexListProcs)];
-    _GlideRoot.deviceArchProcs.nullTexProcs        = _texDownloadProcs + ARRAY_LAST(_texDownloadProcs);
-#undef ARRAY_LAST
-
-    /* Check for vendor specific optimization cases */
-    switch((_GlideRoot.CPUType & 0xFFFF0000UL) >> 16UL) {
-    case kCPUVendorIntel:
-      GDBG_INFO(0,"Intel detected\n");
-      break;
-    case kCPUVendorAMD:
-      GDBG_INFO(0,"AMD detected\n");
-      break;
-    case kCPUVendorCyrix:
-      GDBG_INFO(0,"Cyrix detected\n");
-      break;
-    case kCPUVendorIDT:
-      GDBG_INFO(0,"IDT detected\n");
-      break;
-    case kCPUVendorTransmeta:
-      GDBG_INFO(0,"Transmeta detected\n");
-      break;
-    case kCPUVendorUnknown:
-    default:
-      GDBG_INFO(0,"unknown CPU\n");
-      break;
-    }
-
-    if(((_GlideRoot.CPUType & 0xFFFF0000UL) >> 16UL) != kCPUVendorUnknown) {
-#if GL_MMX
-      if ((_GlideRoot.CPUType & 0x1L) == 0x1UL) {  /* check for MMX feature */
-        GDBG_INFO(0,"using MMX\n");
-        _GlideRoot.deviceArchProcs.curTexProcs        = _texDownloadProcs + 2;
-      }
-#endif /* GL_MMX */
-#if GL_SSE
-      if ((_GlideRoot.CPUType & 0x10L) == 0x10UL) {  /* check for SSE FP feature */
-        GDBG_INFO(0,"using SSE\n");
-        _GlideRoot.deviceArchProcs.curTriProcs        = _triSetupProcs + 2;
-        _GlideRoot.deviceArchProcs.curDrawTrisProc    = _grDrawTriangles_SSE;
-        _GlideRoot.deviceArchProcs.curVertexListProcs = _vertexListProcs[2];
-      }
-#endif /* GL_SSE */
-#if GL_AMD3D
-      if ((_GlideRoot.CPUType & 0x2L) == 0x2UL) {  /* check for 3DNow! feature */
-        GDBG_INFO(0,"using 3DNow!\n");
-        _GlideRoot.deviceArchProcs.curTriProcs        = _triSetupProcs + 1;
-        _GlideRoot.deviceArchProcs.curDrawTrisProc    = _grDrawTriangles_3DNow;
-        _GlideRoot.deviceArchProcs.curVertexListProcs = _vertexListProcs[1];
-        _GlideRoot.deviceArchProcs.curTexProcs        = _texDownloadProcs + 1;
-      }
-#endif /* GL_AMD3D */
-#if GL_SSE2
-      if ((_GlideRoot.CPUType & 0x40L) == 0x40UL) {  /* check for SSE2 feature */
-        GDBG_INFO(0,"using SSE2\n");
-        _GlideRoot.deviceArchProcs.curTexProcs        = _texDownloadProcs + 3;
-      }
-#endif /* GL_SSE2*/
-    }
-
-  }
-
-#else
-  
-  /* Get CPU type */
+  /* Get CPU Info */
   _cpuid (&_GlideRoot.CPUType);
+
+#ifndef __linux__
+  /* Pass retrieved CPU Info into minihwc */
+  hwcSetCPUInfo(&_GlideRoot.CPUType);
+#endif
 
   /* Setup the basic proc tables based on the cpu type. */
   {
@@ -2053,7 +1926,7 @@ _GlideInitEnvironment(int which)
     
     /* Check for vendor specific optimization cases */
     GDBG_INFO( 0,"   CPU Vendor: %s\n", _GlideRoot.CPUType.v_name);
-    GDBG_INFO( 0,"    CPU Model: %s\n", _GlideRoot.CPUType.model_name);
+    GDBG_INFO( 0,"   CPU Model : %s\n", _GlideRoot.CPUType.model_name);
     GDBG_INFO(80,"   MMX Support: %c\n", _GlideRoot.CPUType.os_support&_CPU_FEATURE_MMX ? 'Y' : 'N');
     GDBG_INFO(80,"   SSE Support: %c\n", _GlideRoot.CPUType.os_support&_CPU_FEATURE_SSE ? 'Y' : 'N');
     GDBG_INFO(80,"  SSE2 Support: %c\n", _GlideRoot.CPUType.os_support&_CPU_FEATURE_SSE2 ? 'Y' : 'N');
@@ -2070,7 +1943,7 @@ _GlideInitEnvironment(int which)
 
 #if GL_MMX
     if (_GlideRoot.CPUType.os_support & _CPU_FEATURE_MMX) {  /* check for MMX feature */
-      GDBG_INFO(80,"Using MMX Texture Download Functions\n");
+      GDBG_INFO(0,"Using MMX Texture Download Functions\n");
       _GlideRoot.deviceArchProcs.curTexProcs        = _texDownloadProcs + 2;
     }
 #endif /* GL_MMX */
@@ -2084,7 +1957,7 @@ _GlideInitEnvironment(int which)
 #endif /* GL_SSE */
 #if GL_AMD3D
     if (_GlideRoot.CPUType.os_support & _CPU_FEATURE_3DNOW) {  /* check for 3DNow! feature */
-      GDBG_INFO(80,"Using 3DNow! Texture Download Functions\n");
+      GDBG_INFO(0,"Using 3DNow! Texture Download Functions\n");
       _GlideRoot.deviceArchProcs.curTexProcs        = _texDownloadProcs + 1;
       
       GDBG_INFO(0,"Using 3DNow! Geometry Functions\n");
@@ -2100,8 +1973,6 @@ _GlideInitEnvironment(int which)
     }
 #endif /* GL_SSE2*/
   }
-  
-#endif /* use Colourless's CPUID */
 
   
 #if __POWERPC__ && PCI_BUMP_N_GRIND
@@ -2164,13 +2035,10 @@ _GlideInitEnvironment(int which)
 #endif
   } */
   
-
-  /* KoolSmoky - just get the info for the requested sst
+  /* display info for all sst devices */
   for (i = 0; i < _GlideRoot.hwConfig.num_sst; i++) {
     displayBoardInfo(i, &_GlideRoot.hwConfig);
   }
-  */
-  displayBoardInfo(ctx, &_GlideRoot.hwConfig);
   
   _GlideRoot.initialized = FXTRUE;               /* save this for the end */
 } /* _GlideInitEnvironment */

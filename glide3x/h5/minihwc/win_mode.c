@@ -56,6 +56,7 @@
 #include <sst1vid.h>
 #include "qmodes.h"
 #include "setmode.h"
+#include "minihwc.h"
 #define IS_32
 #define Not_VxD
 #include <minivdd.h>
@@ -238,22 +239,16 @@ static char *
 getModesRegPath() 
 {
   char *retVal = NULL;
-  OSVERSIONINFO ovi;
+  FxU32 OS = hwcGetOS();
   
-  ovi.dwOSVersionInfoSize = sizeof ( ovi );
-  GetVersionEx ( &ovi );
-  if (ovi.dwPlatformId == VER_PLATFORM_WIN32_NT) {
+  if ((OS == OS_WIN32_NT4) ||
+      (OS == OS_WIN32_2K)  ||
+      (OS == OS_WIN32_XP))
+  {
     HKEY hKey;
     DWORD type ;
     static char strval[255];
     DWORD szData = sizeof(strval) ;
-
-/*    GDBG_INFO(80, "OS == WNT\n"); */
-    if ( ovi.dwMajorVersion >= 5 && ovi.dwMinorVersion >= 1) {
-      GDBG_INFO(80, "REGPATH: OS == NT5.1\n");
-    } else {
-      GDBG_INFO(80, "REGPATH: OS == NT4\n");
-    }
 
     /* Go fishing for the registry path on Win2K */
     if (RegOpenKey(HKEY_LOCAL_MACHINE, "HARDWARE\\DEVICEMAP\\VIDEO", &hKey) == ERROR_SUCCESS)
@@ -327,7 +322,7 @@ setVideoMode( HWND hwnd, int xRes, int yRes, int h3pixelSize, int refresh, void 
   //HRESULT ddRVal;
   //DWORD style;
 #ifdef IS_ALT_TAB
-  OSVERSIONINFO ovi;
+  FxU32 OS = hwcGetOS();
 
   /* reset fullscreen flag */
   is_fullscreen = FXFALSE;
@@ -445,12 +440,6 @@ setVideoMode( HWND hwnd, int xRes, int yRes, int h3pixelSize, int refresh, void 
 
   
 //  checkSpecialList();
-
-#ifdef IS_ALT_TAB
-  /* get os version */
-  ovi.dwOSVersionInfoSize = sizeof ( ovi );
-  GetVersionEx ( &ovi );
-#endif
   
   if (lpDD == NULL) {
     /* only create directdraw object once */
@@ -542,8 +531,8 @@ setVideoMode( HWND hwnd, int xRes, int yRes, int h3pixelSize, int refresh, void 
   devMode.dmBitsPerPel = bpp;
   devMode.dmDisplayFrequency = refresh;
 
-  if(((ovi.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS) && (ovi.dwMinorVersion < 10)) ||
-     ((ovi.dwPlatformId == VER_PLATFORM_WIN32_NT) && (ovi.dwMajorVersion < 5)))
+  if ((OS == OS_WIN32_95) ||
+      (OS == OS_WIN32_NT4)) 
   {
     // win95,nt4
     if(ChangeDisplaySettings(&devMode, CDS_FULLSCREEN) == DISP_CHANGE_SUCCESSFUL)
@@ -800,7 +789,7 @@ resetVideo( void )
 #define FN_NAME "resetVideo"
 
 #ifdef IS_ALT_TAB
-  OSVERSIONINFO ovi;
+  FxU32 OS = hwcGetOS();
 #endif
   
   GDBG_INFO(80, "%s:  called!\n", FN_NAME);
@@ -840,13 +829,9 @@ resetVideo( void )
 #endif
 
 #ifdef IS_ALT_TAB
-  /* get os version */
-  ovi.dwOSVersionInfoSize = sizeof ( ovi );
-  GetVersionEx ( &ovi );
-
   //ChangeDisplaySettings(NULL, 0);
-  if(((ovi.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS) && (ovi.dwMinorVersion < 10)) ||
-     ((ovi.dwPlatformId == VER_PLATFORM_WIN32_NT) && (ovi.dwMajorVersion < 5)))
+  if ((OS == OS_WIN32_95) ||
+      (OS == OS_WIN32_NT4)) 
   {
     // win95,nt4
     /* KoolSmoky - ripped from quake3 */
@@ -952,13 +937,9 @@ checkResolutions( FxBool *supportedByResolution, FxU32 stride, void *hmon, int h
 #define FN_NAME "checkResolution"
   DEVMODE chkDevMode;
   DWORD chkRes, chkRefresh;
-  OSVERSIONINFO ovi;
+  FxU32 OS = hwcGetOS();
 
   GDBG_INFO(80, "%s:  called!\n", FN_NAME);
-
-  /* get os version */
-  ovi.dwOSVersionInfoSize = sizeof ( ovi );
-  GetVersionEx ( &ovi );
 
   chkDevMode.dmSize   = sizeof(DEVMODE);
   chkDevMode.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT | DM_BITSPERPEL | DM_DISPLAYFREQUENCY;
@@ -980,8 +961,8 @@ checkResolutions( FxBool *supportedByResolution, FxU32 stride, void *hmon, int h
       chkDevMode.dmDisplayFrequency  = refresh[chkRefresh];
 
       //ChangeDisplaySettings(NULL, 0);
-      if(((ovi.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS) && (ovi.dwMinorVersion < 10)) ||
-         ((ovi.dwPlatformId == VER_PLATFORM_WIN32_NT) && (ovi.dwMajorVersion < 5)))
+	  if ((OS == OS_WIN32_95) ||
+          (OS == OS_WIN32_NT4))
       {
         // win95,nt4
         if(ChangeDisplaySettings(&chkDevMode, CDS_TEST) == DISP_CHANGE_SUCCESSFUL)

@@ -502,8 +502,6 @@ typedef struct hwcBoardInfo_s {
   FxU32
     lostContextDWORD;
   FxBool
-    osNT;
-  FxBool
     isMapped;
   FxU32
     procHandle;
@@ -512,10 +510,8 @@ typedef struct hwcBoardInfo_s {
   FxI32 hwcProtocol;
   FxU32 devNode ;   /* AJB- DevNode from display driver for minivdd ioctls */
   FxI16/*FxI32*/ hwcEscape ; /* AJB- sucky: H5 TOT uses a diff't escape code than H3 */ /* KoolSmoky - new escape code for winxp *//* revert back to previous for now */
-  FxBool osNT51;    /* KoolSmoky- WinXP flag */
   char RegPath[255];    /* KoolSmoky - Device registry path */
   char DeviceName[32];  /* KoolSmoky - Device Name */
-  _p_info CPUInfo; /* Colourless - CPU info */
 } hwcBoardInfo;
 
 
@@ -624,6 +620,15 @@ hwcCheckMemSize(hwcBoardInfo *bInfo, FxU32 xres, FxU32 yres, FxU32 nColBuffers,
                 FxU32 nAuxBuffers, FxBool tiled);
 
 #ifdef __WIN32__
+
+#define OS_WIN32_95  0
+#define OS_WIN32_98  1
+#define OS_WIN32_ME  2
+#define OS_WIN32_NT4 3
+#define OS_WIN32_2K  4
+#define OS_WIN32_XP  5
+FxI32
+hwcGetOS();
 
 FxU32
 hwcAllocWinContext(hwcBoardInfo* bInfo);
@@ -769,3 +774,6 @@ extern void hwcAAReadRegion(hwcBoardInfo *bInfo, FxU32 colBufNum,
 void hwcCalcSipValue(hwcBoardInfo *bInfo, FxU32 chipNum, FxU32 *nandChain, FxU32 *norChain);
 
 #endif                          /* MINIHWC_H not defined */
+
+void
+hwcSetCPUInfo(_p_info *CPUInfo_);
