@@ -66,7 +66,7 @@ if FX_GLIDE_CTRISETUP
 FX_GLIDE_CTRISETUP_VDEFS = -DGLIDE_USE_C_TRISETUP
 else
 FX_GLIDE_CTRISETUP_VDEFS = -DGLIDE_PACKED_RGB=0 \
-						   -DGLIDE_TRI_CULLING=1
+                           -DGLIDE_TRI_CULLING=1
 endif
 
 if FX_GLIDE_NO_PLUG
@@ -100,6 +100,10 @@ if GL_AMD3D
 GL_AMD3D_SRC = xtexdl_3dnow.S xdraw2_3dnow.S xdraw3_3dnow.S
 endif
 
+if HAL_CSIM
+HAL_CSIM_INCLUDES = -I@top_srcdir@/@FX_GLIDE_HW@/csim
+endif
+
 VDEFS = $(FX_CHRIS_DENIS_ANTHONY_HACK_VDEFS) \
         $(FX_GLIDE_ALT_TAB_VDEFS) \
         $(FX_GLIDE_DIRECT_WRITE_VDEFS) \
@@ -109,7 +113,8 @@ VDEFS = $(FX_CHRIS_DENIS_ANTHONY_HACK_VDEFS) \
         $(FX_GLIDE_CTRISETUP_VDEFS) \
         $(FX_GLIDE_NO_PLUG_VDEFS) \
         $(FX_GLIDE_NO_SPLASH_VDEFS) \
-        $(GLIDE_DEBUG_VDEFS)
+        $(GLIDE_DEBUG_VDEFS) \
+        $(HAL_CSIM_INCLUDES)
 
 LDEFS = -DGLIDE_INIT_HWC \
         -DGLIDE_LIB      \
@@ -118,30 +123,16 @@ LDEFS = -DGLIDE_INIT_HWC \
         -DH3
 
 #
-# Now, we define the includes, first the variable ones,
-# and then the fixed ones.
-#
-if HAL_CSIM
-HAL_CSIM_INCLUDES = -I@top_srcdir@/@FX_GLIDE_HW@/csim
-endif
-
-VINCLUDES = $(HAL_CSIM_INCLUDES)
-
-#
-# Nothing for CPPFLAGS or OPTS here.
-#
-
-#
 # Special rules for assembly files.
 #
 cpudtect.o cpudtect.lo: cpudtect.S
-	libtool --mode=compile $(CC) -$$ -I$(top_builddir)/@FX_GLIDE_HW@/glide3/src $(AFLAGS) -c -o $*.o $<
+	libtool --mode=compile $(CCAS) -$$ -I$(top_builddir)/@FX_GLIDE_HW@/glide3/src $(CCASFLAGS) -c -o $*.o $<
 
 xdraw2_def.o xdraw2_def.lo: xdraw2.S xdraw2.inc.S fxgasm.h
-	libtool --mode=compile $(CC) -$$ -I$(top_builddir)/@FX_GLIDE_HW@/glide3/src $(AFLAGS) -c -o $*.o $<
+	libtool --mode=compile $(CCAS) -$$ -I$(top_builddir)/@FX_GLIDE_HW@/glide3/src $(CCASFLAGS) -c -o $*.o $<
 
 xdraw3_def.o xdraw3_def.lo: xdraw3.S fxgasm.h
-	libtool --mode=compile $(CC) -$$ -I$(top_builddir)/@FX_GLIDE_HW@/glide3/src $(AFLAGS) -c -o $*.o $<
+	libtool --mode=compile $(CCAS) -$$ -I$(top_builddir)/@FX_GLIDE_HW@/glide3/src $(CCASFLAGS) -c -o $*.o $<
 
 # 3DNow!(tm) dependencies
 # XXX_def.obj targets are the default targets
@@ -149,13 +140,13 @@ xdraw3_def.o xdraw3_def.lo: xdraw3.S fxgasm.h
 if GL_AMD3D
 
 xdraw2_3dnow.o xdraw2_3dnow.lo: xdraw2.S xdraw2.inc.S fxgasm.h
-	libtool --mode=compile $(CC) -$$ -I$(top_builddir)/@FX_GLIDE_HW@/glide3/src $(AFLAGS) -DGL_AMD3D -DUSE_PACKET_FIFO=1 -c -o $*.o $<
+	libtool --mode=compile $(CCAS) -$$ -I$(top_builddir)/@FX_GLIDE_HW@/glide3/src $(CCASFLAGS) -DGL_AMD3D -DUSE_PACKET_FIFO=1 -c -o $*.o $<
 
 xdraw3_3dnow.o xdraw3_3dnow.lo: xdraw3.S fxgasm.h
-	libtool --mode=compile $(CC) -$$ -I$(top_builddir)/@FX_GLIDE_HW@/glide3/src $(AFLAGS) -DGL_AMD3D -DUSE_PACKET_FIFO=1 -c -o $*.o $<
+	libtool --mode=compile $(CCAS) -$$ -I$(top_builddir)/@FX_GLIDE_HW@/glide3/src $(CCASFLAGS) -DGL_AMD3D -DUSE_PACKET_FIFO=1 -c -o $*.o $<
 
 xtexdl_3dnow.o xtexdl_3dnow.lo: xtexdl.S fxgasm.h
-	libtool --mode=compile $(CC) -$$ -I$(top_builddir)/@FX_GLIDE_HW@/glide3/src $(AFLAGS) -DGL_AMD3D -DUSE_PACKET_FIFO=1 -c -o $*.o $<
+	libtool --mode=compile $(CCAS) -$$ -I$(top_builddir)/@FX_GLIDE_HW@/glide3/src $(CCASFLAGS) -DGL_AMD3D -DUSE_PACKET_FIFO=1 -c -o $*.o $<
 
 endif
 

@@ -20,16 +20,12 @@
 ## $Revision$
 ## $Date$
 ##
-if GLIDE_DEBUG
-GLIDE_DEBUG_DEFS = -DGDBG_INFO_ON
-endif
 
 if DRI_BUILD
 DRI_BUILD_VDEFS = -DDRI_BUILD
 endif
 
 VDEFS            = $(DRI_BUILD_VDEFS)
-LDEFS            = $(GLIDE_DEBUG_DEFS)
 
 noinst_HEADERS         = fxpci.h sst1_pci.h pcilib.h
 noinst_LTLIBRARIES     = libfxpci.la

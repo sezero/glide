@@ -42,12 +42,8 @@
 ## $Revision$
 ## $Date$
 ##
-if GLIDE_DEBUG
-else
-GLIDE_DEBUG_VDEFS = -g
-endif
 
-LDEFS = -DINIT_LINUX $(GLIDE_DEBUG_VDEFS)
+LDEFS = -DINIT_LINUX
 
 lib_LTLIBRARIES             = libsst1init.la
 libsst1init_la_SOURCES      = sst1init.c info.c print.c parse.c \

@@ -24,13 +24,7 @@
 # First, the variable defs.
 #
 
-if GLIDE_DEBUG
-GLIDE_DEBUG_VDEFS=-DGDBG_INFO_ON
-endif
-
-OSDEPC = linhwc.c 
-
-VDEFS                  = $(GLIDE_DEBUG_VDEFS)
+OSDEPC = linhwc.c
 
 noinst_LTLIBRARIES     = libminihwc.la
 libminihwc_la_SOURCES  = hwcio.c gdebug.c $(OSDEPC)

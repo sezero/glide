@@ -20,54 +20,25 @@
 ## $Revision$
 ## $Date$
 ##
-#
+
 # Always set make, so that we get the right makefile.
 MAKE=@MAKE@
-#
-# Here we have global definitions.
-#
-#
-# Then we have compiler flag definitions.
-#
-CPPFLAGS  = $(GCPPFLAGS)  $(LCPPFLAGS)  $(VCPPFLAGS)
-DEFS      = $(GDEFS)      $(LDEFS)      $(VDEFS)
-INCLUDES  = $(GINCLUDES)  $(LINCLUDES)  $(VINCLUDES)
-CFLAGS    = $(GCFLAGS)    $(LCFLAGS)    $(VCFLAGS)
 
-AFLAGS    = $(GAFLAGS)    $(LAFLAGS)    $(VAFLAGS)
-ADEFS     = $(GADEFS)     $(LADEFS)     $(VADEFS)
-AINCLUDES = $(GAINCLUDES) $(LAINCLUDES) $(VAINCLUDES)
-AOPTS     = $(GAOPTS)     $(LAOPTS)     $(VAOPTS)
+#
+# User Overrideable FLAGS
+#
 
-########################################################################
-#
-# Compilation flags, options and includes
-#
-########################################################################
-#
-# Global CFLAGS
-#
 ifeq ("@GLIDE_DEBUG@","true")
-GLIDE_DEBUG_GCFLAGS = -g -O
-GLIDE_DEBUG_GDEFS = -DGDBG_INFO_ON -DGLIDE_DEBUG
+GLIDE_DEBUG_CFLAGS = -O
+GLIDE_DEBUG_CPPFLAGS = -DGDBG_INFO_ON -DGLIDE_DEBUG
 else
-GLIDE_DEBUG_GCFLAGS = -O6 -mcpu=pentium
-GLIDE_DEBUG_GDEFS = -fomit-frame-pointer -funroll-loops \
-	                -fexpensive-optimizations -ffast-math -DBIG_OPT
+GLIDE_DEBUG_CFLAGS = -O6 -mcpu=pentium -fomit-frame-pointer -funroll-loops \
+                     -fexpensive-optimizations -ffast-math -DBIG_OPT
 endif
-GCFLAGS = $(GLIDE_DEBUG_GCFLAGS)
-#
-# Global DEFS
-#
-# This variable may require -DENDB.  The original Linux build
-# used it, but the Windows build didn't.  It seems to mean
-# Big Endian, which is not the case for the x86.  It is only
-# used in texus2 as far as I can see.
-#
-GDEFS=-DX11 $(GLIDE_DEBUG_GDEFS) -Wall
-#
-# Global INCLUDES
-#
+
+CFLAGS = -Wall -g $(GLIDE_DEBUG_CFLAGS)
+CPPFLAGS = @CPPFLAGS@ $(GLIDE_DEBUG_CPPFLAGS)
+
 ifeq ("@FX_GLIDE_HW@","cvg")
 CVG_VINCLUDES= -I$(top_srcdir)/init \
                -I$(top_srcdir)/cvg/glide3/src \
@@ -88,15 +59,16 @@ H5_VINCLUDES = -I$(top_srcdir)/h5/glide3/src \
                -I$(top_srcdir)/h5/minihwc
 endif
 
-GINCLUDES = $(CVG_VINCLUDES) $(H3_VINCLUDES) $(H5_VINCLUDES) \
-			-I. \
+# This variable may require -DENDB.  The original Linux build
+# used it, but the Windows build didn't.  It seems to mean
+# Big Endian, which is not the case for the x86.  It is only
+# used in texus2 as far as I can see.
+
+AM_CPPFLAGS = -DX11 $(LDEFS) $(VDEFS) \
+            $(CVG_VINCLUDES) $(H3_VINCLUDES) $(H5_VINCLUDES) \
+            -I. \
             -I$(top_srcdir)/swlibs/fxmemmap \
             -I$(top_srcdir)/swlibs/fxmisc \
             -I$(top_srcdir)/swlibs/newpci/pcilib \
             -I$(top_srcdir)/swlibs/@TEXTURE_UTILITIES_DIR@/lib
 
-########################################################################
-#
-# Linker definitions
-#
-########################################################################

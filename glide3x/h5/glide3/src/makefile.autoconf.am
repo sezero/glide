@@ -130,6 +130,11 @@ FX_GLIDE_CTRISETUP_VDEFS = -DGLIDE_USE_C_TRISETUP
 else
 FX_GLIDE_CTRISETUP_VDEFS = -DGLIDE_PACKED_RGB=0 -DGLIDE_TRI_CULLING=1
 endif
+
+if HAL_CSIM
+HAL_CSIM_INCLUDES = -I@top_srcdir@/@FX_GLIDE_HW@/csim
+endif
+
 VDEFS = $(FX_CHRIS_DENIS_ANTHONY_HACK_VDEFS) \
         $(FX_GLIDE_ALT_TAB_VDEFS) \
         $(FX_GLIDE_DIRECT_WRITE_VDEFS) \
@@ -151,19 +156,14 @@ VDEFS = $(FX_CHRIS_DENIS_ANTHONY_HACK_VDEFS) \
         $(HAL_CSIM_VDEFS) \
         $(HAL_HW_VDEFS) \
         $(FX_GLIDE_HW_CULL_VDEFS) \
-        $(FX_GLIDE_CTRISETUP_VDEFS)
+        $(FX_GLIDE_CTRISETUP_VDEFS) \
+        $(HAL_CSIM_INCLUDES)
 
 LDEFS = -DGLIDE_LIB -DGLIDE3 -DGLIDE3_ALPHA -DH3 $(CMDXPORTDEFS)
 
 #
-# Now, we define the includes, first the variable ones,
-# and then the fixed ones.
+# Special rules for assembly files.
 #
-if HAL_CSIM
-HAL_CSIM_INCLUDES = -I@top_srcdir@/@FX_GLIDE_HW@/csim
-endif
-
-VINCLUDES = $(HAL_CSIM_INCLUDES)
 
 #
 # Nothing for CPPFLAGS or OPTS here.
