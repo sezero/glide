@@ -409,7 +409,7 @@ txMipNccNNet(TxMip *pxMip, TxMip *txMip, int format, FxU32 dither, FxU32 comp)
     txMapPal256toYAB((FxU32 *)yabTable, (FxU8 *)map, ncolors, (FxU32 *)pxMip->pal);
     if( txVerbose )
       {
-        printf("eMax=(%3d%3d%3d)...eAvg=(%3d%3d%3d)\n", 
+        printf("eMax=(%3ld%3ld%3ld)...eAvg=(%3ld%3ld%3ld)\n",
                errG, errR, errB, 
                totG/ncolors, totR/ncolors, totB/ncolors
                );
