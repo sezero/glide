@@ -21,13 +21,12 @@
 **
 */
 
+
 #define MANVERSION              3
 #define MANREVISION             10
 #define MINVERSION              00
 
-#ifdef __WIN32__
 #define BUILD_NUMBER            3001 /* hmm, must be at least 674 for the 3dfx OpenGL ICD to work correctly */
-#endif
 
 #define VERSIONSTR "3.10.00.3001"
 #define CONTACTSTR "The Glide Open Source Project http://glide.sourceforge.net/"
@@ -68,8 +67,8 @@
 #     define PRODNAME "Glide" _REGISTERED_ " for Voodoo^2" _COPYRIGHT_ " & Windows" _REGISTERED_ " 95/98"
 #   endif /* NT_BUILD */
 #elif defined(H3) || defined(H5)
-#   define HWSTR   " Voodoo Banshee" _REGISTERED_ ", Voodoo3" _REGISTERED_ ", Velocity" _TRADEMARK_ " 100/200, Voodoo4" _REGISTERED_ ", & Voodoo5" _REGISTERED_ ""
-#     define PRODNAME "Glide" _REGISTERED_ " for Voodoo Banshee" _REGISTERED_ ", Voodoo3" _REGISTERED_ ", Velocity" _TRADEMARK_ " 100/200, Voodoo4" _REGISTERED_ ", & Voodoo5" _REGISTERED_ "; Windows 95" _REGISTERED_ ", Windows 98" _REGISTERED_ ", Windows NT" _REGISTERED_ ""
+#   define HWSTR   " Voodoo Banshee" _REGISTERED_ ", Velocity" _TRADEMARK_ " 100/200, Voodoo3" _REGISTERED_ ", Voodoo4" _REGISTERED_ ", & Voodoo5" _REGISTERED_
+#     define PRODNAME "Glide" _REGISTERED_ " for Voodoo Banshee" _REGISTERED_ ", Velocity" _TRADEMARK_ "100/200, Voodoo3" _REGISTERED_ " , Voodoo4" _REGISTERED_ ", & Voodoo5" _REGISTERED_ "; Windows" _REGISTERED_ " 95/98/Me/NT4/2000/XP"
 #else
 #   define HWSTR   "Some Hoopti Chip" _REGISTERED_ ""
 #endif
