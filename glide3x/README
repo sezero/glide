@@ -1,35 +1,3 @@
-Glide3x (01-oct-2004):
-~~~~~~~~~~~~~~~~~~~~~~
-sst1:	HW:		Voodoo Graphics XOR Voodoo Rush
-	Status:		DOS	- working (compiled with DJGPP)
-			Linux	- V1 working, VR needs testing
-			Win32	- N/A
-	Notes:		grDrawPoint has type-punning problems (gcc -O2)
-			V1 library cannot be used with VR (and vice-versa)
-	Maintainers:	Daniel Borca
-
-cvg:	HW:		Voodoo^2
-	Status:		DOS	- working (compiled with DJGPP)
-			Linux	- working
-			Win32	- N/A
-	Notes:		grDrawPoint has type-punning problems (gcc -O2)
-	Maintainers:	Daniel Borca
-
-h3:	HW:		Voodoo Banshee, Voodoo3
-	Status:		DOS	- working (compiled with DJGPP)
-			Linux	- DRI working, DGA needs testing, CINIT broken
-			Win32	- N/A
-	Notes:		grDrawPoint has type-punning problems (gcc -O2)
-	Maintainers:	Daniel Borca, Guillem Jover
-
-h5:	HW:		Voodoo Banshee, Velocity 100/200, Voodoo3/4/5
-	Status:		DOS	- working (compiled with DJGPP)
-			Linux	- DRI working, DGA needs testing, CINIT broken
-			Win32	- working (compiled with MSVC)
-	Maintainers:	Hiroshi Morii, Daniel Borca, Guillem Jover
-
-------------------------------------------------------------------------------
-
 Look at the INSTALL file for more information on installing Glide3.
 
 Here are a few notes about building Glide3x from CVS.
