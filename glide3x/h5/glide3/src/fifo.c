@@ -1,25 +1,31 @@
 /*
- ** THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONLY
- ** PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGHT
- ** TO USE THE GLIDE TRADEMARK WITHOUT PRIOR WRITTEN PERMISSION OF 3DFX
- ** INTERACTIVE, INC. A COPY OF THIS LICENSE MAY BE OBTAINED FROM THE 
- ** DISTRIBUTOR OR BY CONTACTING 3DFX INTERACTIVE INC(info@3dfx.com). 
- ** THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER 
- ** EXPRESSED OR IMPLIED. SEE THE 3DFX GLIDE GENERAL PUBLIC LICENSE FOR A
- ** FULL TEXT OF THE NON-WARRANTY PROVISIONS.  
- ** 
- ** USE, DUPLICATION OR DISCLOSURE BY THE GOVERNMENT IS SUBJECT TO
- ** RESTRICTIONS AS SET FORTH IN SUBDIVISION (C)(1)(II) OF THE RIGHTS IN
- ** TECHNICAL DATA AND COMPUTER SOFTWARE CLAUSE AT DFARS 252.227-7013,
- ** AND/OR IN SIMILAR OR SUCCESSOR CLAUSES IN THE FAR, DOD OR NASA FAR
- ** SUPPLEMENT. UNPUBLISHED RIGHTS RESERVED UNDER THE COPYRIGHT LAWS OF
- ** THE UNITED STATES.  
- ** 
- ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
- **
+** THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONLY
+** PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGHT
+** TO USE THE GLIDE TRADEMARK WITHOUT PRIOR WRITTEN PERMISSION OF 3DFX
+** INTERACTIVE, INC. A COPY OF THIS LICENSE MAY BE OBTAINED FROM THE
+** DISTRIBUTOR OR BY CONTACTING 3DFX INTERACTIVE INC(info@3dfx.com).
+** THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER
+** EXPRESSED OR IMPLIED. SEE THE 3DFX GLIDE GENERAL PUBLIC LICENSE FOR A 
+** FULL TEXT OF THE NON-WARRANTY PROVISIONS. 
+**
+** USE, DUPLICATION OR DISCLOSURE BY THE GOVERNMENT IS SUBJECT TO
+** RESTRICTIONS AS SET FORTH IN SUBDIVISION (C)(1)(II) OF THE RIGHTS IN
+** TECHNICAL DATA AND COMPUTER SOFTWARE CLAUSE AT DFARS 252.227-7013,
+** AND/OR IN SIMILAR OR SUCCESSOR CLAUSES IN THE FAR, DOD OR NASA FAR
+** SUPPLEMENT. UNPUBLISHED RIGHTS RESERVED UNDER THE COPYRIGHT LAWS OF
+** THE UNITED STATES. 
+**
+** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
+ *
  ** $Header$
  ** $Log: 
- **  10   3dfx      1.9         05/11/00 Bill White      Merged changes for Linux.
+ **  12   3dfx      1.8.1.2     06/20/00 Joseph Kain     Fixed errors introduced by
+ **       my previous merge.
+ **  11   3dfx      1.8.1.1     06/20/00 Joseph Kain     Changes to support the
+ **       Napalm Glide open source release.  Changes include cleaned up offensive
+ **       comments and new legal headers.
+ **  10   3dfx      1.8.1.0     06/15/00 Bill White      Merged changes to support
+ **       Linux.
  ** 
  **  9    3dfx      1.8         04/21/00 Kenneth Dyke    Magic FX_GLIDE_NO_HW
  **       support.
@@ -33,14 +39,14 @@
  **  6    3dfx      1.5         02/07/00 Kenneth Dyke    Fixes for slave fifo
  **       checking.
  **  5    3dfx      1.4         01/30/00 Adam Briggs     get napalm status correctly
- **  4    3dfx      1.3         01/24/00 Adam Briggs     added some debugging output
+ **  4    3dfx      1.3         01/23/00 Adam Briggs     added some debugging output
  **       for slave chip fifos
  **  3    3dfx      1.2         01/21/00 Adam Briggs     some changes to get the
  **       correct linear mappings for slave regs and use them to sync the fifos in
  **       sli mode
- **  2    3dfx      1.1         01/19/00 Kenneth Dyke    Fifo check timeout debug
+ **  2    3dfx      1.1         01/18/00 Kenneth Dyke    Fifo check timeout debug
  **       level change.
- **  1    3dfx      1.0         09/12/99 StarTeam VTS Administrator 
+ **  1    3dfx      1.0         09/11/99 StarTeam VTS Administrator 
  ** $
 ** 
 ** 32    4/16/99 2:45p Kcd

@@ -2,24 +2,30 @@
 ** THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONLY
 ** PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGHT
 ** TO USE THE GLIDE TRADEMARK WITHOUT PRIOR WRITTEN PERMISSION OF 3DFX
-** INTERACTIVE, INC. A COPY OF THIS LICENSE MAY BE OBTAINED FROM THE 
-** DISTRIBUTOR OR BY CONTACTING 3DFX INTERACTIVE INC(info@3dfx.com). 
-** THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER 
-** EXPRESSED OR IMPLIED. SEE THE 3DFX GLIDE GENERAL PUBLIC LICENSE FOR A
-** FULL TEXT OF THE NON-WARRANTY PROVISIONS.  
-** 
+** INTERACTIVE, INC. A COPY OF THIS LICENSE MAY BE OBTAINED FROM THE
+** DISTRIBUTOR OR BY CONTACTING 3DFX INTERACTIVE INC(info@3dfx.com).
+** THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER
+** EXPRESSED OR IMPLIED. SEE THE 3DFX GLIDE GENERAL PUBLIC LICENSE FOR A 
+** FULL TEXT OF THE NON-WARRANTY PROVISIONS. 
+**
 ** USE, DUPLICATION OR DISCLOSURE BY THE GOVERNMENT IS SUBJECT TO
 ** RESTRICTIONS AS SET FORTH IN SUBDIVISION (C)(1)(II) OF THE RIGHTS IN
 ** TECHNICAL DATA AND COMPUTER SOFTWARE CLAUSE AT DFARS 252.227-7013,
 ** AND/OR IN SIMILAR OR SUCCESSOR CLAUSES IN THE FAR, DOD OR NASA FAR
 ** SUPPLEMENT. UNPUBLISHED RIGHTS RESERVED UNDER THE COPYRIGHT LAWS OF
-** THE UNITED STATES.  
-** 
+** THE UNITED STATES. 
+**
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
 ** $Header$
 ** $Log: 
-**  36   3dfx      1.35        05/11/00 Bill White      Merged changes for Linux.
+**  38   3dfx      1.34.1.2    06/20/00 Joseph Kain     Fixed errors introduced in
+**       merge.
+**  37   3dfx      1.34.1.1    06/20/00 Joseph Kain     Changes to support the
+**       Napalm Glide open source release.  Changes include cleaned up offensive
+**       comments and new legal headers.
+**  36   3dfx      1.34.1.0    06/15/00 Bill White      Merged changes to support
+**       Linux.
 ** 
 **  35   3dfx      1.34        04/21/00 Kenneth Dyke    Magic FX_GLIDE_NO_HW
 **       support.
@@ -38,7 +44,7 @@
 ** 
 **  29   3dfx      1.28        03/23/00 Kenneth Dyke    Change 2PPC band height
 **       default to 2.
-**  28   3dfx      1.27        03/22/00 Kenneth Dyke    Performance tweaks to
+**  28   3dfx      1.27        03/21/00 Kenneth Dyke    Performance tweaks to
 **       default env vars.  Added env for disabling SLI band height clamp.
 **  27   3dfx      1.26        03/16/00 Adam Briggs     default FX_GLIDE_WAX_ON to
 **       1
@@ -60,12 +66,12 @@
 **  19   3dfx      1.18        01/31/00 Adam Briggs     Changed all device ID magic
 **       numbers to use those defined in fxhal.h & added IS_NAPALM macro to test
 **       against device ID range
-**  18   3dfx      1.17        01/24/00 Adam Briggs     set & recognize the SSTTYPE
+**  18   3dfx      1.17        01/23/00 Adam Briggs     set & recognize the SSTTYPE
 **       var for Voodoo4
 **  17   3dfx      1.16        01/21/00 Adam Briggs     some changes to get the
 **       correct linear mappings for slave regs and use them to sync the fifos in
 **       sli mode
-**  16   3dfx      1.15        01/19/00 Kenneth Dyke    Added environment variables
+**  16   3dfx      1.15        01/18/00 Kenneth Dyke    Added environment variables
 **       for configuring AA jitter offsets.
 **  15   3dfx      1.14        01/16/00 Kenneth Dyke    Triangle column width
 **       tweaking.
@@ -77,7 +83,7 @@
 **  12   3dfx      1.11        12/10/99 Kenneth Dyke    Ugh.  Undid some changes
 **       for backwards compatibility.
 ** 
-**  11   3dfx      1.10        12/09/99 Kenneth Dyke    Fixed stupid macro problem.
+**  11   3dfx      1.10        12/08/99 Kenneth Dyke    Fixed stupid macro problem.
 **  10   3dfx      1.9         12/08/99 Kenneth Dyke    Environment variable
 **       checking is now actually sane and based on the value of the variable and
 **       not just its presence.
@@ -98,8 +104,9 @@
 **  3    3dfx      1.2         09/22/99 Larry  warner   Created download procedures
 **       for FXT1 format.
 **  2    3dfx      1.1         09/13/99 Anthony tai     added napalm tmu case
-**  1    3dfx      1.0         09/12/99 StarTeam VTS Administrator 
+**  1    3dfx      1.0         09/11/99 StarTeam VTS Administrator 
 ** $
+** 
 ** 
 ** 74    8/31/99 5:48p Atai
 ** fixed chip count

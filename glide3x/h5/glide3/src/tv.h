@@ -20,6 +20,9 @@
 ** $Revision$ 
 ** $Date$
 ** $Log: 
+**  3    3dfx      1.1.1.0     06/20/00 Joseph Kain     Changes to support the
+**       Napalm Glide open source release.  Changes include cleaned up offensive
+**       comments and new legal headers.
 **  2    3dfx      1.1         09/24/99 Mark McMahon    Fixed PRS 7906: 
 **       Incorrect memory size reported by control panel in SLI mode
 **  1    3dfx      1.0         09/12/99 StarTeam VTS Administrator 

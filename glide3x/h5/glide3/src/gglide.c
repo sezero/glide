@@ -1,26 +1,41 @@
 /*
 ** THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONLY
 ** PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGHT
-** TO USE THE GLIDE TRADEMARK WITHOUT PRIOR WRITTEN PERMISSION OF 3DFX
-** INTERACTIVE, INC. A COPY OF THIS LICENSE MAY BE OBTAINED FROM THE 
-** DISTRIBUTOR OR BY CONTACTING 3DFX INTERACTIVE INC(info@3dfx.com). 
-** THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER 
+** TO USE THE GLIDE TRADEMARK WITHOUT PRIOR WRITTEN PERMISSION OF 3DF
+** INTERACTIVE, INC. A COPY OF THIS LICENSE MAY BE OBTAINED FROM THE
+** DISTRIBUTOR OR BY CONTACTING 3DFX INTERACTIVE INC(info@3dfx.com).
+** THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER
 ** EXPRESSED OR IMPLIED. SEE THE 3DFX GLIDE GENERAL PUBLIC LICENSE FOR A
-** FULL TEXT OF THE NON-WARRANTY PROVISIONS.  
-** 
+** FULL TEXT OF THE NON-WARRANTY PROVISIONS. 
+**
 ** USE, DUPLICATION OR DISCLOSURE BY THE GOVERNMENT IS SUBJECT TO
 ** RESTRICTIONS AS SET FORTH IN SUBDIVISION (C)(1)(II) OF THE RIGHTS IN
 ** TECHNICAL DATA AND COMPUTER SOFTWARE CLAUSE AT DFARS 252.227-7013,
 ** AND/OR IN SIMILAR OR SUCCESSOR CLAUSES IN THE FAR, DOD OR NASA FAR
 ** SUPPLEMENT. UNPUBLISHED RIGHTS RESERVED UNDER THE COPYRIGHT LAWS OF
-** THE UNITED STATES.  
-** 
+** THE UNITED STATES. 
+**
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
+** 
 ** $Header$
 ** $Log: 
-**  43   3dfx      1.42        05/11/00 Bill White      Merged changes for Linux.
+**  49   3dfx      1.41.1.6    06/20/00 Joseph Kain     Fixed errors introduced by
+**       my previous merge.
+**  48   3dfx      1.41.1.5    06/20/00 Joseph Kain     Changes to support the
+**       Napalm Glide open source release.  Changes include cleaned up offensive
+**       comments and new legal headers.
+**  47   3dfx      1.41.1.4    06/18/00 Stephane Huaulme fixed toggle and screen
+**       shot key for the Macintosh
+**  46   3dfx      1.41.1.3    06/15/00 Bill White      Merged changes to support
+**       Linux.
 ** 
+**  45   3dfx      1.41.1.2    05/25/00 Kenneth Dyke    Fixed bogus file time
+**       stamp.
+**  44   3dfx      1.41.1.1    05/24/00 Kenneth Dyke    Added MacOS support for
+**       screenshots and AA toggling.
+**  43   3dfx      1.41.1.0    05/09/00 Kenneth Dyke    Paranoia fix to make sure
+**       fogMode is updated properly after grGlideSetState().
 **  42   3dfx      1.41        04/21/00 Kenneth Dyke    Fix for ITRGBA parameter
 **       setup.  Added 2D nop after a WAX clear.
 **  41   3dfx      1.40        04/13/00 Kenneth Dyke    Added support for new style
@@ -76,7 +91,7 @@
 **       register update mechanism to make 2PPC modes work right regardless of the
 **       order of Glide calls.   Also fixed a few register config bugs found when
 **       switching between new and old style combine modes.
-**  18   3dfx      1.17        01/19/00 Kenneth Dyke    Get AA jitter values from
+**  18   3dfx      1.17        01/18/00 Kenneth Dyke    Get AA jitter values from
 **       the right place.
 **  17   3dfx      1.16        01/16/00 Kenneth Dyke    More minor AA swap fixes.
 **  16   3dfx      1.15        01/16/00 Kenneth Dyke    Fixes for windowed 32-bit
@@ -113,7 +128,7 @@
 **       change so I no longer hose other people... for now!
 **  2    3dfx      1.1         09/17/99 Adam Briggs     Supported TEXTUREBUFFEREXT
 **       for Napalm 32bpp and AA modes.
-**  1    3dfx      1.0         09/12/99 StarTeam VTS Administrator 
+**  1    3dfx      1.0         09/11/99 StarTeam VTS Administrator 
 ** $
 ** 
 ** 122   9/01/99 2:22p Atai
@@ -2528,6 +2543,44 @@ GR_ENTRY(grBufferSwap, void, (FxU32 swapInterval))
       hwcAAScreenShot(gc->bInfo, gc->curBuffer);
     }
   }  
+#elif (GLIDE_PLATFORM & GLIDE_OS_MACOS)
+  if (_GlideRoot.environment.aaToggleKey || _GlideRoot.environment.aaScreenshotKey) {
+    static KeyMapByteArray key_map[2];
+    static int current_key_map = 0;
+    
+	current_key_map = (current_key_map + 1) & 1;
+	GetKeys((FxU32*) key_map[current_key_map]);
+    
+    if (_GlideRoot.environment.aaToggleKey) {
+      if(gc->grPixelSample > 1) {
+        FxU32 key = _GlideRoot.environment.aaToggleKey;
+        key = (key & keyCodeMask) >> 8;
+        
+        /* If current state is down and previous state is not down, then toggle. */
+        if(  (key_map[current_key_map][key >> 3] & (1L << (key & 0x7))) &&
+            !(key_map[current_key_map^1][key >> 3] & (1L << (key & 0x7)))) {
+          static FxU32 aaEnabled = 1;
+          
+          aaEnabled ^= 1;
+          if(aaEnabled) {
+            grEnable(GR_AA_MULTI_SAMPLE);
+          } else {
+            grDisable(GR_AA_MULTI_SAMPLE);
+          }
+        }  
+      }  
+    }  
+    if(_GlideRoot.environment.aaScreenshotKey) {
+      FxU32 key = _GlideRoot.environment.aaScreenshotKey;
+      key = (key & keyCodeMask) >> 8;
+       /* If current state is down and previous state is not down, then toggle. */
+      if(  (key_map[current_key_map][key >> 3] & (1L << (key & 0x7))) &&
+          !(key_map[current_key_map^1][key >> 3] & (1L << (key & 0x7)))) {
+        grFinish();
+        hwcAAScreenShot(gc->bInfo, gc->curBuffer);
+      }
+    }  
+  }
 #endif
 
 #if A0_AA_SWAP_WORKAROUND

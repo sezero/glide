@@ -2,26 +2,32 @@
  ** THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONLY
  ** PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGHT
  ** TO USE THE GLIDE TRADEMARK WITHOUT PRIOR WRITTEN PERMISSION OF 3DFX
- ** INTERACTIVE, INC. A COPY OF THIS LICENSE MAY BE OBTAINED FROM THE 
- ** DISTRIBUTOR OR BY CONTACTING 3DFX INTERACTIVE INC(info@3dfx.com). 
- ** THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER 
+ ** INTERACTIVE, INC. A COPY OF THIS LICENSE MAY BE OBTAINED FROM THE
+ ** DISTRIBUTOR OR BY CONTACTING 3DFX INTERACTIVE INC(info@3dfx.com).
+ ** THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER
  ** EXPRESSED OR IMPLIED. SEE THE 3DFX GLIDE GENERAL PUBLIC LICENSE FOR A
- ** FULL TEXT OF THE NON-WARRANTY PROVISIONS.  
- ** 
+ ** FULL TEXT OF THE NON-WARRANTY PROVISIONS. 
+ **
  ** USE, DUPLICATION OR DISCLOSURE BY THE GOVERNMENT IS SUBJECT TO
  ** RESTRICTIONS AS SET FORTH IN SUBDIVISION (C)(1)(II) OF THE RIGHTS IN
  ** TECHNICAL DATA AND COMPUTER SOFTWARE CLAUSE AT DFARS 252.227-7013,
  ** AND/OR IN SIMILAR OR SUCCESSOR CLAUSES IN THE FAR, DOD OR NASA FAR
  ** SUPPLEMENT. UNPUBLISHED RIGHTS RESERVED UNDER THE COPYRIGHT LAWS OF
- ** THE UNITED STATES.  
+ ** THE UNITED STATES. 
  ** 
  ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
  **
  ** $Header$
  ** $Log: 
- **  7    3dfx      1.6         05/11/00 Bill White      Merged changes for Linux.
+ **  9    3dfx      1.5.1.2     06/20/00 Joseph Kain     Fixed errors introduced by
+ **       my previous merge.
+ **  8    3dfx      1.5.1.1     06/20/00 Joseph Kain     Changes to support the
+ **       Napalm Glide open source release.  Changes include cleaned up offensive
+ **       comments and new legal headers.
+ **  7    3dfx      1.5.1.0     06/15/00 Bill White      Merged changes to support
+ **       Linux.
  ** 
- **  6    3dfx      1.5         03/27/00 Don Mullis      Non-floating point data
+ **  6    3dfx      1.5         03/26/00 Don Mullis      Non-floating point data
  **       loaded to the floating point unit may upon re-emerging appear somewhat the
  **       worse for the experience.
  ** 
@@ -33,7 +39,7 @@
  **       napalm csim
  **  2    3dfx      1.1         09/14/99 Anthony tai     workaround csim bias
  **       snapping for points
- **  1    3dfx      1.0         09/12/99 StarTeam VTS Administrator 
+ **  1    3dfx      1.0         09/11/99 StarTeam VTS Administrator 
  ** $
 ** 
 ** 36    9/10/99 2:16p Atai
@@ -44,7 +50,7 @@
 ** test04 can do 4 sample aa (2 chips)
 ** 
 ** 34    6/03/99 12:15p Kcd
-** Inline assembly with CodeWarrior isn't working out, so grDrawTriangle is done
+** Inline assembly with CodeWarrior isn't working out, so grDrawTriangle is don
 ** totally in assembly in another file.
 ** 
 ** 33    5/26/99 4:17p Kcd
@@ -348,6 +354,7 @@ GR_ENTRY(grDrawTriangle, void, (const void *a, const void *b, const void *c))
     TRISETUP(a, b, c);
     GR_END();
   }
+  
 #else /* defined(__linux__) */
 #error "Write triangle proc dispatch for this compiler"
 #endif /* Triangle proc dispatch routine */

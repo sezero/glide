@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log: 
+**  4    3dfx      1.2.1.0     06/20/00 Joseph Kain     Changes to support the
+**       Napalm Glide open source release.  Changes include cleaned up offensive
+**       comments and new legal headers.
 **  3    3dfx      1.2         11/08/99 Larry  warner   Changes to enable building
 **       with MSVC 6.
 **  2    3dfx      1.1         11/02/99 Larry  warner   Clean up some debug code to

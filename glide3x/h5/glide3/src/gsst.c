@@ -3,25 +3,33 @@
 ** THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONLY
 ** PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGHT
 ** TO USE THE GLIDE TRADEMARK WITHOUT PRIOR WRITTEN PERMISSION OF 3DFX
-** INTERACTIVE, INC. A COPY OF THIS LICENSE MAY BE OBTAINED FROM THE 
-** DISTRIBUTOR OR BY CONTACTING 3DFX INTERACTIVE INC(info@3dfx.com). 
-** THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER 
+** INTERACTIVE, INC. A COPY OF THIS LICENSE MAY BE OBTAINED FROM THE
+** DISTRIBUTOR OR BY CONTACTING 3DFX INTERACTIVE INC(info@3dfx.com).
+** THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER
 ** EXPRESSED OR IMPLIED. SEE THE 3DFX GLIDE GENERAL PUBLIC LICENSE FOR A
-** FULL TEXT OF THE NON-WARRANTY PROVISIONS.  
-** 
+** FULL TEXT OF THE NON-WARRANTY PROVISIONS. 
+**
 ** USE, DUPLICATION OR DISCLOSURE BY THE GOVERNMENT IS SUBJECT TO
 ** RESTRICTIONS AS SET FORTH IN SUBDIVISION (C)(1)(II) OF THE RIGHTS IN
 ** TECHNICAL DATA AND COMPUTER SOFTWARE CLAUSE AT DFARS 252.227-7013,
 ** AND/OR IN SIMILAR OR SUCCESSOR CLAUSES IN THE FAR, DOD OR NASA FAR
 ** SUPPLEMENT. UNPUBLISHED RIGHTS RESERVED UNDER THE COPYRIGHT LAWS OF
-** THE UNITED STATES.  
-** 
+** THE UNITED STATES. 
+**
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
 ** $Header$
 ** $Log: 
-**  54   3dfx      1.53        05/11/00 Bill White      Merged changes for Linux.
+**  57   3dfx      1.52.1.3    06/20/00 Joseph Kain     Fixed errors introduced by
+**       my previous merge.
+**  56   3dfx      1.52.1.2    06/20/00 Joseph Kain     Changes to support the
+**       Napalm Glide open source release.  Changes include cleaned up offensive
+**       comments and new legal headers.
+**  55   3dfx      1.52.1.1    06/15/00 Bill White      Merged changes to support
+**       Linux.
 ** 
+**  54   3dfx      1.52.1.0    05/28/00 Stephane Huaulme fixed Mac Headers crap
+**       (UI3.3)
 **  53   3dfx      1.52        04/25/00 Adam Briggs     make grSelectContext
 **       actually return a useful value in windowed mode
 **  52   3dfx      1.51        04/25/00 Kenneth Dyke    Fix single buffered video
@@ -47,7 +55,7 @@
 **       modes)
 **  42   3dfx      1.41        03/23/00 Kenneth Dyke    Make sure we maintain state
 **       across all chips.  Change default LOD bias to 0.5f.
-**  41   3dfx      1.40        03/22/00 Kenneth Dyke    Tweaks for overlay video
+**  41   3dfx      1.40        03/21/00 Kenneth Dyke    Tweaks for overlay video
 **       format.
 **       Support for not clamping SLI band height.
 **       Allow user to override 16-bit rendering to 15-bit.
@@ -92,13 +100,13 @@
 **       register update mechanism to make 2PPC modes work right regardless of the
 **       order of Glide calls.   Also fixed a few register config bugs found when
 **       switching between new and old style combine modes.
-**  23   3dfx      1.22        01/24/00 Adam Briggs     initializing h3nwaysli
+**  23   3dfx      1.22        01/23/00 Adam Briggs     initializing h3nwaysli
 **       properly greatly aids in 4-sample AA init
 **  22   3dfx      1.21        01/21/00 Adam Briggs     closer to working on 2 chip
 **       sli
 **  21   3dfx      1.20        01/20/00 Kenneth Dyke    Fixed unitialized variable
 **       in command transport struct for grSstWinOpenExt.
-**  20   3dfx      1.19        01/19/00 Kenneth Dyke    Get proper AA jitter
+**  20   3dfx      1.19        01/18/00 Kenneth Dyke    Get proper AA jitter
 **       values.
 **  19   3dfx      1.18        01/16/00 Kenneth Dyke    Sandbox stuff.
 **       32-bit/AA override stuff
@@ -146,7 +154,7 @@
 **       format in grSstWinOpen calls
 **  2    3dfx      1.1         10/04/99 Matt McClure    Ported Glide Context
 **       Switching code from V3_OEM_100.
-**  1    3dfx      1.0         09/12/99 StarTeam VTS Administrator 
+**  1    3dfx      1.0         09/11/99 StarTeam VTS Administrator 
 ** $
 ** 
 ** 159   9/09/99 4:24p Adamb
@@ -788,6 +796,7 @@
 #endif
 
 #if (GLIDE_PLATFORM & GLIDE_OS_MACOS)
+#define __MACERRORS__
 #include <DriverServices.h>
 #endif
 
@@ -1516,6 +1525,7 @@ GR_ENTRY(grSstWinOpen, GrContext_t, ( FxU32                   hWnd,
     vInfo->xRes              = gc->state.screen_width;
     vInfo->yRes              = gc->state.screen_height;
 #endif	/* defined(__linux__) */
+
     vInfo->refresh           = gc->grSstRefresh;
     vInfo->tiled             = FXTRUE;
     vInfo->initialized       = FXTRUE;
@@ -3123,6 +3133,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
       gc->contextP = 1;
     }
 #endif /* defined(__linux__) */
+
 #endif /* !defined( USE_PACKET_FIFO ) */
   
     /* Compute Virtual FIFO address extents */

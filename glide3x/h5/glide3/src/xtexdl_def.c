@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log: 
+**  6    3dfx      1.4.1.0     06/20/00 Joseph Kain     Changes to support the
+**       Napalm Glide open source release.  Changes include cleaned up offensive
+**       comments and new legal headers.
 **  5    3dfx      1.4         01/28/00 Kenneth Dyke    Totoally revamped TMU
 **       register update mechanism to make 2PPC modes work right regardless of the
 **       order of Glide calls.   Also fixed a few register config bugs found when

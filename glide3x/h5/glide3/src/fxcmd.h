@@ -21,6 +21,9 @@
 ** $Revision$ 
 ** $Date$ 
 ** $Log: 
+**  6    3dfx      1.4.1.0     06/20/00 Joseph Kain     Changes to support the
+**       Napalm Glide open source release.  Changes include cleaned up offensive
+**       comments and new legal headers.
 **  5    3dfx      1.4         03/29/00 Chris Dow       Moved check for fence to be
 **       nonconditional.
 **  4    3dfx      1.3         03/24/00 Chris Dow       Added code to fence every n
@@ -29,9 +32,9 @@
 ** 
 **  3    3dfx      1.2         02/14/00 Kenneth Dyke    Added macro to allow
 **       setting of slave CAGP registers.
-**  2    3dfx      1.1         01/24/00 Adam Briggs     define a handy macro for
+**  2    3dfx      1.1         01/23/00 Adam Briggs     define a handy macro for
 **       accessing slave chip command/agp regs
-**  1    3dfx      1.0         09/12/99 StarTeam VTS Administrator 
+**  1    3dfx      1.0         09/11/99 StarTeam VTS Administrator 
 ** $
 ** 
 ** 45    8/25/99 1:02p Atai

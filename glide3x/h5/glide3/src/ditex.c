@@ -2,25 +2,33 @@
 ** THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONLY
 ** PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGHT
 ** TO USE THE GLIDE TRADEMARK WITHOUT PRIOR WRITTEN PERMISSION OF 3DFX
-** INTERACTIVE, INC. A COPY OF THIS LICENSE MAY BE OBTAINED FROM THE 
-** DISTRIBUTOR OR BY CONTACTING 3DFX INTERACTIVE INC(info@3dfx.com). 
-** THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER 
-** EXPRESSED OR IMPLIED. SEE THE 3DFX GLIDE GENERAL PUBLIC LICENSE FOR A
-** FULL TEXT OF THE NON-WARRANTY PROVISIONS.  
-** 
+** INTERACTIVE, INC. A COPY OF THIS LICENSE MAY BE OBTAINED FROM THE
+** DISTRIBUTOR OR BY CONTACTING 3DFX INTERACTIVE INC(info@3dfx.com).
+** THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER
+** EXPRESSED OR IMPLIED. SEE THE 3DFX GLIDE GENERAL PUBLIC LICENSE FOR A 
+** FULL TEXT OF THE NON-WARRANTY PROVISIONS. 
+**
 ** USE, DUPLICATION OR DISCLOSURE BY THE GOVERNMENT IS SUBJECT TO
 ** RESTRICTIONS AS SET FORTH IN SUBDIVISION (C)(1)(II) OF THE RIGHTS IN
 ** TECHNICAL DATA AND COMPUTER SOFTWARE CLAUSE AT DFARS 252.227-7013,
 ** AND/OR IN SIMILAR OR SUCCESSOR CLAUSES IN THE FAR, DOD OR NASA FAR
 ** SUPPLEMENT. UNPUBLISHED RIGHTS RESERVED UNDER THE COPYRIGHT LAWS OF
-** THE UNITED STATES.  
-** 
+** THE UNITED STATES. 
+**
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
 ** $Header$
 ** $Log: 
-**  6    3dfx      1.5         05/11/00 Bill White      Merged changes for Linux.
+**  9    3dfx      1.4.1.3     06/20/00 Joseph Kain     Fixed errors introduced by
+**       my previous merge.
+**  8    3dfx      1.4.1.2     06/20/00 Joseph Kain     Changes to support the
+**       Napalm Glide open source release.  Changes include cleaned up offensive
+**       comments and new legal headers.
+**  7    3dfx      1.4.1.1     06/15/00 Bill White      Merged changes to support
+**       Linux.
 ** 
+**  6    3dfx      1.4.1.0     06/13/00 Adam Briggs     fixes single pass trilinear
+**       for FXT1
 **  5    3dfx      1.4         02/10/00 Jonny Cochrane  Fixes single pass trilinear
 **       filtering, PRS 12575 and 12566
 **  4    3dfx      1.3         01/28/00 Kenneth Dyke    Totoally revamped TMU
@@ -31,7 +39,7 @@
 **       validation
 **  2    3dfx      1.1         10/06/99 Anthony tai     disable 2ppc if tmu1 is
 **       specified
-**  1    3dfx      1.0         09/12/99 StarTeam VTS Administrator 
+**  1    3dfx      1.0         09/11/99 StarTeam VTS Administrator 
 ** $
 ** 
 ** 38    9/03/99 17:41 Dwm
@@ -1309,8 +1317,8 @@ _grTexCalcBaseAddress( FxU32 start, GrLOD_t large_lod,
       if (((odd_even_mask == GR_MIPMAPLEVELMASK_EVEN) && (large_lod & 1)) ||
           ((odd_even_mask == GR_MIPMAPLEVELMASK_ODD) && !(large_lod & 1)))
         large_lod += 1;
-      else 				/* jcochrane - original reading wrong offset values for single pass trilinear, tsplit across tmu's			   */
-		large_lod += 2;	/* this is the correct offset for (even large lod && odd mipmap level) || (odd large lod && even mipmap level) */
+      else /* jcochrane - original reading wrong offset values for single pass trilinear, tsplit across tmu's */
+        large_lod += 2;	/* this is the correct offset for (even large lod && odd mipmap level) || (odd large lod && even mipmap level) */
 
       sum_of_lod_sizes = _grMipMapOffset_Tsplit[aspect][large_lod];
     }
@@ -1322,7 +1330,9 @@ _grTexCalcBaseAddress( FxU32 start, GrLOD_t large_lod,
     } else {
       if (((odd_even_mask == GR_MIPMAPLEVELMASK_EVEN) && (large_lod & 1)) ||
           ((odd_even_mask == GR_MIPMAPLEVELMASK_ODD) && !(large_lod & 1)))
-        large_lod += 1;
+        large_lod += 1 ;
+      else
+        large_lod += 2 ; /* as it turns out, this is important for FXT1 as well */
 		
       sum_of_lod_sizes =
         _grMipMapOffset_TsplitCmp4Bit[aspect][large_lod];
@@ -1395,10 +1405,10 @@ GR_DIENTRY(grTexDetailControl, void,
 
 /* Matt M. - Richardson - (edited by CHD)
 **
-**   Changes below fix PRS #5852
-**   Some games cause an error when  launching with Glide3x on
+**   Changes below fix PRS #585
+**   Some games cause an error when  launching with Glide3x o
 **   V3.  This is a work around for an application fault.
-**   Games are  calling  grTexMinAddress before we get a call to
+**   Games are  calling  grTexMinAddress before we get a call t
 **   winOpen.  The code below replaces GR_BEGIN_NOFIFOCHECK_RET
 **   Note that this has been a somewhat common error for MaxAddress
 **   and MinAddress, so I've go a workaround in both places.
@@ -1470,11 +1480,11 @@ GR_DIENTRY(grTexMaxAddress, FxU32, ( GrChipID_t tmu ))
   GR_DCL_HW_INIT;       /* Declare *hw variable */
   GR_DEBUG_DCL_INIT();  /* Declare debug variables */
 #define MIN_TEX_MEM  0x200000
-  /* Matt M. - Richardson -  Changes below fix PRS #5852
-  **   Some games cause an error when  launching with Glide3x on
-  **   V3.  This is a work around for an application fault.
-  **   Games are  calling  grTexMinAddress before we get a call to
-  **   winOpen.  The code below replaces GR_BEGIN_NOFIFOCHECK_RET
+  /* Matt M. - Richardson -  Changes below fix PRS #585
+  **   Some games cause an error when  launching with Glide3x o
+  **   V3.  This is a work around for an application fault
+  **   Games are  calling  grTexMinAddress before we get a call t
+  **   winOpen.  The code below replaces GR_BEGIN_NOFIFOCHECK_RE
   */
   if (!gc)                      /* If Gc is not valid, return 0 */
     return MIN_TEX_MEM;         /* Always guaranteed */
@@ -1508,6 +1518,7 @@ GR_DIENTRY(grTexMaxAddress, FxU32, ( GrChipID_t tmu ))
     }
   }     
 #endif /* defined(__linux__) */
+
   GDBG_INFO_MORE(gc->myLevel,"(%d)\n",tmu);
   GR_CHECK_TMU(FN_NAME, tmu );
   GR_RETURN(gc->tmu_state[tmu].total_mem - SST_TEXTURE_ALIGN);

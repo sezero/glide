@@ -18,51 +18,7 @@
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
 ** $Header$
-** $Log: 
-**  18   3dfx      1.17        04/18/00 Adam Briggs     added
-**       grGetRegistryOrEnvironmentStringExt call so that OpenGL has an easy way to
-**       read environment settings from the registry.  To save you the trouble of
-**       asking, the answer is no, I could not think of a longer name for the
-**       function.  I did try, though.
-**  17   3dfx      1.16        04/10/00 Larry  warner   Report max texture size
-**       2048 for Napalm and 256 otherwise.
-**  16   3dfx      1.15        04/06/00 Larry  warner   So much for the palindrome.
-**  15   3dfx      1.14        03/31/00 Kenneth Dyke    Get number of chips from
-**       bInfo so we report back the right kind of card. (Cosmetic).
-**  14   3dfx      1.13        02/22/00 Kenneth Dyke    Base min/max z and w buffer
-**       values on actual pixel depth, and not on the hardware we're on.
-**  13   3dfx      1.12        02/10/00 Adam Briggs     grGet(GR_NUM_FB) now
-**       returns the number of chips on a board.
-**  12   3dfx      1.11        01/31/00 Adam Briggs     changed the IS_NAPALM macro
-**       to cooperate with the display driver version of the same
-**  11   3dfx      1.10        01/31/00 Adam Briggs     Changed all device ID magic
-**       numbers to use those defined in fxhal.h & added IS_NAPALM macro to test
-**       against device ID range
-**  10   3dfx      1.9         01/30/00 Adam Briggs     get napalm status correctly
-**  9    3dfx      1.8         01/19/00 Kenneth Dyke    Fix query value for maximum
-**       texture size.
-**  8    3dfx      1.7         01/04/00 Adam Briggs     changed grGetGammaTable to
-**       be an extension called grGetGammaTableExt
-**  7    3dfx      1.6         12/13/99 Adam Briggs     Made
-**       grGetString(GR_HARDWARE) return Voodoo4 or VoodooV instead of Napalm
-**  6    3dfx      1.5         12/10/99 Leo Galway      Removed previous hi-res
-**       mode information for Glide3. These modes were only necessary for
-**       Cornerstone (or future hi-res) support in RT4.2 source branch and
-**       proceeded to break the V3 and V2 builds (from 3dfx view), hence they have
-**       been removed.
-**  5    3dfx      1.4         12/08/99 Leo Galway      Added mode information for
-**       1600x1280, 1792x1440, 1920x1080, 1920x1200, 2046x1536 (as a result of
-**       glide being tested with Cornerstone modes). Although not all of these
-**       modes are currently capable under Glide, their inclusion prevents Glide
-**       apps from displaying in incorrect modes when these hi-res modes are
-**       selected. Search for SUSTAINED_ENGINEERING_CHANGE_BEGIN. 
-**  4    3dfx      1.3         10/26/99 Anthony tai     workaround for calling
-**       grGetString before the gc exist
-**  3    3dfx      1.2         09/28/99 Anthony tai     workaround for dct bug
-**  2    3dfx      1.1         09/22/99 Adam Briggs     Added
-**       grConstantColorValueExt
-**  1    3dfx      1.0         09/12/99 StarTeam VTS Administrator 
-** $
+** $Log$
 ** 
 ** 93    9/09/99 4:19p Adamb
 ** Added TEXTUREBUFFER to GR_EXTENSION string

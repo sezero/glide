@@ -19,6 +19,9 @@
  **
  ** $Header$
  ** $Log: 
+ **  2    3dfx      1.0.1.0     06/20/00 Joseph Kain     Changes to support the
+ **       Napalm Glide open source release.  Changes include cleaned up offensive
+ **       comments and new legal headers.
  **  1    3dfx      1.0         09/11/99 StarTeam VTS Administrator 
  ** $
 ** 

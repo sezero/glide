@@ -2,25 +2,26 @@
 ** THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONLY
 ** PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGHT
 ** TO USE THE GLIDE TRADEMARK WITHOUT PRIOR WRITTEN PERMISSION OF 3DFX
-** INTERACTIVE, INC. A COPY OF THIS LICENSE MAY BE OBTAINED FROM THE 
-** DISTRIBUTOR OR BY CONTACTING 3DFX INTERACTIVE INC(info@3dfx.com). 
-** THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER 
+** INTERACTIVE, INC. A COPY OF THIS LICENSE MAY BE OBTAINED FROM THE
+** DISTRIBUTOR OR BY CONTACTING 3DFX INTERACTIVE INC(info@3dfx.com).
+** THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER
 ** EXPRESSED OR IMPLIED. SEE THE 3DFX GLIDE GENERAL PUBLIC LICENSE FOR A
-** FULL TEXT OF THE NON-WARRANTY PROVISIONS.  
-** 
+** FULL TEXT OF THE NON-WARRANTY PROVISIONS. 
+**
 ** USE, DUPLICATION OR DISCLOSURE BY THE GOVERNMENT IS SUBJECT TO
 ** RESTRICTIONS AS SET FORTH IN SUBDIVISION (C)(1)(II) OF THE RIGHTS IN
 ** TECHNICAL DATA AND COMPUTER SOFTWARE CLAUSE AT DFARS 252.227-7013,
 ** AND/OR IN SIMILAR OR SUCCESSOR CLAUSES IN THE FAR, DOD OR NASA FAR
 ** SUPPLEMENT. UNPUBLISHED RIGHTS RESERVED UNDER THE COPYRIGHT LAWS OF
-** THE UNITED STATES.  
-** 
+** THE UNITED STATES. 
+**
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
-** $Header$
-** $Log: 
-**  44   3dfx      1.43        05/11/00 Bill White      Merged changes for Linux.
-** 
+** $Header: fxglide.h, 44, 6/15/2000 9:18:11 AM, Bill White
+** $Log:
+**  44   3dfx      1.42.1.0    06/15/00 Bill White      Merged changes to support
+**       Linux.
+**
 **  43   3dfx      1.42        04/21/00 Kenneth Dyke    Magic FX_GLIDE_NO_HW
 **       support.
 **  42   3dfx      1.41        04/13/00 Kenneth Dyke    Added support for new style
@@ -35,10 +36,10 @@
 **  38   3dfx      1.37        03/24/00 Chris Dow       Added code to fence every n
 **       writes (not to exceed 0x10000) where n is either 0x10000 or indicated by
 **       the environment variable FX_GLIDE_FENCE_LIMIT
-** 
+**
 **  37   3dfx      1.36        03/23/00 Kenneth Dyke    Added tracking for whether
 **       or not the stencil buffer has ever been cleared.
-**  36   3dfx      1.35        03/22/00 Kenneth Dyke    Added variable to allow Y
+**  36   3dfx      1.35        03/21/00 Kenneth Dyke    Added variable to allow Y
 **       origin swapping SLI band height clamp to be disabled.
 **  35   3dfx      1.34        03/19/00 Kenneth Dyke    Made mode2ppc stuff part of
 **       the Glide state.
@@ -47,7 +48,7 @@
 **  33   3dfx      1.32        03/14/00 Adam Briggs     enable analog sli in 2X
 **       modes or when forced
 **  32   3dfx      1.31        03/08/00 Kenneth Dyke    Remove bad hwInitP flag.
-**  31   3dfx      1.30        03/08/00 Kenneth Dyke    Workaround for weird
+**  31   3dfx      1.30        03/07/00 Kenneth Dyke    Workaround for weird
 **       compressed texture quirk.
 **  30   3dfx      1.29        03/06/00 Kenneth Dyke    Added backdoor hack to
 **       toggle AA on and off on the fly.
@@ -70,12 +71,12 @@
 **       register update mechanism to make 2PPC modes work right regardless of the
 **       order of Glide calls.   Also fixed a few register config bugs found when
 **       switching between new and old style combine modes.
-**  22   3dfx      1.21        01/24/00 Adam Briggs     set & recognize the SSTTYPE
+**  22   3dfx      1.21        01/23/00 Adam Briggs     set & recognize the SSTTYPE
 **       var for Voodoo4
 **  21   3dfx      1.20        01/21/00 Adam Briggs     some changes to get the
 **       correct linear mappings for slave regs and use them to sync the fifos in
 **       sli mode
-**  20   3dfx      1.19        01/19/00 Kenneth Dyke    Added default AA jitter
+**  20   3dfx      1.19        01/18/00 Kenneth Dyke    Added default AA jitter
 **       values to Glide environment.
 **  19   3dfx      1.18        01/16/00 Kenneth Dyke    Added column width stuff.
 **  18   3dfx      1.17        01/16/00 Kenneth Dyke    Added support to track
@@ -117,7 +118,7 @@
 **       grConstantColorValueExt... not yet tested.
 **  2    3dfx      1.1         09/17/99 Anthony tai     fixed 2ppc and tmumask for
 **       texture color/alpha combine extension
-**  1    3dfx      1.0         09/12/99 StarTeam VTS Administrator 
+**  1    3dfx      1.0         09/11/99 StarTeam VTS Administrator 
 ** $
 ** 
 ** 164   9/03/99 4:32p Atai
@@ -1277,6 +1278,7 @@ typedef FxI32 (FX_CALL* GrTriSetupProc)(const void *a, const void *b, const void
 #else   /* defined(__linux__) */
 typedef FxI32 (FX_CALL* GrTriSetupProc)(const void *g, const void *a, const void *b, const void *c);
 #endif  /* defined(__linux__) */
+
 typedef void  (FX_CALL* GrVertexListProc)(FxU32 pkType, FxU32 type, FxI32 mode, FxI32 count, void* ptrs);
 typedef void  (FX_CALL* GrDrawTrianglesProc)(FxI32 mode, FxI32 count, void* vPtrs);
 
@@ -1332,7 +1334,7 @@ void FX_CSTYLE _grDrawVertexList_3DNow_Clip(FxU32 pktype, FxU32 type, FxI32 mode
 /* Define this structure otherwise it assumes the structure only exists
    within the function */
 struct GrGC_s;
-#endif
+#endif	/* defined(__linux__) */
 
 /* _GlideRoot.curTexProcs is an array of (possibly specialized)
  * function pointers indexed by texture format size (8/16 bits for
@@ -1515,7 +1517,7 @@ typedef struct GrGC_s
     FxBool
       texTiled;
 
-    /* Information about how to flush the textures and any
+    /* Information about how to flush the textures and an
      * downloads from any internal hw fifos.  
      *
      *  flushCount: If > 0 then the flush operations should be 
@@ -1525,7 +1527,7 @@ typedef struct GrGC_s
      *              the multiple level downloads so the lower
      *              levels know not to worry about the flush.
      *  xxxPacket:  The actual packet data need to flush the
-     *              textures and internal pixel fifo's.
+     *              textures and internal pixel fifo's
      *    pre:
      *      pkt1 header: wax command
      *        command = nop | go
@@ -1862,7 +1864,7 @@ typedef struct GrGC_s
    *
    * NB: The following fields are similar, but subtly different.
    * Make sure that you keep their meanings differentiated when 
-   * messing w/ their values because various internal bits of glide
+   * messing w/ their values because various internacl bits of glide
    * make various assumptions about their values.
    *
    * hwInitP: Is the hw mapping active? Some OS's (notably NT) require
@@ -2079,6 +2081,9 @@ extern GrGCFuncs _curGCFuncs;
 #elif defined(macintosh) && defined(__POWERPC__) && defined(__MWERKS__)
 #  define P6FENCE __sync()
 #elif defined(__GNUC__) && defined(__i386__)
+/*
+ * This is the __linux__ code.
+ */
 #define P6FENCE asm("xchg %%eax, %0" : : "m" (_GlideRoot.p6Fencer) : "eax");
 #else  /* !defined ( P6FENCE ) */
 #  error "P6 Fencing code needs to be added for this compiler"
@@ -2242,7 +2247,7 @@ _trisetup_noclip_valid(const void *va, const void *vb, const void *vc );
 #else /* defined(__linux__) */
 #define TRISETUP \
   (*gc->triSetupProc)
-#endif
+#endif	/* defined(__linux__) */
 void
 _grValidateState();
 

@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler Version 6.13.7299		    05/17/00 11:38:48
+Microsoft (R) Macro Assembler Version 6.14.8444		    06/20/00 17:18:56
 cpudtect.asm						     Page 1 - 1
 
 
@@ -23,6 +23,9 @@ cpudtect.asm						     Page 1 - 1
 				;;
 				;; $Header$
 				;; $Log$
+				;; Revision 1.1  2000/06/15 00:27:42  joseph
+				;; Initial checkin into SourceForge.
+				;;
 				;; 
 				;; 9     3/10/99 10:40a Peter
 				;; detect katmai-ness
@@ -44,12 +47,12 @@ cpudtect.asm						     Page 1 - 1
 				; 2     3/04/97 9:10p Dow
 				;;
 				;;
-
+				
 				TITLE  cpudtect.asm
-
+				
 				.586P
 				.model FLAT,C                   ; Flat memory, mangle publics with leading '_'
-
+				
 				;;      Data for data segment goes here
 				;_DATA   SEGMENT DWORD USE32 PUBLIC 'DATA'; 
 				;_DATA   ENDS
@@ -72,7 +75,7 @@ cpudtect.asm						     Page 1 - 1
 				;;  int __cdecl _cpu_detect_asm(void);
 				;;
 				;;  returns 4 for non-pen
-
+				
 				PUBLIC  _cpu_detect_asm
  00000000			_cpu_detect_asm PROC NEAR
  00000000			P6Stuff:
@@ -81,7 +84,7 @@ cpudtect.asm						     Page 1 - 1
  00000001  57			    push   edi
  00000002  53			    push   ebx
  00000003  55			    push   ebp
-
+				
 				    ; First, determine whether CPUID instruction is available.
 				    ; If it's not, then it's a 386 or 486.
  00000004  9C			    pushfd                              ; push original EFLAGS.
@@ -107,7 +110,7 @@ cpudtect.asm						     Page 1 - 1
  00000027  75 4B		    jnz NotIntel
  00000029  81 F1 6C65746E	    xor ecx, 06c65746eh                 ; "ntel"
  0000002F  75 43		    jnz NotIntel                        ;
-
+				
 				    ;;  Verifying architecture family
 				    ;;      eax - type[13:12] family[11:8] model[7:4] revision[3:0]
 				    ;;      edx - feature bits
@@ -126,38 +129,38 @@ cpudtect.asm						     Page 1 - 1
 				    ; Make sure it supports Memory Type Range Request registers (bit 12)    
  00000043  8B DA		    mov     ebx, edx
  00000045  F7 C3 00001000	    test    ebx, 1000h
-
+				
 				    ;; Hmmmm... p6 w/o mtrr's?
  0000004B  74 16		    jz      IsP5
-
+				
 				    ;; Check for katmai-ness (bit 25)
  0000004D  F7 C2 02000000	    test    edx, 2000000h
  00000053  74 07		    jz      noKNI
-
+				
  00000055  B8 00000007		    mov     eax, 7
  0000005A  EB 13		    jmp     DoneCpu                         ; return
 				    
  0000005C			noKNI:      
  0000005C  B8 00000006		    mov     eax, 6                          ; 
  00000061  EB 0C		    jmp     DoneCpu                         ; return 
-
+				
  00000063			IsP5:   
  00000063  B8 00000005		    mov     eax, 5                          ; 
  00000068  EB 05		    jmp     DoneCpu
-
+				
  0000006A			NotPentium:
  0000006A  B8 00000004		    mov     eax, 4
-
+				
  0000006F			DoneCpu:
  0000006F  5D			    pop     ebp
  00000070  5B			    pop     ebx
  00000071  5F			    pop     edi
  00000072  5E			    pop     esi
  00000073  C3			    ret
-
-
+				
+				
  00000074			NotIntel:
-
+				
 				    ;; This is a non-Intel processor. Figure out whether it supports
 				    ;; both MMX and 3DNow!, in which case we can use Norbert's cool
 				    ;; MMX/3DNow!(tm) code
@@ -175,37 +178,37 @@ cpudtect.asm						     Page 1 - 1
 				    ;; 0002h   3DNow! (tm)
 				    ;; 0004h   K6-style MTRRs
 				    ;; 0008h   PentiumII-style MTRRs
-
+				
  00000074  33 F6		    xor esi, esi     ; default feature flags
  00000076  33 FF		    xor edi, edi     ; default extended feature flags
-
+				
 				    ;; Test whether extended feature function is supported
-
+				
  00000078  B8 80000000		    mov eax, 80000000h
  0000007D  0F A2		    cpuid
  0000007F  3D 80000000		    cmp eax, 80000000h
  00000084  76 09		    jbe NoExtendedFeatures
-
+				
 				    ;; execute extended feature function
-
+				
  00000086  B8 80000001		    mov eax, 80000001h
  0000008B  0F A2		    cpuid
  0000008D  8B FA		    mov edi, edx
-
+				
  0000008F			NoExtendedFeatures:
-
+				
 				    ;; execute standard feature function
-
+				
  0000008F  B8 00000001		    mov eax, 1
  00000094  0F A2		    cpuid
  00000096  8B F2		    mov esi, edx
  00000098  8B E8		    mov ebp, eax           ; save family/model/stepping
-
+				
 				    ;; get the vendor string 
 				 
  0000009A  B8 00000000		    mov eax, 0
  0000009F  0F A2		    cpuid
-
+				
  000000A1			ChkAMD:
  000000A1  81 FB 68747541	    cmp ebx, 68747541h     ; 'htuA'
  000000A7  75 10		    jne ChkCyrix
@@ -213,7 +216,7 @@ cpudtect.asm						     Page 1 - 1
  000000AF  75 08		    jne ChkCyrix
  000000B1  81 F9 444D4163	    cmp ecx, 444D4163h     ; 'DMAc'
  000000B7  74 68		    je  CPUisAMD
-
+				
  000000B9			ChkCyrix:
  000000B9  81 FB 69727943	    cmp ebx, 69727943h     ; 'iryC'                   
  000000BF  75 14		    jne ChkIDT
@@ -221,7 +224,7 @@ cpudtect.asm						     Page 1 - 1
  000000C7  75 0C		    jne ChkIDT
  000000C9  81 F9 64616574	    cmp ecx, 64616574h     ; 'deat'
  000000CF  0F 84 00000094	    je  CPUisCyrix
-
+				
  000000D5			ChkIDT:
  000000D5  81 FB 746E6543	    cmp ebx, 746E6543h     ; 'tneC'
  000000DB  0F 85 000000B0	    jne UnknownVendor
@@ -229,7 +232,7 @@ cpudtect.asm						     Page 1 - 1
  000000E7  0F 85 000000A4	    jne UnknownVendor
  000000ED  81 F9 736C7561	    cmp ecx, 736C7561h     ; 'slua'
  000000F3  0F 85 00000098	    jne UnknownVendor
-
+				
  000000F9			CPUisIDT:
  000000F9  B8 80030000		    mov  eax, 80030000h    ; vendor = IDT, features = none
  000000FE  F7 C6 00800000	    test esi, 00800000h    ; check for MMX bit in features
@@ -239,7 +242,7 @@ cpudtect.asm						     Page 1 - 1
  00000113  0F 84 FFFFFF56	    jz   DoneCpu
  00000119  83 C8 02		    or   eax, 2            ; set 3DNow! feature flag
  0000011C  E9 FFFFFF4E		    jmp  DoneCpu
-
+				
  00000121			CPUisAMD:
  00000121  B8 80010000		    mov  eax, 80010000h    ; vendor = AMD, features = none
  00000126  8B D5		    mov  edx, ebp          ; family/model/stepping information
@@ -260,7 +263,7 @@ cpudtect.asm						     Page 1 - 1
  0000015B  0F 84 FFFFFF0E	    jz   DoneCpu
  00000161  83 C8 02		    or   eax, 2            ; set 3DNow! feature flag
  00000164  E9 FFFFFF06		    jmp  DoneCpu
-
+				
  00000169			CPUisCyrix:
  00000169  B8 80020000		    mov  eax, 80020000h    ; vendor = Cyrix, features = none
  0000016E  F7 C6 00800000	    test esi, 00800000h    ; check for MMX bit in features
@@ -270,19 +273,19 @@ cpudtect.asm						     Page 1 - 1
  00000183  0F 84 FFFFFEE6	    jz   DoneCpu
  00000189  83 C8 02		    or   eax, 2            ; set 3DNow! feature flag
  0000018C  E9 FFFFFEDE		    jmp  DoneCpu
-
+				
  00000191			UnknownVendor:
  00000191  B8 FFFFFFFF		    mov  eax, 0ffffffffh
  00000196  E9 FFFFFED4		    jmp  DoneCpu
-
+				
 				        
  0000019B			_cpu_detect_asm ENDP
-
-
+				
+				
 				;------------------------------------------------------------------------------   
 				; this routine sets the precision to single
 				; which effects all adds, mults, and divs
-				    align 4                 ; 
+    align 4                 ; 
 				    PUBLIC  single_precision_asm
  0000019C			single_precision_asm PROC NEAR
 				.586
@@ -296,7 +299,7 @@ cpudtect.asm						     Page 1 - 1
  000001B1  58			    pop   eax
  000001B2  C3			    ret   0
  000001B3			single_precision_asm ENDP
-
+				
 				;------------------------------------------------------------------------------   
 				; this routine sets the precision to double
 				; which effects all adds, mults, and divs
@@ -318,7 +321,7 @@ cpudtect.asm						     Page 1 - 1
 				    
  000001D0			_TEXT ENDS
 				END
-Microsoft (R) Macro Assembler Version 6.13.7299		    05/17/00 11:38:48
+Microsoft (R) Macro Assembler Version 6.14.8444		    06/20/00 17:18:56
 cpudtect.asm						     Symbols 2 - 1
 
 
@@ -376,9 +379,7 @@ CPUTypeP5  . . . . . . . . . . .	Number	 00000005h
 CPUTypeP6  . . . . . . . . . . .	Number	 00000006h   
 CPUTypePrePent . . . . . . . . .	Number	 00000004h   
 CPUTypeUnknown . . . . . . . . .	Number	 FFFFFFFFh   
-GDBG_INFO_ON . . . . . . . . . .	Text   	 
 GLIDE_ALT_TAB  . . . . . . . . .	Text   	 
-GLIDE_DEBUG  . . . . . . . . . .	Text   	 
 GLIDE_INIT_HWC . . . . . . . . .	Text   	 
 GLIDE_PACKED_RGB . . . . . . . .	Text   	 0
 GLIDE_TRI_CULLING  . . . . . . .	Text   	 1

@@ -7,7 +7,7 @@
  ** THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER 
  ** EXPRESSED OR IMPLIED. SEE THE 3DFX GLIDE GENERAL PUBLIC LICENSE FOR A
  ** FULL TEXT OF THE NON-WARRANTY PROVISIONS.  
- ** 
+ **
  ** USE, DUPLICATION OR DISCLOSURE BY THE GOVERNMENT IS SUBJECT TO
  ** RESTRICTIONS AS SET FORTH IN SUBDIVISION (C)(1)(II) OF THE RIGHTS IN
  ** TECHNICAL DATA AND COMPUTER SOFTWARE CLAUSE AT DFARS 252.227-7013,
@@ -17,9 +17,16 @@
  ** 
  ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
  **
+ **
  ** $Header$
  ** $Log: 
- **  27   3dfx      1.26        05/11/00 Bill White      Merged changes for Linux.
+ **  29   3dfx      1.25.1.2    06/20/00 Joseph Kain     Fixed errors introduced by
+ **       my previous merge.
+ **  28   3dfx      1.25.1.1    06/20/00 Joseph Kain     Changes to support the
+ **       Napalm Glide open source release.  Changes include cleaned up offensive
+ **       comments and new legal headers.
+ **  27   3dfx      1.25.1.0    06/15/00 Bill White      Merged changes to support
+ **       Linux.
  ** 
  **  26   3dfx      1.25        04/25/00 Kenneth Dyke    Fixed non-compressed ->
  **       compressed texture chip bug workaround code.
@@ -33,7 +40,7 @@
  **       across all chips.
  **  21   3dfx      1.20        03/19/00 Kenneth Dyke    Keep track of which TMU
  **       'owns' the real TMU register state when in 2ppc mode.
- **  20   3dfx      1.19        03/08/00 Kenneth Dyke    Workaround for weird
+ **  20   3dfx      1.19        03/07/00 Kenneth Dyke    Workaround for weird
  **       compressed texture quirk.
  **  19   3dfx      1.18        02/28/00 Kenneth Dyke    Fixed dither rotation stuff
  **       for 4-sample AA.  We also no longer clobber the fog mode setting.
@@ -58,9 +65,9 @@
  **       register update mechanism to make 2PPC modes work right regardless of the
  **       order of Glide calls.   Also fixed a few register config bugs found when
  **       switching between new and old style combine modes.
- **  10   3dfx      1.9         01/24/00 Adam Briggs     set & recognize the SSTTYPE
+ **  10   3dfx      1.9         01/23/00 Adam Briggs     set & recognize the SSTTYPE
  **       var for Voodoo4
- **  9    3dfx      1.8         01/19/00 Kenneth Dyke    Pull AA jitter values from
+ **  9    3dfx      1.8         01/18/00 Kenneth Dyke    Pull AA jitter values from
  **       Glide environment.
  **  8    3dfx      1.7         01/16/00 Kenneth Dyke    Changes to enforce proper
  **       combine extension usage.
@@ -75,7 +82,7 @@
  **       validation
  **  2    3dfx      1.1         09/17/99 Adam Briggs     Supported TEXTUREBUFFEREXT
  **       for Napalm 32bpp and AA modes.
- **  1    3dfx      1.0         09/12/99 StarTeam VTS Administrator 
+ **  1    3dfx      1.0         09/11/99 StarTeam VTS Administrator 
  ** $
 ** 
 ** 57    8/16/99 11:18a Adamb

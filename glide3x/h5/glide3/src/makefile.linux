@@ -2,19 +2,19 @@
 # THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONLY
 # PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGHT
 # TO USE THE GLIDE TRADEMARK WITHOUT PRIOR WRITTEN PERMISSION OF 3DFX
-# INTERACTIVE, INC. A COPY OF THIS LICENSE MAY BE OBTAINED FROM THE 
-# DISTRIBUTOR OR BY CONTACTING 3DFX INTERACTIVE INC(info@3dfx.com). 
-# THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER 
+# INTERACTIVE, INC. A COPY OF THIS LICENSE MAY BE OBTAINED FROM THE
+# DISTRIBUTOR OR BY CONTACTING 3DFX INTERACTIVE INC(info@3dfx.com).
+# THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER
 # EXPRESSED OR IMPLIED. SEE THE 3DFX GLIDE GENERAL PUBLIC LICENSE FOR A
-# FULL TEXT OF THE NON-WARRANTY PROVISIONS.  
-# 
+# FULL TEXT OF THE NON-WARRANTY PROVISIONS. 
+#
 # USE, DUPLICATION OR DISCLOSURE BY THE GOVERNMENT IS SUBJECT TO
 # RESTRICTIONS AS SET FORTH IN SUBDIVISION (C)(1)(II) OF THE RIGHTS IN
 # TECHNICAL DATA AND COMPUTER SOFTWARE CLAUSE AT DFARS 252.227-7013,
 # AND/OR IN SIMILAR OR SUCCESSOR CLAUSES IN THE FAR, DOD OR NASA FAR
 # SUPPLEMENT. UNPUBLISHED RIGHTS RESERVED UNDER THE COPYRIGHT LAWS OF
-# THE UNITED STATES.  
-# 
+# THE UNITED STATES. 
+#
 # COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 
 ifeq ($(FX_CHRIS_DENIS_ANTHONY_HACK),1)
@@ -159,7 +159,7 @@ else
 # function versions of the functions taht these files
 # originally contained. See the end of the file.
 ifeq ($(GL_AMD3D),)
-ASMTRISETUP     +=      xdraw2.S xdraw3.S
+ASMTRISETUP     +=      xdraw2.s xdraw3.s
 #LIBOBJS		+=      xdraw2.o xdraw3.o
 endif
 
@@ -202,7 +202,7 @@ LADEFS          +=      $(ASM_REGMAP_DEFS)
 LAINCS          =       -I$(BUILD_ROOT)/$(FX_GLIDE_HW)/include
 LAOPTS          =       $(DBGOPTS) $(DSPOPTS) $(OPTOPTS)
 
-AFILES          =       $(ASMTRISETUP) cpudtect.S
+AFILES          =       $(ASMTRISETUP) cpudtect.s
 
 # sources
 HEADERS         =       glide.h glidesys.h glideutl.h g3ext.h
@@ -239,7 +239,7 @@ endif
 
 LCDEFS          +=      $(FIFODEFS)
 
-include $(BUILD_ROOT)/swlibs/include/make/3dfx.mak
+include $(BUILD_ROOT)/swlibs/include/make/3dfx.linux.mak
 
 ctags:  $(CFILES)
 	ctags $(CFILES)
@@ -271,29 +271,39 @@ ifneq ($(FX_GLIDE_CTRISETUP),1)
 gdraw.o: fxinline.h
 endif
 
-xdraw2.o : xdraw2.S xdraw2.inc.S fxgasm.h
-	$(CC) $(AFLAGS) -c -o $@ xdraw2.S
+# $(CPP) from 3dfx.linux.mak runs gcc/egcs which guesses at file types so run 
+# cpp directly.  However, cpp can get confused by $__LINE__ which is needed
+# to manipulate the __LINE__ macro as a literal number.  So we pass -$
+# to disallow $ in identifiers to disambiguate the situation.  Note that 
+# the makefile syntax requires $ to be escaped so we use $$ below.
+# 
+PREPROCESSOR=/lib/cpp -$$
+%.o: %.s
+	$(PREPROCESSOR) $< > $*.tmp.s
+	$(CC) $(AFLAGS) -c -o $@ $*.tmp.s
+	$(RM) -f $*.tmp.s
 
-xdraw3.o : xdraw3.S fxgasm.h
-	$(CC) $(AFLAGS) -c -o $@ xdraw3.S
+xdraw2.o : xdraw2.s xdraw2.inc.s fxgasm.h
+xdraw3.o : xdraw3.s fxgasm.h
+cpudtect.o: cpudtect.s
 
 # 3DNow!(tm) dependencies
 # XXX_def.obj targets are the default targets
 
 ifneq ($(GL_AMD3D),)
-xdraw2_def.o: xdraw2.S xdraw2.inc.S fxgasm.h
-	$(CC) $(AFLAGS) -c -o $@ xdraw2.S
+xdraw2_def.o: xdraw2.s xdraw2.inc.s fxgasm.h
+	$(CC) $(AFLAGS) -c -o $@ xdraw2.s
 
-xdraw2_3dnow.o: xdraw2.S xdraw2.inc.S fxgasm.h
-	$(CC) $(AFLAGS) -DGL_AMD3D -DUSE_PACKET_FIFO=1 -c -o $@ xdraw2.S
+xdraw2_3dnow.o: xdraw2.s xdraw2.inc.s fxgasm.h
+	$(CC) $(AFLAGS) -DGL_AMD3D -DUSE_PACKET_FIFO=1 -c -o $@ xdraw2.s
 
-xdraw3_def.o: xdraw3.S fxgasm.h
-	$(CC) $(AFLAGS) -c -o $@ xdraw3.S
+xdraw3_def.o: xdraw3.s fxgasm.h
+	$(CC) $(AFLAGS) -c -o $@ xdraw3.s
 
-xdraw3_3dnow.o: xdraw3.S fxgasm.h
-	$(CC) $(AFLAGS) -DGL_AMD3D -DUSE_PACKET_FIFO=1 -c -o $@ xdraw3.S
+xdraw3_3dnow.o: xdraw3.s fxgasm.h
+	$(CC) $(AFLAGS) -DGL_AMD3D -DUSE_PACKET_FIFO=1 -c -o $@ xdraw3.s
 
-xtexdl_3dnow.o: xtexdl.S fxgasm.h 
-	$(CC) $(AFLAGS) -DGL_AMD3D -DUSE_PACKET_FIFO=1 -c -o $@ xtexdl.S
+xtexdl_3dnow.o: xtexdl.s fxgasm.h 
+	$(CC) $(AFLAGS) -DGL_AMD3D -DUSE_PACKET_FIFO=1 -c -o $@ xtexdl.s
 
 endif # GL_AMD3D

@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log: 
+**  19   3dfx      1.17.1.0    06/20/00 Joseph Kain     Changes to support the
+**       Napalm Glide open source release.  Changes include cleaned up offensive
+**       comments and new legal headers.
 **  18   3dfx      1.17        04/25/00 Adam Briggs     Ack: don't clear the lost
 **       context dword in set rendering surface--it is cleared when the context is
 **       allocated.
@@ -32,7 +35,7 @@
 **       register pointers.
 **  13   3dfx      1.12        03/08/00 Kenneth Dyke    New use isMapped boardInfo
 **       flag instead of broken gc flag.
-**  12   3dfx      1.11        03/08/00 Don Mullis      Generalize glide3 to handle
+**  12   3dfx      1.11        03/07/00 Don Mullis      Generalize glide3 to handle
 **       sub-byte-size texels.
 ** 
 **  11   3dfx      1.10        01/31/00 Adam Briggs     changed the IS_NAPALM macro
@@ -58,7 +61,7 @@
 **       formats.
 **  3    3dfx      1.2         09/17/99 Anthony tai     fixed h3 build
 **  2    3dfx      1.1         09/16/99 Anthony tai     added 32 bpp rendermode
-**  1    3dfx      1.0         09/12/99 StarTeam VTS Administrator 
+**  1    3dfx      1.0         09/11/99 StarTeam VTS Administrator 
 ** $
 ** 
 ** 53    8/23/99 3:14p Kcd

@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log: 
+**  10   3dfx      1.8.1.0     06/20/00 Joseph Kain     Changes to support the
+**       Napalm Glide open source release.  Changes include cleaned up offensive
+**       comments and new legal headers.
 **  9    3dfx      1.8         04/04/00 Kenneth Dyke    Fixed addressing for large
 **       tiled textures.
 **  8    3dfx      1.7         01/31/00 Adam Briggs     changed the IS_NAPALM macro
@@ -38,7 +41,7 @@
 **       download code for tiled memory.
 **  2    3dfx      1.1         09/22/99 Larry  warner   Created download procedures
 **       for FXT1 format.
-**  1    3dfx      1.0         09/12/99 StarTeam VTS Administrator 
+**  1    3dfx      1.0         09/11/99 StarTeam VTS Administrator 
 ** $
 ** 
 ** 58    8/25/99 8:45p Larryw

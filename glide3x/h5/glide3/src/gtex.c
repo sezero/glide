@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log: 
+**  36   3dfx      1.34.1.0    06/20/00 Joseph Kain     Changes to support the
+**       Napalm Glide open source release.  Changes include cleaned up offensive
+**       comments and new legal headers.
 **  35   3dfx      1.34        04/25/00 Kenneth Dyke    Fixed non-compressed ->
 **       compressed texture chip bug workaround code.
 **  34   3dfx      1.33        04/11/00 Kenneth Dyke    Fixed debug assertion
@@ -37,9 +40,9 @@
 **  28   3dfx      1.27        03/11/00 Kenneth Dyke    Removed hack to disable
 **       palettized textures in 2PPC mode.
 **       Added some texture combine debuggng stuff.
-**  27   3dfx      1.26        03/08/00 Kenneth Dyke    Minor refinement to
+**  27   3dfx      1.26        03/07/00 Kenneth Dyke    Minor refinement to
 **       compressed texture nop workaround.
-**  26   3dfx      1.25        03/08/00 Kenneth Dyke    Workaround for weird
+**  26   3dfx      1.25        03/07/00 Kenneth Dyke    Workaround for weird
 **       compressed texture quirk.
 **  25   3dfx      1.24        02/22/00 Kenneth Dyke    Track palettized texture
 **       usage.
@@ -61,13 +64,13 @@
 **       register update mechanism to make 2PPC modes work right regardless of the
 **       order of Glide calls.   Also fixed a few register config bugs found when
 **       switching between new and old style combine modes.
-**  17   3dfx      1.16        01/24/00 Adam Briggs     set & recognize the SSTTYPE
+**  17   3dfx      1.16        01/23/00 Adam Briggs     set & recognize the SSTTYPE
 **       var for Voodoo4
-**  16   3dfx      1.15        01/19/00 Kenneth Dyke    Fix for 26-bit texture
+**  16   3dfx      1.15        01/18/00 Kenneth Dyke    Fix for 26-bit texture
 **       addresses.
 **  15   3dfx      1.14        01/16/00 Kenneth Dyke    Changes to enforce proper
 **       combine extension usage.
-**  14   3dfx      1.13        12/01/99 Kenneth Dyke    Fixed incorrect LOD
+**  14   3dfx      1.13        11/30/99 Kenneth Dyke    Fixed incorrect LOD
 **       settings for inactive TMUs.
 **  13   3dfx      1.12        10/26/99 Larry  warner   Turn off mipmap level size
 **       debug check
@@ -93,7 +96,7 @@
 **       for Napalm 32bpp and AA modes.
 **  2    3dfx      1.1         09/17/99 Anthony tai     fixed 2ppc and tmumask for
 **       texture color/alpha combine extension
-**  1    3dfx      1.0         09/12/99 StarTeam VTS Administrator 
+**  1    3dfx      1.0         09/11/99 StarTeam VTS Administrator 
 ** $
 ** 
 ** 67    8/05/99 5:03p Larryw
