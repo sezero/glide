@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <3dfx.h>
+#include <glidesys.h>
 #define FX_DLL_DEFINITION
 #include <fxdll.h>
 #include <fxmemmap.h>
