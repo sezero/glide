@@ -1,3 +1,8 @@
+2000-08-02  Bill White  <bill.white@griggsinst.com>
+
+	*  Added the swlibs/texus2 directory, in support of
+	   compressed textures.
+
 2000-08-01  Bill White  <bill.white@griggsinst.com>
 
 	* swlibs/include/makefile.autoconf.am:

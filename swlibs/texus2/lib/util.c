@@ -120,6 +120,22 @@ txError(char *message)
         _txErrorCallback( message, FXFALSE );
 }
 
+extern void _txDefaultErrorCallback( const char *string, FxBool fatal );
+
+void
+txErrorSetCallback( TxErrorCallbackFnc_t  fnc,
+                    TxErrorCallbackFnc_t *old_fnc)
+{
+    if (old_fnc) {
+        *old_fnc = _txErrorCallback;
+    }
+    if (fnc) {
+        _txErrorCallback = fnc;
+    } else {
+        _txErrorCallback = _txDefaultErrorCallback;
+    }
+}
+
 int
 txGCD(int a, int b)
 {

@@ -21,18 +21,8 @@
 ## $Date$
 ##
 
-MAGICK_DIR = @MAGICK_DIR@
-X_LIB_PATH = @X_LIB_PATH@
-if	TEXTURE_DISPLAY
-DISPLAY_LIBS         = $(X_LIB_PATH) -lX11 -lXext $(MAGICK_DIR) -lMagick -ltiff -lpng
-TEXTURE_DISPLAY_DEFS = -DTEXTURE_DISPLAY
-endif
-
-LDEFS                = $(TEXTURE_DISPLAY_DEFS)
-
-bin_PROGRAMS         = texus
+noinst_PROGRAMS         = texus
 texus_SOURCES        = cmd.c
 texus_LDADD          = $(top_builddir)/swlibs/fxmisc/libfxmisc.la \
-                       $(top_builddir)/swlibs/texus2/lib/libtexus.la \
-                       $(DISPLAY_LIBS)
+                       $(top_builddir)/swlibs/texus2/lib/libtexus.la
 

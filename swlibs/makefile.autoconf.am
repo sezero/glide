@@ -20,4 +20,4 @@
 ## $Revision$
 ## $Date$
 ##
-SUBDIRS=fxmisc newpci texus
+SUBDIRS=fxmisc newpci @TEXTURE_UTILITIES_DIR@

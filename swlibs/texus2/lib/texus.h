@@ -283,7 +283,20 @@ void txImgQuantize( char *dst, char *src,
  */
 typedef void (*TxErrorCallbackFnc_t)( const char *string, FxBool fatal );
 
-void txErrorSetCallback( TxErrorCallbackFnc_t fnc );
+/*
+ * Set the error call back function.
+ * Paramters:
+ *     fnc:            If this is non-null, set the callback
+ *                     function to this value.  If this pointer,
+ *                     is null, set the callback function to
+ *                     the default value.
+ *     old_fnc:        If this pointer is non-null, fill its
+ *                     contents with the callback function before
+ *                     changing it.  If this pointer is null,
+ *                     do nothing.
+ */
+extern void txErrorSetCallback( TxErrorCallbackFnc_t  fnc,
+                                TxErrorCallbackFnc_t *old_fnc);
 
 /*
  * TEXUS MEMORY ALLOCATION ROUTINES.

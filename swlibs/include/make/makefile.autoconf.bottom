@@ -59,7 +59,12 @@ GCFLAGS = $(GLIDE_DEBUG_GCFLAGS)
 #
 # Global DEFS
 #
-GDEFS=-DENDB -DX11 $(GLIDE_DEBUG_GDEFS) -Wall
+# This variable may require -DENDB.  The original Linux build
+# used it, but the Windows build didn't.  It seems to mean
+# Big Endian, which is not the case for the x86.  It is only
+# used in texus2 as far as I can see.
+#
+GDEFS=-DX11 $(GLIDE_DEBUG_GDEFS) -Wall
 #
 # Global INCLUDES
 #
@@ -88,7 +93,7 @@ GINCLUDES = $(CVG_VINCLUDES) $(H3_VINCLUDES) $(H5_VINCLUDES) \
             -I$(top_srcdir)/swlibs/fxmemmap \
             -I$(top_srcdir)/swlibs/fxmisc \
             -I$(top_srcdir)/swlibs/newpci/pcilib \
-            -I$(top_srcdir)/swlibs/texus/lib
+            -I$(top_srcdir)/swlibs/@TEXTURE_UTILITIES_DIR@/lib
 
 ########################################################################
 #

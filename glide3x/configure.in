@@ -79,7 +79,7 @@ AM_CONDITIONAL(HAL_HW, test "$FX_GLIDE_HW"=cvg && test ! -z "$HAL_HW")
 #
 AC_ARG_ENABLE([fx-debug],
               [dnl
-  --enable-fx-debug           Enable a debugging glide build [default=yes]],
+  --enable-fx-debug           Enable a debugging glide build [default=no]],
               [case ${enableval} in
                true|yes)
                    GLIDE_DEBUG=true
@@ -90,7 +90,7 @@ AC_ARG_ENABLE([fx-debug],
                *)
                    AC_MSG_ERROR([Illegal value (${enableval}) for --enable-fx-debug])
                    ;;
-               esac],[GLIDE_DEBUG=true])
+               esac],[GLIDE_DEBUG=false])
 AM_CONDITIONAL(GLIDE_DEBUG,test x$GLIDE_DEBUG = xtrue)
 AC_SUBST(GLIDE_DEBUG)
 #
@@ -111,6 +111,24 @@ AC_ARG_ENABLE([amd3d],
                    ;;
                esac],[enable_amd3d=false])
 AM_CONDITIONAL(GL_AMD3D,     test x$enable_amd3d = xtrue)
+#
+# --enable-fx-texus2 enables new texus library.
+#
+AC_ARG_ENABLE([fx-texlib],
+              [dnl
+  --enable-fx-tex=dir         Enable enhanced texture utilities library
+                                texus  - original library
+                                texus2 - library for compressed textures
+                                [default=texus]],
+              [case ${enableval} in
+               texus|texus2)
+                   TEXTURE_UTILITIES_DIR=${enableval}
+                   ;;
+               *)
+                   AC_MSG_ERROR([Illegal value (${enableval}) for --enable-fx-texus])
+                   ;;
+               esac],[TEXTURE_UTILITIES_DIR=texus])
+AC_SUBST(TEXTURE_UTILITIES_DIR)
 #
 # These are conditional variables whose value is set by
 # one of the other enable macros.
@@ -247,6 +265,9 @@ AC_OUTPUT(build.3dfx
           swlibs/newpci/pcilib/makefile.autoconf:swlibs/newpci/pcilib/makefile.autoconf.in:swlibs/include/make/makefile.autoconf.bottom
           swlibs/texus/makefile.autoconf:swlibs/texus/makefile.autoconf.in:swlibs/include/make/makefile.autoconf.bottom
           swlibs/texus/lib/makefile.autoconf:swlibs/texus/lib/makefile.autoconf.in:swlibs/include/make/makefile.autoconf.bottom
+          swlibs/texus2/makefile.autoconf:swlibs/texus2/makefile.autoconf.in:swlibs/include/make/makefile.autoconf.bottom
+          swlibs/texus2/lib/makefile.autoconf:swlibs/texus2/lib/makefile.autoconf.in:swlibs/include/make/makefile.autoconf.bottom
+          swlibs/texus2/cmd/makefile.autoconf:swlibs/texus2/cmd/makefile.autoconf.in:swlibs/include/make/makefile.autoconf.bottom
           )
 AC_OUTPUT_COMMANDS([chmod +x build.3dfx])
 

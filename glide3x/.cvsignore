@@ -1,0 +1,3 @@
+makefile.autoconf.in
+aclocal.m4
+configure

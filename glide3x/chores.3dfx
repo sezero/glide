@@ -68,6 +68,11 @@ while [ ! -z "$1" ] && [ "$DONE" != YES ] ; do
         echo '                         Note that you need to put local macros'
         echo '                         in acinclude.m4, not aclocal.m4.  The'
         echo '                         former is included in the latter.'
+        echo '    --debug-build        Add configuration option for a'
+        echo '                         debug build.'
+        echo '    --texus2             Add configuration option to use'
+        echo '                         the texus2 library.  (Do not use this'
+        echo '                         unless you know what you are doing.)'
         echo '    --generate:          Generate configure script and'
         echo '                         makefile.autoconf.in files.'
         echo '                         This is essentially just:'
@@ -95,18 +100,25 @@ while [ ! -z "$1" ] && [ "$DONE" != YES ] ; do
         echo ''
         exit 100
         ;;
+    --debug-build)
+        CONFIGURE_OPTIONS="$CONFIGURE_OPTIONS --enable-fx-debug"
+        shift
+        ;;
+    --texus2)
+        CONFIGURE_OPTIONS="$CONFIGURE_OPTIONS --enable-fx-texlib=texus2"
+        shift
+        ;;
     --generate)
         DO_GENERATE=YES
         shift
         ;;
     --configure)
         DO_CONFIGURE=YES
-        CONFIGURE_OPTIONS=""
         shift
         ;;
     --configure=*)
         DO_CONFIGURE=YES
-        CONFIGURE_OPTIONS=`echo $1 | sed s/--configure=//`
+        CONFIGURE_OPTIONS="$CONFIGURE_OPTIONS `echo $1 | sed s/--configure=//`"
         shift
         ;;
     --build-dir*=*)

@@ -71,6 +71,10 @@ However, there are some small wrinkles.
                                   h3 for DRI.  To build h3 stand alone,
                                   use --disable-fx-dri-build.
       --enable-amd3d              Build with 3DNow instructions.
+      --enable-fx-texus=library   Choose which texture manipulation
+                                  library to use.  The default value,
+                                  texus, is the only one which is
+                                  currently functional.
 4.) There is a script, build.3dfx, which is installed by the
     configure script at the root of every build directory.  It
     is essentially the single line:
