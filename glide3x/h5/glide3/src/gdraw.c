@@ -295,12 +295,12 @@ GR_ENTRY(grDrawLine, void, (const void *a, const void *b))
     _grAADrawLineStrip(GR_VTX_PTR_ARRAY, GR_LINES, 2, (void *)&a);
   else
     _grDrawLineStrip(GR_VTX_PTR_ARRAY, GR_LINES, 2, (void *)&a);
-#else	/* (GLIDE_PLATFORM & GLIDE_OS_UNIX) || defined(__DJGPP__) */
+#else  /* __GNUC__ */
   if (gc->state.grEnableArgs.primitive_smooth_mode & GR_AA_ORDERED_LINES_MASK)
     _grAADrawLineStrip(GR_VTX_PTR_ARRAY, GR_LINES, 2, &(void *)a);
   else
     _grDrawLineStrip(GR_VTX_PTR_ARRAY, GR_LINES, 2, &(void *)a);
-#endif	/* (GLIDE_PLATFORM & GLIDE_OS_UNIX) || defined(__DJGPP__) */
+#endif /* __GNUC__ */
 #endif
     
 #undef FN_NAME

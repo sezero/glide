@@ -2347,7 +2347,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
     /* This actually gets taken in hwcInitVideo */
     gc->contextP = FXTRUE;
 
-#if !(GLIDE_PLATFORM & GLIDE_OS_UNIX)
+#if GLIDE_CHECK_CONTEXT
     /* CSR - Set up flag for display driver to tell us that context was lost */
     if ( !gc->open )  /* If we already have a context open, then lets not
                          re-initialize the pointers                          */                                             
@@ -2359,7 +2359,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
     /* This actually gets taken in hwcInitVideo */
     gc->contextP = FXTRUE;
     *gc->lostContext = FXFALSE;
-#endif	/* !(GLIDE_PLATFORM & GLIDE_OS_UNIX) */
+#endif /* GLIDE_CHECK_CONTEXT */
 
     if (_GlideRoot.environment.gammaR != 1.3f &&
         _GlideRoot.environment.gammaG != 1.3f &&
@@ -2625,7 +2625,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
                                   gc->buffers0[gc->curBuffer], /* board address of beginning of OS  */
                                   gc->strideInTiles );        /* distance between scanlines of the OS, in*/
 
-#if !(GLIDE_PLATFORM & GLIDE_OS_UNIX)
+#if GLIDE_CHECK_CONTEXT
     /*
     ** initialize context checking
     */
@@ -2634,7 +2634,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
       *gc->lostContext = FXFALSE;
       gc->contextP = 1;
     }
-#endif	/* !(GLIDE_PLATFORM & GLIDE_OS_UNIX) */
+#endif /* GLIDE_CHECK_CONTEXT */
 
 #endif /*  defined( GLIDE_INIT_HAL )  */
 #else  /* !defined( USE_PACKET_FIFO ) */
@@ -2746,7 +2746,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
                                   gc->buffers0[gc->curBuffer], /* board address of beginning of OS  */
                                   gc->strideInTiles );        /* distance between scanlines of the OS, in*/
     _grReCacheFifo(0);
-#if !(GLIDE_PLATFORM & GLIDE_OS_UNIX)
+#if GLIDE_CHECK_CONTEXT
     /*
     ** initialize context checking
     */
@@ -2755,7 +2755,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
       *gc->lostContext = FXFALSE;
       gc->contextP = 1;
     }
-#endif /* !(GLIDE_PLATFORM & GLIDE_OS_UNIX) */
+#endif /* GLIDE_CHECK_CONTEXT */
 
 #endif /* !defined( USE_PACKET_FIFO ) */
   
@@ -3136,7 +3136,7 @@ GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
   }
 #endif
 
-#if !(GLIDE_PLATFORM & GLIDE_OS_UNIX)
+#if GLIDE_CHECK_CONTEXT
   if (gc->lostContext) {
     if (*gc->lostContext) {
 #if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
@@ -3149,7 +3149,7 @@ GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
       return 0;
     }
   }
-#endif	/* !(GLIDE_PLATFORM & GLIDE_OS_UNIX) */
+#endif /* GLIDE_CHECK_CONTEXT */
 
   /* NB: The gc that is being closed is the passed gc not the
    * currently selected gc. This must be setup before the
@@ -3203,13 +3203,13 @@ GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
        * safe everywhere.
        */
       GDBG_INFO(gc->myLevel, "  Restore Video\n");
-#if !(GLIDE_PLATFORM & GLIDE_OS_UNIX)
+#if GLIDE_CHECK_CONTEXT
       if (!*gc->lostContext)
-#endif	/* !(GLIDE_PLATFORM & GLIDE_OS_UNIX) */
+#endif /* GLIDE_CHECK_CONTEXT */
 #if !DRI_BUILD
+      {
       /* disable SLI and AA */
 #ifdef FX_GLIDE_NAPALM
-      {
         if (IS_NAPALM(gc->bInfo->pciInfo.deviceID)) {
           _grChipMask( SST_CHIP_MASK_ALL_CHIPS );
           _grTex2ppc(FXFALSE);
@@ -3349,7 +3349,7 @@ GR_DIENTRY(grSelectContext, FxBool , (GrContext_t context) )
         GR_ASSERT((gc >= _GlideRoot.GCs) &&
                   (gc <= _GlideRoot.GCs + MAX_NUM_SST));
 
-#ifdef GLIDE_INIT_HWC
+#if defined(GLIDE_INIT_HWC) && GLIDE_CHECK_CONTEXT 
         gc->contextP = !(*gc->lostContext) ;
 #else
         gc->contextP = 1;

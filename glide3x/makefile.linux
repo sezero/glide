@@ -111,6 +111,7 @@ endif
 # other
 CDEFS += -DGLIDE_PLUG -DGLIDE_SPLASH
 #CDEFS += -DGLIDE_LIB
+#CDEFS += -DGLIDE_CHECK_CONTEXT
 
 ###############################################################################
 #	flags

@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.7.4.16  2003/08/21 08:49:55  dborca
+** Texture fixes by Koolsmoky
+**
 ** Revision 1.7.4.15  2003/08/04 12:44:40  dborca
 ** Enabled 32bit Z writes
 **
@@ -1568,7 +1571,7 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t _type, GrBuffer_t buffer,
     GR_RETURN(FXFALSE);
   }
   
-#if !(GLIDE_PLATFORM & GLIDE_OS_UNIX) /* fix me! */
+#if !DRI_BUILD /* fix me! */
   /* Read using HWC if we want dithering and using FSAA or 16 bpp mode */
   wantHwc = ((_GlideRoot.environment.useHwcAAforLfbRead & 2) &&                  /* using HWC and */
              _GlideRoot.environment.ditherHwcAA &&                               /* want dithering and */
@@ -1807,7 +1810,7 @@ GR_ENTRY(grLfbUnlock, FxBool, (GrLock_t _type, GrBuffer_t buffer))
                          buffer != GR_BUFFER_AUXBUFFER,
                          "Bad buffer");
   
-#if !(GLIDE_PLATFORM & GLIDE_OS_UNIX) /* fix me! */
+#if !DRI_BUILD /* fix me! */
   /* Read using HWC if we want dithering and using FSAA or 16 bpp mode */
   wantHwc = ((_GlideRoot.environment.useHwcAAforLfbRead & 2) &&                  /* using HWC and */
              _GlideRoot.environment.ditherHwcAA &&                               /* want dithering and */
@@ -2232,7 +2235,7 @@ static FxBool grLfbReadRegionOrigin (GrBuffer_t src_buffer, GrOriginLocation_t o
    info.size = sizeof(info);
    rv=FXFALSE;
 
-#if !(GLIDE_PLATFORM & GLIDE_OS_UNIX) /* [dBorca] fixme :D */
+#if !DRI_BUILD /* fixme */
    /* Read using HWC if we want dithering and using FSAA or 16 bpp mode */
    wantHwc = ((_GlideRoot.environment.useHwcAAforLfbRead & 2) &&                  /* using HWC and */
               _GlideRoot.environment.ditherHwcAA &&                               /* want dithering and */

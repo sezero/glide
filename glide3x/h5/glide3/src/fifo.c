@@ -940,11 +940,11 @@ _grCommandTransportMakeRoom(const FxI32 blockSize, const char* fName, const int 
      * we wrap check the current hw fifo pointer which is going to be the
      * 2d driver's fifo if we lost our context.
      */
-#if defined(GLIDE_INIT_HWC) && !(GLIDE_PLATFORM & GLIDE_OS_UNIX)
+#if defined(GLIDE_INIT_HWC) && GLIDE_CHECK_CONTEXT
     gc->contextP = !(*gc->lostContext) ;
-#else /* defined(GLIDE_INIT_HWC) && !(GLIDE_PLATFORM & GLIDE_OS_UNIX) */
+#else  /* defined(GLIDE_INIT_HWC) && GLIDE_CHECK_CONTEXT */
     gc->contextP = 1; /* always has context in CSIM */
-#endif /* defined(GLIDE_INIT_HWC) && !(GLIDE_PLATFORM & GLIDE_OS_UNIX) */
+#endif /* defined(GLIDE_INIT_HWC) && GLIDE_CHECK_CONTEXT */
     if (gc->contextP) {
       FxU32 wrapAddr = 0x00UL;
       FxU32 checks;

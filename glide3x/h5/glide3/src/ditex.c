@@ -1918,7 +1918,7 @@ GR_DIENTRY(grTexMinAddress, FxU32, ( GrChipID_t tmu ))
      
   FXUNUSED(hw); 
   
-#if !(GLIDE_PLATFORM & GLIDE_OS_UNIX)
+#if GLIDE_CHECK_CONTEXT
   if (!gc->lostContext)  
     return 0; 
   
@@ -1927,7 +1927,7 @@ GR_DIENTRY(grTexMinAddress, FxU32, ( GrChipID_t tmu ))
       return 0;
     }
   }     
-#endif  /* !(GLIDE_PLATFORM & GLIDE_OS_UNIX) */
+#endif /* GLIDE_CHECK_CONTEXT */
 
   GDBG_INFO_MORE(gc->myLevel,"(%d)\n",tmu);
   GR_CHECK_TMU(FN_NAME, tmu);
@@ -1984,7 +1984,7 @@ GR_DIENTRY(grTexMaxAddress, FxU32, ( GrChipID_t tmu ))
      
   FXUNUSED(hw); 
   
-#if !(GLIDE_PLATFORM & GLIDE_OS_UNIX)  
+#if GLIDE_CHECK_CONTEXT
   if (!gc->lostContext)  
     return 0; 
   
@@ -1993,7 +1993,7 @@ GR_DIENTRY(grTexMaxAddress, FxU32, ( GrChipID_t tmu ))
       return 0;
     }
   }     
-#endif /* !(GLIDE_PLATFORM & GLIDE_OS_UNIX) */
+#endif /* GLIDE_CHECK_CONTEXT */
 
   GDBG_INFO_MORE(gc->myLevel,"(%d)\n",tmu);
   GR_CHECK_TMU(FN_NAME, tmu );
@@ -2265,4 +2265,3 @@ GR_DIENTRY(grTexDownloadMipMapLevel, void,
 
   GR_END();
 } /* grTexDownloadMipmapLevel */
-

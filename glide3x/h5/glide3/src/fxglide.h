@@ -2356,7 +2356,7 @@ _trisetup_noclip_valid(const void *va, const void *vb, const void *vc );
 #define TRISETUP \
   __asm(""::"d"(gc)); \
   (*gc->triSetupProc)
-#else /* (GLIDE_PLATFORM & GLIDE_OS_UNIX) */
+#else /* (GLIDE_PLATFORM & GLIDE_OS_UNIX) || defined(__DJGPP__) */
 #define TRISETUP \
   (*gc->triSetupProc)
 #endif

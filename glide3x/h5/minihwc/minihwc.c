@@ -1037,10 +1037,8 @@ modify [eax];
 #error "P6 Fencing in-line assembler code needs to be added for this compiler"
 #endif /* Compiler specific fence commands */
 
-#if defined(HWC_EXT_INIT) || defined(HWC_GDX_INIT) || defined(__DJGPP__)
+/* keep this around, just in case... */
 static FxU32 dummyContextDWORD;
-static FxU32 **dummydata;
-#endif
 
 #if WINXP_ALT_TAB_FIX
 static WNDPROC wpWinProc = 0; 
@@ -4238,8 +4236,8 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
   hwcExtRequest_t ctxReq;
   hwcExtResult_t  ctxRes;
   FxI32 OS = hwcGetOS();
-  FxI32 useV56KdacFix = 2;
 #endif
+  FxI32 useV56KdacFix = 2;
   
    {
       FxU32 refresh;
@@ -9120,7 +9118,7 @@ hwcShareContextData(hwcBoardInfo *bInfo, FxU32 **data)
               ctxRes.optData.shareContextDWORDRes.contextDWORD); 
   }
 #endif
-#if HWC_GDX_INIT || defined(__DJGPP__)
+#if HWC_GDX_INIT || defined(__DJGPP__) || (GLIDE_PLATFORM & GLIDE_OS_UNIX)
   *data = &dummyContextDWORD;
 #endif
   return retVal;
