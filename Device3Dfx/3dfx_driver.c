@@ -21,6 +21,16 @@
 
    ChangeLog
 
+   2004-05-04   Guillem Jover   <guillem@debian.org>
+
+   * Cleaned new kernel build system.
+
+   2004-02-13   Aristeu Sergio Rozanski Filho <aris@cathedrallabs.org>
+
+   * Use kernel build system.
+   * Use new pci probe present in 2.6.x kernels.
+   * Use module auto-loading.
+
    2004-01-22   Guillem Jover   <guillem@debian.org>
 
    * Ported to 2.6 kernels.
@@ -203,6 +213,14 @@
 #define PCI_DEVICE_ID_3DFX_VOODOO4 9
 #endif
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
+static char name_3dfx[] = "3dfx";
+
+#define pcibios_read_config_byte(x,y,z,w) pci_read_config_byte(y,z,w)
+#define pcibios_read_config_word(x,y,z,w) pci_read_config_word(y,z,w)
+#define pcibios_read_config_dword(x,y,z,w) pci_read_config_dword(y,z,w)
+#define pcibios_write_config_dword(x,y,z,w) pci_write_config_dword(y,z,w)
+#else	/* LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0) */
 static struct pci_card {
 	unsigned short	vendor;
 	unsigned short	device;
@@ -214,6 +232,7 @@ static struct pci_card {
 	{PCI_VENDOR_ID_3DFX, 		PCI_DEVICE_ID_3DFX_VOODOO3},
 	{PCI_VENDOR_ID_3DFX, 		PCI_DEVICE_ID_3DFX_VOODOO4}
 };
+#endif	/* LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0) */
 
 #ifdef DEBUG
 #define DEBUGMSG(x) printk x
@@ -251,7 +270,11 @@ struct cardInfo_t {
   	int addr1;
 	int addr2;
 	unsigned char bus;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
+	struct pci_dev	*dev;
+#else
 	unsigned char dev;
+#endif
 	struct file *curFile;
 #ifdef HAVE_MTRR
 	int mtrr_buf;
@@ -274,6 +297,7 @@ static int numCards = 0;
 static devfs_handle_t devfs_handle;
 #endif
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
 static void findCardType(int vendor, int device)
 {
 	struct pci_dev *dev = NULL;
@@ -307,6 +331,7 @@ static int findCards(void)
 		findCardType(pci_card_list[i].vendor, pci_card_list[i].device);
 	return numCards;
 }
+#endif
 
 static int open_3dfx(struct inode *inode, struct file *file)
 {
@@ -796,6 +821,62 @@ static struct file_operations fops_3dfx = {
 	release:		release_3dfx,		/* release */
 };
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
+static int probe_3dfx(struct pci_dev *dev, const struct pci_device_id *id)
+{
+	pci_read_config_dword(dev, PCI_BASE_ADDRESS_0, &cards[numCards].addr0);
+	pci_read_config_dword(dev, PCI_BASE_ADDRESS_1, &cards[numCards].addr1);
+	pci_read_config_dword(dev, PCI_BASE_ADDRESS_2, &cards[numCards].addr2);
+	cards[numCards].addr0 &= ~0xF;
+	cards[numCards].addr1 &= ~0xF;
+	cards[numCards].dev = dev;
+	cards[numCards].vendor = dev->vendor;
+	cards[numCards].type = dev->device;
+	cards[numCards].curFile = 0;
+
+
+	DEBUGMSG(("3dfx: board vendor %d type %d located at %x/%x\n",
+		    dev->vendor, dev->device, cards[numCards].addr0,
+		    cards[numCards].addr1));
+	numCards++;
+
+	return 0;
+}
+
+static void remove_3dfx(struct pci_dev *dev)
+{
+
+}
+
+static struct pci_device_id id_table_3dfx[] = {
+	{PCI_VENDOR_ID_3DFX,		PCI_DEVICE_ID_3DFX_VOODOO,
+	 PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
+	{PCI_VENDOR_ID_3DFX, 		PCI_DEVICE_ID_3DFX_VOODOO2,
+	 PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
+	{PCI_VENDOR_ID_ALLIANCE, 	PCI_DEVICE_ID_ALLIANCE_AT3D,
+	 PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
+	{PCI_VENDOR_ID_3DFX, 		PCI_DEVICE_ID_3DFX_BANSHEE,
+	 PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
+	{PCI_VENDOR_ID_3DFX, 		PCI_DEVICE_ID_3DFX_VOODOO3,
+	 PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
+	{PCI_VENDOR_ID_3DFX, 		PCI_DEVICE_ID_3DFX_VOODOO4,
+	 PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
+};
+MODULE_DEVICE_TABLE(pci, id_table_3dfx);
+
+static struct pci_driver driver_3dfx = {
+	.name =		name_3dfx,
+	.id_table =	id_table_3dfx,
+	.probe =	probe_3dfx,
+	.remove =	remove_3dfx,
+};
+
+static void findCards(void)
+{
+	pci_register_driver(&driver_3dfx);
+}
+#endif	/* LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0) */
+
 #ifdef MODULE
 int init_module(void)
 {
@@ -854,6 +935,10 @@ void cleanup_module(void)
 	  DEBUGMSG(("3dfx: unregister_chrdev failed\n"));
 	  return;
 	}
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
+	pci_unregister_driver(&driver_3dfx);
+#endif
 }
 #else /* !MODULE */
 
