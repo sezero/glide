@@ -19,6 +19,9 @@
  **
  ** $Header$
  ** $Log$
+ ** Revision 1.2  2000/01/15 00:08:22  joseph
+ ** Evil nasty hack to fix dispatch code using binutils 2.9.5.
+ **
  ** Revision 1.1.1.1  1999/12/07 21:49:10  joseph
  ** Initial checkin into SourceForge.
  **
@@ -688,25 +691,11 @@ all_done:
   asm( "popl %%ebp" : /* no outputs*/ : /* no inputs */ : "ebp");
 #endif
 
-  /* This is a really disgusting hack but I can't seem to get gcc's extended
-   * inline asm to generate *kTriProcOffset(%0).  If anyone can do that
-   * please do. */
-#define MAKE_OFFSET_PASS_2(offset) "jmp *" #offset "(%0)"
-#define MAKE_OFFSET(offset) MAKE_OFFSET_PASS_2(offset)
-  asm( MAKE_OFFSET (kTriProcOffsetClean)
-	: /* no outputs */ 
-       : "r" (_GlideRoot.curGC)
-       );
-
-  /* This nice clean solution used to work.  It generated slightly bad asm
-   * but as version 2.9.1 would assemble it with a warning.  It breaks
-   * on as version 2.9.5. */
-#if 0
-  asm( "jmp %0"
+  asm( "jmp *%0"
        : /* no outputs */
        : "m" (_GlideRoot.curGC->cmdTransportInfo.triSetupProc)
        );
-#endif /* 0 */
+
 
 #endif
 #endif
