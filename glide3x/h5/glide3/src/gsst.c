@@ -2389,7 +2389,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
     ** if we only have one TMU or we are using UMA, do similar things
     */
     if (
-      (gc->num_tmu < 1) ||
+      (gc->num_tmu < 2) ||
       (gc->state.grEnableArgs.texture_uma_mode == GR_MODE_ENABLE)
       ) {
       tramShift = 0;
