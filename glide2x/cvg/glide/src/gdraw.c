@@ -19,6 +19,9 @@
  **
  ** $Header$
  ** $Log$
+ ** Revision 1.4  2000/01/28 20:52:17  joseph
+ ** Changes to support building shared libraries with PIC support.
+ **
  ** Revision 1.3  2000/01/17 22:18:41  joseph
  ** A nicer, cleaner fix than the evil hack.
  **
@@ -680,13 +683,19 @@ all_done:
 #else
 #if defined(__MSC__)
   {
+    /* XXX [koolsmoky] fix this. for now we just call TRISETUP
     extern struct _GlideRoot_s _GlideRoot;
 
     _asm {
       mov eax, [_GlideRoot + kCurGCOffset];
       mov eax, [eax + kTriProcOffset];
       jmp eax;
-    }
+    }*/
+    
+    GR_BEGIN_NOFIFOCHECK("grDrawTriangle",92);
+    GR_CHECK_F(myName, !a || !b || !c, "NULL pointer passed");
+    TRISETUP(a, b, c);
+    GR_END();
   }
 #endif
 #if defined( __linux__ )
@@ -723,7 +732,7 @@ all_done:
 #endif
        "jmp *%0" 
        : /* no outputs */        
-       : "m" (_GlideRoot.curGC->cmdTransportInfo.triSetupProc)
+       : "m" (_GlideRoot.curGC->curArchProcs.triSetupProc)
 #if defined (PIC) || !defined (BIG_OPT)
        :
 #endif

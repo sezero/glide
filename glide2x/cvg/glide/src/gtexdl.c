@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.2  2000/10/03 18:28:33  mercury
+** 003-clean_up_cvg-000, cvg tree cleanup.
+**
 ** Revision 1.1.1.1  1999/12/07 21:49:11  joseph
 ** Initial checkin into SourceForge.
 **
@@ -391,7 +394,9 @@ GR_ENTRY(grTexDownloadMipMapLevelPartial,
 {
   const FifoChipField chipId = (FifoChipField)(0x02UL << tmu);
   FxI32 sh;
+#if !GLIDE_DISPATCH_DOWNLOAD
   FxU32 max_s, width, tmu_baseaddress;
+#endif
 #define FN_NAME "grTexDownloadMipMapLevelPartial"
 
   GR_BEGIN_NOFIFOCHECK(FN_NAME, 89);
@@ -477,6 +482,35 @@ GR_ENTRY(grTexDownloadMipMapLevelPartial,
   REG_GROUP_END();
   }
 
+#if GLIDE_DISPATCH_DOWNLOAD /* cpu optimized texture downloads */
+  /* XXX [koolsmoky] need to implement work around for 8bit-wide downloads
+   * for old revision TMUs.
+   */
+  /* Do the download */
+  {
+    const FxU32 
+      width = _grMipMapHostWH[aspectRatio][thisLod][0],
+      formatSel = (format >= GR_TEXFMT_16BIT),
+      tmuBaseAddr = ((FxU32)gc->tex_ptr + 
+                     (((FxU32)tmu) << 21UL) + 
+                     (((FxU32)thisLod) << 17UL));
+    FxU32 
+      widthSel = (width >> 0x01UL),
+      max_s = width >> (formatSel
+                        ? 1   /* 16-bit texture */
+                        : 2); /* 8-bit texture */
+
+    if (max_s <= 0) max_s = 1;
+    if (widthSel > 2) widthSel = 3;
+    
+    _GlideRoot.stats.texBytes += max_s * (max_t - t + 1) * 4;
+    
+    (*((*gc->curArchProcs.texDownloadProcs)[formatSel][widthSel]))(gc, 
+								   tmuBaseAddr,
+								   max_s, t, max_t,
+								   data);
+  }
+#else
   /*------------------------------------------------------------
     Determine max_s
     ------------------------------------------------------------*/
@@ -499,7 +533,7 @@ GR_ENTRY(grTexDownloadMipMapLevelPartial,
     ------------------------------------------------------------*/
   if (format < GR_TEXFMT_16BIT) { /* 8 bit textures */
     /* Hoisted initialization */
-    FxU32 tex_address = tmu_baseaddress + TEX_ROW_ADDR_INCR(t, thisLod);
+    FxU32 tex_address = tmu_baseaddress + TEX_ROW_ADDR_INCR(t);
     const FxU8* src8  = (const FxU8*)data;
 
     switch(width) {
@@ -525,7 +559,7 @@ GR_ENTRY(grTexDownloadMipMapLevelPartial,
         LINEAR_WRITE_END();
             
         src8 += width;
-        tex_address += TEX_ROW_ADDR_INCR(1, thisLod);
+        tex_address += TEX_ROW_ADDR_INCR(1);
       }
       break;
 
@@ -538,7 +572,7 @@ GR_ENTRY(grTexDownloadMipMapLevelPartial,
         LINEAR_WRITE_END();
         
         src8 += width;
-        tex_address += TEX_ROW_ADDR_INCR(1, thisLod);
+        tex_address += TEX_ROW_ADDR_INCR(1);
       }
       break;
 
@@ -550,7 +584,7 @@ GR_ENTRY(grTexDownloadMipMapLevelPartial,
       for (; t <= max_t; t++) {
         FxU32 s;
 
-        tex_address = tmu_baseaddress + TEX_ROW_ADDR_INCR(t, thisLod);
+        tex_address = tmu_baseaddress + TEX_ROW_ADDR_INCR(t);
 
         LINEAR_WRITE_BEGIN(max_s, kLinearWriteTex,
                            (FxU32)tex_address - (FxU32)gc->tex_ptr,
@@ -572,7 +606,7 @@ GR_ENTRY(grTexDownloadMipMapLevelPartial,
     }
   } else { /* 16-bit Textures */
     /* Hoisted initialization */
-    FxU32 tex_address = tmu_baseaddress + TEX_ROW_ADDR_INCR(t, thisLod);
+    FxU32 tex_address = tmu_baseaddress + TEX_ROW_ADDR_INCR(t);
     const FxU16* src16 = (const FxU16*)data;
 
         /* Cases 1, 2 don't need inner loops for s */
@@ -586,7 +620,7 @@ GR_ENTRY(grTexDownloadMipMapLevelPartial,
           LINEAR_WRITE_END();
           
           src16 += width;
-          tex_address += TEX_ROW_ADDR_INCR(1, thisLod);
+          tex_address += TEX_ROW_ADDR_INCR(1);
         }
       break;
       
@@ -599,7 +633,7 @@ GR_ENTRY(grTexDownloadMipMapLevelPartial,
         LINEAR_WRITE_END();
         
         src16 += width;
-        tex_address += TEX_ROW_ADDR_INCR(1, thisLod);
+        tex_address += TEX_ROW_ADDR_INCR(1);
       }
       break;
 
@@ -607,7 +641,7 @@ GR_ENTRY(grTexDownloadMipMapLevelPartial,
       for (; t <= max_t; t++) {
         FxU32 s;
 
-        tex_address = tmu_baseaddress + TEX_ROW_ADDR_INCR(t, thisLod);
+        tex_address = tmu_baseaddress + TEX_ROW_ADDR_INCR(t);
 
         /* Loop unrolled to process 2 dwords per iteration */            
         LINEAR_WRITE_BEGIN(max_s, kLinearWriteTex,
@@ -632,6 +666,7 @@ GR_ENTRY(grTexDownloadMipMapLevelPartial,
       break;
     }
   }
+#endif
   
   /*------------------------------------------------------------
     Restore TLOD, texMode, baseAddress
@@ -771,7 +806,7 @@ GR_ENTRY(ConvertAndDownloadRle,
   
   rle_line_end=rle_line+width+u0;
   for(t=0;t<max_t;t++) {
-    tex_address = tmu_baseaddress + TEX_ROW_ADDR_INCR(t, thisLod);
+    tex_address = tmu_baseaddress + TEX_ROW_ADDR_INCR(t);
     src = rle_line + u0;
       
     rle_decode_line_asm(tlut,&bm_data[offset],rle_line);
@@ -789,7 +824,7 @@ GR_ENTRY(ConvertAndDownloadRle,
   }
 
   if (dest_height>height) {
-    tex_address = tmu_baseaddress + TEX_ROW_ADDR_INCR(t, thisLod);
+    tex_address = tmu_baseaddress + TEX_ROW_ADDR_INCR(t);
     src=rle_line+u0;
 
     LINEAR_WRITE_BEGIN(max_s, kLinearWriteTex, 

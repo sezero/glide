@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.2.2.1  2004/12/12 15:26:04  koolsmoky
+** changes to support new cpuid
+**
 ** Revision 1.2  2000/10/03 18:28:33  mercury
 ** 003-clean_up_cvg-000, cvg tree cleanup.
 **
@@ -333,6 +336,7 @@
 #include <fxdll.h>
 #include <glide.h>
 #include "fxglide.h"
+#include "fxsplash.h"
 
 #if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
 #define WIN32_LEAN_AND_MEAN
@@ -487,9 +491,9 @@ __tryReOpen:
     }
     
     /* Re-enabled write combining */
-    if (_GlideRoot.CPUType.family >= 6) {
+    /*if (_GlideRoot.CPUType.family >= 6) {*/
       sst1InitCaching(sstRegs, FXTRUE);
-    }
+    /*}*/
 
     rv = sst1InitRegisters(sstRegs);
     if (!rv) {
@@ -880,10 +884,10 @@ __tryReOpen:
              * NB: The order of the caching changes is relevant here since
              * we don't want to waste mtrr's, even briefly.  
              */
-            if (_GlideRoot.CPUType.family >= 6) {
+            /*if (_GlideRoot.CPUType.family >= 6) {*/
               sst1InitCaching(gc->base_ptr, FXFALSE);
               sst1InitCaching((gc + 1)->base_ptr, FXTRUE);
-            }
+            /*}*/
 
             sst1InitShutdown(gc->base_ptr);
 
@@ -977,10 +981,10 @@ __tryReOpen:
          * NB: The order of the caching changes is relevant here since
          * we don't want to waste mtrr's, even briefly.  
          */
-        if (_GlideRoot.CPUType.family >= 6) {
+        /*if (_GlideRoot.CPUType.family >= 6) {*/
           sst1InitCaching(gc->slave_ptr, FXFALSE);
           sst1InitCaching(gc->base_ptr, FXTRUE);
-        }
+        /*}*/
       }
     
       /* Save that we swapped teh master sense so that we can
@@ -1338,9 +1342,9 @@ __errSliExit:
      * This is currently being done in _grDetectResources so that we
      * can match the nt driver semantics in win95.  
      */
-    if (_GlideRoot.CPUType.family >= 6) {
+    /*if (_GlideRoot.CPUType.family >= 6) {*/
       sst1InitCaching(gc->reg_ptr, FXTRUE);
-    }
+    /*}*/
 #endif /* !GLIDE_INIT_HAL */
 #else
 #error "Need to write command transport init for glide for this hw"
@@ -1349,6 +1353,12 @@ __errSliExit:
   
   /* We're effectively open now */
   gc->open = FXTRUE;
+
+  /* Setup the procs that we can do w/o any mode knowledge */
+#if GLIDE_DISPATCH_SETUP || GLIDE_DISPATCH_DOWNLOAD
+  gc->curArchProcs.texDownloadProcs  = _GlideRoot.deviceArchProcs.curTexProcs;
+  gc->curArchProcs.coorTriSetupVector = _GlideRoot.deviceArchProcs.curTriProcs;
+#endif /* GLIDE_DISPATCH_SETUP || GLIDE_DISPATCH_DOWNLOAD */
 
   /*------------------------------------------------------
     GC Init
@@ -1558,13 +1568,53 @@ __errSliExit:
   if (!_GlideRoot.environment.noSplash) {
     HMODULE newSplash;
 
-    if (newSplash = LoadLibrary("3dfxsplash2.dll")) {
-      FARPROC fxSplash;
+    if (newSplash = LoadLibrary("3dfxspl2.dll")) {
+      GrState glideState;
+      FxBool didLoad;
+      GrSplashProc fxSplash;
+      GrSplashInitProc fxSplashInit;
+      GrSplashPlugProc fxSplashPlug;
+      GrSplashShutdownProc fxSplashShutdown;
 
-      if (fxSplash = GetProcAddress(newSplash, "_fxSplash@16")) {
-        fxSplash(hWnd, gc->state.screen_width, gc->state.screen_height, nAuxBuffers);
-        _GlideRoot.environment.noSplash = 1;        
-      } 
+      fxSplash = (GrSplashProc)GetProcAddress(newSplash, "_fxSplash@20");
+      fxSplashInit = (GrSplashInitProc)GetProcAddress(newSplash, "_fxSplashInit@24");
+      fxSplashPlug = (GrSplashPlugProc)GetProcAddress(newSplash, "_fxSplashPlug@16");
+      fxSplashShutdown = (GrSplashShutdownProc)GetProcAddress(newSplash, "_fxSplashShutdown@0");
+
+      didLoad = ((fxSplash != NULL) &&
+                 (fxSplashInit != NULL) &&
+                 (fxSplashPlug != NULL) &&
+                 (fxSplashShutdown != NULL));
+
+      if (didLoad & 0/* [dBorca] i am evil! harr-harr */) {
+        /* new style DLL */
+        grGlideGetState(&glideState);
+        didLoad = fxSplashInit(hWnd,
+                               gc->state.screen_width, gc->state.screen_height,
+                               nColBuffers, nAuxBuffers,
+                               format);
+        if (didLoad) {
+          fxSplash(0.0f, 0.0f, 
+                   (float)gc->state.screen_width,
+                   (float)gc->state.screen_height,
+                   0);
+          fxSplashShutdown();
+          _GlideRoot.environment.noSplash = 1;
+        }
+        grGlideSetState((const void*)&glideState);
+      } else {
+        /* old style DLL */
+        typedef int (FX_CALL *GrSplashOld) (FxU32 hWind, FxU32 scrWidth, FxU32 scrHeight, FxU32 nAuxBuffers);
+        GrSplashOld fxSplashOld = (GrSplashOld)GetProcAddress(newSplash, "_fxSplash@16");
+        if (fxSplashOld) {
+            grGlideGetState(&glideState);
+            fxSplashOld(hWnd, gc->state.screen_width, gc->state.screen_height, nAuxBuffers);
+            _GlideRoot.environment.noSplash = 1;
+	    grGlideSetState((const void*)&glideState);
+	}
+      }
+      
+      FreeLibrary(newSplash);
     }
   }
 #endif /* (GLIDE_PLATFORM & GLIDE_OS_WIN32) */
@@ -1682,9 +1732,9 @@ GR_ENTRY(grSstWinClose, void, (void))
      * track of the mtrr's.
      */
     sst1InitIdle(gc->reg_ptr);
-    if (_GlideRoot.CPUType.family >= 6) {
+    /*if (_GlideRoot.CPUType.family >= 6) {*/
       sst1InitCaching(gc->base_ptr, FXFALSE);
-    }
+    /*}*/
     sst1InitShutdown(gc->reg_ptr);
 #endif /* !GLIDE_INIT_HAL */
 

@@ -19,6 +19,9 @@
 ;; $Header$
 ;; $Revision$
 ;; $Log$
+;; Revision 1.1.1.1  1999/12/07 21:49:13  joseph
+;; Initial checkin into SourceForge.
+;;
 ;; 
 ;; 7     5/18/98 12:16p Peter
 ;; culling enabling
@@ -47,174 +50,164 @@
 ; B4 Chip field fix.
 ;;
 
-TITLE   xdraw2.asm
-OPTION OLDSTRUCTS       
-.586P
+%include "xos.inc"
 
-.model FLAT,C                   ; Flat memory, mangle publics with leading '_'
-        
-; some useful floating load and store macros <ala gmt>
-flds    TEXTEQU <fld  DWORD PTR>
-fsubs   TEXTEQU <fsub DWORD PTR>
-fmuls   TEXTEQU <fmul DWORD PTR>
+extrn   _GlideRoot
+extrn   _FifoMakeRoom
 
-_DATA   SEGMENT
-    One         DD  03f800000r
+%MACRO GR_FIFO_WRITE 3
+    mov     [%1 + %2], %3
+%ENDMACRO ; GR_FIFO_WRITE
+
+%ifdef GL_AMD3D
+;; 3dnow!
+%MACRO WRITE_MM1_FIFO_ALIGNED 1
+    movq      [fifo+%1], mm1        ; store current param | previous param
+%ENDMACRO ; WRITE_MM1_FIFO_ALIGNED
+
+%MACRO WRITE_MM1LOW_FIFO 0
+    movd      [fifo], mm1           ; store current param | previous param
+%ENDMACRO ; WRITE_MM1LOW_FIFO
+
+%MACRO PROC_TYPE 1
+    proc %1_3DNow, 12
+%ENDM
+%else
+;; original code
+%MACRO PROC_TYPE 1
+    proc %1, 12
+%ENDM
+%endif
+
+segment		DATA
+    One         DD  1.0
     Area        DD  0
-    dxAB        DD  0
-    dxBC        DD  0
-    dyAB        DD  0
-    dyBC        DD  0
-    culltest    DD  0
-
-    ;; Extra junk to pad out to the next cache line.
-    bias0	DD  0
-    pad1	DD  0
-    pad2	DD  0
-    pad3	DD  0
-    pad4	DD  0
-    pad5	DD  0
-    pad6	DD  0
-    pad7	DD  0
-    bias1	DD  0
-_DATA   ENDS
-
-; Ugly, but seems to workaround the problem with locally defined
-; data segment globals not getting relocated properly when using
-; djgpp.
-
-zArea   TEXTEQU <One+04h>
-zdxAB   TEXTEQU <One+08h>
-zdxBC   TEXTEQU <One+0ch>
-zdyAB   TEXTEQU <One+10h>
-zdyBC   TEXTEQU <One+14h>
-zculltest TEXTEQU <One+18h>
 
 ;;; Definitions of cvg regs and glide root structures.
-INCLUDE fxgasm.h
+%INCLUDE "fxgasm.h"
 
 ;; enables/disables trisProcessed and trisDrawn counters
-STATS = 1
+%define STATS 1
 
-;--------------------------------------------------------------------------        
-; Arguments (STKOFF = 16 from 4 pushes)
-STKOFF  = 16
-_va$    =  4 + STKOFF
-_vb$    =  8 + STKOFF
-_vc$    = 12 + STKOFF
+;;; Arguments (STKOFF = 16 from 4 pushes)
+STKOFF  equ 16
+_va$    equ  4 + STKOFF
+_vb$    equ  8 + STKOFF
+_vc$    equ 12 + STKOFF
 
-X       = 0
-Y       = 4
-                                ; edx is used as index, loading from *src
-gc      TEXTEQU     <esi>       ; points to graphics context
+    ;; coordinate offsets into vertex.
+    ;; NB:  These are constants and are not
+    ;;	    user settable like the rest of the
+    ;;	    parameter offset. Weird.
+X       equ 0
+Y       equ 4
 
-_TEXT       SEGMENT
+segment		CONST
+T2003  DD  12288.0      ; 12288
+T2005  DD  1.0          ; 1
+T2006  DD  256.0        ; 256
 
-            align 4
-            PUBLIC  _trisetup_cull@12
-_trisetup_cull@12  PROC    NEAR
-            .code
+segment		TEXT
 
-GLIDE_CULLING	    textequ <1>
-GLIDE_PACK_RGB	    textequ <0>
-GLIDE_PACK_ALPHA    textequ <0>
-GLIDE_GENERIC_SETUP textequ <0>
-INCLUDE xdraw2.inc
-GLIDE_GENERIC_SETUP textequ <0>    
-GLIDE_PACK_ALPHA    textequ <0>
-GLIDE_PACK_RGB	    textequ <0>    
-GLIDE_CULLING	    textequ <0>
+            ALIGN 32
 
-_trisetup_cull@12 ENDP
+PROC_TYPE _trisetup_cull
 
-IF GLIDE_PACKED_RGB
-            align 4
-            PUBLIC  _trisetup_cull_rgb@12
-_trisetup_cull_rgb@12  PROC    NEAR
-            .code
+%define GLIDE_CULLING	    1
+%define GLIDE_PACK_RGB	    0
+%define GLIDE_PACK_ALPHA    0
+%define GLIDE_GENERIC_SETUP 0
+%INCLUDE "xdraw2.inc"
+%undef GLIDE_GENERIC_SETUP
+%undef GLIDE_PACK_ALPHA
+%undef GLIDE_PACK_RGB
+%undef GLIDE_CULLING
 
-GLIDE_CULLING	    textequ <1>
-GLIDE_PACK_RGB	    textequ <1>
-GLIDE_PACK_ALPHA    textequ <0>
-GLIDE_GENERIC_SETUP textequ <0>
-INCLUDE xdraw2.inc
-GLIDE_GENERIC_SETUP textequ <0>    
-GLIDE_PACK_ALPHA    textequ <0>
-GLIDE_PACK_RGB	    textequ <0>    
-GLIDE_CULLING	    textequ <0>
+endp
 
-_trisetup_cull_rgb@12 ENDP
+%IF GLIDE_PACKED_RGB
 
-            align 4
-            PUBLIC  _trisetup_cull_argb@12
-_trisetup_cull_argb@12  PROC    NEAR
-            .code
+            ALIGN 32
 
-GLIDE_CULLING	    textequ <1>
-GLIDE_PACK_RGB	    textequ <1>
-GLIDE_PACK_ALPHA    textequ <1>
-GLIDE_GENERIC_SETUP textequ <0>
-INCLUDE xdraw2.inc
-GLIDE_GENERIC_SETUP textequ <0>    
-GLIDE_PACK_ALPHA    textequ <0>
-GLIDE_PACK_RGB	    textequ <0>    
-GLIDE_CULLING	    textequ <0>
+PROC_TYPE  _trisetup_cull_rgb
 
-_trisetup_cull_argb@12 ENDP
-ENDIF ; GLIDE_PACKED_RGB
+%define GLIDE_CULLING	    1
+%define GLIDE_PACK_RGB	    1
+%define GLIDE_PACK_ALPHA    0
+%define GLIDE_GENERIC_SETUP 0
+%INCLUDE "xdraw2.inc"
+%undef GLIDE_GENERIC_SETUP
+%undef GLIDE_PACK_ALPHA
+%undef GLIDE_PACK_RGB
+%undef GLIDE_CULLING
+
+endp
+
+            ALIGN 32
+
+PROC_TYPE  _trisetup_cull_argb
+
+%define GLIDE_CULLING	    1
+%define GLIDE_PACK_RGB	    1
+%define GLIDE_PACK_ALPHA    1
+%define GLIDE_GENERIC_SETUP 0
+%INCLUDE "xdraw2.inc"
+%undef GLIDE_GENERIC_SETUP
+%undef GLIDE_PACK_ALPHA
+%undef GLIDE_PACK_RGB
+%undef GLIDE_CULLING
+
+endp
+%ENDIF ; GLIDE_PACKED_RGB
     
-            align 4
-            PUBLIC  _trisetup@12
-_trisetup@12  PROC    NEAR
-            .code
+            ALIGN 32
 
-GLIDE_CULLING	    textequ <0>
-GLIDE_PACK_RGB	    textequ <0>
-GLIDE_PACK_ALPHA    textequ <0>
-GLIDE_GENERIC_SETUP textequ <0>
-INCLUDE xdraw2.inc
-GLIDE_GENERIC_SETUP textequ <0>    
-GLIDE_PACK_ALPHA    textequ <0>
-GLIDE_PACK_RGB	    textequ <0>    
-GLIDE_CULLING	    textequ <0>
+PROC_TYPE  _trisetup
 
-_trisetup@12 ENDP
+%define GLIDE_CULLING	    0
+%define GLIDE_PACK_RGB	    0
+%define GLIDE_PACK_ALPHA    0
+%define GLIDE_GENERIC_SETUP 0
+%INCLUDE "xdraw2.inc"
+%undef GLIDE_GENERIC_SETUP
+%undef GLIDE_PACK_ALPHA
+%undef GLIDE_PACK_RGB
+%undef GLIDE_CULLING
 
-IF GLIDE_PACKED_RGB    
-            align 4
-            PUBLIC  _trisetup_rgb@12
-_trisetup_rgb@12  PROC    NEAR
-            .code
+endp
 
-GLIDE_CULLING	    textequ <0>
-GLIDE_PACK_RGB	    textequ <1>
-GLIDE_PACK_ALPHA    textequ <0>
-GLIDE_GENERIC_SETUP textequ <0>
-INCLUDE xdraw2.inc
-GLIDE_GENERIC_SETUP textequ <0>    
-GLIDE_PACK_ALPHA    textequ <0>
-GLIDE_PACK_RGB	    textequ <0>    
-GLIDE_CULLING	    textequ <0>
+%IF GLIDE_PACKED_RGB    
 
-_trisetup_rgb@12 ENDP
+            ALIGN 32
 
-            align 4
-            PUBLIC  _trisetup_argb@12
-_trisetup_argb@12  PROC    NEAR
-            .code
+PROC_TYPE  _trisetup_rgb
 
-GLIDE_CULLING	    textequ <0>
-GLIDE_PACK_RGB	    textequ <1>
-GLIDE_PACK_ALPHA    textequ <1>
-GLIDE_GENERIC_SETUP textequ <0>
-INCLUDE xdraw2.inc
-GLIDE_GENERIC_SETUP textequ <0>    
-GLIDE_PACK_ALPHA    textequ <0>
-GLIDE_PACK_RGB	    textequ <0>    
-GLIDE_CULLING	    textequ <0>
+%define GLIDE_CULLING	    0
+%define GLIDE_PACK_RGB	    1
+%define GLIDE_PACK_ALPHA    0
+%define GLIDE_GENERIC_SETUP 0
+%INCLUDE "xdraw2.inc"
+%undef GLIDE_GENERIC_SETUP
+%undef GLIDE_PACK_ALPHA
+%undef GLIDE_PACK_RGB
+%undef GLIDE_CULLING
 
-_trisetup_argb@12 ENDP
-ENDIF ; GLIDE_PACKED_RGB
+endp
 
-_TEXT ENDS
-END
+            ALIGN 32
+
+PROC_TYPE  _trisetup_argb
+
+%define GLIDE_CULLING	    0
+%define GLIDE_PACK_RGB	    1
+%define GLIDE_PACK_ALPHA    1
+%define GLIDE_GENERIC_SETUP 0
+%INCLUDE "xdraw2.inc"
+%undef GLIDE_GENERIC_SETUP
+%undef GLIDE_PACK_ALPHA
+%undef GLIDE_PACK_RGB
+%undef GLIDE_CULLING
+
+endp
+
+%ENDIF ; GLIDE_PACKED_RGB

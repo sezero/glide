@@ -23,10 +23,16 @@
 #			default = 6 (PentiumPro)
 #	DEBUG=1		disable optimizations and build for debug.
 #			default = no
-#	USE_X86=1	use assembler triangle specializations
+#	USE_X86=1	use assembler triangle specializations; req by CVG
+#			default = yes
+#	USE_3DNOW=1	allow 3DNow! specializations. However, the true CPU
+#			capabilities are still checked at run-time to avoid
+#			crashes.
 #			default = no
 #	TEXUS2=1	embed Texus2 functions into Glide2.
 #			default = no
+#       FXOEM2X=1       build fxoem2x.dll
+#                       default = no
 #
 #    Targets:
 #	all:		build everything
@@ -97,13 +103,24 @@ CDEFS += -DGDBG_INFO_ON -DGLIDE_DEBUG -DGLIDE_SANITY_ASSERT -DGLIDE_SANITY_SIZE
 endif
 
 override USE_FIFO = 1
+override USE_X86 = 1
 
 # cpu optimized triangle
+ifeq ($(USE_MMX),1)
+CFLAGS += -DGL_MMX
+override USE_X86 = 1
+endif
+
+ifeq ($(USE_3DNOW),1)
+CFLAGS += -DGL_AMD3D
+override USE_X86 = 1
+endif
+
 ifeq ($(USE_X86),1)
-CDEFS += -DGLIDE_DISPATCH_SETUP
+CDEFS += -DGLIDE_DISPATCH_SETUP=1 -DGLIDE_DISPATCH_DOWNLOAD=1
 override USE_FIFO = 1
 else
-CDEFS += -DGLIDE_USE_C_TRISETUP
+CDEFS += -DGLIDE_USE_C_TRISETUP=1
 endif
 
 # fifo
@@ -155,14 +172,19 @@ CFLAGS += $(CDEFS)
 GLIDE_OBJECTS = \
 	fifo.obj \
 	gsplash.obj \
-	g3df.obj \
+	g3df.obj  \
 	gu.obj \
+	guclip.obj \
 	gpci.obj \
+	gump.obj \
 	diglide.obj \
 	disst.obj \
 	ditex.obj \
 	gbanner.obj \
 	gerror.obj \
+	gmovie.obj \
+	digutex.obj \
+	ddgump.obj \
 	gaa.obj \
 	gdraw.obj \
 	gglide.obj \
@@ -170,18 +192,28 @@ GLIDE_OBJECTS = \
 	gsst.obj \
 	gtex.obj \
 	gtexdl.obj \
+	gutex.obj \
 	cpuid.obj
 
 ifeq ($(USE_X86),1)
 GLIDE_OBJECTS += \
-	xdraw2_def.obj
+	xdraw2_def.obj \
+        xtexdl_def.obj
+ifeq ($(USE_MMX),1)
+GLIDE_OBJECTS += \
+	xtexdl_mmx.obj
+endif
+ifeq ($(USE_3DNOW),1)
+GLIDE_OBJECTS += \
+	xdraw2_3dnow.obj \
+        xtexdl_3dnow.obj
+endif
 else
 GLIDE_OBJECTS += \
 	gxdraw.obj
 endif
 
 GLIDE_OBJECTS += \
-	digutex.obj \
 	$(FX_GLIDE_SW)/newpci/pcilib/fxpci.obj \
 	$(FX_GLIDE_SW)/newpci/pcilib/fxw32.obj \
 	$(FX_GLIDE_SW)/newpci/pcilib/fxvxd.obj \
@@ -241,7 +273,7 @@ endif
 ###############################################################################
 #	main
 ###############################################################################
-all: glide2x $(TEXUS_EXEDIR)/$(TEXUS_EXE)
+all: glide2x $(TEXUS_EXEDIR)/$(TEXUS_EXE) fxoem2x
 
 glide2x: $(GLIDE_LIBDIR)/$(GLIDE_DLL)
 
@@ -249,10 +281,20 @@ $(GLIDE_LIBDIR)/$(GLIDE_DLL): $(GLIDE_OBJECTS) $(GLIDE_RES)
 	$(LD) -out:$@ $(LDFLAGS) $(GLIDE_OBJECTS) $(LDLIBS) $(GLIDE_RES)
 
 $(TEXUS_EXEDIR)/$(TEXUS_EXE): $(FX_GLIDE_SW)/texus2/cmd/cmd.c $(GLIDE_LIBDIR)/$(GLIDE_IMP)
-ifeq ($(TEXUS2),1)
-	$(CC) -o $@ $(CFLAGS) $^
+#ifeq ($(TEXUS2),1)
+#	$(CC) -o $@ $(CFLAGS) $^
+#else
+#	$(warning Texus2 not enabled... Skipping $(TEXUS_EXE))
+#endif
+
+fxoem2x: $(GLIDE_LIBDIR)/fxoem2x.dll
+
+ifeq ($(FXOEM2X),1)
+$(GLIDE_LIBDIR)/fxoem2x.dll: ../oem/oeminit.obj ../oem/oeminit.res
+#	$(LD) -out:$@ $(LDFLAGS) ../oem/oeminit.obj $(LDLIBS) ../oem/oeminit.res
 else
-	$(warning Texus2 not enabled... Skipping $(TEXUS_EXE))
+$(GLIDE_LIBDIR)/fxoem2x.dll:
+#	$(warning FxOem2x not enabled... Skipping fxoem2x.dll)
 endif
 
 ###############################################################################
@@ -263,6 +305,14 @@ endif
 #	$(AS) -o $@ $(ASFLAGS) $<
 xdraw2_def.obj: xdraw2.asm
 	$(AS) -o $@ $(ASFLAGS) $<
+xtexdl_def.obj: xtexdl.c
+	$(CC) -Fo$@ $(CFLAGS) -c $<
+xtexdl_mmx.obj: xtexdl.asm
+	$(AS) -o $@ $(ASFLAGS) -DGL_MMX=1 $<
+xdraw2_3dnow.obj: xdraw2.asm
+	$(AS) -o $@ $(ASFLAGS) -DGL_AMD3D=1 $<
+xtexdl_3dnow.obj: xtexdl.asm
+	$(AS) -o $@ $(ASFLAGS) -DGL_AMD3D=1 $<
 
 $(GLIDE_OBJECTS): fxinline.h fxgasm.h
 
@@ -286,10 +336,14 @@ clean:
 	-$(call UNLINK,fxinline.h)
 	-$(call UNLINK,fxgasm.h)
 	-$(call UNLINK,$(FX_GLIDE_SW)/texus2/lib/*.obj)
-	-$(call UNLINK,$(GLIDE_RES))
+	-$(call UNLINK,../oem/oeminit.obj)
+	-$(call UNLINK,../oem/oeminit.res)
 
 realclean: clean
 	-$(call UNLINK,$(GLIDE_LIBDIR)/glide2x.exp)
 	-$(call UNLINK,$(GLIDE_LIBDIR)/$(GLIDE_DLL))
 	-$(call UNLINK,$(GLIDE_LIBDIR)/$(GLIDE_IMP))
 	-$(call UNLINK,$(TEXUS_EXEDIR)/$(TEXUS_EXE))
+	-$(call UNLINK,$(GLIDE_LIBDIR)/fxoem2x.exp)
+	-$(call UNLINK,$(GLIDE_LIBDIR)/fxoem2x.dll)
+	-$(call UNLINK,$(GLIDE_LIBDIR)/fxoem2x.lib)

@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.2.2.1  2004/12/12 15:17:18  koolsmoky
+** support new cpuid
+**
 ** Revision 1.2  2003/06/28 19:31:06  guillemj
 ** Fix compilation warnings.
 ** Removed some trailing spaces.
@@ -508,6 +511,102 @@ struct _GrState_s
     a, r, g, b;                /* Constant color values for Delta0 mode */
 };
 
+#if GLIDE_DISPATCH_SETUP
+/* gpci.c 
+ *
+ * Set of procs for the current cpu type. These are selected out of
+ * the _archXXXX proc list that is selected at grGlideInit time.
+ */
+
+typedef FxI32 (FX_CALL* GrTriSetupProc)(const void*, const void*, const void*);
+#if GLIDE_PACKED_RBG
+typedef GrTriSetupProc GrTriSetupProcVector[6];
+#else
+typedef GrTriSetupProc GrTriSetupProcVector[2];
+#endif
+typedef GrTriSetupProcVector GrTriSetupProcArchVector;
+
+/* Decalrations of the dispatchable procs found in xdraw2.asm and
+ * xtexdl.c for teh triangle and texture download procs respectively.  
+ */
+extern FxI32 FX_CALL _trisetup(const void*, const void*, const void*);
+extern FxI32 FX_CALL _trisetup_cull(const void*, const void*, const void*);
+
+#if GLIDE_PACKED_RGB
+extern FxI32 FX_CALL _trisetup_rgb(const void*, const void*, const void*);
+extern FxI32 FX_CALL _trisetup_cull_rgb(const void*, const void*, const void*);
+extern FxI32 FX_CALL _trisetup_argb(const void*, const void*, const void*);
+extern FxI32 FX_CALL _trisetup_cull_argb(const void*, const void*, const void*);
+#endif /* GLIDE_PACKED_RBG */
+
+#if GL_AMD3D
+extern FxI32 FX_CALL _trisetup_3DNow(const void*, const void*, const void*);
+extern FxI32 FX_CALL _trisetup_cull_3DNow(const void*, const void*, const void*);
+
+#if GLIDE_PACKED_RGB
+extern FxI32 FX_CALL _trisetup_rgb_3DNow(const void*, const void*, const void*);
+extern FxI32 FX_CALL _trisetup_cull_rgb_3DNow(const void*, const void*, const void*);
+extern FxI32 FX_CALL _trisetup_argb_3DNow(const void*, const void*, const void*);
+extern FxI32 FX_CALL _trisetup_cull_argb_3DNow(const void*, const void*, const void*);
+#endif /* GLIDE_PACKED_RBG */
+#endif /* GL_AMD3D */
+
+#endif /* GLIDE_DISPATCH_SETUP */
+
+#if GLIDE_DISPATCH_DOWNLOAD
+/* _GlideRoot.curTexProcs is an array of (possibly specialized
+ * function pointers indexed by texture format size (8/16 bits) and
+ * texture line width (1/2/4/>4).  
+ *
+ * xtexdl.c
+ */
+struct GrGC_s;
+typedef void  (FX_CALL* GrTexDownloadProc)(struct GrGC_s* gc, const FxU32 tmuBaseAddr,
+                                           const FxU32 maxS, const FxU32 minT, const FxU32 maxT,
+                                           void* texData);
+typedef GrTexDownloadProc GrTexDownloadProcVector[2][4];
+
+extern void FX_CALL _grTexDownload_Default_8_1(struct GrGC_s* gc, const FxU32 tmuBaseAddr,
+                                               const FxU32 maxS, const FxU32 minT, const FxU32 maxT,
+                                               void* texData);
+extern void FX_CALL _grTexDownload_Default_8_2(struct GrGC_s* gc, const FxU32 tmuBaseAddr,
+                                               const FxU32 maxS, const FxU32 minT, const FxU32 maxT,
+                                               void* texData);
+extern void FX_CALL _grTexDownload_Default_8_4(struct GrGC_s* gc, const FxU32 tmuBaseAddr,
+                                               const FxU32 maxS, const FxU32 minT, const FxU32 maxT,
+                                               void* texData);
+extern void FX_CALL _grTexDownload_Default_8_WideS(struct GrGC_s* gc, const FxU32 tmuBaseAddr,
+                                                   const FxU32 maxS, const FxU32 minT, const FxU32 maxT,
+                                                   void* texData);
+
+extern void FX_CALL _grTexDownload_Default_16_1(struct GrGC_s* gc, const FxU32 tmuBaseAddr,
+                                                const FxU32 maxS, const FxU32 minT, const FxU32 maxT,
+                                                void* texData);
+extern void FX_CALL _grTexDownload_Default_16_2(struct GrGC_s* gc, const FxU32 tmuBaseAddr,
+                                                const FxU32 maxS, const FxU32 minT, const FxU32 maxT,
+                                                void* texData);
+extern void FX_CALL _grTexDownload_Default_16_4(struct GrGC_s* gc, const FxU32 tmuBaseAddr,
+                                                const FxU32 maxS, const FxU32 minT, const FxU32 maxT,
+                                                void* texData);
+extern void FX_CALL _grTexDownload_Default_16_WideS(struct GrGC_s* gc, const FxU32 tmuBaseAddr,
+                                                    const FxU32 maxS, const FxU32 minT, const FxU32 maxT,
+                                                    void* texData);
+
+#if GL_AMD3D
+/* xtexdl.asm */
+extern void FX_CALL _grTexDownload_3DNow_MMX(struct GrGC_s* gc, const FxU32 tmuBaseAddr,
+                                             const FxU32 maxS, const FxU32 minT, const FxU32 maxT,
+                                             void* texData);
+#endif /* GL_AMD3D */
+
+#if GL_MMX
+/* xtexdl.asm */
+extern void FX_CALL _grTexDownload_MMX(struct GrGC_s* gc, const FxU32 tmuBaseAddr,
+                                       const FxU32 maxS, const FxU32 minT, const FxU32 maxT,
+                                       void* texData);
+#endif /* GL_MMX */
+#endif /* GLIDE_DISPATCH_DOWNLOAD */
+
 typedef struct GrGC_s
 {
   FxU32
@@ -531,6 +630,30 @@ typedef struct GrGC_s
 
   GrState
     state;                      /* state of Glide/SST */
+
+#if GLIDE_DISPATCH_SETUP || GLIDE_DISPATCH_DOWNLOAD
+  struct {
+#if GLIDE_DISPATCH_SETUP
+    /* Current triangle rendering proc specialized for culling/no
+     * culling and viewport/window coordinates.
+     */
+    GrTriSetupProc      triSetupProc;
+    
+    /* Vector to choose triangle rendering proc from based
+     * on culling or no-cull this vector should be specialized
+     * on viewport vs window coordinates.
+     */
+    GrTriSetupProcVector* coorTriSetupVector;
+#endif /* GLIDE_DISPATCH_SETUP */
+    
+#if GLIDE_DISPATCH_DOWNLOAD
+    /* Vector of texture download procs specialized by size
+     * and processor vendor type.
+     */
+    GrTexDownloadProcVector* texDownloadProcs;
+#endif /* GLIDE_DISPATCH_DOWNLOAD */
+  } curArchProcs;
+#endif /* GLIDE_DISPATCH_SETUP || GLIDE_DISPATCH_DOWNLOAD */
 
   struct cmdTransportInfo {
     FxU32  triPacketHdr; /* Pre-computed packet header for
@@ -573,10 +696,6 @@ typedef struct GrGC_s
 
     FxBool fifoLfbP;     /* Do we expect lfb writes to go through the fifo? */
     FxBool lfbLockCount; /* Have we done an lfb lock? Count of the locks. */
-    
-#if GLIDE_DISPATCH_SETUP
-    FxI32 (FX_CALL *triSetupProc)(const GrVertex* a, const GrVertex* b, const GrVertex* c);
-#endif /* GLIDE_DISPATCH_SETUP */
 
 #if GLIDE_USE_SHADOW_FIFO
     FxU32* fifoShadowBase; /* Buffer that shadows the hw fifo for debugging */
@@ -820,6 +939,17 @@ struct _GlideRoot_s {
                                                  * sst's and actual boards.
                                                  */
   GrGC                  GCs[MAX_NUM_SST];       /* one GC per board     */
+
+#if GLIDE_DISPATCH_SETUP || GLIDE_DISPATCH_DOWNLOAD
+  struct {
+#if GLIDE_DISPATCH_SETUP
+    GrTriSetupProcArchVector* curTriProcs;
+#endif /* GLIDE_DISPATCH_SETUP */
+#if GLIDE_DISPATCH_DOWNLOAD
+    GrTexDownloadProcVector*  curTexProcs;
+#endif /* GLIDE_DISPATCH_DOWNLOAD */
+  } deviceArchProcs;
+#endif /* GLIDE_DISPATCH_SETUP || GLIDE_DISPATCH_DOWNLOAD */
 };
 
 extern struct _GlideRoot_s GR_CDECL _GlideRoot;
@@ -887,37 +1017,22 @@ extern GrGCFuncs _curGCFuncs;
 void _grMipMapInit(void);
 
 #if GLIDE_DISPATCH_SETUP
-FxI32 FX_CSTYLE
-_trisetup_cull(const GrVertex *va, const GrVertex *vb, const GrVertex *vc);
-FxI32 FX_CSTYLE
-_trisetup(const GrVertex *va, const GrVertex *vb, const GrVertex *vc);
-
 #define TRISETUP_NORGB(__cullMode) (((__cullMode) == GR_CULL_DISABLE) \
-                                    ? _trisetup \
-                                    : _trisetup_cull)
-
-#if GLIDE_PACKED_RGB
-FxI32 FX_CSTYLE
-_trisetup_cull_rgb(const GrVertex *va, const GrVertex *vb, const GrVertex *vc);
-FxI32 FX_CSTYLE
-_trisetup_cull_argb(const GrVertex *va, const GrVertex *vb, const GrVertex *vc);
-FxI32 FX_CSTYLE
-_trisetup_rgb(const GrVertex *va, const GrVertex *vb, const GrVertex *vc);
-FxI32 FX_CSTYLE
-_trisetup_argb(const GrVertex *va, const GrVertex *vb, const GrVertex *vc);
-
+                                    ? (*gc->curArchProcs.coorTriSetupVector)[0] \
+                                    : (*gc->curArchProcs.coorTriSetupVector)[1])
+#if GLIDE_PACKED_RBG
 #define TRISETUP_RGB(__cullMode) (((__cullMode) == GR_CULL_DISABLE) \
-                                  ? _trisetup_rgb \
-                                  : _trisetup_cull_rgb)
+                                  ? (*gc->curArchProcs.coorTriSetupVector)[2] \
+                                  : (*gc->curArchProcs.coorTriSetupVector)[3])
 #define TRISETUP_ARGB(__cullMode) (((__cullMode) == GR_CULL_DISABLE) \
-                                   ? _trisetup_argb \
-                                   : _trisetup_cull_argb)
+                                   ? (*gc->curArchProcs.coorTriSetupVector)[4] \
+                                   : (*gc->curArchProcs.coorTriSetupVector)[5])
 
 #else /* !GLIDE_PACKED_RGB */
 #define TRISETUP_RGB(__cullMode)   TRISETUP_NORGB(__cullMode)
 #define TRISETUP_ARGB(__cullMode)  TRISETUP_NORGB(__cullMode)
 #endif /* !GLIDE_PACKED_RGB */
-#define TRISETUP (*gc->cmdTransportInfo.triSetupProc)
+#define TRISETUP (*gc->curArchProcs.triSetupProc)
 #else /* !GLIDE_DISPATCH_SETUP */
 FxI32 FX_CSTYLE
 _trisetup_asm(const GrVertex *va, const GrVertex *vb, const GrVertex *vc);
@@ -2086,7 +2201,7 @@ enum {
 };
 
 #if (GLIDE_PLATFORM & GLIDE_HW_CVG)
-#define TEX_ROW_ADDR_INCR(__t, __lod) ((__t) << 9)
+#define TEX_ROW_ADDR_INCR(__t) ((__t) << 9)
 #elif (GLIDE_PLATFORM & GLIDE_HW_H3)
 #define TEX_ROW_ADDR_INCR(__t, __lod) ((__t) << 7)
 #else
@@ -2380,8 +2495,8 @@ _grErrorCallback(const char* const procName,
                  va_list           args);
 #endif
 
-extern FxU32 GR_CDECL
-_cpu_detect_asm(void);
+/*extern FxU32 GR_CDECL
+_cpu_detect_asm(void);*/
 
 extern void GR_CDECL 
 single_precision_asm(void);

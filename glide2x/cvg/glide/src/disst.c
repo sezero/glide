@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/12/07 21:49:08  joseph
+** Initial checkin into SourceForge.
+**
 ** 
 ** 22    4/21/98 10:05a Peter
 ** grSstSelect cleanup (Thanks John/Rufus)
@@ -109,7 +112,7 @@ GR_DIENTRY(grSstQueryBoards, FxBool, ( GrHwConfiguration *hwc ))
   GDBG_INIT();
   GDBG_INFO(80,"grSstQueryBoards(0x%x)\n",hwc);
 
-#if GLIDE_INIT_HAL
+#if 1 /*GLIDE_INIT_HAL*/
   hwc->num_sst = (_grSstDetectResources()
                   ? _GlideRoot.hwConfig.num_sst
                   : 0);

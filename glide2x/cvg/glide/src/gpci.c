@@ -19,6 +19,10 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.2.1  2004/12/12 15:27:47  koolsmoky
+** changes to support new cpuid
+** set default to disable alpha dither subtraction
+**
 ** Revision 1.1.1.1  1999/12/07 21:49:10  joseph
 ** Initial checkin into SourceForge.
 **
@@ -229,6 +233,84 @@
 #include <glide.h>
 #include "fxglide.h"
 
+#if GLIDE_DISPATCH_SETUP 
+/* Collection of all of the known procs for a given system */
+#if GLIDE_PACKED_RBG
+static GrTriSetupProc _triSetupProcs[][6] =
+#else /* !GLIDE_PACKED_RBG */
+static GrTriSetupProc _triSetupProcs[][2] =
+#endif /* !GLIDE_PACKED_RBG */
+{
+  /* Default Procs */
+  { _trisetup, _trisetup_cull
+#if GLIDE_PACKED_RBG
+    , _trisetup_rgb, _trisetup_cull_rgb, _trisetup_argb, _trisetup_cull_argb
+#endif /* GLIDE_PACKED_RBG */
+  }
+#if GL_AMD3D
+  /* 3DNow!(tm) Procs */
+  ,{ _trisetup_3DNow, _trisetup_cull_3DNow
+#if GLIDE_PACKED_RBG
+    , _trisetup_rgb_3DNow, _trisetup_cull_rgb_3DNow, _trisetup_argb_3DNow, _trisetup_cull_argb_3DNow
+#endif /* GLIDE_PACKED_RBG */
+  }
+#endif /* GL_AMD3D */
+};
+#endif /* GLIDE_DISPATCH_SETUP */
+
+#if GLIDE_DISPATCH_DOWNLOAD
+static GrTexDownloadProc _texDownloadProcs[][2][4] = 
+{
+  /* Default Procs */
+  { 
+    {
+      _grTexDownload_Default_8_1, 
+      _grTexDownload_Default_8_2,
+      _grTexDownload_Default_8_4,
+      _grTexDownload_Default_8_WideS
+    }, 
+    {
+      _grTexDownload_Default_16_1,
+      _grTexDownload_Default_16_2,
+      _grTexDownload_Default_16_WideS,
+      _grTexDownload_Default_16_WideS
+    }
+  },
+#if GL_AMD3D
+  { 
+    { 
+      _grTexDownload_Default_8_1, 
+      _grTexDownload_Default_8_2, 
+      _grTexDownload_Default_8_4, 
+      _grTexDownload_3DNow_MMX, 
+    },
+    {
+      _grTexDownload_Default_16_1,
+      _grTexDownload_Default_16_2,
+      _grTexDownload_3DNow_MMX,
+      _grTexDownload_3DNow_MMX,
+    },
+  }
+#endif /* GL_AMD3D */
+#if GL_MMX
+  ,{ 
+    { 
+      _grTexDownload_Default_8_1, 
+      _grTexDownload_Default_8_2, 
+      _grTexDownload_Default_8_4, 
+      _grTexDownload_MMX, 
+    },
+    {
+      _grTexDownload_Default_16_1,
+      _grTexDownload_Default_16_2,
+      _grTexDownload_MMX,
+      _grTexDownload_MMX,
+    },
+  }
+#endif /* GL_MMX */
+};
+#endif /* GLIDE_DISPATCH_DOWNLOAD */
+
 /*-------------------------------------------------------------------
   Function: _grSstDetectResources
   Date: --
@@ -327,9 +409,9 @@ _grSstDetectResources(void)
            * pair then we don't want to waste mtrr's that we're never
            * really going to write to.  
            */
-          if (!inSliPairP && (_GlideRoot.CPUType.family >= 6)) {
+          /*if (!inSliPairP && (_GlideRoot.CPUType.family >= 6)) {*/
 		sst1InitCaching((FxU32*)devRegs, FXTRUE);
-	  }
+	  /*}*/
 
           if (!sst1InitRegisters((FxU32*)devRegs) ||
               !sst1InitGetDeviceInfo((FxU32*)devRegs, &dummyDevInfo)) goto __errRegFailure;
@@ -445,9 +527,9 @@ _grSstDetectResources(void)
 #if GLIDE_INIT_HAL
             fxHalShutdown(devRegs);
 #else /* !GLIDE_INIT_HAL */
-            if (_GlideRoot.CPUType.family >= 6) {
+            /*if (_GlideRoot.CPUType.family >= 6) {*/
               sst1InitCaching((FxU32*)devRegs, FXFALSE);
-            }
+            /*}*/
             pciUnmapPhysical((FxU32)devRegs, 0x1000000UL);
 #endif /* !GLIDE_INIT_HAL */
           }
@@ -565,6 +647,37 @@ _GlideInitEnvironment(void)
     GDBG_INFO(0,"CPU Extensions disabled\n");
   }
 
+#if GLIDE_DISPATCH_SETUP || GLIDE_DISPATCH_DOWNLOAD
+  /* Default case */
+#if GLIDE_DISPATCH_SETUP
+  _GlideRoot.deviceArchProcs.curTriProcs = _triSetupProcs + 0;
+#endif /* GLIDE_DISPATCH_SETUP */
+#if GLIDE_DISPATCH_DOWNLOAD
+  _GlideRoot.deviceArchProcs.curTexProcs = _texDownloadProcs + 0;
+#endif /* GLIDE_DISPATCH_DOWNLOAD */
+
+  /* Check for vendor specific optimization cases */
+#ifdef GL_MMX
+  if (_GlideRoot.CPUType.os_support & _CPU_FEATURE_MMX) {
+#if GLIDE_DISPATCH_DOWNLOAD
+    _GlideRoot.deviceArchProcs.curTexProcs = _texDownloadProcs + 2;
+#endif /* GLIDE_DISPATCH_DOWNLOAD */
+  }
+#endif /* GL_MMX */
+
+#ifdef GL_AMD3D
+  if (_GlideRoot.CPUType.os_support & _CPU_FEATURE_3DNOW) {
+#if GLIDE_DISPATCH_SETUP
+    _GlideRoot.deviceArchProcs.curTriProcs = _triSetupProcs + 1;
+#endif /* GLIDE_DISPATCH_SETUP */
+#if GLIDE_DISPATCH_DOWNLOAD
+    _GlideRoot.deviceArchProcs.curTexProcs = _texDownloadProcs + 1;
+#endif /* GLIDE_DISPATCH_DOWNLOAD */
+  }
+#endif /* GL_AMD3D */
+  
+#endif /* GLIDE_DISPATCH_SETUP || GLIDE_DISPATCH_DOWNLOAD */
+
   /* Check for user environment tweaks */
   {
     const char* envStr;
@@ -602,6 +715,7 @@ _GlideInitEnvironment(void)
     GDBG_INFO(80,"      swapInterval: %d\n",_GlideRoot.environment.swapInterval);
     GDBG_INFO(80,"          noSplash: %d\n",_GlideRoot.environment.noSplash);
     GDBG_INFO(80,"     shamelessPlug: %d\n",_GlideRoot.environment.shamelessPlug);
+    /*GDBG_INFO(80,"               cpu: %d\n",_GlideRoot.CPUType);*/
     GDBG_INFO(80,"          snapshot: %d\n",_GlideRoot.environment.snapshot);
     GDBG_INFO(80,"  disableDitherSub: %d\n",_GlideRoot.environment.disableDitherSub);
   }

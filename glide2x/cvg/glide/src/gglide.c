@@ -19,6 +19,10 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.2.2.1  2004/12/12 15:24:40  koolsmoky
+** grDitherMode(): force 2x2 dithering for 4x1 dither
+** grBufferSwap(): enable vsync and set swapbufferinterval to 0 for tripple buffering.
+**
 ** Revision 1.2  2000/10/03 18:28:33  mercury
 ** 003-clean_up_cvg-000, cvg tree cleanup.
 **
@@ -767,9 +771,13 @@ GR_ENTRY(grBufferSwap, void, (int swapInterval))
    * any better. If, however, the user has not chosen, but the app
    * wants something other than 0 then we need to honor their choice.  
    */
-  swapInterval = ((_GlideRoot.environment.swapInterval >= 0)
+  /*swapInterval = ((_GlideRoot.environment.swapInterval >= 0)
                   ? _GlideRoot.environment.swapInterval
-                  : (gc->scanline_interleaved ? MAX(swapInterval, 1) : swapInterval));
+                  : (gc->scanline_interleaved ? MAX(swapInterval, 1) : swapInterval));*/
+  /* always allow user override */
+  if (_GlideRoot.environment.swapInterval >= 0) {
+    swapInterval = _GlideRoot.environment.swapInterval;
+  }
   
   GR_CHECK_F(myName,
              (swapInterval > 255) || (swapInterval < 0),
@@ -1713,9 +1721,9 @@ GR_ENTRY(grGlideShutdown, void, (void))
      */
     for(i = 0; i < _GlideRoot.hwConfig.num_sst; i++) {
       if (_GlideRoot.GCs[i].hwInitP) {
-        if (_GlideRoot.CPUType.family >= 6) {
+        /*if (_GlideRoot.CPUType.family >= 6) {*/
 		sst1InitCaching(_GlideRoot.GCs[i].base_ptr, FXFALSE);
-	}
+	/*}*/
         sst1InitShutdown(_GlideRoot.GCs[i].base_ptr);
 
         _GlideRoot.GCs[i].hwInitP = FXFALSE;
@@ -2141,11 +2149,11 @@ _grUpdateTriPacketHdr(FxU32 paramMask,
 
     switch(colorComp) {
     case COLOR_COMP_ARGB:
-      gc->cmdTransportInfo.triSetupProc = TRISETUP_ARGB(cullMode);
+      gc->curArchProcs.triSetupProc = TRISETUP_ARGB(cullMode);
       break;
 
     case COLOR_COMP_RGB:
-      gc->cmdTransportInfo.triSetupProc = TRISETUP_RGB(cullMode);
+      gc->curArchProcs.triSetupProc = TRISETUP_RGB(cullMode);
       break;
 
       /* If no rgb data then it is not worthwhile to pack
@@ -2153,12 +2161,12 @@ _grUpdateTriPacketHdr(FxU32 paramMask,
        * and just use the looping proc.
        */
     default:
-      gc->cmdTransportInfo.triSetupProc = TRISETUP_NORGB(cullMode);
+      gc->curArchProcs.triSetupProc = TRISETUP_NORGB(cullMode);
       paramMask &= ~SSTCP_PKT3_PACKEDCOLOR;
       break;
     }
   } else {
-    gc->cmdTransportInfo.triSetupProc = TRISETUP_NORGB(cullMode);
+    gc->curArchProcs.triSetupProc = TRISETUP_NORGB(cullMode);
   }
 #endif /* GLIDE_DISPATCH_SETUP */
 

@@ -46,16 +46,16 @@
                         COMMENT; NEWLINE
 
 #define OFFSET(p,o,pname) if (hex) \
-        printf("%s\t= %08xh\n",pname,((int)&p.o)-(int)&p); \
-    else printf("%s\t= %10d\n",pname,((int)&p.o)-(int)&p)
+        printf("%s\tequ %08xh\n",pname,((int)&p.o)-(int)&p); \
+    else printf("%s\tequ %10d\n",pname,((int)&p.o)-(int)&p)
 
 #define OFFSET2(p,o,pname) if (hex) \
-        printf("%s\t= %08xh\n",pname,((int)&o)-(int)&p); \
-    else printf("%s\t= %10d\n",pname,((int)&o)-(int)&p)
+        printf("%s\tequ %08xh\n",pname,((int)&o)-(int)&p); \
+    else printf("%s\tequ %10d\n",pname,((int)&o)-(int)&p)
 
 #define SIZEOF(p,pname) if (hex) \
-        printf("SIZEOF_%s\t= %08xh\n",pname,sizeof(p)); \
-    else printf("SIZEOF_%s\t= %10d\n",pname,sizeof(p))
+        printf("SIZEOF_%s\tequ %08lxh\n",pname,sizeof(p)); \
+    else printf("SIZEOF_%s\tequ %10ld\n",pname,sizeof(p))
 
 #else
 
@@ -110,9 +110,9 @@ main (int argc, char **argv)
                offsetof(struct _GlideRoot_s, curGC));
 
         printf("#define kTriProcOffset 0x%XUL\n",
-               offsetof(struct GrGC_s, cmdTransportInfo.triSetupProc));
+               offsetof(struct GrGC_s, curArchProcs.triSetupProc));
 	printf("#define kTriProcOffsetClean %d\n", 
-	       offsetof(struct GrGC_s, cmdTransportInfo.triSetupProc));
+	       offsetof(struct GrGC_s, curArchProcs.triSetupProc));
 #endif /* GLIDE_DISPATCH_SETUP */
         
         printf("/* The # of 2-byte entries in the hw fog table */\n");
@@ -135,6 +135,7 @@ main (int argc, char **argv)
     OFFSET (gc,base_ptr,"base_ptr\t");
     OFFSET (gc,reg_ptr,"reg_ptr\t\t");
     OFFSET (gc,lfb_ptr,"lfb_ptr\t\t");
+    OFFSET (gc,tex_ptr,"tex_ptr\t\t");
     OFFSET (gc,state.cull_mode,"cull_mode\t");
     OFFSET (gc, regDataList,"regDataList\t");
     OFFSET (gc, tsuDataList,"tsuDataList\t");

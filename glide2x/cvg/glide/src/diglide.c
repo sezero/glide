@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.2.1  2004/12/12 15:18:58  koolsmoky
+** changes to support new cpuid; moved single_precision_asm(), double_precision_asm() from cpudetect.asm
+**
 ** Revision 1.1.1.1  1999/12/07 21:49:08  joseph
 ** Initial checkin into SourceForge.
 **
@@ -134,6 +137,7 @@ struct _GlideRoot_s GR_CDECL _GlideRoot;
  */
 void single_precision_asm()
 {
+#if __MSC__
   __asm {
     push  eax       ; make room
     fnclex          ; clear pending exceptions    
@@ -144,6 +148,9 @@ void single_precision_asm()
     fldcw WORD PTR [esp]
     pop   eax
     }
+#else
+#error "Need to implement single_precision_asm() for this compiler"
+#endif
 }
 
 /*;------------------------------------------------------------------------------   
@@ -152,6 +159,7 @@ void single_precision_asm()
  */
 void double_precision_asm()
 {
+#if __MSC__
   __asm {
     push  eax       ; make room
     fnclex          ; clear pending exceptions    
@@ -163,6 +171,9 @@ void double_precision_asm()
     fldcw WORD PTR [esp]
     pop   eax
     }
+#else
+#error "Need to implement double_precision_asm() for this compiler"
+#endif
 }
 
 /*---------------------------------------------------------------------------
