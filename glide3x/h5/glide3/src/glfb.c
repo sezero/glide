@@ -18,7 +18,7 @@
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVE
 **
 ** $Header$
-** $Log: 
+** $Log$
 **
 **  02/23/03 KoolSmoky - merged with Colourless's sources
 **  14   3dfx      1.7.1.2.1.2 10/11/00 Brent           Forced check in to enforce
@@ -54,7 +54,6 @@
 **       32-bit buffers.  Added big-endian swizzling support for PowerPC systems. 
 **       Read locks now return pixel format in lfbInfo.
 **  1    3dfx      1.0         09/11/99 StarTeam VTS Administrator 
-** $
 ** 
 ** 33    7/14/99 9:39a Atai
 ** direct register write for glide3x
@@ -287,6 +286,332 @@
 #endif	/* defined(__linux__) */
 
 /*---------------------------------------------------------------------------
+** MMX specializations
+*/
+#ifdef __GNUC__
+
+#define MMX_RESET() __asm __volatile ("emms")
+
+#define MMX_SRCLINE(src, dst, length) __asm __volatile ("\n\
+		movl	%2, %%ecx	\n\
+		movl	%0, %%esi	\n\
+		movl	%1, %%edi	\n\
+		cmpl	$8, %%ecx	\n\
+		jb	4f		\n\
+		testl	$2, %%esi	\n\
+		jz	1f		\n\
+		movw	(%%esi), %%ax	\n\
+		addl	$2, %%esi	\n\
+		movw	%%ax, (%%edi)	\n\
+		addl	$2, %%edi	\n\
+		subl	$2, %%ecx	\n\
+		.p2align 3,,7		\n\
+	1:				\n\
+		testl	$4, %%esi	\n\
+		jz	2f		\n\
+		movl	(%%esi), %%eax	\n\
+		addl	$4, %%esi	\n\
+		movl	%%eax, (%%edi)	\n\
+		addl	$4, %%edi	\n\
+		subl	$4, %%ecx	\n\
+		.p2align 3,,7		\n\
+	2:				\n\
+		movl	%%ecx, %%eax	\n\
+		andl	$7, %%ecx	\n\
+		shrl	$3, %%eax	\n\
+		jz	4f		\n\
+		.p2align 3,,7		\n\
+	3:				\n\
+		movq	(%%esi), %%mm0	\n\
+		addl	$8, %%esi	\n\
+		movq	%%mm0, (%%edi)	\n\
+		addl	$8, %%edi	\n\
+		decl	%%eax		\n\
+		jnz	3b		\n\
+		.p2align 3,,7		\n\
+	4:				\n\
+		testl	$4, %%ecx	\n\
+		jz	5f		\n\
+		movl	(%%esi), %%eax	\n\
+		addl	$4, %%esi	\n\
+		movl	%%eax, (%%edi)	\n\
+		addl	$4, %%edi	\n\
+		.p2align 3,,7		\n\
+	5:				\n\
+		testl	$2, %%ecx	\n\
+		jz	6f		\n\
+		movw	(%%esi), %%ax	\n\
+		movw	%%ax, (%%edi)	\n\
+		.p2align 3,,7		\n\
+	6:"::"g"(src), "g"(dst), "g"(length):"%eax", "%ecx", "%esi", "%edi")
+
+#define MMX_DSTLINE2(src, dst, width) __asm __volatile ("\n\
+		movl	%2, %%ecx	\n\
+		movl	%0, %%esi	\n\
+		movl	%1, %%edi	\n\
+		cmpl	$4, %%ecx	\n\
+		jb	4f		\n\
+		testl	$2, %%edi	\n\
+		jz	1f		\n\
+		movw	(%%esi), %%ax	\n\
+		addl	$2, %%esi	\n\
+		movw	%%ax, (%%edi)	\n\
+		addl	$2, %%edi	\n\
+		decl	%%ecx		\n\
+		.p2align 3,,7		\n\
+	1:				\n\
+		testl	$4, %%edi	\n\
+		jz	2f		\n\
+		movl	(%%esi), %%eax	\n\
+		addl	$4, %%esi	\n\
+		movl	%%eax, (%%edi)	\n\
+		addl	$4, %%edi	\n\
+		subl	$2, %%ecx	\n\
+		.p2align 3,,7		\n\
+	2:				\n\
+		movl	%%ecx, %%eax	\n\
+		andl	$3, %%ecx	\n\
+		shrl	$2, %%eax	\n\
+		jz	4f		\n\
+		.p2align 3,,7		\n\
+	3:				\n\
+		movq	(%%esi), %%mm0	\n\
+		addl	$8, %%esi	\n\
+		movq	%%mm0, (%%edi)	\n\
+		addl	$8, %%edi	\n\
+		decl	%%eax		\n\
+		jnz	3b		\n\
+		.p2align 3,,7		\n\
+	4:				\n\
+		testl	$2, %%ecx	\n\
+		jz	5f		\n\
+		movl	(%%esi), %%eax	\n\
+		addl	$4, %%esi	\n\
+		movl	%%eax, (%%edi)	\n\
+		addl	$4, %%edi	\n\
+		.p2align 3,,7		\n\
+	5:				\n\
+		testl	$1, %%ecx	\n\
+		jz	6f		\n\
+		movw	(%%esi), %%ax	\n\
+		movw	%%ax, (%%edi)	\n\
+		.p2align 3,,7		\n\
+	6:"::"g"(src), "g"(dst), "g"(width):"%eax", "%ecx", "%esi", "%edi")
+
+#define MMX_DSTLINE4(src, dst, width) __asm __volatile ("\n\
+		movl	%2, %%ecx	\n\
+		movl	%0, %%esi	\n\
+		movl	%1, %%edi	\n\
+		cmpl	$2, %%ecx	\n\
+		jb	4f		\n\
+		testl	$1, %%edi	\n\
+		jz	2f		\n\
+		movl	(%%esi), %%eax	\n\
+		addl	$4, %%esi	\n\
+		movl	%%eax, (%%edi)	\n\
+		addl	$4, %%edi	\n\
+		decl	%%ecx		\n\
+		.p2align 3,,7		\n\
+	2:				\n\
+		movl	%%ecx, %%eax	\n\
+		andl	$1, %%ecx	\n\
+		shrl	%%eax		\n\
+		jz	4f		\n\
+		.p2align 3,,7		\n\
+	3:				\n\
+		movq	(%%esi), %%mm0	\n\
+		addl	$8, %%esi	\n\
+		movq	%%mm0, (%%edi)	\n\
+		addl	$8, %%edi	\n\
+		decl	%%eax		\n\
+		jnz	3b		\n\
+		.p2align 3,,7		\n\
+	4:				\n\
+		testl	$1, %%ecx	\n\
+		jz	5f		\n\
+		movl	(%%esi), %%eax	\n\
+		movl	%%eax, (%%edi)	\n\
+		.p2align 3,,7		\n\
+	5:"::"g"(src), "g"(dst), "g"(width):"%eax", "%ecx", "%esi", "%edi")
+        
+#else
+
+#define MMX_RESET() __asm { emms }
+
+/* Desc: copy one row of pixels
+ *
+ * In  : length = number of bytes (pixels*bytesperpixel). Must be even (which
+ *                holds true, because we don't support 8bit. Also the existing
+ *                code assumes this, so this won't be a problem.
+ *       src    = source buffer
+ *       dst    = destination buffer
+ *
+ * Note: Aligns src (LFB) before copying. Clobbers eax, ecx, esi, edi
+ */
+#define MMX_SRCLINE(src, dst, length) __asm {\
+		__asm mov	ecx, length	\
+		__asm mov	esi, src	\
+		__asm mov	edi, dst	\
+		__asm cmp	ecx, 8		\
+		__asm jb	small_move	\
+		__asm test	esi, 2		\
+		__asm jz	check4		\
+		__asm mov	ax, [esi]	\
+		__asm add	esi, 2		\
+		__asm mov	[edi], ax	\
+		__asm add	edi, 2		\
+		__asm sub	ecx, 2		\
+		__asm align	8		\
+	__asm check4:				\
+		__asm test	esi, 4		\
+		__asm jz	aligned8	\
+		__asm mov	eax, [esi]	\
+		__asm add	esi, 4		\
+		__asm mov	[edi], eax	\
+		__asm add	edi, 4		\
+		__asm sub	ecx, 4		\
+		__asm align	8		\
+	__asm aligned8:				\
+		__asm mov	eax, ecx	\
+		__asm and	ecx, 7		\
+		__asm shr	eax, 3		\
+		__asm jz	small_move	\
+		__asm align	8		\
+	__asm big_move:				\
+		__asm movq	mm0, [esi]	\
+		__asm add	esi, 8		\
+		__asm movq	[edi], mm0	\
+		__asm add	edi, 8		\
+		__asm dec	eax		\
+		__asm jnz	big_move	\
+		__asm align	8		\
+	__asm small_move:			\
+		__asm test	ecx, 4		\
+		__asm jz	check2		\
+		__asm mov	eax, [esi]	\
+		__asm add	esi, 4		\
+		__asm mov	[edi], eax	\
+		__asm add	edi, 4		\
+		__asm align	8		\
+	__asm check2:				\
+		__asm test	ecx, 2		\
+		__asm jz	finish		\
+		__asm mov	ax, [esi]	\
+		__asm mov	[edi], ax	\
+		__asm align	8		\
+	__asm finish:				\
+	}
+
+/* Desc: copy one row of 16bit pixels
+ *
+ * In  : width = number of pixels
+ *       src   = source buffer
+ *       dst   = destination buffer
+ *
+ * Note: Aligns dst (LFB) before copying. Clobbers eax, ecx, esi, edi
+ */
+#define MMX_DSTLINE2(src, dst, width) __asm {\
+		__asm mov	ecx, width	\
+		__asm mov	esi, src	\
+		__asm mov	edi, dst	\
+		__asm cmp	ecx, 4		\
+		__asm jb	small_move_mmx_dstline2	\
+		__asm test	edi, 2		\
+		__asm jz	check4_mmx_dstline2	\
+		__asm mov	ax, [esi]	\
+		__asm add	esi, 2		\
+		__asm mov	[edi], ax	\
+		__asm add	edi, 2		\
+		__asm dec	ecx		\
+		__asm align	8		\
+	__asm check4_mmx_dstline2:		\
+		__asm test	edi, 4		\
+		__asm jz	aligned8_mmx_dstline2	\
+		__asm mov	eax, [esi]	\
+		__asm add	esi, 4		\
+		__asm mov	[edi], eax	\
+		__asm add	edi, 4		\
+		__asm sub	ecx, 2		\
+		__asm align	8		\
+	__asm aligned8_mmx_dstline2:		\
+		__asm mov	eax, ecx	\
+		__asm and	ecx, 3		\
+		__asm shr	eax, 2		\
+		__asm jz	small_move_mmx_dstline2	\
+		__asm align	8		\
+	__asm big_move_mmx_dstline2:			\
+		__asm movq	mm0, [esi]	\
+		__asm add	esi, 8		\
+		__asm movq	[edi], mm0	\
+		__asm add	edi, 8		\
+		__asm dec	eax		\
+		__asm jnz	big_move_mmx_dstline2	\
+		__asm align	8		\
+	__asm small_move_mmx_dstline2:		\
+		__asm test	ecx, 2		\
+		__asm jz	check2_mmx_dstline2	\
+		__asm mov	eax, [esi]	\
+		__asm add	esi, 4		\
+		__asm mov	[edi], eax	\
+		__asm add	edi, 4		\
+		__asm align	8		\
+	__asm check2_mmx_dstline2:		\
+		__asm test	ecx, 1		\
+		__asm jz	finish_mmx_dstline2	\
+		__asm mov	ax, [esi]	\
+		__asm mov	[edi], ax	\
+		__asm align	8		\
+	__asm finish_mmx_dstline2:		\
+	}
+
+/* Desc: copy one row of 32bit pixels
+ *
+ * In  : width = number of pixels
+ *       src   = source buffer
+ *       dst   = destination buffer
+ *
+ * Note: Aligns dst (LFB) before copying. Clobbers eax, ecx, esi, edi
+ */
+#define MMX_DSTLINE4(src, dst, width) __asm {\
+		__asm mov	ecx, width	\
+		__asm mov	esi, src	\
+		__asm mov	edi, dst	\
+		__asm cmp	ecx, 2		\
+		__asm jb	small_move_mmx_dstline4	\
+		__asm test	edi, 4		\
+		__asm jz	aligned8_mmx_dstline4	\
+		__asm mov	eax, [esi]	\
+		__asm add	esi, 4		\
+		__asm mov	[edi], eax	\
+		__asm add	edi, 4		\
+		__asm dec	ecx		\
+		__asm align	8		\
+	__asm aligned8_mmx_dstline4:		\
+		__asm mov	eax, ecx	\
+		__asm and	ecx, 1		\
+		__asm shr	eax, 1		\
+		__asm jz	small_move_mmx_dstline4	\
+		__asm align	8		\
+	__asm big_move_mmx_dstline4:		\
+		__asm movq	mm0, [esi]	\
+		__asm add	esi, 8		\
+		__asm movq	[edi], mm0	\
+		__asm add	edi, 8		\
+		__asm dec	eax		\
+		__asm jnz	big_move_mmx_dstline4	\
+		__asm align	8		\
+	__asm small_move_mmx_dstline4:		\
+		__asm test	ecx, 1		\
+		__asm jz	finish_mmx_dstline4	\
+		__asm mov	eax, [esi]	\
+		__asm mov	[edi], eax	\
+		__asm align	8		\
+	__asm finish_mmx_dstline4:		\
+	}
+
+#endif
+
+/*---------------------------------------------------------------------------
 ** grLfbConstantAlpha
 */
 GR_ENTRY(grLfbConstantAlpha, void, (GrAlpha_t alpha))
@@ -379,7 +704,7 @@ static FxBool _grLfbLock (GrLock_t type, GrBuffer_t buffer,
 
   /* Pray that no one has made any glide calls that touch the hardware... */
 #ifdef FX_GLIDE_NAPALM
-  if((gc->sliCount > 1)/* &&
+  if((gc->sliCount > 1) /*&&
      (type == GR_LFB_READ_ONLY)*/) {
     hwcSLIReadDisable(gc->bInfo);
   }
@@ -901,7 +1226,7 @@ static FxBool _grLfbLock (GrLock_t type, GrBuffer_t buffer,
         }
         /* Pray that no one makes any glide calls that touch the hardware... */
 #ifdef FX_GLIDE_NAPALM
-        if((gc->sliCount > 1)/* &&
+        if((gc->sliCount > 1) /*&&
            (type == GR_LFB_READ_ONLY)*/) {
             hwcSLIReadEnable(gc->bInfo);
         }
@@ -1114,7 +1439,7 @@ static FxBool _grLfbUnlock (GrLock_t type, GrBuffer_t buffer)
     gc->lockPtrs[type] = (FxU32)-1;
 
 #ifdef FX_GLIDE_NAPALM
-    if((gc->sliCount > 1)/* &&
+    if((gc->sliCount > 1) /*&&
        (type == GR_LFB_READ_ONLY)*/) {
       hwcSLIReadDisable(gc->bInfo);
     }
@@ -1171,7 +1496,7 @@ static FxBool _grLfbUnlock (GrLock_t type, GrBuffer_t buffer)
     gc->cmdTransportInfo.lfbLockCount = lockCount - 1;
   
 #ifdef FX_GLIDE_NAPALM
-    if((gc->sliCount > 1)/* &&
+    if((gc->sliCount > 1) /*&&
        (type == GR_LFB_READ_ONLY)*/) {
       if(gc->cmdTransportInfo.lfbLockCount != 0) {
         grFinish();
@@ -1343,6 +1668,11 @@ _grLfbWriteRegion(FxBool pixPipelineP,
                  src_format, src_width, src_height,
                  src_stride, src_data);
 
+  /* don't waste time */
+  if (!(src_width && src_height)) {
+     goto done;
+  }
+
   writeMode = ((src_format == GR_LFB_SRC_FMT_RLE16)
                ? GR_LFBWRITEMODE_565
                : src_format);
@@ -1375,6 +1705,18 @@ _grLfbWriteRegion(FxBool pixPipelineP,
     case GR_LFB_SRC_FMT_1555:
     case GR_LFB_SRC_FMT_ZA16:
       dstData = (FxU32*)(((FxU16*)dstData) + dst_x);
+#if 1 /* Hack alert: disable if SET_LFB_16 is not simple assignment */
+      if (_GlideRoot.CPUType.os_support & _CPU_FEATURE_MMX) {
+         do {
+             MMX_DSTLINE2(srcData, dstData, src_width);
+             /* adjust for next line */
+             ((FxU8 *)srcData) += src_stride;
+             ((FxU8 *)dstData) += info.strideInBytes;
+         } while (--scanline);
+         MMX_RESET();
+         break;
+      }
+#endif
       length  = src_width * 2;
       aligned = !((int)dstData&0x2);
       srcJump = src_stride - length;
@@ -1433,6 +1775,18 @@ _grLfbWriteRegion(FxBool pixPipelineP,
     case GR_LFB_SRC_FMT_555_DEPTH:
     case GR_LFB_SRC_FMT_1555_DEPTH:
       dstData = ((FxU32*)dstData) + dst_x;
+#if 1 /* Hack alert: disable if SET_LFB is not simple assignment */
+      if (_GlideRoot.CPUType.os_support & _CPU_FEATURE_MMX) {
+         do {
+             MMX_DSTLINE4(srcData, dstData, src_width);
+             /* adjust for next line */
+             ((FxU8 *)srcData) += src_stride;
+             ((FxU8 *)dstData) += info.strideInBytes;
+         } while (--scanline);
+         MMX_RESET();
+         break;
+      }
+#endif
       length  = src_width * 4;
       srcJump = src_stride - length;
       dstJump = info.strideInBytes - length;
@@ -1458,6 +1812,7 @@ _grLfbWriteRegion(FxBool pixPipelineP,
     rv = FXFALSE;
   }
 
+done:
   GR_RETURN(rv);
 #undef FN_NAME
 } /* _grLfbWriteRegion */
@@ -1559,13 +1914,14 @@ static FxBool grLfbReadRegionOrigin (GrBuffer_t src_buffer, GrOriginLocation_t o
                   src_buffer, src_x, src_y,
                   src_width, src_height, dst_stride, dst_data);
 
+   /* don't waste time */
+   if (!(src_width && src_height)) {
+     rv=FXTRUE;
+     goto done;
+   }
+
    bpp=gc->bInfo->h3pixelSize;
    info.size = sizeof(info);
-   if (!src_width)
-   {
-      rv=FXTRUE;
-      goto done;
-   }
    rv=FXFALSE;
 
 #ifndef __linux__ /* [dBorca] fixme :D */
@@ -1632,17 +1988,31 @@ static FxBool grLfbReadRegionOrigin (GrBuffer_t src_buffer, GrOriginLocation_t o
                  &info))
    {
       FxU32 *src,*dst;
-      FxI32 length,scanline;
+      FxI32 length;
       FxU32 src_adjust,dst_adjust,tmp;
 
       src=(FxU32 *) (((char*)info.lfbPtr)+
                      (src_y*info.strideInBytes) + (src_x * bpp));
+      length = src_width * bpp;
+
+      if (_GlideRoot.CPUType.os_support & _CPU_FEATURE_MMX) {
+         if (!gc->state.forced32BPP) {
+            do {
+                MMX_SRCLINE(src, dst_data, length);
+                /* adjust for next line */
+                ((FxU8 *)src) += info.strideInBytes;
+                ((FxU8 *)dst_data) += dst_stride;
+            } while (--src_height);
+            MMX_RESET();
+            goto okay;
+         }
+      }
+
       dst=dst_data;
-      scanline=src_height;
 
       /* set length - alignment fix*/
       tmp=(((FxU32)src)&2);
-      length=src_width * bpp - tmp;
+      length -= tmp;
       src_adjust=info.strideInBytes - tmp;
       dst_adjust=dst_stride - tmp;
 
@@ -1723,6 +2093,7 @@ static FxBool grLfbReadRegionOrigin (GrBuffer_t src_buffer, GrOriginLocation_t o
 		  ((FxU8 *)dst)+=dst_stride;
 	  }
 
+okay:
       rv=FXTRUE;
 	  /* unlock buffer */
       _grLfbUnlock(GR_LFB_READ_ONLY,src_buffer);
