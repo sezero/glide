@@ -1,4 +1,4 @@
-# Win32 makefile for Glide3 and Texus2
+# OpenWatcom makefile for Glide3 and Texus2
 # This makefile MUST be processed by GNU make!!!
 #
 #  Copyright (c) 2003 - Daniel Borca
@@ -65,10 +65,10 @@ G3_DIR = $(FX_GLIDE_HW)/glide3/src
 endif
 
 all:
-	make -f Makefile.win32 -C $(G3_DIR)
+	make -f Makefile.wat -C $(G3_DIR)
 
 clean:
-	make -f Makefile.win32 -C $(G3_DIR) clean
+	make -f Makefile.wat -C $(G3_DIR) clean
 
 realclean:
-	make -f Makefile.win32 -C $(G3_DIR) realclean
+	make -f Makefile.wat -C $(G3_DIR) realclean
