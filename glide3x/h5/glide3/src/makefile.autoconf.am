@@ -183,7 +183,7 @@ xtexdl_3dnow.o xtexdl_3dnow.lo: xtexdl.s fxgasm.h
 	$(CP) $*.o $*.lo
 	$(RM) -f $*.tmp.s
 
-cpudtect.o cpudtct.lo: cpudtect.s
+cpudtect.o cpudtect.lo: cpudtect.s
 	$(PREPROCESSOR) -DUSE_PACKET_FIFO=1 $< > $*.tmp.s
 	$(CC) $(AFLAGS) -c -o $*.o $*.tmp.s
 	$(CP) $*.o $*.lo
