@@ -43,7 +43,7 @@
 
 /* OK, so this should be 1.7, but sometime during the
  * late stages of the original v2 release hell we changed
- * it to 1.3 
+ * it to 1.3 to make id (or someone happy).
  */
 #define kDefaultVoodoo2Gamma 1.3
 
@@ -65,9 +65,9 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitGamma(FxU32 *sstbase, double gamma)
 }
 
 FX_EXPORT FxBool FX_CSTYLE sst1InitGammaRGB(FxU32 *sstbase, 
-					    double gammaR,
-					    double gammaG, 
-					    double gammaB)
+                                            double gammaR,
+                                            double gammaG, 
+                                            double gammaB)
 {
   FxU32 
     x,
@@ -90,7 +90,7 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitGammaRGB(FxU32 *sstbase,
   
   if(!sst1CurrentBoard->fbiInitGammaDone)
     INIT_PRINTF(("sst1InitGammaRGB(): Setting GammaRGB = (%.2f,%.2f,%.2f)\n",
-		 gammaR, gammaG, gammaB));
+                 gammaR, gammaG, gammaB));
 
   /* Get the user set definitions (cp or environment) */
   if(!calledBefore) {
@@ -156,9 +156,20 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitGammaRGB(FxU32 *sstbase,
 
   // Last entry in the gamma table is stored as 0x0 to perform proper
   // linear interpolation of the last 8 entries
+  //
   // BUG Fix: Last entry in table needs to be 0xffffff for proper linear
   //  interpolation
-  ISET(sst->clutData, (32<<SST_CLUTDATA_INDEX_SHIFT) | 0xffffff);
+  //
+  // YABF: Unconditionally using 0xFFFFFF to max out the interpolation
+  // causes a problem if the component gamma value is 0 (some
+  // developer wants this).   Anyway, we now special case 0 (or close to 0) 
+  // so that   // this looks right.
+#define GAMMA_COMP_FLOOR(__val) (~(((__val) == 0x00UL) - 0x01UL) & 0xFFUL)
+  ISET(sst->clutData, ((32 << SST_CLUTDATA_INDEX_SHIFT) | 
+                       (GAMMA_COMP_FLOOR(gammaTableR[255]) << SST_CLUTDATA_RED_SHIFT) |
+                       (GAMMA_COMP_FLOOR(gammaTableG[255]) << SST_CLUTDATA_RED_SHIFT) |
+                       (GAMMA_COMP_FLOOR(gammaTableB[255]) << SST_CLUTDATA_RED_SHIFT)));
+#undef GAMMA_COMP_FLOOR
   
   if(sstVideoIsReset) {
     // wait for gamma table writes to complete

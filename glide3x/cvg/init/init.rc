@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/12/07 21:49:24  joseph
+** Initial checkin into SourceForge.
+**
 */
 
 #define OFFICIAL   1 

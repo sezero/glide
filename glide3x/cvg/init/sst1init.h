@@ -28,6 +28,21 @@
 #define __SST1INIT_H__
 
 /*
+** Copyright (c) 1996, 3Dfx Interactive, Inc.
+** All Rights Reserved.
+**
+** This is UNPUBLISHED PROPRIETARY SOURCE CODE of 3Dfx Interactive, Inc.;
+** the contents of this file may not be disclosed to third parties, copied or
+** duplicated in any form, in whole or in part, without the prior written
+** permission of 3Dfx Interactive, Inc.
+**
+** RESTRICTED RIGHTS LEGEND:
+** Use, duplication or disclosure by the Government is subject to restrictions
+** as set forth in subdivision (c)(1)(ii) of the Rights in Technical Data
+** and Computer Software clause at DFARS 252.227-7013, and/or in similar or
+** successor clauses in the FAR, DOD or NASA FAR Supplement. Unpublished  -
+** rights reserved under the Copyright Laws of the United States.
+**
 ** $Revision$
 ** $Date$
 **
@@ -145,7 +160,7 @@ p6Fence(void);
 #  define P6FENCE {_asm xchg eax, p6FenceVar}
 #elif defined(macintosh) && __POWERPC__ && defined(__MWERKS__)
 #  define P6FENCE __eieio()
-#elif defined(__GNUC__) && defined(__i386__)
+#elif defined (__GNUC__) && defined(__i386__)
 #  define P6FENCE asm("xchg %%eax,%0" : /*outputs*/ : "m" (p6FenceVar) : \
 					"eax");
 #else
@@ -522,6 +537,7 @@ p6Fence(void);
 #define SST_FBI_DACTYPE_ATT                0
 #define SST_FBI_DACTYPE_ICS                1
 #define SST_FBI_DACTYPE_TI                 2
+#define SST_FBI_DACTYPE_PROXY              3  /* for single-dac SLI */
 
 /* Definitions for parsing voodoo.ini file */
 #define DACRDWR_TYPE_WR                    0
@@ -638,7 +654,6 @@ FX_ENTRY FxBool FX_CALL sst1InitVideoBorder(FxU32 *, FxU32, FxU32);
 FX_ENTRY void FX_CALL sst1InitWrite32(FxU32 *, FxU32);
 FX_ENTRY FxU32 FX_CALL sst1InitRead32(FxU32 *);
 FX_ENTRY FxBool FX_CALL sst1InitIdle(FxU32 *);
-FX_ENTRY FxBool FX_CALL sst1InitIdleWithTimeout(FxU32 *, FxU32);
 FX_ENTRY FxBool FX_CALL sst1InitIdleNoNOP(FxU32 *);
 FX_ENTRY FxBool FX_CALL sst1InitIdleFBI(FxU32 *);
 FX_ENTRY FxBool FX_CALL sst1InitIdleFBINoNOP(FxU32 *);
@@ -688,10 +703,10 @@ FX_ENTRY char * FX_CALL sst1InitGetenv(char *);
 FX_ENTRY FxU32 * FX_CALL sst1InitGetBaseAddr(FxU32);
 FxBool sst1InitFillDeviceInfo(FxU32 *, sst1DeviceInfoStruct *);
 void sst1InitIdleLoop(FxU32 *, FxBool);
-int sst1InitIdleWithTimeoutLoop(FxU32 *, FxBool, FxU32);
 void sst1InitPciFifoIdleLoop(FxU32 *);
 void sst1InitClearBoardInfo(void);
 FX_ENTRY FxBool FX_CALL sst1InitCaching(FxU32* sstBase, FxBool enableP);
+FX_ENTRY FxBool FX_CALL sst1InitCachingAMD(FxU32* sstBase, FxBool enableP, FxBool hasP2MTRR);
 FX_ENTRY void FX_CALL sst1InitPrintInitRegs(FxU32 *);
 FX_ENTRY sst1VideoTimingStruct* FX_CALL
 sst1InitFindVideoTimingStruct(GrScreenResolution_t, GrScreenRefresh_t);
@@ -736,7 +751,7 @@ extern "C" {
 #endif
 
 #ifdef SST1INIT_ALLOCATE
-  FILE *sst1InitMsgFile = NULL;// = stdout;
+  FILE *sst1InitMsgFile = NULL; /*stdout;*/
 #else
 extern FILE *sst1InitMsgFile;
 #endif

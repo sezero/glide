@@ -134,6 +134,7 @@
 ** SSTV2_VIDEO_CLEARCOLOR        hex     Clear screen color
 ** SSTV2_VFIFO_THRESH            {0-31}  Select video fifo threshold
 ** SSTV2_VSYNC                   hex     Specify value of vSync video register
+** SSTV2_NOREMAP                 0       Don't try to remap single board sli.
 **
 ** VOODOO2_FILE                  name    Filename used in place of "voodoo2.ini"
 ** VOODOO2_PATH                  path    Path used to locate "voodoo2.ini" file
@@ -155,6 +156,9 @@
 #define SST1INIT_ALLOCATE // Allocate variables in sst1init.h
 #define FX_DLL_DEFINITION
 #include <fxdll.h>
+#if !macintosh && !__linux__
+#include <fxremap.h>
+#endif
 #include <sst1vid.h>
 #include <sst1init.h>
 #include "rcver.h"
@@ -196,6 +200,7 @@ FX_EXPORT FxU32 * FX_CSTYLE sst1InitMapBoardDirect(FxU32 BoardNumber,
     FxU32 *sstbase;
     FxU32 n;
     FxU32 j;
+    FxU32 sstv2_noremap = 0;
 
     if( GETENV( ("SSTV2_DEVICEID") ) )
       SSCANF(GETENV(("SSTV2_DEVICEID")), "%i", &deviceID);
@@ -208,16 +213,38 @@ FX_EXPORT FxU32 * FX_CSTYLE sst1InitMapBoardDirect(FxU32 BoardNumber,
     // NB: It is safe to do this even if we never called pciClose.
     pciOpen();
 
+    /* NB: firstTime does not get cleared until we actually find a
+     * board and get one mapped (A little weird to begin w/, but
+     * probably not worth changing at this late date). However,
+     * sst1InitMapBoard usually gets called up to MAX_PCI_DEVICES
+     * which means that we'll be re-counting and re-mapping boards
+     * over and over which is just whacked. Now, if we fail to find
+     * any suitable boards via sst1InitNumBoardsInSystem we clear the
+     * firstTime flag, and carry on checking for the non-existant
+     * board which will (of course) fail to map.  
+     */
     if(firstTime) {
-        // Make Watcom happy
-        codeIdent[0] = '@';
-        headersIdent[0] = '@';
-
-        // Find "voodoo2.ini" file if it exists...
-        sst1InitUseVoodooFile = sst1InitVoodooFile();
-
-        if(!(boardsInSystem = sst1InitNumBoardsInSystem()))
-            return(NULL);
+      // Make Watcom happy
+      codeIdent[0] = '@';
+      headersIdent[0] = '@';
+      
+      // Find "voodoo2.ini" file if it exists...
+      sst1InitUseVoodooFile = sst1InitVoodooFile();
+      
+      if( GETENV( ("SSTV2_NOREMAP") ) ) {
+        SSCANF(GETENV(("SSTV2_NOREMAP")), "%i", &sstv2_noremap);
+      } else {
+        sstv2_noremap = 0;
+      }
+#if !macintosh && !__linux__     
+      if (!sstv2_noremap) {
+        fxremap(); /* remap single board SLI */
+      }
+#endif      
+      if(!(boardsInSystem = sst1InitNumBoardsInSystem())) {
+        firstTime = FXTRUE;
+        return(NULL);
+      }
     }
 
     if( clearBoardInfo ) {
@@ -283,6 +310,9 @@ FX_EXPORT FxU32 * FX_CSTYLE sst1InitMapBoardDirect(FxU32 BoardNumber,
                 sst1BoardInfo[index].virtAddr[0] = (SstRegs *) sstbase;
                 PCICFG_RD(PCI_BASE_ADDRESS_0, sst1BoardInfo[index].physAddr[0]);
                 sst1BoardInfo[index].deviceNumber = sst1InitDeviceNumber;
+
+                //sst1BoardInfo[index].singleBrdSLISlave = 
+                //        ((sst1InitDeviceNumber >> 13) & 0x7);
                 {
                   FxU32 oldFbiRevision, newFbiRevision;
 
@@ -310,9 +340,12 @@ FX_EXPORT FxU32 * FX_CSTYLE sst1InitMapBoardDirect(FxU32 BoardNumber,
                 if (code != PCI_ERR_NOERR) {
 #ifdef __WIN32__
                   MessageBox(NULL, pciGetErrorString(), NULL, MB_OK);
+                  INIT_PRINTF(("sst1InitMapBoard(): 0x%X\n", GetLastError()));
 #endif // __WIN32__
 
+
                   INIT_PRINTF(("pciError(): %s", pciGetErrorString()));
+
                   exit(-1);
                 }
             }
@@ -580,10 +613,10 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitRegisters(FxU32 *sstbase)
     // Note that setting the clock will automatically reset the TMUs...
     // sst1InitResetTmus() also will de-assert TEXMAP_DISABLE in fbiInit3
     // unless SSTV2_TEXMAP_DISABLE is set
-    if(sst1InitComputeClkParams((float) 16.0, &sstGrxClk) == FXFALSE)
-        return(FXFALSE);
-    if(sst1InitSetGrxClk(sstbase, &sstGrxClk) == FXFALSE)
-        return(FXFALSE);
+    if(!sst1InitComputeClkParams(16.0f, &sstGrxClk)) 
+      return(FXFALSE);
+    if(!sst1InitSetGrxClk(sstbase, &sstGrxClk))
+      return(FXFALSE);
     sst1CurrentBoard->initGrxClkDone = 0;
 
     // Set PCI wait-states
@@ -853,7 +886,7 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitShutdown(FxU32 *sstbase)
 
     // Disable the command fifo if enabled...
     if(sst1CurrentBoard->fbiCmdFifoEn ||
-       (sstMaster->fbiInit7 & SST_EN_CMDFIFO))
+       (IGET(sstMaster->fbiInit7) & SST_EN_CMDFIFO))
        sst1InitCmdFifo(sstbase, FXFALSE, (void *) NULL, (void *) NULL,
         (void *) NULL, NULL);
 
@@ -907,8 +940,9 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitShutdown(FxU32 *sstbase)
           INIT_PRINTF(("sst1InitShutdown() WARNING: sst1InitSetGrxClk failed...Continuing...\n"));
         sst1CurrentBoard->initGrxClkDone = 0;
 
+#ifndef __linux__
         pciUnmapPhysical((FxU32)sst1CurrentBoard->virtAddr[0], 0x1000000UL); 
-        
+#endif
         if((++n > 1) || !sliEnabled)
             break;
     }
@@ -930,7 +964,7 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitShutdown(FxU32 *sstbase)
 
     INIT_PRINTF(("sst1InitShutdown(): Returning with status %d...\n", FXTRUE));
 #ifdef INIT_OUTPUT
-    if ( sst1InitMsgFile != stdout && sst1InitMsgFile)
+    if ( sst1InitMsgFile != stdout )
         fclose(sst1InitMsgFile);
 #endif
 
@@ -1093,8 +1127,9 @@ FX_ENTRY FxU32 FX_CSTYLE sst1InitNumBoardsInSystem(void)
 /*
 ** sst1InitCaching
 **
-** Sets up memory caching on P6 systems for the entire 16mb virtual
-** address space of the card.
+** Sets up memory caching on P6 class systems and K7 systems for the
+** lower 8 MB of the 16 MB virtual address space of the card. These
+** hold the command fifo area.
 **
 */
 FX_ENTRY FxBool FX_CSTYLE 
@@ -1191,5 +1226,103 @@ __errExit:
 
   return retVal;
 } // sst1InitSetCaching
+
+
+
+/*
+** sst1InitCachingAMD
+**
+** Sets up memory caching for AMD K6 and AMD K7 systems for the entire
+** 16mb virtual address space of the card. For K7, goes through
+** sst1InitCaching
+**
+*/
+
+#define kCacheSizeWriteCombineAMD (0x08UL << 20UL)      /* 8 MB   */
+#define kCacheSizeUncacheableAMD  (0x20000UL)           /* 128 KB */
+
+FX_ENTRY FxBool FX_CSTYLE
+sst1InitCachingAMD(FxU32* sstBase, FxBool enableP, FxBool hasP2MTRR)
+{
+  FxBool retVal = sst1InitCheckBoard(sstBase);
+
+  if (!retVal) return FXFALSE;
+
+  /* The K7 has MTRRs that are exactly compatible to the P6/PII, so
+     we just do the work through the existing sst1InitCaching function
+  */
+
+  if (hasP2MTRR) { 
+     return sst1InitCaching(sstBase, enableP);
+  }
+
+  /* If it's not a K7, we must have a K6 with WC support, i.e. a K6-2 with
+     CXT core or a Sharptooth, otherwise we wouldn't have gotten here.
+  */
+
+  if (enableP && (GETENV("SSTV2_IGNORE_CACHING") == NULL)) {
+    FxU32 physAddr;
+    
+    /* Get the board's base. Isn't this the same as what we
+     * carry around in sst1CurrentBoard->physAddr[0]?
+     */
+
+    pciGetConfigData(PCI_BASE_ADDRESS_0, sst1CurrentBoard->deviceNumber, &physAddr);
+    
+    /* For some reason, there sometimes is a 008 at the end of the
+     * physical address, so mask that puppy RTF out
+     */
+
+    physAddr &= 0xfffff000;
+
+    /* dpc - 23 jan 1998 - Warning!!!!!
+     * We are no longer mapping the entire board range as uswc because
+     * this causes weird problems on some systems. We are now mapping
+     * the 3d register area as uncacheable (since no one should be
+     * writing here anyway, except to bump the swapbufferCMD register)
+     * and the command fifo range and lfb range as uswc.
+     *
+     * NB: It is still unclear why this is happening because the
+     * memory page containing the registers is never really explicitly
+     * written to until we are shutting down so changing its caching
+     * characteristics should have no bearing on anything.
+     *
+     * This might no be necessary for K6, as K6 maintains strong write
+     * ordering in WC regions. We do this here compatible to PII just in
+     * case. Note: Overlapping WC and UC regions results in UC type on K6,
+     * just like on PII. Note: the smallest MTRR region size on K6 is 128 KB,
+     * while on PII it is 4 KB. We make the UC region as small as we can.
+     */
+   
+    /* For K6, we don't do any elaborate allocation, as it only has two
+     * variable size memory regions, and we need both for Voodoo2. So, we
+     * just jam the data into the two available MTRRs.
+     */
+
+    pciSetMTRRAmdK6 (0, physAddr, kCacheSizeWriteCombineAMD, PciMemTypeWriteCombining);
+    pciSetMTRRAmdK6 (1, physAddr, kCacheSizeUncacheableAMD, PciMemTypeUncacheable);
+    
+  } else {  /* disable MTRRs */
+
+    /* This always succeeds */
+
+    retVal = FXTRUE;
+
+    /* Since AMD recommends a "free for all" policy for allocating MTRRs
+       on K6, we do nothing for "disable". Any software that wants to grab
+       the MTRRs can just do so. Leaving the MTRR enabled might actually
+       beneficial in a situation like the following: We run a D3D app, then
+       a Glide app, then a D3D app, but the second time around D3D doesn't
+       re-initialize, since it's still active, so it doesn't reprogram the
+       MTRRs.
+     */
+
+    // pciSetMTRRAmdK6 (0, 0, 0, 0);    /* size == 0 implies disable */
+    // pciSetMTRRAmdK6 (1, 0, 0, 0);    /* size == 0 implies disable */
+
+  }
+
+  return retVal;
+} // sst1InitSetCachingAMD
 
 #pragma optimize ("",on)

@@ -121,7 +121,7 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitSli(FxU32 *sstbase0, FxU32 *sstbase1)
        SST_VIDEO_BUFFER_OFFSET_SHIFT;
     tilesInXOrig = (IGET(sstMaster->fbiInit1) & SST_VIDEO_TILES_IN_X) >>
        SST_VIDEO_TILES_IN_X_SHIFT;
-    if(sstMaster->fbiInit1 & SST_VIDEO_TILES_IN_X_MSB)
+    if(IGET(sstMaster->fbiInit1) & SST_VIDEO_TILES_IN_X_MSB)
        tilesInXOrig += 16;
 
     if(tilesInXOrig & 0x1) {

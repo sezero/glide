@@ -641,7 +641,9 @@ FxBool sst1InitFillDeviceInfo(FxU32 *sstbase, sst1DeviceInfoStruct *info)
 	        INIT_PRINTF(("ICS ICS5342\n"));
 	    else if(info->fbiVideoDacType == SST_FBI_DACTYPE_TI)
 	        INIT_PRINTF(("TI TVP3409\n"));
-	    else
+	    else if(info->fbiVideoDacType == SST_FBI_DACTYPE_PROXY)
+                INIT_PRINTF(("(SLI PROXY)\n"));
+            else
 	        INIT_PRINTF(("Unknown\n"));
 	}
     INIT_PRINTF(("sst1DeviceInfo: SLI Detected:%d\n", info->sliDetected));

@@ -62,6 +62,7 @@ static void sst1InitFixFilename(char *dst, char *src);
 
 static FxBool checkedFileP = FXFALSE;
 
+#ifndef INIT_LINUX
 /*
 ** sst1InitVoodooFile():
 **  Find and setup "voodoo2.ini" file if possible
@@ -90,6 +91,7 @@ FX_ENTRY FxBool FX_CALL sst1InitVoodooFile()
 	  char fixedFilename[512], *tmpPtr;
 	  char path[512];
 	  int i;
+
 
 	  if(getenv("VOODOO2_FILE")) {
 	    /* Override voodoo2.ini name */
@@ -263,6 +265,84 @@ __errExit:
 
   return retVal;
 }
+
+#else
+
+/*
+** sst1InitVoodooFile():
+**  Find and setup "voodoo2.ini" file if possible
+**
+**    Returns:
+**      FxTRUE if "voodoo2.ini" file is found, opened with no errors, and
+**             constains the dac programming data.
+**      FXFALSE if cannot find file, error opening file, or has no dac data in it.
+**
+*/
+FX_ENTRY FxBool FX_CALL sst1InitVoodooFile() {
+  static FxBool retVal = FXFALSE;
+  int inCfg, inDac;
+  FILE *file = 0;
+  char buffer[1024], filename[256];
+  char *tmpPtr;
+  char path[512];
+  int i;
+
+  filename[0] = '\0';
+  if (checkedFileP) goto __errExit;
+
+  if (getenv("VOODOO2_FILE")) {
+    /* Override voodoo2.ini name */
+    strcpy(filename, getenv("VOODOO2_FILE"));
+    if (!(file = fopen(filename, "r"))) 
+      goto __errExit;
+  } else {
+    /* Override path setting */
+    if (getenv("VOODOO2_PATH")) {
+      strcpy(path, getenv("VOODOO2_PATH"));
+    } else {
+      strcpy(path, "/etc/conf.3dfx");
+    }
+
+    i = 0;
+    while(1) {
+      if (!i) {
+	if ((tmpPtr = strtok(path, ":")) == NULL)
+	  break;
+      } else {
+	if ((tmpPtr = strtok(NULL, ":")) == NULL)
+	  break;
+      }
+      strcpy(filename, tmpPtr);
+      if (filename[strlen(filename)-1] == '\\')
+	sprintf(filename, "%voodoo2", filename);
+      else
+	sprintf(filename, "%s/voodoo2", filename);
+      i++;
+      if ((file = fopen(filename, "r")))
+	break;
+    }
+  }
+  if (!file) {
+    retVal = FXFALSE;
+    goto __errExit;
+  }
+  while(sst1InitFgets(buffer, file)) {
+    buffer[strlen(buffer)-1] = 0;
+    if (buffer[0]=='#') continue;
+    if (!sst1InitParseFieldCfg(buffer)) {
+      retVal = FXFALSE;
+      break;
+    }
+  }
+  INIT_PRINTF(("sst1Init Routines(): Using Initialization file '%s'\n", filename));
+
+__errExit:
+  if (file) fclose(file);
+  checkedFileP = FXTRUE;
+
+  return retVal;
+}
+#endif
 
 #if defined(INIT_DOS) || defined(INIT_LINUX)
 
