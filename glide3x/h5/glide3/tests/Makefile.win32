@@ -27,6 +27,10 @@ FLAGS  = -DH3=1
 FLAGS  = $(FLAGS) -DFX_GLIDE_NAPALM=1 -DH4=1 -DFX_GLIDE_H5_CSIM=1
 !endif
 
+!if "$(FX_HW_PROJECTS)"=="glide3"
+FLAGS  = $(FLAGS) -DGLIDE3=1 -DGLIDE3_ALPHA=1
+!endif
+
 ##################################
 # compiler setup
 ##################################
