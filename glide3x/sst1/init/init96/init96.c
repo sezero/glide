@@ -824,10 +824,13 @@ INITVG96ENTRY(init96MapBoard, FxBool , (void *rd, void *info, FxU16 vID, FxU16 d
   {
     int xres=1, yres=1, fbStride;
     GrScreenResolution_t    res = GR_RESOLUTION_NONE;
-    init96SetVideo(0, res,
+    FxBool rv = FXTRUE;
+    rv = init96SetVideo(0, res,
                    0, 2, 1, 
                    2, 1, regDesc,
                    &xres, &yres, &fbStride );
+    if ( !rv )
+      return FXFALSE;
     sst96InitGetTmuInfo((FxU32 *)sstHW, vg96Info);
     init96RestoreVideo(regDesc);
   }
@@ -1029,7 +1032,7 @@ INITVG96ENTRY(init96SetVideo, FxBool ,
   if (curHALData->initAperture)
     (*curHALData->initAperture)(regDesc);
   
-#if defined( __DOS32__ )
+#ifdef __DOS32__
   {
     union REGS
       inR, outR;
@@ -1041,7 +1044,7 @@ INITVG96ENTRY(init96SetVideo, FxBool ,
     GDBG_INFO((80, "%s:  Saving Current video mode (0x%x).\n",
                FN_NAME, oldVidMode)); 
   }
-#endif
+#endif /* __DOS32__ */
   
   /*-------------------------------------
     Set Video Mode
@@ -1415,9 +1418,9 @@ INITVG96ENTRY(init96EnableTransport, FxBool, ( InitFIFOData *info, InitRegisterD
 
   if (res)
     pciSetMTRR(fifoMTRRNum, fifoPhysBaseAddress, fifoPhysSize, fifoMemType);
-  else
+  else {
     GDBG_INFO((80, "%s:  Couldn't get free or used MTRR!\n"));
-
+  }
 
   return rv;
 
@@ -1661,7 +1664,7 @@ INITVG96ENTRY(init96Idle, void , (Init96WriteMethod *wcb) )
   Return:
   void opinter to buffer
   -------------------------------------------------------------------*/
-#define LFB_OFFSET( X ) ( X & 0x3fffff )
+#define LFB_OFFSET( X ) ( X & 0x3fffff ) /* was 0x1fffff */
 
 INITVG96ENTRY(init96GetBufferPtr, void*, (InitBuffer_t buffer, int *strideBytes)) 
 {
@@ -1688,7 +1691,12 @@ INITVG96ENTRY(init96GetBufferPtr, void*, (InitBuffer_t buffer, int *strideBytes)
     break;
 
   case INIT_BUFFER_AUXBUFFER:
-    rv = (void*)(((char*)sstHW) + LFB_OFFSET(ab0));
+    rv = (void*)(((char*)sstHW) + LFB_OFFSET(ab0Base));
+    /* [dBorca]
+     * used to be ab0, but I changed it to ab0Base.
+     * VG96STRIDE(ab0Stride) doesn't really matter,
+     * because we stripped off the high bits anyway!
+     */
     *strideBytes = ab0Stride;
     GDBG_INFO((80, "  get aux buffer pointer" ));
     break;
@@ -2141,16 +2149,21 @@ init96LoadBufRegs(int nBuffers, InitBufDesc_t *pBufDesc, int xRes,
     pAux->bufOffset = A;
   }
 
-  if (pFront)
-  GDBG_INFO((80,"F = %.08x, s= %6d\n", pFront->bufOffset, pFront->bufStride));
-  if (pBack)
+  if (pFront) {
+    GDBG_INFO((80,"F = %.08x, s= %6d\n", pFront->bufOffset, pFront->bufStride));
+  }
+  if (pBack) {
     GDBG_INFO((80,"B = %.08x, s= %6d\n", pBack ->bufOffset, pBack ->bufStride));
-  if (pTriple)
+  }
+  if (pTriple) {
     GDBG_INFO((80,"T = %.08x, s= %6d\n", pTriple ->bufOffset, pTriple ->bufStride));
-  if (pAux)
+  }
+  if (pAux) {
     GDBG_INFO((80,"A = %.08x, s= %6d\n", pAux  ->bufOffset, pAux  ->bufStride));
-  if (pFifo)
+  }
+  if (pFifo) {
     GDBG_INFO((80,"C = %.08x, s= %6d\n", pFifo ->bufOffset, pFifo ->bufStride));
+  }
     
   /* Fill the arrays here */
   bI[0].dfbBase   = pFront->bufOffset; 

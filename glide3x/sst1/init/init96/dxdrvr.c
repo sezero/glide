@@ -18,12 +18,17 @@
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
 ** $Log$
+** Revision 1.1.2.2  2004/03/08 07:42:23  dborca
+** Voodoo Rush fixes
+**
 ** Revision 1.1.2.1  2004/03/02 07:56:03  dborca
 ** Bastardised Glide3x for SST1
 **
 ** Revision 1.1.1.1  1999/12/07 21:49:06  joseph
 ** Initial checkin into SourceForge.
 **
+** 35    11/03/98 11:13a Peter
+** release exclusive mode in the fullscreen case of restoreVideo
  * 
  * 34    1/12/98 10:22p Dow
  * H3D Stereo Support
@@ -745,14 +750,23 @@ FxBool
 dxClose()
 {
   GDBG_INFO((80, "dxClose:\n"));
-/*
- * fixme! nulling out this code fixes bug 541... why is unclear??? XXX
+
+/* fixme! nulling out this code fixes bug 541... why is unclear??? XXX
  *  A little more information... the problem is releasing lpDD1, and
  *  only in fullscreen mode.  Temporary refined hack is to not release
  *  lpDD1 in fullscreen mode.  Also rearrange code in dxAllocSurfaces
  *  to only create lpDD1 once per application execution. /PGJ
  */
 #if 1
+  /* If we're fullscreen then we need to release exclusive mode access
+   * to the hw otherwise re-opens won't work. DD seems to take care of
+   * this if the app just quits, but nuking the surfaces does not seem
+   * to be sufficient in the normal case.  
+   */
+  if (IsFullScreen) {
+    IDirectDraw2_SetCooperativeLevel(lpDD, hWndApp, DDSCL_NORMAL );
+  }
+
   // Release any allocated buffers
   if( lpClipper) IDirectDrawSurface2_Release( lpClipper);
   if( lpFront  ) IDirectDrawSurface2_Release( lpFront  );
@@ -761,6 +775,7 @@ dxClose()
   }
   if( lpAux    ) IDirectDrawSurface2_Release( lpAux    );
   if( lpDD     ) IDirectDraw2_Release( lpDD );
+
   if (1 /* !IsFullScreen */) {
     if( lpDD1    ) IDirectDraw_Release( lpDD1 );
     lpDD1     = NULL;
@@ -771,9 +786,9 @@ dxClose()
   lpBack    = NULL;
   lpTriple   = NULL;
   lpAux     = NULL;
-  lpDD      = NULL;
-  
+  lpDD      = NULL;  
 #endif /* 0 */
+
   GDBG_INFO((80, "dxClose:  Returning TRUE\n"));
   return FXTRUE;
 } /* dxClose */
