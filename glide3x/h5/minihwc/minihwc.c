@@ -1,24 +1,41 @@
 /*
-** THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONLY
-** PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGHT
-** TO USE THE GLIDE TRADEMARK WITHOUT PRIOR WRITTEN PERMISSION OF 3DFX
-** INTERACTIVE, INC. A COPY OF THIS LICENSE MAY BE OBTAINED FROM THE
-** DISTRIBUTOR OR BY CONTACTING 3DFX INTERACTIVE INC(info@3dfx.com).
-** THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER
-** EXPRESSED OR IMPLIED. SEE THE 3DFX GLIDE GENERAL PUBLIC LICENSE FOR A
-** FULL TEXT OF THE NON-WARRANTY PROVISIONS. 
+** Copyright (c) 1996, 3Dfx Interactive, Inc.
+** All Rights Reserved.
 **
-** USE, DUPLICATION OR DISCLOSURE BY THE GOVERNMENT IS SUBJECT TO
-** RESTRICTIONS AS SET FORTH IN SUBDIVISION (C)(1)(II) OF THE RIGHTS IN
-** TECHNICAL DATA AND COMPUTER SOFTWARE CLAUSE AT DFARS 252.227-7013,
-** AND/OR IN SIMILAR OR SUCCESSOR CLAUSES IN THE FAR, DOD OR NASA FAR
-** SUPPLEMENT. UNPUBLISHED RIGHTS RESERVED UNDER THE COPYRIGHT LAWS OF
-** THE UNITED STATES. 
+** This is UNPUBLISHED PROPRIETARY SOURCE CODE of 3Dfx Interactive, Inc.;
+** the contents of this file may not be disclosed to third parties, copied or
+** duplicated in any form, in whole or in part, without the prior written
+** permission of 3Dfx Interactive, Inc.
 **
-** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
+** RESTRICTED RIGHTS LEGEND:
+** Use, duplication or disclosure by the Government is subject to restrictions
+** as set forth in subdivision (c)(1)(ii) of the Rights in Technical Data
+** and Computer Software clause at DFARS 252.227-7013, and/or in similar or
+** successor clauses in the FAR, DOD or NASA FAR Supplement. Unpublished -
+** rights reserved under the Copyright Laws of the United States.
 **
 ** $Header$
 ** $Log: 
+**  92   3dfx      1.71.1.6.1.4.1.711/08/00 Drew McMinn     Added
+**       FX_GLIDE_BRIGHTNESS and FX_GLIDE_CONTRAST modifiers
+**  91   3dfx      1.71.1.6.1.4.1.610/11/00 Brent           Forced check in to
+**       enforce branching.
+**  90   3dfx      1.71.1.6.1.4.1.509/15/00 troy thornton   added code to allow
+**       grquerryresolutions to check the refresh rate of the monitor before
+**       returning a valid screen mode
+**  89   3dfx      1.71.1.6.1.4.1.408/29/00 Jonny Cochrane  Some 8x FSAA code
+**  88   3dfx      1.71.1.6.1.4.1.308/07/00 Andy Hanson     Fixed up lfb cfg
+**       registers.  Variable bpp was being used without being properly
+**       initialized.  Cleaned up source, and put some safety strncpy's for
+**       errorString.  Sprintf's are still unsafe.
+**  87   3dfx      1.71.1.6.1.4.1.207/21/00 Adam Briggs     ack: the display driver
+**       is always returning 1 for the AGPINFO escape whether or not an AGP fifo
+**       exists... make sure we use a memory fifo if the agp fifo is zero bytes
+**       long
+**  86   3dfx      1.71.1.6.1.4.1.107/06/00 Adam Briggs     fixed Ken's AA
+**       screenshot function for 32bit & 2-sample AA
+**  85   3dfx      1.71.1.6.1.4.1.006/22/00 troy thornton   added
+**       FX_GLIDE_USE_APP_GAMMA env. var.
 **  84   3dfx      1.71.1.6.1.406/20/00 Joseph Kain     Fixed errors introduced by
 **       my previous merge.
 **  83   3dfx      1.71.1.6.1.306/20/00 Joseph Kain     Changes to support the
@@ -68,7 +85,7 @@
 **       Reset FBI & 2D when Glide starts up.
 **  60   3dfx      1.59        03/21/00 Kenneth Dyke    Lots of video backend fixes
 **       for SLI/AA/32-bit.
-**  59   3dfx      1.58        03/16/00 Kenneth Dyke    Don't let the user do
+**  59   3dfx      1.58        03/15/00 Kenneth Dyke    Don't let the user do
 **       something dumb. ;)
 **  58   3dfx      1.57        03/14/00 Adam Briggs     let glide decide when to
 **       use analog sli
@@ -140,7 +157,7 @@
 **       whining
 **  27   3dfx      1.26        01/21/00 Adam Briggs     get the correct linear
 **       mappings of slave regs
-**  26   3dfx      1.25        01/20/00 Kenneth Dyke    Do proper Napalm fifo
+**  26   3dfx      1.25        01/19/00 Kenneth Dyke    Do proper Napalm fifo
 **       padding.
 **  25   3dfx      1.24        01/19/00 Adam Briggs     for some strange reason,
 **       display driver escapes don't seem to work in DOS.
@@ -853,9 +870,31 @@ typedef struct sli_aa_request {
 #define HWC_RAW_LFB_STRIDE SST_RAW_LFB_ADDR_STRIDE_8K
 
        hwcInfo hInfo;
-static char errorString[1024];
+
+#define MAX_ERROR_SIZE 1024
+static char errorString[MAX_ERROR_SIZE];
 static FxU32 fenceVar;
 
+FxU32 hwc_errncpy(char *dst,const char *src);
+
+/* like strncpy, for the error string except it always null terminates */
+FxU32 hwc_errncpy(char *dst,const char *src)
+{
+   FxU32 i,size=MAX_ERROR_SIZE;
+
+   if (size==0)
+      return 0;
+
+   for(i=0;i<size;i++)
+   {
+      *dst++=*src++;
+      if (src[-1]==0)
+         return i;
+   }
+   dst[-1]=0;
+
+   return (i-1);
+}
 
 #if defined(__WATCOMC__)
 /*
@@ -910,7 +949,7 @@ calcBufferSizeInTiles(hwcBoardInfo* bInfo, FxU32 xres, FxU32 yres);
 static FxU32
 calcBufferHeightInTiles(hwcBoardInfo* bInfo, FxU32 yres);
 
-static FxBool resolutionSupported[HWC_MAX_BOARDS][0xF];
+static FxBool resolutionSupported[HWC_MAX_BOARDS][0x20][0x10];
 
 /* 
 ** DOS-only stuff for multi-chip boards.
@@ -1261,114 +1300,119 @@ hwcInit(FxU32 vID, FxU32 dID)
         hInfo.boardInfo[monitor].h3Mem = atoi(GETENV("FX_GLIDE_FBRAM"));      
       }
 
-      checkResolutions(resolutionSupported[monitor],
+      checkResolutions((int *) resolutionSupported[monitor], 
+                       (FxU32) sizeof(resolutionSupported[0][0]) / sizeof(FxBool),
                        (void *) hInfo.boardInfo[monitor].hMon);
     }
   }
 #elif defined(HWC_GDX_INIT)
-  {
-    FxU32 i, j = 0, numTargets;
+   {
+      FxU32 i, j = 0, numTargets;
     
-    /* Grab hrm extensions we need. */
-    _hrmGetVersionInfo = hrmGetExtension("hrmGetVersionInfo");
-    _hrmSetExclusiveMode = hrmGetExtension("hrmSetExclusiveMode");
-    _hrmSetVideoMode = hrmGetExtension("hrmSetVideoMode");
-    _hrmReleaseExclusiveMode = hrmGetExtension("hrmReleaseExclusiveMode");
-    _hrmGetTargetBoardInfo = hrmGetExtension("hrmGetTargetBoardInfoExt");
-    _hrmAllocateBlock = hrmGetExtension("hrmAllocateBlock");
-    _hrmFreeBlock = hrmGetExtension("hrmFreeBlock");
-    _hrmAllocWinContext = hrmGetExtension("hrmAllocWinContext");
-    _hrmFreeWinContext = hrmGetExtension("hrmFreeWinContext");
-    _hrmExecuteWinFifo = hrmGetExtension("hrmExecuteWinFifo");
-    _hrmGetDeviceConfig = hrmGetExtension("hrmGetDeviceConfig");
-    _hrmGetAGPInfo = hrmGetExtension("hrmGetAGPInfo");
-    _hrmWriteConfigRegister = hrmGetExtension("hrmWriteConfigRegister");
-    _hrmReadConfigRegister = hrmGetExtension("hrmReadConfigRegister");
-    _hrmGetSlaveRegs = hrmGetExtension("hrmGetSlaveRegs");
-    _hrmSLIAA = hrmGetExtension("hrmSLIAA");
+      /* Grab hrm extensions we need. */
+      _hrmGetVersionInfo = hrmGetExtension("hrmGetVersionInfo");
+      _hrmSetExclusiveMode = hrmGetExtension("hrmSetExclusiveMode");
+      _hrmSetVideoMode = hrmGetExtension("hrmSetVideoMode");
+      _hrmReleaseExclusiveMode = hrmGetExtension("hrmReleaseExclusiveMode");
+      _hrmGetTargetBoardInfo = hrmGetExtension("hrmGetTargetBoardInfoExt");
+      _hrmAllocateBlock = hrmGetExtension("hrmAllocateBlock");
+      _hrmFreeBlock = hrmGetExtension("hrmFreeBlock");
+      _hrmAllocWinContext = hrmGetExtension("hrmAllocWinContext");
+      _hrmFreeWinContext = hrmGetExtension("hrmFreeWinContext");
+      _hrmExecuteWinFifo = hrmGetExtension("hrmExecuteWinFifo");
+      _hrmGetDeviceConfig = hrmGetExtension("hrmGetDeviceConfig");
+      _hrmGetAGPInfo = hrmGetExtension("hrmGetAGPInfo");
+      _hrmWriteConfigRegister = hrmGetExtension("hrmWriteConfigRegister");
+      _hrmReadConfigRegister = hrmGetExtension("hrmReadConfigRegister");
+      _hrmGetSlaveRegs = hrmGetExtension("hrmGetSlaveRegs");
+      _hrmSLIAA = hrmGetExtension("hrmSLIAA");
       
-    /* Have to bail out now if these aren't available. */
-    if(!(_hrmSetExclusiveMode && _hrmSetVideoMode && 
+      /* Have to bail out now if these aren't available. */
+      if(!(_hrmSetExclusiveMode && _hrmSetVideoMode && 
          _hrmReleaseExclusiveMode && _hrmGetTargetBoardInfo && _hrmGetVersionInfo))
-      return NULL;
+         return NULL;
     
-    /* safety net: no exec if not compatible */
-    {
-        hrmVersionInfo_t        theVersion;
-        _hrmGetVersionInfo( &theVersion );
-        if ( theVersion.major >= 1 && theVersion.minor >= 6 )
-        {
-                numTargets = hrmGetNumTargets();
-        }
-        else
-        {
-                sprintf(errorString, "Current version of 3dfx Hardware Resource Manager is not compatible with this version of Glide\n");
-                GDBG_INFO(80, "%s:  ERROR... Current version of 3dfx Hardware Resource Manager is not compatible\n", FN_NAME);
-                numTargets = 0;
-        }
-    }
+      /* safety net: no exec if not compatible */
+      {
+         hrmVersionInfo_t        theVersion;
+         
+         _hrmGetVersionInfo( &theVersion );
+         if ( theVersion.major >= 1 && theVersion.minor >= 6 )
+         {
+            numTargets = hrmGetNumTargets();
+         }
+         else
+         {
+            hwc_errncpy(errorString, "Current version of 3dfx Hardware Resource Manager is not compatible with this version of Glide\n");
+            GDBG_INFO(80, "%s:  ERROR... Current version of 3dfx Hardware Resource Manager is not compatible\n", FN_NAME);
+            numTargets = 0;
+         }
+      }
     
-    for(i = 0; i < numTargets; i++) {
-      hrmBoard_t *board;
-      hrmBoardInfo_t boardInfo;
+      for(i = 0; i < numTargets; i++)
+      {
+         hrmBoard_t *board;
+         hrmBoardInfo_t boardInfo;
       
-      board = hrmGetTargetAtIndex(i);
+         board = hrmGetTargetAtIndex(i);
       
-      /* Set the size of the struct we're passing in so the HRM has a clue
-         what kind of info to return in case the HRM's struct grows in the
-         future. */
-      boardInfo.size = sizeof(boardInfo);
-      _hrmGetTargetBoardInfo(board,&boardInfo);
+         /* Set the size of the struct we're passing in so the HRM has a clue
+            what kind of info to return in case the HRM's struct grows in the
+            future. */
+         boardInfo.size = sizeof(boardInfo);
+         _hrmGetTargetBoardInfo(board,&boardInfo);
       
-      hInfo.nBoards++;
+         hInfo.nBoards++;
       
-      /* Note that we use hMon for something different than the HRM does. */
-      /* We use it to store the reference back to the hrm board this data came
+         /* Note that we use hMon for something different than the HRM does. */
+         /* We use it to store the reference back to the hrm board this data came
          frome.  The HRM uses hMon to store the GDHandle of the board.  However,
          since we really do need the GDHandle too (for grDeviceQuery), we stash that in hdc. */
-      
-      hInfo.boardInfo[j].hMon = board;
-      hInfo.boardInfo[j].hdc  = (void *)boardInfo.driverRefNum;
-      hInfo.boardInfo[j].h3pixelSize = 2;
-      hInfo.boardInfo[j].h3nwaySli = 1;
-      hInfo.boardInfo[j].h3Mem = boardInfo.h3Mem;
-      hInfo.boardInfo[j].devRev = boardInfo.deviceRev;
-      hInfo.boardInfo[j].pciInfo.vendorID = boardInfo.vendorID;
-      hInfo.boardInfo[j].pciInfo.deviceID = boardInfo.deviceID;
-      hInfo.boardInfo[j].pciInfo.pciBaseAddr[0] = boardInfo.pciBaseAddr[0];
-      hInfo.boardInfo[j].pciInfo.pciBaseAddr[1] = boardInfo.pciBaseAddr[1];
-      hInfo.boardInfo[j].pciInfo.pciBaseAddr[2] = boardInfo.pciBaseAddr[2];
-      hInfo.boardInfo[j].pciInfo.initialized = 1;
-      hInfo.boardInfo[j].pciInfo.devNum = boardInfo.devNum;
-      hInfo.boardInfo[j].pciInfo.isMaster = boardInfo.isMaster;
-      hInfo.boardInfo[j].pciInfo.numChips = boardInfo.numChips;
-      hInfo.boardInfo[j].pciInfo.swizzleOffset[0] = boardInfo.swizzleOffset[0];                   
-      hInfo.boardInfo[j].pciInfo.swizzleOffset[1] = boardInfo.swizzleOffset[1];                   
-      hInfo.boardInfo[j].pciInfo.swizzleOffset[2] = boardInfo.swizzleOffset[2];                   
-      hInfo.boardInfo[j].pciInfo.swizzleOffset[3] = boardInfo.swizzleOffset[3];                   
 
-      if (GETENV("FX_GLIDE_FBRAM")) {
-        hInfo.boardInfo[j].h3Mem = atoi(GETENV("FX_GLIDE_FBRAM"));      
-      }
+         hInfo.boardInfo[j].hMon = board;
+         hInfo.boardInfo[j].hdc  = (void *)boardInfo.driverRefNum;
+         hInfo.boardInfo[j].h3pixelSize = 2;
+         hInfo.boardInfo[j].h3nwaySli = 1;
+         hInfo.boardInfo[j].h3Mem = boardInfo.h3Mem;
+         hInfo.boardInfo[j].devRev = boardInfo.deviceRev;
+         hInfo.boardInfo[j].pciInfo.vendorID = boardInfo.vendorID;
+         hInfo.boardInfo[j].pciInfo.deviceID = boardInfo.deviceID;
+         hInfo.boardInfo[j].pciInfo.pciBaseAddr[0] = boardInfo.pciBaseAddr[0];
+         hInfo.boardInfo[j].pciInfo.pciBaseAddr[1] = boardInfo.pciBaseAddr[1];
+         hInfo.boardInfo[j].pciInfo.pciBaseAddr[2] = boardInfo.pciBaseAddr[2];
+         hInfo.boardInfo[j].pciInfo.initialized = 1;
+         hInfo.boardInfo[j].pciInfo.devNum = boardInfo.devNum;
+         hInfo.boardInfo[j].pciInfo.isMaster = boardInfo.isMaster;
+         hInfo.boardInfo[j].pciInfo.numChips = boardInfo.numChips;
+         hInfo.boardInfo[j].pciInfo.swizzleOffset[0] = boardInfo.swizzleOffset[0];                   
+         hInfo.boardInfo[j].pciInfo.swizzleOffset[1] = boardInfo.swizzleOffset[1];                   
+         hInfo.boardInfo[j].pciInfo.swizzleOffset[2] = boardInfo.swizzleOffset[2];                   
+         hInfo.boardInfo[j].pciInfo.swizzleOffset[3] = boardInfo.swizzleOffset[3];                   
+
+         if (GETENV("FX_GLIDE_FBRAM")) {
+            hInfo.boardInfo[j].h3Mem = atoi(GETENV("FX_GLIDE_FBRAM"));      
+         }
 
 #ifdef FX_GLIDE_NAPALM
-      if (GETENV("FX_GLIDE_DEVICEID")) {
-        FxU32 deviceid = atoi(GETENV("FX_GLIDE_DEVICEID"));
-        hInfo.boardInfo[j].pciInfo.deviceID = deviceid;
+         if (GETENV("FX_GLIDE_DEVICEID"))
+         {
+            FxU32 deviceid = atoi(GETENV("FX_GLIDE_DEVICEID"));
+            hInfo.boardInfo[j].pciInfo.deviceID = deviceid;
+         }
+         if(GETENV("FX_GLIDE_NUM_CHIPS"))
+         {
+            FxU32 numChips;
+            numChips = atoi(GETENV("FX_GLIDE_NUM_CHIPS"));
+            /* Don't do something stupid... */
+            if(numChips <= hInfo.boardInfo[j].pciInfo.numChips)
+            {
+               hInfo.boardInfo[j].pciInfo.numChips = numChips;
+            }
+         }
+#endif
+         j++;
       }
-      if(GETENV("FX_GLIDE_NUM_CHIPS")) {
-        FxU32 numChips;
-        numChips = atoi(GETENV("FX_GLIDE_NUM_CHIPS"));
-        /* Don't do something stupid... */
-        if(numChips <= hInfo.boardInfo[j].pciInfo.numChips) {
-          hInfo.boardInfo[j].pciInfo.numChips = numChips;
-        }
-      }
-#endif      
-
-      j++;
-    }
-  }
+   }
 #else /* HWC_GDX_INIT */
   {
     int i, chip;
@@ -1507,7 +1551,7 @@ hwcMapBoard(hwcBoardInfo *bInfo, FxU32 bAddrMask)
       sizeof(ctxRes), (void *) &ctxRes);
 
     if (ctxRes.resStatus != 1) {
-      strcpy(errorString, "HWCEXT_GETLINEARADDR Failed");
+      hwc_errncpy(errorString, "HWCEXT_GETLINEARADDR Failed");
       return FXFALSE;
     }
     bInfo->isMapped = FXTRUE;
@@ -1541,7 +1585,7 @@ hwcMapBoard(hwcBoardInfo *bInfo, FxU32 bAddrMask)
 
         if (ctxRes.resStatus != 1) 
         {
-          strcpy(errorString, "HWCEXT_GET_SLAVE_REGS Failed") ;
+          hwc_errncpy(errorString, "HWCEXT_GET_SLAVE_REGS Failed") ;
           return FXFALSE ;
         }
 
@@ -1676,7 +1720,7 @@ hwcInitRegisters(hwcBoardInfo *bInfo)
     sgramMode, sgramMask, sgramColor;
   
   if (bInfo->linearInfo.initialized == FXFALSE) {
-    printf(errorString, "%s:  Called before hwcMapBoard\n", FN_NAME);
+    sprintf(errorString, "%s:  Called before hwcMapBoard\n", FN_NAME);
     return FXFALSE;
   }
       
@@ -2416,7 +2460,7 @@ _hwcLinear2HWAddr(const FxU32 linearAddr,
                         sizeof(ctxReq), (LPSTR)&ctxReq, 
                         sizeof(ctxRes), (LPSTR)&ctxRes) > 0);
     if (!retVal) {
-      strcpy(errorString, "HWCEXT_GETDEVICECONFIG failed");
+      hwc_errncpy(errorString, "HWCEXT_GETDEVICECONFIG failed");
       GDBG_INFO(80, "%s: %s.\n", FN_NAME, errorString);
       goto __errExit;
     }
@@ -2577,7 +2621,7 @@ hwcGetSurfaceInfo(const hwcBoardInfo* bInfo,
                           sizeof(ctxReq), (LPCSTR)&ctxReq,
                           sizeof(ctxRes), (LPSTR)&ctxRes) > 0);
       if (!retVal) {
-        strcpy(errorString, "HWCEXT_LINEAR_MAP_OFFSET failed");
+        hwc_errncpy(errorString, "HWCEXT_LINEAR_MAP_OFFSET failed");
         GDBG_INFO(80, "%s: %s.\n", FN_NAME, errorString);
       }
       
@@ -2622,7 +2666,7 @@ hwcAllocWinContext(hwcBoardInfo* bInfo)
   if (ExtEscape(bInfo->hdc, HWCEXT_ESCAPE(bInfo->boardNum), /**/
                 sizeof(ctxReq), (LPSTR)&ctxReq,
                 sizeof(ctxRes), (LPSTR)&ctxRes) < 1) {
-    strcpy(errorString, FN_NAME": HWCEXT_ALLOCCONTEXT failed");
+    hwc_errncpy(errorString, FN_NAME": HWCEXT_ALLOCCONTEXT failed");
   } else {
     retVal = ctxRes.optData.allocContextRes.contextID;
   }    
@@ -3065,7 +3109,7 @@ hwcLockWinFifo(hwcBoardInfo* bInfo,
      */
     IDirectDrawSurface_Unlock((LPDIRECTDRAWSURFACE)fifo->surfaceFifo, NULL);
     if (!retVal) {
-      strcpy(errorString, "Could not lock cmdFifo surface");
+      hwc_errncpy(errorString, "Could not lock cmdFifo surface");
       GDBG_INFO(80, "%s: %s.\n", FN_NAME, errorString);
       goto __errFifoLock;
     }
@@ -3084,7 +3128,7 @@ hwcLockWinFifo(hwcBoardInfo* bInfo,
      */
     IDirectDrawSurface_Unlock((LPDIRECTDRAWSURFACE)fifo->surfaceSentinal, NULL);
     if (!retVal) {
-      strcpy(errorString, "Could not lock serial # surface");
+      hwc_errncpy(errorString, "Could not lock serial # surface");
       GDBG_INFO(80, "%s: %s.\n", FN_NAME, errorString);
       goto __errFifoLock;
     }
@@ -3115,7 +3159,7 @@ hwcLockWinFifo(hwcBoardInfo* bInfo,
                           sizeof(ctxReq), (LPSTR)&ctxReq, 
                           sizeof(ctxRes), (LPSTR)&ctxRes) > 0);
       if (!retVal) {
-        strcpy(errorString, "HWCEXT_GETDEVICECONFIG failed");
+        hwc_errncpy(errorString, "HWCEXT_GETDEVICECONFIG failed");
         GDBG_INFO(80, "%s: %s.\n", FN_NAME, errorString);
         goto __errFifoLock;
       }
@@ -3147,7 +3191,7 @@ hwcLockWinFifo(hwcBoardInfo* bInfo,
                               sizeof(ctxReq), (LPCSTR)&ctxReq,
                               sizeof(ctxRes), (LPSTR)&ctxRes) > 0);
           if (!retVal) {
-            strcpy(errorString, "HWCEXT_LINEAR_MAP_OFFSET failed");
+            hwc_errncpy(errorString, "HWCEXT_LINEAR_MAP_OFFSET failed");
             GDBG_INFO(80, "%s: %s.\n", FN_NAME, errorString);
             goto __errFifoLock;
           }
@@ -3780,60 +3824,62 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
     hwcExtResult_t  ctxRes;
 #endif
   
-  {
-    FxU32 refresh;
-    static FxU32 refConstToRefreshHz[] = {
-      60,                       /* GR_REFRESH_60Hz   */
-      70,                       /* GR_REFRESH_70Hz   */
-      72,                       /* GR_REFRESH_72Hz   */
-      75,                       /* GR_REFRESH_75Hz   */
-      80,                       /* GR_REFRESH_80Hz   */
-      90,                       /* GR_REFRESH_90Hz   */
-      100,                      /* GR_REFRESH_100Hz  */
-      85,                       /* GR_REFRESH_85Hz   */
-      120,                      /* GR_REFRESH_120Hz  */
-      0
-    };  
+   {
+      FxU32 refresh;
+      static FxU32 refConstToRefreshHz[] =
+      {
+         60,                       /* GR_REFRESH_60Hz   */
+         70,                       /* GR_REFRESH_70Hz   */
+         72,                       /* GR_REFRESH_72Hz   */
+         75,                       /* GR_REFRESH_75Hz   */
+         80,                       /* GR_REFRESH_80Hz   */
+         90,                       /* GR_REFRESH_90Hz   */
+         100,                      /* GR_REFRESH_100Hz  */
+         85,                       /* GR_REFRESH_85Hz   */
+         120,                      /* GR_REFRESH_120Hz  */
+         0
+      };
 
-    if (bInfo->vidInfo.vRefresh > GR_REFRESH_120Hz)
-      refresh = 0;
-    else
-      refresh = bInfo->vidInfo.vRefresh;
+      if (bInfo->vidInfo.vRefresh > GR_REFRESH_120Hz)
+         refresh = 0;
+      else
+         refresh = bInfo->vidInfo.vRefresh;
 
-    refresh = refConstToRefreshHz[refresh]; /* Make sure we use the table, otherwise
+      refresh = refConstToRefreshHz[refresh]; /* Make sure we use the table, otherwise
                                                we will always pass 0Hz to setVideoMode */
-    if (GETENV("FX_GLIDE_REFRESH")) {
-      refresh = atoi(GETENV("FX_GLIDE_REFRESH"));
-    }
-  
-    if ( !setVideoMode( (void*)bInfo->vidInfo.hWnd, 
+      if (GETENV("FX_GLIDE_REFRESH"))
+         refresh = atoi(GETENV("FX_GLIDE_REFRESH"));
+
+      if ( !setVideoMode( (void*)bInfo->vidInfo.hWnd, 
                         bInfo->vidInfo.xRes,
                         bInfo->vidInfo.yRes,
                         bInfo->h3pixelSize,
                         refresh,
-                        bInfo->hMon ) ) {
-      GDBG_INFO(80, "%s:  dxOpen() failed!\n", FN_NAME);
-      return FXFALSE;
-    }
+                        bInfo->hMon ) )
+      {
+         GDBG_INFO(80, "%s:  dxOpen() failed!\n", FN_NAME);
+         return FXFALSE;
+      }
 #if SET_SWIZZLEHACK
-    setLfbSwizzleMode(bInfo->regInfo.rawLfbBase,bInfo->regInfo.ioMemBase,8);
+      setLfbSwizzleMode(bInfo->regInfo.rawLfbBase,bInfo->regInfo.ioMemBase,8);
 #endif
-  }
+   }
 
 #ifdef HWC_EXT_INIT
-  ctxReq.which = HWCEXT_HWCSETEXCLUSIVE;
-  ctxReq.optData.linearAddrReq.devNum = 0;
-  GDBG_INFO(80, FN_NAME ":  ExtEscape:HWCEXT_HWCSETEXCLUSIVE\n");
+   ctxReq.which = HWCEXT_HWCSETEXCLUSIVE;
+   ctxReq.optData.linearAddrReq.devNum = 0;
+   GDBG_INFO(80, FN_NAME ":  ExtEscape:HWCEXT_HWCSETEXCLUSIVE\n");
   
-  ExtEscape((HDC) bInfo->hdc, HWCEXT_ESCAPE(bInfo->boardNum), sizeof(ctxReq), (void *) &ctxReq, /**/
+   ExtEscape((HDC) bInfo->hdc, HWCEXT_ESCAPE(bInfo->boardNum), sizeof(ctxReq), (void *) &ctxReq, /**/
             sizeof(ctxRes), (void *) &ctxRes);
   
-  status = ctxRes.resStatus;
+   status = ctxRes.resStatus;
   
-  if (status != 1) {
-    strcpy(errorString, "HWCEXT_HWCSETEXCLUSIVE Failed");
-    return FXFALSE;
-  }
+   if (status != 1)
+   {
+      hwc_errncpy(errorString,"HWCEXT_HWCSETEXCLUSIVE Failed");
+      return FXFALSE;
+   }
 
 #else
   /* This is off for now until the rest of the alt-tab type things are done. */
@@ -3843,66 +3889,74 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
    * doing this before dorking w/ things that are going to make it
    * unhappy.  
    */
-  if (Dpmi2DEnvironmentP()) {
-    bInfo->hdc = DpmiDeviceContextGet("3DFXVB");
-    if (bInfo->hdc == 0x00UL) return FXFALSE;
-    
-    if (!DpmiDeviceContextDispatch(bInfo->hdc, FxDCIsFullscreenP)) return FXFALSE;
-    if (!DpmiDeviceContextDispatch(bInfo->hdc, FxDCExclusiveLock)) return FXFALSE;
-  }
+   if (Dpmi2DEnvironmentP())
+   {
+      bInfo->hdc = DpmiDeviceContextGet("3DFXVB");
+      if (bInfo->hdc == 0x00UL)
+         return FXFALSE;
+
+      if (!DpmiDeviceContextDispatch(bInfo->hdc, FxDCIsFullscreenP))
+         return FXFALSE;
+      if (!DpmiDeviceContextDispatch(bInfo->hdc, FxDCExclusiveLock))
+         return FXFALSE;
+   }
 #endif
 #endif
   
-  switch(pixFmt) {
-    case SST_OVERLAY_PIXEL_RGB565D:
-    case SST_OVERLAY_PIXEL_RGB565U:
-    case SST_OVERLAY_PIXEL_RGB1555U:
-    case SST_OVERLAY_PIXEL_RGB1555D:        
-        pixelShift = 1;
-        break;
-    case SST_OVERLAY_PIXEL_RGB32U:
-        pixelShift = 2;
-        break;
-    default:
-      GDBG_INFO(80, "%s:  Invalid overlay pixel format: %08lx failed!\n", FN_NAME, pixFmt);
-      return FXFALSE;
-                
-  }  
-  HWC_IO_STORE(bInfo->regInfo, vidOverlayDudxOffsetSrcWidth,
-    ((bInfo->vidInfo.xRes << pixelShift) << 19));
+   switch(pixFmt)
+   {
+      case SST_OVERLAY_PIXEL_RGB565D:
+      case SST_OVERLAY_PIXEL_RGB565U:
+         pixelShift = 1;
+         bpp=16;
+         break;
+      case SST_OVERLAY_PIXEL_RGB1555U:
+      case SST_OVERLAY_PIXEL_RGB1555D:        
+         pixelShift = 1;
+         bpp=15;
+         break;
+      case SST_OVERLAY_PIXEL_RGB32U:
+         pixelShift = 2;
+         bpp=32;
+         break;
+      default:
+         GDBG_INFO(80, "%s:  Invalid overlay pixel format: %08lx failed!\n", FN_NAME, pixFmt);
+         return FXFALSE;        
+   }
+   HWC_IO_STORE(bInfo->regInfo, vidOverlayDudxOffsetSrcWidth,
+      ((bInfo->vidInfo.xRes << pixelShift) << 19));
 
-  /* Video pixel buffer threshold */
-  {
-    FxU32 vidPixelBufThold;
-    FxU32 thold = 32;
+   /* Video pixel buffer threshold */
+   {
+      FxU32 vidPixelBufThold;
+      FxU32 thold = 32;
 
-    if (GETENV("SSTVB_PIXTHOLD")) {
-      thold = atoi(GETENV("SSTVB_PIXTHOLD"));
-    }
+      if (GETENV("SSTVB_PIXTHOLD"))
+         thold = atoi(GETENV("SSTVB_PIXTHOLD"));
 
-    thold &= 0x3f;
+      thold &= 0x3f;
 
-    vidPixelBufThold = (thold | (thold << 6) | (thold << 12));
+      vidPixelBufThold = (thold | (thold << 6) | (thold << 12));
 
-    HWC_IO_STORE(bInfo->regInfo, vidPixelBufThold, vidPixelBufThold);
-  }
+      HWC_IO_STORE(bInfo->regInfo, vidPixelBufThold, vidPixelBufThold);
+   }
 
 #ifdef __WIN32__
-  if (vidTiming) {
-  hwcExtRequest_t ctxReq;
-    hwcExtResult_t ctxRes;
+   if (vidTiming)
+   {
+      hwcExtRequest_t ctxReq;
+      hwcExtResult_t ctxRes;
 
-    if( HWCEXT_PROTOCOL(bInfo->boardNum) )
-    {
-      ctxReq.which = HWCEXT_VIDTIMING;
-      ctxReq.optData.vidTimingReq.vidTiming = (void *) vidTiming;
-      GDBG_INFO(80, FN_NAME ":  ExtEscape:HWCEXT_VIDTIMING\n");
-      ExtEscape((HDC) bInfo->hdc, HWCEXT_ESCAPE(bInfo->boardNum), sizeof(ctxReq), (void *) &ctxReq, /**/
-        sizeof(ctxRes), (void *) &ctxRes);
-    }
-    /* Ignore failure */
-
-  }
+      if( HWCEXT_PROTOCOL(bInfo->boardNum) )
+      {
+         ctxReq.which = HWCEXT_VIDTIMING;
+         ctxReq.optData.vidTimingReq.vidTiming = (void *) vidTiming;
+         GDBG_INFO(80, FN_NAME ":  ExtEscape:HWCEXT_VIDTIMING\n");
+         ExtEscape((HDC) bInfo->hdc, HWCEXT_ESCAPE(bInfo->boardNum), sizeof(ctxReq), (void *) &ctxReq, /**/
+         sizeof(ctxRes), (void *) &ctxRes);
+      }
+      /* Ignore failure */
+   }
 #endif
 
 #ifdef __DOS32__
@@ -4027,42 +4081,48 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
   ** Adding user support for switching the video filter from 2x2 to 4x1
   */
 
-  if (NULL == GETENV("SSTH3_OVERLAYMODE")) {
-        /* We are in optimal mode by default */
-        if(bInfo->vidInfo.xRes < 1024)
-      vidProcCfg |= SST_OVERLAY_FILTER_2X2;
-        else
-          vidProcCfg |= SST_OVERLAY_FILTER_4X4;
-  } else {
-    switch(atoi(GETENV("SSTH3_OVERLAYMODE"))) {
-    default:
-    case 1: /* Optimal */
+   if (NULL == GETENV("SSTH3_OVERLAYMODE"))
+   {
+      /* We are in optimal mode by default */
       if(bInfo->vidInfo.xRes < 1024)
-        vidProcCfg |= SST_OVERLAY_FILTER_2X2;
+         vidProcCfg |= SST_OVERLAY_FILTER_2X2;
       else
-        vidProcCfg |= SST_OVERLAY_FILTER_4X4;
-      break;
-    case 2: /* Normal */
-      vidProcCfg |= SST_OVERLAY_FILTER_4X4;
-      break;
-    case 3: /* High */
-      /* make sure that if 2x video mode is enabled, we use the 4x1 filter. */
-      if(vidProcCfg & SST_VIDEO_2X_MODE_EN)
-        vidProcCfg |= SST_OVERLAY_FILTER_4X4;
-      else
-        vidProcCfg |= SST_OVERLAY_FILTER_2X2;
-      break;
-    case -1: /* Disabled */
-      break;
-    }
-  }      
+         vidProcCfg |= SST_OVERLAY_FILTER_4X4;
+   }
+   else
+   {
+      switch(atoi(GETENV("SSTH3_OVERLAYMODE")))
+      {
+         default:
+         case 1: /* Optimal */
+            if(bInfo->vidInfo.xRes < 1024)
+               vidProcCfg |= SST_OVERLAY_FILTER_2X2;
+            else
+               vidProcCfg |= SST_OVERLAY_FILTER_4X4;
+            break;
+         case 2: /* Normal */
+            vidProcCfg |= SST_OVERLAY_FILTER_4X4;
+            break;
+         case 3: /* High */
+            /* make sure that if 2x video mode is enabled, we use the 4x1 filter. */
+            if(vidProcCfg & SST_VIDEO_2X_MODE_EN)
+               vidProcCfg |= SST_OVERLAY_FILTER_4X4;
+            else
+               vidProcCfg |= SST_OVERLAY_FILTER_2X2;
+            break;
+         case -1: /* Disabled */
+            break;
+      }
+   }      
   
-  if (bInfo->h3pixelSample < 2) {
+  if (bInfo->h3pixelSample < 2)
+  {
     vidScreenSize &= ~SST_VIDEO_SCREEN_DESKTOPADDR_FIFO_ENABLE;
     HWC_IO_STORE(bInfo->regInfo, vidScreenSize, vidScreenSize);
     vidProcCfg &= ~(SST_CHROMA_EN|SST_DESKTOP_EN);
-      
-  } else if (bInfo->h3pixelSample > 1 && bInfo->buffInfo.enable2ndbuffer) {
+  }
+  else if (bInfo->h3pixelSample > 1 && bInfo->buffInfo.enable2ndbuffer)
+  {
     vidScreenSize |= SST_VIDEO_SCREEN_DESKTOPADDR_FIFO_ENABLE;
 
     /*
@@ -4227,6 +4287,7 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
       bInfo->h3analogSli = FXFALSE;        
     }    
   }  
+
 #ifdef HWC_EXT_INIT
 
 #ifdef HWC_MINIVDD_HACK
@@ -4261,8 +4322,13 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
       ctxReq.optData.sliAAReq.ChipInfo.dwChips            = bInfo->pciInfo.numChips ;
 
       /* Fill out AA mode information. */
-      ctxReq.optData.sliAAReq.ChipInfo.dwaaSampleHigh     = (bInfo->h3pixelSample == 4) ;
-   
+      /* 8xaa */
+   	  ctxReq.optData.sliAAReq.ChipInfo.dwaaSampleHigh     = 0;
+	  if(bInfo->h3pixelSample == 4)
+      	ctxReq.optData.sliAAReq.ChipInfo.dwaaSampleHigh   = 1;
+	  else if(bInfo->h3pixelSample == 8)
+       	ctxReq.optData.sliAAReq.ChipInfo.dwaaSampleHigh   = 2;
+
       ctxReq.optData.sliAAReq.MemInfo.dwaaSecondaryColorBufBegin  = bInfo->buffInfo.colBuffStart1[0] ;
       ctxReq.optData.sliAAReq.MemInfo.dwaaSecondaryDepthBufBegin  = bInfo->buffInfo.lfbBuffAddr0[bInfo->buffInfo.nColBuffers];
       ctxReq.optData.sliAAReq.MemInfo.dwaaSecondaryDepthBufEnd    = bInfo->buffInfo.lfbBuffAddr0End[bInfo->buffInfo.nColBuffers];
@@ -4286,6 +4352,7 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
     Sli_AA_Request.ChipInfo.dwaaEn             = (bInfo->h3pixelSample > 1) ;
     Sli_AA_Request.ChipInfo.dwsliEn            = (bInfo->h3nwaySli > 1) ;
 
+    /* 8xaa */
     Sli_AA_Request.ChipInfo.dwsliAaAnalog      = bInfo->h3analogSli ;
     Sli_AA_Request.ChipInfo.dwsli_nlines       = bInfo->h3sliBandHeight;
     Sli_AA_Request.ChipInfo.dwCfgSwapAlgorithm = 1 ; /* What the *F* is this about? */
@@ -4299,7 +4366,12 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
     Sli_AA_Request.ChipInfo.dwChips            = bInfo->pciInfo.numChips ;
 
     /* Fill out AA mode information. */
-    Sli_AA_Request.ChipInfo.dwaaSampleHigh = (bInfo->h3pixelSample == 4) ;
+    /* 8xaa */
+    Sli_AA_Request.ChipInfo.dwaaSampleHigh     = 0;
+    if(bInfo->h3pixelSample == 4)
+      	Sli_AA_Request.ChipInfo.dwaaSampleHigh = 1;
+    else if(bInfo->h3pixelSample == 8)
+       	Sli_AA_Request.ChipInfo.dwaaSampleHigh = 2;
  
     Sli_AA_Request.MemInfo.dwaaSecondaryColorBufBegin  = bInfo->buffInfo.colBuffStart1[0] ;
     Sli_AA_Request.MemInfo.dwaaSecondaryDepthBufBegin  = bInfo->buffInfo.lfbBuffAddr0[bInfo->buffInfo.nColBuffers];
@@ -5171,7 +5243,7 @@ hwcRestoreVideo(hwcBoardInfo *bInfo)
    GDBG_INFO(80, "%s:  ctxRes.resStatus = %d\n", FN_NAME, status);
 
   if (ctxRes.resStatus != 1) {
-      strcpy(errorString, "HWCEXT_HWCRLSEXCLUSIVE Failed");
+      hwc_errncpy(errorString, "HWCEXT_HWCRLSEXCLUSIVE Failed");
       return FXFALSE;
     }
     
@@ -5536,7 +5608,9 @@ hwcInitAGPFifo(hwcBoardInfo *bInfo, FxBool enableHoleCounting)
   agpSize = ctxRes.optData.agpInfoRes.size;
 
   /* If we fail, bail and go to memory fifo */
-  if (status != 1) {
+  if ((status != 1) ||
+     (agpSize == 0))
+  {
     return hwcInitFifo(bInfo, enableHoleCounting); 
   }
 
@@ -5750,9 +5824,9 @@ static void hwcReadBuffer8888(hwcBoardInfo *bInfo, FxU32 src, FxU32 strideInByte
         b = (FxU8)(pix32 & 0xff);
 
         /* Targa is bgr. */
-        *d++ = b;        
-        *d++ = g;
-        *d++ = r;
+        *d++ += b >> (aaShift) ;
+        *d++ += g >> (aaShift) ;
+        *d++ += r >> (aaShift) ;
       }  
       srcY++;
     }
@@ -5821,8 +5895,10 @@ void hwcAAScreenShot(hwcBoardInfo *bInfo, FxU32 colBufNum)
   if(!buffer)
     return;
   
-  /* Have to do it the hard way for 16-bit */
-  if(bInfo->h3pixelSize == 2) {
+  /* Have to do it the hard way for 16-bit 
+   * or for the new way of doing 2-sample */
+  if ((bInfo->h3pixelSize == 2) ||
+     (bInfo->h3pixelSample == 2)) {
     
     /* Figure out framebuffer format (1555 or 565) */
     HWC_IO_LOAD(bInfo->regInfo, vidProcCfg, vidProcCfg);
@@ -5836,6 +5912,10 @@ void hwcAAScreenShot(hwcBoardInfo *bInfo, FxU32 colBufNum)
       case SST_OVERLAY_PIXEL_RGB565U:
         hwcReadBufferFunc = hwcReadBuffer565;
         break;
+
+      case SST_OVERLAY_PIXEL_RGB32U:
+        hwcReadBufferFunc = hwcReadBuffer8888;
+        break ;
     }  
     
     /* First, figure out where everything is. */
@@ -6010,6 +6090,67 @@ void hwcAAScreenShot(hwcBoardInfo *bInfo, FxU32 colBufNum)
 #define GREEN_SHIFT     8
 #define BLUE_SHIFT      0
 
+
+#define CLAMP(val, min, max) if (val > max) val = max; else if (val < min) val = min;
+#define ADJUST(val, lowest, low, high, typ) if (high < lowest) val=(typ)(low); else val = (typ)(high)
+#define GETFLOATENV(s, v) if (GETENV(s)) v = (FxFloat)(atof(GETENV(s)))
+
+/*---------------------------------------------------------------------------
+ * Function    : adjustBrightnessAndContrast_m    
+ *
+ * Description :
+ *               Routine to generate and apply a new gamma table based on 
+ *               passed in Brightness and Contrast values.
+ *               contrast is >=0.0
+ *               Brightness may be negative.
+ *---------------------------------------------------------------------------*/
+
+static FxBool adjustBrightnessAndContrast_m(FxFloat contrast,
+					    FxFloat brightness,
+					    FxU32 nEntries,
+					    FxU32 *pR, FxU32 *pG, FxU32 *pB)
+{
+  FxU16 i;
+  FxFloat r,g,b;
+  
+  if (pR == NULL || pG == NULL || pG == NULL)
+      return FXFALSE;
+  
+  GDBG_INFO(69, ":\tSlot\t\tRed\t\tGreen\t\tBlue\n");
+
+  /* If the 0th row of the table contains non zero values then we get strange banding effects (Napalm) on
+   * returning to the desktop to ensure this does not happen these values are intialised to zero.
+   * Note this will not happen unless a brightness modifier is supplied, which highlighted the issue. */
+   GDBG_INFO(69, "Note r[0]=g[0]=b[0]=special default \n");
+   pB[0] = pG[0] = pR[0] = 0;
+
+  for (i=1; i<nEntries; i++) 
+  {
+      /* Note to resolve rouding/sign errors, keep everything in the Fp domain until the last minute */
+
+      /* R */
+      r = (pR[i] * contrast) + brightness;
+      ADJUST(pR[i], 0.0f, 0, r, FxU32);	
+      CLAMP(pR[i], 0, 255);
+      
+      /* G */
+      g = (pG[i] * contrast) + brightness;
+      ADJUST(pG[i], 0.0f, 0, g, FxU32);	
+      CLAMP(pG[i], 0, 255);
+      
+      /* B */
+      b = (pB[i] * contrast) + brightness;
+      ADJUST(pB[i], 0.0f, 0, b, FxU32);
+      CLAMP(pB[i], 0, 255);
+
+      GDBG_INFO(69, "\t%d\t\t%d\t\t%d\t\t%d\n", i, pR[i], pG[i], pB[i]);
+  }
+  
+  return FXTRUE;
+}
+/* Gamma */
+
+
 FxBool
 hwcGammaTable(hwcBoardInfo *bInfo, FxU32 nEntries, FxU32 *r, FxU32 *g, FxU32 *b)
 {
@@ -6020,13 +6161,39 @@ hwcGammaTable(hwcBoardInfo *bInfo, FxU32 nEntries, FxU32 *r, FxU32 *g, FxU32 *b)
   FxU32 dacBase;
   FxU32 rDacBase;
   FxU32 rDacData;
+  char *psBrightness = "FX_GLIDE_BRIGHTNESS";
+  char *psContrast = "FX_GLIDE_CONTRAST";
   
+  /* Adjust Gamma as user selected */
+  if (GETENV(psBrightness) || GETENV(psContrast))
+  {
+  	FxFloat brightness = 0.0f;
+    	FxFloat contrast = 1.0f;
+    	
+    	/* override */
+    	GETFLOATENV(psBrightness, brightness);
+    	GETFLOATENV(psContrast, contrast);
+
+	/* clamp contrast to > 0.0 */
+	if (contrast <= 0.0f)
+	{
+		contrast = 1.0f;
+		GDBG_INFO(69,": minihwc Readjusting contrast to %3.3f as <=0.0 \n", contrast);
+	}
+
+	GDBG_INFO(69,": minihwc Overriding Brightness with %3.3f and Contrast with %3.3f\n", brightness, contrast);
+
+    	adjustBrightnessAndContrast_m(contrast, brightness, nEntries, r,g,b);
+    }
+
+
   /* Load the table into the Display driver as above */
   for (i = 0; i < nEntries; i++) {
     gRamp[i] =
       ((r[i] & 0xff) << RED_SHIFT) |
         ((g[i] & 0xff) << GREEN_SHIFT) |  
           ((b[i] & 0xff) << BLUE_SHIFT);
+		GDBG_INFO(69,": gRamp[%d] = %d\n", i, gRamp[i]);
   }
   
   /*
@@ -6049,7 +6216,7 @@ hwcGammaTable(hwcBoardInfo *bInfo, FxU32 nEntries, FxU32 *r, FxU32 *g, FxU32 *b)
             FN_NAME, (vidProcCfg & SST_OVERLAY_EN) ? 1 : 0);
   GDBG_INFO(80, "%s:  vidProcCFG(SST_OVERLAY_CLUT_BYPASS) = %d\n",
             FN_NAME, (vidProcCfg & SST_OVERLAY_CLUT_BYPASS) ? 1 : 0);
-  
+
   for (i = 0; i < nEntries; i++) {
     int repeat = 100;
     while (repeat) {
@@ -6203,7 +6370,7 @@ hwcGammaRGB(hwcBoardInfo *bInfo, float gammaR, float gammaG, float gammaB)
   int
     i;
 
-  GDBG_INFO(80, FN_NAME "(0x%x, %1.2f, %1.2f, %1.2f)\n",
+  GDBG_INFO(69, FN_NAME "(0x%x, %1.2f, %1.2f, %1.2f)\n",
             bInfo, gammaR, gammaG, gammaB);
 
   /*
@@ -6270,7 +6437,7 @@ hwcSetMemClock(hwcBoardInfo *bInfo, FxU32 speedInMHz)
 
 
 FxBool
-hwcResolutionSupported(hwcBoardInfo *bInfo, GrScreenResolution_t res)
+hwcResolutionSupported(hwcBoardInfo *bInfo, GrScreenResolution_t res, GrScreenRefresh_t ref)
 {
 #define FN_NAME "hwcResolutionSupported"
   static char *resNames[] = {
@@ -6332,14 +6499,27 @@ hwcResolutionSupported(hwcBoardInfo *bInfo, GrScreenResolution_t res)
   };
 #endif  
 
-  GDBG_INFO(80, FN_NAME ":  res == %s (0x%x), supported == %s\n",
-            resNames[res], resolutionSupported[bInfo->boardNum][res],
-            resolutionSupported[bInfo->boardNum][res] ? "FXTRUE" : "FXFALSE");
+  static char *refresh[] = {
+    "GR_REFRESH_60Hz",
+    "GR_REFRESH_70Hz",
+    "GR_REFRESH_72Hz",
+    "GR_REFRESH_75Hz",
+    "GR_REFRESH_80Hz",
+    "GR_REFRESH_90Hz",
+    "GR_REFRESH_100Hz",
+    "GR_REFRESH_85Hz",
+    "GR_REFRESH_120Hz"    
+  };
+
+
+  GDBG_INFO(80, FN_NAME ":  res == %s (0x%x) ref == %s, supported == %s\n",
+            resNames[res], resolutionSupported[bInfo->boardNum][res][ref], refresh[ref],
+            resolutionSupported[bInfo->boardNum][res][ref] ? "FXTRUE" : "FXFALSE");
   
 
   /* Glide has very good checking to see if the memory required is
   available, so we'll just return whether the driver can do it. */
-  return resolutionSupported[bInfo->boardNum][res];
+  return resolutionSupported[bInfo->boardNum][res][ref];
 
 #undef FN_NAME
 } /* hwcResolutionSupported */

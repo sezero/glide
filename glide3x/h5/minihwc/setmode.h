@@ -27,5 +27,6 @@ FxBool setVideoMode( void *hwnd,
                      
 void resetVideo( void );
 
-FxBool checkResolutions(FxBool *reslist, void *hmon);
+FxBool checkResolutions(FxBool *reslist, FxU32 stride, void *hmon);
+
 
