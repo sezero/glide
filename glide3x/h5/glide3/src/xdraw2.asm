@@ -419,7 +419,8 @@ _trisetup_clip_coor_thunk:
 
     ;; If debugging make sure that we're in clip coordinates
 %IFDEF GLIDE_DEBUG
-    test    [gc + CoordinateSpace], 1
+    mov     eax, [gc + CoordinateSpace]
+    test    eax, 1
     jnz     __clipSpace
     xor     eax, eax
     mov     [eax], eax
@@ -454,7 +455,8 @@ _trisetup_SSE_clip_coor_thunk:
 
     ;; If debugging make sure that we're in clip coordinates
 %IFDEF GLIDE_DEBUG
-    test    [gc + CoordinateSpace], 1
+    mov     eax, [gc + CoordinateSpace]
+    test    eax, 1
     jnz     __clipSpace
     xor     eax, eax
     mov     [eax], eax
