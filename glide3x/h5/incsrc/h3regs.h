@@ -455,6 +455,10 @@ typedef volatile struct sstregs {       // THE 3D CHIP
     unsigned long nccTable0[12];        // NCC decode tables, bits are packed
     unsigned long nccTable1[12];        // 4 words Y, 4 words I, 4 words Q
 
+#if GLIDE_USE_DEBUG_FIFO
+    unsigned long cmdFifoDepth;         // command fifo depth
+#endif /* GLIDE_USE_DEBUG_FIFO */
+
 } SstRegs;
 
 

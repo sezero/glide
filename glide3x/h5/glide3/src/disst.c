@@ -18,7 +18,9 @@
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
 ** $Header$
-** $Log: 
+** $Log:
+**  4    ve3d      1.1         04/07/02 KoolSmoky       moved _GlideInitEnvironment
+**       and thread initalizing routine from grGlideInit to grSstSelect.
 **  3    3dfx      1.0.1.0.1.0 10/11/00 Brent           Forced check in to enforce
 **       branching.
 **  2    3dfx      1.0.1.0     06/20/00 Joseph Kain     Changes to support the
@@ -175,6 +177,7 @@ GR_DIENTRY(grSstQueryHardware, FxBool, ( GrHwConfiguration *hwc ))
 */
 GR_DIENTRY(grSstSelect, void, ( int which ))
 {
+  static FxBool initialized[HWC_MAX_BOARDS];
   /* NB: We cannot use GR_DCL_GC here because we may be setting
    * a context into tls.
    */
@@ -183,18 +186,31 @@ GR_DIENTRY(grSstSelect, void, ( int which ))
   if ( which >= _GlideRoot.hwConfig.num_sst )
     GrErrorCallback( "grSstSelect:  non-existent SST", FXTRUE );
 
-  _GlideRoot.current_sst = which;
-  setThreadValue( (FxU32)&_GlideRoot.GCs[_GlideRoot.current_sst] );
+  if(!initialized[which]) _GlideRoot.initialized = FXFALSE;
+  _GlideInitEnvironment(which); /* the main init code */
+  initialized[which] = FXTRUE;
+  
+#if GDBG_INFO_ON
+  GDBG_ERROR_SET_CALLBACK(_grErrorCallback);
+#endif
+  
+  if (_GlideRoot.initialized) {
+    initThreadStorage();
+    initCriticalSection();
+    _GlideRoot.current_sst = which;
+    setThreadValue( (FxU32)&_GlideRoot.GCs[_GlideRoot.current_sst] );
 
 #ifdef GLIDE_MULTIPLATFORM
   _GlideRoot.curGCFuncs = _GlideRoot.curGC->gcFuncs;
 #endif
+    
+  }
 } /* grSstSelect */
 
 /*---------------------------------------------------------------------------
 ** grSstScreenWidth
 */
-GR_DIENTRY(grSstScreenWidth, FxU32, (void))
+GR_DIENTRY(grSstScreenWidth, int, (void))
 {
   GR_DCL_GC;
   GR_ASSERT(gc != NULL);
@@ -204,7 +220,7 @@ GR_DIENTRY(grSstScreenWidth, FxU32, (void))
 /*---------------------------------------------------------------------------
 ** grSstScreenHeight
 */
-GR_DIENTRY(grSstScreenHeight, FxU32,  (void))
+GR_DIENTRY(grSstScreenHeight, int,  (void))
 {
   GR_DCL_GC;
   GR_ASSERT(gc != NULL);

@@ -304,6 +304,7 @@ GR_EXT_ENTRY(grSurfaceCreateContext, GrContext_t, ( GrSurfaceContextType_t type 
   
   rv = 0;
   
+  
   /* validate */
   if ( type != GR_SURFACECONTEXT_WINDOWED ) {
     GDBG_INFO( 80, "GR_SURFACECONTEXT_FULLSCREEN not yet implemented\n" );
@@ -729,7 +730,7 @@ GR_EXT_ENTRY(grSurfaceSetRenderingSurface, void , (GrSurface_t sfc,
   gc->state.shadow.colBufferStride = _colBufferStride;
   
   __errNullSurface:
-  if (sfc = 0x00UL)
+  if (sfc == 0x00UL)
     gc->state.wClipping.colBufferSet = FXFALSE;
   GDBG_INFO(180, "%s:  _colBufferAddr = 0x%x\n", FN_NAME, _colBufferAddr);
   GDBG_INFO(180, "%s:  _colBufferStride = 0x%x\n", FN_NAME, _colBufferStride);
@@ -990,15 +991,34 @@ GR_EXT_ENTRY(grSurfaceCalcTextureWHD, FxBool , (GrTexInfo *tInfo, FxU32 *w,
   if (retVal) {
     /* gsfctabl.h contains the boundingBoxWH array, which we include here: */
 #include "gsfctabl.h"
-    FxU32 fmtType = (tInfo->format == GR_TEXFMT_ARGB_CMP_FXT1 ? 1 : 0);
-    FxU32 internalWidth =
+    FxU32 fmtType, internalWidth, internalHeight;
+    
+    switch(tInfo->format) {
+    case GR_TEXFMT_ARGB_CMP_FXT1:
+    case GR_TEXFMT_ARGB_CMP_DXT1:
+      fmtType = 1;
+      break;
+    case GR_TEXFMT_ARGB_CMP_DXT2:
+    case GR_TEXFMT_ARGB_CMP_DXT3:
+    case GR_TEXFMT_ARGB_CMP_DXT4:
+    case GR_TEXFMT_ARGB_CMP_DXT5:
+      fmtType = 2;
+      break;
+    default:
+      fmtType = 0;
+      break;
+    }
+
+    internalWidth =
       (FxU32)(boundingBoxWH[fmtType]
               [G3_ASPECT_TRANSLATE(tInfo->aspectRatioLog2)]
               [tInfo->largeLodLog2][tInfo->smallLodLog2][0]);
-    FxU32 internalHeight =
+
+    internalHeight =
       (FxU32)(boundingBoxWH[fmtType]
               [G3_ASPECT_TRANSLATE(tInfo->aspectRatioLog2)]
               [tInfo->largeLodLog2][tInfo->smallLodLog2][1]);
+
     if (w != NULL) *w = internalWidth;
     if (h != NULL) *h = internalHeight;
   }

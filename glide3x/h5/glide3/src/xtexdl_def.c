@@ -86,6 +86,56 @@
 #define PACKET5_MODE   SSTCP_PKT5_LFB
 
 void FX_CSTYLE
+_grTexDownload_Default_4_4(struct GrGC_s* gc, const FxU32 tmuBaseAddr,
+                           const FxI32 maxS, const FxI32 minT,
+                           const FxI32 maxT, void* texData)
+{
+/* for DXT1 8*4 mipmaps */
+#define FN_NAME "_grTexDownload_Default_4_4"
+#if 0
+  const FxU16
+    *src16  = (const FxU16*)texData;
+  FxI32 
+    t = minT;
+
+  src16++;
+  for (; t <= maxT; t+=4) {
+    FxU32 tex_address = tmuBaseAddr + (t << 2UL), s;
+    LINEAR_WRITE_BEGIN(2, PACKET5_MODE, (FxU32)tex_address, 0x00UL, 0x00UL);
+    for (s = 0; s < 2; s++)  {
+      LINEAR_WRITE_SET(tex_address, (FxU32)(*src16));
+      tex_address++;
+      src16+=4;
+    }
+    LINEAR_WRITE_END();
+  }
+#else
+  const FxU32
+    *src32  = (const FxU32*)texData;
+  FxI32 
+    t = minT;
+
+  /* Ok, what we do is write 8 bytes at a time (4 'half' lines) */
+  /* Anyone attempting to do partial DXT1 uploads is a moron */
+  for (; t <= maxT; t+=4) {
+    FxU32 tex_address = tmuBaseAddr + (t << 2UL);
+    int s;
+
+    LINEAR_WRITE_BEGIN(2, PACKET5_MODE, (FxU32)tex_address, 0x00UL, 0x00UL);
+	for (s=0;s<2;s++)
+	{
+	    const FxU32 t0 = *src32;
+		LINEAR_WRITE_SET(tex_address, t0);
+		tex_address++;
+	    src32++;
+	}
+	LINEAR_WRITE_END();
+  }
+#endif
+#undef FN_NAME
+}
+
+void FX_CSTYLE
 _grTexDownload_Default_4_8(struct GrGC_s* gc, const FxU32 tmuBaseAddr,
                            const FxI32 maxS, const FxI32 minT,
                            const FxI32 maxT, void* texData)

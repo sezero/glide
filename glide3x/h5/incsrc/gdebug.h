@@ -39,8 +39,12 @@
 #define GETENV(a) getenv(a)
 #endif
 
+#if defined(_FIFODUMP)
+#define GDBG_FD gdbg_info
+#endif
+
 // if debug info turned on then GDBG_INFO does something
-#ifdef GDBG_INFO_ON
+#if defined(GDBG_INFO_ON)
 
 #define GDBG_INFO gdbg_info
 #define GDBG_INFO_MORE gdbg_info_more
@@ -85,6 +89,7 @@
 #define GDBG_GET_ERRORS		gdbg_get_errors
 #define GDBG_SET_FILE		gdbg_set_file
 
+void gdbg_init_gdbg_msgfile(void);
 FX_ENTRY void	FX_CALL gdbg_init(void);
 FX_ENTRY void	FX_CALL gdbg_parse(const char *env);
 FX_ENTRY void	FX_CALL gdbg_shutdown(void);

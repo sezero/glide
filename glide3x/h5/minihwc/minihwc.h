@@ -19,6 +19,9 @@
 **
 ** $Header: minihwc.h, 22, 5/9/2000 12:58:24 PM, Kenneth Dyke
 ** $Log:
+**  23   GlideXP   1.21.1      12/13/01 Ryan Nunn       Getting Alt-Tab on
+**       Windows XP to work. #define WINXP_ALT_TAB_FIX=1 to enable
+**  23   ve3d     1.21       12/09/01 KoolSmoky    Added NT5.1 flag
 **  22   3dfx      1.20.1.0    05/09/00 Kenneth Dyke    Added code to calculat
 **       chip values on Napalm
 **  21   3dfx      1.20        04/10/00 Kenneth Dyke    Added code to tak
@@ -231,13 +234,16 @@
 #define MINIHWC_H
 
 #ifdef HWC_EXT_INIT
+#ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
+#endif
 #include <windows.h>
 #endif
 
 #include <3dfx.h>
 #include <h3.h>
 #include <fxvid.h>
+#include <cpuid.h>
 
 /* 
 **  Constants
@@ -293,7 +299,6 @@ typedef FxU32   hwcControl;
 /*
 **  Data Structures
 */
-
 typedef struct hwcPCIInfo_s {
   FxBool
     initialized;
@@ -303,6 +308,7 @@ typedef struct hwcPCIInfo_s {
     devNum,                     /* master/slave */
     isMaster,                   /* master/slave */
     numChips,                   /* PCI Device ID */
+    realNumChips,               /* PCI Device ID */
     pciBaseAddr[HWC_NUM_BASE_ADDR];
 #if macintosh
    FxU32
@@ -505,7 +511,11 @@ typedef struct hwcBoardInfo_s {
     contextHandle;  
   FxI32 hwcProtocol;
   FxU32 devNode ;   /* AJB- DevNode from display driver for minivdd ioctls */
-  FxI16 hwcEscape ; /* AJB- sucky: H5 TOT uses a diff't escape code than H3 */
+  FxI16/*FxI32*/ hwcEscape ; /* AJB- sucky: H5 TOT uses a diff't escape code than H3 */ /* KoolSmoky - new escape code for winxp *//* revert back to previous for now */
+  FxBool osNT51;    /* KoolSmoky- WinXP flag */
+  char RegPath[255];    /* KoolSmoky - Device registry path */
+  char DeviceName[32];  /* KoolSmoky - Device Name */
+  _p_info CPUInfo; /* Colourless - CPU info */
 } hwcBoardInfo;
 
 
@@ -605,6 +615,7 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo
 FxBool
 hwcRestoreVideo(hwcBoardInfo *bInfo);
 
+
 char *
 hwcGetErrorString(void);
 
@@ -698,8 +709,16 @@ hwcResolutionSupported(hwcBoardInfo *bInfo, GrScreenResolution_t res, GrScreenRe
 char *
 hwcGetenv(char *a);
 
+char *
+hwcGetenvEx(char *a, char *b);
+
 FxU32
 hwcQueryContext(hwcBoardInfo *bInfo);
+
+#if WINXP_ALT_TAB_FIX
+FxU32 __fastcall 
+hwcQueryContextXP(hwcBoardInfo *bInfo);
+#endif
 
 FxU32
 hwcShareContextData(hwcBoardInfo *bInfo, FxU32 **data);
@@ -737,7 +756,13 @@ extern void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
                      FxU32 aaDepthBuffEnd,
                      FxU32 bpp);
 
-extern void hwcAAScreenShot(hwcBoardInfo *bInfo, FxU32 colBufNum);
+extern void hwcAAScreenShot(hwcBoardInfo *bInfo, FxU32 colBufNum, FxBool dither);
+
+extern void hwcAAReadRegion(hwcBoardInfo *bInfo, FxU32 colBufNum,
+                            FxU32 src_x, FxU32 src_y, 
+                            FxU32 src_width, FxU32 src_height, 
+                            FxU32 dst_stride, void *dst_data,
+                            FxU32 bpp, FxBool dither);
 
 #endif
 

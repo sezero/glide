@@ -399,7 +399,7 @@ typedef struct {
 
 
 #ifdef WINNT
-int QueryMode(PDEV *, LPQIN lpQIN, LPVOID lpOutput);
+int QueryMode( PDEV *, LPQIN lpQIN, LPVOID lpOutput);
 #else
 int QueryMode(LPQIN lpQIN, LPVOID lpOutput);
 #endif

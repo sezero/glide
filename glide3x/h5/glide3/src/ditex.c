@@ -18,7 +18,12 @@
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVE
 **
 ** $Header$
-** $Log: 
+** $Log
+**  11   GlideXP   1.5.1       12/12/01 Ryan Nunn       Removed the function
+**       _grTexFloatLODToFixedLOD because it's useless
+**  12   ve3d      1.51        05/31/02 KoolSmoky       Revised texture format
+**       detection.
+**  11   ve3d      1.5         04/29/02 KoolSmoky       added DXT-ness
 **  10   3dfx      1.4.1.3.1.0 10/11/00 Brent           Forced check in to enforce
 **       branching.
 **  9    3dfx      1.4.1.3     06/20/00 Joseph Kain     Fixed errors introduced by
@@ -28,7 +33,6 @@
 **       comments and new legal headers.
 **  7    3dfx      1.4.1.1     06/15/00 Bill White      Merged changes to support
 **       Linux.
-** 
 **  6    3dfx      1.4.1.0     06/13/00 Adam Briggs     fixes single pass trilinear
 **       for FXT1
 **  5    3dfx      1.4         02/10/00 Jonny Cochrane  Fixes single pass trilinear
@@ -240,7 +244,7 @@ const FxU32 _grBitsPerTexel[] =
   0x08,  /* GR_TEXFMT_ALPHA_INTENSITY_44           */
   0x08,  /* GR_TEXFMT_P_8                          */
   0x08,  /* GR_TEXFMT_RSVD0 == GR_TEXFMT_P_8_6666  */
-  0x00,  /* GR_TEXFMT_RSVD1                        */
+  0x10,  /* GR_TEXFMT_RSVD1                        */
   0x10,  /* GR_TEXFMT_16BIT == GR_TEXFMT_ARGB_8332 */
   0x10,  /* GR_TEXFMT_AYIQ_8422                    */
   0x10,  /* GR_TEXFMT_RGB_565                      */
@@ -252,14 +256,14 @@ const FxU32 _grBitsPerTexel[] =
   0x00,  /*                                        */
   0x04,  /* GR_TEXFMT_ARGB_CMP_FXT1                */
   0x20,  /* GR_TEXFMT_ARGB_8888                    */
-  0x00,  /* GR_TEXFMT_YUYV_422                     */
-  0x00,  /* GR_TEXFMT_UYVY_422                     */
-  0x00,  /* GR_TEXFMT_AYUV_444                     */
-  0x00,  /* GR_TEXFMT_ARGB_CMP_DXT1                */
-  0x00,  /* GR_TEXFMT_ARGB_CMP_DXT2                */
-  0x00,  /* GR_TEXFMT_ARGB_CMP_DXT3                */
-  0x00,  /* GR_TEXFMT_ARGB_CMP_DXT4                */
-  0x00,  /* GR_TEXFMT_ARGB_CMP_DXT5                */
+  0x10,  /* GR_TEXFMT_YUYV_422                     */
+  0x10,  /* GR_TEXFMT_UYVY_422                     */
+  0x20,  /* GR_TEXFMT_AYUV_444                     */
+  0x04,  /* GR_TEXFMT_ARGB_CMP_DXT1                */
+  0x08,  /* GR_TEXFMT_ARGB_CMP_DXT2                */
+  0x08,  /* GR_TEXFMT_ARGB_CMP_DXT3                */
+  0x08,  /* GR_TEXFMT_ARGB_CMP_DXT4                */
+  0x08   /* GR_TEXFMT_ARGB_CMP_DXT5                */
 };
 
 
@@ -331,7 +335,7 @@ const FxU32 _grMipMapHostSize[4][GR_LOD_LOG2_2048+1] =
 };
 
 /*
- * Similar to _grMipMapHostSize[][] but for 4-bit compressed
+ * Similar to _grMipMapHostSize[][] but for 4-bit fxt1 compressed
  * textures, where 8x4 is the minimum size.
  */
 const FxU32 _grMipMapHostSizeCmp4Bit[7][GR_LOD_LOG2_2048+1] =
@@ -437,8 +441,72 @@ const FxU32 _grMipMapHostSizeCmp4Bit[7][GR_LOD_LOG2_2048+1] =
 };
 
 /*
+ * Similar to _grMipMapHostSize[][] but for 8-bit compressed
+ * textures, where 4x4 is the minimum size. DXT2,3,4,5
+ */
+const FxU32 _grMipMapHostSizeDXT[4][GR_LOD_LOG2_2048+1] =
+{
+  {                  /* 8:1 aspect ratio */
+         16,         /*  0 :    4x4    */
+         16,         /*  1 :    4x4    */
+         16,         /*  2 :    4x4    */
+         32,         /*  3 :    8x4    */
+         64,         /*  4 :   16x4    */
+        128,         /*  5 :   32x4    */
+        512,         /*  6 :   64x8    */
+       2048,         /*  7 :  128x16   */
+       8192,         /*  8 :  256x32   */
+      32768,         /*  9 :  512x64   */
+     131072,         /* 10 : 1024x128  */
+     524288,         /* 11 : 2048x256  */
+  },
+  {                  /* 4:1 aspect ratio */
+         16,         /*  0 :    4x4    */
+         16,         /*  1 :    4x4    */
+         16,         /*  2 :    4x4    */
+         32,         /*  3 :    8x4    */
+         64,         /*  4 :   16x4    */
+        256,         /*  5 :   32x8    */
+       1024,         /*  6 :   64x16   */
+       4096,         /*  7 :  128x32   */
+      16384,         /*  8 :  256x64   */
+      65536,         /*  9 :  512x128  */
+     262144,         /* 10 : 1024x256  */
+    1048576,         /* 11 : 2048x512  */
+  },
+  {                  /* 2:1 aspect ratio */
+         16,         /*  0 :    4x4    */
+         16,         /*  1 :    4x4    */
+         16,         /*  2 :    4x4    */
+         32,         /*  3 :    8x4    */
+        128,         /*  4 :   16x8    */
+        512,         /*  5 :   32x16   */
+       2048,         /*  6 :   64x32   */
+       8192,         /*  7 :  128x64   */
+      32768,         /*  8 :  256x128  */
+     131072,         /*  9 :  512x256  */
+     524288,         /* 10 : 1024x512  */
+    2097152,         /* 11 : 2048x1024 */
+  },
+  {                  /* 1:1 aspect ratio */
+         16,         /*  0 :    4x4    */
+         16,         /*  1 :    4x4    */
+         16,         /*  2 :    4x4    */
+         64,         /*  3 :    8x8    */
+        256,         /*  4 :   16x16   */
+       1024,         /*  5 :   32x32   */
+       4096,         /*  6 :   64x64   */
+      16384,         /*  7 :  128x128  */
+      65536,         /*  8 :  256x256  */
+     262144,         /*  9 :  512x512  */
+    1048576,         /* 10 : 1024x1024 */
+    4194304,         /* 11 : 2048x2048 */
+  },
+};
+
+/*
  * Similar to _grMipMapHostWH[][], but for 4-bit compressed
- * textures, where 8x4 is the minimum size.
+ * textures, where 8x4 is the minimum size. FXT1,DXT1
  */
 const int _grMipMapHostWHCmp4Bit[G3_ASPECT_TRANSLATE(GR_ASPECT_LOG2_1x8) + 1]
 [GR_LOD_LOG2_2048 + 1][2] =
@@ -534,6 +602,113 @@ const int _grMipMapHostWHCmp4Bit[G3_ASPECT_TRANSLATE(GR_ASPECT_LOG2_1x8) + 1]
     { 8,   8 }, 
     { 8,   16 },
     { 8,   32 },
+    { 8,   64 },
+    { 16,  128 },
+    { 32,  256 },
+    { 64,  512 },
+    { 128, 1024 },
+    { 256, 2048 },
+  }
+};
+
+/*
+ * Similar to _grMipMapHostWH[][], but for 8-bit compressed
+ * textures, where 4x4 is the minimum size. DXT2,3,4,5
+ */
+const int _grMipMapHostWHDXT[G3_ASPECT_TRANSLATE(GR_ASPECT_LOG2_1x8) + 1]
+[GR_LOD_LOG2_2048 + 1][2] =
+{
+  { /* GR_ASPECT_LOG2_8x1 */
+    { 4   , 4 },
+    { 4   , 4 }, 
+    { 4   , 4 }, 
+    { 8   , 4 }, 
+    { 16  , 4 }, 
+    { 32  , 4 }, 
+    { 64  , 8 }, 
+    { 128 , 16 }, 
+    { 256 , 32 }, 
+    { 512 , 64 },
+    { 1024, 128 },
+    { 2048, 256 },
+  },
+  { /* GR_ASPECT_LOG2_4x1 */
+    { 4   , 4 },
+    { 4   , 4 }, 
+    { 4   , 4 }, 
+    { 8   , 4 },
+    { 16  , 4 }, 
+    { 32  , 8 }, 
+    { 64  , 16 }, 
+    { 128 , 32 }, 
+    { 256 , 64 }, 
+    { 512 , 128 },
+    { 1024, 256 },
+    { 2048, 512 },
+  } ,
+  { /* GR_ASPECT_LOG2_2x1 */
+    { 4   , 4 },
+    { 4   , 4 }, 
+    { 4   , 4 }, 
+    { 8   , 4 }, 
+    { 16  , 8 },
+    { 32  , 16 },
+    { 64  , 32 }, 
+    { 128 , 64 }, 
+    { 256 , 128 }, 
+    { 512 , 256 },
+    { 1024, 512 },
+    { 2048, 1024 },
+  },
+  { /* GR_ASPECT_LOG2_1x1 */
+    { 4   , 4 },
+    { 4   , 4 }, 
+    { 4   , 4 }, 
+    { 8   , 8 }, 
+    { 16  , 16 },
+    { 32  , 32 },
+    { 64  , 64 },
+    { 128 , 128 }, 
+    { 256 , 256 }, 
+    { 512 , 512 },
+    { 1024, 1024 },
+    { 2048, 2048 },
+  },
+  { /* GR_ASPECT_LOG2_1x2 */
+    { 4,   4 },
+    { 4,   4 }, 
+    { 4,   4 }, 
+    { 4,   8 }, 
+    { 8,   16 }, 
+    { 16,  32 },
+    { 32,  64 },
+    { 64,  128 },
+    { 128, 256 },
+    { 256, 512 },
+    { 512, 1024 },
+    { 1024, 2048 },
+  },
+  { /* GR_ASPECT_LOG2_1x4 */
+    { 4,   4 },
+    { 4,   4 }, 
+    { 4,   4 }, 
+    { 4,   8 }, 
+    { 4,   16 },
+    { 8,   32 },
+    { 16,  64 },
+    { 32,  128 },
+    { 64,  256 },
+    { 128, 512 },
+    { 256, 1024 },
+    { 512, 2048 },
+  },
+  { /* GR_ASPECT_LOG2_1x8 */
+    { 4,   4 },
+    { 4,   4 },
+    { 4,   4 }, 
+    { 4,   8 }, 
+    { 4,   16 },
+    { 4,   32 },
     { 8,   64 },
     { 16,  128 },
     { 32,  256 },
@@ -727,7 +902,7 @@ static const FxU32 _grMipMapSize[4][16] = {
   },
 };
 
-/* Similar to _grMipMapSize[][] but for 4-bit formats. */
+/* Similar to _grMipMapSize[][] but for 4-bit compressed formats. FXT1,DXT1 */
 static const FxU32 _grMipMapSizeCmp4Bit[7][16] = {
   {                  /* 8:1 aspect ratio */
     0x000020,        /*   0 :    8x4    */
@@ -829,6 +1004,66 @@ static const FxU32 _grMipMapSizeCmp4Bit[7][16] = {
   },
 };
 
+/* Similar to _grMipMapSize[][] but for 8-bit compressed formats. DXT2,3,4,5 */
+static const FxU32 _grMipMapSizeDXT[4][16] = {
+  {                  /* 8:1 aspect ratio */
+    0x000010,        /*   0 :    4x4    */
+    0x000010,        /*   1 :    4x4    */
+    0x000010,        /*   2 :    4x4    */
+    0x000020,        /*   3 :    8x4    */
+    0x000040,        /*   4 :   16x4    */
+    0x000080,        /*   5 :   32x4    */
+    0x000200,        /*   6 :   64x8    */
+    0x000800,        /*   7 :  128x16   */
+    0x002000,        /*   8 :  256x32   */
+    0x008000,        /*   9 :  512x64   */
+    0x020000,        /*  10 : 1024x128  */
+    0x080000,        /*  11 : 2048x256  */
+  },
+  {                  /* 4:1 aspect ratio */
+    0x000010,        /*   0 :    4x4    */
+    0x000010,        /*   1 :    4x4    */
+    0x000010,        /*   2 :    4x4    */
+    0x000020,        /*   3 :    8x4    */
+    0x000040,        /*   4 :   16x4    */
+    0x000100,        /*   5 :   32x8    */
+    0x000400,        /*   6 :   64x16   */
+    0x001000,        /*   7 :  128x32   */
+    0x004000,        /*   8 :  256x64   */
+    0x010000,        /*   9 :  512x128  */
+    0x040000,        /*  10 : 1024x256  */
+    0x100000,        /*  11 : 2048x512  */
+  },
+  {                  /* 2:1 aspect ratio */
+    0x000010,        /*   0 :    4x4    */
+    0x000010,        /*   1 :    4x4    */
+    0x000010,        /*   2 :    4x4    */
+    0x000020,        /*   3 :    8x4    */
+    0x000080,        /*   4 :   16x8    */
+    0x000200,        /*   5 :   32x16   */
+    0x000800,        /*   6 :   64x32   */
+    0x002000,        /*   7 :  128x64   */
+    0x008000,        /*   8 :  256x128  */
+    0x020000,        /*   9 :  512x256  */
+    0x080000,        /*  10 : 1024x512  */
+    0x200000,        /*  11 : 2048x1024 */
+  },
+  {                  /* 1:1 aspect ratio */
+    0x000010,        /*   0 :    4x4    */
+    0x000010,        /*   1 :    4x4    */
+    0x000010,        /*   2 :    4x4    */
+    0x000040,        /*   3 :    8x8    */
+    0x000100,        /*   4 :   16x16   */
+    0x000400,        /*   5 :   32x32   */
+    0x001000,        /*   6 :   64x64   */
+    0x004000,        /*   7 :  128x128  */
+    0x010000,        /*   8 :  256x256  */
+    0x040000,        /*   9 :  512x512  */
+    0x100000,        /*  10 : 1024x1024 */
+    0x400000,        /*  11 : 2048x2048 */
+  },
+};
+
 /* the offset from mipmap level 0 of each mipmap level in texels            */
 /* index is [aspect_ratio][lod]                                             */
 const FxI32 _grMipMapOffset[4][16] =
@@ -906,7 +1141,7 @@ const FxI32 _grMipMapOffset[4][16] =
 
 /*
  * Similar to _grMipMapOffset[][], but for 4-bit compressed
- * textures, where 8x4 is the minimum size.
+ * textures, where 8x4 is the minimum size. FXT1,DXT1
  */
 const FxI32 _grMipMapOffsetCmp4Bit[7][16] = {
   {                  /* 8:1 aspect ratio */
@@ -1016,6 +1251,73 @@ const FxI32 _grMipMapOffsetCmp4Bit[7][16] = {
   },
 };
 
+/*
+ * Similar to _grMipMapOffset[][], but for 8-bit compressed
+ * textures, where 4x4 is the minimum size. DXT2,3,4,5
+ */
+const FxI32 _grMipMapOffsetDXT[4][16] = {
+  {                  /* 8:1 aspect ratio */
+     11024, /* Sum(256x32,128x16,64x8,32x4,16x4,8x4,4x4,4x4,4x4)      */
+     11008, /* Sum(256x32,128x16,64x8,32x4,16x4,8x4,4x4,4x4)          */
+     10992, /* Sum(256x32,128x16,64x8,32x4,16x4,8x4,4x4)              */
+     10976, /* Sum(256x32,128x16,64x8,32x4,16x4,8x4)                  */
+     10944, /* Sum(256x32,128x16,64x8,32x4,16x4)                      */
+     10880, /* Sum(256x32,128x16,64x8,32x4)                           */
+     10752, /* Sum(256x32,128x16,64x8)                                */
+     10240, /* Sum(256x32,128x16)                                     */
+      8192, /* Sum(256x32)                                            */
+         0, /* Base address (beginning of 512x64 level)               */
+    -32768, /* - Sum(512x64)                                          */
+   -163840, /* - Sum(1024x128,512x64)                                 */
+   -688128, /* - Sum(2048x256,1024x128,512x64)                        */
+  },
+  {                  /* 4:1 aspect ratio */
+     21904, /* Sum(256x64,128x32,64x16,32x8,16x4,8x4,4x4,4x4,4x4)     */
+     21888, /* Sum(256x64,128x32,64x16,32x8,16x4,8x4,4x4,4x4)         */
+     21872, /* Sum(256x64,128x32,64x16,32x8,16x4,8x4,4x4)             */
+     21856, /* Sum(256x64,128x32,64x16,32x8,16x4,8x4)                 */
+     21824, /* Sum(256x64,128x32,64x16,32x8,16x4)                     */
+     21760, /* Sum(256x64,128x32,64x16,32x8)                          */
+     21504, /* Sum(256x64,128x32,64x16)                               */
+     20480, /* Sum(256x64,128x32)                                     */
+     16384, /* Sum(256x64)                                            */
+         0, /* Base address (beginning of 512x128 level)              */
+    -65536, /* - Sum(512x128)                                         */
+   -327680, /* - Sum(1024x256,512x128)                                */
+  -1376256, /* - Sum(2048x512,1024x256,512x128)                       */
+  },
+  {                  /* 2:1 aspect ratio */
+     43728, /* Sum(256x128,128x64,64x32,32x16,16x8,8x4,4x4,4x4,4x4)   */
+     43712, /* Sum(256x128,128x64,64x32,32x16,16x8,8x4,4x4,4x4)       */
+     43696, /* Sum(256x128,128x64,64x32,32x16,16x8,8x4,4x4)           */
+     43680, /* Sum(256x128,128x64,64x32,32x16,16x8,8x4)               */
+     43648, /* Sum(256x128,128x64,64x32,32x16,16x8)                   */
+     43520, /* Sum(256x128,128x64,64x32,32x16)                        */
+     43008, /* Sum(256x128,128x64,64x32)                              */
+     40960, /* Sum(256x128,128x64)                                    */
+     32768, /* Sum(256x128)                                           */
+         0, /* Base address (beginning of 512x256 level)              */
+   -131072, /* - Sum(512x256)                                         */
+   -655360, /* - Sum(1024x512,512x256)                                */
+  -2752512, /* - Sum(2048x1024,1024x512,512x256)                      */
+  },
+  {                  /* 1:1 aspect ratio */
+     87408, /* Sum(256x256,128x128,64x64,32x32,16x16,8x8,4x4,4x4,4x4) */
+     87392, /* Sum(256x256,128x128,64x64,32x32,16x16,8x8,4x4,4x4)     */
+     87376, /* Sum(256x256,128x128,64x64,32x32,16x16,8x8,4x4)         */
+     87360, /* Sum(256x256,128x128,64x64,32x32,16x16,8x8)             */
+     87296, /* Sum(256x256,128x128,64x64,32x32,16x16)                 */
+     87040, /* Sum(256x256,128x128,64x64,32x32)                       */
+     86016, /* Sum(256x256,128x128,64x64)                             */
+     81920, /* Sum(256x256,128x128)                                   */
+     65536, /* Sum(256x256)                                           */
+         0, /* Base address (beginning of 512x512 level)              */
+   -262144, /* - Sum(512x512)                                         */
+  -1310720, /* - Sum(1024x1024,512x512)                               */
+  -5505024, /* - Sum(2048x2048,1024x1024,512x512)                     */
+  },
+};
+
 const FxI32 _grMipMapOffset_Tsplit[4][16] =
 {
   {  /* 8:1 and 1:8 aspect ratios */
@@ -1086,7 +1388,7 @@ const FxI32 _grMipMapOffset_Tsplit[4][16] =
 
 /*
  * Similar to _grMipMapOffset_Tsplit[][], but for 4-bit compressed
- * textures, where 8x4 is the minimum size.
+ * textures, where 8x4 is the minimum size. FXT1,DXT1
  */
 const FxI32 _grMipMapOffset_TsplitCmp4Bit[7][16] = {
   {                  /* 8:1 aspect ratio */
@@ -1203,6 +1505,77 @@ const FxI32 _grMipMapOffset_TsplitCmp4Bit[7][16] = {
   },
 };
 
+/*
+ * Similar to _grMipMapOffset_Tsplit[][], but for 8-bit compressed
+ * textures, where 4x4 is the minimum size. DXT2,3,4,5
+ */
+const FxI32 _grMipMapOffset_TsplitDXT[4][16] = {
+  {                  /* 8:1 aspect ratio */
+      8800, /* Sum(256x32,64x8,16x4,4x4,4x4)                          */
+      2224, /* Sum(128x16,32x4,8x4,4x4)                               */
+      8784, /* Sum(256x32,64x8,16x4,4x4)                              */
+      2208, /* Sum(128x16,32x4,8x4)                                   */
+      8768, /* Sum(256x32,64x8,16x4)                                  */
+      2176, /* Sum(128x16,32x4)                                       */
+      8704, /* Sum(256x32,64x8)                                       */
+      2048, /* Sum(128x16)                                            */
+      8192, /* Sum(256x32)                                            */
+         0, /* Base address (beginning of 128x16 level)               */
+         0, /* Base address (beginning of 256x32 level)               */
+    -32768, /* - Sum(512x64)                                          */
+   -131072, /* - Sum(1024x128)                                        */
+   -557056, /* - Sum(2048x256,512x64)                                 */
+  },
+  {                  /* 4:1 aspect ratio */
+     17504, /* Sum(256x64,64x16,16x4,4x4,4x4)                         */
+      4400, /* Sum(128x32,32x8,8x4,4x4)                               */
+     17488, /* Sum(256x64,64x16,16x4,4x4)                             */
+      4384, /* Sum(128x32,32x8,8x4)                                   */
+     17472, /* Sum(256x64,64x16,16x4)                                 */
+      4352, /* Sum(128x32,32x8)                                       */
+     17408, /* Sum(256x64,64x16)                                      */
+      4096, /* Sum(128x32)                                            */
+     16384, /* Sum(256x64)                                            */
+         0, /* Base address (beginning of 128x32 level)               */
+         0, /* Base address (beginning of 256x64 level)               */
+    -65536, /* - Sum(512x128)                                         */
+   -262144, /* - Sum(1024x256)                                        */
+  -1114112, /* - Sum(2048x512,512x128)                                */
+  },
+  {                  /* 2:1 aspect ratio */
+     34976, /* Sum(256x128,64x32,16x8,4x4,4x4)                        */
+      8752, /* Sum(128x64,32x16,8x4,4x4)                              */
+     34960, /* Sum(256x128,64x32,16x8,4x4)                            */
+      8736, /* Sum(128x64,32x16,8x4)                                  */
+     34944, /* Sum(256x128,64x32,16x8)                                */
+      8704, /* Sum(128x64,32x16)                                      */
+     34816, /* Sum(256x128,64x32)                                     */
+      8192, /* Sum(128x64)                                            */
+     32768, /* Sum(256x128)                                           */
+         0, /* Base address (beginning of 128x64 level)               */
+         0, /* Base address (beginning of 256x128 level)              */
+   -131072, /* - Sum(512x256)                                         */
+   -524288, /* - Sum(1024x512)                                        */
+  -2228224, /* - Sum(2048x1024,512x256)                               */
+  },
+  {                  /* 1:1 aspect ratio */
+     69920, /* Sum(256x256,64x64,16x16,4x4,4x4)                       */
+     17488, /* Sum(128x128,32x32,8x8,4x4)                             */
+     69904, /* Sum(256x256,64x64,16x16,4x4)                           */
+     17472, /* Sum(128x128,32x32,8x8)                                 */
+     69888, /* Sum(256x256,64x64,16x16)                               */
+     17408, /* Sum(128x128,32x32)                                     */
+     69632, /* Sum(256x256,64x64)                                     */
+     16384, /* Sum(128x128)                                           */
+     65536, /* Sum(256x256)                                           */
+         0, /* Base address (beginning of 128x128 level)              */
+         0, /* Base address (beginning of 256x256 level)              */
+   -262144, /* - Sum(512x512)                                         */
+  -1048576, /* - Sum(1024x1024)                                       */
+  -4456448, /* - Sum(2048x2048,512x512)                               */
+  },
+};
+
 /*---------------------------------------------------------------------------
 **  This is not DI anymore.  Perhaps all of these size routines need
 **  to be in gtex.c now.
@@ -1224,26 +1597,9 @@ _grTexTextureMemRequired( GrLOD_t small_lod, GrLOD_t large_lod,
              "invalid evenOdd mask" );
   GR_CHECK_F(FN_NAME, _grBitsPerTexel[format] == 0, "invalid texture format");
 
-  if (format != GR_TEXFMT_ARGB_CMP_FXT1 ) {
-    /* Non-FXT1 formats allow us to mirror the aspect ratios because
-       the table entries are the same for, e.g., 1x8 as for 8x1 */
-    if (aspect < GR_ASPECT_LOG2_1x1) aspect = -aspect;
-    
-    if ( evenOdd == GR_MIPMAPLEVELMASK_BOTH ) {
-      memrequired  = _grMipMapOffset[G3_ASPECT_TRANSLATE(aspect)][small_lod];
-      memrequired -= _grMipMapOffset[G3_ASPECT_TRANSLATE(aspect)][large_lod+1];
-    } else { 
-      memrequired = 0;
-      
-      /* construct XOR mask   */
-      evenOdd = (evenOdd == GR_MIPMAPLEVELMASK_EVEN) ? 1 : 0;  
-      while (large_lod >= small_lod) {    /* sum up all the mipmap levels */
-        if ((large_lod ^ evenOdd) & 1)    /* that match the XOR mask      */
-          memrequired += _grMipMapSize[G3_ASPECT_TRANSLATE(aspect)][large_lod];
-        large_lod--;
-      }
-    }
-  } else {
+  switch(format) {
+  case GR_TEXFMT_ARGB_CMP_FXT1:
+  case GR_TEXFMT_ARGB_CMP_DXT1:
     /* In this case, do not mirror the aspect ratios, as the minimum
      * size of a mipmap level is 8x4, so the tables are not symmetric
      * w.r.t. sign of the aspect ratio, so keep the sign. */
@@ -1264,8 +1620,54 @@ _grTexTextureMemRequired( GrLOD_t small_lod, GrLOD_t large_lod,
         large_lod--;
       }
     }
-  }
+    break;
 
+  case GR_TEXFMT_ARGB_CMP_DXT2:
+  case GR_TEXFMT_ARGB_CMP_DXT3:
+  case GR_TEXFMT_ARGB_CMP_DXT4:
+  case GR_TEXFMT_ARGB_CMP_DXT5:
+    /* DXT2,3,4,5 formats allow us to mirror the aspect ratios because
+       the table entries are the same */
+    if (aspect < GR_ASPECT_LOG2_1x1) aspect = -aspect;
+    
+    if ( evenOdd == GR_MIPMAPLEVELMASK_BOTH ) {
+      memrequired  = _grMipMapOffsetDXT[G3_ASPECT_TRANSLATE(aspect)][small_lod];
+      memrequired -= _grMipMapOffsetDXT[G3_ASPECT_TRANSLATE(aspect)][large_lod+1];
+    } else { 
+      memrequired = 0;
+      
+      /* construct XOR mask   */
+      evenOdd = (evenOdd == GR_MIPMAPLEVELMASK_EVEN) ? 1 : 0;  
+      while (large_lod >= small_lod) {    /* sum up all the mipmap levels */
+        if ((large_lod ^ evenOdd) & 1)    /* that match the XOR mask      */
+          memrequired += _grMipMapSizeDXT[G3_ASPECT_TRANSLATE(aspect)][large_lod];
+        large_lod--;
+      }
+    }
+    break;
+    
+  default:
+    /* Non-FXT1 formats allow us to mirror the aspect ratios because
+       the table entries are the same for, e.g., 1x8 as for 8x1 */
+    if (aspect < GR_ASPECT_LOG2_1x1) aspect = -aspect;
+    
+    if ( evenOdd == GR_MIPMAPLEVELMASK_BOTH ) {
+      memrequired  = _grMipMapOffset[G3_ASPECT_TRANSLATE(aspect)][small_lod];
+      memrequired -= _grMipMapOffset[G3_ASPECT_TRANSLATE(aspect)][large_lod+1];
+    } else { 
+      memrequired = 0;
+      
+      /* construct XOR mask   */
+      evenOdd = (evenOdd == GR_MIPMAPLEVELMASK_EVEN) ? 1 : 0;  
+      while (large_lod >= small_lod) {    /* sum up all the mipmap levels */
+        if ((large_lod ^ evenOdd) & 1)    /* that match the XOR mask      */
+          memrequired += _grMipMapSize[G3_ASPECT_TRANSLATE(aspect)][large_lod];
+        large_lod--;
+      }
+    }
+    
+  }
+  
   /* convert from texels to bytes */
   memrequired *= _grBitsPerTexel[format]; /* bits  */
   memrequired >>= 3;                      /* bytes */
@@ -1280,6 +1682,7 @@ _grTexTextureMemRequired( GrLOD_t small_lod, GrLOD_t large_lod,
 #undef FN_NAME
 } /* _grTexTextureMemRequired */
 
+#if 0 /* KoolSmoky - remove junk */
 FxU16
 _grTexFloatLODToFixedLOD( float value )
 {
@@ -1293,6 +1696,7 @@ _grTexFloatLODToFixedLOD( float value )
 
   return new_value;
 } /* _grTexFloatLODToFixedLOD */
+#endif
 
 /*---------------------------------------------------------------------------
 ** _grTexCalcBaseAddress
@@ -1308,7 +1712,47 @@ _grTexCalcBaseAddress( FxU32 start, GrLOD_t large_lod,
 
   GR_CHECK_F(FN_NAME, _grBitsPerTexel[format] == 0, "invalid texture format");
 
-  if ( format != GR_TEXFMT_ARGB_CMP_FXT1 ) {
+  switch(format) {
+  case GR_TEXFMT_ARGB_CMP_FXT1:
+  case GR_TEXFMT_ARGB_CMP_DXT1:
+     /* FXT1 format: Don't mirror the aspect ratios, because of the 8x4 limit */
+    if ( odd_even_mask == GR_MIPMAPLEVELMASK_BOTH ) {
+      sum_of_lod_sizes = _grMipMapOffsetCmp4Bit[aspect]
+        [large_lod + 1];
+    } else {
+      if (((odd_even_mask == GR_MIPMAPLEVELMASK_EVEN) && (large_lod & 1)) ||
+          ((odd_even_mask == GR_MIPMAPLEVELMASK_ODD) && !(large_lod & 1)))
+        large_lod += 1 ;
+      else
+        large_lod += 2 ; /* as it turns out, this is important for FXT1 as well */
+		
+      sum_of_lod_sizes =
+        _grMipMapOffset_TsplitCmp4Bit[aspect][large_lod];
+    }
+    break;
+
+  case GR_TEXFMT_ARGB_CMP_DXT2:
+  case GR_TEXFMT_ARGB_CMP_DXT3:
+  case GR_TEXFMT_ARGB_CMP_DXT4:
+  case GR_TEXFMT_ARGB_CMP_DXT5:
+    /* DXT2,3,4,5 format: mirror the aspect ratios */
+    if ( aspect > G3_ASPECT_TRANSLATE(GR_ASPECT_LOG2_1x1) )
+      aspect =  G3_ASPECT_TRANSLATE(GR_ASPECT_LOG2_1x8) - aspect;
+    
+    if ( odd_even_mask == GR_MIPMAPLEVELMASK_BOTH ) {
+      sum_of_lod_sizes = _grMipMapOffsetDXT[aspect][large_lod + 1];
+    } else {
+      if (((odd_even_mask == GR_MIPMAPLEVELMASK_EVEN) && (large_lod & 1)) ||
+          ((odd_even_mask == GR_MIPMAPLEVELMASK_ODD) && !(large_lod & 1)))
+        large_lod += 1 ;
+      else
+        large_lod += 2 ;
+		
+      sum_of_lod_sizes = _grMipMapOffset_TsplitDXT[aspect][large_lod];
+    }
+    break;
+    
+  default:
     if ( aspect > G3_ASPECT_TRANSLATE(GR_ASPECT_LOG2_1x1) )
       /* mirror aspect ratios */
       aspect =  G3_ASPECT_TRANSLATE(GR_ASPECT_LOG2_1x8) - aspect;
@@ -1324,23 +1768,8 @@ _grTexCalcBaseAddress( FxU32 start, GrLOD_t large_lod,
 
       sum_of_lod_sizes = _grMipMapOffset_Tsplit[aspect][large_lod];
     }
-  } else {
-    /* FXT1 format: Don't mirror the aspect ratios, because of the 8x4 limit */
-    if ( odd_even_mask == GR_MIPMAPLEVELMASK_BOTH ) {
-      sum_of_lod_sizes = _grMipMapOffsetCmp4Bit[aspect]
-        [large_lod + 1];
-    } else {
-      if (((odd_even_mask == GR_MIPMAPLEVELMASK_EVEN) && (large_lod & 1)) ||
-          ((odd_even_mask == GR_MIPMAPLEVELMASK_ODD) && !(large_lod & 1)))
-        large_lod += 1 ;
-      else
-        large_lod += 2 ; /* as it turns out, this is important for FXT1 as well */
-		
-      sum_of_lod_sizes =
-        _grMipMapOffset_TsplitCmp4Bit[aspect][large_lod];
-    }
   }
-    
+  
   /* Convert from texels to bytes */
   sum_of_lod_sizes *= _grBitsPerTexel[format]; /* bits  */
   sum_of_lod_sizes >>= 3;                      /* bytes */
@@ -1486,7 +1915,7 @@ GR_DIENTRY(grTexMaxAddress, FxU32, ( GrChipID_t tmu ))
   **   Some games cause an error when  launching with Glide3x o
   **   V3.  This is a work around for an application fault
   **   Games are  calling  grTexMinAddress before we get a call t
-  **   winOpen.  The code below replaces GR_BEGIN_NOFIFOCHECK_RE
+  **   winOpen.  The code below replaces GR_BEGIN_NOFIFOCHECK_RET
   */
   if (!gc)                      /* If Gc is not valid, return 0 */
     return MIN_TEX_MEM;         /* Always guaranteed */
@@ -1655,16 +2084,28 @@ GR_DIENTRY(grTexDownloadMipMap, void,
                                evenOdd,
                                src_base);
 
-      if (info->format == GR_TEXFMT_ARGB_CMP_FXT1) {
+      switch(info->format) {
+      case GR_TEXFMT_ARGB_CMP_FXT1:
+      case GR_TEXFMT_ARGB_CMP_DXT1:
         /* Note: in this case, we need to use info->aspectRatioLog2
          * rather than curAspectRatio, because we need to keep the
          * sign of the apsect ratio in order to get the right size. */
         src_base += ((_grMipMapHostSizeCmp4Bit
                       [G3_ASPECT_TRANSLATE(info->aspectRatioLog2)][lod]
                       * formatMult) >> 3);
-      } else {
+        break;
+
+      case GR_TEXFMT_ARGB_CMP_DXT2:
+      case GR_TEXFMT_ARGB_CMP_DXT3:
+      case GR_TEXFMT_ARGB_CMP_DXT4:
+      case GR_TEXFMT_ARGB_CMP_DXT5:
+        src_base += ((_grMipMapHostSizeDXT[curAspectRatio][lod] * formatMult)>>3);
+        break;
+
+      default:
         src_base += ((_grMipMapHostSize[curAspectRatio][lod] * formatMult)>>3);
       }
+      
     }
 
     /* Force a pixel flush which should force all of the
@@ -1707,9 +2148,12 @@ GR_DIENTRY(grTexDownloadTablePartial, void,
   GR_CHECK_F(myName, !data, "invalid data pointer");
 
   /* What type of palette is this? */
-  if ((type == GR_TEXTABLE_PALETTE) || (type == GR_TEXTABLE_PALETTE_6666_EXT)){
+  switch(type) {
+  case GR_TEXTABLE_PALETTE:
+  case GR_TEXTABLE_PALETTE_6666_EXT:
     _grTexDownloadPalette( GR_TMU0, type, (GuTexPalette *)data, start, end );
-  } else {
+    break;
+  default:
     _grTexDownloadNccTable( GR_TMU0, type, (GuNccTable*)data, start, end );
   }
 
@@ -1738,21 +2182,38 @@ GR_DIENTRY(grTexDownloadMipMapLevel, void,
   ** note for glide3 lod translation:
   ** we are calling gr* routine so the lod data should remain the same 
   */
-  if (format == GR_TEXFMT_ARGB_CMP_FXT1) {
+  switch(format) {
+  case GR_TEXFMT_ARGB_CMP_FXT1:
+  case GR_TEXFMT_ARGB_CMP_DXT1:
     grTexDownloadMipMapLevelPartial(tmu, startAddress,
                                     thisLod, largeLod, aspectRatio, 
                                     format,
                                     evenOdd, data,
                                     0, 
                                     _grMipMapHostWHCmp4Bit[G3_ASPECT_TRANSLATE(aspectRatio)][thisLod][1] - 1);
-  } else {
+    break;
+
+  case GR_TEXFMT_ARGB_CMP_DXT2:
+  case GR_TEXFMT_ARGB_CMP_DXT3:
+  case GR_TEXFMT_ARGB_CMP_DXT4:
+  case GR_TEXFMT_ARGB_CMP_DXT5:
     grTexDownloadMipMapLevelPartial(tmu, startAddress,
+                                    thisLod, largeLod, aspectRatio, 
+                                    format,
+                                    evenOdd, data,
+                                    0, 
+                                    _grMipMapHostWHDXT[G3_ASPECT_TRANSLATE(aspectRatio)][thisLod][1] - 1);
+    break;
+
+  default:
+     grTexDownloadMipMapLevelPartial(tmu, startAddress,
                                     thisLod, largeLod, aspectRatio, 
                                     format,
                                     evenOdd, data,
                                     0, 
                                     _grMipMapHostWH[G3_ASPECT_TRANSLATE(aspectRatio)][thisLod][1] - 1);
   }
+
   GR_END();
 } /* grTexDownloadMipmapLevel */
 

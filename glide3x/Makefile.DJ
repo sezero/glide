@@ -1,0 +1,222 @@
+# DOS/DJGPP makefile v1.2 for Glide3
+#
+#  Copyright (c) 2003 - Borca Daniel
+#  Email : dborca@yahoo.com
+#  Web   : http://www.geocities.com/dborca
+
+
+#
+#  Available options:
+#
+#    Environment variables:
+#	FX_GLIDE_HW=[h3|h5]	build for the given ASIC.
+#				default = h5
+#	H4=1			tune for Voodoo3/Avenger. Not for Banshee.
+#				default = no
+#	TRIS=[asm|c|3dnow]	select triangle rendering specializations.
+#				default = asm
+#	DEBUG=1			disable any optimization and build for debug.
+#				default = no
+#	CPU			optimize for the given processor.
+#				default = k6
+#
+#    Targets:
+#	glid3:		build glide3
+#	all:		build everything
+#	clean:		remove object files
+#	realclean:	remove all generated files
+#
+
+
+
+.PHONY: glid3 all clean realclean
+.INTERMEDIATE: fxgasm.exe gendate.exe
+
+GLIDE_LIB = libglid3.a
+GLIDE_DXE = glid3.dxe
+GLIDE_IMP = libg3i.a
+
+FX_GLIDE_HW ?= h5
+FX_GLIDE_SW = swlibs
+GLIDE_LIBDIR = $(FX_GLIDE_HW)/lib
+
+CC = gcc
+CFLAGS = -Wall
+
+ifdef DEBUG
+CFLAGS += -O0 -gcoff
+CFLAGS += -DGDBG_INFO_ON -DGLIDE_DEBUG -DGLIDE_SANITY_ASSERT -DGLIDE_SANITY_SIZE
+else
+CPU ?= k6
+CFLAGS += -O2 -ffast-math -mcpu=$(CPU)
+endif
+
+CFLAGS += -I$(FX_GLIDE_HW)/glide3/src -I$(FX_GLIDE_HW)/incsrc -I$(FX_GLIDE_HW)/minihwc -Ih3/cinit
+CFLAGS += -I$(FX_GLIDE_SW)/fxmisc -I$(FX_GLIDE_SW)/newpci/pcilib -I$(FX_GLIDE_SW)/fxmemmap
+CFLAGS += -D__DOS__ -D__DOS32__
+CFLAGS += -DGLIDE3 -DGLIDE3_ALPHA -DGLIDE_HW_TRI_SETUP=1 -DGLIDE_INIT_HWC -DGLIDE_PACKED_RGB=0 -DGLIDE_PACKET3_TRI_SETUP=1 -DGLIDE_TRI_CULLING=1 -DH3 -DUSE_PACKET_FIFO=1
+
+ifdef H4
+CFLAGS += -DH4
+endif
+
+ifeq ($(TRIS),c)
+CFLAGS += -DGLIDE_USE_C_TRISETUP
+GLIDE_C = \
+	$(FX_GLIDE_HW)/glide3/src/gxdraw.c
+else
+GLIDE_ASM = \
+	$(FX_GLIDE_HW)/glide3/src/xdraw2_def.S \
+	$(FX_GLIDE_HW)/glide3/src/xdraw3_def.S
+ifeq ($(TRIS),3dnow)
+CFLAGS += -DGL_AMD3D
+GLIDE_K3D = \
+	$(FX_GLIDE_HW)/glide3/src/xdraw2_3dnow.S \
+	$(FX_GLIDE_HW)/glide3/src/xdraw3_3dnow.S \
+	$(FX_GLIDE_HW)/glide3/src/xtexdl_3dnow.S
+endif
+endif
+
+ifeq ($(FX_GLIDE_HW),h5)
+GENDATE = h5/incsrc/gendate.h
+CFLAGS += -DFX_GLIDE_H5_CSIM=1 -DFX_GLIDE_NAPALM=1
+else
+ifneq ($(FX_GLIDE_HW),h3)
+$(error Invalid ASIC)
+endif
+endif
+
+#CFLAGS += -DGLIDE_LIB -DGLIDE_PLUG
+
+AR = ar
+ARFLAGS = rus
+
+HAVEDXE3 = $(wildcard $(DJDIR)/bin/dxe3gen.exe)
+
+ifeq ($(wildcard $(addsuffix /rm.exe,$(subst ;, ,$(PATH)))),)
+UNLINK = del $(subst /,\,$(1))
+else
+UNLINK = $(RM) $(1)
+endif
+
+GLIDE_SOURCES = \
+	$(FX_GLIDE_HW)/glide3/src/gsplash.c \
+	$(FX_GLIDE_HW)/glide3/src/g3df.c \
+	$(FX_GLIDE_HW)/glide3/src/gu.c \
+	$(FX_GLIDE_HW)/glide3/src/gthread.c \
+	$(FX_GLIDE_HW)/glide3/src/gpci.c \
+	$(FX_GLIDE_HW)/glide3/src/diglide.c \
+	$(FX_GLIDE_HW)/glide3/src/disst.c \
+	$(FX_GLIDE_HW)/glide3/src/ditex.c \
+	$(FX_GLIDE_HW)/glide3/src/gbanner.c \
+	$(FX_GLIDE_HW)/glide3/src/gerror.c \
+	$(FX_GLIDE_HW)/glide3/src/gaa.c \
+	$(FX_GLIDE_HW)/glide3/src/gdraw.c \
+	$(FX_GLIDE_HW)/glide3/src/gglide.o \
+	$(FX_GLIDE_HW)/glide3/src/distate.c \
+	$(FX_GLIDE_HW)/glide3/src/gstrip.c \
+	$(FX_GLIDE_HW)/glide3/src/distrip.c \
+	$(FX_GLIDE_HW)/glide3/src/diget.c \
+	$(FX_GLIDE_HW)/glide3/src/glfb.o \
+	$(FX_GLIDE_HW)/glide3/src/gsst.c \
+	$(FX_GLIDE_HW)/glide3/src/gtex.c \
+	$(FX_GLIDE_HW)/glide3/src/gtexdl.c \
+	$(FX_GLIDE_HW)/glide3/src/fifo.c \
+	$(GLIDE_C) \
+	$(GLIDE_K3D) \
+	$(GLIDE_ASM) \
+	$(FX_GLIDE_HW)/glide3/src/xtexdl_def.c \
+	$(FX_GLIDE_HW)/glide3/src/cpuid.c \
+	h3/cinit/h3cinit.c \
+	h3/cinit/h3cinit2.c \
+	$(FX_GLIDE_SW)/newpci/pcilib/fxpci.c \
+	$(FX_GLIDE_SW)/newpci/pcilib/fxdpmi2.c \
+	$(FX_GLIDE_HW)/minihwc/hwcio.c \
+	$(FX_GLIDE_HW)/minihwc/gdebug.c \
+	$(FX_GLIDE_HW)/minihwc/minihwc.c \
+	$(FX_GLIDE_HW)/minihwc/dos_mode.c
+
+GLIDE_OBJECTS = $(addsuffix .o,$(basename $(GLIDE_SOURCES)))
+
+.c.o:
+	$(CC) -o $@ $(CFLAGS) -c $<
+.S.o:
+	$(CC) -o $@ $(CFLAGS) -c $<
+.s.o:
+	$(CC) -o $@ $(CFLAGS) -x assembler-with-cpp -c $<
+
+###############################################################################
+#	glide3
+###############################################################################
+glid3: $(GLIDE_LIBDIR)/$(GLIDE_LIB) $(GLIDE_LIBDIR)/$(GLIDE_DXE) $(GLIDE_LIBDIR)/$(GLIDE_IMP)
+
+$(GLIDE_LIBDIR)/$(GLIDE_LIB): $(GLIDE_OBJECTS)
+	$(AR) $(ARFLAGS) $@ $(GLIDE_OBJECTS)
+
+$(GLIDE_LIBDIR)/$(GLIDE_DXE) $(GLIDE_LIBDIR)/$(GLIDE_IMP): $(GLIDE_OBJECTS)
+ifeq ($(HAVEDXE3),)
+	$(warning Missing DXE3 package... Skipping $(GLIDE_DXE))
+else
+	-dxe3gen -o $(GLIDE_LIBDIR)/$(GLIDE_DXE) -I $(GLIDE_LIBDIR)/$(GLIDE_IMP) -D "Glide3/$(FX_GLIDE_HW) DJGPP" -E _gr -E _gu -U $(GLIDE_OBJECTS)
+endif
+
+###############################################################################
+#	special
+###############################################################################
+h3/glide3/src/gglide.o: h3/glide3/src/gglide.c.save
+	$(CC) -o $@ $(CFLAGS) -x c -c $<
+h3/glide3/src/glfb.o: h3/glide3/src/glfb.c.save
+	$(CC) -o $@ $(CFLAGS) -x c -c $<
+$(FX_GLIDE_HW)/glide3/src/xtexdl_3dnow.o: $(FX_GLIDE_HW)/glide3/src/xtexdl.S
+	$(CC) -o $@ $(CFLAGS) -c $<
+$(FX_GLIDE_HW)/glide3/src/xdraw2_def.o: $(FX_GLIDE_HW)/glide3/src/xdraw2.S
+	$(CC) -o $@ $(CFLAGS) -UGL_AMD3D -c $<
+$(FX_GLIDE_HW)/glide3/src/xdraw2_3dnow.o: $(FX_GLIDE_HW)/glide3/src/xdraw2.S
+	$(CC) -o $@ $(CFLAGS) -c $<
+$(FX_GLIDE_HW)/glide3/src/xdraw3_def.o: $(FX_GLIDE_HW)/glide3/src/xdraw3.S
+	$(CC) -o $@ $(CFLAGS) -UGL_AMD3D -c $<
+$(FX_GLIDE_HW)/glide3/src/xdraw3_3dnow.o: $(FX_GLIDE_HW)/glide3/src/xdraw3.S
+	$(CC) -o $@ $(CFLAGS) -c $<
+
+###############################################################################
+#	fxinline.h / fxgasm.h
+###############################################################################
+$(GLIDE_OBJECTS): $(FX_GLIDE_HW)/glide3/src/fxinline.h $(FX_GLIDE_HW)/glide3/src/fxgasm.h
+
+$(FX_GLIDE_HW)/glide3/src/fxinline.h: fxgasm.exe
+	$< -inline > $@
+
+$(FX_GLIDE_HW)/glide3/src/fxgasm.h: fxgasm.exe
+	$< -hex > $@
+
+fxgasm.exe: $(FX_GLIDE_HW)/glide3/src/fxgasm.c $(GENDATE)
+	$(CC) -o $@ $(CFLAGS) $<
+
+###############################################################################
+#	gendate.h
+###############################################################################
+$(GENDATE): gendate.exe
+	$< > $@
+
+gendate.exe: h5/incsrc/gendate.c
+	$(CC) -o $@ $(CFLAGS) $<
+
+###############################################################################
+#	all, clean, realclean
+###############################################################################
+all: glid3
+
+clean:
+	-$(call UNLINK,h3/cinit/*.o)
+	-$(call UNLINK,$(FX_GLIDE_HW)/glide3/src/*.o)
+	-$(call UNLINK,$(FX_GLIDE_HW)/minihwc/*.o)
+	-$(call UNLINK,$(FX_GLIDE_SW)/newpci/pcilib/*.o)
+	-$(call UNLINK,$(FX_GLIDE_HW)/glide3/src/fxinline.h)
+	-$(call UNLINK,$(FX_GLIDE_HW)/glide3/src/fxgasm.h)
+ifneq ($(GENDATE),)
+	-$(call UNLINK,$(GENDATE))
+endif
+
+realclean: clean
+	-$(call UNLINK,$(GLIDE_LIBDIR)/*.a)
+	-$(call UNLINK,$(GLIDE_LIBDIR)/*.dxe)

@@ -19,6 +19,9 @@
 **
 ** $Revision$
 ** $Date$
+** 
+** $Log:
+** 1   ve3d      1.0 03/29/02        KoolSmoky    FX_GLIDE_SW_SETUP should work now
 */
 
 #include <stddef.h>
@@ -37,7 +40,7 @@
  * macros for creating assembler offset files
  *----------------------------------------------------------------------*/
 
-#ifndef	__linux
+#if !defined(__linux__) && !defined(__DJGPP__)
 #define NEWLINE printf("\n")
 #define COMMENT printf(";----------------------------------------------------------------------\n")
 
@@ -87,7 +90,7 @@ main (int argc, char **argv)
     static GrGC gc;
 
 #if !GLIDE_HW_TRI_SETUP
-    static Sstregs sst;
+    static SstRegs sst;
     static struct dataList_s dl;
 #endif /* !GLIDE_HW_TRI_SETUP */
 

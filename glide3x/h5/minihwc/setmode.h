@@ -18,15 +18,21 @@
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
  */
 
-FxBool setVideoMode( void *hwnd, 
+FxBool setVideoMode( void *hwnd,
                      int  xRes, 
                      int  yRes, 
-                     int  pixelSize, 
+                     int  h3pixelSize, 
                      int  refresh, 
-                     void *hmon );
-                     
+                     void *hmon,
+                     char *regpath,
+                     char *devicename);
+
 void resetVideo( void );
+     
+#ifdef IS_ALT_TAB
+FxBool checkResolutions(FxBool *reslist, FxU32 stride, void *hmon, int h3pixelSize, char *devicename);
+#endif
 
-FxBool checkResolutions(FxBool *reslist, FxU32 stride, void *hmon);
-
-
+#if WINXP_FASTER_ALT_TAB_FIX || WINXP_ALT_TAB_FIX
+FxBool checkResolutions(FxBool *supportedByResolution, FxU32 stride, void *hmon);
+#endif

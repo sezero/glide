@@ -19,6 +19,13 @@
 ;;
 ;; $Header$
 ;; $Log$
+;; 2002/12/28  KoolSmoky detect SSE, SSE2
+;;
+;; Revision 1.5  2002/04/13 16:53:26  KoolSmoky
+;; detect multimonitor regpath for win98/2k/xp
+;;
+;; Revision 1.1  2000/06/15 00:27:42  joseph
+;; Initial checkin into SourceForge.
 ;; 
 ;; 9     3/10/99 10:40a Peter
 ;; detect katmai-ness
@@ -52,11 +59,13 @@ TITLE  cpudtect.asm
     
 ;;; Some useful constants
 ; CPU Type
-CPUTypeUnknown  = 0ffffffffh
-CPUTypePrePent  = 4h
-CPUTypeP5       = 5h    
-CPUTypeP6       = 6h    
-        
+CPUTypeUnknown   = 0ffffffffh
+CPUTypeIntel     = 000000000h
+CPUTypeAMD       = 080010000h
+CPUTypeCyrix     = 080020000h
+CPUTypeIDT       = 080030000h
+CPUTypeTransmeta = 080040000h
+
 ;;; References to external data:
     
 _TEXT   SEGMENT
@@ -67,142 +76,128 @@ _TEXT   SEGMENT
 ;;
 ;;  int __cdecl _cpu_detect_asm(void);
 ;;
-;;  returns 4 for non-pen
+
+;; The return value is split into two 16-bit fields. Bits [31:16]
+;; identify the processor vendor as follows:
+;;
+;; 0000h   Intel
+;; 8001h   AMD
+;; 8002h   Cyrix
+;; 8003h   IDT
+;; 8004h   Transmeta
+;; ffffh   Unknown
+;;
+;; Bits [15:0] identify processor features as follows:
+;;
+;; 0001h   MMX
+;; 0002h   3DNow! (tm)
+;; 0004h   K6-style MTRRs
+;; 0008h   PentiumII-style MTRRs
+;; 0010h   SSE FP
+;; 0020h   SSE MMX
+;; 0040h   SSE2
+;;
+;; The FP part of SSE introduces a new architectural state and therefore
+;; requires support from the operating system. So even if CPUID indicates
+;; support for SSE FP, the application might not be able to use it. If
+;; CPUID indicates support for SSE FP, check whether it is also
+;; supported by the OS, and turn off the SSE FP feature bit if there 
+;; is no OS support for SSE FP.
+;;
+;; Operating systems that do not support SSE FP return an illegal
+;; instruction exception if execution of an SSE FP instruction is performed. 
+;; Here, a sample SSE FP instruction is executed, and is checked for an 
+;; exception using the (non-standard) __try/__except mechanism 
+;; of Microsoft Visual C. 
+;;
+;; if((_GlideRoot.CPUType & 0x10L) == 0x10UL) {
+;;   __try {
+;;     __asm _emit 0x0f 
+;;     __asm _emit 0x56 
+;;     __asm _emit 0xC0    ;; orps xmm0, xmm0
+;;   }
+;;   __except(EXCEPTION_EXECUTE_HANDLER) {
+;;     GDBG_INFO(0,"SSE is not supported by OS\n");
+;;     _GlideRoot.CPUType &= ~0x10UL;
+;;   }
+;; }
+;; if((_GlideRoot.CPUType & 0x40L) == 0x40UL) {
+;;   __try {
+;;     __asm _emit 0x66 
+;;     __asm _emit 0x0f 
+;;     __asm _emit 0x57 
+;;     __asm _emit 0xc0    ;; xorpd xmm0, xmm0
+;;   }
+;;   __except(EXCEPTION_EXECUTE_HANDLER) {
+;;     GDBG_INFO(0,"SSE2 is not supported by OS\n");
+;;     _GlideRoot.CPUType &= ~0x40UL;
+;;   }
+;; }
+;;
+;; Although CR0 can be called from ring3, CR4 must be called from ring0
+;; which prevents us from using the CR0.EM and the CR4.OSFXSR bits. The
+;; main reason for this indirect method.
+;;
 
 PUBLIC  _cpu_detect_asm
 _cpu_detect_asm PROC NEAR
 P6Stuff:
     .586
-    push   esi                          ; save registers that are not volatile
+    push   esi              ; save registers that are not volatile
     push   edi
     push   ebx
     push   ebp
 
     ; First, determine whether CPUID instruction is available.
     ; If it's not, then it's a 386 or 486.
-    pushfd                              ; push original EFLAGS.
-    pop eax                             ; pop into eax
-    mov ecx, eax                        ; save original EFLAGS in ecx
-    xor eax, 0200000h                   ; flip ID bit in EFLAGS
-    push    eax                         ; put it back on stack
-    popfd                               ; pop into EFLAGS
-    pushfd                              ; get EFLAGS back
-    pop eax                             ; into eax
-    xor eax, ecx                        ; check to see if we could toggle ID
-    jz  NotPentium                      ; Sorry, not P5 or P6.
+    pushfd                  ; push original EFLAGS.
+    pop eax                 ; pop into eax
+    mov ecx, eax            ; save original EFLAGS in ecx
+    xor eax, 0200000h       ; flip ID bit in EFLAGS
+    push    eax             ; put it back on stack
+    popfd                   ; pop into EFLAGS
+    pushfd                  ; get EFLAGS back
+    pop eax                 ; into eax
+    xor eax, ecx            ; check to see if we could toggle ID
+    jz  UnknownVendor       ; Sorry, older than P5
     
-    ;
-    ; Now determine whether it's an intel P6 CPU.
-    ;
-    ;;  Is it an Intel CPU?
-    xor eax, eax                        ; eax = 0.
-    cpuid                               ; get cpuid
-    xor ebx, 0756e6547h                 ; "Genu"
-    jnz NotIntel
-    xor edx, 049656e69h                 ; "ineI"
-    jnz NotIntel
-    xor ecx, 06c65746eh                 ; "ntel"
-    jnz NotIntel                        ;
+    xor esi, esi            ; default feature flags
+    xor edi, edi            ; default extended feature flags
 
     ;;  Verifying architecture family
     ;;      eax - type[13:12] family[11:8] model[7:4] revision[3:0]
     ;;      edx - feature bits
     mov eax, 1
-    cpuid                               ; get family/model/stepping
-    
-    shr eax, 8                          ; rid of model & stepping number
-    and eax, 0fh                        ; use only family
-    cmp eax, 6
-    jl     IsP5                         ; It's a P5
-    ;; Else it's a P6
-    
-    ; Intel P6 processor. 
-    ;; feature bits are in edx from the cpuid[1]
-IsP6:
-    ; Make sure it supports Memory Type Range Request registers (bit 12)    
-    mov     ebx, edx
-    test    ebx, 1000h
+    cpuid                  ; get family/model/stepping
+    mov esi, edx
+    mov ebp, eax           ; save family/model/stepping
 
-    ;; Hmmmm... p6 w/o mtrr's?
-    jz      IsP5
+;; get the vendor string 
+ChkIntel:
+    mov eax, 0             ; eax = 0.
+    cpuid                  ; get cpuid
+    cmp ebx, 0756e6547h    ; "Genu"
+    jne NoneIntel
+    cmp edx, 049656e69h    ; "ineI"
+    jne NoneIntel
+    cmp ecx, 06c65746eh    ; "ntel"
+    je  CPUisIntel
 
-    ;; Check for katmai-ness (bit 25)
-    test    edx, 2000000h
-    jz      noKNI
-
-    mov     eax, 7
-    jmp     DoneCpu                         ; return
-    
-noKNI:      
-    mov     eax, 6                          ; 
-    jmp     DoneCpu                         ; return 
-
-IsP5:   
-    mov     eax, 5                          ; 
-    jmp     DoneCpu
-
-NotPentium:
-    mov     eax, 4
-
-DoneCpu:
-    pop     ebp
-    pop     ebx
-    pop     edi
-    pop     esi
-    ret
-
-
-NotIntel:
-
-    ;; This is a non-Intel processor. Figure out whether it supports
-    ;; both MMX and 3DNow!, in which case we can use Norbert's cool
-    ;; MMX/3DNow!(tm) code
-    ;;
-    ;; The return value is split into two 16-bit fields. Bits [31:16]
-    ;; identify the processor vendor as follows:
-    ;;
-    ;; 8001h   AMD
-    ;; 8002h   Cyrix
-    ;; 8003h   IDT
-    ;;
-    ;; Bits [15:0] identify processor features as follows:
-    ;;
-    ;; 0001h   MMX
-    ;; 0002h   3DNow! (tm)
-    ;; 0004h   K6-style MTRRs
-    ;; 0008h   PentiumII-style MTRRs
-
-    xor esi, esi     ; default feature flags
-    xor edi, edi     ; default extended feature flags
-
+NoneIntel:
     ;; Test whether extended feature function is supported
-
     mov eax, 80000000h
     cpuid
     cmp eax, 80000000h
-    jbe NoExtendedFeatures
+    jbe ChkAMD
 
     ;; execute extended feature function
-
     mov eax, 80000001h
     cpuid
     mov edi, edx
 
-NoExtendedFeatures:
-
-    ;; execute standard feature function
-
-    mov eax, 1
-    cpuid
-    mov esi, edx
-    mov ebp, eax           ; save family/model/stepping
-
-    ;; get the vendor string 
- 
-    mov eax, 0
-    cpuid
-
 ChkAMD:
+    mov eax, 0             ; eax = 0.
+    cpuid                  ; get cpuid
     cmp ebx, 68747541h     ; 'htuA'
     jne ChkCyrix
     cmp edx, 69746E65h     ; 'itne'
@@ -211,7 +206,7 @@ ChkAMD:
     je  CPUisAMD
 
 ChkCyrix:
-    cmp ebx, 69727943h     ; 'iryC'                   
+    cmp ebx, 69727943h     ; 'iryC'
     jne ChkIDT
     cmp edx, 736E4978h     ; 'snIx'
     jne ChkIDT
@@ -220,58 +215,92 @@ ChkCyrix:
 
 ChkIDT:
     cmp ebx, 746E6543h     ; 'tneC'
-    jne UnknownVendor
+    jne ChkTransmeta
     cmp edx, 48727561h     ; 'Hrua'
-    jne UnknownVendor
+    jne ChkTransmeta
     cmp ecx, 736C7561h     ; 'slua'
-    jne UnknownVendor
+    je  CPUisIDT
 
-CPUisIDT:
-    mov  eax, 80030000h    ; vendor = IDT, features = none
-    test esi, 00800000h    ; check for MMX bit in features
-    jz   DoneCpu
-    or   eax, 1            ; set MMX feature flag
-    test edi, 80000000h    ; check for 3DNow! bit in extended features
-    jz   DoneCpu
-    or   eax, 2            ; set 3DNow! feature flag
-    jmp  DoneCpu
+ChkTransmeta:
+    cmp ebx, 6E617254h     ; 'narT'
+    jne UnknownVendor
+    cmp edx, 74656D73h     ; 'tems'
+    jne UnknownVendor
+    cmp ecx, 74656D73h     ; 'UPCa'
+    je  CPUisTransmeta
+
+CPUisIntel:
+    mov  eax, CPUTypeIntel ; vendor = Intel, features = none
+    test esi, 1000h        ; check P2_MTRR bit in features
+    jz   IntelMTRRchkDone
+    or   eax, 8h           ; set P2_MTRR feature flag
+IntelMTRRchkDone:
+    jmp  ChkMMX
 
 CPUisAMD:
-    mov  eax, 80010000h    ; vendor = AMD, features = none
+    mov  eax, CPUTypeAMD   ; vendor = AMD, features = none
     mov  edx, ebp          ; family/model/stepping information
     and  edx, 00000FFFh    ; extract family/model/stepping
     cmp  edx, 00000588h    ; CXT, Sharptooth, or K7 ?
     jb   AmdMTRRchkDone    ; nope, definitely no MTRRs
     cmp  edx, 00000600h    ; K7 or better ?
     jb   AmdHasK6MTRR      ; nope, but supports K6 MTRRs
-    or   eax, 8            ; set P2_MTRR feature flag
+    or   eax, 8h           ; set P2_MTRR feature flag
     jmp  AmdMTRRchkDone    ;
 AmdHasK6MTRR:
-    or   eax, 4            ; set K6_MTRR feature flag
+    or   eax, 4h           ; set K6_MTRR feature flag
 AmdMTRRchkDone:
-    test esi, 00800000h    ; check for MMX bit in features
-    jz   DoneCpu
-    or   eax, 1            ; set MMX feature flag
-    test edi, 80000000h    ; check for 3DNow! bit in extended features
-    jz   DoneCpu
-    or   eax, 2            ; set 3DNow! feature flag
-    jmp  DoneCpu
+    jmp  Chk3DNOW
 
 CPUisCyrix:
-    mov  eax, 80020000h    ; vendor = Cyrix, features = none
-    test esi, 00800000h    ; check for MMX bit in features
-    jz   DoneCpu
-    or   eax, 1            ; set MMX feature flag
+    mov  eax, CPUTypeCyrix ; vendor = Cyrix, features = none
+    jmp  Chk3DNOW
+
+CPUisIDT:
+    mov  eax, CPUTypeIDT   ; vendor = IDT, features = none
+    jmp  Chk3DNOW
+
+CPUisTransmeta:
+    mov  eax, CPUTypeTransmeta ; vendor = Transmeta, features = none
+
+;; none intel cpu features
+Chk3DNOW:
     test edi, 80000000h    ; check for 3DNow! bit in extended features
+    jz   ChkMMX
+    or   eax, 2h           ; set 3DNow! feature flag
+
+;; intel cpu features
+ChkMMX:
+    test esi, 00800000h    ; check for MMX bit in features
+    jz   ChkSSE
+    or   eax, 1h           ; set MMX feature flag
+
+ChkSSE:
+    test esi, 02000000h    ; check for SSE FP bit in features
+    jz   ChkSSE2
+    or   eax, 10h          ; set SSE FP feature flag
+
+;ChkSSEMMX:
+;    test edi, 00400000h    ; check for SSE MMX bit in extended features
+;    jz   ChkSSE2
+;    or   eax, 20h          ; set SSE MMX feature flag
+
+ChkSSE2:
+    test esi, 04000000h    ; check for SSE2 feature flag
     jz   DoneCpu
-    or   eax, 2            ; set 3DNow! feature flag
+    or   eax, 40h          ; set SSE2 feature flag
     jmp  DoneCpu
 
 UnknownVendor:
-    mov  eax, 0ffffffffh
-    jmp  DoneCpu
+    mov  eax, CPUTypeUnknown
 
-        
+DoneCpu:
+    pop  ebp
+    pop  ebx
+    pop  edi
+    pop  esi
+    ret
+
 _cpu_detect_asm ENDP
 
 

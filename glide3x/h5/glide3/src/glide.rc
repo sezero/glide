@@ -19,6 +19,10 @@
 **
 ** $Header$
 ** $Log$
+**
+** Revision 1.1  2000/06/15 00:27:42  joseph
+** Initial checkin into SourceForge.
+**
 */
 
 #define OFFICIAL   1 
@@ -38,8 +42,8 @@
 #endif
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION MANVERSION, MANREVISION, 0, BUILD_NUMBER
- PRODUCTVERSION MANVERSION, MANREVISION, 0, BUILD_NUMBER
+ FILEVERSION MANVERSION, MANREVISION, MINVERSION, BUILD_NUMBER
+ PRODUCTVERSION MANVERSION, MANREVISION, MINVERSION, BUILD_NUMBER
  FILEFLAGSMASK 0x0030003FL
  FILEFLAGS (VER_PRIVATEBUILD|VER_PRERELEASE|VER_DEBUG)
 
@@ -55,11 +59,12 @@ BEGIN
             VALUE "FileDescription", "3dfx Interactive, Inc. Glide\256 DLL\0"
             VALUE "FileVersion", VERSIONSTR
             VALUE "InternalName", VERSIONNAME
-            VALUE "LegalCopyright", "Copyright \251 3dfx Interactive, Inc. 2000\0"
+            VALUE "LegalCopyright", "Copyright \251 3dfx Interactive, Inc. 2003\0"
             VALUE "OriginalFilename", VERSIONNAME
             VALUE "ProductName", PRODNAME
             VALUE "ProductVersion", VERSIONSTR
             VALUE "Graphics Subsystem", HWSTR
+            VALUE "Contact", CONTACTSTR
         END
     END
     BLOCK "VarFileInfo"

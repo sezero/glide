@@ -162,7 +162,7 @@ typedef FxU32 GrAlphaBlendOp_t;
 #define GR_TEXFMT_ARGB_CMP_DXT3           0x18
 #define GR_TEXFMT_ARGB_CMP_DXT4           0x19
 #define GR_TEXFMT_ARGB_CMP_DXT5           0x1A
-
+#define GR_TEXTFMT_RGB_888                0xFF
 
 /* Napalm extensions to GrLOD_t */
 #define GR_LOD_LOG2_2048        0xb

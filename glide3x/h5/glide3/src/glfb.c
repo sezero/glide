@@ -19,6 +19,8 @@
 **
 ** $Header$
 ** $Log: 
+**
+**  02/23/03 KoolSmoky - merged with Colourless's sources
 **  14   3dfx      1.7.1.2.1.2 10/11/00 Brent           Forced check in to enforce
 **       branching.
 **  13   3dfx      1.7.1.2.1.1 08/29/00 Jonny Cochrane  Some 8x FSAA code
@@ -337,9 +339,9 @@ GR_ENTRY(grLfbConstantDepth, void, (FxU32 depth))
 static FxU32 slaveBaseSize;
 #endif
 
-GR_ENTRY(grLfbLock, FxBool,(GrLock_t type, GrBuffer_t buffer, 
+static FxBool _grLfbLock (GrLock_t type, GrBuffer_t buffer, 
                             GrLfbWriteMode_t writeMode, GrOriginLocation_t origin, 
-                            FxBool pixelPipeline, GrLfbInfo_t *info)) 
+                            FxBool pixelPipeline, GrLfbInfo_t *info)
 {
 #define FN_NAME "grLfbLock"
   FxBool
@@ -368,7 +370,8 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t type, GrBuffer_t buffer,
 
   /* Pray that no one has made any glide calls that touch the hardware... */
 #ifdef FX_GLIDE_NAPALM
-  if(gc->sliCount > 1) {
+  if((gc->sliCount > 1) &&
+     (type == GR_LFB_READ_ONLY)) {
     hwcSLIReadDisable(gc->bInfo);
   }
 #endif
@@ -658,147 +661,185 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t type, GrBuffer_t buffer,
 #endif	/* defined(__linux__) */
         info->origin            = origin;
 
-    /* tbext. Kind of ugly. Kind of duplicate / unfolded code
-                ** needs checking before collapsing
-                ** Something seems really busted here: in the 2 first cases
-                ** (read only and 2d lfb) we return a stride which is the actual
-                ** stride we are setting the registers to (which is a stride in linear space)
-                ** But in the case of 3d lfb, WE HAVE TO RETURN THE ORIGINAL TILED STRIDE
-                ** even though we are setting the registers to the linear one. This means
-                ** the application that makes a grlfblock IS ACTUALLY USING (OR HAS TO USE)
-                ** the tiled stride to be able to access the supposedly LINEAR lfb space...
-                */
-        if ( gc->textureBuffer.on && 
-           ( buffer == GR_BUFFER_TEXTUREBUFFER_EXT || buffer == GR_BUFFER_TEXTUREAUXBUFFER_EXT ))       {
-          if (type == GR_LFB_READ_ONLY) {
-            info->lfbPtr = (void *)((FxU32)gc->rawLfb + gc->textureBuffer.addr);
-            info->strideInBytes     = gc->textureBuffer.stride ;
+        /* tbext. Kind of ugly. Kind of duplicate / unfolded code
+         ** needs checking before collapsing
+         ** Something seems really busted here: in the 2 first cases
+         ** (read only and 2d lfb) we return a stride which is the actual
+         ** stride we are setting the registers to (which is a stride in linear space)
+         ** But in the case of 3d lfb, WE HAVE TO RETURN THE ORIGINAL TILED STRIDE
+         ** even though we are setting the registers to the linear one. This means
+         ** the application that makes a grlfblock IS ACTUALLY USING (OR HAS TO USE)
+         ** the tiled stride to be able to access the supposedly LINEAR lfb space...
+         */
+        switch(type) {
+        case GR_LFB_READ_ONLY:
+          {
+            if(( gc->textureBuffer.on ) &&
+               ( buffer == GR_BUFFER_TEXTUREBUFFER_EXT || buffer == GR_BUFFER_TEXTUREAUXBUFFER_EXT )) {
+              info->lfbPtr = (void *)((FxU32)gc->rawLfb + gc->textureBuffer.addr);
+              info->strideInBytes     = gc->textureBuffer.stride ;
 #if __POWERPC__
-            if(IS_NAPALM(gc->bInfo->pciInfo.deviceID)) {
-              if(gc->grPixelSize == 2) {
-                info->lfbPtr = (void *)((FxU32)info->lfbPtr + gc->bInfo->pciInfo.swizzleOffset[3]);                
-              } else {
-                info->lfbPtr = (void *)((FxU32)info->lfbPtr + gc->bInfo->pciInfo.swizzleOffset[1]);  
+              if(IS_NAPALM(gc->bInfo->pciInfo.deviceID)) {
+                if(gc->grPixelSize == 2) {
+                  info->lfbPtr = (void *)((FxU32)info->lfbPtr + gc->bInfo->pciInfo.swizzleOffset[3]);                
+                } else {
+                  info->lfbPtr = (void *)((FxU32)info->lfbPtr + gc->bInfo->pciInfo.swizzleOffset[1]);  
+                }
               }
-            }
-#endif                        
-          }
-#if !__POWERPC__          
-          /* Next, If it is writeOnly and 565 and not pixelpipe,
-             we just return the current buffer lfbPtr as the write ptr. 
-             This fixes those games that use the lfb write pointer to do
-             lfb reads. --mikec */
-          else if ((type == GR_LFB_WRITE_ONLY) &&
-                   (writeMode == (FxI32)fbMode) &&
-                   (!pixelPipeline) && 
-                   /* Origin must be upper left since we will return raw lfb */
-                   (origin != GR_ORIGIN_LOWER_LEFT)){
-            info->lfbPtr = (void *)((FxU32)gc->rawLfb + gc->textureBuffer.addr);
-            info->strideInBytes     = gc->textureBuffer.stride ;
-            
-          } 
-#endif          
-            else {
-#ifdef __linux__
-           /*
-            * For Linux, we just return the correct address and
-            * stride.
-            */
-	    info->strideInBytes   = gc->bInfo->buffInfo.bufLfbStride;
-            info->lfbPtr          = (void *)gc->lfbBuffers[colBufferIndex];
-#else	/* defined(__linux__) */
-            info->lfbPtr          = (void *)gc->lfb_ptr;
-#endif	/* defined(__linux__) */
-#ifndef	__linux__
-            switch (writeMode) {
-            case GR_LFBWRITEMODE_565_DEPTH:
-            case GR_LFBWRITEMODE_555_DEPTH:
-            case GR_LFBWRITEMODE_1555_DEPTH:
-            case GR_LFBWRITEMODE_888:
-            case GR_LFBWRITEMODE_8888:
-            case GR_LFBWRITEMODE_Z32:
-              info->strideInBytes <<= 1;
-              break;
-            }
-#endif	/* defined(__linux__) */
-          }
-          REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 2, 0x3);
-          REG_GROUP_SET(hw, colBufferAddr, gc->textureBuffer.addr );
-          REG_GROUP_SET(hw, colBufferStride, gc->textureBuffer.stride );
-          REG_GROUP_END();  
-        } else /* else !gc->textureBuffer.on  */        {
-          if (type == GR_LFB_READ_ONLY) {
-            info->lfbPtr        = (void *)gc->lfbBuffers[colBufferIndex];
-#if	defined(__linux__)
-            if (colBufferIndex == 0) {
-                info->strideInBytes = driInfo.stride;
-            } else {
-                info->strideInBytes     = gc->bInfo->buffInfo.bufLfbStride;
-            }
-#else	/* defined(__linux__) */
-            info->strideInBytes     = gc->bInfo->buffInfo.bufLfbStride;
-#endif	/* defined(__linux__) */
-#if __POWERPC__
-            if(IS_NAPALM(gc->bInfo->pciInfo.deviceID)) {
-              if(gc->grPixelSize == 2) {
-                info->lfbPtr = (void *)((FxU32)info->lfbPtr + gc->bInfo->pciInfo.swizzleOffset[3]);                
-              } else {
-                info->lfbPtr = (void *)((FxU32)info->lfbPtr + gc->bInfo->pciInfo.swizzleOffset[1]);  
-              }
-            }
-#endif                        
-          }
-#if !__POWERPC__          
-          /* Next, If it is writeOnly and 565 (or matches the FB format exactly) 
-             and not pixelpipe, we just return the current buffer lfbPtr as the
-             write ptr. This fixes those games that use the lfb write pointer to do
-             lfb reads. --mikec */
-          /* Note: It also appears that OpenGL depends on this, since they always
-           * take both a read and write lock, but only save off the stride value 
-           * from the latter one.  So if we return different strides OpenGL's lfb
-           * accesses will be whacked. -- KCD */
-          else if ((type == GR_LFB_WRITE_ONLY) &&
-                   (writeMode == fbMode) &&
-                   (!pixelPipeline) && 
-                   /* Origin must be upper left since we will return raw lfb */
-                   (origin != GR_ORIGIN_LOWER_LEFT)){
-            info->lfbPtr = (void *)gc->lfbBuffers[colBufferIndex];
-            info->strideInBytes     = gc->bInfo->buffInfo.bufLfbStride;
-            gc->state.shadow.colBufferAddr = gc->buffers0[colBufferIndex]; 
-          }
 #endif
-           else {
-            gc->state.shadow.colBufferAddr = gc->buffers0[colBufferIndex];
-            /* tbext */
-            if ( gc->textureBuffer.on ) {
               REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 2, 0x3);
-              REG_GROUP_SET(hw, colBufferAddr, gc->buffers0[colBufferIndex]);
-              REG_GROUP_SET(hw, colBufferStride,gc->state.shadow.colBufferStride);
+              REG_GROUP_SET(hw, colBufferAddr, gc->textureBuffer.addr );
+              REG_GROUP_SET(hw, colBufferStride, gc->textureBuffer.stride );
               REG_GROUP_END();
+              
+            } else {
+              
+              info->lfbPtr        = (void *)gc->lfbBuffers[colBufferIndex];
+#if defined(__linux__)
+              if (colBufferIndex == 0) {
+                info->strideInBytes = driInfo.stride;
+              } else {
+                info->strideInBytes     = gc->bInfo->buffInfo.bufLfbStride;
+              }
+#else	/* defined(__linux__) */
+              info->strideInBytes     = gc->bInfo->buffInfo.bufLfbStride;
+#endif	/* defined(__linux__) */
+#if __POWERPC__
+              if(IS_NAPALM(gc->bInfo->pciInfo.deviceID)) {
+                if(gc->grPixelSize == 2) {
+                  info->lfbPtr = (void *)((FxU32)info->lfbPtr + gc->bInfo->pciInfo.swizzleOffset[3]);                
+                } else {
+                  info->lfbPtr = (void *)((FxU32)info->lfbPtr + gc->bInfo->pciInfo.swizzleOffset[1]);  
+                }
+              }
+#endif
+            }
+          }
+          break;
+        case GR_LFB_WRITE_ONLY:
+          {
+            if(( gc->textureBuffer.on ) &&
+               ( buffer == GR_BUFFER_TEXTUREBUFFER_EXT || buffer == GR_BUFFER_TEXTUREAUXBUFFER_EXT )) {
+             /* Next, If it is writeOnly and 565 and not pixelpipe,
+                we just return the current buffer lfbPtr as the write ptr. 
+                This fixes those games that use the lfb write pointer to do
+                lfb reads. --mikec */
+              if((writeMode == (FxI32)fbMode) &&
+                (!pixelPipeline) && 
+                 /* Origin must be upper left since we will return raw lfb */
+                 (origin != GR_ORIGIN_LOWER_LEFT)){
+                info->lfbPtr = (void *)((FxU32)gc->rawLfb + gc->textureBuffer.addr);
+                info->strideInBytes     = gc->textureBuffer.stride ;
+              } else {
+#ifdef __linux__
+              /*
+               * For Linux, we just return the correct address and
+               * stride.
+               */
+                info->strideInBytes   = gc->bInfo->buffInfo.bufLfbStride;
+                info->lfbPtr          = (void *)gc->lfbBuffers[colBufferIndex];
+#else	/* defined(__linux__) */
+                info->lfbPtr          = (void *)gc->lfb_ptr;
+#endif	/* defined(__linux__) */
+              
+#ifndef __linux__
+                switch (writeMode) {
+                case GR_LFBWRITEMODE_565_DEPTH:
+                case GR_LFBWRITEMODE_555_DEPTH:
+                case GR_LFBWRITEMODE_1555_DEPTH:
+                case GR_LFBWRITEMODE_888:
+                case GR_LFBWRITEMODE_8888:
+                case GR_LFBWRITEMODE_Z32:
+                  info->strideInBytes <<= 1;
+                  break;
+                }
+#endif	/* defined(__linux__) */
+              }
+
+              REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 2, 0x3);
+              REG_GROUP_SET(hw, colBufferAddr, gc->textureBuffer.addr );
+              REG_GROUP_SET(hw, colBufferStride, gc->textureBuffer.stride );
+              REG_GROUP_END();
+             
+            } else {
+              
+            /* Next, If it is writeOnly and 565 (or matches the FB format exactly) 
+               and not pixelpipe, we just return the current buffer lfbPtr as the
+               write ptr. This fixes those games that use the lfb write pointer to do
+               lfb reads. --mikec */
+            /* Note: It also appears that OpenGL depends on this, since they always
+             * take both a read and write lock, but only save off the stride value 
+             * from the latter one.  So if we return different strides OpenGL's lfb
+             * accesses will be whacked. -- KCD */
+              if((writeMode == fbMode) &&
+                 (!pixelPipeline) && 
+                 /* Origin must be upper left since we will return raw lfb */
+                 (origin != GR_ORIGIN_LOWER_LEFT)){
+                info->lfbPtr = (void *)gc->lfbBuffers[colBufferIndex];
+                info->strideInBytes     = gc->bInfo->buffInfo.bufLfbStride;
+                gc->state.shadow.colBufferAddr = gc->buffers0[colBufferIndex];
+              } else {
+                gc->state.shadow.colBufferAddr = gc->buffers0[colBufferIndex];
+                /* tbext */
+                if ( gc->textureBuffer.on ) {
+                  REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 2, 0x3);
+                  REG_GROUP_SET(hw, colBufferAddr, gc->buffers0[colBufferIndex]);
+                  REG_GROUP_SET(hw, colBufferStride,gc->state.shadow.colBufferStride);
+                  REG_GROUP_END();
+                  /* %%KCD - Make sure we don't program the colBufferAddr to point to
+                   * the AUX buffer if the user is trying to do pixel pipe writes to
+                   * the AUX buffer! */
+                } else if (colBufferIndex < (FxU32)gc->grColBuf) {
+                  GR_SET_EXPECTED_SIZE(sizeof(FxU32), 1);
+                  GR_SET(BROADCAST_ID, hw, colBufferAddr, gc->buffers0[colBufferIndex]);
+                  GR_CHECK_SIZE();
+                }
+                
+                /* Make sure dither rotation is disabled for 3D LFBs. */
+                _3dlfb = FXTRUE;
+                
+#if defined(__linux__)
+                /*
+                 * For Linux, we just return the correct address and
+                 * stride.
+                 */
+                info->strideInBytes   = gc->bInfo->buffInfo.bufLfbStride;
+                info->lfbPtr          = (void *)gc->lfbBuffers[colBufferIndex];
+#else	/* defined(__linux__) */
+                info->lfbPtr          = (void *)gc->lfb_ptr;
+#endif	/* defined(__linux__) */
+                
+#ifndef __linux__
+                switch (writeMode) {
+                case GR_LFBWRITEMODE_565_DEPTH:
+                case GR_LFBWRITEMODE_555_DEPTH:
+                case GR_LFBWRITEMODE_1555_DEPTH:
+                case GR_LFBWRITEMODE_888:
+                case GR_LFBWRITEMODE_8888:
+                case GR_LFBWRITEMODE_Z32:
+                  info->strideInBytes <<= 1;
+                  break;
+                }
+#endif	/* defined(__linux__) */
+              }
+            }
+          }
+          break;
+        default:
+          {
             /* %%KCD - Make sure we don't program the colBufferAddr to point to
-             * the AUX buffer if the user is trying to do pixel pipe writes to
+             * the AUX buffer if the user is trying to do 3D LFB writes to
              * the AUX buffer! */
-            } else if (colBufferIndex < (FxU32)gc->grColBuf) {
+            if (colBufferIndex < (FxU32)gc->grColBuf) {
               GR_SET_EXPECTED_SIZE(sizeof(FxU32), 1);
               GR_SET(BROADCAST_ID, hw, colBufferAddr, gc->buffers0[colBufferIndex]);
               GR_CHECK_SIZE();
             }
             
-            /* Make sure dither rotation is disabled for 3D LFBs. */
             _3dlfb = FXTRUE;
             
-#if	defined(__linux__)
-           /*
-            * For Linux, we just return the correct address and
-            * stride.
-            */
-	    info->strideInBytes   = gc->bInfo->buffInfo.bufLfbStride;
-            info->lfbPtr          = (void *)gc->lfbBuffers[colBufferIndex];
-#else	/* defined(__linux__) */
             info->lfbPtr          = (void *)gc->lfb_ptr;
-#endif	/* defined(__linux__) */
-
-#ifndef	__linux__
+            
             switch (writeMode) {
             case GR_LFBWRITEMODE_565_DEPTH:
             case GR_LFBWRITEMODE_555_DEPTH:
@@ -809,9 +850,10 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t type, GrBuffer_t buffer,
               info->strideInBytes <<= 1;
               break;
             }
-#endif	/* defined(__linux__) */
           }
+          break;
         }
+        
         
 #ifdef FX_GLIDE_NAPALM
         /* SLI Effage.  It seems that in order for flipped LFBs to work right,
@@ -850,7 +892,8 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t type, GrBuffer_t buffer,
         }
         /* Pray that no one makes any glide calls that touch the hardware... */
 #ifdef FX_GLIDE_NAPALM
-        if(gc->sliCount > 1) {
+        if((gc->sliCount > 1) &&
+           (type == GR_LFB_READ_ONLY)) {
             hwcSLIReadEnable(gc->bInfo);
         }
 #endif
@@ -875,6 +918,115 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t type, GrBuffer_t buffer,
   GR_RETURN(rv);
 #undef FN_NAME
 } /* grLfbLock */
+
+/* Hack to correct locks of forced 32 bit surfaces */
+static FxU16 *forced_32bpp_lock_buffer = 0;
+
+static FxBool grLfbReadRegionOrigin (GrBuffer_t src_buffer, GrOriginLocation_t origin, 
+                                     FxU32 src_x, FxU32 src_y, 
+                                     FxU32 src_width, FxU32 src_height, 
+                                     FxU32 dst_stride, void *dst_data);
+
+GR_ENTRY(grLfbLock, FxBool,(GrLock_t _type, GrBuffer_t buffer, 
+                            GrLfbWriteMode_t writeMode, GrOriginLocation_t origin, 
+                            FxBool pixelPipeline, GrLfbInfo_t *info)) 
+{
+#define FN_NAME "grLfbLock"
+  FxBool rv = FXTRUE;
+  FxBool wantHwc;
+  
+  GrLock_t type;
+  
+  GR_BEGIN_NOFIFOCHECK_RET("grLfbLock", 82);
+  GDBG_INFO_MORE(gc->myLevel,"(%d,%d,0x%x)\n", _type, buffer, info);
+  
+  GR_CHECK_COMPATABILITY(FN_NAME, !info,
+                         "Null info structure passed.");
+  /* there is only one revision extant */
+  GR_CHECK_COMPATABILITY(FN_NAME, info->size != sizeof(GrLfbInfo_t),
+                         "uninitialized info structure passed.");
+  
+  type = _type & ~(GR_LFB_NOIDLE);
+  if (gc->lockPtrs[type] != (FxU32)-1) {
+    GDBG_INFO(79, "Read lock failure due to existing lock");
+    return FXFALSE;
+  }
+  
+  /* We want to read using HWC if we using FSAA with 4 chips or want dithering */
+  /* or we are using forced 32 bit mode and want dithering */
+  wantHwc = (_GlideRoot.environment.useHwcAAforLfbRead & 2) &&
+    ((gc->state.forced32BPP != 0    && _GlideRoot.environment.ditherHwcAA) ||
+     (gc->bInfo->h3pixelSample >= 2 && (gc->chipCount == 4 || _GlideRoot.environment.ditherHwcAA)));
+  
+  /* If we are using forced 32 bpp mode, the app is expecting 16 bit data */
+  /* Or we want to be using HwcAA for the Lfb read lock */
+  /* We need to use a hack for reading in OpenGL since they do 2 locks. Why, oh why, oh why...*/
+  if ((gc->state.forced32BPP || wantHwc) && 
+      (!_GlideRoot.environment.is_opengl || _GlideRoot.environment.oglLfbLockHack) &&  
+      (buffer ==  GR_BUFFER_FRONTBUFFER || buffer == GR_BUFFER_BACKBUFFER))
+    {
+      if (_GlideRoot.environment.is_opengl && type == GR_LFB_WRITE_ONLY && (gc->lockPtrs[GR_LFB_READ_ONLY] == (FxU32)buffer))
+        {
+          GDBG_INFO_MORE(82,"OpenGL Locking forced 32bit->16bit hack(%d, %d)\n", _type, buffer);
+          
+          /* Now set the lock pointer */
+          gc->lockPtrs[type] = (FxU32) buffer;
+          
+          /* Setup the info structure */
+          info->lfbPtr = forced_32bpp_lock_buffer;
+          info->writeMode = GR_LFBWRITEMODE_565;
+          info->strideInBytes = gc->state.screen_width * 2;
+          info->origin = origin;
+          
+          GDBG_INFO_MORE(82,"OpenGL Locked forced hack (%d, %d)\n", _type, buffer);
+          return FXTRUE;
+          
+        }
+      else if (type == GR_LFB_READ_ONLY)
+        {
+          /* Force origin */
+          /* origin = GR_ORIGIN_UPPER_LEFT; */
+          
+          /* Just play with the useHwcAAforLfbRead setting to tell the ReadRegion */
+          /* function what we want to do */
+          FxU32 old_useHwcAAforLfbRead = _GlideRoot.environment.useHwcAAforLfbRead;
+          if (wantHwc) _GlideRoot.environment.useHwcAAforLfbRead |= 1;
+          else _GlideRoot.environment.useHwcAAforLfbRead = 0;
+          
+          GDBG_INFO_MORE(82,"Locking forced (%d, %d)\n", _type, buffer);
+          
+          forced_32bpp_lock_buffer = malloc (gc->state.screen_width * gc->state.screen_height * 2);
+          rv = grLfbReadRegionOrigin(buffer, origin, 0, 0, gc->state.screen_width, gc->state.screen_height, gc->state.screen_width*2, forced_32bpp_lock_buffer);
+          
+          /* Reset the useHwcAAforLfbRead setting */
+          _GlideRoot.environment.useHwcAAforLfbRead = old_useHwcAAforLfbRead;
+          
+          /* Failed to read */
+          if (!rv)
+            {
+              free (forced_32bpp_lock_buffer);
+              return FXFALSE;
+            }
+          
+          /* Now set the lock pointer */
+          gc->lockPtrs[type] = (FxU32) buffer;
+          
+          /* Setup the info structure */
+          info->lfbPtr = forced_32bpp_lock_buffer;
+          info->writeMode = GR_LFBWRITEMODE_565;
+          info->strideInBytes = gc->state.screen_width * 2;
+          info->origin = origin;
+          
+          GDBG_INFO_MORE(82,"Locked forced (%d, %d)\n", _type, buffer);
+          return FXTRUE;
+        }
+    }
+  
+  GDBG_INFO_MORE(82,"Conventional Lock (%d, %d)\n", _type, buffer);
+  
+  return _grLfbLock(_type, buffer, writeMode, origin, pixelPipeline, info);
+#undef FN_NAME
+}
     
 /*-------------------------------------------------------------------
   Function: grLfbUnlock
@@ -891,7 +1043,7 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t type, GrBuffer_t buffer,
   FXFALSE - failure
   -------------------------------------------------------------------*/
 
-GR_ENTRY(grLfbUnlock, FxBool, (GrLock_t type, GrBuffer_t buffer))
+static FxBool _grLfbUnlock (GrLock_t type, GrBuffer_t buffer)
 {
 #define FN_NAME "grLfbUnlock"
   FxBool rval = FXFALSE;
@@ -925,7 +1077,8 @@ GR_ENTRY(grLfbUnlock, FxBool, (GrLock_t type, GrBuffer_t buffer))
     gc->lockPtrs[type] = (FxU32)-1;
 
 #ifdef FX_GLIDE_NAPALM
-    if(gc->sliCount > 1) {
+    if((gc->sliCount > 1) &&
+       (type == GR_LFB_READ_ONLY)) {
       hwcSLIReadDisable(gc->bInfo);
     }
 #endif
@@ -981,7 +1134,8 @@ GR_ENTRY(grLfbUnlock, FxBool, (GrLock_t type, GrBuffer_t buffer))
     gc->cmdTransportInfo.lfbLockCount = lockCount - 1;
   
 #ifdef FX_GLIDE_NAPALM
-    if(gc->sliCount > 1) {
+    if((gc->sliCount > 1) &&
+       (type == GR_LFB_READ_ONLY)) {
       if(gc->cmdTransportInfo.lfbLockCount != 0) {
         grFinish();
         hwcSLIReadEnable(gc->bInfo);
@@ -995,6 +1149,78 @@ GR_ENTRY(grLfbUnlock, FxBool, (GrLock_t type, GrBuffer_t buffer))
   GR_RETURN(rval);
 #undef FN_NAME
 } /* grLfbUnlock */
+
+/* Hack to correct locks of forced 32 bit surfaces */
+GR_ENTRY(grLfbUnlock, FxBool, (GrLock_t _type, GrBuffer_t buffer))
+{
+#define FN_NAME "grLfbUnlock"
+  FxBool rval = FXFALSE;
+  GrLock_t type;
+  
+  GR_BEGIN_NOFIFOCHECK_RET("_grLfbUnLock", 83);
+  GDBG_INFO_MORE(gc->myLevel,"(%d, %d)\n", _type, buffer);
+  
+  type = _type & ~(GR_LFB_NOIDLE);
+  
+  GR_CHECK_COMPATABILITY(FN_NAME, 
+                         type != GR_LFB_WRITE_ONLY &&
+                         type != GR_LFB_READ_ONLY,
+                         "Bad type");
+  
+  /* tbext  */
+  GR_CHECK_COMPATABILITY(FN_NAME, 
+                         buffer != GR_BUFFER_FRONTBUFFER &&
+                         buffer != GR_BUFFER_BACKBUFFER  &&
+                         buffer != GR_BUFFER_TEXTUREBUFFER_EXT &&
+                         buffer != GR_BUFFER_TEXTUREAUXBUFFER_EXT &&
+                         buffer != GR_BUFFER_AUXBUFFER,
+                         "Bad buffer");
+  
+  /* If we are using forced 32 bpp mode, the app is expecting 16 bit data */
+  /* Or we want to be using HwcAA for the Lfb read lock */
+  /* We need to use a hack for reading in OpenGL since they do 2 locks. Why, oh why, oh why...*/
+  if ((gc->state.forced32BPP || _GlideRoot.environment.useHwcAAforLfbRead & 2) && 
+      (!_GlideRoot.environment.is_opengl || _GlideRoot.environment.oglLfbLockHack) &&  
+      (buffer ==  GR_BUFFER_FRONTBUFFER || buffer == GR_BUFFER_BACKBUFFER))
+    {
+      if (_GlideRoot.environment.is_opengl && type == GR_LFB_WRITE_ONLY && (gc->lockPtrs[GR_LFB_READ_ONLY] == (FxU32)buffer))
+        {
+          GDBG_INFO_MORE(82,"OpenGL UnLocking forced 32bit->16bit hack(%d, %d)\n", _type, buffer);
+          
+          // Not this buffer that is locked
+          if (gc->lockPtrs[type] != (FxU32) buffer) return FXFALSE;
+          
+          // Set unlocked
+          gc->lockPtrs[type] = (FxU32) -1;
+          
+          GDBG_INFO_MORE(82,"OpenGL UnLocked forced hack (%d, %d)\n", _type, buffer);
+          return FXTRUE;
+          
+        }
+      else if (type == GR_LFB_READ_ONLY)
+        {
+          GDBG_INFO_MORE(82,"Unlocking forced (%d, %d)\n", _type, buffer);
+          
+          // Not this buffer that is locked
+          if (gc->lockPtrs[type] != (FxU32) buffer) return FXFALSE;
+          
+          // Set unlocked
+          gc->lockPtrs[type] = (FxU32) -1;
+          
+          // But, the buffer didn't exist
+          if (!forced_32bpp_lock_buffer) return FXFALSE;
+          
+          // Free the buffer
+          free (forced_32bpp_lock_buffer);
+          forced_32bpp_lock_buffer = 0;
+          GDBG_INFO_MORE(82,"Unlocked forced (%d, %d)\n", _type, buffer);
+          return FXTRUE;
+        }
+    }
+  
+  return _grLfbUnlock(_type, buffer);
+#undef FN_NAME
+}
 
 
 #if GLIDE_DEBUG
@@ -1280,10 +1506,10 @@ GR_ENTRY(grLfbWriteRegion, FxBool, (GrBuffer_t dst_buffer,
   FXFALSE - failure
   -------------------------------------------------------------------*/
 #if !__POWERPC__
-GR_ENTRY(grLfbReadRegion, FxBool, (GrBuffer_t src_buffer, 
-                                   FxU32 src_x, FxU32 src_y, 
-                                   FxU32 src_width, FxU32 src_height, 
-                                   FxU32 dst_stride, void *dst_data))
+static FxBool grLfbReadRegionOrigin (GrBuffer_t src_buffer, GrOriginLocation_t origin, 
+                                     FxU32 src_x, FxU32 src_y, 
+                                     FxU32 src_width, FxU32 src_height, 
+                                     FxU32 dst_stride, void *dst_data)
 {
 #define FN_NAME "grLfbReadRegion"
    FxU32 bpp;
@@ -1363,6 +1589,17 @@ GR_ENTRY(grLfbReadRegion, FxBool, (GrBuffer_t src_buffer,
 done:
    GR_RETURN(rv);
 }
+
+GR_ENTRY(grLfbReadRegion, FxBool, (GrBuffer_t src_buffer, 
+                                   FxU32 src_x, FxU32 src_y, 
+                                   FxU32 src_width, FxU32 src_height, 
+                                   FxU32 dst_stride, void *dst_data))
+{
+  return grLfbReadRegionOrigin(src_buffer, GR_ORIGIN_UPPER_LEFT, src_x, src_y,
+									src_width, src_height, dst_stride, dst_data);
+
+}
+
 #else /* if __POWERPC__ */
 GR_ENTRY(grLfbReadRegion, FxBool, (GrBuffer_t src_buffer, 
                                    FxU32 src_x, FxU32 src_y, 

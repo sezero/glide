@@ -19,6 +19,10 @@
 ;; $Header$
 ;; $Revision$
 ;; $Log$
+;; Revision 1.1  2000/06/15 00:27:43  joseph
+;; Initial checkin into SourceForge.
+;;
+;; 13    1/10/03  KoolSmoky first cut at SSE
 ;; 
 ;; 12    4/05/99 11:34a Atai
 ;; added GLIDE_ALT_TAB for xdraw2.inc to query context in the retail build
@@ -83,9 +87,14 @@
 TITLE   xdraw2.asm
 OPTION OLDSTRUCTS       
 
-.586P
+.686P
+IFDEF GL_AMD3D
 .MMX
 .K3D
+ENDIF
+IFDEF GL_SSE
+.XMM
+ENDIF
 
 ;;; Definitions of cvg regs and glide root structures.
 INCLUDE fxgasm.h    
@@ -127,7 +136,11 @@ PROC_TYPE MACRO procType:=<Default>
     IFDEF GL_AMD3D
         EXITM <__trisetup_3DNow_&procType&@12>
     ELSE
-        EXITM <__trisetup_Default_&procType&@12>
+        IFDEF GL_SSE
+            EXITM <__trisetup_SSE_&procType&@12>
+        ELSE
+            EXITM <__trisetup_Default_&procType&@12>
+        ENDIF
     ENDIF
     ENDM        
 
@@ -346,6 +359,42 @@ ENDIF ; GLIDE_DEBUG
 __trisetup_clip_coor_thunk@12 ENDP
 
 ENDIF ; GL_AMD3D    
+
+IFDEF GL_SSE
+            ALIGN   32
+            PUBLIC  __trisetup_SSE_clip_coor_thunk@12
+__trisetup_SSE_clip_coor_thunk@12 PROC NEAR
+
+procPtr TEXTEQU <eax>    
+vPtr    TEXTEQU <ecx>
+gc      TEXTEQU <edx>           ; Current graphics context passed implicitly through edx
+    
+    ;; Call through to the gc->curArchProcs.drawTrianglesProc w/o
+    ;; adding extra stuff to the stack. I wish we could actually
+    ;; do a direct return here w/o too much work.
+    lea     vPtr, [esp + _va$ - STKOFF]         ; Get vertex pointer address
+    mov     procPtr, [gc + drawTrianglesProc]   ; Prefetch drawTriangles proc addr
+    
+    push    vPtr                ; vertex array address
+    push    3                   ; 3 vertices
+
+    ;; If debugging make sure that we're in clip coordinates
+IFDEF GLIDE_DEBUG
+    mov     eax, [gc + CoordinateSpace]
+    test    eax, 1
+    jnz     __clipSpace
+    xor     eax, eax
+    mov     [eax], eax
+__clipSpace:    
+ENDIF ; GLIDE_DEBUG
+
+    push    1                   ; mode = grDrawVertexArray
+    call    procPtr             ; (*gc->curArchProcs.drawTrianglesProc)(grDrawVertexArray, 3, vPtr)
+
+    ret     12                  ; pop 3 dwords (vertex addrs) and return    
+__trisetup_SSE_clip_coor_thunk@12 ENDP
+
+ENDIF ; GL_SSE
 
 _TEXT   ENDS
         END

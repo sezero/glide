@@ -78,11 +78,17 @@ FxU32 getThreadValueSLOW( void ) {
 #elif 1
     __GR_GET_TLSC_VALUE();
 #else
-    __asm {
+/*    __asm {
       __asm mov esi, DWORD PTR fs:[WNT_TEB_PTR] 
       __asm add esi, DWORD PTR _GlideRoot.tlsOffset \
      __asm mov eax, DWORD PTR [esi] \
 }
+*/
+  __asm {
+    __asm mov esi, DWORD PTR fs:[WNT_TEB_PTR];
+    __asm add esi, DWORD PTR _GlideRoot.tlsOffset;
+    __asm mov eax, DWORD PTR [esi];
+  }
 
 #endif
 
@@ -199,6 +205,46 @@ void endCriticalSection(void)
 {
 }
 
-#else	/* defined(__linux__) */
+#elif defined(__DJGPP__)
+
+#include <3dfx.h>
+#include <glidesys.h>
+
+#define FX_DLL_DEFINITION
+#include <fxdll.h>
+#include <glide.h>
+
+#include "fxglide.h"
+#include "fxcmd.h"
+
+FxU32 threadValueDJGPP;
+
+void initThreadStorage(void)
+{
+}
+
+void setThreadValue( FxU32 value )
+{
+	threadValueDJGPP = value;
+}
+
+FxU32 getThreadValueSLOW( void )
+{
+	return threadValueDJGPP;
+}
+ 
+void initCriticalSection(void)
+{
+}
+
+void beginCriticalSection(void)
+{
+}
+
+void endCriticalSection(void)
+{
+}
+
+#else	/* defined(__DJGPP__) */
 #  error "No thread synchronization/storage functions defined for this OS"
 #endif

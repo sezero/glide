@@ -19,6 +19,16 @@
 **
 ** $Header: fxglide.h, 44, 6/15/2000 9:18:11 AM, Bill White
 ** $Log:
+**  49   3dfxzone  1.44        02/26/03 Sandro          fast C clipping routine.
+**       define FAST_C_CLIP.
+**  48   GlideXP   1.43.4      12/14/01 Ryan Nunn       Removed calls to
+**       MultitextureAndTrilinear(). That will now be called by g3LodBiasPerChip()
+**  47   GlideXP   1.43.3      12/13/01 Ryan Nunn       Getting Alt-Tab on
+**       Windows XP to work. #define WINXP_ALT_TAB_FIX=1 to enable
+**  46   GlideXP   1.43.2      12/12/01 Ryan Nunn       Sub Sample LOD Dither Env
+**       settings
+**  45   GlideXP   1.43.1      12/10/01 Ryan Nunn       Define a TRISETUP macro 
+**       just for when GLIDE_USE_C_TRISETUP is defined.
 **  44   3dfx      1.42.1.0    06/15/00 Bill White      Merged changes to support
 **       Linux.
 **
@@ -523,6 +533,7 @@
 #include <glidesys.h>
 #include <gdebug.h>
 #include <h3.h>
+#include <cpuid.h>
 
 /* local */
 #define GR_CDECL
@@ -588,7 +599,11 @@
    Code Macros
    ----------------------------------------------------------------------- */
 #undef  GETENV
-#define GETENV getenv
+#if defined(__linux__) || defined(__DJGPP__)
+#define GETENV(a, b) hwcGetenv(a)
+#else
+#define GETENV(a, b) hwcGetenvEx(a, b)
+#endif
 
 /* -----------------------------------------------------------------------
    Internal Enumerated Types
@@ -949,13 +964,16 @@ typedef struct {
     } wClipping;
 
     struct PerTmuState {
-        float s_scale;
-        float t_scale;
-        FxU32 mmMode;
-        FxU32 smallLod;
-        FxU32 largeLod;
-        FxU32 evenOdd;
-        FxU32 nccTable;
+        float  s_scale;
+        float  t_scale;
+        FxU32  mmMode;
+        FxU32  smallLod;
+        FxU32  largeLod;
+        FxU32  evenOdd;
+        FxU32  nccTable;
+        FxU32  textureMode;
+        FxU32  tLOD;
+        FxBool texSubLodDither;
     } per_tmu[GLIDE_NUM_TMU];
 
   float depth_range;
@@ -1136,14 +1154,14 @@ typedef struct {
     struct {
       GrDitherMode_t mode;
     } grDitherModeArgs;
-#ifdef __linux__
+#if defined(__linux__) || defined(__WIN32__)
     struct {
       GrStippleMode_t mode;
     } grStippleModeArgs;
     struct {
       GrStipplePattern_t stipple;
     } grStipplePatternArgs;
-#endif /* __linux__ */
+#endif /* __linux__ __WIN32__ */
     struct {
       GrBuffer_t buffer;
     } grRenderBufferArgs;
@@ -1264,10 +1282,12 @@ typedef struct {
     GrEnableMode_t texture_uma_mode;
     GrEnableMode_t combine_ext_mode;
     GrEnableMode_t stencil_mode;
+    FxU32 aaMultisampleDisableCount;
   } grEnableArgs;
   struct{
     GrCoordinateSpaceMode_t coordinate_space_mode;
   } grCoordinateSpaceArgs;
+  FxU32 forced32BPP;
 } GrState;
 
 /*
@@ -1282,7 +1302,7 @@ typedef struct {
  * the _archXXXX proc list that is selected at grGlideInit time.
  */
 
-#ifndef __linux__
+#if !defined(__linux__) && (!defined(__DJGPP__) || defined(GLIDE_USE_C_TRISETUP)) /* [dBorca] asm workaround */
 typedef FxI32 (FX_CALL* GrTriSetupProc)(const void *a, const void *b, const void *c);
 #else   /* defined(__linux__) */
 typedef FxI32 (FX_CALL* GrTriSetupProc)(const void *g, const void *a, const void *b, const void *c);
@@ -1318,6 +1338,10 @@ extern FxI32 FX_CALL _vptrisetup_cull(const void*, const void*, const void*);
  */
 extern FxI32 FX_CALL _trisetup_clip_coor_thunk(const void*, const void*, const void*);
 
+#if GL_SSE
+extern FxI32 FX_CALL _trisetup_SSE_clip_coor_thunk(const void*, const void*, const void*);
+#endif /* GL_SSE */
+
 extern void FX_CALL _grDrawTriangles_Default(FxI32, FxI32, void*);
 
 void FX_CSTYLE _drawvertexlist(FxU32 pktype, FxU32 type, FxI32 mode, FxI32 count, void *pointers);
@@ -1339,11 +1363,27 @@ void FX_CSTYLE _grDrawVertexList_3DNow_Window(FxU32 pktype, FxU32 type, FxI32 mo
 void FX_CSTYLE _grDrawVertexList_3DNow_Clip(FxU32 pktype, FxU32 type, FxI32 mode, FxI32 count, void *pointers);
 #endif /* GL_AMD3D */
 
-#ifdef __linux__
+#if GL_SSE
+extern FxI32 FX_CALL _trisetup_SSE_win_cull_invalid(const void*, const void*, const void*);
+extern FxI32 FX_CALL _trisetup_SSE_win_cull_valid(const void*, const void*, const void*);
+extern FxI32 FX_CALL _trisetup_SSE_win_nocull_invalid(const void*, const void*, const void*);
+extern FxI32 FX_CALL _trisetup_SSE_win_nocull_valid(const void*, const void*, const void*);
+
+extern FxI32 FX_CALL _trisetup_SSE_clip_cull_invalid(const void*, const void*, const void*);
+extern FxI32 FX_CALL _trisetup_SSE_clip_cull_valid(const void*, const void*, const void*);
+extern FxI32 FX_CALL _trisetup_SSE_clip_nocull_invalid(const void*, const void*, const void*);
+extern FxI32 FX_CALL _trisetup_SSE_clip_nocull_valid(const void*, const void*, const void*);
+
+extern void FX_CALL _grDrawTriangles_SSE(FxI32, FxI32, void*);
+void FX_CSTYLE _grDrawVertexList_SSE_Window(FxU32 pktype, FxU32 type, FxI32 mode, FxI32 count, void *pointers);
+void FX_CSTYLE _grDrawVertexList_SSE_Clip(FxU32 pktype, FxU32 type, FxI32 mode, FxI32 count, void *pointers);
+#endif /* GL_SSE */
+
+#if defined(__linux__) || defined(__DJGPP__)
 /* Define this structure otherwise it assumes the structure only exists
    within the function */
 struct GrGC_s;
-#endif	/* defined(__linux__) */
+#endif	/* defined(__linux__) || defined(__DJGPP__) */
 
 /* _GlideRoot.curTexProcs is an array of (possibly specialized)
  * function pointers indexed by texture format size (8/16 bits for
@@ -1359,6 +1399,12 @@ typedef void  (FX_CALL* GrTexDownloadProc)(struct GrGC_s* gc,
                                            void* texData);
 typedef GrTexDownloadProc GrTexDownloadProcVector[4][5];
 
+extern void FX_CALL _grTexDownload_Default_4_4(struct GrGC_s* gc,
+                                               const FxU32 tmuBaseAddr,
+                                               const FxI32 maxS,
+                                               const FxI32 minT,
+                                               const FxI32 maxT,
+                                               void* texData);
 extern void FX_CALL _grTexDownload_Default_4_8(struct GrGC_s* gc,
                                                const FxU32 tmuBaseAddr,
                                                const FxI32 maxS,
@@ -1444,6 +1490,33 @@ extern void FX_CALL _grTexDownload_3DNow_MMX(struct GrGC_s* gc,
                                              const FxI32 maxT,
                                              void* texData);
 #endif /* GL_AMD3D */
+
+#if GL_MMX
+/* xtexdl.asm */
+extern void FX_CALL _grTexDownload_MMX(struct GrGC_s* gc,
+                                       const FxU32 tmuBaseAddr,
+                                       const FxI32 maxS,
+                                       const FxI32 minT,
+                                       const FxI32 maxT,
+                                       void* texData);
+#endif
+
+#if GL_SSE2
+/* xtexdl.asm */
+extern void FX_CALL _grTexDownload_SSE2_64(struct GrGC_s* gc,
+                                           const FxU32 tmuBaseAddr,
+                                           const FxI32 maxS,
+                                           const FxI32 minT,
+                                           const FxI32 maxT,
+                                           void* texData);
+
+extern void FX_CALL _grTexDownload_SSE2_128(struct GrGC_s* gc,
+                                            const FxU32 tmuBaseAddr,
+                                            const FxI32 maxS,
+                                            const FxI32 minT,
+                                            const FxI32 maxT,
+                                            void* texData);
+#endif
 
 typedef struct GrGC_s
 {
@@ -1621,8 +1694,18 @@ typedef struct GrGC_s
     FxFloat* addr;
   } regDataList[kMaxVertexParam];
   int tsuDataList[kMaxVertexParam];
+
+#ifdef FAST_C_CLIP
+  int tsuDataListByte[kMaxVertexParam];
+#endif
+  
 #else
   int tsuDataList[kMaxVertexParam];
+
+#ifdef FAST_C_CLIP
+  int tsuDataListByte[kMaxVertexParam];
+#endif
+  
 #endif
 #ifdef GLIDE3_SCALER
   int tsuDataListScaler[kMaxVertexParam];
@@ -1756,7 +1839,7 @@ typedef struct GrGC_s
                                    occur every 64K writes. */
 
   } cmdTransportInfo;
-#ifndef	__linux__
+#if !defined(__linux__) && (!defined(__DJGPP__) || defined(GLIDE_USE_C_TRISETUP)) /* [dBorca] asm workaround */
   FxI32 (FX_CALL *triSetupProc)(const void *a, const void *b, const void *c);
 #else	/* defined(__linux__) */
   FxI32 (FX_CALL *triSetupProc)(const void *g, const void *a, const void *b, const void *c);
@@ -1950,8 +2033,8 @@ struct _GlideRoot_s {
     tlsOffset;
 
   int current_sst;
-  FxU32
-    CPUType;
+  _p_info
+    CPUType;            /* Colourless's CPUID */
   FxBool
     OSWin95;
   FxI32
@@ -2039,10 +2122,27 @@ struct _GlideRoot_s {
     FxU32  columnWidth;         /* 'n' in columns of n */
 
     /* Anti-aliasing default perturbation values */
-    FxU32  aaXOffset[10][8];		/* increase arrays for 8xaa */
-    FxU32  aaYOffset[10][8];
+    FxU32  aaXOffset[13][8];	/* increase arrays for 8xaa */
+    FxU32  aaYOffset[13][8];
     /* Limit number of writes between fences */
     FxI32  fenceLimit;
+    FxBool texSubLodDither;     /* always do subsample mipmap dithering */
+    FxBool aaClip;              /* clean out AA garbage */
+    float  aaPixelOffset;       /* AA jitter pixel offset */
+    float  aaJitterDisp;        /* AA jitter dispersity */
+    double aaGridRotation;      /* AA grid rotation */
+
+    FxBool forceAutoBump;       /* force Auto bump? */
+#if CHECK_SLAVE_SWAPCMD
+    FxU32 checkSlaveSwapCMD;    /* check swap commands across all chips */
+#endif
+#if TACO_MEMORY_FIFO_HACK
+    FxBool memFIFOHack;         /* flush FIFO as much as possible */
+#endif
+
+    FxU32  oglLfbLockHack;	/* Enables disable hack to get around forced 32bit problems in OpenGL */
+    FxU32  useHwcAAforLfbRead;  /* Specifies whether to use HwcAAReadRegion for read Locks and LfbReadRegion calls */
+    FxU32  ditherHwcAA;		/* Specifies whether to use HwcAAReadRegion should dither */
   } environment;
 
   GrHwConfiguration     hwConfig;
@@ -2065,6 +2165,7 @@ struct _GlideRoot_s {
     GrVertexListProc*         nullVertexListProcs;
     GrTexDownloadProcVector*  nullTexProcs;    
   } deviceArchProcs;
+
 };
 
 extern struct _GlideRoot_s GR_CDECL _GlideRoot;
@@ -2109,7 +2210,8 @@ extern GrGCFuncs _curGCFuncs;
    type FX_CSTYLE name args
 
 #define GR_ENTRY(name, type, args) \
-   FX_EXPORT type FX_CSTYLE name args
+   type FX_CSTYLE name args
+   //FX_EXPORT type FX_CSTYLE name args
 
 #define GR_FAST_ENTRY(name, type, args) \
    __declspec naked FX_EXPORT type FX_CSTYLE name args
@@ -2253,7 +2355,7 @@ _trisetup_noclip_valid(const void *va, const void *vb, const void *vc );
 #elif defined(__POWERPC__)
 #define TRISETUP(_a, _b, _c) \
   ((FxI32 (*)(const void *va, const void *vb, const void *vc, GrGC *gc))*gc->triSetupProc)(_a, _b, _c, gc)
-#elif defined(__linux__)
+#elif defined( __linux__ ) || (defined(__DJGPP__) && !defined(GLIDE_USE_C_TRISETUP)) /* [dBorca] asm workaround */
 #define TRISETUP(a, b, c) (gc->triSetupProc)(gc, a, b, c)
 #else /* defined(__linux__) */
 #define TRISETUP \
@@ -2327,11 +2429,11 @@ grStencilFunc(GrCmpFnc_t fnc, GrStencil_t ref, GrStencil_t mask);
 void FX_CALL 
 grStencilMask(GrStencil_t write_mask);
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__WIN32__)
 void FX_CALL
 grStipplePattern(
             GrStipplePattern_t stipple);
-#endif /* __linux__ */
+#endif /* __linux__ __WIN32__ */
 
 void FX_CALL 
 grStencilOp(
@@ -2507,10 +2609,10 @@ _grDepthBufferMode( GrDepthBufferMode_t mode );
 void
 _grDitherMode( GrDitherMode_t mode );
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__WIN32__)
 void
 _grStippleMode( GrStippleMode_t mode );
-#endif /* __linux__ */
+#endif /* __linux__  __WIN32__ */
 
 void
 _grRenderBuffer( GrBuffer_t buffer );
@@ -2623,6 +2725,11 @@ extern FxU32 threadValueLinux;
 #define getThreadValueFast() threadValueLinux
 #endif /* defined(__linux__) */
 
+#ifdef __DJGPP__
+extern FxU32 threadValueDJGPP;
+#define getThreadValueFast() threadValueDJGPP
+#endif /* defined(__DJGPP__) */
+
 #define CUR_TRI_PROC(__checkValidP, __cullP) \
   (*gc->archDispatchProcs.coorModeTriVector)[__checkValidP][__cullP]
 #define INVALIDATE(regset) {\
@@ -2676,7 +2783,7 @@ void
 _grDisplayStats(void);
 
 void
-_GlideInitEnvironment(void);
+_GlideInitEnvironment(int which);
 
 void FX_CSTYLE
 _grColorCombineDelta0Mode(FxBool delta0Mode);
@@ -2777,8 +2884,10 @@ _grShamelessPlug(void);
 FxBool
 _grSstDetectResources(void);
 
+#if 0 /* KoolSmoky - remove junk */
 FxU16
 _grTexFloatLODToFixedLOD(float value);
+#endif
 
 void FX_CSTYLE
 _grTexDetailControl(GrChipID_t tmu, FxU32 detail);
@@ -2911,10 +3020,18 @@ assertDefaultState( void );
 #define GR_DEBUG_DCL_STAGE2(name, level)
 #define GR_DEBUG_DCL(name, level)
 #define GR_TRACE_EXIT(__n)
-#define GR_TRACE_RETURN(__l, __n, __v) 
+#define GR_TRACE_RETURN(__l, __n, __v)
 #endif /* !DEBUG_MODE */
 
 #include <assert.h>
+
+#if WINXP_ALT_TAB_FIX
+#define HWCQUERYCONTEXTXP() if (!(gc->windowed || hwcQueryContextXP(gc->bInfo))) return;
+#define HWCQUERYCONTEXTXP_RET() if (!(gc->windowed || hwcQueryContextXP(gc->bInfo))) return 0;
+#else /* WINXP_ALT_TAB_FIX */
+#define HWCQUERYCONTEXTXP()
+#define HWCQUERYCONTEXTXP_RET()
+#endif/* WINXP_ALT_TAB_FIX */
 
 #ifdef GLIDE_ALT_TAB
 #define GR_BEGIN_NOFIFOCHECK(name,level) \
@@ -2928,6 +3045,7 @@ assertDefaultState( void );
                   if (*gc->lostContext) { \
                     return;\
                   }\
+                  HWCQUERYCONTEXTXP(); \
                 }
 #define GR_BEGIN_NOFIFOCHECK_RET(name,level) \
                 GR_DCL_GC;      \
@@ -2940,6 +3058,7 @@ assertDefaultState( void );
                   if (*gc->lostContext) { \
                       return 0;\
                   }\
+                  HWCQUERYCONTEXTXP_RET(); \
                 }
 #define GR_BEGIN_NOFIFOCHECK_NORET(name,level) \
                 GR_DCL_GC;      \
@@ -3067,6 +3186,7 @@ _grErrorCallback(const char* const procName,
                  va_list           args);
 #endif
 
+#if 0  /* we now use Colourless's CPUID */
 /* Returns 16:16 pair indicating the cpu's manufacturer and its
  * capabilities. Non-Intel processors should have a vendor id w/ the
  * high bit set so that it appears to be a negative #. The value of
@@ -3099,11 +3219,12 @@ _grErrorCallback(const char* const procName,
  */
 
 enum {
-  kCPUVendorIntel   = 0x0000,
-  kCPUVendorAMD     = 0x8001,
-  kCPUVendorCyrix   = 0x8002,
-  kCPUVendorIDT     = 0x8003,
-  kCPUVendorUnknown = 0xFFFF
+  kCPUVendorIntel     = 0x0000,
+  kCPUVendorAMD       = 0x8001,
+  kCPUVendorCyrix     = 0x8002,
+  kCPUVendorIDT       = 0x8003,
+  kCPUVendorTransmeta = 0x8004,
+  kCPUVendorUnknown   = 0xFFFF
 };
 
 extern FxI32 GR_CDECL
@@ -3114,7 +3235,7 @@ single_precision_asm(void);
 
 extern void GR_CDECL 
 double_precision_asm(void);
-
+#endif /* we now use Colourless's CPUID */
 
 /* The translation macros convert from the reasonable log2 formats to
  * the somewhat whacked (For those of us coming back to sst1 things
@@ -3135,12 +3256,16 @@ extern const FxU32 _grBitsPerTexel[];
 extern const int _grMipMapHostWH[G3_ASPECT_TRANSLATE(GR_ASPECT_LOG2_1x8) + 1]
                                 [GR_LOD_LOG2_2048 + 1][2];
 extern const int _grMipMapHostWHCmp4Bit[G3_ASPECT_TRANSLATE(GR_ASPECT_LOG2_1x8) + 1][GR_LOD_LOG2_2048 + 1][2];
+extern const int _grMipMapHostWHDXT[G3_ASPECT_TRANSLATE(GR_ASPECT_LOG2_1x8) + 1][GR_LOD_LOG2_2048 + 1][2];
 extern const FxU32 _grMipMapHostSize[][12];
 extern const FxU32 _grMipMapHostSizeCmp4Bit[][12];
+extern const FxU32 _grMipMapHostSizeDXT[][12];
 extern const FxI32 _grMipMapOffset[4][16];
 extern const FxI32 _grMipMapOffsetCmp4Bit[7][16];
+extern const FxI32 _grMipMapOffsetDXT[4][16];
 extern const FxI32 _grMipMapOffset_Tsplit[4][16];
 extern const FxI32 _grMipMapOffset_TsplitCmp4Bit[7][16];
+extern const FxI32 _grMipMapOffset_TsplitDXT[4][16];
 extern const FxU32 _gr_evenOdd_xlate_table[];
 extern const FxU32 _gr_aspect_xlate_table[];
 
@@ -3156,12 +3281,29 @@ extern const FxU32 _gr_aspect_xlate_table[];
 #define HEIGHT_BY_ASPECT_LOD_FXT1(__aspect, __lod) \
   _grMipMapHostWHCmp4Bit[G3_ASPECT_TRANSLATE(__aspect)][(__lod)][1]
 
+#define WIDTH_BY_ASPECT_LOD_DXT(__aspect, __lod) \
+  _grMipMapHostWHDXT[G3_ASPECT_TRANSLATE(__aspect)][(__lod)][0]
+
+#define HEIGHT_BY_ASPECT_LOD_DXT(__aspect, __lod) \
+  _grMipMapHostWHDXT[G3_ASPECT_TRANSLATE(__aspect)][(__lod)][1]
+
+#if 0 /* KoolSmoky - remove */
 GrLOD_t
 _g3LodXlat(const GrLOD_t someLOD, const FxBool tBig);
+#endif
 
-extern void g3LodBiasPerChip(void);
+extern void g3LodBiasPerChip(GrChipID_t tmu, FxU32 tLod);
 
-extern FxBool MultitextureAndTrilinear(void);
+#if 0 /* KoolSmoky - remove */
+extern GrChipID_t MultitextureAndTrilinear(void);
+#endif
+
+#define _grTexFloatLODToFixedLOD(value) \
+  (FxU16)((( int )(( value + .125F ) / .25F)) & 0x003F)
+
+static GrLOD_t g3LodXlat_base[2] = { GR_LOD_LOG2_256, GR_LOD_LOG2_2048 };
+#define _g3LodXlat(someLOD, tBig) \
+  (g3LodXlat_base[tBig] - someLOD)
 
 #endif /* __FXGLIDE_H__ */
 

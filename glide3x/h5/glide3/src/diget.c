@@ -556,11 +556,13 @@ GR_DIENTRY(grGet, FxU32, (FxU32 pname, FxU32 plength, FxI32 *params))
       /* Default to the whole memory size until the application inits
        * buffers etc then subtract off start of the first color buffer.
        */
-      *params = (gc->fbuf_size - 2) << 20;
 #ifdef GLIDE_INIT_HWC
       if (gc->open)
         *params = ((gc->bInfo->h3Mem << 20) - gc->fbOffset);
+      else
 #endif
+        *params = (gc->fbuf_size - 2) << 20;
+      
       retVal = plength;
     }
     break;
@@ -572,6 +574,7 @@ GR_DIENTRY(grGet, FxU32, (FxU32 pname, FxU32 plength, FxI32 *params))
         *params = (gc->tmu_state[0].total_mem);
       else
         *params = 2 << 20;
+
       retVal = plength;
     }
     break;
@@ -580,7 +583,7 @@ GR_DIENTRY(grGet, FxU32, (FxU32 pname, FxU32 plength, FxI32 *params))
       GR_DCL_GC;
 
 #ifdef GLIDE_INIT_HWC
-      *params = gc->bInfo->h3Mem << 20;
+        *params = gc->bInfo->h3Mem << 20;
 #endif
 
       retVal = plength;
@@ -613,7 +616,7 @@ GR_DIENTRY(grGet, FxU32, (FxU32 pname, FxU32 plength, FxI32 *params))
     break;
   case GR_NUM_TMU:
     if (plength == 4) {
-      *params = _GlideRoot.GCs[_GlideRoot.current_sst].num_tmu;
+        *params = _GlideRoot.GCs[_GlideRoot.current_sst].num_tmu;
       retVal = plength;
     }
     break;
@@ -638,7 +641,7 @@ GR_DIENTRY(grGet, FxU32, (FxU32 pname, FxU32 plength, FxI32 *params))
         *params = 0x11100;  /* voodoo3 = banshee + voodoo2 */
         break;
       default:
-        *params = 0;
+          *params = 0;
       }
 #endif
         
@@ -850,6 +853,20 @@ GR_DIENTRY(grGet, FxU32, (FxU32 pname, FxU32 plength, FxI32 *params))
   Return:
     pointer to the selected string if successful
   -------------------------------------------------------------------*/
+#if GLIDE_POINTCAST_PALETTE
+#define POINTCAST_EXT_STR "POINTCAST "
+#else
+#define POINTCAST_EXT_STR ""
+#endif
+#ifdef QUERY_EXTENSION_SUPPORTED
+#define QUERY_EXT_STR "QUERY "
+#else
+#define QUERY_EXT_STR ""
+#endif
+
+#define BASE_EXT_STR	"CHROMARANGE TEXCHROMA TEXMIRROR TEXUMA PALETTE6666 FOGCOORD SURFACE COMMAND_TRANSPORT TEXTUREBUFFER GETGAMMA GETREGISTRY ALPHAFOG "
+#define NAPALM_EXT_STR	"PIXEXT COMBINE TEXFMT "
+
 GR_DIENTRY(grGetString, const char *, (FxU32 pname))
 {
 #define FN_NAME "grGetString"
@@ -865,9 +882,9 @@ GR_DIENTRY(grGetString, const char *, (FxU32 pname))
       if (!gc)  /* workaround null gc bug */
         return rv;
       if (!IS_NAPALM(gc->bInfo->pciInfo.deviceID))
-        rv = " CHROMARANGE TEXCHROMA TEXMIRROR TEXUMA PALETTE6666 FOGCOORD SURFACE COMMAND_TRANSPORT TEXTUREBUFFER GETGAMMA GETREGISTRY ";
+        rv = " " BASE_EXT_STR QUERY_EXT_STR POINTCAST_EXT_STR;
       else
-        rv = " CHROMARANGE TEXCHROMA TEXMIRROR TEXUMA PALETTE6666 FOGCOORD SURFACE COMMAND_TRANSPORT PIXEXT COMBINE TEXFMT TEXTUREBUFFER GETGAMMA GETREGISTRY ";
+        rv = " " BASE_EXT_STR NAPALM_EXT_STR QUERY_EXT_STR POINTCAST_EXT_STR;
     }
     break;
   case GR_HARDWARE:
@@ -887,7 +904,11 @@ GR_DIENTRY(grGetString, const char *, (FxU32 pname))
         break;
       default:
         if (IS_NAPALM(gc->bInfo->pciInfo.deviceID)) {
-          if (gc->bInfo->pciInfo.numChips >= 2) {
+          if (gc->bInfo->pciInfo.realNumChips == 4) {
+            rv = "Voodoo5 6000 (tm)" ;
+          } else if (gc->bInfo->pciInfo.realNumChips == 2) {
+            rv = "Voodoo5 5500 (tm)" ;
+          } else if (gc->bInfo->pciInfo.realNumChips >= 2) {
             rv = "Voodoo5 (tm)" ;
           } else {
             rv = "Voodoo4 (tm)" ;
@@ -1091,6 +1112,17 @@ static GrExtensionTuple _extensionTable[] = {
     { "grAlphaBlendFunctionExt", (GrProc)grAlphaBlendFunctionExt },
     { "grTBufferWriteMaskExt", (GrProc)grTBufferWriteMaskExt },
 #endif /* FX_GLIDE_NAPALM */
+    /* QUERY */
+#ifdef QUERY_EXTENSION_SUPPORTED
+    { "grSstQueryBoards", (GrProc)grSstQueryBoards },
+    { "grSstQueryHardware", (GrProc)grSstQueryHardware },
+#endif
+    /* POINTCAST */
+#if GLIDE_POINTCAST_PALETTE
+    { "grTexDownloadTableExt", (GrProc)grTexDownloadTableExt },
+    { "grTexDownloadTablePartialExt", (GrProc)grTexDownloadTablePartialExt },
+    { "grTexNCCTableExt", (GrProc)grTexNCCTableExt },
+#endif
     { 0, 0 }
 };
 

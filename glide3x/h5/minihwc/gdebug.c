@@ -22,6 +22,14 @@
 **
 ** $Revision$
 ** $Date$
+**
+**
+** $Log: 
+**  1    GlideXP   1.0             12/10/01 Ryan Nunn       Automatically
+**       write Level 80 ouput to gdbg.txt when _DEBUG is defined
+**  02/23/03 KoolSmoky - merged with Colourless's glidexp
+**   1   ve3d      1.6         03/29/02 KoolSmoky    KERNEL_NT fix
+**
 */
 
 #include <stdio.h>
@@ -52,7 +60,6 @@ static FxBool UseDebugString = 0;
 #endif /* USE_DEBUG_STRING */
 
 #ifdef KERNEL_NT
-
 void __stdcall
 EngDebugPrint(
     char * StandardPrefix,
@@ -70,10 +77,10 @@ static long gdbg_errors = 0;
 #ifdef HWC_EXT_INIT
 char *
 hwcGetenv(char *a);
-#ifdef GETENV
+/*#ifdef GETENV
 #undef GETENV
 #endif
-#define GETENV hwcGetenv
+#define GETENV hwcGetenv*/
 #endif
 
 
@@ -90,8 +97,12 @@ hwcGetenv(char *a);
 #define	INITIAL_STATIC_GDBG_MSGFILE	NULL
 #define INITIAL_GDBG_MSGFILE            stderr
 #else
+#ifdef NEED_MSGFILE_ASSIGN
+#define	INITIAL_STATIC_GDBG_MSGFILE	NULL
+#else
 #define	INITIAL_STATIC_GDBG_MSGFILE	stdout
-#define INITIAL_GDBG_MSGFILE            stdout
+#endif
+#define INITIAL_GDBG_MSGFILE		stdout
 #endif
 
 #ifdef KERNEL
@@ -118,11 +129,16 @@ extern int __cdecl klvfprintf(FILE        *stream,
                               va_list      arg    ) ;
 #endif
 
-static FILE *gdbg_msgfile;                                   // GDBG info/error file
+FILE *gdbg_msgfile;                                   // GDBG info/error file
 
 #else /* #ifdef KERNEL */
 
-static FILE *gdbg_msgfile = INITIAL_STATIC_GDBG_MSGFILE;     // GDBG info/error file
+//#ifdef _DLL
+//FILE *gdbg_msgfile;     // GDBG info/error file
+//#else
+FILE *gdbg_msgfile = INITIAL_STATIC_GDBG_MSGFILE;     // GDBG info/error file
+//#endif
+
 
 //----------------------------------------------------------------------
 // initialize gdbg_level from an environment variable
@@ -174,6 +190,17 @@ gdbg_parse(const char *env)
 
 #endif /* #ifndef KERNEL */
 
+
+void gdbg_init_gdbg_msgfile(void) 
+{
+    static int done=0;                  // only execute once
+	if (done)return;
+	done = 1;
+#ifdef NEED_MSGFILE_ASSIGN
+    gdbg_msgfile = INITIAL_GDBG_MSGFILE;
+#endif
+}
+
 FX_EXPORT void FX_CSTYLE
 gdbg_init(void)
 {
@@ -203,10 +230,22 @@ gdbg_init(void)
 #else /* #ifdef KERNEL */
     done = 1;
     gdbg_debuglevel[0] = 1;             // always enable level 0
-    env = GETENV("GDBG_FILE");
+    env = hwcGetenv("GDBG_FILE");
+#ifdef _DEBUG
+    if (env == NULL) env = "gdbg.txt";
+#endif
+#if _FIFODUMP
+	env = "fifodump.txt";
+#endif
     if (env != NULL) GDBG_SET_FILE(env);
-    env = GETENV("GDBG_LEVEL");
+    env = hwcGetenv("GDBG_LEVEL");
+#ifdef _DEBUG
+    if (env == NULL) env = "80";
+#endif
     if (env == NULL) env = "0";
+#if _FIFODUMP
+	env = "444";
+#endif
     gdbg_parse(env);
     gdbg_info(1,"gdbg_init(): debug level = %s\n",env);
 #endif /* #ifndef KERNEL */
@@ -258,6 +297,8 @@ FX_EXPORT void FX_CSTYLE gdbg_set_keepalive(GDBGKeepAliveProc p)
 FX_EXPORT void FX_CSTYLE
 gdbg_vprintf (const char *format,va_list args)
 {
+#ifndef CEASE_ALL_GDBG
+  
   if (gdbg_msgfile != NULL) {
 #ifdef KERNEL
     // shouldn't get here now
@@ -291,11 +332,16 @@ gdbg_vprintf (const char *format,va_list args)
     if (keepAliveProc) keepAliveProc(100);
 #endif /* !KERNEL */
   }
+
+#endif /* !CEASE_ALL_GDBG */
 }
 
 FX_EXPORT void FX_CSTYLE
 gdbg_printf (const char *format, ...)
 {
+#ifdef _FIFODUMP
+	/* do nothing */
+#else
 #ifndef KERNEL
     va_list args;
 
@@ -312,7 +358,8 @@ gdbg_printf (const char *format, ...)
     __asm lea   eax, (format+4);
     __asm mov   ebx, format;
     MyPrintf();
-#endif /* #ifndef KERNEL */    
+#endif /* #ifndef KERNEL */
+#endif /* _FIFODUMP */
 
 }
 
@@ -332,18 +379,29 @@ gdbg_info (const int level, const char *format, ...)
     char newformat[4095];
 #endif
 
+#ifdef _FIFODUMP
+	if (level!=444) return(0);
+#endif
+
     if (!gdbg_debuglevel[level>=GDBG_MAX_LEVELS ? GDBG_MAX_LEVELS-1 : level])
         return(0);
-#ifndef KERNEL
-    va_start(args, format);
-    sprintf(newformat, "%s.%d:\t", gdbg_myname,level);
-    strcat(newformat,format);
-    gdbg_vprintf(newformat,args);
-    va_end(args);
-#elif defined( KERNEL_NT )
+
+#if defined( KERNEL_NT )
+#ifndef _FIFODUMP
     gdbg_NTPrint( "%s.%d:\t", gdbg_myname, level );
+#endif
     va_start(args, format);
     EngDebugPrint( "", format, args );
+    va_end(args);
+#elif !defined( KERNEL )
+    va_start(args, format);
+#ifdef _FIFODUMP
+	strcpy(newformat,format);
+#else
+    sprintf(newformat, "%s.%d:\t", gdbg_myname,level);
+    strcat(newformat,format);
+#endif
+    gdbg_vprintf(newformat,args);
     va_end(args);
 #else /* #ifndef KERNEL */
     Debug_Printf("%s.%d:\t", gdbg_myname, level);
@@ -365,6 +423,10 @@ FX_EXPORT int FX_CSTYLE
 gdbg_info_more (const int level, const char *format, ...)
 {
     va_list args;
+
+#ifdef _FIFODUMP
+	if(level!=444) return(0);
+#endif
 
     if (!gdbg_debuglevel[level>=GDBG_MAX_LEVELS ? GDBG_MAX_LEVELS-1 : level])
         return(0);
@@ -513,5 +575,5 @@ gdbg_set_file(const char *name)
   return (outf != NULL);
 #else /* #ifndef KERNEL */
   return 0;
-#endif /* #ifndef KERNEL */    
+#endif /* #ifndef KERNEL */
 }

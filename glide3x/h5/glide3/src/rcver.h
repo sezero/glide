@@ -15,17 +15,22 @@
 ** SUPPLEMENT. UNPUBLISHED RIGHTS RESERVED UNDER THE COPYRIGHT LAWS O
 ** THE UNITED STATES. 
 **
-** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVE
+** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
+**
+** $Log:
+**
 */
 
 #define MANVERSION              3
 #define MANREVISION             10
+#define MINVERSION              01
 
 #ifdef __WIN32__
-#define BUILD_NUMBER            0658
+#define BUILD_NUMBER            0001
 #endif
 
-#define VERSIONSTR "3.10.00.0658"
+#define VERSIONSTR "3.10.01.0001"
+#define CONTACTSTR "The Glide Open Source Project http://glide.sourceforge.net/\0"
 
 #if defined(__WIN32__)
 #define _TRADEMARK_  "(tm)"
@@ -62,9 +67,9 @@
 #   else
 #     define PRODNAME "Glide" _REGISTERED_ " for Voodoo^2" _COPYRIGHT_ " & Windows" _REGISTERED_ " 95/98"
 #   endif /* NT_BUILD */
-#elif defined(H3)
-#   define HWSTR   " Voodoo Banshee" _REGISTERED_ ", Voodoo3" _REGISTERED_ ", & Velocity" _TRADEMARK_ " 100/200"
-#     define PRODNAME "Glide" _REGISTERED_ " for Voodoo Banshee" _REGISTERED_ ", Voodoo3" _REGISTERED_ ", & Velocity" _TRADEMARK_ " 100/200; Windows 95" _REGISTERED_ ", Windows 98" _REGISTERED_ ", & Windows NT" _REGISTERED_ ""
+#elif defined(H3) || defined(H5)
+#   define HWSTR   " Voodoo Banshee" _REGISTERED_ ", Voodoo3" _REGISTERED_ ", Velocity" _TRADEMARK_ " 100/200, Voodoo4" _REGISTERED_ ", & Voodoo5" _REGISTERED_ ""
+#     define PRODNAME "Glide" _REGISTERED_ " for Voodoo Banshee" _REGISTERED_ ", Voodoo3" _REGISTERED_ ", Velocity" _TRADEMARK_ " 100/200, Voodoo4" _REGISTERED_ ", & Voodoo5" _REGISTERED_ "; Windows 95" _REGISTERED_ ", Windows 98" _REGISTERED_ ", Windows NT" _REGISTERED_ ""
 #else
 #   define HWSTR   "Some Hoopti Chip" _REGISTERED_ ""
 #endif

@@ -16,22 +16,31 @@
 # THE UNITED STATES.  
 # 
 # COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
+#
+# $Log:
+# 1   ve3d      1.0         11/24/01 KoolSmoky    win32 glide3x makefile
+#
+
+!include $(BUILD_ROOT)\config.mak
+
+# build the lib and dll
+#FX_DLL_BUILD=1
 
 TAG_REGEXP      = $(BUILD_ROOT)\$(FX_GLIDE_HW)\glide3\src\glide3.rx
 
-FX_GLIDE_ALT_TAB=1
+#FX_GLIDE_ALT_TAB=1
 
 !if "$(FX_CHRIS_DENIS_ANTHONY_HACK)" == "1"
 LCDEFS          =       $(LCDEFS) -DCHRIS_DENIS_ANTHONY_HACK=1
 !endif
 
 !if "$(FX_GLIDE_ALT_TAB)" == "1"
-LCDEFS          =       $(LCDEFS) -DGLIDE_ALT_TAB
-LADEFS          =       $(LADEFS) -DGLIDE_ALT_TAB
+LCDEFS          =       $(LCDEFS) -DGLIDE_ALT_TAB=1 -DFX_GLIDE_ALT_TAB=1
+#LADEFS          =       $(LADEFS) -DGLIDE_ALT_TAB
 !endif
 
 !if "$(FX_TARGET)" == "WIN32"
-# LCINCS         = -I$(DIRECTXSDK)\include
+LCINCS         = -I$(DIRECTXSDK)\include
 !endif
 
 # This is a bit of a red herring
@@ -40,14 +49,14 @@ FX_GLIDE_DIRECT_WRITE   = 1
 FX_GLIDE_PACKET_FIFO    = 0
 !if "$(HAL_CSIM)" != "1"
 LCDEFS          =       $(LCDEFS) -DDIRECT_IO=1
-#else
+#!else
 ATSOPTS         =       $(ATSOPTS) -DDIRECT_IO=1
 !endif
 !else
 FX_GLIDE_PACKET_FIFO    = 1
 !endif
 
-FX_GLIDE_CTRISETUP =    0
+#FX_GLIDE_CTRISETUP =    0
 
 # Compile for specific hardware
 !if "$(HAL_CSIM)" == "1"
@@ -63,20 +72,26 @@ FX_GLIDE_CTRISETUP      = 1
 !endif
 
 !if "$(FX_GLIDE_PACKET_FIFO)" == "1"
+!if "$(FX_GLIDE_SW_SETUP)" == "1"
+CMDXPORTDEFS    =       -DGLIDE_PACKET3_TRI_SETUP=1 -DUSE_PACKET_FIFO=1
+!else
 CMDXPORTDEFS    =       -DGLIDE_PACKET3_TRI_SETUP=1 -DUSE_PACKET_FIFO=1 -DGLIDE_HW_TRI_SETUP=1
+!endif
 !else 
 CMDXPORTDEFS    =       -DGLIDE_HW_TRI_SETUP=1 -DGLIDE_PACKET3_TRI_SETUP=0
 FX_GLIDE_DEBUG_FIFO=1
 !endif
 
-FX_GLIDE_REAL_HW=       1
-FX_GLIDE_NO_FIFO=       1
+#FX_GLIDE_REAL_HW=       1
+#FX_GLIDE_NO_FIFO=       1
 
 HWSPEC          =       fifo.c
-LCDEFS          =       $(LCDEFS) -DH3 $(CMDXPORTDEFS)
+LCDEFS          =       $(LCDEFS) -DH3=1 $(CMDXPORTDEFS)
 INITLIB         =       $(BUILD_ROOT)\$(FX_GLIDE_HW)\$(FX_GLIDE_HW)init.lib
 
-LLDOPTS         = /NODEFAULTLIB:LIBC.LIB libcmt.lib
+!if "$(FX_DLL_BUILD)" == "1"
+LLDOPTS         = /NODEFAULTLIB libcmt.lib kernel32.lib #$(LLDOPTS) /NODEFAULTLIB:LIBC.LIB /NODEFAULTLIB:MSVCRT.LIB libcmt.lib
+!endif
 
 !if "$(FX_GLIDE_VTUNE)"!=""
 OTSOPTS = /Zi
@@ -84,12 +99,12 @@ LLDOPTS = $(LLDOPTS) /DEBUG
 !endif
 
 !if "$(DEBUG)" == "1"
-DBGOPTS          =      -DGLIDE_DEBUG -DGDBG_INFO_ON
+DBGOPTS          =      -DGLIDE_DEBUG=1 -DGDBG_INFO_ON=1
 GLIDE_SANITY_ALL =      1
 !endif
 
-!if "$(FX_GLIDE_HW)" == "H5"
-LCDEFS          =       $(LCDEFS) -DFX_GLIDE_NAPALM=1 -DFX_GLIDE_H5_CSIM=1
+!if "$(FX_GLIDE_HW)" == "h5"
+LCDEFS          =       $(LCDEFS) -DFX_GLIDE_NAPALM=1 -DH4=1 -DFX_GLIDE_H5_CSIM=1 #-DA0_AA_SWAP_WORKAROUND=1 -DCHECK_SLAVE_SWAPCMD=1 -DTACO_MEMORY_FIFO_HACK=1
 !endif
 
 # So that we can get reasonable stuff from SoftIce etc even
@@ -103,14 +118,35 @@ LLDOPTS          = /MAP:glide3x.map /DEBUG
 !endif
 
 !if "$(FX_COMPILER)" == "MICROSOFT"
+# KoolSmoky - testing
 DBGOPTS          =      $(DBGOPTS) /WX
 !endif
 
 # 3DNow stuff
 !if "$(HAL_CSIM)" == "1"
 GL_AMD3D        =       
+GL_MMX          =
+GL_SSE          =
+GL_SSE2         =
 !else
+!if "$(FX_GLIDE_CPUOPTS)" == "1"
 GL_AMD3D        =       1
+GL_MMX          =       1
+GL_SSE          =       1
+GL_SSE2         =       1
+!else
+GL_AMD3D        =
+GL_MMX          =
+GL_SSE          =
+GL_SSE2         =
+!endif
+!endif
+
+!if "$(FX_GLIDE_SW_SETUP)" == "1"
+GL_AMD3D        =       
+GL_MMX          =
+GL_SSE          =
+GL_SSE2         =
 !endif
 
 !if "$(GL_AMD3D)"!=""
@@ -124,10 +160,30 @@ LOBJECTS        =       $(LOBJECTS) \
                         xdraw2_def.obj xdraw3_def.obj
 !endif
 
-LCDEFS          =       $(LCDEFS) -DGL_AMD3D
+# KoolSmoky - check this
+LCDEFS          =       $(LCDEFS) -DGL_AMD3D=1
 !else
 CFILES          =       $(CFILES) xtexdl_def.c
 !endif # GL_AMD3D
+
+!if "$(GL_MMX)"!=""
+LCDEFS          =       $(LCDEFS) -DGL_MMX=1
+LOBJECTS        =       $(LOBJECTS) \
+                        xtexdl_mmx.obj
+!endif
+
+!if "$(GL_SSE)"!=""
+LCDEFS          =       $(LCDEFS) -DGL_SSE=1
+LOBJECTS        =       $(LOBJECTS) \
+                        xdraw2_sse.obj \
+                        xdraw3_sse.obj
+!endif
+
+!if "$(GL_SSE2)"!=""
+LCDEFS          =       $(LCDEFS) -DGL_SSE2=1
+LOBJECTS        =       $(LOBJECTS) \
+                        xtexdl_sse2.obj
+!endif
 
 !if "$(FX_GLIDE_HW)" == ""
 !error "FX_GLIDE_HW not defined"
@@ -137,29 +193,32 @@ CFILES          =       $(CFILES) xtexdl_def.c
 DSPOPTS =
 SUBLIBRARIES =
 !if ("$(HAL_CSIM)" != "")
-DSPOPTS         =       $(DSPOPTS) -DHAL_CSIM=1 -DGLIDE_INIT_HAL -DHOOPTI_LAB_LFB_BYPASS=1
+DSPOPTS         =       $(DSPOPTS) -DHAL_CSIM=1 -DGLIDE_INIT_HAL=1 -DHOOPTI_LAB_LFB_BYPASS=1
+#LCDEFS          =       $(LCDEFS) -DHAL_CSIM=1 -DGLIDE_INIT_HAL=1 -DHOOPTI_LAB_LFB_BYPASS=1
 LCINCS          =       -I$(BUILD_ROOT)\$(FX_GLIDE_HW)\csim
 SUBLIBRARIES    =       $(SUBLIBRARIES) $(BUILD_ROOT)\$(FX_GLIDE_HW)\lib\h4hal.lib
 FX_GLIDE_REAL_HW=       1
 !else
-DSPOPTS         =       $(DSPOPTS) -DGLIDE_INIT_HWC
+DSPOPTS         =       $(DSPOPTS) -DGLIDE_INIT_HWC=1
+#LCDEFS          =       $(LCDEFS) -DGLIDE_INIT_HWC=1
 !endif
 
 !if ("$(HAL_HW)" == "1")
 DSPOPTS         =       $(DSPOPTS) -DHAL_HW=1
+#LCDEFS          =       $(LCDEFS) -DHAL_HW=1
 SUBLIBRARIES    =       $(SUBLIBRARIES) 
 !endif
 !if !defined(DSPOPTS)
 !error "Unknown HAL_* configuration"
 !endif
 
-# !if (("$(HAL_CSIM)" != "1") && ("$(HAL_HW)" != "1"))
+# !if (("$(HAL_CSIM)" == "1") && ("$(HAL_HW)" == "1"))
 SUBLIBRARIES    =       $(SUBLIBRARIES) $(BUILD_ROOT)\$(FX_GLIDE_HW)\lib\minihwc.lib
 # !endif
 
 # If we're running w/ the CSIM then we cannot do direct
 # lfb writes through the info ptr.
-!if ("$(HAL_HW)" == "1") && ("$(HAL_CSIM)" != "")
+!if (("$(HAL_HW)" == "1") && ("$(HAL_CSIM)" == "1"))
 LCDEFS          =       $(LCDEFS) -DHOOPTI_LAB_LFB_BYPASS=1
 !endif
 
@@ -171,12 +230,22 @@ LCDEFS          =       $(LCDEFS) -DGLIDE_HW_TRI_SETUP=0 -DGLIDE_TRI_CULLING=1
 FX_GLIDE_CTRISETUP = 1
 !else # HW Setup
 
+# Stick one more slots in the dataList so that the clamping loop does 
+# not go one more iteration.
+!if "$(GLIDE_FP_CLAMP)" == "1"
+LCDEFS          =       $(LCDEFS) -DGLIDE_FP_CLAMP=1
+!if "$(GLIDE_FP_CLAMP_TEX)" == "1"
+LCDEFS          =       $(LCDEFS) -DGLIDE_FP_CLAMP_TEX=1
+!endif
+!endif
+
 # Do culling test in sw for independent triangles
 CULL_MODE       =
 !if "$(FX_GLIDE_HW_CULL)" != "1"
 CULL_MODE       =       -DGLIDE_TRI_CULLING=1
 !endif
 DSPOPTS         =       $(DSPOPTS) $(CULL_MODE)
+#LCDEFS          =       $(LCDEFS) $(CULL_MODE)
 
 !endif # HW Tri Setup
 
@@ -207,7 +276,7 @@ LCDEFS          =       $(LCDEFS)  \
 # this makefile from Chris's sst1 glide2x tree.
 !if "$(FX_GLIDE_CTRISETUP)" == "1"
 ASMTRISETUP     =
-ATSOPTS         =       -DGLIDE_USE_C_TRISETUP 
+ATSOPTS         =       -DGLIDE_USE_C_TRISETUP=1
 CFILES          =       $(CFILES) gxdraw.c
 !else
 
@@ -219,49 +288,54 @@ ASMTRISETUP     =       $(ASMTRISETUP) xdraw2.asm xdraw3.asm
 !endif
 
 DSPOPTS         =       $(DSPOPTS) -DGLIDE_PACKED_RGB=0 -DGLIDE_TRI_CULLING=1
+#LCDEFS          =       $(LCDEFS) -DGLIDE_PACKED_RGB=0 -DGLIDE_TRI_CULLING=1
 !endif
 
 OPTOPTS         =       $(GRMOPTS) $(OTSOPTS) $(ATSOPTS)
 
 # local defines, begin with basics and then add on
-LCDEFS          =       $(LCDEFS) -DGLIDE_LIB
+LCDEFS          =       $(LCDEFS) -DGLIDE_LIB=1
+# KoolSmoky - the above isn't use anywhere for H5
 
 # Turn Off/On compilation of shameless plug
 !if "$(FX_GLIDE_NO_PLUG)" == "1"
 !else
-LCDEFS          =       $(LCDEFS) -DGLIDE_PLUG
+LCDEFS          =       $(LCDEFS) -DGLIDE_PLUG=1
 !endif
 
 # Turn Off/On splash screen
 !if "$(FX_GLIDE_NO_SPLASH)" == "1"
 !else
-LCDEFS          =       $(LCDEFS) -DGLIDE_SPLASH
+LCDEFS          =       $(LCDEFS) -DGLIDE_SPLASH=1
 !endif
 
 !if "$(FX_PCI_TARGET)" == "NT"
-LCDEFS          =       $(LCDEFS) -DNT_BUILD
+LCDEFS          =       $(LCDEFS) -DNT_BUILD=1
 !endif
 
-LCDEFS          =       $(LCDEFS) -DGLIDE3 -DGLIDE3_ALPHA
+# KoolSmoky - need to check
+#LCDEFS          =       $(LCDEFS) -DGLIDE3 -DGLIDE3_ALPHA
+LCDEFS          =       $(LCDEFS) -DGLIDE3=1 -DGLIDE3_ALPHA=1
 GLIDE3FILES     =       distate.c gstrip.c distrip.c diget.c
 
-!if defined(GLIDE_SANITY_ALL) || defined(GLIDE_SANITY_SIZE)
-LCDEFS          =       $(LCDEFS) -DGLIDE_SANITY_SIZE
+!if (("$(GLIDE_SANITY_ALL)" != "") || ("$(GLIDE_SANITY_SIZE)" != ""))
+LCDEFS          =       $(LCDEFS) -DGLIDE_SANITY_SIZE=1
 !endif
-!if defined(GLIDE_SANITY_ALL) || defined(GLIDE_SANITY_ASSERT)
-LCDEFS          =       $(LCDEFS) -DGLIDE_SANITY_ASSERT
+!if (("$(GLIDE_SANITY_ALL)" != "") || ("$(GLIDE_SANITY_ASSERT)" != ""))
+LCDEFS          =       $(LCDEFS) -DGLIDE_SANITY_ASSERT=1
 !endif
 
 # Local Defs, Includes, and Options (C)
 LCINCS          =       $(LCINCS) -I$(BUILD_ROOT)\$(FX_GLIDE_HW)\include 
-LCOPTS          =       $(LCOPTS) $(DBGOPTS) $(DSPOPTS) $(OPTOPTS) /MT
+# KoolSmoky - testing
+LCOPTS          =       $(LCOPTS) $(DBGOPTS) $(DSPOPTS) $(OPTOPTS)
 
 # Local Defs, Includes, and Options (ASM)
 LADEFS          =       $(LADEFS) $(ASM_REGMAP_DEFS)
 LAINCS          =       -I$(BUILD_ROOT)\$(FX_GLIDE_HW)\include
 LAOPTS          =       $(DBGOPTS) $(DSPOPTS) $(OPTOPTS) /Fl /Sa
 
-AFILES          =       $(ASMTRISETUP) cpudtect.asm
+#AFILES          =       $(ASMTRISETUP) cpudtect.asm
 
 # sources
 HEADERS         =       glide.h glidesys.h glideutl.h g3ext.h
@@ -272,7 +346,7 @@ INSTALL_DESTINATION =   $(BUILD_ROOT)\$(FX_GLIDE_HW)
 CFILES              =   $(CFILES) gsplash.c g3df.c  gu.c gthread.c \
                         gpci.c diglide.c disst.c ditex.c gsfc.c\
                         gbanner.c gerror.c gaa.c gdraw.c gglide.c $(GLIDE3FILES) \
-                        glfb.c gsst.c gtex.c gtexdl.c $(HWSPEC) 
+                        glfb.c gsst.c gtex.c gtexdl.c $(HWSPEC) cpuid.c
 
 OFILES          =       $(CFILES:.c=.obj)
 
@@ -281,7 +355,7 @@ OTHER_CFILES    =       fxgasm.c fxbldno.c fxinline.h
 CODFILES        =       $(CFILES:.c=.cod)
 
 # targets
-LDIRT           =       fxgasm.obj fxgasm.exe fxgasm.h fxinline.h fxbldno.obj fxbldno.exe fxbldno.h 
+LDIRT           =       fxgasm.obj fxgasm.exe fxgasm.h fxinline.h fxbldno.obj fxbldno.exe fxbldno.h *.lst *.obj
 
 LIBRARIES       =       glide3x.lib
 RCFILE          =       glide.rc
@@ -290,13 +364,13 @@ RCFILE          =       glide.rc
 !if "$(FX_DLL_BUILD)" == "1"
 FX_DLL_LIBRARY  =       1
 !else
-LCDEFS          =       $(LCDEFS) -DFX_STATIC_BUILD
+LCDEFS          =       $(LCDEFS) -DFX_STATIC_BUILD=1
 !endif
 
 
 LCDEFS          =       $(LCDEFS) $(FIFODEFS)
 
-!include $(BUILD_ROOT)\swlibs/include/nmake/3dfx.mak
+!include $(BUILD_ROOT)\swlibs\include\nmake\3dfx.mak
 
 codfiles:   $(CODFILES)
 xdraw2.obj : xdraw2.asm xdraw2.inc fxgasm.h fxinline.h
@@ -361,12 +435,11 @@ fxinline.h: fxgasm.exe
         fxgasm -inline > fxinline.h
 
 glide3x.nms:  glide3x.dll
-        nmsym /trans:source,package,always /source:$(BUILD_ROOT)/$(FX_GLIDE_HW)/cinit;$(BUILD_ROOT)/$(FX_GLIDE_HW)/minihwc;$(BUILD_ROOT)\$(FX_GLIDE_HW)\glide\src glide3x.dll
+        nmsym /trans:source,package,always /source:$(BUILD_ROOT)\$(FX_GLIDE_HW)\cinit;$(BUILD_ROOT)\$(FX_GLIDE_HW)\minihwc;$(BUILD_ROOT)\$(FX_GLIDE_HW)\glide3\src glide3x.dll
 
 #--------------------------------------------------------------------------
 # special rules for making FXBLDNO.H
 #
-
 fxbldno.exe: fxbldno.c $(HEADERS) $(PRIVATE_HEADERS)
 !if "$(FX_COMPILER)" == "MICROSOFT"
         $(CC) -o $@ fxbldno.c $(GCDEFS) $(LCDEFS) $(VCDEFS) $(LCOPTS) $(LDFLAGS)
@@ -385,23 +458,50 @@ gglide.obj: rcver.h
 gdraw.obj: fxinline.h
 !endif
 
+#--------------------------------------------------------------------------
 # 3DNow!(tm) dependencies
 # XXX_def.obj targets are the default targets
-
-!if "$(GL_AMD3D)"!=""
+#
+!if "$(FX_GLIDE_CTRISETUP)" != "1"
 xdraw2_def.obj: xdraw2.asm xdraw2.inc fxgasm.h
         $(AS) $(AFLAGS) -Fo $@ xdraw2.asm
 
-xdraw2_3dnow.obj: xdraw2.asm xdraw2.inc fxgasm.h
-        $(AS) $(AFLAGS) -DGL_AMD3D -DUSE_PACKET_FIFO=1 -Fo $@ xdraw2.asm
-
 xdraw3_def.obj: xdraw3.asm fxgasm.h
         $(AS) $(AFLAGS) -Fo $@ xdraw3.asm
+!endif
+
+!if "$(GL_AMD3D)"!=""
+#xdraw2_def.obj: xdraw2.asm xdraw2.inc fxgasm.h
+#        $(AS) $(AFLAGS) -Fo $@ xdraw2.asm
+
+xdraw2_3dnow.obj: xdraw2.asm xdraw2.inc fxgasm.h
+        $(AS) $(AFLAGS) -DGL_AMD3D=1 -DUSE_PACKET_FIFO=1 -Fo $@ xdraw2.asm
+
+#xdraw3_def.obj: xdraw3.asm fxgasm.h
+#        $(AS) $(AFLAGS) -Fo $@ xdraw3.asm
 
 xdraw3_3dnow.obj: xdraw3.asm fxgasm.h
-        $(AS) $(AFLAGS) -DGL_AMD3D -DUSE_PACKET_FIFO=1 -Fo $@ xdraw3.asm
+        $(AS) $(AFLAGS) -DGL_AMD3D=1 -DUSE_PACKET_FIFO=1 -Fo $@ xdraw3.asm
 
-xtexdl_3dnow.obj: xtexdl.asm fxgasm.h 
-        $(AS) $(AFLAGS) -DGL_AMD3D -DUSE_PACKET_FIFO=1 -Fo $@ xtexdl.asm
+xtexdl_3dnow.obj: xtexdl.asm fxgasm.h
+        $(AS) $(AFLAGS) -DGL_AMD3D=1 -DUSE_PACKET_FIFO=1 -Fo $@ xtexdl.asm
 
 !endif # GL_AMD3D
+
+!if "$(GL_MMX)"!=""
+xtexdl_mmx.obj: xtexdl.asm fxgasm.h
+        $(AS) $(AFLAGS) -DGL_MMX=1 -DUSE_PACKET_FIFO=1 -Fo $@ xtexdl.asm
+!endif # GL_MMX
+
+!if "$(GL_SSE)"!=""
+xdraw2_sse.obj: xdraw2.asm xdraw2.inc fxgasm.h
+        $(AS) $(AFLAGS) -DGL_SSE=1 -DUSE_PACKET_FIFO=1 -Fo $@ xdraw2.asm
+
+xdraw3_sse.obj: xdraw3.asm fxgasm.h
+        $(AS) $(AFLAGS) -DGL_SSE=1 -DUSE_PACKET_FIFO=1 -Fo $@ xdraw3.asm
+!endif # GL_SSE
+
+!if "$(GL_SSE2)"!=""
+xtexdl_sse2.obj: xtexdl.asm fxgasm.h
+        $(AS) $(AFLAGS) -DGL_SSE2=1 -DUSE_PACKET_FIFO=1 -Fo $@ xtexdl.asm
+!endif # GL_SSE2

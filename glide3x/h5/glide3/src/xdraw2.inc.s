@@ -197,7 +197,7 @@ LOCAL(win_coordinates):
 	test %ebp , %ebp	/*  does state need validation? */
 	jz LOCAL(no_validation)	/*  valid, don't need to validate */
 
-	call _grValidateState	/*  validate state */
+	call EXTRN(_grValidateState)	/*  validate state */
 
 LOCAL(no_validation):
 
@@ -209,7 +209,7 @@ LOCAL(no_validation):
 	mov _vc(%esp) , fc	/*  get base address of vertex C */
 	nop 	/*  filler */
 
-.align 4
+ALIGN(4)
 
 	femms 	/*  will use AMD3D, clear FPU/MMX registers */
 
@@ -263,14 +263,14 @@ LOCAL(no_validation):
 	push $0x0	/*  pointer to function name = NULL */
 
 	push tempVal	/*  fifo space required */
-	call _grCommandTransportMakeRoom	/*  note: updates fifoPtr */
+	call EXTRN(_grCommandTransportMakeRoom)	/*  note: updates fifoPtr */
 	add $12, %esp
 
 	jmp LOCAL(__triBegin)	/*  merge back with short path */
 
 /*  culling disabled */
 
-.align 4
+ALIGN(4)
 
 LOCAL(nocull):
 /*  Check to make sure that we have enough room for */
@@ -286,7 +286,7 @@ LOCAL(nocull):
 	push $0x0	/*  pointer to function name = NULL */
 
 	push tempVal	/*  fifo space needed */
-	call _grCommandTransportMakeRoom	/*  note: updates fifoPtr */
+	call EXTRN(_grCommandTransportMakeRoom)	/*  note: updates fifoPtr */
 	add $12, %esp
 #else	/*  !GLIDE_CULLING */
 
@@ -295,7 +295,12 @@ LOCAL(nocull):
 	push %edi	/*  save caller's register variable */
 	push %esi	/*  save caller's register variable  */
 
-	mov _gc-8(%esp) , gc	/*  gc on stack (NOT!!! in edx) from caller */
+/* [dBorca] edx is not sane anymore */
+#if 1
+	mov _gc-8(%esp), gc
+#else
+        mov %edx , gc   /*  gc in edx from caller */
+#endif
 	push %ebx	/*  save caller's register variable */
 
 	push %ebp	/*  save frame pointer */
@@ -329,7 +334,7 @@ LOCAL(nocull):
 
 	ret	/*  return, pop 3 DWORD arguments off stack */
 
-.align 4
+ALIGN(4)
 LOCAL(win_coordinates):
 
 #endif
@@ -338,7 +343,7 @@ LOCAL(win_coordinates):
 	test %ebp , %ebp	/*  does state need validation? */
 	jz LOCAL(no_validation)	/*  valid, don't need to validate */
 
-	call _grValidateState	/*  validate state */
+	call EXTRN(_grValidateState)	/*  validate state */
 
 LOCAL(no_validation):
 
@@ -357,7 +362,7 @@ LOCAL(no_validation):
 	push $0x0	/*  pointer to function name = NULL */
 
 	push tempVal	/*  fifo space needed */
-	call _grCommandTransportMakeRoom	/*  note: updates fifoPtr */
+	call EXTRN(_grCommandTransportMakeRoom)	/*  note: updates fifoPtr */
 	add $12, %esp
 	
 	jmp LOCAL(__triBegin)	/*  large distance due to alignment */
@@ -368,7 +373,7 @@ LOCAL(no_validation):
 #define dlpstrt %ecx	/*  points to begin of dataList structure */
 #define vertex %edx	/*  the current vertex */
 
-.align 4
+ALIGN(4)
 
 LOCAL(__triBegin):
 	mov triPacketHdr(gc) , %eax	/*  Packet 3 header */
@@ -761,7 +766,7 @@ LOCAL(__triDone_cull):
 	mov (%edx) , %ebx
 	test $1 , %ebx
 	jnz LOCAL(__triDone)
-.align 4
+ALIGN(4)
 #endif
 	
 LOCAL(pastContextTest):
@@ -770,8 +775,8 @@ LOCAL(pastContextTest):
 	movl invalid(gc) , %edx
 	test %edx , %edx
 	je LOCAL(no_validation)
-	call _grValidateState
-.align 4
+	call EXTRN(_grValidateState)
+ALIGN(4)
 #endif
 	
 LOCAL(no_validation):
@@ -833,7 +838,7 @@ LOCAL(Area_Computation):
 	xor cull , intArea	/*  if (j ^ (culltest << 31)) */
 
 	jge LOCAL(__triDone)
-.align 4
+ALIGN(4)
 #endif	/*  GLIDE_CULLING     */
 
 LOCAL(nocull):
@@ -851,7 +856,7 @@ LOCAL(nocull):
 	push $0x0
 
 	push %eax
-	call _grCommandTransportMakeRoom
+	call EXTRN(_grCommandTransportMakeRoom)
 	add $12, %esp
 
 /*  Send triangle parameters */
@@ -882,7 +887,7 @@ LOCAL(nocull):
 #endif
 .endm	/*  GR_FIFO_WRITE */
 
-.align 4
+ALIGN(4)
 LOCAL(__triBegin):
 	mov fifoPtr(gc) , fifo	/*  Fetch Fifo Ptr */
 	mov $_va-STKOFF , vOffset	/*  Starting vertex */
@@ -893,7 +898,7 @@ LOCAL(__triBegin):
 	GR_FIFO_WRITE fifo , 0 , %eax	/*  Write packet header to fifo     */
 	add $4 , fifo	/*  Advance fifo for hdr & x/y coordinate */
 
-.align 4
+ALIGN(4)
 LOCAL(__vertexStart):
 	mov STKOFF(%esp, vOffset) , vertex	/*  Current vertex */
 	add $8 , fifo
@@ -934,7 +939,7 @@ LOCAL(__paramLoop):
 
 	jne LOCAL(__paramLoop)
 
-.align 4
+ALIGN(4)
 LOCAL(__nextVertex):
 /*  On to the next vertex */
 	add $4 , vOffset

@@ -19,7 +19,10 @@
  **
  **
  ** $Header$
- ** $Log: 
+ ** $Log:
+ **  34   GlideXP   1.26.1      12/14/01 Ryan Nunn       Removed calls to
+ **       MultitextureAndTrilinear(). That will now be called by g3LodBiasPerChip()
+ **  34   ve3d      1.26        06/24/02 KoolSmoky       fixes for 4chip napalm
  **  33   3dfx      1.25.1.2.1.311/14/00 Jonny Cochrane  Implement multisample LOD
  **       Dithering for 2x and 4x FSAA modes 
  **  32   3dfx      1.25.1.2.1.210/11/00 Brent           Forced check in to enforce
@@ -840,7 +843,7 @@ GR_EXT_ENTRY(grLfbConstantStencil, void , (GrStencil_t value) )
   
   Return:
   -------------------------------------------------------------------*/
-#ifdef __linux__
+#if defined(__linux__) || defined(__WIN32__)
 GR_EXT_ENTRY(grStipplePattern, void , (GrStipplePattern_t stipple))
 {
  #define FN_NAME "grStipplePattern"
@@ -853,7 +856,7 @@ GR_EXT_ENTRY(grStipplePattern, void , (GrStipplePattern_t stipple))
 
  #undef FN_NAME
 } /* grStipplePattern */
-#endif /* __linux__ */
+#endif /* __linux__ __WIN32__ */
 
 
 /*-------------------------------------------------------------------
@@ -1016,7 +1019,7 @@ GR_EXT_ENTRY(grAlphaCombineExt, void , (GrACUColor_t     a,
   
   Return:
   -------------------------------------------------------------------*/
-#ifdef __linux__
+#if defined(__linux__) || defined(__WIN32__)
 GR_DIENTRY(grStippleMode, void , (GrStippleMode_t mode) )
 {
  #define FN_NAME "grStippleMode"
@@ -1029,7 +1032,7 @@ GR_DIENTRY(grStippleMode, void , (GrStippleMode_t mode) )
 
  #undef FN_NAME
 } /* grStippleMode */
-#endif /* __linux__ */
+#endif /* __linux__ || __WIN32__*/
 
 /*-------------------------------------------------------------------
   Function: grDitherMode
@@ -1310,6 +1313,8 @@ GR_DIENTRY(grDepthBiasLevel, void , (FxI32 level) )
 
   INVALIDATE(zaColor);
 
+  if (gc->state.forced32BPP) level*=256;
+
   STOREARG(grDepthBiasLevel, level);
 
 #undef FN_NAME
@@ -1498,7 +1503,7 @@ _grValidateTMUState()
        TMU0 enabled /TMU1 disabled:  Clone TMU1 state to TMU0 and enable
                                      2PPC mode.
        TMU0 disabled/TMU1  enabled:  "Disable" TMU1, Update TMU1 state[1]                                        
-       TMU0 ensabled/TMU1 disabled:  Update TMU0 and TMU1 state.
+       TMU0 enabled /TMU1  enabled:  Update TMU0 and TMU1 state.
                                      
      Note 1: It would be nice if we could do some magic in this case and
              rempap TMU1's state down to TMU0.  We should be able to do this
@@ -1543,6 +1548,7 @@ _grValidateTMUState()
   
   
   for(tmu = 0; tmu < gc->num_tmu; tmu++) {
+    FxU32 texSubLodDitherTMU = tmu;
     tmuSource = tmu;
 
     chipField = (FifoChipField)(0x02UL << tmu);
@@ -1623,6 +1629,10 @@ _grValidateTMUState()
 #endif
         }
         REG_GROUP_END();
+
+        if(gc->state.per_tmu[tmu].texSubLodDither)
+            g3LodBiasPerChip(tmu, gc->state.shadow.tmuState[tmu].tLOD);
+        
         if(IS_NAPALM(gc->bInfo->pciInfo.deviceID)) {
           COPY_TMU_STATE(tmu, tmu, combineMode);
           REG_GROUP_BEGIN(chipField, combineMode, 1, 0x01);
@@ -1720,6 +1730,8 @@ _grValidateTMUState()
           /* Flag all TMU0 registers as invalid */
           gc->state.tmuInvalid[GR_TMU0] = 0xffffffff;
 
+          texSubLodDitherTMU = GR_TMU1;
+
         } else if(tmu > 0) {
 #if DEBUG_2PPC        
           GDBG_PRINTF("TMU0:r -> TMU1:r\n");
@@ -1749,6 +1761,8 @@ _grValidateTMUState()
           
           /* Now that we know that TMU1 is not being used and it's state matches TMU0, we can enable 2PPC mode. */
           enable2PPC = FXTRUE;
+
+          texSubLodDitherTMU = GR_TMU0;
           
         } else {    
 #if DEBUG_2PPC        
@@ -1809,6 +1823,9 @@ _grValidateTMUState()
 #endif           
         }
         REG_GROUP_END();
+
+        if(gc->state.per_tmu[texSubLodDitherTMU].texSubLodDither)
+            g3LodBiasPerChip(tmu, gc->state.shadow.tmuState[tmu].tLOD);
   
         REG_GROUP_BEGIN(chipField, combineMode, 1, 0x01);
         {
@@ -1867,9 +1884,6 @@ _grValidateTMUState()
       }
 #endif    
     }     
-
-	if(MultitextureAndTrilinear()) g3LodBiasPerChip();
-
 
 }
 #undef FN_NAME  
@@ -2032,14 +2046,21 @@ _grValidateState()
   /* Check for alpha test optimization */
   if (NOTVALID(alphaMode) || NOTVALID(fbzMode) || NOTVALID(stencilMode)) {
     updateAlphaMode = FXTRUE;
-    if((LOADARG(grAlphaBlendFunction, rgb_sf) == GR_BLEND_SRC_ALPHA) &&
+    /*if((LOADARG(grAlphaBlendFunction, rgb_sf) == GR_BLEND_SRC_ALPHA) &&
        (LOADARG(grAlphaBlendFunction, rgb_df) == GR_BLEND_ONE_MINUS_SRC_ALPHA) &&
        (LOADARG(grAlphaBlendFunction, rgb_op) == GR_BLEND_OP_ADD) &&
        (LOADARG(grDepthMask, enable) == FXFALSE) &&
        ((LOADARG(grStencilMask, value) == 0x00) ||
-        (gc->state.grEnableArgs.stencil_mode == FXFALSE))) {
-      //GDBG_PRINTF("Alpha test optimization enabled.\n");
-      alphaTestOptimization = FXTRUE;
+        (gc->state.grEnableArgs.stencil_mode == FXFALSE))) {*/
+    if(LOADARG(grDepthMask, enable) == FXFALSE) {
+      if((LOADARG(grAlphaBlendFunction, rgb_df) == GR_BLEND_ONE_MINUS_SRC_ALPHA) &&
+         (LOADARG(grAlphaBlendFunction, rgb_op) == GR_BLEND_OP_ADD) &&
+         (LOADARG(grDepthMask, enable) == FXFALSE) &&
+         ((LOADARG(grStencilMask, value) == 0x00) ||
+          (gc->state.grEnableArgs.stencil_mode == FXFALSE))) {
+        //GDBG_PRINTF("Alpha test optimization enabled.\n");
+        alphaTestOptimization = FXTRUE;
+      }
     } else {
       //GDBG_PRINTF("Alpha test optimization disabled.\n");
     }  
@@ -2071,9 +2092,9 @@ _grValidateState()
     _grDepthBufferFunction(LOADARG(grDepthBufferFunction, fnc));
     _grDepthBufferMode(LOADARG(grDepthBufferMode, mode));
     _grDitherMode(LOADARG(grDitherMode, mode));
-#ifdef __linux__
+#if defined(__linux__) || defined(__WIN32__)
     _grStippleMode(LOADARG(grStippleMode, mode));
-#endif /* __linux__ */
+#endif /* __linux__  __WIN32__*/
     _grSstOrigin(LOADARG(grSstOrigin, origin));
     _grRenderBuffer(LOADARG(grRenderBuffer, buffer));
         /* tbext */
@@ -2286,7 +2307,7 @@ _grValidateState()
     REG_GROUP_END();
   }
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__WIN32__)
   if (NOTVALID(stipple)) {
     gc->state.shadow.stipple = LOADARG(grStipplePattern, stipple);
     REG_GROUP_BEGIN(BROADCAST_ID, stipple, 1, 0x01);
@@ -2295,7 +2316,7 @@ _grValidateState()
     }
     REG_GROUP_END();
   }
-#endif /* __linux__ */
+#endif /* __linux__ __WIN32__ */
 
   if (NOTVALID(stencilOp)) {
     FxU32 stencilOp = gc->state.shadow.stencilOp;
@@ -2500,43 +2521,64 @@ _grValidateState()
             fogMode &= ~(SST_DITHER_ROTATE | SST_DITHER_ROTATE_BLEND | 
                         SST_DITHER_ROTATE_AA | SST_DITHER_ROTATE_BLEND_AA) ;
             fogMode |= (2 << SST_DITHER_ROTATE_SHIFT) |
-                        (2 << SST_DITHER_ROTATE_BLEND_SHIFT) |                
+                        (2 << SST_DITHER_ROTATE_BLEND_SHIFT) |
                         (2 << SST_DITHER_ROTATE_AA_SHIFT) |
                         (2 << SST_DITHER_ROTATE_BLEND_AA_SHIFT) ;
             } else { /* Sample 0 */
             fogMode &= ~(SST_DITHER_ROTATE | SST_DITHER_ROTATE_BLEND | 
                         SST_DITHER_ROTATE_AA | SST_DITHER_ROTATE_BLEND_AA) ;
             fogMode |= (0 << SST_DITHER_ROTATE_SHIFT) |
-                        (0 << SST_DITHER_ROTATE_BLEND_SHIFT) |                
+                        (0 << SST_DITHER_ROTATE_BLEND_SHIFT) |
                         (0 << SST_DITHER_ROTATE_AA_SHIFT) |
                         (0 << SST_DITHER_ROTATE_BLEND_AA_SHIFT) ;
-            }    
+            }
             _grChipMask( 1L << chipIndex );
             REG_GROUP_BEGIN(eChipFBI, fogMode, 1, 0x01);
             REG_GROUP_SET(hw, fogMode, fogMode);
-            REG_GROUP_END();      
-        }      
-        _grChipMask( SST_CHIP_MASK_ALL_CHIPS );        
-      }  
-    } else if(gc->grPixelSample == 4) {
+            REG_GROUP_END();
+        }
+        _grChipMask( SST_CHIP_MASK_ALL_CHIPS );
+      }
+    } else if(gc->grPixelSample >= 4) {
       FxU32 chipIndex, fogMode;
       fogMode = gc->state.shadow.fogMode;
       for(chipIndex = 0; chipIndex < gc->chipCount; chipIndex++) {
-        if(chipIndex & 1) { /* Samples 2 and 3 */
-          fogMode &= ~(SST_DITHER_ROTATE | SST_DITHER_ROTATE_BLEND | 
+#if 1 /* KoolSmoky */
+        if(gc->grSamplesPerChip == 2) {
+          if(chipIndex & 1) { /* Samples 2 and 3 */
+            fogMode &= ~(SST_DITHER_ROTATE | SST_DITHER_ROTATE_BLEND | 
+                         SST_DITHER_ROTATE_AA | SST_DITHER_ROTATE_BLEND_AA) ;
+            fogMode |= (2 << SST_DITHER_ROTATE_SHIFT) |
+                       (2 << SST_DITHER_ROTATE_BLEND_SHIFT) |
+                       (3 << SST_DITHER_ROTATE_AA_SHIFT) |
+                       (3 << SST_DITHER_ROTATE_BLEND_AA_SHIFT) ;
+          } else { /* Samples 0 and 1 */
+            fogMode &= ~(SST_DITHER_ROTATE | SST_DITHER_ROTATE_BLEND | 
+                         SST_DITHER_ROTATE_AA | SST_DITHER_ROTATE_BLEND_AA) ;
+            fogMode |= (0 << SST_DITHER_ROTATE_SHIFT) |
+                       (0 << SST_DITHER_ROTATE_BLEND_SHIFT) |
+                       (1 << SST_DITHER_ROTATE_AA_SHIFT) |
+                       (1 << SST_DITHER_ROTATE_BLEND_AA_SHIFT) ;
+          }
+        } else {
+          int rotNum = chipIndex & 3;
+
+          fogMode &= ~(SST_DITHER_ROTATE | SST_DITHER_ROTATE_BLEND |
                        SST_DITHER_ROTATE_AA | SST_DITHER_ROTATE_BLEND_AA) ;
-          fogMode |= (2 << SST_DITHER_ROTATE_SHIFT) |
-                     (2 << SST_DITHER_ROTATE_BLEND_SHIFT) |                
-                     (3 << SST_DITHER_ROTATE_AA_SHIFT) |
-                     (3 << SST_DITHER_ROTATE_BLEND_AA_SHIFT) ;
-        } else { /* Samples 0 and 1 */
-          fogMode &= ~(SST_DITHER_ROTATE | SST_DITHER_ROTATE_BLEND | 
-                       SST_DITHER_ROTATE_AA | SST_DITHER_ROTATE_BLEND_AA) ;
-          fogMode |= (0 << SST_DITHER_ROTATE_SHIFT) |
-                     (0 << SST_DITHER_ROTATE_BLEND_SHIFT) |                
-                     (1 << SST_DITHER_ROTATE_AA_SHIFT) |
-                     (1 << SST_DITHER_ROTATE_BLEND_AA_SHIFT) ;
-        }    
+
+          fogMode |= (rotNum << SST_DITHER_ROTATE_SHIFT) |
+                     (rotNum << SST_DITHER_ROTATE_BLEND_SHIFT);
+        }
+#else /* Colourless */
+        /* Chip0Buf0=0, Chip0Buf1=2, Chip1Buf0=1, Chip1Buf1=3 */
+        /* Chip2Buf0=2, Chip2Buf1=0, Chip3Buf0=3, Chip3Buf1=1 */
+        fogMode &= ~(SST_DITHER_ROTATE | SST_DITHER_ROTATE_BLEND | 
+                     SST_DITHER_ROTATE_AA | SST_DITHER_ROTATE_BLEND_AA) ;
+        fogMode |= ((chipIndex&3) << SST_DITHER_ROTATE_SHIFT) |
+                   ((chipIndex&3) << SST_DITHER_ROTATE_BLEND_SHIFT) |
+                   (((chipIndex+2)&3) << SST_DITHER_ROTATE_AA_SHIFT) |
+                   (((chipIndex+2)&3) << SST_DITHER_ROTATE_BLEND_AA_SHIFT) ;
+#endif
         _grChipMask( 1L << chipIndex );
         REG_GROUP_BEGIN(eChipFBI, fogMode, 1, 0x01);
         REG_GROUP_SET(hw, fogMode, fogMode);
@@ -2546,8 +2588,8 @@ _grValidateState()
     } else {
       REG_GROUP_BEGIN(eChipFBI, fogMode, 1, 0x01);
       REG_GROUP_SET(hw, fogMode, gc->state.shadow.fogMode);
-      REG_GROUP_END();      
-    }        
+      REG_GROUP_END();
+    }
   }
 
   /* In this case, textureCombine is a "virtual" register that means something important
@@ -2648,9 +2690,14 @@ GR_DIENTRY(grEnable, void , (GrEnableMode_t mode) )
 #ifdef FX_GLIDE_NAPALM
   case GR_AA_MULTI_SAMPLE:
     {
-      _grAAOffsetValue(_GlideRoot.environment.aaXOffset[gc->sampleOffsetIndex],
-                       _GlideRoot.environment.aaYOffset[gc->sampleOffsetIndex],
-                       0, gc->chipCount - 1, FXTRUE, gc->enableSecondaryBuffer) ;
+      if (gc->state.grEnableArgs.aaMultisampleDisableCount)
+        gc->state.grEnableArgs.aaMultisampleDisableCount--;
+      
+      if (!gc->state.grEnableArgs.aaMultisampleDisableCount) {
+        _grAAOffsetValue(_GlideRoot.environment.aaXOffset[gc->sampleOffsetIndex],
+                         _GlideRoot.environment.aaYOffset[gc->sampleOffsetIndex],
+                         0, gc->chipCount - 1, FXTRUE, gc->enableSecondaryBuffer) ;
+      }
     }
     break;
   case GR_OPENGL_MODE_EXT:
@@ -2659,15 +2706,15 @@ GR_DIENTRY(grEnable, void , (GrEnableMode_t mode) )
       /* EnableOpenGL - Win_Mode.c 
       ** Allow minihwc to know about OpenGL 
       */
-      void EnableOpenGL ( void );
-
-	  EnableOpenGL();
+      /* KoolSmoky - the registry path should already be enumerated by now. */
+      void EnableOpenGL ( char *regpath );
+      EnableOpenGL( gc->bInfo->RegPath );
      /* setup env to determine whether we are an OGL app */
      _GlideRoot.environment.is_opengl=FXTRUE;
 #endif
       /* Set up some stuff that's affected by OpenGL's behaviour. */
       _GlideRoot.environment.sliBandHeightForce = FXTRUE;
-	}
+    }
     break;
 #endif
   }
@@ -2740,6 +2787,8 @@ GR_DIENTRY(grDisable, void , (GrEnableMode_t mode) )
 #ifdef FX_GLIDE_NAPALM
   case GR_AA_MULTI_SAMPLE:
     {
+      gc->state.grEnableArgs.aaMultisampleDisableCount++;
+      
       _grAAOffsetValue(_GlideRoot.environment.aaXOffset[0],
                        _GlideRoot.environment.aaYOffset[0],
                        0, gc->chipCount - 1, FXTRUE, gc->enableSecondaryBuffer) ;

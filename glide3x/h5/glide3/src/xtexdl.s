@@ -21,6 +21,10 @@
 /*  $Header$ *
 /*  $Revision$ *
 /*  $Log$
+/*  Revision 1.4  2000/11/17 21:31:06  joseph
+/*  Restored changes that were lost when I imported new sources from 3dfx's
+/*  internal source repository.
+/*
 /*  Revision 1.3  2000/11/15 23:32:54  joseph
 /*  Syncing up with 3dfx internal source repository.  These changes contain a
 /*  number of bug fixes.
@@ -78,6 +82,8 @@
 
 .file "xtexdl.asm"
 
+/* [dBorca] */
+#include "assyntax.h"
 
 #ifdef USE_PACKET_FIFO
 #endif
@@ -130,12 +136,9 @@
 .text
 
 
-.align 32
+ALIGN(32)
 
-.globl _grTexDownload_3DNow_MMX
-
-.type _grTexDownload_3DNow_MMX,@function
-_grTexDownload_3DNow_MMX:
+GLOBL(_grTexDownload_3DNow_MMX)
 
 	push %ebx	/*  save caller's register variable */
 	mov _maxT-12(%esp) , %curT	/*  curT = maxT */
@@ -205,7 +208,7 @@ _grTexDownload_3DNow_MMX:
 	push $0	/*  NULL file name */
 
 	push $4	/*  fifo space required (bytes) */
-	call _grCommandTransportMakeRoom	/*  make fifo room */
+	call EXTRN(_grCommandTransportMakeRoom)	/*  make fifo room */
 	add $12, %esp
 #endif
 
@@ -226,13 +229,13 @@ _grTexDownload_3DNow_MMX:
 	add $4 , %fifo	/*  fifoPtr += 4 */
 
 #ifdef GLIDE_DEBUG
-	move %fifo , checkPtr(%gc)
+	mov %fifo , checkPtr(%gc)
 #endif			
 
 	mov %fifo , fifoPtr(%gc)	/*  store new fifoPtr */
 	jmp .L_grTexDownload_3DNow_MMX___startDownload	/*  fifo aligned, download texture now */
 
-.align 32
+ALIGN(32)
 
 /*  ebx = curT, edi = dataPtr, esi = gc, ebp = fifo, ecx = maxS = curS */
 /*  edx=fifoRoom, mm1 = texAddr|packetHdr, mm2 = TEX_ROW_ADDR_INCR(1)|0 */
@@ -308,7 +311,7 @@ _grTexDownload_3DNow_MMX:
 	push $0x0	/*  NULL file name */
 
 	push %eax	/*  fifo space required */
-	call _grCommandTransportMakeRoom	/*  make fifo room (if fifoPtr QWORD aligned before */
+	call EXTRN(_grCommandTransportMakeRoom)	/*  make fifo room (if fifoPtr QWORD aligned before */
 	add $12, %esp
 #endif
 

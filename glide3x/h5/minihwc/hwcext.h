@@ -136,7 +136,9 @@
 
 #ifndef WINNT
 
+#ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
+#endif
 #include <windows.h>
 
 /*
@@ -158,6 +160,12 @@ extern void D3notify(void);
 /* The HWC escape */
 #define EXT_HWC                         0x3df3
 #define EXT_HWC_OLD                     0xfd3
+/* KoolSmoky - Microsoft reserves the range 0 to 0x10000 for its escape codes.
+ * Third-party vendors are free to choose escape codes for their own use above
+ * this range. previous values were illegal and disabled glide from functioning
+ * under winxp.
+ */
+#define EXT_HWC_WXP                     0x13df3
 
 /*
 **  EXT_HWC_SHARE_CPUTYPE
@@ -166,6 +174,7 @@ extern void D3notify(void);
 **  
 */
 #define EXT_HWC_SHARE_CPUTYPE        0x3df4
+#define EXT_HWC_SHARE_CPUTYPE_WXP    0x13df4
 
 /********************************************************************
 **  Here's the protocol:
@@ -307,7 +316,7 @@ typedef struct hwcExtExecuteFifoReq_s {
                        * current command stream has been committed by the hw.
                        */
 #ifdef ENABLE_V3_W2K_GLIDE_CHANGES
-    FxU32 procId;
+    FxU32 procID;
 #endif
   
 } hwcExtExecuteFifoReq_t;

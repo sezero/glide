@@ -18,7 +18,9 @@
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
 ** $Header$
-** $Log: 
+** $Log:
+**  5    ve3d      1.1.1       04/29/02 KoolSmoky       DXT-ness
+**  4    ve3d      1.1         04/28/02 KoolSmoky       extra texture formats
 **  3    3dfx      1.0.1.0.1.0 10/11/00 Brent           Forced check in to enforce
 **       branching.
 **  2    3dfx      1.0.1.0     06/20/00 Joseph Kain     Changes to support the
@@ -124,6 +126,7 @@ static FxU16 ReadDataShort(FILE *);
 static FxU32 ReadDataLong(FILE *);
 static void  Read4Bit(FxU8 *dst, FILE *image, int small_lod, int large_lod, GrAspectRatio_t aspect);
 static void  Read8Bit(FxU8 *dst, FILE *image, int small_lod, int large_lod, GrAspectRatio_t aspect);
+static void  ReadDXT8Bit(FxU8 *dst, FILE *image, int small_lod, int large_lod, GrAspectRatio_t aspect);
 static void  Read16Bit(FxU16 *dst, FILE *image, int small_lod, int large_lod, GrAspectRatio_t aspect);
 static void  Read32Bit(FxU32 *dst, FILE *image, int small_lod, int large_lod, GrAspectRatio_t aspect);
 
@@ -225,6 +228,26 @@ GR_DIENTRY(gu3dfGetInfo, FxBool,
     { "P8",       GR_TEXFMT_P_8,                FXTRUE },
     { "AP88",     GR_TEXFMT_AP_88,              FXTRUE },
     { "ARGB8888", GR_TEXFMT_ARGB_8888,          FXTRUE },
+#ifdef FX_GLIDE_NAPALM
+    /* KoolSmoky - other texture formats. */
+    { "FXT1",        GR_TEXFMT_ARGB_CMP_FXT1,   FXTRUE },
+    { "FXT1_HI",     GR_TEXFMT_ARGB_CMP_FXT1,   FXTRUE },
+    { "FXT1_MIXED",  GR_TEXFMT_ARGB_CMP_FXT1,   FXTRUE },
+    { "FXT1_CHROMA", GR_TEXFMT_ARGB_CMP_FXT1,   FXTRUE },
+    { "FXT1_ALPHA",  GR_TEXFMT_ARGB_CMP_FXT1,   FXTRUE },
+    { "P6666",    GR_TEXFMT_P_8_6666,           FXTRUE },
+  /*{ "RSVD1",    GR_TEXFMT_RSVD1,              FXTRUE },
+    { "RSVD2",    GR_TEXFMT_RSVD2,              FXTRUE },
+    { "RSVD4",    GR_TEXFMT_RSVD4,              FXTRUE },*/
+    { "YUYV422",  GR_TEXFMT_YUYV_422,           FXTRUE },
+    { "UYVY22",   GR_TEXFMT_UYVY_422,           FXTRUE },
+    { "AYUV444",  GR_TEXFMT_AYUV_444,           FXTRUE },
+    { "DXT1",     GR_TEXFMT_ARGB_CMP_DXT1,      FXTRUE },
+    { "DXT2",     GR_TEXFMT_ARGB_CMP_DXT2,      FXTRUE },
+    { "DXT3",     GR_TEXFMT_ARGB_CMP_DXT3,      FXTRUE },
+    { "DXT4",     GR_TEXFMT_ARGB_CMP_DXT4,      FXTRUE },
+    { "DXT5",     GR_TEXFMT_ARGB_CMP_DXT5,      FXTRUE },
+#endif
     { 0, 0, FXFALSE }
   };
 
@@ -233,7 +256,13 @@ GR_DIENTRY(gu3dfGetInfo, FxBool,
   ** open the file
   */
   if((image_file = fopen(FileName, openmode)) == NULL) return FXFALSE;
-  if (!_grGet3dfHeader(image_file, buffer, sizeof(buffer))) return FXFALSE;
+  if (!_grGet3dfHeader(image_file, buffer, sizeof(buffer))) {
+    /*
+     ** close the file
+     */
+    fclose(image_file);
+    return FXFALSE;
+  }
 
   /*
   ** grab statistics out of the header
@@ -242,8 +271,13 @@ GR_DIENTRY(gu3dfGetInfo, FxBool,
             version,
             color_format,
             &small_lod, &large_lod,
-            &aspect_width, &aspect_height) == 0)
+            &aspect_width, &aspect_height) == 0) {
+    /*
+     ** close the file
+     */
+    fclose(image_file);
     return FXFALSE;
+  }
 
   /*
   ** determine aspect ratio, height, and width
@@ -268,7 +302,13 @@ GR_DIENTRY(gu3dfGetInfo, FxBool,
 
     i++;
   }
-  if (!ratio_found) return FXFALSE;
+  if (!ratio_found) {
+    /*
+     ** close the file
+     */
+    fclose(image_file);
+    return FXFALSE;
+  }
 
   /*
   ** determine height and width of the mip map
@@ -475,13 +515,18 @@ GR_DIENTRY(gu3dfGetInfo, FxBool,
 #ifdef __GNUC__
   /* This function is not found in libgcc.a */
   {
+#ifndef __DJGPP__
     char* tempStr = (char*)color_format;
     while(*tempStr != '\0') *tempStr++ = toupper(*tempStr);
+#else
+    extern char *strupr (char *string);
+    strupr(color_format);
+#endif
   }
 #else
   {
-    extern char* strupr(char*);
-    strupr(color_format);
+    extern char* _strupr(char*);
+    _strupr(color_format);
   }
 #endif /* __GNUC__ */
 
@@ -510,6 +555,7 @@ GR_DIENTRY(gu3dfGetInfo, FxBool,
                                                   FXFALSE);
   }
 
+  GDBG_INFO(81,"gu3dfGetInfo(%s,0x%x) -> %i tex memory required\n",FileName,Info, Info->mem_required);
   return format_found;
 #undef FN_NAME
 } /* gu3dfGetInfo() */
@@ -529,8 +575,15 @@ GR_DIENTRY(gu3dfLoad, FxBool, (const char *filename, Gu3dfInfo *info))
   ** open the file
   */
   if ((image_file = fopen(filename, openmode)) == NULL) return FXFALSE;
-  if (!_grGet3dfHeader(image_file, buffer, sizeof(buffer))) return FXFALSE;
+  if (!_grGet3dfHeader(image_file, buffer, sizeof(buffer))) {
+    /*
+     ** close the file
+     */
+    fclose(image_file);
+    return FXFALSE;
+  }
 
+#if 0
   /*
   ** If necessary, read in the YIQ decompression table
   */
@@ -611,25 +664,221 @@ GR_DIENTRY(gu3dfLoad, FxBool, (const char *filename, Gu3dfInfo *info))
     for(i = 0; i < 256; i++)
       info->table.palette.data[i] = ReadDataLong(image_file);
   }
+#endif
 
   /*
   ** Read in the image
   */
   switch (info->header.format)
   {
+  case GR_TEXFMT_YIQ_422:
+     /*
+     ** If necessary, read in the YIQ decompression table
+     */
+    {
+      /*
+       ** read in Y
+       */
+      for (index = 0; index < 16; index++)
+        info->table.nccTable.yRGB[index] = ((FxI16) ReadDataShort(image_file)) & 0xFF;
+      
+      /*
+       ** read in I
+       */
+      for (index = 0; index < 4; index++) {
+        info->table.nccTable.iRGB[index][0] = ((FxI16) ReadDataShort(image_file)) & 0x1FF;
+        info->table.nccTable.iRGB[index][1] = ((FxI16) ReadDataShort(image_file)) & 0x1FF;
+        info->table.nccTable.iRGB[index][2] = ((FxI16) ReadDataShort(image_file)) & 0x1FF;
+      }
+      
+      /*
+       ** read in Q
+       */
+      for (index = 0; index < 4; index++) {
+        info->table.nccTable.qRGB[index][0] = ((FxI16) ReadDataShort(image_file)) & 0x1FF;
+        info->table.nccTable.qRGB[index][1] = ((FxI16) ReadDataShort(image_file)) & 0x1FF;
+        info->table.nccTable.qRGB[index][2] = ((FxI16) ReadDataShort(image_file)) & 0x1FF;
+      }
+      
+      /*
+       ** pack the table Y entries
+       */
+      for (index = 0; index < 4; index++) {
+        FxU32 packedvalue;
+        
+        packedvalue  = ((FxU32) info->table.nccTable.yRGB[index*4+0]);
+        packedvalue |= ((FxU32) info->table.nccTable.yRGB[index*4+1]) << 8;
+        packedvalue |= ((FxU32) info->table.nccTable.yRGB[index*4+2]) << 16;
+        packedvalue |= ((FxU32) info->table.nccTable.yRGB[index*4+3]) << 24;
+                                           
+        info->table.nccTable.packed_data[index] = packedvalue;
+      }
+      
+      /*
+       ** pack the table I entries
+       */
+      for (index = 0; index < 4; index++) {
+        FxU32 packedvalue;
+        
+        packedvalue  = ((FxU32) info->table.nccTable.iRGB[index][0]) << 18;
+        packedvalue |= ((FxU32) info->table.nccTable.iRGB[index][1]) << 9;
+        packedvalue |= ((FxU32) info->table.nccTable.iRGB[index][2]) << 0;
+        
+        info->table.nccTable.packed_data[index+4] = packedvalue;
+      }
+      
+      /*
+       ** pack the table Q entries
+       */
+      for (index = 0; index < 4; index++) {
+        FxU32 packedvalue;
+        
+        packedvalue  = ((FxU32) info->table.nccTable.qRGB[index][0]) << 18;
+        packedvalue |= ((FxU32) info->table.nccTable.qRGB[index][1]) << 9;;
+        packedvalue |= ((FxU32) info->table.nccTable.qRGB[index][2]) << 0;
+        
+        info->table.nccTable.packed_data[index+8] = packedvalue;
+      }
+    }
+    
+    Read8Bit(info->data, image_file, 
+             info->header.small_lod, 
+             info->header.large_lod, 
+             G3_ASPECT_TRANSLATE(info->header.aspect_ratio));
+    break;
+    
+  case GR_TEXFMT_AYIQ_8422:
+    /*
+     ** If necessary, read in the YIQ decompression table
+     */
+    {
+      /*
+       ** read in Y
+       */
+      for (index = 0; index < 16; index++)
+        info->table.nccTable.yRGB[index] = ((FxI16) ReadDataShort(image_file)) & 0xFF;
+      
+      /*
+       ** read in I
+       */
+      for (index = 0; index < 4; index++) {
+        info->table.nccTable.iRGB[index][0] = ((FxI16) ReadDataShort(image_file)) & 0x1FF;
+        info->table.nccTable.iRGB[index][1] = ((FxI16) ReadDataShort(image_file)) & 0x1FF;
+        info->table.nccTable.iRGB[index][2] = ((FxI16) ReadDataShort(image_file)) & 0x1FF;
+      }
+      
+      /*
+       ** read in Q
+       */
+      for (index = 0; index < 4; index++) {
+        info->table.nccTable.qRGB[index][0] = ((FxI16) ReadDataShort(image_file)) & 0x1FF;
+        info->table.nccTable.qRGB[index][1] = ((FxI16) ReadDataShort(image_file)) & 0x1FF;
+        info->table.nccTable.qRGB[index][2] = ((FxI16) ReadDataShort(image_file)) & 0x1FF;
+      }
+      
+      /*
+       ** pack the table Y entries
+       */
+      for (index = 0; index < 4; index++) {
+        FxU32 packedvalue;
+        
+        packedvalue  = ((FxU32) info->table.nccTable.yRGB[index*4+0]);
+        packedvalue |= ((FxU32) info->table.nccTable.yRGB[index*4+1]) << 8;
+        packedvalue |= ((FxU32) info->table.nccTable.yRGB[index*4+2]) << 16;
+        packedvalue |= ((FxU32) info->table.nccTable.yRGB[index*4+3]) << 24;
+                                           
+        info->table.nccTable.packed_data[index] = packedvalue;
+      }
+      
+      /*
+       ** pack the table I entries
+       */
+      for (index = 0; index < 4; index++) {
+        FxU32 packedvalue;
+        
+        packedvalue  = ((FxU32) info->table.nccTable.iRGB[index][0]) << 18;
+        packedvalue |= ((FxU32) info->table.nccTable.iRGB[index][1]) << 9;
+        packedvalue |= ((FxU32) info->table.nccTable.iRGB[index][2]) << 0;
+        
+        info->table.nccTable.packed_data[index+4] = packedvalue;
+      }
+      
+      /*
+       ** pack the table Q entries
+       */
+      for (index = 0; index < 4; index++) {
+        FxU32 packedvalue;
+        
+        packedvalue  = ((FxU32) info->table.nccTable.qRGB[index][0]) << 18;
+        packedvalue |= ((FxU32) info->table.nccTable.qRGB[index][1]) << 9;;
+        packedvalue |= ((FxU32) info->table.nccTable.qRGB[index][2]) << 0;
+        
+        info->table.nccTable.packed_data[index+8] = packedvalue;
+      }
+    }
+
+    Read16Bit(info->data, image_file, 
+              info->header.small_lod,
+              info->header.large_lod,
+              G3_ASPECT_TRANSLATE(info->header.aspect_ratio));
+    break;
+    
+  case GR_TEXFMT_P_8:
+    /*
+     ** If necessary, read in the Palette
+     */
+    {
+      FxU32 i;
+      for(i = 0; i < 256; i++)
+        info->table.palette.data[i] = ReadDataLong(image_file);
+    }
+    
+    Read8Bit(info->data, image_file, 
+             info->header.small_lod, 
+             info->header.large_lod, 
+             G3_ASPECT_TRANSLATE(info->header.aspect_ratio));
+    break;
+    
+  case GR_TEXFMT_AP_88:
+    /*
+     ** If necessary, read in the Palette
+     */
+    {
+      FxU32 i;
+      for(i = 0; i < 256; i++)
+        info->table.palette.data[i] = ReadDataLong(image_file);
+    }
+    
+    Read16Bit(info->data, image_file, 
+              info->header.small_lod,
+              info->header.large_lod,
+              G3_ASPECT_TRANSLATE(info->header.aspect_ratio));
+    break;
+    
   case GR_TEXFMT_ARGB_CMP_FXT1:
+  case GR_TEXFMT_ARGB_CMP_DXT1:
     Read4Bit(info->data, image_file, 
              info->header.small_lod, 
              info->header.large_lod, 
              G3_ASPECT_TRANSLATE(info->header.aspect_ratio));
     break;
 
+  case GR_TEXFMT_ARGB_CMP_DXT2:
+  case GR_TEXFMT_ARGB_CMP_DXT3:
+  case GR_TEXFMT_ARGB_CMP_DXT4:
+  case GR_TEXFMT_ARGB_CMP_DXT5:
+    ReadDXT8Bit(info->data, image_file, 
+                info->header.small_lod, 
+                info->header.large_lod, 
+                G3_ASPECT_TRANSLATE(info->header.aspect_ratio));
+    break;
+
   case GR_TEXFMT_INTENSITY_8:
   case GR_TEXFMT_ALPHA_8:
   case GR_TEXFMT_ALPHA_INTENSITY_44:
-  case GR_TEXFMT_YIQ_422:
+  /*case GR_TEXFMT_YIQ_422:*/
   case GR_TEXFMT_RGB_332:
-  case GR_TEXFMT_P_8:
+  /*case GR_TEXFMT_P_8:*/
     Read8Bit(info->data, image_file, 
              info->header.small_lod, 
              info->header.large_lod, 
@@ -639,10 +888,12 @@ GR_DIENTRY(gu3dfLoad, FxBool, (const char *filename, Gu3dfInfo *info))
   case GR_TEXFMT_RGB_565:
   case GR_TEXFMT_ARGB_8332:
   case GR_TEXFMT_ARGB_1555:
-  case GR_TEXFMT_AYIQ_8422:
+  /*case GR_TEXFMT_AYIQ_8422:*/
   case GR_TEXFMT_ARGB_4444:
   case GR_TEXFMT_ALPHA_INTENSITY_88:
-  case GR_TEXFMT_AP_88:
+  /*case GR_TEXFMT_AP_88:*/
+  case GR_TEXFMT_YUYV_422:
+  case GR_TEXFMT_UYVY_422:
     Read16Bit(info->data, image_file, 
               info->header.small_lod,
               info->header.large_lod,
@@ -650,6 +901,7 @@ GR_DIENTRY(gu3dfLoad, FxBool, (const char *filename, Gu3dfInfo *info))
     break;
 
   case GR_TEXFMT_ARGB_8888:
+  case GR_TEXFMT_AYUV_444:
     Read32Bit(info->data, image_file,
               info->header.small_lod,
               info->header.large_lod,
@@ -657,7 +909,12 @@ GR_DIENTRY(gu3dfLoad, FxBool, (const char *filename, Gu3dfInfo *info))
     break;
 
   default:
+    /*
+     ** close the file
+     */
+    fclose(image_file);
     return FXFALSE;
+    break;
   }
 
   /*
@@ -676,6 +933,8 @@ GR_DIENTRY(gu3dfLoad, FxBool, (const char *filename, Gu3dfInfo *info))
 ** or low nibble is.
 ** Take advantage of the fact that the minimum size is 16 bytes
 ** during the fread() call.
+** FXT1,DXT1
+** DXT1 has 2 side by side 4x4 microtiles thus 8x4 texels
 */
 static void 
 Read4Bit(FxU8 *data, FILE *image_file, int small_lod, int large_lod,
@@ -695,6 +954,37 @@ Read4Bit(FxU8 *data, FILE *image_file, int small_lod, int large_lod,
     fread(data, 16, thisMipMapByteCount, image_file);
     data += thisMipMapByteCount;
   }
+}
+
+/*
+** ReadDXT8Bit
+**
+** Read in a 8-bit Compressed texture map. the minimum mipmap
+** size is 4x4 texels
+** Take advantage of the fact that the minimum size is 16 bytes
+** during the fread() call.
+** dxt2,3,4,5
+*/
+static void 
+ReadDXT8Bit(FxU8 *data, FILE *image_file, 
+         int small_lod, int large_lod, 
+         GrAspectRatio_t aspect_ratio)
+{
+  int lod;
+  int width, height,thisMipMapByteCount;
+
+  for (lod = small_lod; lod <= large_lod; lod++) {
+    width  = _grMipMapHostWHDXT[aspect_ratio][lod][0];
+    height = _grMipMapHostWHDXT[aspect_ratio][lod][1];
+
+    /* Divide the WxH by 16 (the most we can safely do) so that we can
+       read 16 bytes at a time. */
+    thisMipMapByteCount = (width * height) >> 4;
+
+    fread(data, 16, thisMipMapByteCount, image_file);
+    data += thisMipMapByteCount;
+  }
+
 }
 
 /*

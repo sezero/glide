@@ -21,6 +21,6 @@
 # $Date$
 #
 
-LDIRT = *.exe *.dll *.bat *.sim
+LDIRT = *.exe *.dll *.bat *.sim *.3df *.txt
 
-!include $(BUILD_ROOT_SWLIBS)/include/nmake/3dfx.mak
+!include $(BUILD_ROOT_SWLIBS)\include\nmake\3dfx.mak

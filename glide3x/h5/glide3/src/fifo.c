@@ -18,7 +18,8 @@
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
  *
  ** $Header$
- ** $Log: 
+ ** $Log:
+ **  15   GlideXP   1.9.0       12/14/01 Ryan Nunn       Changed an #ifdef to #if
  **  14   3dfx      1.8.1.2.1.1 10/11/00 Brent           Forced check in to enforce
  **       branching.
  **  13   3dfx      1.8.1.2.1.0 07/21/00 Adam Briggs     don't try to bump > 0xffff
@@ -202,7 +203,7 @@
 #include "fxcmd.h"
 
 
-#if GDBG_INFO_ON
+#if (GDBG_INFO_ON || _FIFODUMP)
 
 static const char* h3SstRegNames[] = {
   "status",
@@ -503,7 +504,9 @@ static const char * h3SstIORegNames[] = {
 
 
 #define GEN_INDEX(a) ((((FxU32) a) - ((FxU32) gc->reg_ptr)) >> 2)
+#endif /* GDBG_INFO_ON || _FIFODUMP */
 
+#if GDBG_INFO_ON
 void
 _grFifoWriteDebug(FxU32 addr, FxU32 val, FxU32 fifoPtr)
 {
@@ -562,7 +565,7 @@ _grFifoFWriteDebug(FxU32 addr, float val, FxU32 fifoPtr)
 #endif /* !HAL_CSIM */
 } /* _grFifoFWriteDebug */
 
-extern void
+void
 _grH3FifoDump_TriHdr(const FxU32 hdrVal)
 {
   GR_DCL_GC;
@@ -619,6 +622,8 @@ _grErrorCallback(const char* const procName,
                  const char* const format,
                  va_list           args)
 {
+  GR_DCL_GC;
+  
   static FxBool inProcP = FXFALSE;
 
   if (!inProcP) {
@@ -629,13 +634,73 @@ _grErrorCallback(const char* const procName,
       extern void (*GrErrorCallback)( const char *string, FxBool fatal );
 
       vsprintf(errMsgBuf, format, args);
-      (*GrErrorCallback)(errMsgBuf, (GETENV("FX_ERROR_FAIL") != NULL));
+      (*GrErrorCallback)(errMsgBuf, (GETENV("FX_ERROR_FAIL", gc->bInfo->RegPath) != NULL));
     }
     inProcP = FXFALSE;
   }
 }
 
 #endif /* GDBG_INFO_ON */
+
+#if _FIFODUMP
+void
+_grFifoWriteDebugDump(FxU32 tmu, FxU32 addr, FxU32 val, FxU32 fifoPtr)
+{
+  GR_DCL_GC;
+  FxU32 index = GEN_INDEX(addr);
+  
+  GDBG_FD(444, "Storing to FIFO:\n");
+  GDBG_FD(444, "  FIFO Ptr:    0x%x : 0x%X\n", fifoPtr, gc->cmdTransportInfo.fifoRoom);  
+  if (index <= 0xff) { 
+    GDBG_FD(444, "  Reg Name:    %s\n", h3SstRegNames[index]);
+    GDBG_FD(444, "  Reg Num:     0x%X\n", index);
+  } else {
+    const char* strP;
+    const FxU32 offset = (addr - (FxU32)gc->reg_ptr);
+    
+    if (offset >= HW_TEXTURE_OFFSET) {
+      strP = "Texture";
+    } else if (offset >= HW_LFB_OFFSET) {
+      strP = "LFB";
+      index = addr;
+    } else if (offset >= HW_FIFO_OFFSET) {
+      strP = "Cmd FIFO";
+    } else {
+      strP = "Woah!";
+    }
+    GDBG_FD(444, "  %s Addr:    0x%X\n",
+              strP, index);
+  }
+  GDBG_FD(444, "  Value:       0x%X 0x%X\n", (index << 2), val);
+  
+#if !HAL_CSIM
+//  GDBG_FD(0, "        SET(0x%X, %ld(0x%X)) 0 %s (0x%X)\n",
+//            0x10000000UL + (FxU32)(index << 2), val, val, 
+//            h3SstRegNames[index & 0xFF], fifoPtr);
+#endif /* !HAL_CSIM */
+} /* _grFifoWriteDebug */
+
+void
+_grFifoFWriteDebugDump(FxU32 tmu, FxU32 addr, float val, FxU32 fifoPtr)
+{
+  GR_DCL_GC;
+  FxU32 index = GEN_INDEX(addr);
+
+  GDBG_FD(444, "Storing to FIFO:\n");
+  GDBG_FD(444, "  FIFO Ptr:    0x%x\n", fifoPtr);
+  if (index <= 0xff) {
+    GDBG_FD(444, "  Reg Name:    %s\n", h3SstRegNames[index]);
+    GDBG_FD(444, "  Reg Num:     0x%x\n", index);
+  }
+  GDBG_FD(444, "  Value:       0x%X %4.2f\n", (index << 2), val);
+
+#if !HAL_CSIM
+//  GDBG_FD(0, "        SET(0x%X, %4.2f (0x%X)) 0 %s\n", 
+//            0x10000000UL + (FxU32)(index << 2), val, *(const FxU32*)&val, 
+//            h3SstRegNames[index & 0xFF]);
+#endif /* !HAL_CSIM */
+} /* _grFifoFWriteDebug */
+#endif /* CMDFIFODUMP_PER_CHIP */
 
 #if USE_PACKET_FIFO
 
@@ -740,10 +805,10 @@ _grCommandTransportMakeRoom(const FxI32 blockSize, const char* fName, const int 
 {
 #define FN_NAME "_FifoMakeRoom"
 
-  GR_BEGIN_NOFIFOCHECK(FN_NAME, 400);
+  GR_BEGIN_NOFIFOCHECK(FN_NAME"()\n", 400);
 
   if ( gc->windowed ) {
-#if defined(GLIDE_INIT_HWC) && !defined(__linux__)
+#if defined(GLIDE_INIT_HWC) && !defined(__linux__) && !defined(__DJGPP__)
     struct cmdTransportInfo*
       gcFifo = &gc->cmdTransportInfo;
     HwcWinFifo 
@@ -885,7 +950,11 @@ _grCommandTransportMakeRoom(const FxI32 blockSize, const char* fName, const int 
       FxU32 wrapAddr = 0x00UL;
       FxU32 checks;
 
+#if TACO_MEMORY_FIFO_HACK
+      GR_ASSERT(blockSize >= 0);
+#else
       GR_ASSERT(blockSize > 0);
+#endif
       GR_ASSERT((FxU32)blockSize < gc->cmdTransportInfo.fifoSize);
       FIFO_ASSERT();
       
@@ -1082,8 +1151,8 @@ _grCommandTransportMakeRoom(const FxI32 blockSize, const char* fName, const int 
             FIFO_CACHE_FLUSH(gc->cmdTransportInfo.fifoPtr);
             GR_CAGP_SET(bump, 1);
 #else /* !__POWERPC__ && !PCI_BUMP_N_GRIND */             
-            SET(*gc->cmdTransportInfo.fifoPtr++, gc->cmdTransportInfo.fifoJmpHdr[0]);
-            SET(*gc->cmdTransportInfo.fifoPtr++, gc->cmdTransportInfo.fifoJmpHdr[1]);
+            SET(*gc->cmdTransportInfo.fifoPtr++, gc->cmdTransportInfo.fifoJmpHdr[0]); /* KoolSmoky - is this correct? should we use SET_FIFO? */
+            SET(*gc->cmdTransportInfo.fifoPtr++, gc->cmdTransportInfo.fifoJmpHdr[1]); /* KoolSmoky - is this correct? should we use SET_FIFO? */
 #ifdef HAL_CSIM
             GR_CAGP_SET(bump, 0);
 #else /* !defined(HAL_CSIM) */
@@ -1092,7 +1161,7 @@ _grCommandTransportMakeRoom(const FxI32 blockSize, const char* fName, const int 
 #endif /* !__POWERPC__ && !PCI_BUMP_N_GRIND */
             gc->cmdTransportInfo.lastBump = gc->cmdTransportInfo.fifoStart;
           } else {
-            SET(*gc->cmdTransportInfo.fifoPtr, gc->cmdTransportInfo.fifoJmpHdr[0]);
+            SET(*gc->cmdTransportInfo.fifoPtr, gc->cmdTransportInfo.fifoJmpHdr[0]); /* KoolSmoky - is this correct? should we use SET_FIFO? */
           }
         }
           
@@ -1170,7 +1239,7 @@ _grCommandTransportMakeRoom(const FxI32 blockSize, const char* fName, const int 
 void
 _grH3FifoDump_Linear(const FxU32* const linearPacketAddr)
 {
-#ifdef GDBG_INFO_ON
+#if GDBG_INFO_ON
   FXUNUSED(h3SstIORegNames);
 #endif
 }
@@ -1284,11 +1353,11 @@ _fifoAssertFull( void )
       const FxU32 cmdFifoDepth = GR_GET(((SstRegs*)(gc->reg_ptr))->cmdFifoDepth);
       const FxU32 maxFifoDepth = ((gc->cmdTransportInfo.fifoSize - FIFO_END_ADJUST) >> 2);
       if(cmdFifoDepth > maxFifoDepth) { 
-        gdbg_printf("cmdFifoDepth > size: 0x%X : 0x%Xn", 
+        GDBG_PRINTF("cmdFifoDepth > size: 0x%X : 0x%Xn", 
                     cmdFifoDepth, maxFifoDepth); 
         ASSERT_FAULT_IMMED(cmdFifoDepth <= maxFifoDepth); 
       } else if (cmdFifoDepth + (gc->cmdTransportInfo.fifoRoom >> 2) > maxFifoDepth) { 
-        gdbg_printf("cmdFifoDepth + fifoRoom > size: (0x%X : 0x%X) : 0x%Xn", 
+        GDBG_PRINTF("cmdFifoDepth + fifoRoom > size: (0x%X : 0x%X) : 0x%Xn", 
                     cmdFifoDepth, (gc->cmdTransportInfo.fifoRoom >> 2), maxFifoDepth); 
         ASSERT_FAULT_IMMED(cmdFifoDepth + (gc->cmdTransportInfo.fifoRoom >> 2) <= maxFifoDepth); 
       } 

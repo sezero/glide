@@ -20,7 +20,11 @@
 **
 ** $Revision$ 
 ** $Date$ 
-** $Log: 
+** $Log:
+**  9    3dfxzone  1.6         02/26/03 Sandro          fast C clipping routine.
+**       define FAST_C_CLIP.
+**  8    ve3d      1.5         03/29/02 KoolSmoky       FX_GLIDE_SW_SETUP should 
+**       work now.
 **  7    3dfx      1.4.1.0.1.0 10/11/00 Brent           Forced check in to enforce
 **       branching.
 **  6    3dfx      1.4.1.0     06/20/00 Joseph Kain     Changes to support the
@@ -197,6 +201,11 @@ do { \
     fifoFree = _grSpinFifo(n); \
   gc->state.fifoFree = fifoFree;\
 } while(0)
+
+
+#define GR_WINFIFO_BEGIN()
+#define GR_WINFIFO_END()
+
 #elif USE_PACKET_FIFO
 /* Stuff to manage the command fifo on cvg
  *
@@ -397,6 +406,18 @@ extern void _reg_group_begin_internal( FxU32 chipId, FxU32 regBase,
 #define DBG_CALL( X )
 #endif /* !GDBG_INFO_ON */
 #endif /* USE_PACKET_FIFO */
+
+#if _FIFODUMP
+void _grFifoWriteDebugDump(FxU32 tmu, FxU32 addr, FxU32 val, FxU32 fifoPtr);
+#define FIFODUMP(a,b,c,d) \
+_grFifoWriteDebugDump((FxU32) a, (FxU32) b, (FxU32) c, (FxU32) d)
+void _grFifoFWriteDebugDump(FxU32 tmu, FxU32 addr, float val, FxU32 fifoPtr);
+#define FIFOFDUMP(a,b,c,d) \
+_grFifoFWriteDebugDump((FxU32) a, (FxU32) b, (float) c, (FxU32) d)
+#else
+#define FIFODUMP(a,b,c,d)
+#define FIFOFDUMP(a,b,c,d)
+#endif /* _FIFODUMP */
 
 /* HW Setting macros. We redefine the default macros to:
  *  - add extra tracing
@@ -651,6 +672,11 @@ enum {
    kSetupPingPongDisable = 0x08
 };
 #define GR_CULL_MASK 0xff7fffff
+#else
+enum {
+   kSetupStrip           = 0x00,
+   kSetupFan             = 0x01,
+};
 #endif /* GLIDE_HW_TRI_SETUP */
 
 #define REGNUM(__reg)   (offsetof(SstRegs, __reg) >> 2)
@@ -844,6 +870,7 @@ do { \
                            !gc->open, \
                            "Called before grSstWinOpen()"); \
     DEBUGFIFOWRITE(&((SstRegs*)(__base))->__field, __val, curFifoPtr); \
+	FIFODUMP(__chipId, &((SstRegs*)(__base))->__field, __val, curFifoPtr); \
     SET_FIFO(*curFifoPtr++, ((0x01 << SSTCP_PKT1_NWORDS_SHIFT) |    /* size (32bit words) */ \
                         FIFO_REG(__chipId, __field) |          /* chip[14:10] num[9:3] */ \
                         SSTCP_PKT1));                          /* type (1) */ \
@@ -865,6 +892,7 @@ do { \
                            !gc->open, \
                            "Called before grSstWinOpen()"); \
     DEBUGFIFOWRITE(&((SstGRegs*)(__base))->__field, __val, curFifoPtr); \
+	FIFODUMP(__chipId, &((SstRegs*)(__base))->__field, __val, curFifoPtr); \
     SET_FIFO(*curFifoPtr++,\
       ((0x01 << SSTCP_PKT1_NWORDS_SHIFT) |    /* size (32bit words) */ \
         FIFO_REG_WAX(__field) | /* chip[14:10] num[9:3] */ \
@@ -887,6 +915,7 @@ do { \
                            !gc->open, \
                            "Called before grSstWinOpen()"); \
     DEBUGFIFOWRITE(&((FxU32*)(__base))[__regIndex], __val, curFifoPtr); \
+	FIFODUMP(__chipId, &((FxU32*)(__base))[__regIndex], __val, curFifoPtr); \
     SET_FIFO(*curFifoPtr++, ((0x01 << SSTCP_PKT1_NWORDS_SHIFT) |    /* size (32bit words) */ \
                         ((__chipId) << kChipFieldShift) |      /* chip[14:10] */ \
                         ((__regIndex) << 3) |                    /* Reg Num[9:3] */ \
@@ -909,6 +938,7 @@ do { \
                            !gc->open, \
                            "Called before grSstWinOpen()"); \
     DEBUGFIFOFWRITE(&((FxU32*)(__base))[__regIndex], __val, curFifoPtr); \
+	FIFOFDUMP(__chipId, &((FxU32*)(__base))[__regIndex], __val, curFifoPtr); \
     SET_FIFO(*curFifoPtr++, ((0x01 << SSTCP_PKT1_NWORDS_SHIFT) |    /* size (32bit words) */ \
                         ((__chipId) << kChipFieldShift) |      /* chip[14:10] */ \
                         ((__regIndex) << 3) |                    /* Reg Num[9:3] */ \
@@ -932,6 +962,7 @@ do { \
                            !gc->open, \
                            "Called before grSstWinOpen()"); \
     DEBUGFIFOWRITE(&((SstRegs*)(__base))->__field, __val, curFifoPtr); \
+	FIFODUMP(__chipId, &((SstRegs*)(__base))->__field, __val, curFifoPtr); \
     SET_FIFO(*curFifoPtr++, ((0x01 << SSTCP_PKT1_NWORDS_SHIFT) |       /* size (32bit words) */ \
                         FIFO_REG(__chipId, __field) |             /* chip[14:10] num[9:3] */ \
                         SSTCP_PKT1));                             /* type (1) */ \
@@ -953,6 +984,7 @@ do { \
                            !gc->open, \
                            "Called before grSstWinOpen()"); \
     DEBUGFIFOFWRITE(&((SstRegs*)(__base))->__field, __val, curFifoPtr); \
+	FIFOFDUMP(__chipId, &((SstRegs*)(__base))->__field, __val, curFifoPtr); \
     SET_FIFO(*curFifoPtr++, ((0x01 << SSTCP_PKT1_NWORDS_SHIFT) |    /* size (32bit words) */ \
                         FIFO_REG(__chipId, __field) |          /* chip[14:10] num[9:3] */ \
                         SSTCP_PKT1));                          /* type (1) */ \
@@ -1143,6 +1175,83 @@ do { \
   FIFO_ASSERT(); \
 }
 
+#ifdef FAST_C_CLIP
+
+//*******************************************
+//*			CPU STANDARD ROUTINES			*
+//*******************************************
+#define AMG_TRISETXY(a)\
+  tPackPtr[0]=a[0];\
+  tPackPtr[1]=a[1];\
+  tPackPtr+=2;\
+
+#define AMG_TRISETPARAM(a)\
+  tPackPtr[0]=a;\
+  tPackPtr++;\
+
+#define AMG_TRISETXYNOADD(a,b)\
+  tPackPtr[b]=a[0];\
+  tPackPtr[b+1]=a[1];\
+
+#define AMG_TRISETPARAMNOADD(a,b)\
+  tPackPtr[b]=a;\
+
+#define AMG_TRIFIFOADD\
+  tPackPtr++;
+
+#define AMG_TRIFIFOADDVALUE(a)\
+  tPackPtr+=a;
+
+#define AMG_TRIFIFOMEMSET(i)\
+  while(i!=20)\
+  {\
+    tPackPtr[i]=0;\
+    i++;\
+  }\
+
+#define AMG_GR_SET_EXPECTED_SIZE(n,p) \
+  GR_CHECK_FOR_ROOM(n,p); \
+
+
+#define AMG_TRI_STRIP_BEGIN(tPackPtr,packetVal) \
+  tPackPtr = gc->cmdTransportInfo.fifoPtr; \
+  packetVal= 0x0c0 + gc->cmdTransportInfo.cullStripHdr; \
+  tPackPtr[0]=packetVal; \
+  tPackPtr++; \
+
+#define AMG_TRI_END(tPackPtr)\
+  gc->cmdTransportInfo.fifoRoom -= ((FxU32)tPackPtr - (FxU32)gc->cmdTransportInfo.fifoPtr); \
+  gc->cmdTransportInfo.fifoPtr = tPackPtr; \
+
+
+//*******************************************
+//*				MMX ROUTINES				*
+//*******************************************
+#define AMG_FLUSHMMX()	\
+  __asm	\
+ {\
+    __asm emms \
+ }\
+
+#define AMG_TRISETXYMMX(a,b,c,v2,v3)\
+  __asm	\
+  {\
+    __asm	mov esi,tPackPtr \
+    __asm	mov edi,a \
+    __asm	mov edx,b \
+    __asm	mov eax,c \
+    __asm	mov ebx,v2 \
+    __asm	mov ecx,v3 \
+    __asm	movq mm1,[edi] \
+    __asm	movq mm2,[edx] \
+    __asm	movq mm3,[eax] \
+    __asm	movq [esi],mm1 \
+    __asm	movq [esi+ebx*4],mm2 \
+    __asm	movq [esi+ecx*4],mm3 \
+  }\
+
+#endif /* FAST_C_CLIP */
+
 #define FIFO_LINEAR_WRITE_BEGIN(__numWords, __type, __addr, __maskW2, __maskWN, __f, __l) \
 { \
   FxU32* packetPtr = gc->cmdTransportInfo.fifoPtr; \
@@ -1181,7 +1290,7 @@ do { \
 #define FIFO_LINEAR_WRITE_SET(__val) \
 do { \
   GDBG_INFO(gc->myLevel + 205, "\t0x%X : 0x%X\n", packetPtr, (__val)); \
-  GDBG_INFO(120, "fifPtr: 0x%x, val: 0x%x\n\n", packetPtr, __val);\
+  GDBG_INFO(120, "fifoPtr: 0x%x, val: 0x%x\n\n", packetPtr, __val);\
   if ( !gc->windowed ) { \
     GR_ASSERT(GET(gc->cRegs->cmdFifo0.readPtrL) >= gc->cmdTransportInfo.fifoOffset);\
     GR_ASSERT(GET(gc->cRegs->cmdFifo0.readPtrL) < (gc->cmdTransportInfo.fifoOffset + gc->cmdTransportInfo.fifoSize));\
@@ -1313,7 +1422,7 @@ do { \
 #define FIFO_LINEAR_EDGE_MASK_ADJUST(__mask) ((~(__mask)) & 0x0FUL)
 #define FIFO_LINEAR_EDGE_SET(__val) FIFO_LINEAR_WRITE_SET((((__val) & 0xFFFF0000UL) >> 16UL) | \
                                                           (((__val) & 0x0000FFFFUL) << 16UL))
-#else /* !USE_PACKET_FIFO */
+#else /* !(GLIDE_PLATFORM & GLIDE_HW_CVG) */
 #define FIFO_LINEAR_EDGE_SET(__val) FIFO_LINEAR_WRITE_SET(__val)
 #define FIFO_LINEAR_EDGE_MASK_ADJUST(__mask) (__mask)
 #endif

@@ -19,16 +19,21 @@
 #
 # $Revision$
 # $Date$
-#
+# $Log:
+# 1   ve3d      1.0         11/24/01 KoolSmoky    gendate makefile
+# 
 
-HEADERS=*.h gendate.h
+!include $(BUILD_ROOT)\config.mak
+#!include $(BUILD_ROOT)\swlibs\include\nmake\3dfx.mak
+
+HEADERS=*.h
 
 INSTALL_DESTINATION=$(BUILD_ROOT)\$(FX_GLIDE_HW)
 
 LDIRT = gendate.exe gendate.obj gendate.h
 
-!include $(BUILD_ROOT_SWLIBS)/include/nmake/3dfx.mak
-
+default:: all
+all: gendate.exe gendate.h
 
 gendate.exe: gendate.c
 !if "$(FX_COMPILER)" == "MICROSOFT"
@@ -36,9 +41,12 @@ gendate.exe: gendate.c
 !else if "$(FX_COMPILER)" == "WATCOM"
         set WCC386=$(CFLAGS)
         wcl386 gendate.c
+!else if "$(FX_COMPILER)" == "INTEL"
+	$(CC) gendate.c
 !endif
 
 gendate.h: gendate.exe
 	gendate.exe > gendate.h
 	del gendate.exe
 
+!include $(BUILD_ROOT)\swlibs\include\nmake\3dfx.mak

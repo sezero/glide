@@ -18,7 +18,9 @@
  ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVE
  **
  ** $Header$
- ** $Log: 
+ ** $Log:
+ **  12   GlideXP   1.5.2       12/10/01 Ryan Nunn       Commented out
+ **        __declspec( naked ) for grDrawTriangle since it was causing problems
  **  11   3dfx      1.5.1.2.1.1 10/11/00 Brent           Forced check in to enforce
  **       branching.
  **  10   3dfx      1.5.1.2.1.0 07/10/00 troy thornton   changed grDrawPoints to
@@ -281,7 +283,7 @@ GR_ENTRY(grDrawLine, void, (const void *a, const void *b))
             _grDrawLineStrip(GR_VTX_PTR_ARRAY, GR_LINES, 2, verts);
         }
 #else
-#ifdef __linux__
+#if defined(__linux__) || defined(__DJGPP__)
   if (gc->state.grEnableArgs.primitive_smooth_mode & GR_AA_ORDERED_LINES_MASK)
     _grAADrawLineStrip(GR_VTX_PTR_ARRAY, GR_LINES, 2, (void *)&a);
   else
@@ -302,9 +304,11 @@ GR_ENTRY(grDrawLine, void, (const void *a, const void *b))
  */
 
 #if !defined(__POWERPC__) || GLIDE_USE_C_TRISETUP
-#if !defined(GLIDE_DEBUG) && !defined(__linux__)
+#if !defined(GLIDE_DEBUG) && !defined(__linux__) && !defined(__DJGPP__)
+#if !(GLIDE_USE_C_TRISETUP)
 __declspec( naked )
-#endif	/* !defined(GLIDE_DEBUG) && !defined(__linux__) */
+#endif
+#endif	/* !defined(GLIDE_DEBUG) && !defined(__linux__) && !defined(__DJGPP__) */
 GR_ENTRY(grDrawTriangle, void, (const void *a, const void *b, const void *c))
 {
 #define FN_NAME "grDrawTriangle"
@@ -317,7 +321,8 @@ GR_ENTRY(grDrawTriangle, void, (const void *a, const void *b, const void *c))
     GR_DCL_GC;
     GR_DCL_HW;
 #else  /* GLIDE_DEBUG */
-    GR_BEGIN_NOFIFOCHECK("grDrawTriangle",92);
+    //GR_BEGIN_NOFIFOCHECK("grDrawTriangle",92);
+    GR_BEGIN_NOFIFOCHECK_NORET("grDrawTriangle",92);
 #endif /* GLIDE_DEBUG */
     GDBG_INFO_MORE(gc->myLevel,"(0x%x,0x%x,0x%x)\n",a,b,c);
     
@@ -335,7 +340,7 @@ GR_ENTRY(grDrawTriangle, void, (const void *a, const void *b, const void *c))
   }
 #elif defined(__MSC__)
   {
-    _asm {
+    __asm {
       mov eax, DWORD PTR fs:[WNT_TEB_PTR] ;
       add eax, DWORD PTR _GlideRoot.tlsOffset;
       mov edx, [eax];
@@ -352,7 +357,7 @@ GR_ENTRY(grDrawTriangle, void, (const void *a, const void *b, const void *c))
     }
     lostContext: ; /* <-- my, that's odd, but MSVC was insistent  */
   }
-#elif defined(__linux__)
+#elif defined(__linux__) || defined(__DJGPP__)
   {
     GR_BEGIN_NOFIFOCHECK("grDrawTriangle",92);
     TRISETUP(a, b, c);
@@ -507,6 +512,7 @@ _grDrawPoints(FxI32 mode, FxI32 count, void *pointers)
 
           /* Upper right corner */
           y -= (0x01UL << (21UL - kNumMantissaBits));
+          
           DA_SET(x);
           dataElem = 0;
           DA_SET(y);

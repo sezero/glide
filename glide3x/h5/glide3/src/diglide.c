@@ -18,7 +18,11 @@
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
 ** $Header$
-** $Log: 
+** $Log:
+**  5    ve3d      1.1.1       04/07/02 KoolSmoky       moved _GlideInitEnvironment
+**       and thread initalizing routine from grGlideInit to grSstSelect.
+**  4    ve3d      1.1         03/28/02 KoolSmoky       let's detect glide devices
+**       *before* GETENV is called so we can do multimonitor.
 **  3    3dfx      1.0.1.0.1.0 10/11/00 Brent           Forced check in to enforce
 **       branching.
 **  2    3dfx      1.0.1.0     06/20/00 Joseph Kain     Changes to support the
@@ -345,23 +349,36 @@ GR_DIENTRY(grGlideInit, void, (void))
   GDBG_INIT();
   
   GDBG_INFO(80,"grGlideInit()\n");
-  _GlideInitEnvironment();                      /* the main init code */
+
   FXUNUSED(*glideIdent);
+  
+  /* KoolSmoky - let's detect glide devices *before* GETENV is called
+  ** need to know where the devices are first if we want multimonitor
+  ** capabilities.
+  */
+  if ( !_grSstDetectResources() ) {
+#ifdef GLIDE_INIT_HWC
+    GrErrorCallback( hwcGetErrorString(), FXTRUE );
+#endif
+  }
+  
+//  _GlideInitEnvironment();                      /* the main init code */
+//    FXUNUSED(*glideIdent);
 
 #if GDBG_INFO_ON
-  gdbg_error_set_callback(_grErrorCallback);
+  GDBG_ERROR_SET_CALLBACK(_grErrorCallback);
 #endif
 
-  if (_GlideRoot.initialized) {
-    initThreadStorage();
-    initCriticalSection();
+//  if (_GlideRoot.initialized) {
+//    initThreadStorage();
+//    initCriticalSection();
     
     /* NB: We need to select the default device here so that grGetXXX
      * routines work before grSstWinOpen or the surface attachment
      * routines are called.  
      */
-    grSstSelect(0);
-  }
+     grSstSelect(0);
+//  }
 
   _grResetTriStats();
   GDBG_INFO(281,"grGlideInit --done---------------------------------------\n");

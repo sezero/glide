@@ -195,7 +195,7 @@ void _doGrErrorCallback( const char *name, const char *msg, FxBool fatal )
   }
 #endif /* GDBG_INFO_ON */
 
-  gdbg_printf("%s: %s.\n", name, msg);
+  GDBG_PRINTF("%s: %s.\n", name, msg);
   sprintf(buf,"%s: %s.\n", name, msg);
   GrErrorCallback(buf, fatal);
 
@@ -242,6 +242,7 @@ _grErrorDefaultCallback( const char *s, FxBool fatal )
 }
 #endif
 
+#ifndef __DJGPP__
 #ifdef __DOS__
 int _guHeapCheck( void )
 {
@@ -261,6 +262,7 @@ i3(void)
   __asm int 3;
 } 
 #endif /* !__POWERPC__ && !defined(__linux__) */
+#endif
 
 void
 _grAssert(char *exp, char *fileName, int lineNo)
@@ -278,10 +280,10 @@ _grAssert(char *exp, char *fileName, int lineNo)
   /* initRestoreVideo(); */
 #endif /* !GLIDE_INIT_HAL */
 
-  gdbg_printf("ASSERTION FAILED:\n");
-  gdbg_printf("\tExpression:   %s\n", exp);
-  gdbg_printf("\tFile:         %s\n", fileName);
-  gdbg_printf("\tLine:         %d\n", lineNo);
+  GDBG_PRINTF("ASSERTION FAILED:\n");
+  GDBG_PRINTF("\tExpression:   %s\n", exp);
+  GDBG_PRINTF("\tFile:         %s\n", fileName);
+  GDBG_PRINTF("\tLine:         %d\n", lineNo);
 
 #if USE_PACKET_FIFO
   /* Spew about the state of the fifo since that's what most of the
@@ -291,30 +293,30 @@ _grAssert(char *exp, char *fileName, int lineNo)
     GR_DCL_GC;
     GR_DCL_HW;
     
-    gdbg_printf("Command Fifo:\n");
-    gdbg_printf("\tSoftware:\n");
-    gdbg_printf("\t\tfifoPtr:           0x%X\n", (FxU32)gc->cmdTransportInfo.fifoPtr - (FxU32) gc->rawLfb);
-    gdbg_printf("\t\tfifoOffset:        0x%X\n", gc->cmdTransportInfo.fifoOffset); 
-    gdbg_printf("\t\tfifoEnd:           0x%X\n", gc->cmdTransportInfo.fifoEnd - gc->rawLfb);
-    gdbg_printf("\t\tfifoSize:          0x%X\n", gc->cmdTransportInfo.fifoSize); 
-    gdbg_printf("\t\tfifoRoom:          0x%X\n", gc->cmdTransportInfo.fifoRoom);
-    gdbg_printf("\t\troomToReadPtr:     0x%X\n", gc->cmdTransportInfo.roomToReadPtr);
-    gdbg_printf("\t\troomToEnd:         0x%X\n", gc->cmdTransportInfo.roomToEnd);
+    GDBG_PRINTF("Command Fifo:\n");
+    GDBG_PRINTF("\tSoftware:\n");
+    GDBG_PRINTF("\t\tfifoPtr:           0x%X\n", (FxU32)gc->cmdTransportInfo.fifoPtr - (FxU32) gc->rawLfb);
+    GDBG_PRINTF("\t\tfifoOffset:        0x%X\n", gc->cmdTransportInfo.fifoOffset); 
+    GDBG_PRINTF("\t\tfifoEnd:           0x%X\n", gc->cmdTransportInfo.fifoEnd - gc->rawLfb);
+    GDBG_PRINTF("\t\tfifoSize:          0x%X\n", gc->cmdTransportInfo.fifoSize); 
+    GDBG_PRINTF("\t\tfifoRoom:          0x%X\n", gc->cmdTransportInfo.fifoRoom);
+    GDBG_PRINTF("\t\troomToReadPtr:     0x%X\n", gc->cmdTransportInfo.roomToReadPtr);
+    GDBG_PRINTF("\t\troomToEnd:         0x%X\n", gc->cmdTransportInfo.roomToEnd);
 
     if ( !gc->windowed ) {
-      gdbg_printf("\tHardware:\n");
-      gdbg_printf("\t\treadPtrL:          0x%X\n", HW_FIFO_PTR(FXTRUE) - (FxU32)gc->rawLfb);
-      gdbg_printf("\t\tdepth:             0x%X\n", GR_CAGP_GET(depth));
-      gdbg_printf("\t\tholeCount:         0x%X\n", GR_CAGP_GET(holeCount));
-      gdbg_printf("\t\tbaseAddrL:         0x%X\n", GR_CAGP_GET(baseAddrL));
-      gdbg_printf("\t\taMin:              0x%X\n", GR_CAGP_GET(aMin));
-      gdbg_printf("\t\taMax:              0x%X\n", GR_CAGP_GET(aMax));
+      GDBG_PRINTF("\tHardware:\n");
+      GDBG_PRINTF("\t\treadPtrL:          0x%X\n", HW_FIFO_PTR(FXTRUE) - (FxU32)gc->rawLfb);
+      GDBG_PRINTF("\t\tdepth:             0x%X\n", GR_CAGP_GET(depth));
+      GDBG_PRINTF("\t\tholeCount:         0x%X\n", GR_CAGP_GET(holeCount));
+      GDBG_PRINTF("\t\tbaseAddrL:         0x%X\n", GR_CAGP_GET(baseAddrL));
+      GDBG_PRINTF("\t\taMin:              0x%X\n", GR_CAGP_GET(aMin));
+      GDBG_PRINTF("\t\taMax:              0x%X\n", GR_CAGP_GET(aMax));
       gdbg_printf("\t\tStatus:            0x%X\n", GR_GET(hw->status));
     }
   }
 #endif /* (GLIDE_PLATFORM & GLIDE_HW_CVG) && USE_PACKET_FIFO */
 
-  gdbg_printf("ABNORMAL TERMINATION\n");
+  GDBG_PRINTF("ABNORMAL TERMINATION\n");
 
   grGlideShutdown();
 

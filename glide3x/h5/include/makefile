@@ -23,4 +23,4 @@
 
 LDIRT = *.h
 
-!include $(BUILD_ROOT_SWLIBS)/include/nmake/3dfx.mak
+!include $(BUILD_ROOT_SWLIBS)\include\nmake\3dfx.mak

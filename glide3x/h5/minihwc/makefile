@@ -1,0 +1,107 @@
+#
+# THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONLY
+# PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGHT
+# TO USE THE GLIDE TRADEMARK WITHOUT PRIOR WRITTEN PERMISSION OF 3DFX
+# INTERACTIVE, INC. A COPY OF THIS LICENSE MAY BE OBTAINED FROM THE 
+# DISTRIBUTOR OR BY CONTACTING 3DFX INTERACTIVE INC(info@3dfx.com). 
+# THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER 
+# EXPRESSED OR IMPLIED. SEE THE 3DFX GLIDE GENERAL PUBLIC LICENSE FOR A
+# FULL TEXT OF THE NON-WARRANTY PROVISIONS.  
+# 
+# USE, DUPLICATION OR DISCLOSURE BY THE GOVERNMENT IS SUBJECT TO
+# RESTRICTIONS AS SET FORTH IN SUBDIVISION (C)(1)(II) OF THE RIGHTS IN
+# TECHNICAL DATA AND COMPUTER SOFTWARE CLAUSE AT DFARS 252.227-7013,
+# AND/OR IN SIMILAR OR SUCCESSOR CLAUSES IN THE FAR, DOD OR NASA FAR
+# SUPPLEMENT. UNPUBLISHED RIGHTS RESERVED UNDER THE COPYRIGHT LAWS OF
+# THE UNITED STATES.  
+# 
+# COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
+#
+# $Revision$
+# $Date$
+# $Log:
+# 1   ve3d      1.0         11/24/01 KoolSmoky    minihwc makefile
+#
+
+!include $(BUILD_ROOT)\config.mak
+
+!if "$(DEBUG)" == "1"
+VCDEFS = $(VCDEFS) -DGDBG_INFO_ON=1 -DGLIDE_DEBUG=1
+!endif
+
+!if "$(FX_TARGET)" == "DOS"
+#Target Dos
+PCILIB   = $(BUILD_ROOT)\swlibs\lib\fxpci.lib
+CINITLIB = $(BUILD_ROOT)\h5\lib\h3cinit.lib
+VMODE    = dos_mode.c
+
+
+!else
+#Target Windows
+DXINCS   = -I$(DIRECTXSDK)\include
+DXDEFS   = -DHWC_ACCESS_DDRAW=1
+DXLIBS   = $(DXSDKROOT)\lib\dxguid.lib \
+           $(DXSDKROOT)\lib\ddraw.lib
+CINITLIB =
+
+!if "$(HWC_DXDRVR)"=="1"
+LCDEFS = $(LCDEFS) -DHWC_DXDRVR=1
+VMODE    = dxdrvr.c
+!else
+VMODE    = win_mode.c
+!endif
+
+!if "$(HWC_INIT_VXD)" == "1"
+PCILIB   = $(BUILD_ROOT)\swlibs\lib\fxpci.lib
+CINITLIB = $(BUILD_ROOT)\h5\lib\h3cinit.lib
+!else
+LCDEFS   = $(LCDEFS) -DHWC_EXT_INIT=1
+PRIVATE_HEADERS = $(PRIVATE_HEADERS) hwcext.h
+!endif
+!endif
+
+!if "$(FX_COMPILER)" == "MICROSOFT"
+# KoolSmoky - testing
+#LCOPTS  = /WX
+LCOPTS  = /WX 
+!endif
+
+LDIRT   = 
+LCINCS  = $(LCINCS) \
+          $(DXINCS) \
+          -I$(BUILD_ROOT_SWLIBS)\include \
+          -I$(BUILD_ROOT)\h5\include
+LCDEFS  = $(LCDEFS) $(DXDEFS)
+HEADERS = $(PRIVATE_HEADERS) minihwc.h setmode.h hwcio.h
+
+CFILES  = minihwc.c hwcio.c gdebug.c $(VMODE)
+
+SUBLIBRARIES = $(PCILIB) $(DXLIBS) $(CINITLIB)
+
+LIBRARIES= minihwc.lib
+
+INSTALL_DESTINATION = $(BUILD_ROOT)\$(FX_GLIDE_HW)
+
+#
+# configuration variables for the target environment
+#
+# KoolSmoky - simulator?
+!if "$(FX_GLIDE_HW)" == "h5"
+#LCDEFS     = $(LCDEFS) -DFX_GLIDE_NAPALM=1 -DFX_GLIDE_H5_CSIM=1
+LCDEFS     = $(LCDEFS) -DFX_GLIDE_NAPALM=1 -DH4=1
+!endif
+
+!if "$(HWC_MINIVDD_HACK)"=="1"
+LCDEFS = $(LCDEFS) -DHWC_MINIVDD_HACK=1
+!endif
+
+# KoolSmoky - output to kernel debug. need to check KERNEL.
+!if "$(KERNEL_NT)" == "1"
+LCDEFS          =       $(LCDEFS) -DKERNEL_NT=1
+!endif
+
+!if "$(HWC_WIN40COMPAT)"=="1"
+LCDEFS = $(LCDEFS) -DWIN40COMPAT=1
+!endif
+
+!include $(BUILD_ROOT)\swlibs\include\nmake\3dfx.mak

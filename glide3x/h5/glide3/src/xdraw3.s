@@ -20,6 +20,13 @@
 
 .file "xdraw3.asm"
 
+/* [dBorca] */
+#include "assyntax.h"
+#ifdef __DJGPP__
+#define THREADVALUE EXTRN(threadValueDJGPP)
+#else
+#define THREADVALUE threadValueLinux
+#endif
 
 #ifdef GL_AMD3D
 
@@ -34,7 +41,7 @@
 .section	.rodata
 
 .data
-.align 8
+ALIGN(8)
 	.type	btab,@object
 	.size	btab,4
 btab:	.int	8
@@ -55,13 +62,11 @@ vertices:	.int	0
 .text
 
 
-.align 32
-.globl _grDrawTriangles_3DNow
+ALIGN(32)
+GLOBL(_grDrawTriangles_3DNow)
 #define _mode 20
 #define _count 24
 #define _pointers 28
-.type _grDrawTriangles_3DNow,@function
-_grDrawTriangles_3DNow:
 
 /*  930  : { */
 /*  931  : #define FN_NAME "_grDrawTriangles" */
@@ -96,7 +101,7 @@ _grDrawTriangles_3DNow:
 	push %ebx	/*  save caller's register variable */
 	mov _count-4(%esp) , %vertexCount	/*  number of vertices in triangles */
 
-	movl (threadValueLinux) , %gc	/*  get GC for current thread  */
+	movl (THREADVALUE) , %gc	/*  get GC for current thread  */
 	mov _pointers-4(%esp) , %vertexPtr	/*  get current vertex pointer (deref mode) */
 
 	push %ebp	/*  save frame pointer */
@@ -108,7 +113,7 @@ _grDrawTriangles_3DNow:
 	test %edx , %edx	/*  do we need to validate state ? */
 	je .L_grDrawTriangles_3DNow_no_validation	/*  nope, it's valid */
 
-	call _grValidateState	/*  validate state */
+	call EXTRN(_grValidateState)	/*  validate state */
 
 .L_grDrawTriangles_3DNow_no_validation:
 
@@ -195,10 +200,10 @@ _grDrawTriangles_3DNow:
 	push $0x0	/*  pointer to function name = NULL */
 
 	push %ecx	/*  fifo space needed */
-	call _grCommandTransportMakeRoom	/*  note: updates fifoPtr */
+	call EXTRN(_grCommandTransportMakeRoom)	/*  note: updates fifoPtr */
 	add $12, %esp
 
-.align 32
+ALIGN(32)
 .L_grDrawTriangles_3DNow_win_tri_begin_ND:
 
 	mov %vertexCount , %eax	/*  number of vertices in triangles */
@@ -394,7 +399,7 @@ _grDrawTriangles_3DNow:
 
 	ret	/*  return, pop 3 DWORD parameters off stack */
 
-.align 32
+ALIGN(32)
 
 .L_grDrawTriangles_3DNow_deref_mode:
 
@@ -425,10 +430,10 @@ _grDrawTriangles_3DNow:
 	push $0x0	/*  pointer to function name = NULL */
 
 	push %ecx	/*  fifo space needed */
-	call _grCommandTransportMakeRoom	/*  note: updates fifoPtr */
+	call EXTRN(_grCommandTransportMakeRoom)	/*  note: updates fifoPtr */
 	add $12, %esp
 
-.align 32
+ALIGN(32)
 .L_grDrawTriangles_3DNow_win_tri_begin_D:
 
 	mov %vertexCount , %eax	/*  number of vertices in triangles */
@@ -602,7 +607,7 @@ _grDrawTriangles_3DNow:
 
 	ret	/*  return, pop 3 DWORD parameters off stack */
 
-.align 32
+ALIGN(32)
 
 /*  989  :   } */
 /*  990  :   else { */
@@ -646,7 +651,7 @@ _grDrawTriangles_3DNow:
 
 #define dataElem ebp	/*  number of vertex components processed */
 
-	movd (_GlideRoot+pool_f255) , %mm6	/*  GlideRoot.pool.f255  */
+	movd (EXTRN(_GlideRoot)+pool_f255) , %mm6	/*  GlideRoot.pool.f255  */
 
 .L_grDrawTriangles_3DNow_clip_coords_begin:
 
@@ -670,10 +675,10 @@ _grDrawTriangles_3DNow:
 	push $0x0	/*  pointer to function name = NULL */
 
 	push %ecx	/*  fifo space needed */
-	call _grCommandTransportMakeRoom	/*  note: updates fifoPtr */
+	call EXTRN(_grCommandTransportMakeRoom)	/*  note: updates fifoPtr */
 	add $12, %esp
 
-.align 32
+ALIGN(32)
 .L_grDrawTriangles_3DNow_clip_tri_begin:
 	mov %vertexCount , %edx	/*  number of vertices in triangles */
 	mov fifoPtr(%gc) , %fifo	/*  get fifoPtr */
@@ -1121,11 +1126,9 @@ _grDrawTriangles_3DNow:
 #define X 0
 #define Y 4
 
-.align 32
+ALIGN(32)
 
-.globl _grDrawVertexList_3DNow_Window
-.type _grDrawVertexList_3DNow_Window,@function
-_grDrawVertexList_3DNow_Window:
+GLOBL(_grDrawVertexList_3DNow_Window)
 /*  132  : { */
 
 	push %edi	/*  save caller's register variable */
@@ -1139,7 +1142,7 @@ _grDrawVertexList_3DNow_Window:
 	mov _pointers(%esp) , %vertexPtr	/*  get current vertex pointer (deref mode) */
 /*  get current vertex (non-deref mode) */
 
-	movl (threadValueLinux) , %gc	/*  get current graphics context from tls */
+	movl (THREADVALUE) , %gc	/*  get current graphics context from tls */
 	test %vertexCount , %vertexCount	/*  number of vertices <= 0 ? */
 
 	nop 	/*  filler */
@@ -1208,10 +1211,10 @@ _grDrawVertexList_3DNow_Window:
 	push $0x0	/*  pointer to function name = NULL */
 
 	push %ecx	/*  fifo space needed */
-	call _grCommandTransportMakeRoom	/*  note: updates fifoPtr */
+	call EXTRN(_grCommandTransportMakeRoom)	/*  note: updates fifoPtr */
 	add $12, %esp	
 
-.align 32
+ALIGN(32)
 .L_grDrawVertexList_3DNow_Window_win_strip_begin_ND:
 /*      Setup packet header */
 
@@ -1340,7 +1343,7 @@ _grDrawVertexList_3DNow_Window:
 
 	ret	/*  return, pop 5 DWORD parameters off stack */
 
-.align 32
+ALIGN(32)
 
 .L_grDrawVertexList_3DNow_Window_fifo_aligned_ND:
 
@@ -1440,7 +1443,7 @@ _grDrawVertexList_3DNow_Window:
 
 	ret	/*  return, pop 5 DWORD parameters off stack */
 
-.align 32
+ALIGN(32)
 
 .L_grDrawVertexList_3DNow_Window_deref_mode:
 
@@ -1470,10 +1473,10 @@ _grDrawVertexList_3DNow_Window:
 	push $0x0	/*  pointer to function name = NULL */
 
 	push %ecx	/*  fifo space needed */
-	call _grCommandTransportMakeRoom	/*  note: updates fifoPtr */
+	call EXTRN(_grCommandTransportMakeRoom)	/*  note: updates fifoPtr */
 	add $12, %esp	
 
-.align 32
+ALIGN(32)
 .L_grDrawVertexList_3DNow_Window_win_strip_begin_D:
 /*      Setup packet header */
 
@@ -1603,7 +1606,7 @@ _grDrawVertexList_3DNow_Window:
 
 	ret	/*  return, pop 5 DWORD parameters off stack */
 
-.align 32
+ALIGN(32)
 
 .L_grDrawVertexList_3DNow_Window_fifo_aligned_D:
 
@@ -1710,12 +1713,10 @@ _grDrawVertexList_3DNow_Window:
 
 
 
-.globl _grDrawVertexList_3DNow_Clip
-.type _grDrawVertexList_3DNow_Clip,@function
-_grDrawVertexList_3DNow_Clip:
+GLOBL(_grDrawVertexList_3DNow_Clip)
 /*  132  : { */
 
-.align 32
+ALIGN(32)
 
 	push %edi	/*  save caller's register variable */
 
@@ -1728,7 +1729,7 @@ _grDrawVertexList_3DNow_Clip:
 	mov _pointers(%esp) , %vertexPtr	/*  get current vertex pointer (deref mode) */
 /*  get current vertex (non-deref mode) */
 
-	movl (threadValueLinux) , %gc	/*  get current graphics context from tls */
+	movl (THREADVALUE) , %gc	/*  get current graphics context from tls */
 	test %vertexCount , %vertexCount	/*  number of vertices <= 0 ? */
 
 	jle .L_grDrawVertexList_3DNow_Clip_strip_done	/*  yup, the strip/fan is done */
@@ -1755,7 +1756,7 @@ _grDrawVertexList_3DNow_Clip:
 	test %edx , %edx	/*  mode 0 (array of vertices) ? */
 	mov vertexStride(%gc) , %edx	/*  get stride in DWORDs */
 
-	movd (_GlideRoot+pool_f255) , %mm6	/*  GlideRoot.pool.f255      */
+	movd (EXTRN(_GlideRoot)+pool_f255) , %mm6	/*  GlideRoot.pool.f255      */
 	movl $4 , (strideinbytes)	/*  array of pointers     */
 
 	jnz .L_grDrawVertexList_3DNow_Clip_clip_coords_begin	/*  nope, it's mode 1 */
@@ -1765,7 +1766,7 @@ _grDrawVertexList_3DNow_Clip:
 	shl $2 , %edx	/*  stride in bytes */
 	movl %edx , (strideinbytes)	/*  save off stride (in bytes) */
 
-.align 32
+ALIGN(32)
 .L_grDrawVertexList_3DNow_Clip_clip_coords_begin:
 
 #define dataElem ebp	/*  number of vertex components processed     */
@@ -1796,10 +1797,10 @@ _grDrawVertexList_3DNow_Clip:
 	push $0x0	/*  pointer to function name = NULL */
 
 	push %ecx	/*  fifo space needed */
-	call _grCommandTransportMakeRoom	/*  note: updates fifoPtr */
+	call EXTRN(_grCommandTransportMakeRoom)	/*  note: updates fifoPtr */
 	add $12, %esp
 
-.align 32
+ALIGN(32)
 .L_grDrawVertexList_3DNow_Clip_clip_strip_begin:
 /*      TRI_STRIP_BEGIN(type, vcount, vSize, pktype) */
 
@@ -1928,7 +1929,7 @@ _grDrawVertexList_3DNow_Clip:
 	movd %mm2 , -4(%fifo)	/*  PCI write a*255 */
 	jmp .L_grDrawVertexList_3DNow_Clip_clip_setup_ooz	/*  check whether we need to push out z */
 
-.align 32
+ALIGN(32)
 
 .L_grDrawVertexList_3DNow_Clip_clip_setup_pargb:
 	movd (%eax,%edx) , %mm2	/*  get packed ARGB data */
@@ -2025,7 +2026,7 @@ _grDrawVertexList_3DNow_Clip:
 	movd %mm2 , -4(%fifo)	/*  PCI write transformed Q */
 	jmp .L_grDrawVertexList_3DNow_Clip_clip_setup_qow0	/*  continue with q0 */
 
-.align 32
+ALIGN(32)
 
 .L_grDrawVertexList_3DNow_Clip_clip_setup_oow:
 	add $4 , %fifo	/*  fifoPtr += sizeof(FxFloat)  */
@@ -2053,7 +2054,7 @@ _grDrawVertexList_3DNow_Clip:
 	movd %mm2 , -4(%fifo)	/*  PCI write transformed q0 */
 	jmp .L_grDrawVertexList_3DNow_Clip_clip_setup_stow0	/*  continue with stow0 */
 
-.align 32
+ALIGN(32)
 
 .L_grDrawVertexList_3DNow_Clip_clip_setup_oow0:
 	add $4 , %fifo	/*  fifoPtr += sizeof(FxFloat)  */
@@ -2103,7 +2104,7 @@ _grDrawVertexList_3DNow_Clip:
 	movd %mm2 , -4(%fifo)	/*  PCI write transformed q1 */
 	jmp .L_grDrawVertexList_3DNow_Clip_clip_setup_stow1	/*  continue with stow1 */
 
-.align 32
+ALIGN(32)
 
 .L_grDrawVertexList_3DNow_Clip_clip_setup_oow1:
 	add $4 , %fifo	/*  fifoPtr += sizeof(FxFloat)  */
@@ -2257,18 +2258,16 @@ vPtr2:	.int	0
 #define vertexCount ebx	/*  Current vertex counter in the packet */
 #define vertexPtr edi	/*  Current vertex pointer */
 
-.align 32
+ALIGN(32)
 
-.globl _drawvertexlist
-.type _drawvertexlist,@function
-_drawvertexlist:
+GLOBL(_drawvertexlist)
 /*  132  : { */
 
 #if 0	
 	movl (0x18) , %eax	/*  get thread local storage base pointer         */
 	push %esi
 
-	mov (_GlideRoot+tlsOffset) , %esi	/*  GC position relative to tls base */
+	mov (EXTRN(_GlideRoot)+tlsOffset) , %esi	/*  GC position relative to tls base */
 	push %edi
 
 	movl (%eax,%esi) , %gc
@@ -2277,7 +2276,7 @@ _drawvertexlist:
 	push %esi
 	push %edi
 	push %ebx
-	movl (threadValueLinux) , %gc			
+	movl (THREADVALUE) , %gc			
 #endif
 	
 /*      GR_DCL_GC */
@@ -2300,7 +2299,7 @@ _drawvertexlist:
 	movl vertexStride(%gc) , %edx
 	shl $2 , %edx
 
-.align 4
+ALIGN(4)
 .L_drawvertexlist_no_stride:
 
 /*      Draw the first (or possibly only) set.  This is necessary because */
@@ -2324,14 +2323,14 @@ _drawvertexlist:
 	test %eax , %eax
 	jle .L_drawvertexlist_strip_done
 
-.align 4
+ALIGN(4)
 .L_drawvertexlist_window_coords_begin:
 
 	cmp $15 , %vertexCount	/*  0000000fH */
 	jl .L_drawvertexlist_win_partial_packet
 	mov $15 , %vertexCount	/*  0000000fH */
 
-.align 4
+ALIGN(4)
 .L_drawvertexlist_win_partial_packet:
 
 	movl vSize , %eax
@@ -2343,10 +2342,10 @@ _drawvertexlist:
 	push $__LINE__
 	push $0x0
 	push %eax
-	call _grCommandTransportMakeRoom
+	call EXTRN(_grCommandTransportMakeRoom)
 	add $12, %esp
 
-.align 4
+ALIGN(4)
 .L_drawvertexlist_win_strip_begin:
 
 /*      Setup pacet header */
@@ -2378,7 +2377,7 @@ _drawvertexlist:
 /*        TRI_SETF(FARRAY(vPtr, 4)) */
 /*        i = gc->tsuDataList[dataElem] */
 
-.align 4
+ALIGN(4)
 .L_drawvertexlist_win_for_begin:
 
 	mov %vertexPtr , %edx
@@ -2387,7 +2386,7 @@ _drawvertexlist:
 	jne .L_drawvertexlist_win_no_deref
 	movl (%vertexPtr) , %edx
 
-.align 4
+ALIGN(4)
 .L_drawvertexlist_win_no_deref:
 
 	add $8 , %fifo
@@ -2405,7 +2404,7 @@ _drawvertexlist:
 	leal tsuDataList(%gc) , %dlp
 	je .L_drawvertexlist_win_datalist_end
 
-.align 4
+ALIGN(4)
 
 /*        while (i != GR_DLIST_END) { */
 /*          TRI_SETF(FARRAY(vPtr, i)) */
@@ -2476,18 +2475,16 @@ _drawvertexlist:
 #define fifo ecx	/*  points to next entry in fifo */
 #define vertexPtr edx	/*  pointer to vertex or vertex array */
 
-.align 32
+ALIGN(32)
 
-.globl _vpdrawvertexlist
-.type _vpdrawvertexlist,@function
-_vpdrawvertexlist:
+GLOBL(_vpdrawvertexlist)
 
 	push %esi
 
 	push %edi
 
 	push %ebx
-	movl (threadValueLinux) , %gc
+	movl (THREADVALUE) , %gc
 
 	push %ebp
 	movl _mode(%esp) , %ecx
@@ -2500,7 +2497,7 @@ _vpdrawvertexlist:
 
 	movl (%edi) , %edi
 
-.align 4
+ALIGN(4)
 .L_vpdrawvertexlist_w_no_dref:
 
 /*      load first w */
@@ -2524,7 +2521,7 @@ _vpdrawvertexlist:
 	movl vertexStride(%gc) , %edx
 	shl $2 , %edx
 
-.align 4
+ALIGN(4)
 .L_vpdrawvertexlist_no_stride:
 
 	movl %edx , strideinbytes
@@ -2552,10 +2549,10 @@ _vpdrawvertexlist:
 	push $__LINE__
 	push $0x0
 	push %eax
-	call _grCommandTransportMakeRoom
+	call EXTRN(_grCommandTransportMakeRoom)
 	add $12, %esp
 
-.align 4
+ALIGN(4)
 .L_vpdrawvertexlist_clip_strip_begin:
 /*      TRI_STRIP_BEGIN(type, vcount, vSize, pktype) */
 
@@ -2586,7 +2583,7 @@ _vpdrawvertexlist:
 	je .L_vpdrawvertexlist_clip_for_begin
 	movl (%vertexPtr) , %vertexPtr
 
-.align 4
+ALIGN(4)
 .L_vpdrawvertexlist_clip_for_begin:
 
 	add $8 , %fifo
@@ -2630,11 +2627,11 @@ _vpdrawvertexlist:
 	add $12 , %fifo
 	mov $3 , %ebp
 
-	flds _GlideRoot+pool_f255
+	flds EXTRN(_GlideRoot)+pool_f255
 	fmuls (%ebx,%vertexPtr)
-	flds _GlideRoot+pool_f255
+	flds EXTRN(_GlideRoot)+pool_f255
 	fmuls 4(%ebx,%vertexPtr)
-	flds _GlideRoot+pool_f255
+	flds EXTRN(_GlideRoot)+pool_f255
 	fmuls 8(%ebx,%vertexPtr)
 	fxch %st(2)
 	fstps -12(%fifo)
@@ -2642,7 +2639,7 @@ _vpdrawvertexlist:
 	fstps -4(%fifo)
 	movl tsuDataList+12(%gc) , %ebx
 
-.align 4
+ALIGN(4)
 .L_vpdrawvertexlist_clip_setup_a:
 
 	test $2 , %al
@@ -2652,13 +2649,13 @@ _vpdrawvertexlist:
 	inc %ebp
 
 	flds (%ebx,%vertexPtr)
-	fmuls _GlideRoot+pool_f255
+	fmuls EXTRN(_GlideRoot)+pool_f255
 	fstps -4(%fifo)
 
 	movl tsuDataList(%gc,%ebp,4) , %ebx
 	jmp .L_vpdrawvertexlist_clip_setup_ooz
 
-.align 4
+ALIGN(4)
 .L_vpdrawvertexlist_clip_setup_pargb:
 	add $4 , %fifo
 	movl (%ebx,%vertexPtr) , %ebx
@@ -2668,7 +2665,7 @@ _vpdrawvertexlist:
 
 	mov $1 , %ebp
 	movl tsuDataList+4(%gc) , %ebx
-.align 4
+ALIGN(4)
 .L_vpdrawvertexlist_clip_setup_ooz:
 
 	test $4 , %al
@@ -2692,7 +2689,7 @@ _vpdrawvertexlist:
 	movl tsuDataList(%gc,%ebp,4) , %ebx
 	jmp .L_vpdrawvertexlist_clip_setup_qow
 
-.align 4
+ALIGN(4)
 .L_vpdrawvertexlist_clip_setup_fog_oow:
 
 	flds _F1
@@ -2703,7 +2700,7 @@ _vpdrawvertexlist:
 	movl tsuDataList(%gc,%ebp,4) , %ebx
 	jmp .L_vpdrawvertexlist_clip_setup_qow
 
-.align 4
+ALIGN(4)
 .L_vpdrawvertexlist_clip_setup_ooz_nofog:
 
 	flds (%ebx,%vertexPtr)
@@ -2713,7 +2710,7 @@ _vpdrawvertexlist:
 	fstps -4(%fifo)
 
 	movl tsuDataList(%gc,%ebp,4) , %ebx
-.align 4
+ALIGN(4)
 .L_vpdrawvertexlist_clip_setup_qow:
 
 	test $8 , %al
@@ -2730,7 +2727,7 @@ _vpdrawvertexlist:
 
 	jmp .L_vpdrawvertexlist_clip_setup_oow_inc
 
-.align 4
+ALIGN(4)
 .L_vpdrawvertexlist_clip_setup_oow_nofog:
 
 	movl qInfo_mode(%gc) , %ebx
@@ -2744,19 +2741,19 @@ _vpdrawvertexlist:
 
 	jmp .L_vpdrawvertexlist_clip_setup_oow_inc
 
-.align 4
+ALIGN(4)
 .L_vpdrawvertexlist_clip_setup_oow:
 	movl ccoow , %ebx
 
 	movl %ebx , (%fifo)
-.align 4
+ALIGN(4)
 .L_vpdrawvertexlist_clip_setup_oow_inc:
 
 	movl tsuDataList+4(%gc,%ebp,4) , %ebx
 	add $4 , %fifo
 
 	inc %ebp
-.align 4
+ALIGN(4)
 .L_vpdrawvertexlist_clip_setup_qow0:
 
 	test $16 , %al
@@ -2773,18 +2770,18 @@ _vpdrawvertexlist:
 	fstps (%fifo)
 
 	jmp .L_vpdrawvertexlist_clip_setup_oow0_inc
-.align 4
+ALIGN(4)
 .L_vpdrawvertexlist_clip_setup_oow0:
 	movl ccoow , %ebx
 
 	movl %ebx , (%fifo)
-.align 4
+ALIGN(4)
 .L_vpdrawvertexlist_clip_setup_oow0_inc:
 	movl tsuDataList+4(%gc,%ebp,4) , %ebx
 	add $4 , %fifo
 
 	inc %ebp
-.align 4
+ALIGN(4)
 .L_vpdrawvertexlist_clip_setup_stow0:
 
 	test $32 , %al
@@ -2806,7 +2803,7 @@ _vpdrawvertexlist:
 	fstps -8(%fifo)
 	fstps -4(%fifo)
 
-.align 4
+ALIGN(4)
 .L_vpdrawvertexlist_clip_setup_qow1:
 
 	test $64 , %al
@@ -2823,12 +2820,12 @@ _vpdrawvertexlist:
 	fstps (%fifo)
 
 	jmp .L_vpdrawvertexlist_clip_setup_oow1_inc
-.align 4
+ALIGN(4)
 .L_vpdrawvertexlist_clip_setup_oow1:
 	movl ccoow , %ebx
 
 	movl %ebx , (%fifo)
-.align 4
+ALIGN(4)
 .L_vpdrawvertexlist_clip_setup_oow1_inc:
 
 	movl tsuDataList+4(%gc,%ebp,4) , %ebx
@@ -2836,7 +2833,7 @@ _vpdrawvertexlist:
 
 	inc %ebp
 
-.align 4
+ALIGN(4)
 .L_vpdrawvertexlist_clip_setup_stow1:
 
 	test $128 , %al
@@ -2854,7 +2851,7 @@ _vpdrawvertexlist:
 	fstps -8(%fifo)
 	fstps -4(%fifo)
 
-.align 4
+ALIGN(4)
 .L_vpdrawvertexlist_clip_setup_end:
 
 	dec %edi
@@ -2868,7 +2865,7 @@ _vpdrawvertexlist:
 
 
 	movl (%vertexPtr) , %vertexPtr
-.align 4
+ALIGN(4)
 .L_vpdrawvertexlist_w_clip_no_deref:
 
 	movl wInfo_offset(%gc) , %ebx
@@ -2877,7 +2874,7 @@ _vpdrawvertexlist:
 	fdivrs _F1
 
 	jmp .L_vpdrawvertexlist_clip_for_begin
-.align 4
+ALIGN(4)
 .L_vpdrawvertexlist_clip_for_end:
 
 	movl fifoPtr(%gc) , %ebx
@@ -2904,7 +2901,7 @@ _vpdrawvertexlist:
 	je .L_vpdrawvertexlist_w1_clip_no_deref
 	movl (%edx) , %edx
 
-.align 4
+ALIGN(4)
 .L_vpdrawvertexlist_w1_clip_no_deref:
 
 	movl wInfo_offset(%gc) , %ebx
@@ -2912,7 +2909,7 @@ _vpdrawvertexlist:
 	fdivrs _F1
 
 	jmp .L_vpdrawvertexlist_clip_coords_begin
-.align 4
+ALIGN(4)
 .L_vpdrawvertexlist_strip_done:
 
 	pop %ebp
@@ -2934,11 +2931,9 @@ _vpdrawvertexlist:
 
 /*       YOU HAVE BEEN WARNED         */
 
-.align 32
+ALIGN(32)
 
-.globl _vptrisetup_cull
-.type _vptrisetup_cull,@function
-_vptrisetup_cull:
+GLOBL(_vptrisetup_cull)
 #define _va 20
 #define _vb 24
 #define _vc 28
@@ -2955,7 +2950,7 @@ _vptrisetup_cull:
 	test %edx , %edx
 	je .L_vptrisetup_cull_no_validation
 
-	call _grValidateState
+	call EXTRN(_grValidateState)
 
 .L_vptrisetup_cull_no_validation:
 	
@@ -2985,7 +2980,7 @@ _vptrisetup_cull:
 
 /*     GR_SET_EXPECTED_SIZE(_GlideRoot.curTriSize, 1) */
 
-	movl _GlideRoot+curTriSize , %eax
+	movl EXTRN(_GlideRoot)+curTriSize , %eax
 	movl fifoRoom(%gc) , %ecx
 
 	add $4 , %eax
@@ -2998,10 +2993,10 @@ _vptrisetup_cull:
 	push $0x0	/*  pointer to function name = NULL */
 
 	push %eax
-	call _grCommandTransportMakeRoom
+	call EXTRN(_grCommandTransportMakeRoom)
 	add $12, %esp
 
-.align 4
+ALIGN(4)
 .L_vptrisetup_cull_setup_pkt_hdr:
 
 /*     TRI_STRIP_BEGIN(kSetupStrip, 3, gc->state.vData.vSize, SSTCP_PKT3_BDDBDD) */
@@ -3024,7 +3019,7 @@ _vptrisetup_cull:
 
 /*  Begin loop */
 
-.align 4
+ALIGN(4)
 .L_vptrisetup_cull_begin_for_loop:
 
 	add $4 , %edx
@@ -3065,11 +3060,11 @@ _vptrisetup_cull:
 	add $12 , %fifo
 	add $3 , %ebx
 
-	flds _GlideRoot+pool_f255
+	flds EXTRN(_GlideRoot)+pool_f255
 	fmuls (%vertexPtr,%ebp)
-	flds _GlideRoot+pool_f255
+	flds EXTRN(_GlideRoot)+pool_f255
 	fmuls 4(%vertexPtr,%ebp)
-	flds _GlideRoot+pool_f255
+	flds EXTRN(_GlideRoot)+pool_f255
 	fmuls 8(%vertexPtr,%ebp)
 	fxch %st(2)
 	fstps -12(%fifo)
@@ -3077,7 +3072,7 @@ _vptrisetup_cull:
 	fstps -4(%fifo)
 	movl tsuDataList+12(%gc) , %ebp
 
-.align 4
+ALIGN(4)
 .L_vptrisetup_cull_clip_setup_a:
 
 	test $2 , %al
@@ -3087,12 +3082,12 @@ _vptrisetup_cull:
 	inc %ebx
 
 	flds (%vertexPtr,%ebp)
-	fmuls _GlideRoot+pool_f255
+	fmuls EXTRN(_GlideRoot)+pool_f255
 	fstps -4(%fifo)
 
 	movl tsuDataList(%gc, %ebx, 4) , %ebp
 	jmp .L_vptrisetup_cull_clip_setup_ooz
-.align 4
+ALIGN(4)
 .L_vptrisetup_cull_clip_setup_pargb:
 	add $4 , %fifo
 	movl (%vertexPtr,%ebp) , %ebx
@@ -3102,7 +3097,7 @@ _vptrisetup_cull:
 
 	mov $1 , %ebx
 	movl tsuDataList+4(%gc) , %ebp
-.align 4
+ALIGN(4)
 .L_vptrisetup_cull_clip_setup_ooz:
 
 	test $4 , %al
@@ -3126,7 +3121,7 @@ _vptrisetup_cull:
 	movl tsuDataList(%gc, %ebx, 4) , %ebp
 	jmp .L_vptrisetup_cull_clip_setup_qow
 
-.align 4
+ALIGN(4)
 .L_vptrisetup_cull_clip_setup_fog_oow:
 
 	flds _F1
@@ -3137,7 +3132,7 @@ _vptrisetup_cull:
 	movl tsuDataList(%gc, %ebx, 4) , %ebp
 	jmp .L_vptrisetup_cull_clip_setup_qow
 
-.align 4
+ALIGN(4)
 .L_vptrisetup_cull_clip_setup_ooz_nofog:
 
 	flds (%vertexPtr,%ebp)
@@ -3147,7 +3142,7 @@ _vptrisetup_cull:
 	fstps -4(%fifo)
 
 	movl tsuDataList(%gc, %ebx, 4) , %ebp
-.align 4
+ALIGN(4)
 .L_vptrisetup_cull_clip_setup_qow:
 
 	test $8 , %al
@@ -3162,7 +3157,7 @@ _vptrisetup_cull:
 	fstps (%fifo)
 
 	jmp .L_vptrisetup_cull_clip_setup_oow_inc
-.align 4
+ALIGN(4)
 .L_vptrisetup_cull_clip_setup_oow_nofog:
 	cmpl $1 , qInfo_mode(%gc)
 	jne .L_vptrisetup_cull_clip_setup_oow
@@ -3173,19 +3168,19 @@ _vptrisetup_cull:
 	fstps (%fifo)
 
 	jmp .L_vptrisetup_cull_clip_setup_oow_inc
-.align 4
+ALIGN(4)
 .L_vptrisetup_cull_clip_setup_oow:
 
 	movl oowa , %ebp
 
 	movl %ebp , (%fifo)
-.align 4
+ALIGN(4)
 .L_vptrisetup_cull_clip_setup_oow_inc:
 	movl tsuDataList+4(%gc, %ebx, 4) , %ebp
 	add $4 , %fifo
 
 	inc %ebx
-.align 4
+ALIGN(4)
 .L_vptrisetup_cull_clip_setup_qow0:
 
 	test $16 , %al	/*  00000010H */
@@ -3201,18 +3196,18 @@ _vptrisetup_cull:
 	fstps (%fifo)
 
 	jmp .L_vptrisetup_cull_clip_setup_oow0_inc
-.align 4
+ALIGN(4)
 .L_vptrisetup_cull_clip_setup_oow0:
 	movl oowa , %ebp
 
 	movl %ebp , (%fifo)
-.align 4
+ALIGN(4)
 .L_vptrisetup_cull_clip_setup_oow0_inc:
 	movl tsuDataList+4(%gc, %ebx, 4) , %ebp
 	add $4 , %fifo
 
 	inc %ebx
-.align 4
+ALIGN(4)
 .L_vptrisetup_cull_clip_setup_stow0:
 
 	test $32 , %al
@@ -3234,7 +3229,7 @@ _vptrisetup_cull:
 	fstps -8(%fifo)
 	fstps -4(%fifo)
 
-.align 4
+ALIGN(4)
 .L_vptrisetup_cull_clip_setup_qow1:
 
 	test $64 , %al
@@ -3250,18 +3245,18 @@ _vptrisetup_cull:
 	fstps (%fifo)
 
 	jmp .L_vptrisetup_cull_clip_setup_oow1_inc
-.align 4
+ALIGN(4)
 .L_vptrisetup_cull_clip_setup_oow1:
 	movl oowa , %ebp
 
 	movl %ebp , (%fifo)
-.align 4
+ALIGN(4)
 .L_vptrisetup_cull_clip_setup_oow1_inc:
 	movl tsuDataList+4(%gc, %ebx, 4) , %ebp
 	add $4 , %fifo
 
 	inc %ebx
-.align 4
+ALIGN(4)
 .L_vptrisetup_cull_clip_setup_stow1:
 
 	test $128 , %al
@@ -3279,7 +3274,7 @@ _vptrisetup_cull:
 	fstps -8(%fifo)
 	fstps -4(%fifo)
 
-.align 4
+ALIGN(4)
 .L_vptrisetup_cull_clip_setup_end:
 
 	cmp $12 , %edx
@@ -3294,7 +3289,7 @@ _vptrisetup_cull:
 	movl (%ebx,%edx) , %vertexPtr
 	jmp .L_vptrisetup_cull_begin_for_loop
 
-.align 4
+ALIGN(4)
 .L_vptrisetup_cull_update_fifo_ptr:
 
 	movl fifoPtr(%gc) , %ebx
@@ -3310,7 +3305,7 @@ _vptrisetup_cull:
 	pop %edi
 
 	movl %fifo , fifoPtr(%gc)
-	movl _GlideRoot+trisProcessed , %ebx
+	movl EXTRN(_GlideRoot)+trisProcessed , %ebx
 
 /*     _GlideRoot.stats.trisProcessed++ */
 
@@ -3318,7 +3313,7 @@ _vptrisetup_cull:
 	pop %esi
 	inc %ebx
 
-	movl %ebx , _GlideRoot+trisProcessed
+	movl %ebx , EXTRN(_GlideRoot)+trisProcessed
 	pop %ebx
 
 	ret	/*  0000000cH */

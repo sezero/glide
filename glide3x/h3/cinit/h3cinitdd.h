@@ -23,6 +23,11 @@
 #include <conio.h>
 #include <stddef.h>
 
+/* [dBorca] */
+#ifdef __DJGPP__
+#include <fxdpmi.h>
+#endif
+
 #if defined(__WATCOMC__)
 #define _inp inp
 #define _outp outp

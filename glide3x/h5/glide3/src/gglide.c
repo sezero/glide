@@ -19,7 +19,11 @@
 **
 ** 
 ** $Header$
-** $Log: 
+** $Log:
+**  54   3dfxzone  1.44        02/26/03 Sandro          fast C clipping routine.
+**       define FAST_C_CLIP.
+**  53             1.43        11/30/02 KoolSmoky       added support for 2 and 8 t-buffers.
+**  52   ve3d      1.42        04/29/02 KoolSmoky       2-tri fill test code.
 **  51   3dfx      1.41.1.6.1.110/11/00 Brent           Forced check in to enforce
 **       branching.
 **  50   3dfx      1.41.1.6.1.008/29/00 Jonny Cochrane  Some 8x FSAA code
@@ -1109,7 +1113,12 @@ _grBufferClear2D(const FxU32 buffOffset,
 /* C = (width+1, height*2) */
 /* */
 #define REFERENCE_TRI_FILL 0
+#ifdef FX_GLIDE_NAPALM
+/* KoolSmoky - testing 2-tri fill with napalm */
+#define TWO_TRI_FILL       1
+#else
 #define TWO_TRI_FILL       0
+#endif
 
 void
 _grTriFill(GrColor_t color, FxU32 depth, GrStencil_t stencil)
@@ -1244,6 +1253,7 @@ _grTriFill(GrColor_t color, FxU32 depth, GrStencil_t stencil)
     bufferMode = gc->state.stateArgs.grDepthBufferModeArgs.mode ;
 
     GR_CHECK_FOR_ROOM(256, 0);  /* Probably a little overkill */
+    
     /* */
     /* Set up rendering for flat shading */
     /* */
@@ -1338,23 +1348,49 @@ _grTriFill(GrColor_t color, FxU32 depth, GrStencil_t stencil)
     /* */
     /* Draw the triangle already! */
     /* */
+#if TWO_TRI_FILL
+    vertex[0].x =  (float)gc->state.clipwindowf_xmin ;
+    vertex[0].y =  (float)gc->state.clipwindowf_ymin ;
+    vertex[1].x =  (float)gc->state.clipwindowf_xmax ;
+    vertex[1].y =  (float)gc->state.clipwindowf_ymin ;
+    vertex[2].x =  (float)gc->state.clipwindowf_xmax ;
+    vertex[2].y =  (float)gc->state.clipwindowf_ymax ;
+    
+    vertex[3].x =  (float)gc->state.clipwindowf_xmin ;
+    vertex[3].y =  (float)gc->state.clipwindowf_ymin ;
+    vertex[4].x =  (float)gc->state.clipwindowf_xmax ;
+    vertex[4].y =  (float)gc->state.clipwindowf_ymax ;
+    vertex[5].x =  (float)gc->state.clipwindowf_xmin ;
+    vertex[5].y =  (float)gc->state.clipwindowf_ymax ;
+#else
     vertex[0].x = 0.0f -(float)gc->state.screen_width ;
     vertex[0].y = 0.0f ;
     vertex[1].x = (float)gc->state.screen_width + 1 ;
     vertex[1].y = 0.0f ;
     vertex[2].x = (float)gc->state.screen_width + 1 ;
     vertex[2].y = (float)gc->state.screen_height * 2 ;
+#endif
 
     /* Here I have assumed that bufferMode will be 0 when there is no */
     /* depth buffering and odd when z buffering. */
     if (bufferMode)
     {       
+#if TWO_TRI_FILL
       vertex[0].depth = (float)depth ;
+      vertex[3].depth = (float)depth ;
 
+      GR_SET_EXPECTED_SIZE(sizeof(float) * 3 * 3, 2) ;
+      TRI_PACKET_BEGIN(kSetupStrip,
+                      SST_SETUP_Z << SSTCP_PKT3_PMASK_SHIFT, 
+                      3, sizeof(float) * 3, SSTCP_PKT3_BDDBDD);
+#else
+      vertex[0].depth = (float)depth ;
+      
       GR_SET_EXPECTED_SIZE(sizeof(float) * 3 * 3, 1) ;
       TRI_PACKET_BEGIN(kSetupStrip,
                       SST_SETUP_Z << SSTCP_PKT3_PMASK_SHIFT, 
                       3, sizeof(float) * 3, SSTCP_PKT3_BDDBDD);
+#endif
       {
         TRI_SETF(vertex[0].x);
         TRI_SETF(vertex[0].y);
@@ -1367,18 +1403,44 @@ _grTriFill(GrColor_t color, FxU32 depth, GrStencil_t stencil)
         TRI_SETF(vertex[2].x);
         TRI_SETF(vertex[2].y);
         TRI_SETF(vertex[0].depth);
-        
-        TRI_END ;
-        GR_CHECK_SIZE() ;
       }
+      TRI_END ;
+#if TWO_TRI_FILL
+      TRI_PACKET_BEGIN(kSetupStrip,
+                      SST_SETUP_Z << SSTCP_PKT3_PMASK_SHIFT, 
+                      3, sizeof(float) * 3, SSTCP_PKT3_BDDBDD);
+      {
+        TRI_SETF(vertex[3].x);
+        TRI_SETF(vertex[3].y);
+        TRI_SETF(vertex[3].depth);
+
+        TRI_SETF(vertex[4].x);
+        TRI_SETF(vertex[4].y);
+        TRI_SETF(vertex[3].depth);
+
+        TRI_SETF(vertex[5].x);
+        TRI_SETF(vertex[5].y);
+        TRI_SETF(vertex[3].depth);
+      }
+      TRI_END ;
+#endif
+        
+      GR_CHECK_SIZE() ;
     } 
     else
     {
       /* When depth buffering is disabled, don't send a depth component */
+#if TWO_TRI_FILL
       GR_SET_EXPECTED_SIZE(sizeof(float) * 2 * 3, 1) ;
       TRI_PACKET_BEGIN(kSetupStrip,
                       0, 
                       3, sizeof(float) * 2, SSTCP_PKT3_BDDBDD) ;
+#else
+      GR_SET_EXPECTED_SIZE(sizeof(float) * 2 * 3, 1) ;
+      TRI_PACKET_BEGIN(kSetupStrip,
+                      0, 
+                      3, sizeof(float) * 2, SSTCP_PKT3_BDDBDD) ;
+#endif
       {
         TRI_SETF(vertex[0].x);
         TRI_SETF(vertex[0].y);
@@ -1388,10 +1450,26 @@ _grTriFill(GrColor_t color, FxU32 depth, GrStencil_t stencil)
 
         TRI_SETF(vertex[2].x);
         TRI_SETF(vertex[2].y);
-        
-        TRI_END ;
-        GR_CHECK_SIZE() ;
       }
+      TRI_END ;
+#if TWO_TRI_FILL
+      TRI_PACKET_BEGIN(kSetupStrip,
+                      0, 
+                      3, sizeof(float) * 2, SSTCP_PKT3_BDDBDD) ;
+      {
+        TRI_SETF(vertex[3].x);
+        TRI_SETF(vertex[3].y);
+
+        TRI_SETF(vertex[4].x);
+        TRI_SETF(vertex[4].y);
+
+        TRI_SETF(vertex[5].x);
+        TRI_SETF(vertex[5].y);
+      }
+      TRI_END ;
+#endif
+        
+      GR_CHECK_SIZE() ;
     }
 
     /* */
@@ -1517,6 +1595,9 @@ GR_ENTRY(grBufferClear, void, (GrColor_t color, GrAlpha_t alpha, FxU32 depth))
       } else if ((fbzMode & SST_ENDEPTHBUFFER) != 0) {
         doAuxP = FXTRUE;
 
+        if ((fbzMode & SST_WBUFFER) && (gc->grPixelSize == 4))
+          depth = depth << 8 | 0xff ;
+
         zacolor &= ~SST_ZACOLOR_DEPTH;
         zacolor |= (((FxU32) depth) << SST_ZACOLOR_DEPTH_SHIFT);
       }
@@ -1549,7 +1630,7 @@ GR_ENTRY(grBufferClear, void, (GrColor_t color, GrAlpha_t alpha, FxU32 depth))
         /* in addition to a blt for the common area of the fill.  */
         if ((!(gc->state.shadow.clipBottomTop & (((gc->sliCount << gc->sliBandHeight) - 1) << SST_CLIPTOP_SHIFT)) &&
            !(gc->state.shadow.clipBottomTop & (((gc->sliCount << gc->sliBandHeight) - 1) << SST_CLIPBOTTOM_SHIFT))) &&
-            _GlideRoot.environment.waxon && (gc->state.tbufferMask == 0xf))
+            _GlideRoot.environment.waxon && ((gc->state.tbufferMask & 0xf) == 0xf)) /* KoolSmoky - come back to this! tbufferMask incorrect! */
         {
           FxU32 clipLeft, clipRight, clipTop, clipBottom ;
           FxU32 mask = 0xFFFFFFFF ;
@@ -1646,215 +1727,217 @@ GR_ENTRY(grBufferClear, void, (GrColor_t color, GrAlpha_t alpha, FxU32 depth))
        else
 #endif
 #endif /* end of hot wax session  */
-
-      if (!gc->bInfo->sdRAM && !gc->windowed) {
-        REG_GROUP_BEGIN(BROADCAST_ID, zaColor, 2, 0x41);
-        {
-          REG_GROUP_SET(hw, zaColor, zacolor);
-          REG_GROUP_SET(hw, c1, color);
-        }
-        REG_GROUP_END();
+      {
+        
+        if (!gc->bInfo->sdRAM && !gc->windowed) {
+          REG_GROUP_BEGIN(BROADCAST_ID, zaColor, 2, 0x41);
+          {
+            REG_GROUP_SET(hw, zaColor, zacolor);
+            REG_GROUP_SET(hw, c1, color);
+          }
+          REG_GROUP_END();
           
-        REG_GROUP_BEGIN(BROADCAST_ID, fastfillCMD, 3, 0x209);
-        {
-          /* Execute the FASTFILL command */
-          REG_GROUP_SET(hw, fastfillCMD, 1);
+          REG_GROUP_BEGIN(BROADCAST_ID, fastfillCMD, 3, 0x209);
+          {
+            /* Execute the FASTFILL command */
+            REG_GROUP_SET(hw, fastfillCMD, 1);
             
-          /* Restore C1 and ZACOLOR */
-          REG_GROUP_SET(hw, zaColor, oldzacolor);
-          REG_GROUP_SET(hw, c1, oldc1);
-        }
-        REG_GROUP_END();
-      } else {
-        /* Windowed or SDRAM clears */
-        const FxU32 colorBufMode = ((fbzMode & ~(SST_ZAWRMASK | SST_ENDEPTHBUFFER)) |
-                                    SST_RGBWRMASK |
-                                    SST_ENRECTCLIP);
-
-        /* Turn off writes to the aux buffer */
-        REG_GROUP_BEGIN(BROADCAST_ID, fbzMode, 1, 1);
-        REG_GROUP_SET(hw, fbzMode, colorBufMode);
-        REG_GROUP_END();        
-
-        if (doColorP) {
-        /* Clear Color Buffer */
-        REG_GROUP_BEGIN(BROADCAST_ID, c1, 1, 0x1);
-        REG_GROUP_SET(hw, c1, color);
-        REG_GROUP_END();
+            /* Restore C1 and ZACOLOR */
+            REG_GROUP_SET(hw, zaColor, oldzacolor);
+            REG_GROUP_SET(hw, c1, oldc1);
+          }
+          REG_GROUP_END();
+        } else {
+          /* Windowed or SDRAM clears */
+          const FxU32 colorBufMode = ((fbzMode & ~(SST_ZAWRMASK | SST_ENDEPTHBUFFER)) |
+                                      SST_RGBWRMASK |
+                                      SST_ENRECTCLIP);
+          
+          /* Turn off writes to the aux buffer */
+          REG_GROUP_BEGIN(BROADCAST_ID, fbzMode, 1, 1);
+          REG_GROUP_SET(hw, fbzMode, colorBufMode);
+          REG_GROUP_END();        
+          
+          if (doColorP) {
+            /* Clear Color Buffer */
+            REG_GROUP_BEGIN(BROADCAST_ID, c1, 1, 0x1);
+            REG_GROUP_SET(hw, c1, color);
+            REG_GROUP_END();
             
-        /* Execute the FASTFILL command */
-        REG_GROUP_BEGIN(BROADCAST_ID, fastfillCMD, 1, 1);
-        REG_GROUP_SET(hw, fastfillCMD, 1);
-        REG_GROUP_END();
-        }
-
-    if (doAuxP) {
-        FxU32
-            red, green, blue, convertedDepth;
+            /* Execute the FASTFILL command */
+            REG_GROUP_BEGIN(BROADCAST_ID, fastfillCMD, 1, 1);
+            REG_GROUP_SET(hw, fastfillCMD, 1);
+            REG_GROUP_END();
+          }
+          
+          if (doAuxP) {
+            FxU32
+              red, green, blue, convertedDepth;
 #define GETRED(a) ((a >> 11) & 0x1f)
 #define GETGREEN(a) ((a >> 5) & 0x3f)
 #define GETBLUE(a)  (a & 0x1f)
-
-#ifdef FX_GLIDE_NAPALM
-        if (gc->grPixelSize == 2)
-        {
-#endif
-            /* Convert 16-bit depth to 24-bit, ready for truncation:
-            20        10        0  
-            321098765432109876543210
-            RRRRR000GGGGGG00BBBBB000      
-               
-            So, we get the 565 out of 16-bit depth, then operate
-            like this:
-               
-            RED'   = red << 3
-            GREEN' = green << 2
-            BLUE'  = blue << 3
-               
-            This way, when the fastFill hardware truncates, we
-            still have all the bits we were given.
-               
-            We then simply recombin RED', BLUE', and GREEN' to make
-            a 24-bit color value.
-               
-            capisce?
-               
-            */
-
-            red = GETRED(depth) << 3;
-            green = GETGREEN(depth) << 2;
-            blue = GETBLUE(depth) << 3;
-
-            convertedDepth = ((red << 16) | (green << 8) | blue);
             
+#ifdef FX_GLIDE_NAPALM
+            if (gc->grPixelSize == 2)
+              {
+#endif
+                /* Convert 16-bit depth to 24-bit, ready for truncation:
+                   20        10        0  
+                   321098765432109876543210
+                   RRRRR000GGGGGG00BBBBB000      
+                   
+                   So, we get the 565 out of 16-bit depth, then operate
+                   like this:
+                   
+                   RED'   = red << 3
+                   GREEN' = green << 2
+                   BLUE'  = blue << 3
+                   
+                   This way, when the fastFill hardware truncates, we
+                   still have all the bits we were given.
+                   
+                   We then simply recombin RED', BLUE', and GREEN' to make
+                   a 24-bit color value.
+                   
+                   capisce?
+                   
+                 */
+                
+                red = GETRED(depth) << 3;
+                green = GETGREEN(depth) << 2;
+                blue = GETBLUE(depth) << 3;
+                
+                convertedDepth = ((red << 16) | (green << 8) | blue);
+                
 #if FX_GLIDE_NAPALM
-            /* If we are in 15bpp mode, then turn it off so that clears work as expected
-            and we can clear all 16 bits. */
-            if((gc->state.shadow.renderMode & SST_RM_3D_MODE) == SST_RM_15BPP) {
-            FxU32 renderMode = gc->state.shadow.renderMode;
-            renderMode &= ~SST_RM_15BPP;
-            REG_GROUP_BEGIN(BROADCAST_ID, renderMode, 1, 0x01);
-            REG_GROUP_SET(hw, renderMode, renderMode);
-            REG_GROUP_END();      
-            restoreRenderMode = FXTRUE;
-            }
+                /* If we are in 15bpp mode, then turn it off so that clears work as expected
+                   and we can clear all 16 bits. */
+                if((gc->state.shadow.renderMode & SST_RM_3D_MODE) == SST_RM_15BPP) {
+                  FxU32 renderMode = gc->state.shadow.renderMode;
+                  renderMode &= ~SST_RM_15BPP;
+                  REG_GROUP_BEGIN(BROADCAST_ID, renderMode, 1, 0x01);
+                  REG_GROUP_SET(hw, renderMode, renderMode);
+                  REG_GROUP_END();      
+                  restoreRenderMode = FXTRUE;
+                }
 #endif            
 #ifdef FX_GLIDE_NAPALM
-        }
-        else
-        {
-            FxU32 renderMode = gc->state.shadow.renderMode ;
-
-            /* All of that hoopla is no help at all in 32bpp mode */
-            /* since the depth buffer is 24bpp */
-            convertedDepth = depth ;
-
-            /* Since we are treating the depth buffer as a color buffer, */
-            /* We had best enable color writes. */
-            renderMode |= SST_RM_RED_WMASK | SST_RM_GREEN_WMASK | SST_RM_BLUE_WMASK | SST_RM_ALPHA_WMASK ;
-
-            REG_GROUP_BEGIN(BROADCAST_ID, renderMode, 1, 0x01);
-            REG_GROUP_SET(hw, renderMode, renderMode);
-            REG_GROUP_END();      
-            restoreRenderMode = FXTRUE;
-        }
+              }
+            else
+              {
+                FxU32 renderMode = gc->state.shadow.renderMode ;
+                
+                /* All of that hoopla is no help at all in 32bpp mode */
+                /* since the depth buffer is 24bpp */
+                convertedDepth = depth ;
+                
+                /* Since we are treating the depth buffer as a color buffer, */
+                /* We had best enable color writes. */
+                renderMode |= SST_RM_RED_WMASK | SST_RM_GREEN_WMASK | SST_RM_BLUE_WMASK | SST_RM_ALPHA_WMASK ;
+                
+                REG_GROUP_BEGIN(BROADCAST_ID, renderMode, 1, 0x01);
+                REG_GROUP_SET(hw, renderMode, renderMode);
+                REG_GROUP_END();      
+                restoreRenderMode = FXTRUE;
+              }
 #endif
-
-        /* Clear Aux Buffer */
-        REG_GROUP_BEGIN(BROADCAST_ID, c1, 1, 0x1);
-        REG_GROUP_SET(hw, c1, convertedDepth);
-        REG_GROUP_END();
-          
-                /* tbext */
-        REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 2, 0x3);
-        REG_GROUP_SET(hw, colBufferAddr, gc->state.shadow.auxBufferAddr );
+            
+            /* Clear Aux Buffer */
+            REG_GROUP_BEGIN(BROADCAST_ID, c1, 1, 0x1);
+            REG_GROUP_SET(hw, c1, convertedDepth);
+            REG_GROUP_END();
+            
+            /* tbext */
+            REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 2, 0x3);
+            REG_GROUP_SET(hw, colBufferAddr, gc->state.shadow.auxBufferAddr );
 #ifdef __linux__
-          REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer)? driInfo.stride :
-			gc->state.shadow.auxBufferStride);
+            REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer)? driInfo.stride :
+                          gc->state.shadow.auxBufferStride);
 #else	/* defined(__linux__) */
-          REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.auxBufferStride );
+            REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.auxBufferStride );
 #endif	/* defined(__linux__) */
-        REG_GROUP_END();
+            REG_GROUP_END();
 #ifdef FX_GLIDE_NAPALM
-        if (IS_NAPALM(gc->bInfo->pciInfo.deviceID)) 
-        {
-            if (gc->enableSecondaryBuffer)
+            if (IS_NAPALM(gc->bInfo->pciInfo.deviceID)) 
+              {
+                if (gc->enableSecondaryBuffer)
+                  {
+                    REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 1, 0x1); 
+                    REG_GROUP_SET(hw, colBufferAddr, gc->buffers1[gc->grColBuf] | SST_BUFFER_BASE_SELECT);
+                    REG_GROUP_END();
+                  }
+              }
+#endif
+            
+            REG_GROUP_BEGIN(BROADCAST_ID, fbzMode, 2, 0x21);
             {
-            REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 1, 0x1); 
-            REG_GROUP_SET(hw, colBufferAddr, gc->buffers1[gc->grColBuf] | SST_BUFFER_BASE_SELECT);
-            REG_GROUP_END();
+              /* Write the depth buffer as if it were a color buffer,
+               * but w/ actual color buffer features
+               * (dithering/chroma/stipple) cleared so that the
+               * converted depth value does not get dorked along the
+               * way down the eerie pathways of banshee.
+               */
+              REG_GROUP_SET(hw, fbzMode, colorBufMode & ~(SST_ENCHROMAKEY |
+                                                          SST_ENSTIPPLE |
+                                                          SST_ENDITHER));
+              
+              /* Execute the FASTFILL command */
+              REG_GROUP_SET(hw, fastfillCMD, 1);
             }
-        }
-#endif
-
-        REG_GROUP_BEGIN(BROADCAST_ID, fbzMode, 2, 0x21);
-        {
-            /* Write the depth buffer as if it were a color buffer,
-            * but w/ actual color buffer features
-            * (dithering/chroma/stipple) cleared so that the
-            * converted depth value does not get dorked along the
-            * way down the eerie pathways of banshee.
-            */
-            REG_GROUP_SET(hw, fbzMode, colorBufMode & ~(SST_ENCHROMAKEY |
-                                                        SST_ENSTIPPLE |
-                                                        SST_ENDITHER));
-
-            /* Execute the FASTFILL command */
-            REG_GROUP_SET(hw, fastfillCMD, 1);
-        }
-        REG_GROUP_END();            
-        }
-
-        /* Restore trashed things */
-        REG_GROUP_BEGIN(BROADCAST_ID, c1, 1, 0x1);
-        REG_GROUP_SET(hw, c1, oldc1);
-        REG_GROUP_END();
-
-                /* tbext */
-        if ( gc->textureBuffer.on ) {
-        REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 2, 0x3);
-        REG_GROUP_SET(hw, colBufferAddr, gc->textureBuffer.addr );
-        REG_GROUP_SET(hw, colBufferStride, gc->textureBuffer.stride );
-        REG_GROUP_END();  
-        } else {
-        REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 2, 0x3);
-        REG_GROUP_SET(hw, colBufferAddr, gc->buffers0[gc->windowed ? 0 : gc->curBuffer]);
+            REG_GROUP_END();            
+          }
+          
+          /* Restore trashed things */
+          REG_GROUP_BEGIN(BROADCAST_ID, c1, 1, 0x1);
+          REG_GROUP_SET(hw, c1, oldc1);
+          REG_GROUP_END();
+          
+          /* tbext */
+          if ( gc->textureBuffer.on ) {
+            REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 2, 0x3);
+            REG_GROUP_SET(hw, colBufferAddr, gc->textureBuffer.addr );
+            REG_GROUP_SET(hw, colBufferStride, gc->textureBuffer.stride );
+            REG_GROUP_END();  
+          } else {
+            REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 2, 0x3);
+            REG_GROUP_SET(hw, colBufferAddr, gc->buffers0[gc->windowed ? 0 : gc->curBuffer]);
 #ifdef __linux__
-	REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride : 
-		      gc->state.shadow.colBufferStride );
+            REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride : 
+                          gc->state.shadow.colBufferStride );
 #else
-	REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride );
+            REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride );
 #endif
-        REG_GROUP_END();
-#ifdef FX_GLIDE_NAPALM
-        if (IS_NAPALM(gc->bInfo->pciInfo.deviceID)) {
-            if (gc->enableSecondaryBuffer) {
-            REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 1, 0x1); 
-            REG_GROUP_SET(hw, colBufferAddr, gc->buffers1[gc->curBuffer] | SST_BUFFER_BASE_SELECT);
             REG_GROUP_END();
-            }
-        }
-#endif
-        } /* endif gc->texRender.on */
-
 #ifdef FX_GLIDE_NAPALM
-        /* If we did a 32bpp depth clear, restore the color write masks */
-        if (restoreRenderMode)
-        {
-        REG_GROUP_BEGIN(BROADCAST_ID, renderMode, 1, 0x01);
-        REG_GROUP_SET(hw, renderMode, gc->state.shadow.renderMode);
-        REG_GROUP_END();      
-        }
+            if (IS_NAPALM(gc->bInfo->pciInfo.deviceID)) {
+              if (gc->enableSecondaryBuffer) {
+                REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 1, 0x1); 
+                REG_GROUP_SET(hw, colBufferAddr, gc->buffers1[gc->curBuffer] | SST_BUFFER_BASE_SELECT);
+                REG_GROUP_END();
+              }
+            }
+#endif
+          } /* endif gc->texRender.on */
+          
+#ifdef FX_GLIDE_NAPALM
+          /* If we did a 32bpp depth clear, restore the color write masks */
+          if (restoreRenderMode)
+            {
+              REG_GROUP_BEGIN(BROADCAST_ID, renderMode, 1, 0x01);
+              REG_GROUP_SET(hw, renderMode, gc->state.shadow.renderMode);
+              REG_GROUP_END();      
+            }
 #endif
 
-        REG_GROUP_BEGIN(BROADCAST_ID, fbzMode, 1, 1);
-        REG_GROUP_SET(hw, fbzMode, fbzMode);
-        REG_GROUP_END();        
+          REG_GROUP_BEGIN(BROADCAST_ID, fbzMode, 1, 1);
+          REG_GROUP_SET(hw, fbzMode, fbzMode);
+          REG_GROUP_END();        
+        }
       }
 #else /* !GLIDE_INIT_HWC */
-       /* */
-       /* Life was simple in the days of DOS Glide */
-       /* */
+      /* */
+      /* Life was simple in the days of DOS Glide */
+      /* */
       REG_GROUP_BEGIN(BROADCAST_ID, zaColor, 2, 0x41);
       {
         REG_GROUP_SET(hw, zaColor, zacolor);
@@ -1875,7 +1958,7 @@ GR_ENTRY(grBufferClear, void, (GrColor_t color, GrAlpha_t alpha, FxU32 depth))
 #endif /* !GLIDE_INIT_HWC */
     }
   }
-
+  
 #undef FN_NAME
 } /* grBufferClear */
 
@@ -1981,7 +2064,7 @@ GR_EXT_ENTRY(grBufferClearExt, void, (GrColor_t color, GrAlpha_t alpha, FxU32 de
         /* in addition to a blt for the common area of the fill.  */
         if ((!(gc->state.shadow.clipBottomTop & (((gc->sliCount << gc->sliBandHeight) - 1) << SST_CLIPTOP_SHIFT)) &&
            !(gc->state.shadow.clipBottomTop & (((gc->sliCount << gc->sliBandHeight) - 1) << SST_CLIPBOTTOM_SHIFT))) &&
-            _GlideRoot.environment.waxon && (gc->state.tbufferMask == 0xf))
+            _GlideRoot.environment.waxon && ((gc->state.tbufferMask & 0xf) == 0xf)) /* KoolSmoky - come back to this! tbufferMask incorrect! */
         {
           FxU32 clipLeft, clipRight, clipTop, clipBottom ;
           FxU32 mask = 0xFFFFFFFF ;
@@ -2093,6 +2176,9 @@ GR_EXT_ENTRY(grBufferClearExt, void, (GrColor_t color, GrAlpha_t alpha, FxU32 de
           /* */
           _grTriFill(color, depth, stencil) ;
         }
+        /* KoolSmoky - there is nothing else to do so return */
+        return;
+        
       } else
 #endif
 #endif /* end of hot wax session  */
@@ -2139,6 +2225,8 @@ GR_EXT_ENTRY(grBufferClearExt, void, (GrColor_t color, GrAlpha_t alpha, FxU32 de
       }
         REG_GROUP_END() ;
 #endif
+        /* KoolSmoky - there is nothing else to do so return */
+        return;
       }
        else
       {        
@@ -2158,7 +2246,7 @@ GR_EXT_ENTRY(grBufferClearExt, void, (GrColor_t color, GrAlpha_t alpha, FxU32 de
         /* clears as long as we know we don't need to use WAX.  Yikes.   -- KCD */
         /* */
         if((gc->grPixelSize == 2) ||
-           (gc->state.tbufferMask == 0xf) || 
+           ((gc->state.tbufferMask & 0xf) == 0xf) || /* KoolSmoky - come back to this! tbufferMask incorrect! */
            (!doStencil) ||
            (doStencil && ((gc->state.shadow.stencilMode & SST_STENCIL_WMASK) == SST_STENCIL_WMASK))) {
           FxU32 colorBufMode ;
@@ -2390,7 +2478,11 @@ GR_EXT_ENTRY(grBufferClearExt, void, (GrColor_t color, GrAlpha_t alpha, FxU32 de
            * talk to a single chip with WAX (which we may have to use up above)
            * so we have to use the triangle engine to do TBuffer clears.  UGH! */
           _grTriFill(color, depth, stencil) ;            
-        }    
+        }
+
+        /* KoolSmoky - there is nothing else to do so return */
+        return;
+        
       } /* end of windowed or sdram clear */
 #else /* !GLIDE_INIT_HWC */
 
@@ -2530,6 +2622,22 @@ GR_ENTRY(grBufferSwap, void, (FxU32 swapInterval))
   GDBG_INFO_MORE(gc->myLevel,"(%d)\n",swapInterval);
 
 #ifdef FX_GLIDE_NAPALM
+
+  // 4x FSAA or greater FSAA
+  if (0 && gc->grPixelSample >= 4) {
+    int sample = gc->stats.bufferSwaps%4;
+    
+    // We want to accumulate swaps so don't swap now
+    if (sample) {
+      _grChipMask(0x1 << sample);
+      gc->chipmask = sample;
+      gc->stats.bufferSwaps++;
+      return;
+    }
+    //grTBufferWriteMaskExt(0xF);
+    
+  }
+  
   if (IS_NAPALM(gc->bInfo->pciInfo.deviceID)) {
     _grChipMask( SST_CHIP_MASK_ALL_CHIPS );
   }
@@ -2540,8 +2648,8 @@ GR_ENTRY(grBufferSwap, void, (FxU32 swapInterval))
 
 #if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
   if (_GlideRoot.environment.aaToggleKey) {
-    FxU16 keyState = GetAsyncKeyState(_GlideRoot.environment.aaToggleKey);
     if(gc->grPixelSample > 1) {
+      FxU16 keyState = GetAsyncKeyState(_GlideRoot.environment.aaToggleKey);
       if((keyState & 0x8001) == 0x8001) {
         static FxU32 aaEnabled = 1;
         
@@ -2558,7 +2666,7 @@ GR_ENTRY(grBufferSwap, void, (FxU32 swapInterval))
     FxU16 keyState = GetAsyncKeyState(_GlideRoot.environment.aaScreenshotKey);
     if((keyState & 0x8001) == 0x8001) {
       grFinish();
-      hwcAAScreenShot(gc->bInfo, gc->curBuffer);
+      hwcAAScreenShot(gc->bInfo, gc->curBuffer, _GlideRoot.environment.ditherHwcAA);
     }
   }  
 #elif (GLIDE_PLATFORM & GLIDE_OS_MACOS)
@@ -2621,7 +2729,7 @@ GR_ENTRY(grBufferSwap, void, (FxU32 swapInterval))
   }
   
   while(_grBufferNumPending() > _GlideRoot.environment.swapPendingCount);
-
+  
 #ifndef HAL_CSIM
   /* Cycle the buffer indices */
   {
@@ -2643,12 +2751,14 @@ GR_ENTRY(grBufferSwap, void, (FxU32 swapInterval))
 #if USE_PACKET_FIFO
   {
     int i, j = -1;
+    FxU32 newBufferSwaps =
+      (FxU32) gc->cmdTransportInfo.fifoPtr -
+      (FxU32) gc->cmdTransportInfo.fifoStart; 
 
     for ( i = 0; i < MAX_BUFF_PENDING && j == -1; i++) {
       if (gc->bufferSwaps[i] == 0xffffffff) {
-        gc->bufferSwaps[i] =
-          (FxU32) gc->cmdTransportInfo.fifoPtr -
-          (FxU32) gc->cmdTransportInfo.fifoStart; 
+        gc->bufferSwaps[i] = newBufferSwaps;
+          
         j = i;
       }
     }
@@ -2690,6 +2800,7 @@ GR_ENTRY(grBufferSwap, void, (FxU32 swapInterval))
 #endif
 
 #if defined( TACO_MEMORY_FIFO_HACK )
+  if(_GlideRoot.environment.memFIFOHack)
   _FifoFlush();
 #endif
 
@@ -2757,6 +2868,13 @@ GR_ENTRY(grBufferSwap, void, (FxU32 swapInterval))
   /* Bump & Grind if called for */
   if (!gc->cmdTransportInfo.autoBump)
     GR_BUMP_N_GRIND;
+
+  // 4x FSAA or greater FSAA
+  if (0 && gc->grPixelSample >= 4) {
+    _grChipMask(1);
+    gc->chipmask = 1;
+    //   grTBufferWriteMaskExt(0x11);
+  }
 
   GR_END();
 #undef FN_NAME  
@@ -2921,7 +3039,9 @@ _grBufferNumPending(void)
     i;
   int
     pend;                       /* Num Swaps pending */
-/*  FxU32 chip ; */
+#if CHECK_SLAVE_SWAPCMD
+  FxU32 chip ;
+#endif
 
   GR_DCL_GC;
 
@@ -2935,61 +3055,72 @@ _grBufferNumPending(void)
   /* HACK HACK HACK */
   do {
     readPtr0 = GET(gc->cRegs->cmdFifo0.readPtrL) ;
-    dummy = _grSstStatus() ;
+    dummy = _grSstStatus();
     readPtr1 = GET(gc->cRegs->cmdFifo0.readPtrL) ;
 
   /* KCD: I believe that swap commands are synchronized across chips,
-     so it should be good enough to just track the master's read pointer. */
-     
-#if 0
+     so it should be good enough to just track the master's read pointer.
+  */
+#if CHECK_SLAVE_SWAPCMD
+    if(_GlideRoot.environment.checkSlaveSwapCMD > 0)
     if (gc->chipCount)
       for (chip = 0 ;
            chip < gc->chipCount - 1 ;
            chip++)
-      readPtr1 = ((readPtr1 < GET(gc->slaveCRegs[chip]->cmdFifo0.readPtrL))
-                   ? readPtr1 : GET(gc->slaveCRegs[chip]->cmdFifo0.readPtrL)) ;
-#endif                   
+        readPtr1 = ((readPtr1 < GET(gc->slaveCRegs[chip]->cmdFifo0.readPtrL))
+                    ? readPtr1 : GET(gc->slaveCRegs[chip]->cmdFifo0.readPtrL)) ;
+#endif
   } while (readPtr0 != readPtr1);
 
-  readPtr = readPtr1 - gc->cmdTransportInfo.fifoOffset ;
+  readPtr = readPtr1 - gc->cmdTransportInfo.fifoOffset;
 
   if (readPtr == gc->lastSwapCheck) {
     do {
       depth0 = GET(gc->cRegs->cmdFifo0.depth);
       depth1 = GET(gc->cRegs->cmdFifo0.depth);
+      
+#if CHECK_SLAVE_SWAPCMD
+      if(_GlideRoot.environment.checkSlaveSwapCMD > 1)
+      if (gc->chipCount)
+        for (chip = 0 ;
+             chip < gc->chipCount - 1 ;
+             chip++)
+          depth1 = ((depth1 < GET(gc->slaveCRegs[chip]->cmdFifo0.depth))
+                    ? depth1 : GET(gc->slaveCRegs[chip]->cmdFifo0.depth)) ;
+#endif
     } while (depth0 != depth1);
 
-    if (depth0 == 0) {
-      for (i = 0; i < MAX_BUFF_PENDING; i++)
+    if (depth1 == 0) {
+      for(i = MAX_BUFF_PENDING; i >= 0; --i)
         gc->bufferSwaps[i] = 0xffffffff;
       gc->swapsPending = 0;
       goto NPDONE;
     }
-  }
+  } else
 
   /*
   **  There are two cases here:  One where the read pointer has wrapped around
   **  behind us, and one where it's ahead of us.
   */
   if (readPtr < gc->lastSwapCheck) { /* We've wrapped */
-    for (i = 0; i < MAX_BUFF_PENDING; i++) {
+    for(i = MAX_BUFF_PENDING; i >= 0; --i) {
       /* If it's between the last check and the end of the FIFO or between the
        beginning of the FIFO and the current Read pointer, then it's gone
        */
-      if ( (gc->bufferSwaps[i] != 0xffffffff) && (
-        (gc->bufferSwaps[i] >= gc->lastSwapCheck) ||
-          (gc->bufferSwaps[i] <= readPtr)) ) {
-        --gc->swapsPending;
-        gc->bufferSwaps[i] = 0xffffffff; /* Free swap slot */
+      if(gc->bufferSwaps[i] != 0xffffffff) {
+        if((gc->bufferSwaps[i] >= gc->lastSwapCheck) || (gc->bufferSwaps[i] <= readPtr)) {
+          --gc->swapsPending;
+          gc->bufferSwaps[i] = 0xffffffff; /* Free swap slot */
+        }
       }
     }
   } else {                      /* It's behind us */
-    for (i = 0; i < MAX_BUFF_PENDING; i++) {
-      if ((gc->bufferSwaps[i] != 0xffffffff) && (
-        (gc->bufferSwaps[i] >= gc->lastSwapCheck) && (gc->bufferSwaps[i] <=
-        readPtr))) {
-        --gc->swapsPending;
-        gc->bufferSwaps[i] = 0xffffffff; /* Free swap slot */
+    for(i = MAX_BUFF_PENDING; i >= 0; --i) {
+      if(gc->bufferSwaps[i] != 0xffffffff) {
+        if((gc->bufferSwaps[i] >= gc->lastSwapCheck) && (gc->bufferSwaps[i] <= readPtr)) {
+          --gc->swapsPending;
+          gc->bufferSwaps[i] = 0xffffffff; /* Free swap slot */
+        }
       }
     }
   }
@@ -3077,6 +3208,7 @@ _grClipNormalizeAndGenerateRegValues(FxU32 minx, FxU32 miny, FxU32 maxx,
   GR_CHECK_COMPATABILITY(FN_NAME,
                          ((minx > LONG_MAX) || (miny > LONG_MAX)),
                          "Negative min clip coordinate");
+  
   /* Sort the Maxes and Mins These are the same no matter what */
   if (minx > maxx) {
     tmp = maxx;
@@ -3087,6 +3219,13 @@ _grClipNormalizeAndGenerateRegValues(FxU32 minx, FxU32 miny, FxU32 maxx,
     tmp = maxy;
     miny = maxy;
     maxy = tmp;
+  }
+
+  if(_GlideRoot.environment.aaClip == FXTRUE) {
+    if((gc->grPixelSample > 1) && (_GlideRoot.windowsInit == 1)) {
+      if(minx == 0) minx = 1;
+      if(miny == 0) miny = 1;
+    }
   }
   
   if (gc->windowed) {
@@ -3109,7 +3248,7 @@ _grClipNormalizeAndGenerateRegValues(FxU32 minx, FxU32 miny, FxU32 maxx,
     if (maxx > gc->state.screen_width) maxx = gc->state.screen_width;
     if (maxy > gc->state.screen_height) maxy = gc->state.screen_height;
   }
-
+  
   GDBG_INFO(85, 
             "%s: normalized  minx = %d, maxx = %d, miny = %d, maxy = %d\n",
             FN_NAME, minx, maxx, miny, maxy);
@@ -3374,6 +3513,9 @@ GR_STATE_ENTRY(grDepthBiasLevel, void, (FxI32 level))
   GR_BEGIN_NOFIFOCHECK("_grDepthBiasLevel", 85);
   GDBG_INFO_MORE(gc->myLevel,"(%d)\n",level);
 
+  if ((gc->state.shadow.fbzMode & SST_WBUFFER) && (gc->grPixelSize == 4))
+    level = (level << 8 | 0xff);
+
   zacolor = gc->state.shadow.zaColor;
   zacolor = (zacolor & ~SST_ZACOLOR_DEPTH) | ((FxI16)level & SST_ZACOLOR_DEPTH);
 
@@ -3602,7 +3744,7 @@ GR_ENTRY(grDisableAllEffects, void, (void))
 ** grStippleMode
 */
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__WIN32__)
 GR_STATE_ENTRY(grStippleMode, void, (GrStippleMode_t mode))
 {
 #define FN_NAME "_grStippleMode"
@@ -3636,7 +3778,7 @@ GR_STATE_ENTRY(grStippleMode, void, (GrStippleMode_t mode))
 #endif /* !GLIDE3 */
 #undef FN_NAME
 } /* grStippleMode */
-#endif /* __linux__ */
+#endif /* __linux__ __WIN32__ */
 
 /*---------------------------------------------------------------------------
 ** grDitherMode
@@ -4036,6 +4178,7 @@ GR_ENTRY(grGlideSetState, void, (const void *state))
   
   {
     int tmu;
+    //GrChipID_t tmus;
 
     for(tmu = 0; tmu < gc->num_tmu; tmu++) {
       SstRegs* tmuregs = SST_TMU(hw, tmu);
@@ -4058,6 +4201,9 @@ GR_ENTRY(grGlideSetState, void, (const void *state))
       }
       REG_GROUP_END();
 
+      if(gc->state.per_tmu[tmu].texSubLodDither)
+            g3LodBiasPerChip(tmu, gc->state.shadow.tmuState[tmu].tLOD);
+
       REG_GROUP_BEGIN(chipField, chromaKey, 2, 0x03);
       {
         REG_GROUP_SET(tmuregs, chromaKey, gc->state.shadow.tmuState[tmu].texchromaKey);
@@ -4073,6 +4219,9 @@ GR_ENTRY(grGlideSetState, void, (const void *state))
         REG_GROUP_END();
       }
 #endif
+      
+      /*tmus = MultitextureAndTrilinear();
+      if(tmus & tmu)  g3LodBiasPerChip(tmu);*/
     }
   }
   
@@ -5060,40 +5209,105 @@ GR_DDFUNC(_grACExtcombineMode, void, (GrACUColor_t     a,
 GR_EXT_ENTRY(grTBufferWriteMaskExt, void , (FxU32 tmask) )
 {
 #define FN_NAME "grTBufferWriteMaskExt"
-  /* increase arrays for 8xaa */
-  FxU32 defaultXOffset0[8] = {0x7a, 0x2, 0x7c, 0x4, 0x7a, 0x2, 0x7c, 0x4};
-  FxU32 defaultYOffset0[8] = {0x7b, 0x4, 0x3, 0x7d, 0x7a, 0x2, 0x7c, 0x4};
 
-  FxU32 chipIndex, chipEnList, i;
+#if 0 /* KoolSmoky */
+  FxU32 tBufferSampleOffsetIndex;
+#endif
+  FxU32 chipIndex, chipEnList, chipaamode[4];
   GR_BEGIN_NOFIFOCHECK("grTBufferWriteMaskExt",85);
   GDBG_INFO_MORE(gc->myLevel, "(0x%x)\n", tmask);
 
   /* the current mask will be stored in GrState */
 
-  /* Okay, screw two-sample until I deal with the new AA scheme....sigh. */
-  if (gc->grPixelSample < 4) return;
-  /* if (gc->chipCount <= 1) return; */
+  /* check if we have atleast 2 tbuffers */
+  if(gc->grPixelSample <= 1) return;
 
-  /* Hack to make 2-sample AA two-way SLI t buffers work */
-  if(gc->grPixelSample == 2 && gc->sliCount > 1) {
-    /* Use same two buffer masks for both chips */
-    tmask = (tmask & 3) | ((tmask & 3) << 2);
-  }
+#if 0 /* KoolSmoky */
+  /* In a one-chip config, chip 0 does samples 0 and 1 */
+  /* In a two-chip config, chip 0 does samples 0 and 1, and chip 1 does samples 2 and 3 */
+  /* In a four-chip config, chips 0 and 2 do samples 0 and 1, and chips 1 and 3 do samples 2 and 3 */
+  switch( gc->chipCount ) {
+    case 4:
+      switch( gc->grPixelSample ) {
+      case 8:
+        /*no sli, 2 sample per chip */
+        chipaamode[0] = (tmask>>0) & 0x03;
+        chipaamode[1] = (tmask>>2) & 0x03;
+        chipaamode[2] = (tmask>>4) & 0x03;
+        chipaamode[3] = (tmask>>6) & 0x03;
+        tBufferSampleOffsetIndex = 9;
+        break;
+        
+      case 4:
+        /*no sli, 1 sample per chip */
+        chipaamode[0] = (tmask>>0) & 0x01;
+        chipaamode[1] = (tmask>>2) & 0x01;
+        chipaamode[2] = (tmask>>1) & 0x01;
+        chipaamode[3] = (tmask>>3) & 0x01;
+        tBufferSampleOffsetIndex = 8;
+        break;
 
-  /* This is sortof slow, but this function doesn't need to be that fast. */
-  /* 8xaa - loop to load 8 sample offsets */
-  for(i = 0; i < 8; i++) {
-    defaultXOffset0[i] = _GlideRoot.environment.aaXOffset[gc->grPixelSample - 1][i];
-    defaultYOffset0[i] = _GlideRoot.environment.aaYOffset[gc->grPixelSample - 1][i];
-  }  
+      case 2:
+        if(!_GlideRoot.environment.forceOldAA) {
+          /* 2 way SLI, 1 sample per SLI unit */
+          chipaamode[0] = 
+          chipaamode[2] = (tmask>>0) & 0x01;
+          chipaamode[1] = 
+          chipaamode[3] = (tmask>>1) & 0x01;
+          tBufferSampleOffsetIndex = 7;
+        } else {
+          /* 4 way SLI, 2 samples per SLI unit */
+          chipaamode[0] = 
+          chipaamode[1] = 
+          chipaamode[2] = 
+          chipaamode[3] = (tmask>>0) & 0x03;
+          tBufferSampleOffsetIndex = 7;
+        }  
+        break;		
+      }
+      break;
 
-  chipEnList = gc->chipmask;
+    case 2: 
+      switch( gc->grPixelSample ) {
+      case 4:
+        /* no sli, 2 sample per chip */
+        chipaamode[0] = (tmask>>0) & 0x03;
+        chipaamode[1] = (tmask>>2) & 0x03;
+        tBufferSampleOffsetIndex = 3;
+        break;
+
+      case 2:
+        if(!_GlideRoot.environment.forceOldAA) {
+          /* no sli, 1 sample per chip */
+          chipaamode[0] = (tmask>>0) & 0x01;
+          chipaamode[1] = (tmask>>1) & 0x01;
+          tBufferSampleOffsetIndex = 2;
+        } else {
+          /* 2 samples per SLI pair */
+          chipaamode[0] = 
+          chipaamode[1] = (tmask>>0) & 0x03;
+          tBufferSampleOffsetIndex = 1;
+        }
+        break;
+      }
+      break;
+
+    case 1:
+      switch( gc->grPixelSample ) {
+      case 2:
+        /* no sli, 2 sample per chip */
+        chipaamode[0] = (tmask>>0) & 0x03;
+        tBufferSampleOffsetIndex = 1;
+        break;
+      }
+      break;
+    }
+
+  //chipEnList = gc->chipmask;
+  chipEnList = 0; /* completely initialize */
 
   for (chipIndex = 0; chipIndex < gc->chipCount; chipIndex++) {
-    /* In a two-chip config,  chip 0 does samples 0 and 1, and chip 1 does samples 2 and 3 */
-    /* In a four-chip config, chips 0 and 2 do samples 0 and 1, and chips 1 and 3 do samples 2 and 3 */
-    FxU32 chipaamode = (tmask >> ((chipIndex & 0x01) ? 2:0)) & 0x03;
-    switch (chipaamode) {
+    switch (chipaamode[chipIndex]) {
     case 0:
       /* disable the chip, don't care about the buffers */
       chipEnList &= ~(1 << chipIndex);
@@ -5103,7 +5317,8 @@ GR_EXT_ENTRY(grTBufferWriteMaskExt, void , (FxU32 tmask) )
          primary buffer jitter values and disable the secondary buffer. */
       chipEnList |= (1 << chipIndex);
       _grChipMask(1 << chipIndex);
-      _grAAOffsetValue(defaultXOffset0, defaultYOffset0, 
+      _grAAOffsetValue(_GlideRoot.environment.aaXOffset[tBufferSampleOffsetIndex],
+                       _GlideRoot.environment.aaYOffset[tBufferSampleOffsetIndex], 
                        chipIndex, chipIndex, FXTRUE, FXFALSE);
       /* setup color/aux buffer */
       gc->state.shadow.colBufferAddr = gc->buffers0[gc->curBuffer];
@@ -5129,7 +5344,9 @@ GR_EXT_ENTRY(grTBufferWriteMaskExt, void , (FxU32 tmask) )
          buffer. */
       chipEnList |= (1 << chipIndex);
       _grChipMask(1 << chipIndex);
-      _grAAOffsetValue(defaultXOffset0, defaultYOffset0, chipIndex, chipIndex, FXTRUE, FXFALSE);
+      _grAAOffsetValue(_GlideRoot.environment.aaXOffset[tBufferSampleOffsetIndex],
+                       _GlideRoot.environment.aaYOffset[tBufferSampleOffsetIndex],
+                       chipIndex, chipIndex, FXTRUE, FXFALSE);
       /* setup color/aux buffer */
       gc->state.shadow.colBufferAddr = gc->buffers1[gc->curBuffer];
       gc->state.shadow.auxBufferAddr = gc->buffers1[gc->grColBuf];
@@ -5152,7 +5369,9 @@ GR_EXT_ENTRY(grTBufferWriteMaskExt, void , (FxU32 tmask) )
          of buffers. */
       chipEnList |= (1 << chipIndex);
       _grChipMask(1 << chipIndex);
-      _grAAOffsetValue(defaultXOffset0, defaultYOffset0, chipIndex, chipIndex, FXTRUE, gc->enableSecondaryBuffer);
+      _grAAOffsetValue(_GlideRoot.environment.aaXOffset[tBufferSampleOffsetIndex],
+                       _GlideRoot.environment.aaYOffset[tBufferSampleOffsetIndex],
+                       chipIndex, chipIndex, FXTRUE, gc->enableSecondaryBuffer);
       /* setup color/aux buffer */
       gc->state.shadow.colBufferAddr = gc->buffers0[gc->curBuffer];
       gc->state.shadow.auxBufferAddr = gc->buffers0[gc->grColBuf];
@@ -5183,14 +5402,145 @@ GR_EXT_ENTRY(grTBufferWriteMaskExt, void , (FxU32 tmask) )
       }
       REG_GROUP_END();
       break;
+    default:
+      break;
     }
   }
   
+#else /* Colourless */
+  
+  /* Sanity Check. Make sure we are attempting to actually enable something */
+	if( (tmask&((1 << gc->grPixelSample)-1)) == 0)
+		return;
+
+	//chipEnList = gc->chipmask;
+	chipEnList = 0;
+
+	/* 2 Samples Per Chip and not SLI */
+	if(gc->enableSecondaryBuffer && !gc->sliCount) {
+		/*
+		Chip 0 = Samples 0 & 1
+		Chip 1 = Samples 2 & 3
+		Chip 2 = Samples 4 & 5
+		Chip 3 = Samples 6 & 7
+		*/
+		chipaamode[0] = ((tmask>>0) & 1) | (((tmask>>1) & 1) << 1);
+		chipaamode[1] = ((tmask>>2) & 1) | (((tmask>>3) & 1) << 1);
+		chipaamode[2] = ((tmask>>4) & 1) | (((tmask>>5) & 1) << 1);
+		chipaamode[3] = ((tmask>>6) & 1) | (((tmask>>7) & 1) << 1);
+	}
+	/* 1 Sample per chip and not SLI */
+	else if(!gc->sliCount) {
+		/*
+		Chip 0 = Sample 0
+		Chip 1 = Sample 1
+		Chip 2 = Sample 2
+		Chip 3 = Sample 3
+		*/
+		chipaamode[0] = (tmask>>0) & 1;
+		chipaamode[1] = (tmask>>1) & 1;
+		chipaamode[2] = (tmask>>2) & 1;
+		chipaamode[3] = (tmask>>3) & 1;
+	}
+	/* 1 Sample per chip and SLI */
+	else if (gc->enableSecondaryBuffer) {
+		/*
+		Chip 0 = Sample 0
+		Chip 1 = Sample 1
+		Chip 2 = Sample 0
+		Chip 3 = Sample 1
+		*/
+		chipaamode[2] = chipaamode[0] = (tmask>>0) & 1;
+		chipaamode[3] = chipaamode[1] = (tmask>>1) & 1;
+	}
+	/* 2 Samples per chip and SLI */
+	else {
+		/*
+		Chip 0 = Samples 0 & 1
+		Chip 1 = Samples 0 & 1
+		Chip 2 = Samples 2 & 3
+		Chip 3 = Samples 2 & 3
+		*/
+		chipaamode[0] = ((tmask>>0) & 1) | (((tmask>>1) & 1) << 1);
+		chipaamode[1] = ((tmask>>0) & 1) | (((tmask>>1) & 1) << 1);
+		chipaamode[2] = ((tmask>>2) & 1) | (((tmask>>3) & 1) << 1);
+		chipaamode[3] = ((tmask>>2) & 1) | (((tmask>>3) & 1) << 1);
+	}
+
+	for (chipIndex = 0; chipIndex < gc->chipCount; chipIndex++) {
+
+		/* Enable/Disable the chips */
+		if (chipaamode[chipIndex]) chipEnList |= (1 << chipIndex);
+		else chipEnList &= ~(1 << chipIndex);
+
+		/* Enable/Disable Primary and Secondary Buffers as required */
+		if (gc->enableSecondaryBuffer) switch (chipaamode[chipIndex]) {
+		case 1:
+			/* We are only rendering to the primary buffer so disable the secondary buffer. */
+			_grChipMask(1 << chipIndex);
+
+			/* setup color/aux buffer */
+			gc->state.shadow.colBufferAddr = gc->buffers0[gc->curBuffer];
+			gc->state.shadow.auxBufferAddr = gc->buffers0[gc->grColBuf];
+			REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 4, 0xf);
+			{
+				REG_GROUP_SET(hw, colBufferAddr, gc->state.shadow.colBufferAddr);
+				REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride );
+				REG_GROUP_SET(hw, auxBufferAddr, gc->state.shadow.auxBufferAddr);
+				REG_GROUP_SET(hw, auxBufferStride, gc->state.shadow.auxBufferStride); 
+			}
+			REG_GROUP_END();      
+			break;
+		case 2:
+			/* We are only rendering to the secondary buffer so point the primary color buffer
+			address at the secondary buffer, and disable the second buffer. */
+			_grChipMask(1 << chipIndex);
+
+			/* setup color/aux buffer */
+			gc->state.shadow.colBufferAddr = gc->buffers1[gc->curBuffer];
+			gc->state.shadow.auxBufferAddr = gc->buffers1[gc->grColBuf];
+			REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 4, 0xf);
+			{
+				REG_GROUP_SET(hw, colBufferAddr, gc->state.shadow.colBufferAddr);
+				REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride );
+				REG_GROUP_SET(hw, auxBufferAddr, gc->state.shadow.auxBufferAddr);
+				REG_GROUP_SET(hw, auxBufferStride, gc->state.shadow.auxBufferStride); 
+			}
+			REG_GROUP_END();      
+			break;
+		case 3:
+			/* This chip is using both buffer, so enable both. */
+			_grChipMask(1 << chipIndex);
+
+			/* setup color/aux buffer */
+			gc->state.shadow.colBufferAddr = gc->buffers0[gc->curBuffer];
+			gc->state.shadow.auxBufferAddr = gc->buffers0[gc->grColBuf];
+			REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 4, 0xf);
+			{
+				REG_GROUP_SET(hw, colBufferAddr, gc->state.shadow.colBufferAddr);
+				REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride );
+				REG_GROUP_SET(hw, auxBufferAddr, gc->state.shadow.auxBufferAddr);
+				REG_GROUP_SET(hw, auxBufferStride, gc->state.shadow.auxBufferStride); 
+			}
+			REG_GROUP_END();      
+			REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 4, 0xf);
+			{
+				REG_GROUP_SET(hw, colBufferAddr, gc->buffers1[gc->curBuffer] | SST_BUFFER_BASE_SELECT);
+				REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride );
+				REG_GROUP_SET(hw, auxBufferAddr, gc->buffers1[gc->grColBuf] | SST_BUFFER_BASE_SELECT);
+				REG_GROUP_SET(hw, auxBufferStride, gc->state.shadow.auxBufferStride); 
+			}
+			REG_GROUP_END();
+			break;
+		}
+	}
+#endif
+
   _grChipMask( chipEnList );
 
   gc->state.tbufferMask = tmask;
   gc->chipmask = chipEnList;
-    
+
 #undef FN_NAME
 } /* grTBufferWriteMaskExt */
 
@@ -5256,6 +5606,10 @@ GR_DDFUNC(_grRebuildDataList, void, (void))
     gc->cmdTransportInfo.paramMask  |= SST_SETUP_RGB;
     gc->tsuDataList[curTriSize + 0] = GR_VERTEX_R_OFFSET << 2;
 
+#ifdef FAST_C_CLIP
+    gc->tsuDataListByte[curTriSize + 0] = GR_VERTEX_R_OFFSET;
+#endif
+
     /* When using packed color we only add *ONE* item to the data list
      * and this signals the entire color set since it is not possible
      * to specify a single color component in any packet.  
@@ -5263,6 +5617,12 @@ GR_DDFUNC(_grRebuildDataList, void, (void))
 #if !GLIDE_PACKED_RGB
     gc->tsuDataList[curTriSize + 1] = GR_VERTEX_G_OFFSET << 2;
     gc->tsuDataList[curTriSize + 2] = GR_VERTEX_B_OFFSET << 2;
+
+#ifdef FAST_C_CLIP
+    gc->tsuDataListByte[curTriSize + 1] = GR_VERTEX_G_OFFSET;
+    gc->tsuDataListByte[curTriSize + 2] = GR_VERTEX_B_OFFSET;
+#endif
+    
 #endif /* !GLIDE_PACKED_RGB */
 #elif defined(GLIDE3)
     gc->cmdTransportInfo.paramMask  |= SST_SETUP_RGB;
@@ -5270,6 +5630,13 @@ GR_DDFUNC(_grRebuildDataList, void, (void))
       gc->tsuDataList[curTriSize + 0] = gc->state.vData.rgbInfo.offset;
       gc->tsuDataList[curTriSize + 1] = gc->state.vData.rgbInfo.offset + GR_COLOR_OFFSET_GREEN;
       gc->tsuDataList[curTriSize + 2] = gc->state.vData.rgbInfo.offset + GR_COLOR_OFFSET_BLUE;
+
+#ifdef FAST_C_CLIP
+      gc->tsuDataListByte[curTriSize + 0] = gc->state.vData.rgbInfo.offset >> 2;
+      gc->tsuDataListByte[curTriSize + 1] = (gc->state.vData.rgbInfo.offset + GR_COLOR_OFFSET_GREEN) >> 2;
+      gc->tsuDataListByte[curTriSize + 2] = (gc->state.vData.rgbInfo.offset + GR_COLOR_OFFSET_BLUE)  >> 2;
+#endif
+      
 #ifdef GLIDE3_SCALER
       gc->tsuDataListScaler[curTriSize + 0] = 2;
       gc->tsuDataListScaler[curTriSize + 1] = 2;
@@ -5279,6 +5646,11 @@ GR_DDFUNC(_grRebuildDataList, void, (void))
     }
     else {
       gc->tsuDataList[curTriSize + 0] = gc->state.vData.pargbInfo.offset;
+
+#ifdef FAST_C_CLIP
+      gc->tsuDataListByte[curTriSize + 0] = gc->state.vData.pargbInfo.offset >> 2;
+#endif
+      
       packedRGB = FXTRUE;
       gc->state.vData.vSize += 4;
     }
@@ -5297,7 +5669,8 @@ GR_DDFUNC(_grRebuildDataList, void, (void))
 #if GLIDE_PACKED_RGB
 #if GLIDE3
 #if !GLIDE3_VERTEX_LAYOUT
-    if (gc->state.vData.colorType == GR_FLOAT) {
+    //if (gc->state.vData.colorType == GR_FLOAT) {
+    if (gc->state.vData.colorInfo.colorType == GR_FLOAT) { /* KoolSmoky */
 #else /* GLIDE3_VERTEX_LAYOUT */
     if (gc->state.vData.colorType == GR_FLOAT) {
 #endif /* GLIDE3_VERTEX_LAYOUT */
@@ -5331,10 +5704,20 @@ GR_DDFUNC(_grRebuildDataList, void, (void))
 #if GLIDE_HW_TRI_SETUP && !defined(GLIDE3)
     gc->cmdTransportInfo.paramMask   |= SST_SETUP_A;
     gc->tsuDataList[curTriSize + 0]      = GR_VERTEX_A_OFFSET << 2;
+
+#ifdef FAST_C_CLIP
+    gc->tsuDataListByte[curTriSize + 0]    = GR_VERTEX_A_OFFSET;
+#endif
+    
 #elif defined(GLIDE3)
     gc->cmdTransportInfo.paramMask       |= SST_SETUP_A;
     if (gc->state.vData.colorType == GR_FLOAT) {
       gc->tsuDataList[curTriSize] = gc->state.vData.aInfo.offset;
+
+#ifdef FAST_C_CLIP
+      gc->tsuDataListByte[curTriSize] = gc->state.vData.aInfo.offset >> 2;
+#endif
+      
 #ifdef GLIDE3_SCALER
       gc->tsuDataListScaler[curTriSize] = 2;
 #endif
@@ -5343,6 +5726,11 @@ GR_DDFUNC(_grRebuildDataList, void, (void))
     else if (!(i & STATE_REQUIRES_IT_DRGB)) {
       packedRGB = FXTRUE;
       gc->tsuDataList[curTriSize] = gc->state.vData.pargbInfo.offset;
+
+#ifdef FAST_C_CLIP
+      gc->tsuDataListByte[curTriSize] = gc->state.vData.aInfo.offset >> 2;
+#endif
+      
       gc->state.vData.vSize += 4;
     }
 #endif /* GLIDE_HW_TRI_SETUP */
@@ -5387,6 +5775,11 @@ GR_DDFUNC(_grRebuildDataList, void, (void))
 #if GLIDE_HW_TRI_SETUP && !defined(GLIDE3)
     gc->tsuDataList[curTriSize + 0]      = GR_VERTEX_OOZ_OFFSET << 2;
     gc->cmdTransportInfo.paramMask      |= SST_SETUP_Z;
+
+#ifdef FAST_C_CLIP
+    gc->tsuDataListByte[curTriSize + 0]    = GR_VERTEX_OOZ_OFFSET ;
+#endif
+
 #elif defined(GLIDE3)
     /*
     ** use z iterator for w if w buffering and fog coordinate enable
@@ -5394,12 +5787,22 @@ GR_DDFUNC(_grRebuildDataList, void, (void))
     if ((gc->state.shadow.fbzMode & SST_DEPTH_FLOAT_SEL) && 
         (gc->state.grCoordinateSpaceArgs.coordinate_space_mode == GR_WINDOW_COORDS)) {
       gc->tsuDataList[curTriSize] = gc->state.vData.qInfo.offset;
+
+#ifdef FAST_C_CLIP
+      gc->tsuDataListByte[curTriSize] = gc->state.vData.qInfo.offset >> 2;
+#endif
+      
 #ifdef GLIDE3_SCALER
       gc->tsuDataListScaler[curTriSize] = 0;
 #endif
     }
     else {
       gc->tsuDataList[curTriSize] = gc->state.vData.zInfo.offset;
+
+#ifdef FAST_C_CLIP
+      gc->tsuDataListByte[curTriSize] = gc->state.vData.zInfo.offset >> 2;
+#endif
+      
 #ifdef GLIDE3_SCALER
       gc->tsuDataListScaler[curTriSize] = 1;
 #endif
@@ -5423,6 +5826,11 @@ GR_DDFUNC(_grRebuildDataList, void, (void))
 #if GLIDE_HW_TRI_SETUP && !defined(GLIDE3)
     gc->tsuDataList[curTriSize + 0]      = GR_VERTEX_OOW_OFFSET << 2;
     gc->cmdTransportInfo.paramMask      |= SST_SETUP_Wfbi;
+
+#ifdef FAST_C_CLIP
+    gc->tsuDataListByte[curTriSize + 0]		= GR_VERTEX_OOW_OFFSET;
+#endif
+    
 #elif defined(GLIDE3)
     /*
     ** if fog coordinate is enabled, use w for fog coord
@@ -5430,12 +5838,22 @@ GR_DDFUNC(_grRebuildDataList, void, (void))
     if ((gc->state.vData.fogInfo.mode == GR_PARAM_ENABLE) && 
         (gc->state.grCoordinateSpaceArgs.coordinate_space_mode == GR_WINDOW_COORDS)) {
       gc->tsuDataList[curTriSize] = gc->state.vData.fogInfo.offset;
+
+#ifdef FAST_C_CLIP
+      gc->tsuDataListByte[curTriSize] = gc->state.vData.fogInfo.offset >> 2;
+#endif
+      
 #ifdef GLIDE3_SCALER
       gc->tsuDataListScaler[curTriSize] = 4;
 #endif
     }
     else {
       gc->tsuDataList[curTriSize] = gc->state.vData.qInfo.offset;
+
+#ifdef FAST_C_CLIP
+      gc->tsuDataListByte[curTriSize] = gc->state.vData.qInfo.offset >> 2;
+#endif
+      
 #ifdef GLIDE3_SCALER
       gc->tsuDataListScaler[curTriSize] = 0;
 #endif
@@ -5467,12 +5885,22 @@ GR_DDFUNC(_grRebuildDataList, void, (void))
    * texture parameters.
    */
   gc->tsuDataList[curTriSize++] = 0;
+
+#ifdef FAST_C_CLIP
+  gc->tsuDataListByte[curTriSize++] = 0;
+#endif
+    
 #endif /* GLIDE_FP_CLAMP_TEX */
   
   /* NOTE: this is the first */
   if (i & STATE_REQUIRES_W_TMU0) {
 #if GLIDE_HW_TRI_SETUP && !defined(GLIDE3)
     gc->tsuDataList[curTriSize + 0]      = GR_VERTEX_OOW_TMU0_OFFSET << 2;
+
+#ifdef FAST_C_CLIP
+    gc->tsuDataListByte[curTriSize + 0]	 = GR_VERTEX_OOW_TMU0_OFFSET;
+#endif
+    
     gc->cmdTransportInfo.paramMask      |= SST_SETUP_W0;
 #elif defined(GLIDE3)
     /*
@@ -5480,15 +5908,31 @@ GR_DDFUNC(_grRebuildDataList, void, (void))
     */
     if (gc->state.vData.q0Info.mode == GR_PARAM_ENABLE) {
       gc->tsuDataList[curTriSize] = gc->state.vData.q0Info.offset;
+
+#ifdef FAST_C_CLIP
+      gc->tsuDataListByte[curTriSize] = gc->state.vData.q0Info.offset >> 2;
+#endif
+      
 #ifdef GLIDE3_SCALER
       gc->tsuDataListScaler[curTriSize] = 4;
 #endif
     }
     else {
-      if (gc->state.grCoordinateSpaceArgs.coordinate_space_mode == GR_WINDOW_COORDS)    
+      if (gc->state.grCoordinateSpaceArgs.coordinate_space_mode == GR_WINDOW_COORDS) {
         gc->tsuDataList[curTriSize] = gc->state.vData.qInfo.offset;
-      else
+
+#ifdef FAST_C_CLIP
+        gc->tsuDataListByte[curTriSize] = gc->state.vData.qInfo.offset >> 2;
+#endif
+
+      } else {
         gc->tsuDataList[curTriSize] = gc->state.vData.wInfo.offset;
+
+#ifdef FAST_C_CLIP
+        gc->tsuDataListByte[curTriSize] = gc->state.vData.wInfo.offset >> 2;
+#endif
+        
+      }
 #ifdef GLIDE3_SCALER
       gc->tsuDataListScaler[curTriSize] = 0;
 #endif
@@ -5514,10 +5958,22 @@ GR_DDFUNC(_grRebuildDataList, void, (void))
     gc->tsuDataList[curTriSize + 0]      = GR_VERTEX_SOW_TMU0_OFFSET << 2;
     gc->tsuDataList[curTriSize + 1]      = GR_VERTEX_TOW_TMU0_OFFSET << 2;
     gc->cmdTransportInfo.paramMask      |= SST_SETUP_ST0;
+
+#ifdef FAST_C_CLIP
+    gc->tsuDataListByte[curTriSize + 0]      = GR_VERTEX_SOW_TMU0_OFFSET;
+    gc->tsuDataListByte[curTriSize + 1]      = GR_VERTEX_TOW_TMU0_OFFSET;
+#endif
+    
 #elif defined(GLIDE3)
     gc->tsuDataList[curTriSize + 0]      = gc->state.vData.st0Info.offset;
     gc->tsuDataList[curTriSize + 1]      = gc->state.vData.st0Info.offset 
       + GR_TEXTURE_OFFSET_T;
+
+#ifdef FAST_C_CLIP
+    gc->tsuDataListByte[curTriSize + 0]      = gc->state.vData.st0Info.offset >> 2;
+    gc->tsuDataListByte[curTriSize + 1]      = (gc->state.vData.st0Info.offset+GR_TEXTURE_OFFSET_T) >> 2;
+#endif
+    
 #ifdef GLIDE3_SCALER
     gc->tsuDataListScaler[curTriSize] = 3;
     gc->tsuDataListScaler[curTriSize+1] = 3;
@@ -5542,6 +5998,11 @@ GR_DDFUNC(_grRebuildDataList, void, (void))
   if (i & STATE_REQUIRES_W_TMU1) {
 #if GLIDE_HW_TRI_SETUP && !defined(GLIDE3)
     gc->tsuDataList[curTriSize + 0]      = GR_VERTEX_OOW_TMU1_OFFSET << 2;
+
+#ifdef FAST_C_CLIP
+    gc->tsuDataListByte[curTriSize + 0]      = GR_VERTEX_OOW_TMU1_OFFSET;
+#endif
+    
     gc->cmdTransportInfo.paramMask      |= SST_SETUP_W1;
 #elif defined(GLIDE3)
     /*
@@ -5549,15 +6010,31 @@ GR_DDFUNC(_grRebuildDataList, void, (void))
     */
     if (gc->state.vData.q1Info.mode == GR_PARAM_ENABLE) {
       gc->tsuDataList[curTriSize] = gc->state.vData.q1Info.offset;
+
+#ifdef FAST_C_CLIP
+      gc->tsuDataListByte[curTriSize]   = gc->state.vData.q1Info.offset >> 2;
+#endif
+      
 #ifdef GLIDE3_SCALER
       gc->tsuDataListScaler[curTriSize] = 4;
 #endif
     }
     else {
-      if (gc->state.grCoordinateSpaceArgs.coordinate_space_mode == GR_WINDOW_COORDS)    
+      if (gc->state.grCoordinateSpaceArgs.coordinate_space_mode == GR_WINDOW_COORDS) {
         gc->tsuDataList[curTriSize] = gc->state.vData.qInfo.offset;
-      else
+
+#ifdef FAST_C_CLIP
+        gc->tsuDataListByte[curTriSize]     = gc->state.vData.qInfo.offset >> 2;
+#endif
+        
+      } else {
         gc->tsuDataList[curTriSize] = gc->state.vData.wInfo.offset;
+
+#ifdef FAST_C_CLIP
+        gc->tsuDataListByte[curTriSize]     = gc->state.vData.wInfo.offset >> 2;
+#endif
+        
+      }
 #ifdef GLIDE3_SCALER
       gc->tsuDataListScaler[curTriSize] = 0;
 #endif
@@ -5580,10 +6057,22 @@ GR_DDFUNC(_grRebuildDataList, void, (void))
 #if GLIDE_HW_TRI_SETUP && !defined(GLIDE3)
     gc->tsuDataList[curTriSize + 0]      = GR_VERTEX_SOW_TMU1_OFFSET << 2;
     gc->tsuDataList[curTriSize + 1]      = GR_VERTEX_TOW_TMU1_OFFSET << 2;
+
+#ifdef FAST_C_CLIP
+    gc->tsuDataListByte[curTriSize + 0]      = GR_VERTEX_SOW_TMU1_OFFSET;
+    gc->tsuDataListByte[curTriSize + 1]      = GR_VERTEX_TOW_TMU1_OFFSET;
+#endif
+    
     gc->cmdTransportInfo.paramMask      |= SST_SETUP_ST1;
 #elif defined(GLIDE3)
     gc->tsuDataList[curTriSize + 0] = gc->state.vData.st1Info.offset;
     gc->tsuDataList[curTriSize + 1] = gc->state.vData.st1Info.offset + GR_TEXTURE_OFFSET_T;
+
+#ifdef FAST_C_CLIP
+    gc->tsuDataListByte[curTriSize + 0] = gc->state.vData.st1Info.offset >> 2;
+    gc->tsuDataListByte[curTriSize + 1] = (gc->state.vData.st1Info.offset + GR_TEXTURE_OFFSET_T) >> 2;
+#endif
+    
 #ifdef GLIDE3_SCALER
     gc->tsuDataListScaler[curTriSize] = 3;
     gc->tsuDataListScaler[curTriSize+1] = 3;
@@ -5623,6 +6112,11 @@ GR_DDFUNC(_grRebuildDataList, void, (void))
 
 #if GLIDE_HW_TRI_SETUP
   gc->tsuDataList[curTriSize]   = 0;
+
+#ifdef FAST_C_CLIP
+  gc->tsuDataListByte[curTriSize] = 0;
+#endif
+    
 #endif /* GLIDE_HW_TRI_SETUP */
 
   curTriSize++;
@@ -5663,6 +6157,11 @@ GR_DDFUNC(_grRebuildDataList, void, (void))
    * loop does not go one more iteration.
    */
   gc->tsuDataList[++curTriSize]   = 0;
+
+#ifdef FAST_C_CLIP
+  gc->tsuDataListByte[++curTriSize] = 0;
+#endif
+    
 #endif /* GLIDE_FP_CLAMP_TEX */
   
 #ifdef GDBG_INFO_ON

@@ -570,57 +570,105 @@
         #define PRIBUFVTXOFFX_2SMPL_DEF                   "-0.750"
         #define PRIBUFVTXOFFX_4SMPL_CHP0_DEF              "-0.625"
         #define PRIBUFVTXOFFX_4SMPL_CHP1_DEF              "-0.875"
+        #define PRIBUFVTXOFFX_8SMPL_CHP0_DEF              "-0.625"
+        #define PRIBUFVTXOFFX_8SMPL_CHP1_DEF              "-0.125"
+        #define PRIBUFVTXOFFX_8SMPL_CHP2_DEF              "-0.875"
+        #define PRIBUFVTXOFFX_8SMPL_CHP3_DEF              "-0.375"
 /* these are the correct jitter values */
         #define PRIBUFVTXOFFX_2SMPL_CORRECT_DEF           "-0.250"
         #define PRIBUFVTXOFFX_4SMPL_CHP0_CORRECT_DEF      "-0.125"
         #define PRIBUFVTXOFFX_4SMPL_CHP1_CORRECT_DEF      "-0.375"
+        #define PRIBUFVTXOFFX_8SMPL_CHP0_CORRECT_DEF      "-0.125"
+        #define PRIBUFVTXOFFX_8SMPL_CHP1_CORRECT_DEF      "0.375"
+        #define PRIBUFVTXOFFX_8SMPL_CHP2_CORRECT_DEF      "-0.375"
+        #define PRIBUFVTXOFFX_8SMPL_CHP3_CORRECT_DEF      "0.125"
 // Note: Glide uses the binary values, and these are still the *original* values that ar
 //       centered around the pixel center, rather than offset by -0.5
         #define PRIBUFVTXOFFX_2SMPL_DEF_VAL               0x7c
         #define PRIBUFVTXOFFX_4SMPL_CHP0_DEF_VAL          0x7e
         #define PRIBUFVTXOFFX_4SMPL_CHP1_DEF_VAL          0x7a
+        #define PRIBUFVTXOFFX_8SMPL_CHP0_DEF_VAL          0x06
+        #define PRIBUFVTXOFFX_8SMPL_CHP1_DEF_VAL          0x0e
+        #define PRIBUFVTXOFFX_8SMPL_CHP2_DEF_VAL          0x02
+        #define PRIBUFVTXOFFX_8SMPL_CHP3_DEF_VAL          0x0a
 #define SST_AA_CONTROL_PRIMARY_Y_OFFSET_SHIFT             7
 #define SST_AA_CONTROL_PRIMARY_Y_OFFSET                   (0x7F << SST_AA_CONTROL_PRIMARY_Y_OFFSET_SHIFT)
         #define PRIBUFVTXOFFY_2SMPL_DEF                   "-0.750"
         #define PRIBUFVTXOFFY_4SMPL_CHP0_DEF              "-0.875"
         #define PRIBUFVTXOFFY_4SMPL_CHP1_DEF              "-0.375"
+        #define PRIBUFVTXOFFY_8SMPL_CHP0_DEF              "-0.875"
+        #define PRIBUFVTXOFFY_8SMPL_CHP1_DEF              "-0.625"
+        #define PRIBUFVTXOFFY_8SMPL_CHP2_DEF              "-0.375"
+        #define PRIBUFVTXOFFY_8SMPL_CHP3_DEF              "-0.125"
 /* these are the correct jitter values */
         #define PRIBUFVTXOFFY_2SMPL_CORRECT_DEF           "-0.250"
         #define PRIBUFVTXOFFY_4SMPL_CHP0_CORRECT_DEF      "-0.375"
         #define PRIBUFVTXOFFY_4SMPL_CHP1_CORRECT_DEF      "0.125"
+        #define PRIBUFVTXOFFY_8SMPL_CHP0_CORRECT_DEF      "-0.375"
+        #define PRIBUFVTXOFFY_8SMPL_CHP1_CORRECT_DEF      "-0.125"
+        #define PRIBUFVTXOFFY_8SMPL_CHP2_CORRECT_DEF      "0.125"
+        #define PRIBUFVTXOFFY_8SMPL_CHP3_CORRECT_DEF      "0.375"
 // Note: Glide uses the binary values, and these are still the *original* values that ar
 //       centered around the pixel center, rather than offset by -0.5
         #define PRIBUFVTXOFFY_2SMPL_DEF_VAL               0x7c
         #define PRIBUFVTXOFFY_4SMPL_CHP0_DEF_VAL          0x7a
         #define PRIBUFVTXOFFY_4SMPL_CHP1_DEF_VAL          0x02
+        #define PRIBUFVTXOFFY_8SMPL_CHP0_DEF_VAL          0x02
+        #define PRIBUFVTXOFFY_8SMPL_CHP1_DEF_VAL          0x06
+        #define PRIBUFVTXOFFY_8SMPL_CHP2_DEF_VAL          0x0a
+        #define PRIBUFVTXOFFY_8SMPL_CHP3_DEF_VAL          0x0e
 #define SST_AA_CONTROL_SECONDARY_X_OFFSET_SHIFT           14
 #define SST_AA_CONTROL_SECONDARY_X_OFFSET                 (0x7F << SST_AA_CONTROL_SECONDARY_X_OFFSET_SHIFT)
         #define SECBUFVTXOFFX_2SMPL_DEF                   "-0.250"
         #define SECBUFVTXOFFX_4SMPL_CHP0_DEF              "-0.125"
         #define SECBUFVTXOFFX_4SMPL_CHP1_DEF              "-0.375"
+        #define SECBUFVTXOFFX_8SMPL_CHP0_DEF              "-0.75"
+        #define SECBUFVTXOFFX_8SMPL_CHP1_DEF              "-0.375"
+        #define SECBUFVTXOFFX_8SMPL_CHP2_DEF              "-0.25"
+        #define SECBUFVTXOFFX_8SMPL_CHP3_DEF              "-0.625"
 /* these are the correct jitter values */
         #define SECBUFVTXOFFX_2SMPL_CORRECT_DEF           "0.250"
         #define SECBUFVTXOFFX_4SMPL_CHP0_CORRECT_DEF      "0.375"
         #define SECBUFVTXOFFX_4SMPL_CHP1_CORRECT_DEF      "0.125"
+        #define SECBUFVTXOFFX_8SMPL_CHP0_CORRECT_DEF      "-0.25"
+        #define SECBUFVTXOFFX_8SMPL_CHP1_CORRECT_DEF      "0.125"
+        #define SECBUFVTXOFFX_8SMPL_CHP2_CORRECT_DEF      "0.25"
+        #define SECBUFVTXOFFX_8SMPL_CHP3_CORRECT_DEF      "-0.125"
 // Note: Glide uses the binary values, and these are still the *original* values that ar
 //       centered around the pixel center, rather than offset by -0.5
         #define SECBUFVTXOFFX_2SMPL_DEF_VAL               0x04
         #define SECBUFVTXOFFX_4SMPL_CHP0_DEF_VAL          0x06
         #define SECBUFVTXOFFX_4SMPL_CHP1_DEF_VAL          0x02
+        #define SECBUFVTXOFFX_8SMPL_CHP0_DEF_VAL          0x04
+        #define SECBUFVTXOFFX_8SMPL_CHP1_DEF_VAL          0x0a
+        #define SECBUFVTXOFFX_8SMPL_CHP2_DEF_VAL          0x0c
+        #define SECBUFVTXOFFX_8SMPL_CHP3_DEF_VAL          0x06
 #define SST_AA_CONTROL_SECONDARY_Y_OFFSET_SHIFT           21
 #define SST_AA_CONTROL_SECONDARY_Y_OFFSET                 (0x7F << SST_AA_CONTROL_SECONDARY_Y_OFFSET_SHIFT)
         #define SECBUFVTXOFFY_2SMPL_DEF                   "-0.250"
         #define SECBUFVTXOFFY_4SMPL_CHP0_DEF              "-0.625"
         #define SECBUFVTXOFFY_4SMPL_CHP1_DEF              "-0.125"
+        #define SECBUFVTXOFFY_8SMPL_CHP0_DEF              "-0.625"
+        #define SECBUFVTXOFFY_8SMPL_CHP1_DEF              "-0.75"
+        #define SECBUFVTXOFFY_8SMPL_CHP2_DEF              "-0.375"
+        #define SECBUFVTXOFFY_8SMPL_CHP3_DEF              "-0.25"
 /* these are the correct jitter values */
         #define SECBUFVTXOFFY_2SMPL_CORRECT_DEF           "0.250"
         #define SECBUFVTXOFFY_4SMPL_CHP0_CORRECT_DEF      "-0.125"
         #define SECBUFVTXOFFY_4SMPL_CHP1_CORRECT_DEF      "0.375"
+        #define SECBUFVTXOFFY_8SMPL_CHP0_CORRECT_DEF      "-0.125"
+        #define SECBUFVTXOFFY_8SMPL_CHP1_CORRECT_DEF      "-0.25"
+        #define SECBUFVTXOFFY_8SMPL_CHP2_CORRECT_DEF      "0.125"
+        #define SECBUFVTXOFFY_8SMPL_CHP3_CORRECT_DEF      "0.25"
 // Note: Glide uses the binary values, and these are still the *original* values that ar
 //       centered around the pixel center, rather than offset by -0.5
         #define SECBUFVTXOFFY_2SMPL_DEF_VAL               0x04
         #define SECBUFVTXOFFY_4SMPL_CHP0_DEF_VAL          0x7e
         #define SECBUFVTXOFFY_4SMPL_CHP1_DEF_VAL          0x06
+        #define SECBUFVTXOFFY_8SMPL_CHP0_DEF_VAL          0x06
+        #define SECBUFVTXOFFY_8SMPL_CHP1_DEF_VAL          0x04
+        #define SECBUFVTXOFFY_8SMPL_CHP2_DEF_VAL          0x0a
+        #define SECBUFVTXOFFY_8SMPL_CHP3_DEF_VAL          0x0c
 #define SST_AA_CONTROL_AA_ENABLE                          BIT(28)
 #define SST_AA_CONTROL_AA_DISABLE_FIRST                   BIT(30)
 

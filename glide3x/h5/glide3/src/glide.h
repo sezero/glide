@@ -52,9 +52,9 @@ extern "C" {
 typedef FxU32 GrColor_t;
 typedef FxU8  GrAlpha_t;
 typedef FxU32 GrMipMapId_t;
-#ifdef __linux__
+#if defined(__linux__) || defined(__WIN32__)
 typedef FxU32 GrStipplePattern_t;
-#endif /* __linux__ */
+#endif /* __linux__ __WIN32__ */
 typedef FxU8  GrFog_t;
 typedef FxU32 GrContext_t;
 typedef int (FX_CALL *GrProc)();
@@ -243,12 +243,12 @@ typedef FxI32 GrDitherMode_t;
 #define GR_DITHER_2x2           0x1
 #define GR_DITHER_4x4           0x2
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__WIN32__)
 typedef FxI32 GrStippleMode_t;
 #define GR_STIPPLE_DISABLE	0x0
 #define GR_STIPPLE_PATTERN	0x1
 #define GR_STIPPLE_ROTATE	0x2
-#endif /* __linux__ */
+#endif /* __linux__ __WIN32__ */
 
 typedef FxI32 GrFogMode_t;
 #define GR_FOG_DISABLE                     0x0
@@ -346,17 +346,20 @@ typedef FxI32 GrTextureFilterMode_t;
 #define GR_TEXTUREFILTER_BILINEAR       0x1
 
 typedef FxI32 GrTextureFormat_t;
+/* KoolSmoky - */
 #define GR_TEXFMT_8BIT                  0x0
-#define GR_TEXFMT_RGB_332 GR_TEXFMT_8BIT
+#define GR_TEXFMT_RGB_332               GR_TEXFMT_8BIT
 #define GR_TEXFMT_YIQ_422               0x1
 #define GR_TEXFMT_ALPHA_8               0x2 /* (0..0xFF) alpha     */
 #define GR_TEXFMT_INTENSITY_8           0x3 /* (0..0xFF) intensity */
 #define GR_TEXFMT_ALPHA_INTENSITY_44    0x4
 #define GR_TEXFMT_P_8                   0x5 /* 8-bit palette */
-#define GR_TEXFMT_RSVD0                 0x6
+#define GR_TEXFMT_RSVD0                 0x6 /* GR_TEXFMT_P_8_RGBA */
+#define GR_TEXFMT_P_8_6666              GR_TEXFMT_RSVD0
+#define GR_TEXFMT_P_8_6666_EXT          GR_TEXFMT_RSVD0
 #define GR_TEXFMT_RSVD1                 0x7
 #define GR_TEXFMT_16BIT                 0x8
-#define GR_TEXFMT_ARGB_8332 GR_TEXFMT_16BIT
+#define GR_TEXFMT_ARGB_8332             GR_TEXFMT_16BIT
 #define GR_TEXFMT_AYIQ_8422             0x9
 #define GR_TEXFMT_RGB_565               0xa
 #define GR_TEXFMT_ARGB_1555             0xb
@@ -364,6 +367,7 @@ typedef FxI32 GrTextureFormat_t;
 #define GR_TEXFMT_ALPHA_INTENSITY_88    0xd
 #define GR_TEXFMT_AP_88                 0xe /* 8-bit alpha 8-bit palette */
 #define GR_TEXFMT_RSVD2                 0xf
+#define GR_TEXFMT_RSVD4                 GR_TEXFMT_RSVD2
 
 typedef FxU32 GrTexTable_t;
 #define GR_TEXTABLE_NCC0                 0x0
@@ -744,13 +748,13 @@ grCoordinateSpace( GrCoordinateSpaceMode_t mode );
 FX_ENTRY void FX_CALL 
 grDepthRange( FxFloat n, FxFloat f );
 
-#ifdef __linux__ 
+#if defined(__linux__) || defined(__WIN32__)
 FX_ENTRY void FX_CALL 
 grStippleMode( GrStippleMode_t mode );
 
 FX_ENTRY void FX_CALL 
 grStipplePattern( GrStipplePattern_t mode );
-#endif /* __linux__ */
+#endif /* __linux__ __WIN32__ */
 
 FX_ENTRY void FX_CALL 
 grViewport( FxI32 x, FxI32 y, FxI32 width, FxI32 height );

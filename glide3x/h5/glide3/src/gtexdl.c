@@ -18,7 +18,8 @@
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
 ** $Header$
-** $Log: 
+** $Log:
+**  12   ve3d      1.9         05/02/02 KoolSmoky       added DXT-ness
 **  11   3dfx      1.8.1.0.1.0 10/11/00 Brent           Forced check in to enforce
 **       branching.
 **  10   3dfx      1.8.1.0     06/20/00 Joseph Kain     Changes to support the
@@ -659,10 +660,14 @@ GR_ENTRY(grTexDownloadTable,
   GR_CHECK_F(myName, type > GR_TEXTABLE_PALETTE_6666_EXT, "invalid table specified");
   GR_CHECK_F(myName, !data, "invalid data pointer");
 
-  if ((type == GR_TEXTABLE_PALETTE) || (type == GR_TEXTABLE_PALETTE_6666_EXT)) {
+  switch(type) {
+  case GR_TEXTABLE_PALETTE:
+  case GR_TEXTABLE_PALETTE_6666_EXT:
     _grTexDownloadPalette(GR_TMU0, type, (GuTexPalette *)data, 0, 255);
-  } else {                                 /* Type is an ncc table */
+    break;
+  default: /* Type is an ncc table */
     _grTexDownloadNccTable(GR_TMU0, type, (GuNccTable*)data, 0, 11);
+    break;
   }
 
   /* NB: Set the current palette type after we do the download because
@@ -726,10 +731,9 @@ _grTexDownloadMipMapLevelPartialTiled(GrChipID_t tmu,
       memInfo = gc->tmuMemInfo + tmu;
     const FxU32 
       texelSize = _grBitsPerTexel[format],
-      texStrideBytes = memInfo->texStrideBytes,
-      maxS = WIDTH_BY_ASPECT_LOD(aspectRatio, thisLod);
-    FxU32 
-      texOffset = 0x00UL;
+      texStrideBytes = memInfo->texStrideBytes;
+    FxU32 maxS;
+    FxU32 texOffset = 0x00UL;
 
     if (thisLod < largeLod) {
       texOffset = _grTexCalcMipmapLevelOffsetTiled(tmu,
@@ -743,174 +747,229 @@ _grTexDownloadMipMapLevelPartialTiled(GrChipID_t tmu,
     texOffset += memInfo->tramLfbAddr;
 
     GR_CHECK_F(FN_NAME, texelSize == 0, "invalid texture format");
-    if (texelSize == 4) {        /* 4-bit textures */
-      const FxU32
-        *src32 = (const FxU32*)data;
 
-      /* Minimum maxS is 8 for FXT1 format. */
-      FxU32 fxt1MaxS = MAX(maxS, 8);
-      switch(fxt1MaxS) {
-      case 8:
-        texOffset += (t * texStrideBytes);
-        for (; t <= maxT; t++) {
-          LINEAR_WRITE_BEGIN(1, SSTCP_PKT5_LFB, texOffset, 0x0UL, 0x0UL);
-          LINEAR_WRITE_SET(texOffset, *src32);
-          LINEAR_WRITE_END();
-          src32++;
-          texOffset += texStrideBytes;
-        }
-        break;
-      default:
-        for (; t <= maxT; t++) {
-          FxU32
-            texAddress = texOffset + t * texStrideBytes,
-            s;
+    switch(format) {
+    case GR_TEXFMT_ARGB_CMP_FXT1:
+      maxS = WIDTH_BY_ASPECT_LOD_FXT1(aspectRatio, thisLod);
+      break;
+    case GR_TEXFMT_ARGB_CMP_DXT1:
+    case GR_TEXFMT_ARGB_CMP_DXT2:
+    case GR_TEXFMT_ARGB_CMP_DXT3:
+    case GR_TEXFMT_ARGB_CMP_DXT4:
+    case GR_TEXFMT_ARGB_CMP_DXT5:
+      maxS = WIDTH_BY_ASPECT_LOD_DXT(aspectRatio, thisLod);
+      break;
+    default:
+      maxS = WIDTH_BY_ASPECT_LOD(aspectRatio, thisLod);
+      break;
+    }
 
-          LINEAR_WRITE_BEGIN((fxt1MaxS >> 3), SSTCP_PKT5_LFB, texAddress,
-                             0x0UL, 0x0UL);
-          for (s = 0; s < fxt1MaxS; s+=8)  {
-            LINEAR_WRITE_SET(texAddress, *src32);
-            texAddress +=4;
-            src32++;
-          }
-          LINEAR_WRITE_END();
-        }
-        break;
-      }
-    } else if (texelSize == 8) { /* 8-bit textures */
-      const FxU8
-        *src8 = (const FxU8*)data;
-
-      switch(maxS) {
-      case 1:
-        texOffset += (t * texStrideBytes);
-        for (; t <= maxT; t++) {
-          LINEAR_WRITE_BEGIN(1, SSTCP_PKT5_LFB, texOffset, 0x0UL, 0x0UL);
-          LINEAR_WRITE_SET(((FxU32*)texOffset), *src8);
-          LINEAR_WRITE_END();
-
-          src8 += 1;
-          texOffset += texStrideBytes;
-        }
-        break;
-
-      case 2:
-        texOffset += (t * texStrideBytes);
-        for (; t <= maxT; t++) {
-          LINEAR_WRITE_BEGIN(1, SSTCP_PKT5_LFB, texOffset, 0x0UL, 0x0UL);
-          LINEAR_WRITE_SET(((FxU32*)texOffset), *(const FxU16*)src8);
-          LINEAR_WRITE_END();
-
-          src8 += 2;
-          texOffset += texStrideBytes;
-        }
-        break;
-
-      default:
-        for (; t <= maxT; t++) {
-          FxU32
-            texAddress = (texOffset + t * texStrideBytes),
-            s;
-          
-          LINEAR_WRITE_BEGIN((maxS >> 2), SSTCP_PKT5_LFB, texAddress, 0x0UL,
-                             0x0UL);
-          
-          for (s = 0; s < maxS; s += 4) {
-            LINEAR_WRITE_SET(((FxU32*)texAddress), *(const FxU32*)src8);
-
-            src8 += 4;
-            texAddress += 4;
-          }
-          
-          LINEAR_WRITE_END();
-        }
-        break;
-      }
-    } else if (texelSize == 16) { /* 16-bit textures */
-      const FxU16
-        *src16 = (const FxU16*)data;
-      
-      switch(maxS) {
-      case 1:
-        texOffset += (t * texStrideBytes);
-        for(; t <= maxT; t++) {
-          LINEAR_WRITE_BEGIN(1, SSTCP_PKT5_LFB, texOffset, 0x00UL, 0x00UL);
-          LINEAR_WRITE_SET_16(texOffset, *src16);
-          LINEAR_WRITE_END();
-
-          src16 += 1;
-          texOffset += texStrideBytes;
-        }
-        break;
-
-      case 2:
-        texOffset += (t * texStrideBytes);
-        for(; t <= maxT; t++) {
-          LINEAR_WRITE_BEGIN(1, SSTCP_PKT5_LFB, texOffset, 0x00UL, 0x00UL);
-          LINEAR_WRITE_SET_16(texOffset, *(const FxU32*)src16);
-          LINEAR_WRITE_END();
-
-          src16 += 2;
-          texOffset += texStrideBytes;
-        }
-        break;
-
-      default:
-        for (; t <= maxT; t++) {
-          FxU32
-            texAddress = texOffset + t * texStrideBytes,
-            s;
-          
-          LINEAR_WRITE_BEGIN((maxS >> 1), SSTCP_PKT5_LFB, texAddress, 0x0UL,
-                             0x0UL);
-          
-          for (s = 0; s < maxS; s += 4) {
-            LINEAR_WRITE_SET_16(texAddress + 0, *(const FxU32*)(src16 + 0));
-            LINEAR_WRITE_SET_16(texAddress + 4, *(const FxU32*)(src16 + 2));
+    switch(texelSize) {
+    case 4:  /* 4-bit textures */
+      {
+        const FxU32
+              *src32 = (const FxU32*)data;
+        
+        switch(maxS) {
+        case 4:
+#if 0 /* come back to this !!!! */
+          {
+            const FxU16
+              *src16 = (const FxU16*)data;
             
-            src16 += 4;
-            texAddress += 8;
+            src16++;
+            for(; t <= maxT; t+=4) {
+              FxU32
+                texAddress = texOffset + t * texStrideBytes, s;
+              LINEAR_WRITE_BEGIN(2, SSTCP_PKT5_LFB, texAddress, 0x00UL, 0x00UL);
+              for (s = 0; s < 2; s++)  {
+                LINEAR_WRITE_SET(texAddress, (FxU32)(*src16));
+                texAddress++;
+                src16 += 4;
+              }
+              LINEAR_WRITE_END();
+              
+            }
           }
+#endif
+          break;
+        case 8:
+          {
+            texOffset += (t * texStrideBytes);
+            for (; t <= maxT; t++) {
+              LINEAR_WRITE_BEGIN(1, SSTCP_PKT5_LFB, texOffset, 0x0UL, 0x0UL);
+              LINEAR_WRITE_SET(texOffset, *src32);
+              LINEAR_WRITE_END();
+              src32++;
+              texOffset += texStrideBytes;
+            }
+          }
+          break;
+        default:
+          {
+            for (; t <= maxT; t++) {
+              FxU32
+                texAddress = texOffset + t * texStrideBytes,
+                s;
+              
+              LINEAR_WRITE_BEGIN((maxS >> 3), SSTCP_PKT5_LFB, texAddress,
+                                 0x0UL, 0x0UL);
+              for (s = 0; s < maxS; s+=8)  {
+                LINEAR_WRITE_SET(texAddress, *src32);
+                texAddress +=4;
+                src32++;
+              }
+              LINEAR_WRITE_END();
+            }
+          }
+          break;
+        }
+      }
+      break;
+    case 8:  /* 8-bit textures */
+      {
+        const FxU8
+          *src8 = (const FxU8*)data;
+
+        switch(maxS) {
+        case 1:
+          texOffset += (t * texStrideBytes);
+          for (; t <= maxT; t++) {
+            LINEAR_WRITE_BEGIN(1, SSTCP_PKT5_LFB, texOffset, 0x0UL, 0x0UL);
+            LINEAR_WRITE_SET(((FxU32*)texOffset), *src8);
+            LINEAR_WRITE_END();
+            
+            src8 += 1;
+            texOffset += texStrideBytes;
+          }
+          break;
           
-          LINEAR_WRITE_END();
-        }
-        break;
-      }
-    } else  if (texelSize == 32) { /* 32-bit textures */
-      const FxU32
-        *src32 = (const FxU32*)data;
-
-      switch(maxS) {
-      case 1:
-        texOffset += (t * texStrideBytes);
-        for(; t <= maxT; t++) {
-          LINEAR_WRITE_BEGIN(1, SSTCP_PKT5_LFB, texOffset, 0x00UL, 0x00UL);
-          LINEAR_WRITE_SET(texOffset, *src32);
-          LINEAR_WRITE_END();
-          src32 += 1;
-          texOffset += texStrideBytes;
-        }
-        break;
-      default:
-        for (; t <= maxT; t++) {
-          FxU32
-            texAddress = texOffset + t * texStrideBytes,
-            s;
-
-          LINEAR_WRITE_BEGIN(maxS, SSTCP_PKT5_LFB, texAddress, 0x0UL, 0x0UL);
-          for(s = 0; s < maxS; s += 1) {
-            LINEAR_WRITE_SET(texAddress, *src32);
-            src32 += 1;
-            texAddress += 4;
+        case 2:
+          texOffset += (t * texStrideBytes);
+          for (; t <= maxT; t++) {
+            LINEAR_WRITE_BEGIN(1, SSTCP_PKT5_LFB, texOffset, 0x0UL, 0x0UL);
+            LINEAR_WRITE_SET(((FxU32*)texOffset), *(const FxU16*)src8);
+            LINEAR_WRITE_END();
+            
+            src8 += 2;
+            texOffset += texStrideBytes;
           }
-          LINEAR_WRITE_END();
+          break;
+        default:
+          for (; t <= maxT; t++) {
+            FxU32
+              texAddress = (texOffset + t * texStrideBytes),
+              s;
+            
+            LINEAR_WRITE_BEGIN((maxS >> 2), SSTCP_PKT5_LFB, texAddress, 0x0UL,
+                               0x0UL);
+            
+            for (s = 0; s < maxS; s += 4) {
+              LINEAR_WRITE_SET(((FxU32*)texAddress), *(const FxU32*)src8);
+              
+              src8 += 4;
+              texAddress += 4;
+            }
+            
+            LINEAR_WRITE_END();
+          }
+          break;
         }
-        break;
       }
-    } else {
+      break;
+    case 16:  /* 16-bit textures */
+      {
+        const FxU16
+          *src16 = (const FxU16*)data;
+        
+        switch(maxS) {
+        case 1:
+          texOffset += (t * texStrideBytes);
+          for(; t <= maxT; t++) {
+            LINEAR_WRITE_BEGIN(1, SSTCP_PKT5_LFB, texOffset, 0x00UL, 0x00UL);
+            LINEAR_WRITE_SET_16(texOffset, *src16);
+            LINEAR_WRITE_END();
+            
+            src16 += 1;
+            texOffset += texStrideBytes;
+          }
+          break;
+          
+        case 2:
+          texOffset += (t * texStrideBytes);
+          for(; t <= maxT; t++) {
+            LINEAR_WRITE_BEGIN(1, SSTCP_PKT5_LFB, texOffset, 0x00UL, 0x00UL);
+            LINEAR_WRITE_SET_16(texOffset, *(const FxU32*)src16);
+            LINEAR_WRITE_END();
+            
+            src16 += 2;
+            texOffset += texStrideBytes;
+          }
+          break;
+          
+        default:
+          for (; t <= maxT; t++) {
+            FxU32
+              texAddress = texOffset + t * texStrideBytes,
+              s;
+            
+            LINEAR_WRITE_BEGIN((maxS >> 1), SSTCP_PKT5_LFB, texAddress, 0x0UL,
+                               0x0UL);
+            
+            for (s = 0; s < maxS; s += 4) {
+              LINEAR_WRITE_SET_16(texAddress + 0, *(const FxU32*)(src16 + 0));
+              LINEAR_WRITE_SET_16(texAddress + 4, *(const FxU32*)(src16 + 2));
+              
+              src16 += 4;
+              texAddress += 8;
+            }
+            
+            LINEAR_WRITE_END();
+          }
+          break;
+        }
+      }
+      break;
+    case 32:  /* 32-bit textures */
+      {
+        const FxU32
+          *src32 = (const FxU32*)data;
+        
+        switch(maxS) {
+        case 1:
+          texOffset += (t * texStrideBytes);
+          for(; t <= maxT; t++) {
+            LINEAR_WRITE_BEGIN(1, SSTCP_PKT5_LFB, texOffset, 0x00UL, 0x00UL);
+            LINEAR_WRITE_SET(texOffset, *src32);
+            LINEAR_WRITE_END();
+            src32 += 1;
+            texOffset += texStrideBytes;
+          }
+          break;
+        default:
+          for (; t <= maxT; t++) {
+            FxU32
+              texAddress = texOffset + t * texStrideBytes,
+              s;
+            
+            LINEAR_WRITE_BEGIN(maxS, SSTCP_PKT5_LFB, texAddress, 0x0UL, 0x0UL);
+            for(s = 0; s < maxS; s += 1) {
+              LINEAR_WRITE_SET(texAddress, *src32);
+              src32 += 1;
+              texAddress += 4;
+            }
+            LINEAR_WRITE_END();
+          }
+          break;
+        }
+      }
+      break;
+    default:
       /* Undefined texture format */
       GR_ASSERT(texelSize);
+      break;
     }
+
   }
 
   return FXTRUE;
@@ -1002,6 +1061,7 @@ GR_ENTRY(grTexDownloadMipMapLevelPartial,
       GR_CHECK_F(FN_NAME, largeLod > GR_LOD_LOG2_2048,
                  "largeLod invalid");
     }
+    
     GR_CHECK_F(FN_NAME, thisLod > largeLod,
                "thisLod may not be larger than largeLod");
     GR_CHECK_F(FN_NAME, 
@@ -1013,14 +1073,26 @@ GR_ENTRY(grTexDownloadMipMapLevelPartial,
     GR_CHECK_F(FN_NAME, !data,
                "invalid data pointer");
 #ifdef FX_GLIDE_NAPALM
-    if (format == GR_TEXFMT_ARGB_CMP_FXT1) {
+    switch(format) {
+    case GR_TEXFMT_ARGB_CMP_FXT1:
+    case GR_TEXFMT_ARGB_CMP_DXT1:
       GR_CHECK_F(FN_NAME, max_t >=
                  _grMipMapHostWHCmp4Bit[G3_ASPECT_TRANSLATE(aspectRatio)]
-                 [thisLod][1], "invalid end row");
-    } else {
+                 [thisLod][1], "invalid end row for fxt1, dxt1");
+      break;
+    case GR_TEXFMT_ARGB_CMP_DXT2:
+    case GR_TEXFMT_ARGB_CMP_DXT3:
+    case GR_TEXFMT_ARGB_CMP_DXT4:
+    case GR_TEXFMT_ARGB_CMP_DXT5:
+      GR_CHECK_F(FN_NAME, max_t >=
+                 _grMipMapHostWHDXT[G3_ASPECT_TRANSLATE(aspectRatio)]
+                 [thisLod][1], "invalid end row for dxt2,3,4,5");
+      break;
+    default:
       GR_CHECK_F(FN_NAME, max_t >=
                  _grMipMapHostWH[G3_ASPECT_TRANSLATE(aspectRatio)][thisLod][1],
                  "invalid end row");
+      break;
     }
 #else
     GR_CHECK_F(FN_NAME, max_t >=
@@ -1058,7 +1130,7 @@ GR_ENTRY(grTexDownloadMipMapLevelPartial,
                                             thisLod, largeLod, aspectRatio,
                                             format, 
                                             evenOdd, data, 
-                                            t, max_t); 
+                                            t, max_t);
     } else {
       FxU32
         baseAddress;
@@ -1081,7 +1153,12 @@ GR_ENTRY(grTexDownloadMipMapLevelPartial,
            * because the minimum level size is 16 bytes (8x4x1/2)
            * which matches the alignment restriction.
            */
-          if (format != GR_TEXFMT_ARGB_CMP_FXT1) {
+          /* KoolSmoky - same for DXT2,3,4,5 were the minimum level
+           * size is 16 bytes (4x4x1) which also matches the alignment
+           * restriction.
+           * same for DXT1 ((4x4x1/2)x2) minimum level size is 16 bytes
+           */
+          if((format < GR_TEXFMT_ARGB_CMP_DXT1) && (format != GR_TEXFMT_ARGB_CMP_FXT1)) {
             const FxU32
               aspectIndex = ((aspectRatio < GR_ASPECT_LOG2_1x1) 
                              ? -aspectRatio 
@@ -1111,10 +1188,12 @@ GR_ENTRY(grTexDownloadMipMapLevelPartial,
                */
               while(maxLod < GR_LOD_LOG2_256) {
                 levelSize = (_grMipMapHostSize[aspectIndex][maxLod]
-                             * formatMult);
+                             * formatMult)>>3; // bits to bytes convertion
                 if (levelSize >= SST_TEXTURE_ALIGN) break;
+                // check on the Even/Odd mask to see if the mip-map affects this TMU
+                if((maxLod & 1) ? (evenOdd & GR_MIPMAPLEVELMASK_ODD) : (evenOdd & GR_MIPMAPLEVELMASK_EVEN))
+                  texOffset += levelSize;
                 maxLod++;
-                texOffset += levelSize;
               }
               
               /* maxLod is the index of the smallest level of this aspect
@@ -1152,18 +1231,31 @@ GR_ENTRY(grTexDownloadMipMapLevelPartial,
         const FxU32
           bitsPerTexel = _grBitsPerTexel[format];
         FxU32
-          width =_grMipMapHostWH[G3_ASPECT_TRANSLATE(aspectRatio)][thisLod][0],
-          formatSel, widthSel, max_s;
+          width, formatSel, widthSel, max_s;
 
-        /* Minimum size for 4-bit compressed format mipmaps is 8x4. */
-        if (format == GR_TEXFMT_ARGB_CMP_FXT1) {
-          width =_grMipMapHostWHCmp4Bit[G3_ASPECT_TRANSLATE(aspectRatio)]
-            [thisLod][0];
-          widthSel = (width > 8)
-            ? 4  /* Use _grTexDownload_Default_4_WideS() */
-            : 3; /* Use _grTexDownload_Default_4_8()     */
-        } else {
+        switch(format) {
+        case GR_TEXFMT_ARGB_CMP_FXT1:
+          /* Minimum size for 4-bit compressed format mipmaps is 8x4. FXT1 */
+          width = _grMipMapHostWHCmp4Bit[G3_ASPECT_TRANSLATE(aspectRatio)][thisLod][0];
+          widthSel = (width >> 2);
+          break;
+        case GR_TEXFMT_ARGB_CMP_DXT1:
+          width = _grMipMapHostWHDXT[G3_ASPECT_TRANSLATE(aspectRatio)][thisLod][0];
+          /* hack for DXT1 8x4 mipmaps. download only 4x4. */
+          widthSel = (_grMipMapHostWHDXT[G3_ASPECT_TRANSLATE(aspectRatio)][thisLod][0] >> 2);
+          break;
+        case GR_TEXFMT_ARGB_CMP_DXT2:
+        case GR_TEXFMT_ARGB_CMP_DXT3:
+        case GR_TEXFMT_ARGB_CMP_DXT4:
+        case GR_TEXFMT_ARGB_CMP_DXT5:
+          /* Minimum size for 8-bit compressed format mipmaps is 4x4. DXT2,3,4,5 */
+          width = _grMipMapHostWHDXT[G3_ASPECT_TRANSLATE(aspectRatio)][thisLod][0];
+          widthSel = (width >> 1); /* For 8-bit format */
+          break;
+        default:
+          width =_grMipMapHostWH[G3_ASPECT_TRANSLATE(aspectRatio)][thisLod][0];
           widthSel = (width >> 1); /* For 8,16,32-bit formats */
+          break;
         }
 
         /*
@@ -1193,6 +1285,7 @@ GR_ENTRY(grTexDownloadMipMapLevelPartial,
           /* Undefined format, but let's try 16-bit dimensions just in case. */
           formatSel = 2;
           max_s = width >> 1;
+          break;
         }
 
         if (max_s <= 0) max_s = 1;

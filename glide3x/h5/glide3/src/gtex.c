@@ -18,7 +18,26 @@
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
 ** $Header$
-** $Log: 
+** $Log:
+**  45   GlideXP   1.35.6      12/14/01 Ryan Nunn       Removed calls to
+**       MultitextureAndTrilinear(). That will now be called by g3LodBiasPerChip()
+**  44   GlideXP   1.35.5      12/12/01 Ryan Nunn       4 Chip boards now have  
+**       Sub Sample LOD Dither in 2x
+**  43   GlideXP   1.35.4      12/12/01 Ryan Nunn       Changed the way env 
+**       FX_GLIDE_LOD_DITHER works. If set to -1, there will never be dithering.
+**  42   GlideXP   1.35.3      12/12/01 Ryan Nunn       Sub Sample LOD Dither Env
+**       settings
+**  41   GlideXP   1.35.2      12/12/01 Ryan Nunn       Make Sub Sample LOD Dither
+**       work on a Per TMU Basis
+**  40   GlideXP   1.35.1      12/12/01 Ryan Nunn       Removed the function
+**       _grTexFloatLODToFixedLOD because it's useless
+**  43   ve3d      1.38        05/31/02 KoolSmoky       Revised texture format
+**       detection and mipmap handling.
+**  42   ve3d      1.37        05/02/02 KoolSmoky       Subsample mipmap dithering
+**       with mipmap dithering
+**  41   ve3d      1.36        05/01/02 KoolSmoky       Colourless's subsample
+**       mipmap dithering trilinear approximation 
+**  40   ve3d      1.35        04/29/02 KoolSmoky       added DXT-ness
 **  39   3dfx      1.34.1.0.1.211/14/00 Jonny Cochrane  Implement multisample LOD
 **       Dithering for 2x and 4x FSAA modes 
 **  38   3dfx      1.34.1.0.1.110/11/00 Brent           Forced check in to enforce
@@ -695,22 +714,125 @@ _grTexCalcMipmapLevelOffsetTiled(GrChipID_t tmu,
         break;
         
       case GR_LOD_LOG2_8:
-      case GR_LOD_LOG2_4:
-      case GR_LOD_LOG2_2:
-      case GR_LOD_LOG2_1:
-        if(fmt == GR_TEXFMT_ARGB_CMP_FXT1 || fmt >= GR_TEXFMT_ARGB_CMP_DXT1) {
-          /* For these, we offset the LOD height * texture stride */
-          if (evenOdd & (level & 0x1 ? GR_MIPMAPLEVELMASK_ODD : GR_MIPMAPLEVELMASK_EVEN)) {
-            tileY += HEIGHT_BY_ASPECT_LOD_FXT1(aspect, level + 1);
+        {
+          switch(fmt) {
+          case GR_TEXFMT_ARGB_CMP_FXT1:
+          case GR_TEXFMT_ARGB_CMP_DXT1:
+            /* For these, we offset the LOD height * texture stride */
+            if (evenOdd & GR_MIPMAPLEVELMASK_ODD) {
+              tileY += HEIGHT_BY_ASPECT_LOD_FXT1(aspect, GR_LOD_LOG2_16);
+            }
+            break;
+          case GR_TEXFMT_ARGB_CMP_DXT2:
+          case GR_TEXFMT_ARGB_CMP_DXT3:
+          case GR_TEXFMT_ARGB_CMP_DXT4:
+          case GR_TEXFMT_ARGB_CMP_DXT5:
+            /* For these, we offset the LOD height * texture stride */
+            if (evenOdd & GR_MIPMAPLEVELMASK_ODD) {
+              tileY += HEIGHT_BY_ASPECT_LOD_DXT(aspect, GR_LOD_LOG2_16);
+            }
+            break;
+          default:
+            /* For these, we offset the LOD height * texture stride */
+            if (evenOdd & GR_MIPMAPLEVELMASK_ODD) {
+              tileY += HEIGHT_BY_ASPECT_LOD(aspect, GR_LOD_LOG2_16);
+            }
+            break;
           }
-        } else {
-          /* For these, we offset the LOD height * texture stride */
-          if (evenOdd & (level & 0x1 ? GR_MIPMAPLEVELMASK_ODD : GR_MIPMAPLEVELMASK_EVEN)) {
-            tileY += HEIGHT_BY_ASPECT_LOD(aspect, level + 1);
-          }
-        }    
+        }
         level++;
         break;
+
+      case GR_LOD_LOG2_4:
+        {
+          switch(fmt) {
+          case GR_TEXFMT_ARGB_CMP_FXT1:
+          case GR_TEXFMT_ARGB_CMP_DXT1:
+            /* For these, we offset the LOD height * texture stride */
+            if (evenOdd & GR_MIPMAPLEVELMASK_EVEN) {
+              tileY += HEIGHT_BY_ASPECT_LOD_FXT1(aspect, GR_LOD_LOG2_8);
+            }
+            break;
+          case GR_TEXFMT_ARGB_CMP_DXT2:
+          case GR_TEXFMT_ARGB_CMP_DXT3:
+          case GR_TEXFMT_ARGB_CMP_DXT4:
+          case GR_TEXFMT_ARGB_CMP_DXT5:
+            /* For these, we offset the LOD height * texture stride */
+            if (evenOdd & GR_MIPMAPLEVELMASK_EVEN) {
+              tileY += HEIGHT_BY_ASPECT_LOD_DXT(aspect, GR_LOD_LOG2_8);
+            }
+            break;
+          default:
+            /* For these, we offset the LOD height * texture stride */
+            if (evenOdd & GR_MIPMAPLEVELMASK_EVEN) {
+              tileY += HEIGHT_BY_ASPECT_LOD(aspect, GR_LOD_LOG2_8);
+            }
+            break;
+          }
+        }
+        level++;
+        break;
+        
+      case GR_LOD_LOG2_2:
+        {
+          switch(fmt) {
+          case GR_TEXFMT_ARGB_CMP_FXT1:
+          case GR_TEXFMT_ARGB_CMP_DXT1:
+            /* For these, we offset the LOD height * texture stride */
+            if (evenOdd & GR_MIPMAPLEVELMASK_ODD) {
+              tileY += HEIGHT_BY_ASPECT_LOD_FXT1(aspect, GR_LOD_LOG2_4);
+            }
+            break;
+          case GR_TEXFMT_ARGB_CMP_DXT2:
+          case GR_TEXFMT_ARGB_CMP_DXT3:
+          case GR_TEXFMT_ARGB_CMP_DXT4:
+          case GR_TEXFMT_ARGB_CMP_DXT5:
+            /* For these, we offset the LOD height * texture stride */
+            if (evenOdd & GR_MIPMAPLEVELMASK_ODD) {
+              tileY += HEIGHT_BY_ASPECT_LOD_DXT(aspect, GR_LOD_LOG2_4);
+            }
+            break;
+          default:
+            /* For these, we offset the LOD height * texture stride */
+            if (evenOdd & GR_MIPMAPLEVELMASK_ODD) {
+              tileY += HEIGHT_BY_ASPECT_LOD(aspect, GR_LOD_LOG2_4);
+            }
+            break;
+          }
+        }
+        level++;
+        break;
+        
+      case GR_LOD_LOG2_1:
+        {
+          switch(fmt) {
+          case GR_TEXFMT_ARGB_CMP_FXT1:
+          case GR_TEXFMT_ARGB_CMP_DXT1:
+            /* For these, we offset the LOD height * texture stride */
+            if (evenOdd & GR_MIPMAPLEVELMASK_EVEN) {
+              tileY += HEIGHT_BY_ASPECT_LOD_FXT1(aspect, GR_LOD_LOG2_2);
+            }
+            break;
+          case GR_TEXFMT_ARGB_CMP_DXT2:
+          case GR_TEXFMT_ARGB_CMP_DXT3:
+          case GR_TEXFMT_ARGB_CMP_DXT4:
+          case GR_TEXFMT_ARGB_CMP_DXT5:
+            /* For these, we offset the LOD height * texture stride */
+            if (evenOdd & GR_MIPMAPLEVELMASK_EVEN) {
+              tileY += HEIGHT_BY_ASPECT_LOD_DXT(aspect, GR_LOD_LOG2_2);
+            }
+            break;
+          default:
+            /* For these, we offset the LOD height * texture stride */
+            if (evenOdd & GR_MIPMAPLEVELMASK_EVEN) {
+              tileY += HEIGHT_BY_ASPECT_LOD(aspect, GR_LOD_LOG2_2);
+            }
+            break;
+          }
+        }
+        level++;
+        break;
+        
       }
     }
 
@@ -777,8 +899,8 @@ _grTexCheckTriLinear(GrChipID_t tmu)
      *
      * Case 1 - TMU set for lod blending and has both even/odd levels
      */
-    if (((curTmu->textureMode & SST_TRILINEAR) == SST_TRILINEAR) &&
-        (curTmu->evenOdd == GR_MIPMAPLEVELMASK_BOTH)) {
+    if ((curTmu->textureMode & SST_TRILINEAR) &&
+        (curTmu->evenOdd == 3)) {
       
       /* Check the 'other' tmu to see if it is active, if not then we
        * are doing two pass trilinear so check that we have the
@@ -812,7 +934,7 @@ _grTexCheckTriLinear(GrChipID_t tmu)
             ((tmu1->textureMode & SST_TC_REPLACE) == SST_TC_REPLACE)) {
           FxU32  evenOdd[GLIDE_NUM_TMU];
           FxU32* curEvenOdd = evenOdd + tmu;
-          
+
           {
             FxU32 i;
             
@@ -820,7 +942,7 @@ _grTexCheckTriLinear(GrChipID_t tmu)
               evenOdd[i] = gc->state.shadow[i].tLOD & SST_LOD_ODD;
             }
           }
-              
+
           /* 1 - The other tmu already has the even levels. */
           if ((otherTmu->evenOdd == GR_MIPMAPLEVELMASK_EVEN) &&
               (curTmu->evenOdd != GR_MIPMAPLEVELMASK_ODD)) {
@@ -850,7 +972,7 @@ _grTexCheckTriLinear(GrChipID_t tmu)
 
           /* Do the register updates */
           if (0) {
-        __tmuRegUpdate:
+          __tmuRegUpdate:
             GDBG_INFO(gc->myLevel, FN_NAME": Tri-linear fixup (0x%X : 0x%X) : (0x%X : 0x%X)\n",
                       tmu0->tLOD, tmu1->tLOD,
                       ((tmu0->tLOD & ~SST_MIPMAP_LEVEL_MASK) | evenOdd[0]),
@@ -865,6 +987,7 @@ _grTexCheckTriLinear(GrChipID_t tmu)
             }
             GR_CHECK_SIZE();
           }
+          
         }
       }
     }
@@ -1032,11 +1155,11 @@ GR_ENTRY(grTexClampMode, void,
     }
     REG_GROUP_END();
     _grChipMask(gc->chipmask);
+    if(gc->state.per_tmu[tmu].texSubLodDither)
+        g3LodBiasPerChip(tmu, gc->state.shadow.tmuState[tmu].tLOD);
   } else {
     INVALIDATE_TMU(tmu, textureMode);
   }
-  
-	if(MultitextureAndTrilinear()) g3LodBiasPerChip();
   
   GR_END();
 
@@ -1300,6 +1423,15 @@ GR_ENTRY(grTexCombine, void,
       tLod |= SST_LOD_ODD;
     }
   }
+
+  /* Hack to use single pass trilinear in UMA state */
+  if((texturemode & SST_TRILINEAR) &&
+     (gc->state.grEnableArgs.texture_uma_mode == GR_MODE_ENABLE) &&
+     (gc->state.per_tmu[tmu].evenOdd == GR_MIPMAPLEVELMASK_BOTH) &&
+     (tmu == GR_TMU1)) {
+    tLod |= SST_LOD_ODD;
+  }
+  
   tLod |= _gr_evenOdd_xlate_table[gc->state.per_tmu[tmu].evenOdd];
 
   /* Update shadows */
@@ -1794,6 +1926,15 @@ GR_EXT_ENTRY(grTexColorCombineExt, void,
       tLod |= SST_LOD_ODD;
     }
   }
+
+  /* Hack to use single pass trilinear in UMA state */
+  if((texturemode & SST_TRILINEAR) &&
+     (gc->state.grEnableArgs.texture_uma_mode == GR_MODE_ENABLE) &&
+     (gc->state.per_tmu[tmu].evenOdd == GR_MIPMAPLEVELMASK_BOTH) &&
+     (tmu == GR_TMU1)) {
+    tLod |= SST_LOD_ODD;
+  }
+
   tLod |= _gr_evenOdd_xlate_table[gc->state.per_tmu[tmu].evenOdd];
 
   /* update tmuMask for tac */
@@ -2157,6 +2298,15 @@ GR_EXT_ENTRY(grTexAlphaCombineExt, void,
       tLod |= SST_LOD_ODD;
     }
   }
+
+  /* Hack to use single pass trilinear in UMA state */
+  if((texturemode & SST_TRILINEAR) &&
+     (gc->state.grEnableArgs.texture_uma_mode == GR_MODE_ENABLE) &&
+     (gc->state.per_tmu[tmu].evenOdd == GR_MIPMAPLEVELMASK_BOTH) &&
+     (tmu == GR_TMU1)) {
+    tLod |= SST_LOD_ODD;
+  }
+  
   tLod |= _gr_evenOdd_xlate_table[gc->state.per_tmu[tmu].evenOdd];
 
   /* update tmuMask for tac */
@@ -2310,44 +2460,42 @@ GR_ENTRY(grTexLodBiasValue, void,
   FxU32 tLod;
   FxI32 lodBias;
 
-
   GR_BEGIN_NOFIFOCHECK("grTexLodBiasValue",88);
   GDBG_INFO_MORE(gc->myLevel,"(%d,%g)\n",tmu,fvalue);
   GR_CHECK_TMU(FN_NAME, tmu);
   
-
-  	tLod = gc->state.tmuShadow[tmu].tLOD;
-	tLod &= ~(SST_LODBIAS);
- 	lodBias = _grTexFloatLODToFixedLOD(fvalue);
-  	/* Sign extend it. */
-  	lodBias = ((lodBias << (32-6)) >> (32-6));
-  	lodBias += _GlideRoot.environment.lodBias;
-  	if(lodBias > 0x1f) lodBias = 0x1f;
-  	if(lodBias < -0x20) lodBias = -0x20;
-  	/* Mask it back off. */
-  	lodBias &= 0x3f;
-  	tLod |= lodBias << SST_LODBIAS_SHIFT;
-
-  	gc->state.tmuShadow[tmu].tLOD = tLod;
-
-  	/* Update real shadows and update hardware immediately if we can. */
-  	if(!gc->state.mode2ppc || (tmu == gc->state.mode2ppcTMU)) {
-    	SstRegs* tmuHw = SST_TMU(hw, tmu);
+  tLod = gc->state.tmuShadow[tmu].tLOD;
+  tLod &= ~(SST_LODBIAS);
+  lodBias = _grTexFloatLODToFixedLOD(fvalue);
+  /* Sign extend it. */
+  lodBias = ((lodBias << (32-6)) >> (32-6));
+  lodBias += _GlideRoot.environment.lodBias;
+  if(lodBias > 0x1f) lodBias = 0x1f;
+  else if(lodBias < -0x20) lodBias = -0x20;
+  /* Mask it back off. */
+  lodBias &= 0x3f;
+  tLod |= lodBias << SST_LODBIAS_SHIFT;
+  
+  gc->state.tmuShadow[tmu].tLOD = tLod;
+  
+  /* Update real shadows and update hardware immediately if we can. */
+  if(!gc->state.mode2ppc || (tmu == gc->state.mode2ppcTMU)) {
+    SstRegs* tmuHw = SST_TMU(hw, tmu);
     
-    	gc->state.shadow.tmuState[tmu].tLOD = tLod;
-    	_grChipMask( SST_CHIP_MASK_ALL_CHIPS );
-    	REG_GROUP_BEGIN((0x02 << tmu), tLOD, 1, 0x1);
-    	{
-    	REG_GROUP_SET(tmuHw, tLOD, gc->state.shadow.tmuState[tmu].tLOD);
-    	}
-   	 	REG_GROUP_END();
-    		_grChipMask( gc->chipmask );
-  	} else {
-    	INVALIDATE_TMU(tmu, textureMode);
-  	}
-
-	if(MultitextureAndTrilinear()) g3LodBiasPerChip();
-
+    gc->state.shadow.tmuState[tmu].tLOD = tLod;
+    _grChipMask( SST_CHIP_MASK_ALL_CHIPS );
+    REG_GROUP_BEGIN((0x02 << tmu), tLOD, 1, 0x1);
+    {
+      REG_GROUP_SET(tmuHw, tLOD, gc->state.shadow.tmuState[tmu].tLOD);
+    }
+    REG_GROUP_END();
+    _grChipMask( gc->chipmask );
+    if(gc->state.per_tmu[tmu].texSubLodDither)
+        g3LodBiasPerChip(tmu,gc->state.shadow.tmuState[tmu].tLOD);
+  } else {
+    INVALIDATE_TMU(tmu, textureMode);
+  }
+  
   GR_END();
 #undef FN_NAME
 } /* grTexLodBiasValue */
@@ -2408,7 +2556,7 @@ GR_ENTRY(grTexMipMapMode, void,
     --------------------------------------------------------------*/
   tLod    &= ~(SST_LODMIN | SST_LODMAX | SST_LOD_ODD);
   texMode &= ~(SST_TLODDITHER | SST_TRILINEAR);
-
+  
   /*--------------------------------------------------------------
     Encode Mipmap Mode Bits
     --------------------------------------------------------------*/
@@ -2433,6 +2581,8 @@ GR_ENTRY(grTexMipMapMode, void,
       ----------------------------------------------------------*/
     tLod |= SST_TLOD_MINMAX_INT(gc->state.per_tmu[tmu].largeLod,
                                 gc->state.per_tmu[tmu].smallLod);
+    if(_GlideRoot.environment.texSubLodDither && !lodBlend)
+      gc->state.per_tmu[tmu].texSubLodDither = FXTRUE;
     break;
 
   default:
@@ -2495,11 +2645,11 @@ GR_ENTRY(grTexMipMapMode, void,
     }
     REG_GROUP_END();
     _grChipMask( gc->chipmask );
+    if(gc->state.per_tmu[tmu].texSubLodDither)
+        g3LodBiasPerChip(tmu, gc->state.shadow.tmuState[tmu].tLOD);
   } else {
     INVALIDATE_TMU(tmu, textureMode);
   }
-
-	
 
 
 #if GLIDE_CHECK_TRILINEAR
@@ -2515,8 +2665,6 @@ GR_ENTRY(grTexMipMapMode, void,
    */
   if (gc->num_tmu > 1) _grTexCheckTriLinear(tmu);
 #endif /* GLIDE_CHECK_TRILINEAR */
-
-	if(MultitextureAndTrilinear()) g3LodBiasPerChip();
 
   GR_END();
 #undef FN_NAME
@@ -2739,19 +2887,49 @@ GR_ENTRY(grTexSource, void,
       gc->state.palletizedTexture[tmu] = FXFALSE;
     }      
 #endif
+    
     /* Adjust texture format to match the current texture table type */
+#ifdef FX_GLIDE_NAPALM
+    /* Glide uses a different value than the HW's textureMode reg */
+    switch(format) {
+    case GR_TEXFMT_P_8:
+      format = ((gc->state.tex_table == GR_TEXTABLE_PALETTE_6666_EXT)
+                ? GR_TEXFMT_P_8_RGBA
+                : GR_TEXFMT_P_8);
+      break;
+    case GR_TEXFMT_ARGB_8888:
+      format = (SST_ARGB8888 >> SST_TFORMAT_SHIFT);
+      break;
+    case GR_TEXFMT_ARGB_CMP_FXT1:
+      format = (SST_3DFX_COMPRESSED >> SST_TFORMAT_SHIFT);
+      texMode |= SST_COMPRESSED_TEXTURES;
+      break;
+    case GR_TEXFMT_ARGB_CMP_DXT1:
+      format = (SST_DXT1 >> SST_TFORMAT_SHIFT);
+      texMode |= SST_COMPRESSED_TEXTURES;
+      break;
+    case GR_TEXFMT_ARGB_CMP_DXT2:
+      format = (SST_DXT2 >> SST_TFORMAT_SHIFT);
+      texMode |= SST_COMPRESSED_TEXTURES;
+      break;
+    case GR_TEXFMT_ARGB_CMP_DXT3:
+      format = (SST_DXT3 >> SST_TFORMAT_SHIFT);
+      texMode |= SST_COMPRESSED_TEXTURES;
+      break;
+    case GR_TEXFMT_ARGB_CMP_DXT4:
+      format = (SST_DXT4 >> SST_TFORMAT_SHIFT);
+      texMode |= SST_COMPRESSED_TEXTURES;
+      break;
+    case GR_TEXFMT_ARGB_CMP_DXT5:
+      format = (SST_DXT5 >> SST_TFORMAT_SHIFT);
+      texMode |= SST_COMPRESSED_TEXTURES;
+      break;
+    }
+#else
     if (format == GR_TEXFMT_P_8) {
       format = ((gc->state.tex_table == GR_TEXTABLE_PALETTE_6666_EXT)
                 ? GR_TEXFMT_P_8_RGBA
                 : GR_TEXFMT_P_8);
-    }
-#ifdef FX_GLIDE_NAPALM
-    /* Glide uses a different value than the HW's textureMode reg */
-    else if (format == GR_TEXFMT_ARGB_8888) {
-      format = (SST_ARGB8888 >> SST_TFORMAT_SHIFT);
-    } else if (format == GR_TEXFMT_ARGB_CMP_FXT1) {
-      format = (SST_3DFX_COMPRESSED >> SST_TFORMAT_SHIFT);
-      texMode |= SST_COMPRESSED_TEXTURES;
     }
 #endif
 
@@ -2829,6 +3007,8 @@ GR_ENTRY(grTexSource, void,
     }
     REG_GROUP_END();
     _grChipMask( gc->chipmask );
+    if(gc->state.per_tmu[tmu].texSubLodDither)
+        g3LodBiasPerChip(tmu, gc->state.shadow.tmuState[tmu].tLOD);
   } else {
     INVALIDATE_TMU(tmu, textureMode);
     INVALIDATE_TMU(tmu, texBaseAddr);
@@ -2886,9 +3066,6 @@ GR_ENTRY(grTexSource, void,
     break;
   }
 
-
-	if(MultitextureAndTrilinear()) g3LodBiasPerChip();
-
   GR_END();
 #undef FN_NAME
 } /* grTexSource */
@@ -2940,12 +3117,11 @@ GR_ENTRY(grTexMultibase, void,
     }
     REG_GROUP_END();
     _grChipMask( gc->chipmask );
+    if(gc->state.per_tmu[tmu].texSubLodDither)
+        g3LodBiasPerChip(tmu, gc->state.shadow.tmuState[tmu].tLOD);
   } else {
     INVALIDATE_TMU(tmu, textureMode);
   }
-
-
-  if(MultitextureAndTrilinear()) g3LodBiasPerChip();
 
   GR_END();
 #undef FN_NAME
@@ -3301,12 +3477,18 @@ GR_DIENTRY(grTextureBuffer, void,
 #ifdef FX_GLIDE_NAPALM
   /*
    * AJB- Last I checked we couldn't render to an FXT1 surface...
-   * 
-  if (format == GR_TEXFMT_ARGB_CMP_FXT1) {
+   *
+  if (format == GR_TEXFMT_ARGB_CMP_FXT1 || format == GR_TEXFMT_ARGB_CMP_DXT1) {
     width = _grMipMapHostWHCmp4Bit[G3_ASPECT_TRANSLATE(aspectRatio)][thisLOD][0];
     height = _grMipMapHostWHCmp4Bit[G3_ASPECT_TRANSLATE(aspectRatio)][thisLOD][1];
-    stride = width * dwBytesPerPixel;
-  }*/
+  } else if (format >= GR_TEXFMT_ARGB_CMP_DXT2 && format <= GR_TEXFMT_ARGB_CMP_DXT5) {
+    width = _grMipMapHostWHDXT[G3_ASPECT_TRANSLATE(aspectRatio)][thisLOD][0];
+    height = _grMipMapHostWHDXT[G3_ASPECT_TRANSLATE(aspectRatio)][thisLOD][1];
+  } else {
+    width = _grMipMapHostWH[G3_ASPECT_TRANSLATE(aspectRatio)][thisLOD][0],
+    height = _grMipMapHostWH[G3_ASPECT_TRANSLATE(aspectRatio)][thisLOD][1];
+  }
+  stride = width * dwBytesPerPixel; */
   GR_CHECK_F(myName,
              (((gc->grPixelSize == 4) && (format != GR_TEXFMT_ARGB_8888)) ||
              ((gc->grPixelSize == 2) && ((format != GR_TEXFMT_RGB_565) && (format != GR_TEXFMT_ARGB_1555)))),
@@ -3404,11 +3586,17 @@ GR_DIENTRY(grTextureAuxBuffer, void,
   /*
    * AJB- Using FXT1 for an aux buffer looks like it would be a mistake to me as well.
    *
-  if (format == GR_TEXFMT_ARGB_CMP_FXT1) {
+  if (format == GR_TEXFMT_ARGB_CMP_FXT1 || format == GR_TEXFMT_ARGB_CMP_DXT1) {
     width = _grMipMapHostWHCmp4Bit[G3_ASPECT_TRANSLATE(aspectRatio)][thisLOD][0];
     height = _grMipMapHostWHCmp4Bit[G3_ASPECT_TRANSLATE(aspectRatio)][thisLOD][1];
-    stride = width * dwBytesPerPixel;
-  }*/
+  } else if (format >= GR_TEXFMT_ARGB_CMP_DXT2 && format <= GR_TEXFMT_ARGB_CMP_DXT5) {
+    width = _grMipMapHostWHDXT[G3_ASPECT_TRANSLATE(aspectRatio)][thisLOD][0];
+    height = _grMipMapHostWHDXT[G3_ASPECT_TRANSLATE(aspectRatio)][thisLOD][1];
+  } else {
+    width = _grMipMapHostWH[G3_ASPECT_TRANSLATE(aspectRatio)][thisLOD][0],
+    height = _grMipMapHostWH[G3_ASPECT_TRANSLATE(aspectRatio)][thisLOD][1];
+  }
+  stride = width * dwBytesPerPixel; */
   GR_CHECK_F(myName,
              (((gc->grPixelSize == 4) && (format != GR_TEXFMT_ARGB_8888)) ||
              ((gc->grPixelSize == 2) && ((format != GR_TEXFMT_RGB_565) && (format != GR_TEXFMT_ARGB_1555)))),
@@ -3493,6 +3681,7 @@ GR_DIENTRY(grAuxBuffer, void, (GrBuffer_t buffer ))
 #undef FN_NAME
 } /* grAuxBuffer */
 
+#if 0 /* KoolSmoky - don't need this anymore */
 /*-------------------------------------------------------------------
   Function: _g3LodXlat
   Date: 1-Jul-99
@@ -3524,7 +3713,7 @@ _g3LodXlat(const GrLOD_t someLOD, const FxBool tBig)
   }
 #undef FN_NAME
 } /* _g3LodXlat */
-
+#endif
 
 /*-------------------------------------------------------------------
   Function: 		_g3LodBiasPerChip
@@ -3533,131 +3722,187 @@ _g3LodXlat(const GrLOD_t someLOD, const FxBool tBig)
 
   Implementor: 		Jonny Cochrane
 
-  Description: 		Sub sample LOD Dithering. Called if multitexturing and
-					trilinear filtereing and in NON SLI mode AND No. Units > 1 and 
-					mipmap dithereing NOT requested from tools.
+  Description: 		Sub sample LOD Dithering. Called if TMU is in
+                        texSubLodDither state.
 
-  Arguments:		None  
+                        2chip x2fsaa - no sli, 1 sample per chip
+                        2chip x4fsaa - no sli, 2 samples per chip
+                        4chip x2fsaa - 2 way sli, 1 sample per sli unit
+                        4chip x4fsaa - no sli, 1 sample per chip
+                        4chip x8fsaa - no sli, 2 samples per chip
 
-  Return:			Yes
+  Arguments:		tmu: TMU to set. tLod: tLOD to modify.
+
+  Return:		None
   -------------------------------------------------------------------*/
-void g3LodBiasPerChip(void)
+void g3LodBiasPerChip(GrChipID_t tmu, FxU32 tLod)
 {
-	#define FN_NAME "g3LodBiasPerChip"
+#define FN_NAME "g3LodBiasPerChip"
+  FxU32 newtLod ;
+  FxI32 oldLodBias, newLodBias;
+  unsigned int i;
+  unsigned int idx, iTexLodDither;
 
-	FxI32 lodBias, tLod, tmu;
-	int idx = 0;
-	unsigned int i;
+  static FxI32 chipLodBias[2][2][4] =
+    /* 4.2 format for tLod register
+     * 2chip x2fsaa - no sli, 1 sample per chip
+     * 2chip x4fsaa - no sli, 2 samples per chip
+     * 4chip x2fsaa - 2 way sli, 1 sample per sli unit
+     * 0.00, 0.50, 0.00, 0.50 - the last 2 are used only when 4chip
+     * {0x00, 0x02, 0x00, 0x02},
+     * 4chip x4fsaa - no sli, 1 sample per chip
+     * 4chip x8fsaa - no sli, 2 samples per chip
+     * 0.00, 0.25, 0.50, 0.75 - 4 chip
+     * {0x00, 0x01, 0x02, 0x03}
+     * if mipmap dithering is enabled
+     * we will use different tLod registers.
+     */
+  {
+    {
+      {0x00<<SST_LODBIAS_SHIFT, 0x02<<SST_LODBIAS_SHIFT, 0x00<<SST_LODBIAS_SHIFT, 0x02<<SST_LODBIAS_SHIFT},
+      {0x00<<SST_LODBIAS_SHIFT, 0x01<<SST_LODBIAS_SHIFT, 0x02<<SST_LODBIAS_SHIFT, 0x03<<SST_LODBIAS_SHIFT}
+    },
+    {
+      {-0x01<<SST_LODBIAS_SHIFT, 0x02<<SST_LODBIAS_SHIFT, -0x01<<SST_LODBIAS_SHIFT, 0x02<<SST_LODBIAS_SHIFT},
+      {-0x01<<SST_LODBIAS_SHIFT, 0x00<<SST_LODBIAS_SHIFT,  0x01<<SST_LODBIAS_SHIFT, 0x02<<SST_LODBIAS_SHIFT}
+    }
+  };
+  
+  GR_BEGIN_NOFIFOCHECK("g3LodBiasPerChip", 88);
 
-  	int chipLodBias[2][4] =       // these values per Gary Tarolli
-				{
-				// 4.2 format for tLod register
-				//   0.00, 0.50, 0.00, 0.00 - 2 chip. last two values are not used
-					{0x00, 0x02, 0x00, 0x00},
-				//   0.00, 0.25, 0.50, 0.75 - 4 chip.
-					{0x00, 0x01, 0x02, 0x03}
-				};
+  if( /*(_GlideRoot.environment.texSubLodDither != 1) ||*//* we won't get here if 0 */
+      (gc->sliCount == gc->chipCount) ||
+      (gc->windowed) )
+    return;
+  
+  /* sign extend it. */
+  oldLodBias = (((tLod & SST_LODBIAS) << (32-6-SST_LODBIAS_SHIFT)) >> (32-6-SST_LODBIAS_SHIFT));
 
-  	GR_BEGIN_NOFIFOCHECK("g3LodBiasPerChip", 88);
+  /* unmask lodbias */
+  tLod &= ~(SST_LODBIAS);
 
-	tmu = 0;
-	idx = gc->chipCount > 2;
+  idx = ((gc->chipCount - gc->sliCount) > 2);
+  iTexLodDither = (_GlideRoot.environment.texLodDither == 1);
 
-	if ((gc->sliCount > 1) || (_GlideRoot.environment.texLodDither)) goto FORGET_IT;
+  for (i = 0; i < gc->chipCount; i++)
+  {
+    /* don't need to modify lodbias if 0 */
+    if(chipLodBias[iTexLodDither][idx][i] != 0) {
+      newLodBias = oldLodBias + chipLodBias[iTexLodDither][idx][i];
+      
+      if(newLodBias > (0x1f<<SST_LODBIAS_SHIFT)) newLodBias = (0x1f<<SST_LODBIAS_SHIFT);
+      else if(newLodBias < (-0x20<<SST_LODBIAS_SHIFT)) newLodBias = (-0x20<<SST_LODBIAS_SHIFT);
+      newLodBias &= SST_LODBIAS;
+      newtLod = tLod | newLodBias;
+      
+      {
+        SstRegs* tmuHw = SST_TMU(hw, tmu);
+        _grChipMask( 0x01 << i );
+        REG_GROUP_BEGIN((0x02 << tmu), tLOD, 1, 0x1);
+        {
+          REG_GROUP_SET(tmuHw, tLOD, tLod);
+        }
+        REG_GROUP_END();
+      }
+    }
+  }
+  
+  /* Restore chip mask */
+  _grChipMask( gc->chipmask );
 
-	for (i = 0; i < gc->chipCount; i++)	
-	{
-	  	tLod = gc->state.tmuShadow[tmu].tLOD;
-  		tLod &= ~(SST_LODBIAS);
-		lodBias = chipLodBias[idx][i];
-
-  		if(lodBias > 0x1f) lodBias = 0x1f;
-  		if(lodBias < -0x20) lodBias = -0x20;
-  		/* Mask it back off. */
-  		lodBias &= 0x3f;
-  		tLod |= lodBias << SST_LODBIAS_SHIFT;
-
-  		if(!gc->state.mode2ppc || (tmu == gc->state.mode2ppcTMU)) {
-    		SstRegs* tmuHw = SST_TMU(hw, tmu);
-       		_grChipMask( 1L << i );
-    		REG_GROUP_BEGIN((0x02 << tmu), tLOD, 1, 0x1);
-    		{
-      		REG_GROUP_SET(tmuHw, tLOD, tLod);
-    		}
-   		 	REG_GROUP_END();
-    		_grChipMask( gc->chipmask );
-  		} else {
-    		INVALIDATE_TMU(tmu, textureMode);
-  		}
-
-	}
-
-	tmu = 1;
-
-	for (i = 0; i < gc->chipCount; i++)	
-	{
-	  	tLod = gc->state.tmuShadow[tmu].tLOD;
-  		tLod &= ~(SST_LODBIAS);
-		lodBias = chipLodBias[idx][i];
-
-  		if(lodBias > 0x1f) lodBias = 0x1f;
-  		if(lodBias < -0x20) lodBias = -0x20;
-  		/* Mask it back off. */
-  		lodBias &= 0x3f;
-  		tLod |= lodBias << SST_LODBIAS_SHIFT;
-
-  		if(!gc->state.mode2ppc || (tmu == gc->state.mode2ppcTMU)) {
-    		SstRegs* tmuHw = SST_TMU(hw, tmu);
-      		_grChipMask( 1L << i );
-    		REG_GROUP_BEGIN((0x02 << tmu), tLOD, 1, 0x1);
-    		{
-      		REG_GROUP_SET(tmuHw, tLOD, tLod);
-    		}
-   		 	REG_GROUP_END();
-    		_grChipMask( gc->chipmask );
-  		} else {
-    		INVALIDATE_TMU(tmu, textureMode);
-  		}
-
-	}
-
-FORGET_IT:
   GR_END();
 #undef FN_NAME
 }
 
-
+#if 0 /* KoolSmoky - don't need this anymore */
 /*-------------------------------------------------------------------
   Function: 		MultitextureAndTrilinear
 
-  Date: 			14-Nov-2000
+  Date:                 4-Nov-2000
 
   Implementor: 		Jonny Cochrane
 
-  Description: 		Determines if we are multitexturing and trilinear
-  					filtering
+  Description: 		Determines if we are multitexturing and NOT
+                        trilinear filtering. so that we can do sub
+                        sample lod dithering which gives an almost
+                        trilinear result.
+                        mipmap dithering (lod dithering) is passed
+                        through, see g3LodBiasPerChip
   					
   Arguments:		None  
 
-  Return:			BOOL
+  Return:               tmuMask of the TMUs that can do it
   -------------------------------------------------------------------*/
-FxBool MultitextureAndTrilinear(void)
+GrChipID_t MultitextureAndTrilinear(void)
 {
 
-	#define FN_NAME "MultitextureAndTrilinear"
+#define FN_NAME "MultitextureAndTrilinear"
+  
+  GR_DCL_GC;
 
-	GR_DCL_GC;
+  GrChipID_t retval = FXBIT(0x4);
 
-	FxBool retval = FXFALSE;
+   /* KoolSmoky - we can only do this if we are running in;
+    *   2chip x2fsaa - no sli, 1 sample per chip
+    *   2chip x4fsaa - no sli, 2 samples per chip
+    *   4chip x2fsaa - 2 way sli, 1 sample per sli unit
+    *   4chip x4fsaa - no sli, 1 sample per chip
+    *   4chip x8fsaa - no sli, 2 samples per chip
+    *   ...and with FX_GLIDE_LOD_SUBSAMPLE_DITHER=1
+    */
+  
+  if( (_GlideRoot.environment.texSubLodDither != 1) ||
+      (gc->sliCount == gc->chipCount) ||
+      (gc->windowed) )
+    return retval;
 
-   	if( (gc->state.per_tmu[0].evenOdd == 3) 										&& //both even and odd on each tmu
-   	    (gc->state.per_tmu[1].evenOdd == 3) 										&&	 
-	    (gc->state.tmuShadow[0].textureMode	& (SST_TMINFILTER | SST_TMAGFILTER)) 	&& //and bilinear for mag and min filter
-	    (gc->state.tmuShadow[1].textureMode	& (SST_TMINFILTER | SST_TMAGFILTER)))
-   	{
-		retval = FXTRUE;
-   	}
+#if 0
 
-	return retval;
+#if 0 /* Jonny Cochrane's method */
+  if(_GlideRoot.environment.texLodDither) return 0;
+  
+  if( (gc->state.per_tmu[0].evenOdd == 3) && //both even and odd
+      (gc->state.per_tmu[1].evenOdd == 3) && //both even and odd
+      (gc->state.tmuShadow[0].textureMode & (SST_TMINFILTER | SST_TMAGFILTER)) && //and bilinear for mag and min filter
+      (gc->state.tmuShadow[1].textureMode & (SST_TMINFILTER | SST_TMAGFILTER)) )  //and bilinear for mag and min filter
+    retval |= (GR_TMUMASK_TMU0 | GR_TMUMASK_TMU1);
+  
+#else /* Colourless's method if bilinear filtering is required */
+  if( (gc->state.per_tmu[0].evenOdd == 3) && //both even and odd
+      (gc->state.tmuShadow[0].textureMode & (SST_TMINFILTER | SST_TMAGFILTER)) && //and bilinear for mag and min filter
+      !(gc->state.tmuShadow[0].textureMode & (SST_TRILINEAR | SST_TLODDITHER)) ) //and not mipmap dithering or trilinear
+    retval |= GR_TMUMASK_TMU0;
+
+  if( (gc->state.per_tmu[1].evenOdd == 3) && //both even and odd
+      (gc->state.tmuShadow[1].textureMode & (SST_TMINFILTER | SST_TMAGFILTER)) && //and bilinear for mag and min filter
+      !(gc->state.tmuShadow[1].textureMode & (SST_TRILINEAR | SST_TLODDITHER)) ) //and not mipmap dithering or trilinear
+    retval |= GR_TMUMASK_TMU1;
+#endif
+
+#else
+
+#if 0 /* Colourless's method */
+  if( (gc->state.per_tmu[0].evenOdd == 3) && //both even and odd
+      !(gc->state.tmuShadow[0].textureMode & (SST_TRILINEAR | SST_TLODDITHER)) ) //and not trilinear and not dither mode
+    retval |= GR_TMUMASK_TMU0;
+
+  if( (gc->state.per_tmu[1].evenOdd == 3) && //both even and odd
+      !(gc->state.tmuShadow[1].textureMode & (SST_TRILINEAR | SST_TLODDITHER)) && //and not trilinear and not dither mode
+      !(gc->state.tmuShadow[0].textureMode & SST_TRILINEAR) )
+    retval |= GR_TMUMASK_TMU1;
+  
+#else /* KoolSmoky - we will allow mip dithering. */
+  if( !(gc->state.tmuShadow[1].textureMode & SST_TRILINEAR) && 
+      !(gc->state.tmuShadow[0].textureMode & SST_TRILINEAR) ) { //not single or two pass trilinear
+    if(gc->state.per_tmu[0].evenOdd == 3) //both even and odd
+      retval |= GR_TMUMASK_TMU0;
+    if(gc->state.per_tmu[1].evenOdd == 3) //both even and odd
+      retval |= GR_TMUMASK_TMU1;
+  }
+#endif
+  
+#endif
+
+  return retval;
 }
-
+#endif
