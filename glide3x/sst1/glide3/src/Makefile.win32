@@ -174,6 +174,9 @@ else
 GLIDE_OBJECTS += \
 	xdraw96.obj
 endif
+else
+GLIDE_OBJECTS += \
+	gxdraw.obj
 endif
 
 ifeq ($(FX_GLIDE_HW),sst96)
@@ -299,10 +302,10 @@ endif
 $(GLIDE_OBJECTS): fxinline.h fxgasm.h
 
 fxinline.h: fxgasm.exe
-	$< -inline > $@
+	./$< -inline > $@
 
 fxgasm.h: fxgasm.exe
-	$< -hex > $@
+	./$< -hex > $@
 
 fxgasm.exe: fxgasm.c
 	$(CC) -o $@ $(CFLAGS) $<
