@@ -1118,8 +1118,8 @@ static GrExtensionTuple _extensionTable[] = {
     { "grSstQueryHardware", (GrProc)grSstQueryHardware },
 #endif
     /* POINTCAST */
-#if GLIDE_POINTCAST_PALETTE
     { "grTexDownloadTableExt", (GrProc)grTexDownloadTableExt },
+#if GLIDE_POINTCAST_PALETTE
     { "grTexDownloadTablePartialExt", (GrProc)grTexDownloadTablePartialExt },
     { "grTexNCCTableExt", (GrProc)grTexNCCTableExt },
 #endif
