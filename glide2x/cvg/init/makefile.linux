@@ -30,7 +30,7 @@ LCINCS	 = -I$(BUILD_ROOT)/cvg/include -I$(BUILD_ROOT_SWLIBS)/include
 HEADERS	            = sst1init.h
 INSTALL_DESTINATION = $(BUILD_ROOT)/cvg
 CFILES	            = sst1init.c info.c print.c parse.c gamma.c util.c \
-                      sli.c video.c dac.c gdebug.c
+                      sli.c video.c dac.c gdebug.c canopus.c
 
 SUBLIBRARIES        = $(BUILD_ROOT_SWLIBS)/lib/libfxpci.a
 
@@ -52,5 +52,5 @@ sst1init.obj: rcver.h
 # for some strange reason
 #
 ifndef DEBUG
-CFLAGS = -g -O -m486 -fomit-frame-pointer $(GCFLAGS) $(LCFLAGS) $(VCFLAGS)
+CFLAGS = -g $(GCFLAGS) $(LCFLAGS) $(VCFLAGS)
 endif

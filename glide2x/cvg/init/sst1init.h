@@ -18,6 +18,7 @@
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
+**
 ** $Revision$ 
 ** $Date$ 
 **
@@ -27,6 +28,21 @@
 #define __SST1INIT_H__
 
 /*
+** Copyright (c) 1996, 3Dfx Interactive, Inc.
+** All Rights Reserved.
+**
+** This is UNPUBLISHED PROPRIETARY SOURCE CODE of 3Dfx Interactive, Inc.;
+** the contents of this file may not be disclosed to third parties, copied or
+** duplicated in any form, in whole or in part, without the prior written
+** permission of 3Dfx Interactive, Inc.
+**
+** RESTRICTED RIGHTS LEGEND:
+** Use, duplication or disclosure by the Government is subject to restrictions
+** as set forth in subdivision (c)(1)(ii) of the Rights in Technical Data
+** and Computer Software clause at DFARS 252.227-7013, and/or in similar or
+** successor clauses in the FAR, DOD or NASA FAR Supplement. Unpublished  -
+** rights reserved under the Copyright Laws of the United States.
+**
 ** $Revision$
 ** $Date$
 **
@@ -144,7 +160,7 @@ p6Fence(void);
 #  define P6FENCE {_asm xchg eax, p6FenceVar}
 #elif defined(macintosh) && __POWERPC__ && defined(__MWERKS__)
 #  define P6FENCE __eieio()
-#elif defined(__GNUC__) && defined(__i386__)
+#elif defined (__GNUC__) && defined(__i386__)
 #  define P6FENCE asm("xchg %%eax,%0" : /*outputs*/ : "m" (p6FenceVar) : \
 					"eax");
 #else
@@ -521,6 +537,7 @@ p6Fence(void);
 #define SST_FBI_DACTYPE_ATT                0
 #define SST_FBI_DACTYPE_ICS                1
 #define SST_FBI_DACTYPE_TI                 2
+#define SST_FBI_DACTYPE_PROXY              3  /* for single-dac SLI */
 
 /* Definitions for parsing voodoo.ini file */
 #define DACRDWR_TYPE_WR                    0
@@ -623,13 +640,8 @@ FX_ENTRY FxBool FX_CALL sst1InitGammaTable(FxU32 *, FxU32, FxU32 *, FxU32 *, FxU
 // not be used for Voodoo2. Use sst1InitVideoBuffers() instead
 FX_ENTRY FxBool FX_CALL sst1InitVideo(FxU32 *, GrScreenResolution_t,
   GrScreenRefresh_t, void *);
-FX_ENTRY FxBool FX_CALL sst1InitVideoBuffers(FxU32 *, 
-					     GrScreenResolution_t,
-					     GrScreenRefresh_t, 
-					     FxU32, 
-					     FxU32, 
-					     sst1VideoTimingStruct *, 
-					     FxBool);
+FX_ENTRY FxBool FX_CALL sst1InitVideoBuffers(FxU32 *, GrScreenResolution_t,
+  GrScreenRefresh_t, FxU32, FxU32, sst1VideoTimingStruct *, FxBool);
 FX_ENTRY FxBool FX_CALL sst1InitAllocBuffers(FxU32 *, FxU32, FxU32);
 FX_ENTRY FxBool FX_CALL sst1InitVideoShutdown(FxU32 *, FxBool);
 FX_ENTRY FxBool FX_CALL sst1InitShutdown(FxU32 *);
@@ -642,7 +654,6 @@ FX_ENTRY FxBool FX_CALL sst1InitVideoBorder(FxU32 *, FxU32, FxU32);
 FX_ENTRY void FX_CALL sst1InitWrite32(FxU32 *, FxU32);
 FX_ENTRY FxU32 FX_CALL sst1InitRead32(FxU32 *);
 FX_ENTRY FxBool FX_CALL sst1InitIdle(FxU32 *);
-FX_ENTRY FxBool FX_CALL sst1InitIdleWithTimeout(FxU32 *, FxU32);
 FX_ENTRY FxBool FX_CALL sst1InitIdleNoNOP(FxU32 *);
 FX_ENTRY FxBool FX_CALL sst1InitIdleFBI(FxU32 *);
 FX_ENTRY FxBool FX_CALL sst1InitIdleFBINoNOP(FxU32 *);
@@ -692,10 +703,10 @@ FX_ENTRY char * FX_CALL sst1InitGetenv(char *);
 FX_ENTRY FxU32 * FX_CALL sst1InitGetBaseAddr(FxU32);
 FxBool sst1InitFillDeviceInfo(FxU32 *, sst1DeviceInfoStruct *);
 void sst1InitIdleLoop(FxU32 *, FxBool);
-int sst1InitIdleWithTimeoutLoop(FxU32 *, FxBool, FxU32);
 void sst1InitPciFifoIdleLoop(FxU32 *);
 void sst1InitClearBoardInfo(void);
 FX_ENTRY FxBool FX_CALL sst1InitCaching(FxU32* sstBase, FxBool enableP);
+FX_ENTRY FxBool FX_CALL sst1InitCachingAMD(FxU32* sstBase, FxBool enableP, FxBool hasP2MTRR);
 FX_ENTRY void FX_CALL sst1InitPrintInitRegs(FxU32 *);
 FX_ENTRY sst1VideoTimingStruct* FX_CALL
 sst1InitFindVideoTimingStruct(GrScreenResolution_t, GrScreenRefresh_t);
@@ -740,7 +751,7 @@ extern "C" {
 #endif
 
 #ifdef SST1INIT_ALLOCATE
-  FILE *sst1InitMsgFile = NULL;/*stdout;*/
+  FILE *sst1InitMsgFile = NULL; /*stdout;*/
 #else
 extern FILE *sst1InitMsgFile;
 #endif
@@ -838,6 +849,161 @@ extern "C" {
    NOTE: Max. L is 15
    NOTE: Max. IB is 15
 */
+
+
+/*  H3D video timing structures */
+#ifdef H3D
+/*  This guy's not used anywhere    */
+sst1VideoTimingStruct SST_VREZ_640X502_60 = {
+    96,        /* hSyncOn */
+    704,       /* hSyncOff */
+    2,         /* vSyncOn */
+    523,       /* vSyncOff */
+    38,        /* hBackPorch */
+    15,        /* vBackPorch */
+    640,       /* xDimension */
+    502,       /* yDimension */
+    60,        /* refreshRate */
+    0,         /* miscCtrl */
+    160,       /* memOffset */
+    20,        /* tilesInX */
+    25,        /* vFifoThreshold */
+    FXTRUE,    /* video16BPPIsOK */
+    FXTRUE,    /* video24BPPIsOK */
+    25.175F,   /* clkFreq16bpp */
+    50.350F    /* clkFreq24bpp */
+};
+
+
+/* Line doubled 640x480...line doubling done externally */
+sst1VideoTimingStruct SST_VREZ_640X960LD_60 = {
+    45,        /* hSyncOn */
+    785,       /* hSyncOff */
+    3,         /* vSyncOn */
+    1044,      /* vSyncOff */
+    100,       /* hBackPorch */
+    18,        /* vBackPorch */
+    640,       /* xDimension */
+    502,       /* yDimension */
+    60,        /* refreshRate */
+    0,         /* miscCtrl */
+    160,       /* memOffset */
+    20,        /* tilesInX */
+    23,        /* vFifoThreshold */
+    FXTRUE,    /* video16BPPIsOK */
+    FXTRUE,    /* video24BPPIsOK */
+    50.82F,    /* clkFreq16bpp */
+    101.64F    /* clkFreq24bpp */
+};
+
+
+/* Full resolution 640x480... */
+sst1VideoTimingStruct SST_VREZ_640X960_60 = {
+    45,        /* hSyncOn */
+    785,       /* hSyncOff */
+    3,         /* vSyncOn */
+    1044,      /* vSyncOff */
+    100,       /* hBackPorch */
+    18,        /* vBackPorch */
+    640,       /* xDimension */
+    1004,      /* yDimension */
+    60,        /* refreshRate */
+    0,         /* miscCtrl */
+    320,       /* memOffset */
+    20,        /* tilesInX */
+    23,        /* vFifoThreshold */
+    FXTRUE,    /* video16BPPIsOK */
+    FXTRUE,    /* video24BPPIsOK */
+    50.82F,    /* clkFreq16bpp */
+    101.64F    /* clkFreq24bpp */
+};
+
+
+/* Line doubled 800x600...line doubling done externally */
+sst1VideoTimingStruct SST_VREZ_800X1200LD_45 = {
+    63,        /* hSyncOn */
+    983,       /* hSyncOff */
+    3,         /* vSyncOn */
+    1242,      /* vSyncOff */
+    150,       /* hBackPorch */
+    27,        /* vBackPorch */
+    800,       /* xDimension */
+    608,       /* yDimension */
+    42,        /* refreshRate */
+    0,         /* miscCtrl */
+    247,       /* memOffset */
+    26,        /* tilesInX */
+    19,        /* vFifoThreshold */
+    FXTRUE,    /* video16BPPIsOK */
+    FXTRUE,    /* video24BPPIsOK */
+    56.25F,    /* clkFreq16bpp */
+    112.5F     /* clkFreq24bpp */
+};
+
+sst1VideoTimingStruct SST_VREZ_800X630_60 = {
+    127,       /* hSyncOn */
+    927,       /* hSyncOff */
+    4,         /* vSyncOn */
+    656,       /* vSyncOff */
+    86,        /* hBackPorch */
+    23,        /* vBackPorch */
+    800,       /* xDimension */
+    630,       /* yDimension */
+    60,        /* refreshRate */
+    0,         /* miscCtrl */
+    260,       /* memOffset */
+    26,        /* tilesInX */
+    23,        /* vFifoThreshold */
+    FXTRUE,    /* video16BPPIsOK */
+    FXTRUE,    /* video24BPPIsOK */
+    40.0F,     /* clkFreq16bpp */
+    80.0F      /* clkFreq24bpp */
+};
+
+
+/* Full res 800x600...so far, ain't nobody got enough memory */
+sst1VideoTimingStruct SST_VREZ_800X1200_45 = {
+    63,        /* hSyncOn */
+    983,       /* hSyncOff */
+    3,         /* vSyncOn */
+    1244,      /* vSyncOff */
+    150,       /* hBackPorch */
+    27,        /* vBackPorch */
+    800,       /* xDimension */
+    1216,      /* yDimension */
+    42,        /* refreshRate */
+    0,         /* miscCtrl */
+    494,       /* memOffset */
+    26,        /* tilesInX */
+    19,        /* vFifoThreshold */
+    FXTRUE,    /* video16BPPIsOK */
+    FXTRUE,    /* video24BPPIsOK */
+    56.25F,    /* clkFreq16bpp */
+    112.5F     /* clkFreq24bpp */
+};
+
+sst1VideoTimingStruct SST_VREZ_960X742_60 = {
+    103,       /* hSyncOn */
+    1151,      /* hSyncOff */
+    3,         /* vSyncOn */
+    765,       /* vSyncOff */
+    142,       /* hBackPorch */
+    22,        /* vBackPorch */
+    960,       /* xDimension */
+    742,       /* yDimension */
+    60,        /* refreshRate */
+    0,         /* miscCtrl */
+    360,       /* memOffset */
+    30,        /* tilesInX */
+    19,        /* vFifoThreshold */
+    FXTRUE,    /* video16BPPIsOK */
+    FXTRUE,    /* video24BPPIsOK */
+    56.219F,   /* clkFreq16bpp */
+    112.437F   /* clkFreq24bpp */
+};
+
+#endif
+
 
 sst1VideoTimingStruct SST_VREZ_320X200_70 = {
     96,        /* hSyncOn */

@@ -40,6 +40,8 @@
 #include <sst1vid.h>
 #include <sst1init.h>
 
+#include "canopus.h"
+
 /*
 ** sst1InitDacRd():
 **  Read external DAC registers
@@ -181,6 +183,17 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitDacDetect(FxU32 * sstbase)
 
     if(helper)
         INIT_PRINTF(("sst1InitDacDetect(): Entered...\n"));
+  
+    if (sst1InitCheckBoard(sstbase) == FXFALSE)
+        return (FXFALSE);
+ 
+    /* check to see if we are a single board SLI slave, if
+     * so we have no dac...
+     */
+    //if (sst1CurrentBoard->singleBrdSLISlave) {
+    //    sst1CurrentBoard->fbiVideoDacType = SST_FBI_DACTYPE_PROXY;
+    //    return FXTRUE;
+    //}
 
     sst1InitIdleFBINoNOP(sstbase);
 
@@ -475,8 +488,8 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitCalcGrxClk(FxU32 *sstbase)
            sst1CurrentBoard->tmuMemSize[0] == 2)
               clkFreq = 83;
         else
-        // clkFreq = 50 + (value of fb_data[63:58] latched during reset)
-        clkFreq = 50 + ((IGET(sst->fbiInit7) >> 2) & 0x3f);
+           // clkFreq = 50 + (value of fb_data[63:58] latched during reset)
+           clkFreq = 50 + ((IGET(sst->fbiInit7) >> 2) & 0x3f);
     }
     sst1CurrentBoard->fbiGrxClkFreq = clkFreq;
     sst1CurrentBoard->tmuGrxClkFreq = clkFreq;
@@ -518,13 +531,52 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitGrxClk(FxU32 *sstbase)
 **  Compute PLL parameters for given clock frequency
 **
 */
-FX_EXPORT FxBool FX_CSTYLE sst1InitComputeClkParams(float freq,
-   sst1ClkTimingStruct *clkTiming)
+FX_EXPORT FxBool FX_CSTYLE 
+sst1InitComputeClkParams(float freq, sst1ClkTimingStruct* clkTiming)
 {
-    if(sst1CurrentBoard->fbiVideoDacType == SST_FBI_DACTYPE_TI)
-       return(sst1InitComputeClkParamsTI(freq, clkTiming));
-    else
-       return(sst1InitComputeClkParamsATT(freq, clkTiming));
+  /* If we're using a canopus board then we need to use the
+   * integer-ized version of the clock parameter computation. This
+   * only supports the att dac.
+   * 
+   * NB: The bits in fbiInit5 are only moderatly documented as being
+   * the value of the power-on strapping bits. fbiInit5[8:5] is what
+   * sst1GetFbiInfo uses to set the internal fbiBoardID, but the
+   * canopus board currently does not seem to have these set to
+   * anything while other boards (including the reference design)
+   * return non-zero values.
+   *
+   * NB: There is also a possible race condition here in reading these
+   * bits before the hw is actually reset. I don't think it could
+   * happen, but the value could be whacky if the hw was in some
+   * really horrible state when this is called to set the initial
+   * clock to 16mhz before doing the rest of the reset.  
+   */
+  sst1CurrentBoard->fbiBoardID = ((IGET(sst1CurrentBoard->virtAddr[0]->fbiInit5) >> 0x05UL) & 0x0FUL);
+  if (sst1CurrentBoard->fbiBoardID == CANOPUS_ID) {
+    return sst1InitComputeClkParamsATT_Int((FFLOAT)(freq * CLOCK_MULTIPLIER), clkTiming);
+  } else if(sst1CurrentBoard->fbiVideoDacType == SST_FBI_DACTYPE_TI) {
+    return sst1InitComputeClkParamsTI(freq, clkTiming);
+  } else if (sst1CurrentBoard->fbiVideoDacType == SST_FBI_DACTYPE_PROXY) {
+    FxU32 i;
+    FxBool retval;
+    sst1DeviceInfoStruct *saveBoard;
+    
+    /* if we are a single board SLI (proxy dac) we need to do all changes
+     * to the master's dac, since it's also ours... 
+     */
+    for (i=0;i<boardsInSystem;i++) {
+      if ((i > 0) && (&sst1BoardInfo[i] == sst1CurrentBoard)) {
+        saveBoard = sst1CurrentBoard;
+        sst1CurrentBoard = &sst1BoardInfo[i-1];
+        retval = sst1InitComputeClkParams(freq, clkTiming);
+        sst1CurrentBoard = saveBoard;
+      }
+    }
+
+    return retval;
+  } else {
+    return sst1InitComputeClkParamsATT(freq, clkTiming);
+  }
 }
 
 /*

@@ -52,12 +52,8 @@ FX_ENTRY void FX_CALL sst1InitPrintf(const char *format, ...)
     static FxBool printIt = FXFALSE;
 
     if(firstPass == FXTRUE) {
+        sst1InitMsgFile = stdout;
         firstPass = FXFALSE;
-	if (sst1InitMsgFile == NULL)
-	{
-	  /* I couldn't initialize to stdout because stdout is not constant */
-	  sst1InitMsgFile = stdout;
-	}
         if(GETENV(("SSTV2_INITDEBUG")) || GDBG_GET_DEBUGLEVEL(5))
             printIt = FXTRUE;
         if(GETENV(("SSTV2_INITDEBUG_FILE"))) {

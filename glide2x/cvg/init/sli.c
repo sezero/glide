@@ -18,6 +18,7 @@
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
+**
 ** $Revision$ 
 ** $Date$ 
 **
@@ -120,7 +121,7 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitSli(FxU32 *sstbase0, FxU32 *sstbase1)
        SST_VIDEO_BUFFER_OFFSET_SHIFT;
     tilesInXOrig = (IGET(sstMaster->fbiInit1) & SST_VIDEO_TILES_IN_X) >>
        SST_VIDEO_TILES_IN_X_SHIFT;
-    if(sstMaster->fbiInit1 & SST_VIDEO_TILES_IN_X_MSB)
+    if(IGET(sstMaster->fbiInit1) & SST_VIDEO_TILES_IN_X_MSB)
        tilesInXOrig += 16;
 
     if(tilesInXOrig & 0x1) {
@@ -701,14 +702,14 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitShutdownSli(FxU32 *sstbase)
 FX_ENTRY FxU32 FX_CALL sst1InitSliDetect(FxU32 *sstbase)
 {
     FxU32 sliDetected;
-
-        if(GETENV(("SSTV2_SLIDETECT")))
-            sliDetected = ATOI(GETENV(("SSTV2_SLIDETECT")));
+    
+    if(GETENV(("SSTV2_SLIDETECT")))
+      sliDetected = ATOI(GETENV(("SSTV2_SLIDETECT")));
     else
       sliDetected = sst1InitSliPaired(sstbase);
         
     return sliDetected;
-        }
+}
 
 /*
 ** sst1InitSliPaired():

@@ -508,24 +508,24 @@ sst1InitGetFbiInfo(FxU32 *sstbase, sst1DeviceInfoStruct *info)
 {
 	SstRegs *sst = (SstRegs *) sstbase;
 
-    info->fbiMemSize = fbiMemSize(sstbase);
-
+  info->fbiMemSize = fbiMemSize(sstbase);
+  
 	/* Detect board identification and memory speed */
 	if(GETENV(("SSTV2_FBICFG")))
-        SSCANF(GETENV(("SSTV2_FBICFG")), "%i", &info->fbiConfig);
-    else
+    SSCANF(GETENV(("SSTV2_FBICFG")), "%i", &info->fbiConfig);
+  else
 		info->fbiConfig = (IGET(sst->fbiInit3) & SST_FBI_MEM_TYPE) >>
 			SST_FBI_MEM_TYPE_SHIFT;
-
+  
 	info->fbiBoardID = (IGET(sst->fbiInit5) >> 5) & 0xf;
 	if(IGET(sst->fbiInit7) & BIT(0))
 		info->fbiBoardID |= 0x10;
-
+  
 	/* Detect scanline interleaving */
 	info->sliPaired   = sst1InitSliPaired(sstbase);
-	info->sliDetected = sst1InitSliDetect(sstbase);
-
-    return FXTRUE;
+  info->sliDetected = sst1InitSliDetect(sstbase);
+  
+  return FXTRUE;
 }
 
 /*
@@ -641,7 +641,9 @@ FxBool sst1InitFillDeviceInfo(FxU32 *sstbase, sst1DeviceInfoStruct *info)
 	        INIT_PRINTF(("ICS ICS5342\n"));
 	    else if(info->fbiVideoDacType == SST_FBI_DACTYPE_TI)
 	        INIT_PRINTF(("TI TVP3409\n"));
-	    else
+	    else if(info->fbiVideoDacType == SST_FBI_DACTYPE_PROXY)
+                INIT_PRINTF(("(SLI PROXY)\n"));
+            else
 	        INIT_PRINTF(("Unknown\n"));
 	}
     INIT_PRINTF(("sst1DeviceInfo: SLI Detected:%d\n", info->sliDetected));

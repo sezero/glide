@@ -88,7 +88,8 @@ void setLevel(int level, int value)
 
 
 #ifndef KERNEL_NT
-// we need to call a kernal printf. 
+// when the simulator runs in kernal mode there is no C runtime library
+// so we need to call a kernal printf. 
 extern int __cdecl klvfprintf(FILE        *stream,
                               const char  *format,
                               va_list      arg    ) ;
@@ -97,7 +98,7 @@ extern int __cdecl klvfprintf(FILE        *stream,
 static FILE *gdbg_msgfile;	// GDBG info/error file
 #else /* #ifdef KERNEL */
 
-static FILE *gdbg_msgfile = NULL; /*stdout;*/	// GDBG info/error file
+static FILE *gdbg_msgfile = NULL; /* stdout; */	// GDBG info/error file
 
 //----------------------------------------------------------------------
 // initialize gdbg_level from an environment variable
@@ -160,6 +161,7 @@ gdbg_init(void)
     /* I can't init gdbg_msgfile to stdout since it isn't constant so
      * I do it now */
     gdbg_msgfile = stdout;
+    
 
 #if __MWERKS__
 	SIOUXSettings.standalone 				= false;

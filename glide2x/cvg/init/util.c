@@ -18,6 +18,7 @@
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
+**
 ** $Revision$ 
 ** $Date$ 
 **
@@ -39,6 +40,8 @@
 #include <fxdll.h>
 #include <sst1vid.h>
 #include <sst1init.h>
+
+#include "canopus.h"
 
 /*
 ** sst1InitIdle():
@@ -90,38 +93,57 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitIdle(FxU32 *sstbase)
     return(FXTRUE);
 }
 
-FX_EXPORT FxBool FX_CSTYLE sst1InitIdleWithTimeout(FxU32 *sstbase,
-   FxU32 timeout)
+static FxBool
+sst1InitIdleWithTimeoutLoop(FxU32 *sstbase, FxBool issueNOP, FxU32 timeout)
 {
-    int retVal;
+  FxU32 cntr, loop;
+  SstRegs *sst = (SstRegs *) sstbase;
+  
+  if(issueNOP) ISET(sst->nopCMD, 0x0);
 
-    if(!sstbase)
-        return(FXFALSE);
+  cntr = loop = 0;
+  while(++loop < timeout) {
+    if(!(sst1InitReturnStatus(sstbase) & SST_BUSY)) {
+      if(++cntr >= 3)
+        break;
+    } else
+      cntr = 0;
+  }
 
-    if(sst1InitCheckBoard(sstbase) == FXFALSE)
-        return(FXFALSE);
+  return (loop < timeout);
+}
 
-    if(sst1CurrentBoard->sliSlaveVirtAddr == (FxU32 *) NULL)
-        // SLI not enabled...
-        retVal = sst1InitIdleWithTimeoutLoop(sstbase, FXTRUE, timeout);
-    else {
-        // Check idle for Master...
-        if(!sst1InitIdleWithTimeoutLoop(sstbase, FXTRUE, timeout))
-           return(FXFALSE);
-
-        // Check idle for Slave...
-        // Note that the Slave does not need another NOP command, because
-        // it will snoop the NOP command sent to the Master above.
-        // Sending a NOP command to the Slave also confuses the callback
-        // write routines for the command fifo which are not setup to
-        // handle any other base addresses other than the Master's...
-        retVal = sst1InitIdleWithTimeoutLoop(sst1CurrentBoard->sliSlaveVirtAddr,
-          FXFALSE, timeout);
-    }
-    if(!retVal)
-       return(FXFALSE);
-    else
-       return(FXTRUE);
+FxBool 
+sst1InitIdleFBIWithTimeout(FxU32 *sstbase, FxBool issueNop, FxU32 timeout)
+{
+  int retVal;
+  
+  if(!sstbase)
+    return(FXFALSE);
+  
+  if(!sst1InitCheckBoard(sstbase))
+    return(FXFALSE);
+  
+  if(sst1CurrentBoard->sliSlaveVirtAddr == (FxU32 *) NULL) {
+    // SLI not enabled...
+    retVal = sst1InitIdleWithTimeoutLoop(sstbase, issueNop, timeout);
+  } else {
+    // Check idle for Master...
+    if(!sst1InitIdleWithTimeoutLoop(sstbase, issueNop, timeout))
+      return(FXFALSE);
+    
+    // Check idle for Slave...
+    // Note that the Slave does not need another NOP command, because
+    // it will snoop the NOP command sent to the Master above.
+    // Sending a NOP command to the Slave also confuses the callback
+    // write routines for the command fifo which are not setup to
+    // handle any other base addresses other than the Master's...
+    retVal = sst1InitIdleWithTimeoutLoop(sst1CurrentBoard->sliSlaveVirtAddr,
+                                         FXFALSE, 
+                                         timeout);
+  }
+  
+  return retVal;
 }
 
 FX_EXPORT FxBool FX_CSTYLE sst1InitIdleNoNOP(FxU32 *sstbase)
@@ -175,28 +197,6 @@ void sst1InitIdleLoop(FxU32 *sstbase, FxBool issueNOP)
         } else
             cntr = 0;
     }
-}
-
-int sst1InitIdleWithTimeoutLoop(FxU32 *sstbase, FxBool issueNOP, FxU32 timeout)
-{
-    FxU32 cntr, loop;
-    SstRegs *sst = (SstRegs *) sstbase;
-
-    if(issueNOP)
-        ISET(sst->nopCMD, 0x0);
-
-    cntr = loop = 0;
-    while(++loop < timeout) {
-        if(!(sst1InitReturnStatus(sstbase) & SST_BUSY)) {
-            if(++cntr >= 3)
-                break;
-        } else
-            cntr = 0;
-    }
-    if(loop >= timeout)
-        return(0);
-    else
-        return(1);
 }
 
 void sst1InitPciFifoIdleLoop(FxU32 *sstbase)
@@ -342,6 +342,10 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitVgaPassCtrl(FxU32 *sstbase, FxU32 enable)
     if(sst1InitCheckBoard(sstbase) == FXFALSE)
         return(FXFALSE);
 
+    //if (sst1CurrentBoard->singleBrdSLISlave) {
+    //  enable = 1;
+    //}
+
     if(enable) {
         // VGA controls monitor
         ISET(sst->fbiInit0, (IGET(sst->fbiInit0) & ~SST_EN_VGA_PASSTHRU) | 
@@ -364,69 +368,112 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitVgaPassCtrl(FxU32 *sstbase, FxU32 enable)
 */
 FX_EXPORT FxBool FX_CSTYLE sst1InitResetTmus(FxU32 *sstbase)
 {
-   SstRegs *sst = (SstRegs *) sstbase;
-   FxU32 fbiInit3, i, cntr = 0;
-   int j;
-   FxU32 allowTexturing = (GETENV(("SSTV2_TEXMAP_DISABLE"))) ? 0 : 1;
+  volatile int delay;
+  SstRegs *sst = (SstRegs *) sstbase;
+  FxU32 allowTexturing = (GETENV(("SSTV2_TEXMAP_DISABLE"))) ? 0 : 1;
 
-   if(!sst)
-       return(FXFALSE);
+  if(!sst)
+      return(FXFALSE);
 
-   if(sst1InitCheckBoard(sstbase) == FXFALSE)
-       return(FXFALSE);
+  if(sst1InitCheckBoard(sstbase) == FXFALSE)
+      return(FXFALSE);
 
-   fbiInit3 = IGET(sst->fbiInit3);
-   while(++cntr < 6) {
-      // Ignore stalls on FT Bus
-      ISET(sst->fbiInit3, fbiInit3 | SST_TEXMAP_DISABLE);
-      for(i=0; i<3; i++) sst1InitReturnStatus(sstbase);
+  // Ignore stalls on FT Bus
+  ISET(sst->fbiInit3, IGET(sst->fbiInit3) | SST_TEXMAP_DISABLE);
+  // Delay
+  for(delay=0;delay<10000;)
+    delay++;
+
+//   while(++cntr < 6) {
+
+    INIT_PRINTF(("sst1InitResetTmus(): Reset Graphics "));
+
+    do
+    {
+      INIT_PRINTF(("."));
 
       // Set Default initialization values for all TMUs...
-      for(j=0; j<3; j++) {
-         ISET(SST_TREX(sst,j)->trexInit0, sst1CurrentBoard->tmuInit0[j]);
-         for(i=0; i<3; i++) sst1InitReturnStatus(sstbase);
-      }
-      for(j=0; j<3; j++) {
-         ISET(SST_TREX(sst,j)->trexInit1, sst1CurrentBoard->tmuInit1[j]);
-         for(i=0; i<3; i++) sst1InitReturnStatus(sstbase);
-      }
+      ISET(SST_TREX(sst,0)->trexInit0, sst1CurrentBoard->tmuInit0[0]);
+      ISET(SST_TREX(sst,1)->trexInit0, sst1CurrentBoard->tmuInit0[1]);
+      // Delay
+      for(delay=0;delay<10000;)
+        delay++;
+
+      ISET(SST_TREX(sst,0)->trexInit1, sst1CurrentBoard->tmuInit1[0]);
+      ISET(SST_TREX(sst,1)->trexInit1, sst1CurrentBoard->tmuInit1[1]);
+      // Delay
+      for(delay=0;delay<10000;)
+        delay++;
 
       // Reset TMU FIFOs and graphics core for all TMUs...
-      for(j=0; j<3; j++) {
-         ISET(SST_TREX(sst,j)->trexInit1, sst1CurrentBoard->tmuInit1[j] |
-            SST_TEX_RESET_FIFO | SST_TEX_RESET_GRX);
-         for(i=0; i<3; i++) sst1InitReturnStatus(sstbase);
-      }
-      // Allow reset to propogate
-      for(i=0; i<10; i++) sst1InitReturnStatus(sstbase);
+      ISET(SST_TREX(sst,0)->trexInit1, sst1CurrentBoard->tmuInit1[0] | SST_TEX_RESET_FIFO | SST_TEX_RESET_GRX);
+      ISET(SST_TREX(sst,1)->trexInit1, sst1CurrentBoard->tmuInit1[1] | SST_TEX_RESET_FIFO | SST_TEX_RESET_GRX);
+      // Delay
+      for(delay=0;delay<10000;)
+        delay++;
 
-      // Deassert resets.  Start with upstream TMU and work down...
-      for(j=2; j >= 0; j--) {
-         ISET(SST_TREX(sst,j)->trexInit1, sst1CurrentBoard->tmuInit1[j]);
-         // Allow unreset to propogate
-         for(i=0; i<10; i++) sst1InitReturnStatus(sstbase);
-      }
+      ISET(SST_TREX(sst,1)->trexInit1, sst1CurrentBoard->tmuInit1[1]);
+
+      // Allow unreset to propagate backwards...
+      // Delay
+      for(delay=0;delay<10000;)
+        delay++;
+
+      ISET(SST_TREX(sst,0)->trexInit1, sst1CurrentBoard->tmuInit1[0]);
+      // Delay
+      for(delay=0;delay<10000;)
+        delay++;
 
       // Reset in the downstream TMU may cause glitches in FBI's TF FIFO
       // Waiting for Idle in FBI will not stall on something in the TF FIFO,
       // as the TF FIFO empty signal is not part of FBI's "busy" bit
-      sst1InitIdleFBI(sstbase);
+//      sst1InitIdleFBIWithTimeout(sstbase, FXTRUE, 100000);
       sst1InitResetFbi(sstbase);
+/*
+      fbiInit0 = IGET(sst->fbiInit0) | SST_GRX_RESET | SST_PCI_FIFO_RESET;
 
-      if(allowTexturing) {
-         ISET(sst->fbiInit3, fbiInit3 & ~SST_TEXMAP_DISABLE);
-         for(i=0; i<3; i++) sst1InitReturnStatus(sstbase);
+      ISET(sst->fbiInit0, fbiInit0);
+      // Delay
+      for(delay=0;delay<10000;)
+        delay++;
+
+      fbiInit0 &= ~SST_PCI_FIFO_RESET;
+      ISET(sst->fbiInit0, fbiInit0);
+      // Delay
+      for(delay=0;delay<10000;)
+        delay++;                 
+
+      fbiInit0 &= ~SST_GRX_RESET;
+      ISET(sst->fbiInit0, fbiInit0);
+      // Delay
+      for(delay=0;delay<10000;)
+        delay++;
+*/
+
+      if(allowTexturing)
+      {
+        ISET(sst->fbiInit3, IGET(sst->fbiInit3) & ~SST_TEXMAP_DISABLE);
+        for(delay=0;delay<10000;)
+          delay++;
       }
 
-      if(sst1InitReturnStatus(sstbase) & SST_TREX_BUSY)
-         INIT_PRINTF(("sst1InitResetTmus(): Could not reset TMUs.  Retry #%d...\n", cntr));
-      else
-         break;
-   }
-   if(cntr == 6) {
-       INIT_PRINTF(("sst1InitResetTmus(): Could not reset TMUs...\n"));
-       return(FXFALSE);
-   }
+      delay = 0;
+
+      while( sst1InitReturnStatus(sstbase) & (SST_TMU_BUSY | SST_FBI_BUSY) && (delay < 50000) )
+        delay++;
+
+    }while( delay == 50000 );
+
+    INIT_PRINTF(("\n"));
+        
+//         INIT_PRINTF(("sst1InitResetTmus(): Could not reset graphics (0x%08lx)\n", ret));
+//      else
+//         break;
+//   }
+//   if(cntr == 6) {
+//       INIT_PRINTF(("sst1InitResetTmus(): Could not reset TMUs...\n"));
+//       return(FXFALSE);
+//   }
 
    // Fix problem where first Texture downloads to TMU weren't being
    //  received properly
@@ -443,23 +490,39 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitResetTmus(FxU32 *sstbase)
 */
 FX_EXPORT FxBool FX_CSTYLE sst1InitResetFbi(FxU32 *sstbase)
 {
-   SstRegs *sst = (SstRegs *) sstbase;
+  volatile delay;
+//  int i;
+  FxU32 fbiInit0;
+  SstRegs *sst = (SstRegs *) sstbase;
+/*
+  for(i=0;i<20000;i++) sst1InitReturnStatus(sstbase);
+  ISET(sst->fbiInit0, IGET(sst->fbiInit0) | SST_GRX_RESET | SST_PCI_FIFO_RESET);
+  for(i=0;i<20000;i++) sst1InitReturnStatus(sstbase);
+  ISET(sst->fbiInit0, IGET(sst->fbiInit0) & ~SST_PCI_FIFO_RESET);
+  for(i=0;i<20000;i++) sst1InitReturnStatus(sstbase);
+  ISET(sst->fbiInit0, IGET(sst->fbiInit0) & ~SST_GRX_RESET);
+  for(i=0;i<20000;i++) sst1InitReturnStatus(sstbase);
+*/
+  fbiInit0 = IGET(sst->fbiInit0) | SST_GRX_RESET | SST_PCI_FIFO_RESET;
 
-   ISET(sst->fbiInit0, IGET(sst->fbiInit0) | SST_GRX_RESET |
-      SST_PCI_FIFO_RESET);
-   sst1InitReturnStatus(sstbase);
-   sst1InitReturnStatus(sstbase);
-   sst1InitReturnStatus(sstbase);
-   ISET(sst->fbiInit0, IGET(sst->fbiInit0) & ~SST_PCI_FIFO_RESET);
-   sst1InitReturnStatus(sstbase);
-   sst1InitReturnStatus(sstbase);
-   sst1InitReturnStatus(sstbase);
-   ISET(sst->fbiInit0, IGET(sst->fbiInit0) & ~SST_GRX_RESET);
-   sst1InitReturnStatus(sstbase);
-   sst1InitReturnStatus(sstbase);
-   sst1InitReturnStatus(sstbase);
+  ISET(sst->fbiInit0, fbiInit0);
+  // Delay
+  for(delay=0;delay<10000;)
+    delay++;
 
-   return(FXTRUE);
+  fbiInit0 &= ~SST_PCI_FIFO_RESET;
+  ISET(sst->fbiInit0, fbiInit0);
+  // Delay
+  for(delay=0;delay<10000;)
+    delay++;                 
+
+  fbiInit0 &= ~SST_GRX_RESET;
+  ISET(sst->fbiInit0, fbiInit0);
+  // Delay
+  for(delay=0;delay<10000;)
+    delay++;
+
+  return(FXTRUE);
 }
 
 #if SET_BSWAP
@@ -646,7 +709,8 @@ FX_ENTRY FxBool FX_CALL sst1InitCmdFifo(FxU32 *sstbase, FxBool enable,
 **
 ** sst1InitCmdFifoDirect():
 **   Explicitly initialize Command FIFO.  This routine is typically not 
-**   called directly from apps.
+**   called directly from apps, but is included so that csim diags can
+**   call it directly.
 **
 **   The 'start' and 'size' parameters are specified in bytes.
 **   The 'which' parameter is not used, but is included for H3 compatibility.
@@ -1013,7 +1077,7 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitCalcTClkDelay(FxU32 *sstbase,
       (sst1CurrentBoard->tmuInit1[tmuNumber] & ~SST_TEX_TF_CLK_DEL_ADJ) |
       (tClkDelay<<SST_TEX_TF_CLK_DEL_ADJ_SHIFT));
 
-   if(sst1InitIdleWithTimeout(sstbase, 10000) == FXFALSE)
+   if(!sst1InitIdleFBIWithTimeout(sstbase, FXTRUE, 10000))
       return(FXFALSE);
 
    // Reset pixel stat registers
@@ -1027,7 +1091,7 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitCalcTClkDelay(FxU32 *sstbase,
    sst1InitCheckTmuMemConst(sstbase, tmuNumber, 0x5a5a5a);
    sst1InitCheckTmuMemConst(sstbase, tmuNumber, 0xa5a5a5);
 
-   if(sst1InitIdleWithTimeout(sstbase, 10000) == FXFALSE)
+   if(!sst1InitIdleFBIWithTimeout(sstbase, FXTRUE, 10000))
       return(FXFALSE);
 
    if(IGET(sst->stats.fbiChromaFail))

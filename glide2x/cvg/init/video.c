@@ -18,6 +18,7 @@
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
+**
 ** $Revision$ 
 ** $Date$ 
 **
@@ -40,6 +41,12 @@
 #define SST1INIT_VIDEO_ALLOCATE // allocate data structures for video timing
 #include <sst1vid.h>
 #include <sst1init.h>
+
+#ifdef H3D
+#include <h3dglide.h>
+#endif
+
+#include "canopus.h"
 
 /*
 ** sst1InitVideo():
@@ -79,7 +86,7 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitVideo(FxU32 *sstbase,
       memSizeInPages = 512;
     else
       memSizeInPages = 1024;
-    if(sst1CurrentBoard->sliDetected)
+    if(sst1CurrentBoard->sliDetected) 
       memSizeInPages <<= 1;
 
     // Do we have enough memory for the desired resolution?
@@ -516,6 +523,24 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitVideoBuffers(FxU32 *sstbase,
     // TMUs, as well as reset FBI and TMU...
     sst1InitResetTmus(sstbase);
 
+    /* If we're running on a canopus board we now have to calculate
+     * the actual final clock delays and set them otherwise the video
+     * reset is going to wait forever because the hw is never going to
+     * become idle waiting for pixels from the tmu's.  
+     */
+    if (sst1CurrentBoard->fbiBoardID == CANOPUS_ID) {
+      // Setup graphics clock to 90 MHz for clockdelay measurement
+      if (!sst1SetGrxClk_Canopus(sstbase, 90))
+        return(FXFALSE);
+
+      // Calculate final clock delay values...
+      if(!sst1InitSetClkDelays(sstbase)) {
+        INIT_PRINTF(("sst1InitVideo() ERROR: Could not calculate clock delay values...\n"));
+        return(FXFALSE);
+      }
+    }
+
+
     // Setup graphics clock
     if(sst1InitGrxClk(sstbase) == FXFALSE)
         return(FXFALSE);
@@ -784,6 +809,8 @@ FxBool sst1InitSetVidMode(FxU32 *sstbase, FxU32 video16BPP)
            return(sst1InitSetVidModeATT(sstbase, video16BPP));
         else if(sst1CurrentBoard->fbiVideoDacType == SST_FBI_DACTYPE_ICS)
            return(sst1InitSetVidModeICS(sstbase, video16BPP));
+        else if(sst1CurrentBoard->fbiVideoDacType == SST_FBI_DACTYPE_PROXY)
+           return(FXTRUE); /* single board SLI - jeske */
         else
             return(FXFALSE);
     }
@@ -850,6 +877,8 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitSetVidClk(FxU32 *sstbase, float vidClkFreq)
        return(sst1InitSetVidClkATT(sstbase, &vidClkTiming));
     else if(sst1CurrentBoard->fbiVideoDacType == SST_FBI_DACTYPE_ICS)
        return(sst1InitSetVidClkICS(sstbase, &vidClkTiming));
+    else if(sst1CurrentBoard->fbiVideoDacType == SST_FBI_DACTYPE_PROXY)
+       return(FXTRUE); /* single board sli - jeske */
     else
         return(FXFALSE);
 }
@@ -866,6 +895,7 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitSetGrxClk(FxU32 *sstbase,
 {
     FxBool retVal = FXFALSE;
     int helper = (GETENV(("SSTV2_DEBUGDAC"))) ? 1 : 0;
+    SstRegs *sst = (SstRegs *) sstbase;
 
     if(helper)
         INIT_PRINTF(("sst1InitSetGrxClk(): Entered...\n"));
@@ -881,6 +911,37 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitSetGrxClk(FxU32 *sstbase,
            retVal = sst1InitSetGrxClkATT(sstbase, sstGrxClk);
         else if(sst1CurrentBoard->fbiVideoDacType == SST_FBI_DACTYPE_ICS)
            retVal = sst1InitSetGrxClkICS(sstbase, sstGrxClk);
+        else if(sst1CurrentBoard->fbiVideoDacType == SST_FBI_DACTYPE_PROXY) {
+           /* single board SLI - jeske*/
+           FxU32 i;
+
+           /* Reset graphics unit before we change grx clk */
+           ISET(sst->fbiInit0, IGET(sst->fbiInit0) |
+                (SST_GRX_RESET | SST_PCI_FIFO_RESET));
+           sst1InitIdleFBINoNOP(sstbase);
+
+
+           for (i=0;i<boardsInSystem;i++) {
+               if ((i > 0) && (&sst1BoardInfo[i] == sst1CurrentBoard)) {
+                  retVal = sst1InitSetGrxClk((FxU32 *)sst1BoardInfo[i-1].virtAddr[0],
+                       sstGrxClk);
+                  break;
+               }
+           }
+
+           /* Wait for graphics clock to stabilize */
+           { int n;
+           for(n=0; n<200000; n++)
+             sst1InitReturnStatus(sstbase);
+           
+           /* Unreset PCI FIFO and graphic subsystem */
+           ISET(sst->fbiInit0, IGET(sst->fbiInit0) & ~SST_PCI_FIFO_RESET);
+           sst1InitIdleFBINoNOP(sstbase);
+           ISET(sst->fbiInit0, IGET(sst->fbiInit0) & ~SST_GRX_RESET);
+           sst1InitIdleFBINoNOP(sstbase);
+           }
+           
+        }
     }
     if(retVal == FXFALSE)
         return(FXFALSE);
@@ -1111,6 +1172,45 @@ sst1InitFindVideoTimingStruct(GrScreenResolution_t screenResolution,
              return(&SST_VREZ_1024X768_60);
           break;
 
+#ifdef H3D
+        /*  In the following cases, sli can't handle line doubled LD modes  */
+        /*  therefore, we need to return a non-line doubled mode if we're   */
+        /*  sli-ing                                                         */
+      
+        case (GR_RESOLUTION_640x240_AUTOFLIPPED):
+        case (GR_RESOLUTION_640x480_AUTOFLIPPED):
+          if (sst1CurrentBoard->sliDetected)
+            return(&SST_VREZ_640X960_60);
+          else
+            return(&SST_VREZ_640X960LD_60);
+          break;
+
+        case (GR_RESOLUTION_800x300_AUTOFLIPPED):
+        case (GR_RESOLUTION_800x600_AUTOFLIPPED):
+          if (sst1CurrentBoard->sliDetected)
+            return(&SST_VREZ_800X630_60);
+          else
+            return(&SST_VREZ_800X1200LD_45);
+          break;
+
+        case (GR_RESOLUTION_960x360_AUTOFLIPPED):
+        case (GR_RESOLUTION_960x720_AUTOFLIPPED):
+          if (sst1CurrentBoard->sliDetected)
+            return(&SST_VREZ_960X742_60);
+          else
+            return((sst1VideoTimingStruct *) NULL);             
+          break;
+
+        case (GR_RESOLUTION_1024x384_AUTOFLIPPED):
+        case (GR_RESOLUTION_1024x768_AUTOFLIPPED):
+          if (sst1CurrentBoard->sliDetected)
+            return(&SST_VREZ_1024X768_60);
+          else
+            return((sst1VideoTimingStruct *) NULL);             
+          break;
+
+#endif
+
         default:
           INIT_PRINTF(("sst1InitFindVideoTimingStruc(): Unsupported Resolution...\n"));
           return((sst1VideoTimingStruct *) NULL);
@@ -1152,6 +1252,14 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitMonitorDetect(FxU32 *sstbase)
 
    if(sst1InitCheckBoard(sstbase) == FXFALSE)
        return(FXFALSE);
+
+   /* check to see if we are a single board SLI slave, and if
+    * so, then don't detect a monitor - jeske
+    */
+   //if (sst1CurrentBoard->singleBrdSLISlave) {
+   //   sst1CurrentBoard->monitorDetected = 0;
+   //   return (FXTRUE);
+   // }
 
    if(GETENV(("SSTV2_MDETECT_CONST"))) {
      SSCANF(GETENV(("SSTV2_MDETECT_CONST")), "%i", &gammaCorrectConstant);
@@ -1256,39 +1364,50 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitSetClkDelays(FxU32 *sstbase)
    else
       ft_clkdel = 0x4;
 
-   // TF2 Clock Delay...
-   if(sst1CurrentBoard->numberTmus > 2) {
-      if(sst1InitCalcTClkDelay(sstbase, 2, 11) == FXTRUE)
+   {
+     const char
+       *tf2Str = GETENV("SSTV2_INIT_TF2_RESET_DELAY"),
+       *tf1Str = GETENV("SSTV2_INIT_TF1_RESET_DELAY"),
+       *tf0Str = GETENV("SSTV2_INIT_TF0_RESET_DELAY");
+     const FxU32
+       tf2 = ((tf2Str == NULL) ? 11 : atoi(tf2Str)),
+       tf1 = ((tf1Str == NULL) ? 11 : atoi(tf1Str)),
+       tf0 = ((tf0Str == NULL) ?  9 : atoi(tf0Str));
+
+     // TF2 Clock Delay...
+     if(sst1CurrentBoard->numberTmus > 2) {
+       if(sst1InitCalcTClkDelay(sstbase, 2, tf2) == FXTRUE)
          // Test failed.  Fast process TMUs...
          tf2_clkdel = 0x7;
-      else
+       else
          tf2_clkdel = 0x6;
-   } else 
-      tf2_clkdel = 0x6;
-
-   // TF1 Clock Delay...
-   if(sst1CurrentBoard->numberTmus > 1) {
-      if(sst1InitCalcTClkDelay(sstbase, 1, 11) == FXTRUE)
+     } else 
+       tf2_clkdel = 0x6;
+     
+     // TF1 Clock Delay...
+     if(sst1CurrentBoard->numberTmus > 1) {
+       if(sst1InitCalcTClkDelay(sstbase, 1, tf1) == FXTRUE)
          // Test failed.  Fast process TMUs...
          tf1_clkdel = 0x7;
-      else
+       else
          tf1_clkdel = 0x6;
-   } else 
-      tf1_clkdel = 0x6;
-
-   // Reset FBI & TMU, and put TF1 clock delay value back to default...
-   if(sst1InitResetTmus(sstbase) == FXFALSE) {
-      INIT_PRINTF(("sst1InitSetClkDelays() ERROR(1): Could not reset TMUs...\n"));
-      return(FXFALSE);
+     } else 
+       tf1_clkdel = 0x6;
+     
+     // Reset FBI & TMU, and put TF1 clock delay value back to default...
+     if(sst1InitResetTmus(sstbase) == FXFALSE) {
+       INIT_PRINTF(("sst1InitSetClkDelays() ERROR(1): Could not reset TMUs...\n"));
+       return(FXFALSE);
+     }
+     
+     // TF0 Clock Delay...
+     if(sst1InitCalcTClkDelay(sstbase, 0, tf0) == FXTRUE)
+       // Test failed.  Fast process TMUs...
+       tf0_clkdel = 0x7;
+     else
+       tf0_clkdel = 0x6;
    }
-
-   // TF0 Clock Delay...
-   if(sst1InitCalcTClkDelay(sstbase, 0, 9) == FXTRUE)
-      // Test failed.  Fast process TMUs...
-      tf0_clkdel = 0x7;
-   else
-      tf0_clkdel = 0x6;
-
+     
    // Reset FBI & TMU, and put TF0 clock delay value back to default...
    if(sst1InitResetTmus(sstbase) == FXFALSE) {
       INIT_PRINTF(("sst1InitSetClkDelays() ERROR(2): Could not reset TMUs...\n"));
