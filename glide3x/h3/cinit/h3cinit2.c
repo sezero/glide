@@ -102,26 +102,7 @@ static void fill_crt (FxU16 *reg)
  *   h3InitFindVideoMode(xRes, yRes, refresh);
  * only `refresh' is approximated.
  */
-static FxU16 *h3ScanVideoMode (FxU32 xRes, FxU32 yRes, FxU32 refresh)
-{
- int i = 0;
- int best = -1;
- FxU32 error = -1;
-
- while (mode_table[i][0] != 0) {
-       if ((mode_table[i][0] == xRes) && (mode_table[i][1] == yRes)) {
-          FxU32 d = abs(mode_table[i][2] - refresh);
-          if (error > d) {
-             error = d;
-             best = i;
-          }
-       }
-
-       i++;
- }
-
- return (best == -1) ? NULL : (&mode_table[best][3]);
-}
+extern FxU16 *h3InitFindVideoMode (FxU32 xRes, FxU32 yRes, FxU32 refresh);
 
 /* This is basically just:
  *   h3InitSetVideoMode(regBase, xRes, yRes, refresh, FXFALSE);
@@ -131,7 +112,7 @@ FxBool h3VideoMode (FxU32 regBase, FxU32 xRes, FxU32 yRes, FxU32 refresh)
 {
  int i;
  FxU16 vdispend;
- FxU16 *rs = h3ScanVideoMode(xRes, yRes, refresh);
+ FxU16 *rs = h3InitFindVideoMode(xRes, yRes, refresh);
  FxU32 vidProcCfg;
 
  if (rs == NULL) {
