@@ -31,6 +31,7 @@
 #include <stdlib.h>
 
 #if defined(__WATCOMC__)
+#include <conio.h>
 #define _inp inp
 #define _outp outp
 #define _outpw outpw
