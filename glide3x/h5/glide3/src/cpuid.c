@@ -3,6 +3,9 @@
  *
  * $Header$
  * $Log$
+ * Revision 1.1.2.5  2003/07/01 11:16:42  dborca
+ * fixed  a bug in GNUC code when running Intel; also removed detritus
+ *
  * Revision 1.1.2.3  2003/06/13 07:22:58  dborca
  * more fixes to NASM sources
  *
@@ -58,7 +61,7 @@ typedef unsigned long word32;
 #endif
 
 
-
+#ifndef __WIN32__
 static jmp_buf j;
 
 
@@ -107,6 +110,7 @@ static int check_feature (int feature)
     return feature;
  }
 }
+#endif
 
 
 
@@ -119,6 +123,7 @@ static int check_feature (int feature)
  */
 static int has_feature (int feature)
 {
+#ifndef __WIN32__
  int rv;
 
  /* register signal handlers */
@@ -129,6 +134,24 @@ static int has_feature (int feature)
  /* restore the signal handlers */
  signal(SIGILL, old_sigill);
  return rv;
+#else
+ /* Use the non-standard __try/__except mechanism because win95 fails to catch
+  * sigillegal for SSE using standard signal mechanism. 
+  */
+#define _TRY() __try {
+#define _EXCEPTION() } __except(1) { return 0; } /* EXCEPTION_EXECUTE_HANDLER=1 */
+ switch (feature) {
+	case _CPU_HAS_CPUID:         _TRY() TEST_CPUID(0)    _EXCEPTION() break;
+    case _CPU_FEATURE_SSE:       _TRY() TEST_SSE()       _EXCEPTION() break;
+    case _CPU_FEATURE_SSE2:      _TRY() TEST_SSE2()      _EXCEPTION() break;
+    case _CPU_FEATURE_3DNOW:     _TRY() TEST_3DNOW()     _EXCEPTION() break;
+    case _CPU_FEATURE_MMX:       _TRY() TEST_MMX()       _EXCEPTION() break;
+    case _CPU_FEATURE_3DNOWPLUS: _TRY() TEST_3DNOWPLUS() _EXCEPTION() break;
+    case _CPU_FEATURE_MMXPLUS:   _TRY() TEST_MMXPLUS()   _EXCEPTION() break;
+    default: return 0;
+ }
+ return feature;
+#endif
 }
 
 
