@@ -52,9 +52,9 @@ GLIDE_DEBUG_GCFLAGS = -g -O
 GLIDE_DEBUG_GDEFS = -DGDBG_INFO_ON -DGLIDE_DEBUG
 else
 ifeq ("@FX_GLIDE_BUILD_ARCHITECTURE@","alpha")
-GLIDE_DEBUG_GCFLAGS = -O2 -mcpu=ev6 
+GLIDE_DEBUG_GCFLAGS = -O2 -mcpu=ev5
 GLIDE_DEBUG_GDEFS = -fomit-frame-pointer \
-	                -fexpensive-optimizations -ffast-math -DBIG_OPT
+	                -fexpensive-optimizations -mieee -DBIG_OPT
 else
 ifeq ("@FX_GLIDE_BUILD_ARCHITECTURE@","ia64")
 GLIDE_DEBUG_GCFLAGS = -O3
