@@ -1232,8 +1232,8 @@ _txImgQuantizeDXAlpha3(FxU16* dst, const FxU32* src,
                 else if (rawAlpha > testA7) FX_SET64(bitVal, 0x00UL, 0x07UL); /* encoded to bitcode 111 */
                 else                        FX_SET64(bitVal, 0x00UL, 0x01UL); /* encoded to bitcode 001 */
                 /* the *decoded* result will be
-                 * 0x00UL (bitcode 000) -> alpha0 = maxAlpha = 0xFFUL (255)
-                 * 0x01UL (bitcode 001) -> alpha1 = minAlpha = 0x00UL (0)
+                 * 0x00UL (bitcode 000) -> alpha0 = maxAlpha
+                 * 0x01UL (bitcode 001) -> alpha1 = minAlpha
                  * 0x02UL (bitcode 010) -> alpha2 = 6/7 alpha0 + 1/7 alpha1
                  * 0x03UL (bitcode 011) -> alpha3 = 5/7 alpha0 + 2/7 alpha1
                  * 0x04UL (bitcode 100) -> alpha4 = 4/7 alpha0 + 3/7 alpha1
