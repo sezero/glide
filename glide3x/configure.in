@@ -149,7 +149,7 @@ AC_ARG_ENABLE([build-architecture],
                *)
                    AC_MSG_ERROR([Illegal value (${enableval}) for --enable-build-architecture])
                    ;;
-               esac],[enable_build_architecture=`uname -m`])
+               esac],[FX_GLIDE_BUILD_ARCHITECTURE=`uname -m`])
 AC_SUBST(FX_GLIDE_BUILD_ARCHITECTURE)
 #
 # Various tests needed at points in the build
