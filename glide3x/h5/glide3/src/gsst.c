@@ -3346,11 +3346,6 @@ GR_DIENTRY(grSelectContext, FxBool , (GrContext_t context) )
         GR_ASSERT((gc >= _GlideRoot.GCs) &&
                   (gc <= _GlideRoot.GCs + MAX_NUM_SST));
 
-// Need context checking in XP. Should this effect windowed contexts as well??
-#if WINXP_ALT_TAB_FIX
-        hwcQueryContextXP(gc->bInfo); 
-#endif
-
 #ifdef GLIDE_INIT_HWC
         gc->contextP = !(*gc->lostContext) ;
 #else

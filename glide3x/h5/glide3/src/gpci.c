@@ -1865,7 +1865,6 @@ _GlideInitEnvironment(int which)
   
   _GlideRoot.environment.useAppGamma  = GLIDE_GETENV("FX_GLIDE_USE_APP_GAMMA", GC.bInfo->RegPath, 1L);
 
-
   /* Get CPU Info */
   _cpuid (&_GlideRoot.CPUType);
 

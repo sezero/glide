@@ -3035,14 +3035,6 @@ assertDefaultState( void );
 
 #include <assert.h>
 
-#if WINXP_ALT_TAB_FIX
-#define HWCQUERYCONTEXTXP() if (!(gc->windowed || hwcQueryContextXP(gc->bInfo))) return;
-#define HWCQUERYCONTEXTXP_RET() if (!(gc->windowed || hwcQueryContextXP(gc->bInfo))) return 0;
-#else /* WINXP_ALT_TAB_FIX */
-#define HWCQUERYCONTEXTXP()
-#define HWCQUERYCONTEXTXP_RET()
-#endif/* WINXP_ALT_TAB_FIX */
-
 #ifdef GLIDE_ALT_TAB
 #define GR_BEGIN_NOFIFOCHECK(name,level) \
                 GR_DCL_GC;      \
@@ -3051,11 +3043,12 @@ assertDefaultState( void );
                 FXUNUSED(hw); \
                 if (!gc) \
                   return; \
-                if (gc->lostContext) { \
-                  if (*gc->lostContext) { \
-                    return;\
+                if (!(gc->windowed)) { \
+                  if (gc->lostContext) { \
+                    if (*gc->lostContext) { \
+                      return;\
+                    }\
                   }\
-                  HWCQUERYCONTEXTXP(); \
                 }
 #define GR_BEGIN_NOFIFOCHECK_RET(name,level) \
                 GR_DCL_GC;      \
@@ -3064,11 +3057,12 @@ assertDefaultState( void );
                 FXUNUSED(hw); \
                 if (!gc) \
                   return 0; \
-                if (gc->lostContext) {\
-                  if (*gc->lostContext) { \
-                      return 0;\
+                if (!(gc->windowed)) { \
+                  if (gc->lostContext) {\
+                    if (*gc->lostContext) { \
+                        return 0;\
+                    }\
                   }\
-                  HWCQUERYCONTEXTXP_RET(); \
                 }
 #define GR_BEGIN_NOFIFOCHECK_NORET(name,level) \
                 GR_DCL_GC;      \
