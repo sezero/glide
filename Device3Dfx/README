@@ -7,10 +7,10 @@ When building for 2.4.x or earlier kernels, just do:
 
 When building this module for 2.6.x kernels, just do:
 
-	$ make -C kbuild modules
+	$ make -C kbuild
 
 If your kernel source is someplace different than /usr/src/linux specify
 the KSRC variable, like:
 
-	$ make -C kbuild KSRC=~/src/linux modules
+	$ make -C kbuild KSRC=~/src/linux
 
