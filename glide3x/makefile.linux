@@ -1,0 +1,349 @@
+# Linux makefile for Glide3(h5)
+#
+#  Copyright (c) 2003 - Borca Daniel
+#  Email : dborca@users.sourceforge.net
+#  Web   : http://www.geocities.com/dborca
+#
+# $Header$
+#
+
+
+#
+#  Available options:
+#
+#    Environment variables:
+#	DRI=1		Build DRI version.
+#			default = no
+#	DGA=1		Build DGA version (experimental).
+#			default = no
+#	XPATH		specify X libraries path; needed by DRI and DGA.
+#			default = /usr/X11/lib
+#	H4=1		Avenger/Napalm.
+#			default = no
+#	CPU		optimize for the given processor.
+#			default = pentium
+#	DEBUG=1		disable optimizations and build for debug.
+#			default = no
+#	USE_X86=1	use assembler triangle specializations.
+#			default = no
+#	USE_3DNOW=1	allow 3DNow! specializations. However, the true CPU
+#			capabilities are still checked at run-time to avoid
+#			crashes.
+#			default = no
+#	USE_MMX=1	(see USE_3DNOW)
+#			default = no
+#	USE_SSE=1	(see USE_3DNOW)
+#			default = no
+#	USE_SSE2=1	(see USE_3DNOW)
+#			default = no
+#
+#    Targets:
+#	all:		build everything
+#	glide3x:	build Glide3x lib
+#	clean:		remove object files
+#	realclean:	remove all generated files
+#
+
+
+
+.PHONY: all glide3x clean realclean
+.INTERMEDIATE: fxgasm gendate fxbldno
+.SUFFIXES: .lo
+
+export PATH := $(PATH):.
+
+###############################################################################
+#	general defines (user settable?)
+###############################################################################
+
+GLIDE_LIB = libglide3.a
+GLIDE_SO  = libglide3.so
+
+FX_GLIDE_HW = h5
+FX_GLIDE_SW = swlibs
+GLIDE_LIBDIR = $(FX_GLIDE_HW)/lib
+
+###############################################################################
+#	tools
+###############################################################################
+
+CC = gcc
+AS = nasm
+AR = ar
+
+LD = gcc
+CP = cp
+
+###############################################################################
+#	defines
+###############################################################################
+
+# platform
+XPATH ?= /usr/X11/lib
+CDEFS = -D__linux__
+ifeq ($(DRI),1)
+CDEFS += -DDRI_BUILD
+LDFLAGS = -L$(XPATH)
+LDLIBS = -lX11
+endif
+ifeq ($(DGA),1)
+CDEFS += -DUSE_XDGA_SWITCH=1
+LDFLAGS = -L$(XPATH)
+LDLIBS = -lX11 -lXext -lXxf86dga
+endif
+
+# general
+CDEFS += -DGLIDE3 -DGLIDE3_ALPHA -DGLIDE_HW_TRI_SETUP=1 -DGLIDE_INIT_HWC -DGLIDE_PACKED_RGB=0 -DGLIDE_PACKET3_TRI_SETUP=1 -DGLIDE_TRI_CULLING=1 -DH3 -DUSE_PACKET_FIFO=1
+
+# subsystem
+ifdef H4
+CDEFS += -DH4
+endif
+ifeq ($(FX_GLIDE_HW),h5)
+CDEFS += -DFX_GLIDE_H5_CSIM=1 -DFX_GLIDE_NAPALM=1
+endif
+
+# debug
+ifdef DEBUG
+CDEFS += -DGDBG_INFO_ON -DGLIDE_DEBUG -DGLIDE_SANITY_ASSERT -DGLIDE_SANITY_SIZE
+endif
+
+# other
+CDEFS += -DGLIDE_PLUG -DGLIDE_SPLASH
+#CDEFS += -DGLIDE_LIB
+
+###############################################################################
+#	flags
+###############################################################################
+
+# librarian
+ARFLAGS = rus
+
+# assembler
+ASFLAGS = -O2 -felf -D__linux__
+ASFLAGS += -I$(FX_GLIDE_HW)/glide3/src
+ASFLAGS += $(CDEFS)
+
+# compiler
+CFLAGS = -Wall -W
+
+ifdef DEBUG
+CFLAGS += -O0 -g
+else
+CPU ?= pentium
+CFLAGS += -O2 -ffast-math -mcpu=$(CPU)
+endif
+
+CFLAGS += -I$(FX_GLIDE_HW)/glide3/src -I$(FX_GLIDE_HW)/incsrc -I$(FX_GLIDE_HW)/minihwc -I$(FX_GLIDE_HW)/cinit
+CFLAGS += -I$(FX_GLIDE_SW)/fxmisc -I$(FX_GLIDE_SW)/newpci/pcilib -I$(FX_GLIDE_SW)/fxmemmap
+CFLAGS += $(CDEFS)
+
+ifeq ($(USE_3DNOW),1)
+CFLAGS += -DGL_AMD3D
+override USE_X86 = 1
+endif
+ifeq ($(USE_MMX),1)
+CFLAGS += -DGL_MMX
+override USE_X86 = 1
+endif
+ifeq ($(USE_SSE),1)
+CFLAGS += -DGL_SSE
+override USE_X86 = 1
+endif
+ifeq ($(USE_SSE2),1)
+CFLAGS += -DGL_SSE2
+override USE_X86 = 1
+endif
+
+ifneq ($(USE_X86),1)
+CFLAGS += -DGLIDE_USE_C_TRISETUP
+endif
+
+###############################################################################
+#	objects
+###############################################################################
+
+GLIDE_OBJECTS = \
+	$(FX_GLIDE_HW)/glide3/src/gsplash.o \
+	$(FX_GLIDE_HW)/glide3/src/g3df.o \
+	$(FX_GLIDE_HW)/glide3/src/gu.o \
+	$(FX_GLIDE_HW)/glide3/src/gthread.o \
+	$(FX_GLIDE_HW)/glide3/src/gpci.o \
+	$(FX_GLIDE_HW)/glide3/src/diglide.o \
+	$(FX_GLIDE_HW)/glide3/src/disst.o \
+	$(FX_GLIDE_HW)/glide3/src/ditex.o \
+	$(FX_GLIDE_HW)/glide3/src/gbanner.o \
+	$(FX_GLIDE_HW)/glide3/src/gerror.o \
+	$(FX_GLIDE_HW)/glide3/src/gaa.o \
+	$(FX_GLIDE_HW)/glide3/src/gdraw.o \
+	$(FX_GLIDE_HW)/glide3/src/gglide.o \
+	$(FX_GLIDE_HW)/glide3/src/distate.o \
+	$(FX_GLIDE_HW)/glide3/src/gstrip.o \
+	$(FX_GLIDE_HW)/glide3/src/distrip.o \
+	$(FX_GLIDE_HW)/glide3/src/diget.o \
+	$(FX_GLIDE_HW)/glide3/src/glfb.o \
+	$(FX_GLIDE_HW)/glide3/src/gsst.o \
+	$(FX_GLIDE_HW)/glide3/src/gtex.o \
+	$(FX_GLIDE_HW)/glide3/src/gtexdl.o \
+	$(FX_GLIDE_HW)/glide3/src/fifo.o
+
+ifeq ($(USE_X86),1)
+GLIDE_OBJECTS += \
+	$(FX_GLIDE_HW)/glide3/src/xdraw2_def.o \
+	$(FX_GLIDE_HW)/glide3/src/xdraw3_def.o
+ifeq ($(USE_3DNOW),1)
+GLIDE_OBJECTS += \
+	$(FX_GLIDE_HW)/glide3/src/xdraw2_3dnow.o \
+	$(FX_GLIDE_HW)/glide3/src/xdraw3_3dnow.o \
+	$(FX_GLIDE_HW)/glide3/src/xtexdl_3dnow.o
+endif
+ifeq ($(USE_MMX),1)
+GLIDE_OBJECTS += \
+	$(FX_GLIDE_HW)/glide3/src/xtexdl_mmx.o
+endif
+ifeq ($(USE_SSE),1)
+GLIDE_OBJECTS += \
+	$(FX_GLIDE_HW)/glide3/src/xdraw2_sse.o \
+	$(FX_GLIDE_HW)/glide3/src/xdraw3_sse.o
+endif
+ifeq ($(USE_SSE2),1)
+GLIDE_OBJECTS += \
+	$(FX_GLIDE_HW)/glide3/src/xtexdl_sse2.o
+endif
+else
+GLIDE_OBJECTS += \
+	$(FX_GLIDE_HW)/glide3/src/gxdraw.o
+endif
+
+GLIDE_OBJECTS += \
+	$(FX_GLIDE_HW)/glide3/src/xtexdl_def.o
+
+GLIDE_OBJECTS += \
+	$(FX_GLIDE_HW)/glide3/src/cpuid.o \
+	$(FX_GLIDE_SW)/newpci/pcilib/fxpci.o \
+	$(FX_GLIDE_SW)/newpci/pcilib/fxlinux.o \
+	$(FX_GLIDE_SW)/fxmisc/linutil.o \
+	$(FX_GLIDE_HW)/minihwc/hwcio.o \
+	$(FX_GLIDE_HW)/minihwc/gdebug.o \
+
+ifeq ($(DRI),1)
+GLIDE_OBJECTS += \
+	$(FX_GLIDE_HW)/minihwc/linhwc.o
+else
+GLIDE_OBJECTS += \
+	$(FX_GLIDE_HW)/cinit/h3cinit.o \
+	$(FX_GLIDE_HW)/minihwc/minihwc.o \
+	$(FX_GLIDE_HW)/minihwc/lin_mode.o
+endif
+
+###############################################################################
+#	rules
+###############################################################################
+
+.c.o:
+	$(CC) -o $@ $(CFLAGS) -c $<
+.c.lo:
+	$(CC) -o $@ $(CFLAGS) -DPIC -fPIC -c $<
+
+###############################################################################
+#	main
+###############################################################################
+all: glide3x
+
+glide3x: $(GLIDE_LIBDIR)/$(GLIDE_LIB) $(GLIDE_LIBDIR)/$(GLIDE_SO)
+
+$(GLIDE_LIBDIR)/$(GLIDE_LIB): $(GLIDE_OBJECTS)
+	$(AR) $(ARFLAGS) $@ $^
+
+$(GLIDE_LIBDIR)/$(GLIDE_SO): $(GLIDE_OBJECTS:.o=.lo)
+	$(CC) -o $@ -shared $^ $(LDFLAGS) $(LDLIBS)
+
+###############################################################################
+#	rules(2)
+###############################################################################
+
+$(FX_GLIDE_HW)/glide3/src/xdraw2_def.o: $(FX_GLIDE_HW)/glide3/src/xdraw2.asm
+	$(AS) -o $@ $(ASFLAGS) $<
+$(FX_GLIDE_HW)/glide3/src/xdraw3_def.o: $(FX_GLIDE_HW)/glide3/src/xdraw3.asm
+	$(AS) -o $@ $(ASFLAGS) $<
+$(FX_GLIDE_HW)/glide3/src/xdraw2_3dnow.o: $(FX_GLIDE_HW)/glide3/src/xdraw2.asm
+	$(AS) -o $@ $(ASFLAGS) -DGL_AMD3D=1 $<
+$(FX_GLIDE_HW)/glide3/src/xdraw3_3dnow.o: $(FX_GLIDE_HW)/glide3/src/xdraw3.asm
+	$(AS) -o $@ $(ASFLAGS) -DGL_AMD3D=1 $<
+$(FX_GLIDE_HW)/glide3/src/xtexdl_3dnow.o: $(FX_GLIDE_HW)/glide3/src/xtexdl.asm
+	$(AS) -o $@ $(ASFLAGS) -DGL_AMD3D=1 $<
+$(FX_GLIDE_HW)/glide3/src/xtexdl_mmx.o: $(FX_GLIDE_HW)/glide3/src/xtexdl.asm
+	$(AS) -o $@ $(ASFLAGS) -DGL_MMX=1 $<
+$(FX_GLIDE_HW)/glide3/src/xdraw2_sse.o: $(FX_GLIDE_HW)/glide3/src/xdraw2.asm
+	$(AS) -o $@ $(ASFLAGS) -DGL_SSE=1 $<
+$(FX_GLIDE_HW)/glide3/src/xdraw3_sse.o: $(FX_GLIDE_HW)/glide3/src/xdraw3.asm
+	$(AS) -o $@ $(ASFLAGS) -DGL_SSE=1 $<
+$(FX_GLIDE_HW)/glide3/src/xtexdl_sse2.o: $(FX_GLIDE_HW)/glide3/src/xtexdl.asm
+	$(AS) -o $@ $(ASFLAGS) -DGL_SSE2=1 $<
+
+$(FX_GLIDE_HW)/glide3/src/xdraw2_def.lo: $(FX_GLIDE_HW)/glide3/src/xdraw2_def.o
+	$(CP) $< $@
+$(FX_GLIDE_HW)/glide3/src/xdraw3_def.lo: $(FX_GLIDE_HW)/glide3/src/xdraw3_def.o
+	$(CP) $< $@
+$(FX_GLIDE_HW)/glide3/src/xdraw2_3dnow.lo: $(FX_GLIDE_HW)/glide3/src/xdraw2_3dnow.o
+	$(CP) $< $@
+$(FX_GLIDE_HW)/glide3/src/xdraw3_3dnow.lo: $(FX_GLIDE_HW)/glide3/src/xdraw3_3dnow.o
+	$(CP) $< $@
+$(FX_GLIDE_HW)/glide3/src/xtexdl_3dnow.lo: $(FX_GLIDE_HW)/glide3/src/xtexdl_3dnow.o
+	$(CP) $< $@
+$(FX_GLIDE_HW)/glide3/src/xtexdl_mmx.lo: $(FX_GLIDE_HW)/glide3/src/xtexdl_mmx.o
+	$(CP) $< $@
+$(FX_GLIDE_HW)/glide3/src/xdraw2_sse.lo: $(FX_GLIDE_HW)/glide3/src/xdraw2_sse.o
+	$(CP) $< $@
+$(FX_GLIDE_HW)/glide3/src/xdraw3_sse.lo: $(FX_GLIDE_HW)/glide3/src/xdraw3_sse.o
+	$(CP) $< $@
+$(FX_GLIDE_HW)/glide3/src/xtexdl_sse2.lo: $(FX_GLIDE_HW)/glide3/src/xtexdl_sse2.o
+	$(CP) $< $@
+
+GENDATE = $(FX_GLIDE_HW)/incsrc/gendate.h
+FXBLDNO = $(FX_GLIDE_HW)/glide3/src/fxbldno.h
+
+$(GLIDE_OBJECTS): $(FX_GLIDE_HW)/glide3/src/fxinline.h $(FX_GLIDE_HW)/glide3/src/fxgasm.h $(FXBLDNO)
+
+$(FX_GLIDE_HW)/glide3/src/fxinline.h: fxgasm
+	$< -inline > $@
+
+$(FX_GLIDE_HW)/glide3/src/fxgasm.h: fxgasm
+	$< -hex > $@
+
+fxgasm: $(FX_GLIDE_HW)/glide3/src/fxgasm.c $(GENDATE)
+	$(CC) -o $@ $(CFLAGS) $<
+
+$(GENDATE): gendate
+	$< > $@
+
+$(FXBLDNO): fxbldno
+	$< > $@
+
+gendate: $(GENDATE:.h=.c)
+	$(CC) -o $@ $(CFLAGS) $<
+
+fxbldno: $(FXBLDNO:.h=.c)
+	$(CC) -o $@ $(CFLAGS) $<
+
+###############################################################################
+#	clean, realclean
+###############################################################################
+
+clean:
+	-$(RM) $(FX_GLIDE_HW)/glide3/src/*.o
+	-$(RM) $(FX_GLIDE_HW)/glide3/src/*.lo
+	-$(RM) $(FX_GLIDE_HW)/minihwc/*.o
+	-$(RM) $(FX_GLIDE_HW)/minihwc/*.lo
+	-$(RM) $(FX_GLIDE_SW)/newpci/pcilib/*.o
+	-$(RM) $(FX_GLIDE_SW)/newpci/pcilib/*.lo
+	-$(RM) $(FX_GLIDE_SW)/fxmisc/*.o
+	-$(RM) $(FX_GLIDE_SW)/fxmisc/*.lo
+	-$(RM) $(FX_GLIDE_HW)/glide3/src/fxinline.h
+	-$(RM) $(FX_GLIDE_HW)/glide3/src/fxgasm.h
+	-$(RM) $(GENDATE)
+	-$(RM) $(FXBLDNO)
+
+realclean: clean
+	-$(RM) $(GLIDE_LIBDIR)/$(GLIDE_LIB)
+	-$(RM) $(GLIDE_LIBDIR)/$(GLIDE_SO)
