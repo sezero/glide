@@ -695,7 +695,7 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t type, GrBuffer_t buffer,
             info->strideInBytes     = gc->textureBuffer.stride ;
             
           } 
-#endif          
+#endif
             else {
             info->lfbPtr          = (void *)gc->lfb_ptr;
 #ifdef __linux__
