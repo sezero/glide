@@ -1,8 +1,8 @@
 #!/bin/bash
 
 function timereport() {
-	STARTTIME=$1
-	ENDTIME=$2
+    STARTTIME=$1
+    ENDTIME=$2
     SECONDSPERMIN=60
     SECONDSPERHOUR=`expr 60 \* 60`
     SECONDSPERDAY=`expr 60 \* 60 \* 24`
@@ -16,31 +16,31 @@ function timereport() {
     ELAPSEDTIME=`expr $ELAPSEDTIME % $SECONDSPERHOUR`
     MINUTES=`expr $ELAPSEDTIME / $SECONDSPERMIN`
     ELAPSEDTIME=`expr $ELAPSEDTIME % $SECONDSPERMIN`
-	echo "Time Elapsed: $YEARS Years, $DAYS Days, $HOURS Hours, $MINUTES Minutes, $ELAPSEDTIME Seconds"
+    echo "Time Elapsed: $YEARS Years, $DAYS Days, $HOURS Hours, $MINUTES Minutes, $ELAPSEDTIME Seconds"
 }
 
 function diskreport() {
-	SIGN=""
-	DISKUSAGE=`expr $2 - $1`
-	if [ $DISKUSAGE -lt 0 ]
-	then
-	    DISKUSAGE=`expr $DISKUSAGE '*' -1`
+    SIGN=""
+    DISKUSAGE=`expr $2 - $1`
+    if [ $DISKUSAGE -lt 0 ]
+    then
+        DISKUSAGE=`expr $DISKUSAGE '*' -1`
         SIGN='-'
     fi
-	DISKUSAGE_INT=`expr $DISKUSAGE / 1024`
-	DISKUSAGE_FRAC=`expr $DISKUSAGE % 1024`
+    DISKUSAGE_INT=`expr $DISKUSAGE / 1024`
+    DISKUSAGE_FRAC=`expr $DISKUSAGE % 1024`
     echo "Disk usage: $SIGN$DISKUSAGE_INT.$DISKUSAGE_FRAC Mb"
 }
 
 function instrument_command() {
     STARTDISK=`df -k . | grep --invert-match '^Filesystem' | awk '{print $3;}'`
-	df -k .
-	STARTTIME=`date +%s`
-    (exec $*)
+    df -k .
+    STARTTIME=`date +%s`
+    (exec "$@")
     ENDTIME=`date +%s`
     ENDDISK=`df -k . | grep --invert-match '^Filesystem' | awk '{print $3;}'`
-	df -k .
-	timereport $STARTTIME $ENDTIME
+    df -k .
+    timereport $STARTTIME $ENDTIME
     diskreport $STARTDISK $ENDDISK
 }
 
