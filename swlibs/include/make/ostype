@@ -1,6 +1,9 @@
-#!/bin/bash
+#!/bin/sh
 #
 # $Log$
+# Revision 1.2.8.1  2003/06/29 18:32:13  guillemj
+# Script converted to bash.
+#
 # Revision 1.2  2000/06/15 00:11:40  joseph
 # Merged new swlibs code being used for Voodoo4/5 (h5).
 #
@@ -20,13 +23,10 @@
 
 # if '-all' flag, return all supported architecture types
 
-if [ $# -ge 1 ]
+if [ $# -ge 1 ] && [ $1 = "-all" ]
 then
-        if [ $1 = "-all" ]
-        then
-                echo "hpux sunos solaris linux"
-                exit 0
-        fi
+  echo "hpux sunos solaris linux"
+  exit 0
 fi
 
 # determine and return machine architecture type
@@ -40,9 +40,9 @@ case $a in
     b=$(/bin/uname -r | /usr/bin/cut -c1)
     if [ $b -gt 4 ]
     then
-        echo "solaris"
+      echo "solaris"
     else
-        echo "sunos"
+      echo "sunos"
     fi
     ;;
   "Linux")
