@@ -19,6 +19,9 @@
 ## $Header$
 ## $Revision$
 ## $Log$
+## Revision 1.1.1.1  1999/12/07 21:49:13  joseph
+## Initial checkin into SourceForge.
+##
 ##
 ## 
 ## 7     5/18/98 12:16p Peter
@@ -58,7 +61,7 @@
 #fmuls   TEXTEQU <fmul DWORD PTR>
 
 	.align 4
-\(.data)
+.section	.data
 One         .DATA  0x03f800000
 Area        .DATA  0
 dxAB        .DATA  0

@@ -18,6 +18,9 @@
 #
 # $Header$
 # $Log$
+# Revision 1.1.1.1  1999/12/07 21:48:55  joseph
+# Initial checkin into SourceForge.
+#
 # 
 # 15    3/04/97 9:10p Dow
 # Neutered mutiplatform multiheaded monster.
@@ -54,7 +57,7 @@
 # fmuls   TEXTEQU <fmul DWORD PTR>
 
 	.align 4
-\(.data)
+.section	.data
 One		.DATA 0x03f800000
 Area		.DATA 0
 dxAB		.DATA 0
