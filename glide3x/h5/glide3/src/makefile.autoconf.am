@@ -210,7 +210,7 @@ WHOLE_LIBS = $(top_builddir)/swlibs/fxmisc/libfxmisc.la \
 LINK_LIBS  = -L/usr/X11R6/lib -lX11 -lXext -lXxf86dga -lXxf86vm -lm
 
 noinst_PROGRAMS        = fxgasm
-include_headers        = g3ext.h glide.h glideutl.h glidesys.h
+include_HEADERS        = g3ext.h glide.h glideutl.h glidesys.h
 
 noinst_HEADERS         = fxcmd.h     fxsplash.h  \
                          gsfctabl.h  macglide3.h \

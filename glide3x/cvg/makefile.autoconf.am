@@ -42,4 +42,4 @@
 ## $Revision$
 ## $Date$
 ##
-SUBDIRS = init @FX_HW_PROJECTS@
+SUBDIRS = incsrc init @FX_HW_PROJECTS@

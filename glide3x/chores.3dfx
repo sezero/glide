@@ -72,7 +72,7 @@ while [ ! -z "$1" ] && [ "$DONE" != YES ] ; do
         echo '                         makefile.autoconf.in files.'
         echo '                         This is essentially just:'
         echo '                           aclocal; automake; autoconf'
-        echo '    --build-directory=dir'
+        echo '    --build-dir=dir'
         echo '                         Set the build directory to dir.'
         echo '    --configure="configure options"'
         echo '                         Configure in the build directory'
@@ -109,8 +109,8 @@ while [ ! -z "$1" ] && [ "$DONE" != YES ] ; do
         CONFIGURE_OPTIONS=`echo $1 | sed s/--configure=//`
         shift
         ;;
-    --build-directory=*)
-        BUILD_DIRECTORY=`echo $1 | sed 's/--build-directory=//'`
+    --build-dir*=*)
+        BUILD_DIRECTORY=`echo $1 | sed 's/--build-dir[^=]*=//'`
         shift
         ;;
     --build=*)

@@ -25,7 +25,7 @@ AC_INIT(h5/glide3/src/glfb.c)
 AM_INIT_AUTOMAKE(glide, 3.0)
 AM_CONFIG_HEADER(swlibs/include/config.h)
 AC_PREFIX_DEFAULT([/usr])
-includedir='${prefix}/include/glide3x'
+includedir='${prefix}/include/glide3'
 #
 # Variables local to the build.
 #

@@ -1,29 +1,77 @@
 QuickStart Instructions
 =======================
-% ./chores.3dfx --clean --generate --configure --build
+% ./chores.3dfx --clean --generate \
+           --configure[=whatever configuration options you want] \
+           --build
 % cd build
 % ./build.3dfx install
 N.B.: The last command may have to be executed as root.  It will
       install libglide3x.so into /usr/lib, and the glide include
       files into /usr/include/glide3.
 
+SwiftButNotQuickButMoreConventionalStart Instructions
+=====================================================
+% aclocal && automake && autoconf
+% mkdir build
+% cd build
+% ../configure [ whatever options you want ]
+% make -f makefile.autoconf all 2>&1 | tee make.hst
+
 SlowStart Instructions
 ======================
-This is generally a standard GNU automake/autoconf project.  We use
-automake to make makefiles and autoconf to make a configure script
-from configure.in.  However, there are some small wrinkles.
+This is generally a standard GNU automake/autoconf project.
+  o There is a script named "configure" in the root of the
+    source directory which creates makefiles with parameters
+    set as appropriate for a particular system.
+  o We use automake to make makefile templates and autoconf
+    to make a configure script from configure.in.
+    
+However, there are some small wrinkles.
+0.) Building from the CVS archive requires several tools, 
+    notably automake autoconf and libtool. These, in
+    turn, have their own requirements.  The versions of some of the
+    tools used to create the configuration are:
+       o automake: 1.4
+       o autoconf: 2.13
+       o libtool:  1.3.3
+       o GNU m4:   1.4 (used by autoconf.)
+       o perl      5.005_03
+    FWIW, this was debugged on a Debian distribution, using
+    a not-completely-current frozen release.
 1.) The makefiles are all named makefile.autoconf.  This is because
     the Glide code is built for several platforms, one of which
-    is Win32.  The Win32 build uses the name makefile, and we need
+    is Win32.  The Win32 build uses the name makefile, and so we need
     to use another.  Except for the top build, the makefile.autoconf
-    makefiles take care of everything.
+    makefiles take care of choosing the right names.  (But see
+    the note below about build.3dfx.)
 2.) The (canonical) sequence of files is:
-      makefile.autoconf.am    --> makefile.autoconf.in    (a)
-                              --> makefile.autoconf       (b)
-      (a) makefile.autoconf.in is created by automake as usual.
-      (b) makefile.autoconf is created by the configure script,
-          as usual.
-3.) There is a script, build.3dfx, which is installed by the
+      makefile.autoconf.am    --> makefile.autoconf.in    (b)
+                              --> makefile.autoconf       (c)
+      Note:
+      (a) You will have to run aclocal before automake.
+      (b) makefile.autoconf.in is created by automake as usual.
+      (c) makefile.autoconf is created by the configure script,
+          as usual.  It is the concatenation of the
+          makefile.autoconf.in file created by automake, and
+          some constant boilerplate from the file
+               swlibs/include/make/makefile.autoconf.bottom
+3.) The configuration options are:
+      --enable-fx-debug:          Build for debugging.  This is
+                                  actually the default.  Turn it
+                                  off by --disable-fx-debug or
+                                  else --enable-fx-debug=no.
+      --enable-fx-glide-hw=<asic> Build for the given asic.
+           asic          HW
+           h5            Voodoo4/VoodooV
+           h3            Voodoo3/Banshee
+           cvg           Voodoo2.  (It's not clear that this
+                                    works at all.)
+      --enable-fx-dri-build       Make links called *.c to the files 
+                                  named *.c.dri.  This will build
+                                  h3 for DRI.  To build h3 stand alone,
+                                  use --disable-fx-dri-build.
+      --enable-amd3d              Build with 3DNow instructions.
+4.) There is a script, build.3dfx, which is installed by the
     configure script at the root of every build directory.  It
     is essentially the single line:
         make -f makefile.autoconf "$@"2>&1
@@ -32,23 +80,10 @@ from configure.in.  However, there are some small wrinkles.
     stuff there to put information in the title bar of xterms,
     because I like it.  If you don't like this, don't use it,
     and build your own script.
-4.) There is a second script, chores.3dfx, which takes care of some
+5.) There is a second script, chores.3dfx, which takes care of some
     chores, such as cleaning emacs backup files, deleting old makefiles,
     generating new makefiles and configuring.  I find this is useful,
     but it is not required.  The --help command gives usage.
-5.) Environment Variables
-    There are many other environment variables used to control the Glide
-    build.  Here is a listing of some of the important ones:
-
-        DEBUG=1:               Turn on debugging information, note
-                               this disables the asm optimizations.
-        FX_GLIDE_PIC=1:        Enable PIC in shared libraries.
-        FX_GLIDE_CTRISETUP=1:  Use C versions as opposed to ASM versions
-                               of triangle setup code.
-        GL_AMD3D=1:            Enable AMD 3DNow! optimizations.  Note
-                               this is broken on several platforms.
-    N.B.: The build script napalmbuild.linux does not set these
-    environment ariables.
 6.) A special note about H3:
     The Glide3 H3 source can be built as a DRI client or as a
     stand alone library.  Controlling which gets built is done by
@@ -57,10 +92,9 @@ from configure.in.  However, there are some small wrinkles.
 
     To setup glide3x/h3 to build as a DRI client, configure with
     the --enable-fx-dri-build.  To setup glide3x/h3 to build as a
-    standalone client, configure with --disable-fx-dri-build.
+    stand alone client, configure with --disable-fx-dri-build.
 
     The default is to build as a DRI client.
-
 7.) A special note about H5: 
     The Glide3 H5 source can only be built as a DRI client, so the
     symlinks necessary for the H3 tree are not necessary for the H3
@@ -75,200 +109,18 @@ sequences:
           --build=/tmp/glide.build
 2.) Not using chores.3dfx
     #
-    # Generate the makefile.autoconf.am files for automake.
+    # Create the makefile.autoconf files.
     #
-    % swlibs/bin/autogen.sh
+    % aclocal && automake && autoconf
     #
     # Make a build directory and configure it.
     #
     % mkdir build
     % cd build
-    % ../configure
+    % ../configure [whatever options you want here]
     #
-    # Build everything
+    # Build everything, using one of these two commands:
+    1.) % ./build.3dfx all | tee make.hst
+    2.) % make -f makefile.autoconf all 2>&1 | tee make.hst
+    # 
     #
-    % ./build.3dfx all | tee make.hst  
-    #
-
-Basic Installation
-==================
-
-   These are generic installation instructions.
-
-   The `configure' shell script attempts to guess correct values for
-various system-dependent variables used during compilation.  It uses
-those values to create a `Makefile' in each directory of the package.
-It may also create one or more `.h' files containing system-dependent
-definitions.  Finally, it creates a shell script `config.status' that
-you can run in the future to recreate the current configuration, a file
-`config.cache' that saves the results of its tests to speed up
-reconfiguring, and a file `config.log' containing compiler output
-(useful mainly for debugging `configure').
-
-   If you need to do unusual things to compile the package, please try
-to figure out how `configure' could check whether to do them, and mail
-diffs or instructions to the address given in the `README' so they can
-be considered for the next release.  If at some point `config.cache'
-contains results you don't want to keep, you may remove or edit it.
-
-   The file `configure.in' is used to create `configure' by a program
-called `autoconf'.  You only need `configure.in' if you want to change
-it or regenerate `configure' using a newer version of `autoconf'.
-
-The simplest way to compile this package is:
-
-  1. `cd' to the directory containing the package's source code and type
-     `./configure' to configure the package for your system.  If you're
-     using `csh' on an old version of System V, you might need to type
-     `sh ./configure' instead to prevent `csh' from trying to execute
-     `configure' itself.
-
-     Running `configure' takes awhile.  While running, it prints some
-     messages telling which features it is checking for.
-
-  2. Type `make' to compile the package.
-
-  3. Optionally, type `make check' to run any self-tests that come with
-     the package.
-
-  4. Type `make install' to install the programs and any data files and
-     documentation.
-
-  5. You can remove the program binaries and object files from the
-     source code directory by typing `make clean'.  To also remove the
-     files that `configure' created (so you can compile the package for
-     a different kind of computer), type `make distclean'.  There is
-     also a `make maintainer-clean' target, but that is intended mainly
-     for the package's developers.  If you use it, you may have to get
-     all sorts of other programs in order to regenerate files that came
-     with the distribution.
-
-Compilers and Options
-=====================
-
-   Some systems require unusual options for compilation or linking that
-the `configure' script does not know about.  You can give `configure'
-initial values for variables by setting them in the environment.  Using
-a Bourne-compatible shell, you can do that on the command line like
-this:
-     CC=c89 CFLAGS=-O2 LIBS=-lposix ./configure
-
-Or on systems that have the `env' program, you can do it like this:
-     env CPPFLAGS=-I/usr/local/include LDFLAGS=-s ./configure
-
-Compiling For Multiple Architectures
-====================================
-
-   You can compile the package for more than one kind of computer at the
-same time, by placing the object files for each architecture in their
-own directory.  To do this, you must use a version of `make' that
-supports the `VPATH' variable, such as GNU `make'.  `cd' to the
-directory where you want the object files and executables to go and run
-the `configure' script.  `configure' automatically checks for the
-source code in the directory that `configure' is in and in `..'.
-
-   If you have to use a `make' that does not supports the `VPATH'
-variable, you have to compile the package for one architecture at a time
-in the source code directory.  After you have installed the package for
-one architecture, use `make distclean' before reconfiguring for another
-architecture.
-
-Installation Names
-==================
-
-   By default, `make install' will install the package's files in
-`/usr/local/bin', `/usr/local/man', etc.  You can specify an
-installation prefix other than `/usr/local' by giving `configure' the
-option `--prefix=PATH'.
-
-   You can specify separate installation prefixes for
-architecture-specific files and architecture-independent files.  If you
-give `configure' the option `--exec-prefix=PATH', the package will use
-PATH as the prefix for installing programs and libraries.
-Documentation and other data files will still use the regular prefix.
-
-   In addition, if you use an unusual directory layout you can give
-options like `--bindir=PATH' to specify different values for particular
-kinds of files.  Run `configure --help' for a list of the directories
-you can set and what kinds of files go in them.
-
-   If the package supports it, you can cause programs to be installed
-with an extra prefix or suffix on their names by giving `configure' the
-option `--program-prefix=PREFIX' or `--program-suffix=SUFFIX'.
-
-Optional Features
-=================
-
-   Some packages pay attention to `--enable-FEATURE' options to
-`configure', where FEATURE indicates an optional part of the package.
-They may also pay attention to `--with-PACKAGE' options, where PACKAGE
-is something like `gnu-as' or `x' (for the X Window System).  The
-`README' should mention any `--enable-' and `--with-' options that the
-package recognizes.
-
-   For packages that use the X Window System, `configure' can usually
-find the X include and library files automatically, but if it doesn't,
-you can use the `configure' options `--x-includes=DIR' and
-`--x-libraries=DIR' to specify their locations.
-
-Specifying the System Type
-==========================
-
-   There may be some features `configure' can not figure out
-automatically, but needs to determine by the type of host the package
-will run on.  Usually `configure' can figure that out, but if it prints
-a message saying it can not guess the host type, give it the
-`--host=TYPE' option.  TYPE can either be a short name for the system
-type, such as `sun4', or a canonical name with three fields:
-     CPU-COMPANY-SYSTEM
-
-See the file `config.sub' for the possible values of each field.  If
-`config.sub' isn't included in this package, then this package doesn't
-need to know the host type.
-
-   If you are building compiler tools for cross-compiling, you can also
-use the `--target=TYPE' option to select the type of system they will
-produce code for and the `--build=TYPE' option to select the type of
-system on which you are compiling the package.
-
-Sharing Defaults
-================
-
-   If you want to set default values for `configure' scripts to share,
-you can create a site shell script called `config.site' that gives
-default values for variables like `CC', `cache_file', and `prefix'.
-`configure' looks for `PREFIX/share/config.site' if it exists, then
-`PREFIX/etc/config.site' if it exists.  Or, you can set the
-`CONFIG_SITE' environment variable to the location of the site script.
-A warning: not all `configure' scripts look for a site script.
-
-Operation Controls
-==================
-
-   `configure' recognizes the following options to control how it
-operates.
-
-`--cache-file=FILE'
-     Use and save the results of the tests in FILE instead of
-     `./config.cache'.  Set FILE to `/dev/null' to disable caching, for
-     debugging `configure'.
-
-`--help'
-     Print a summary of the options to `configure', and exit.
-
-`--quiet'
-`--silent'
-`-q'
-     Do not print messages saying which checks are being made.  To
-     suppress all normal output, redirect it to `/dev/null' (any error
-     messages will still be shown).
-
-`--srcdir=DIR'
-     Look for the package's source code in directory DIR.  Usually
-     `configure' can determine that directory automatically.
-
-`--version'
-     Print the version of Autoconf used to generate the `configure'
-     script, and exit.
-
-`configure' also accepts some other, not widely useful, options.

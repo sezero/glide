@@ -86,6 +86,7 @@ FX_GLIDE_DEBUG_FIFO_VDEFS = -DGLIDE_USE_DEBUG_FIFO=1 \
                             -DFIFO_ASSERT_FULL=1 
 endif
 
+include_HEADERS         = glide.h
 lib_LTLIBRARIES         = libglide3.la
 libglide3_la_SOURCES    = gsplash.c g3df.c  gu.c gpci.c \
                           diglide.c disst.c ditex.c gbanner.c gerror.c\

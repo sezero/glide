@@ -19,8 +19,6 @@ Here are a few notes about building Glide3x from CVS.
     this, you will get everything you need.  All of the relevant
     projects, cvs, h3 and h5, are included, as well as swlibs.
 
-    See below for instructions on building.
-
 3.) The Old Way of getting Glide from CVS.
     The top level module needed are glide3x and swlibs.  The glide3x
     module has only the glide code, without swlibs.
@@ -32,6 +30,4 @@ Here are a few notes about building Glide3x from CVS.
     is also shared with the glide2x branch.  N.B.: If you use the CVS
     module Glide3, swlibs will be in the right place, and does not
     need to be moved.
-
-    See the file INSTALL for instructions on building Glide.
     

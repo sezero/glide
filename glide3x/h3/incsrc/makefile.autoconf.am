@@ -20,4 +20,5 @@
 ## $Revision$
 ## $Date$
 ##
-SUBDIRS = incsrc minihwc @FX_HW_PROJECTS@
+
+include_HEADERS=sst1vid.h
