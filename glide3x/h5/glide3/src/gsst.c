@@ -3276,7 +3276,12 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
     REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 4, 0xf);
     {
       REG_GROUP_SET(hw, colBufferAddr, gc->state.shadow.colBufferAddr);
-      REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride);
+#ifdef __linux__
+      REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride : 
+		    gc->state.shadow.colBufferStride );
+#else
+      REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride );
+#endif
       REG_GROUP_SET(hw, auxBufferAddr, gc->state.shadow.auxBufferAddr);
       REG_GROUP_SET(hw, auxBufferStride, gc->state.shadow.auxBufferStride); 
     }
@@ -3287,7 +3292,15 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
         REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 4, 0xf);
         {
             REG_GROUP_SET(hw, colBufferAddr, gc->buffers1[gc->curBuffer] | SST_BUFFER_BASE_SELECT);
-            REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride);
+#ifdef __linux__
+	    REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride : 
+			  gc->state.shadow.colBufferStride );
+#else
+	    REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride );
+#endif
+
+
+
             REG_GROUP_SET(hw, auxBufferAddr, gc->buffers1[nColBuffers] | SST_BUFFER_BASE_SELECT);
             REG_GROUP_SET(hw, auxBufferStride, gc->state.shadow.auxBufferStride); 
         }
@@ -3348,7 +3361,12 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
       REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 4, 0xf);
       {
         REG_GROUP_SET(hw, colBufferAddr, gc->state.shadow.colBufferAddr);
-        REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride);
+#ifdef __linux__
+	REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride : 
+		      gc->state.shadow.colBufferStride );
+#else
+	REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride );
+#endif
         REG_GROUP_SET(hw, auxBufferAddr, gc->state.shadow.auxBufferAddr);
         REG_GROUP_SET(hw, auxBufferStride, gc->state.shadow.auxBufferStride); 
       }
@@ -3357,7 +3375,12 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
         REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 4, 0xf);
         {
           REG_GROUP_SET(hw, colBufferAddr, gc->buffers1[gc->curBuffer] | SST_BUFFER_BASE_SELECT);
-          REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride);
+#ifdef __linux__
+  REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride : 
+			gc->state.shadow.colBufferStride );
+#else
+  REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride );
+#endif
           REG_GROUP_SET(hw, auxBufferAddr, gc->buffers1[nColBuffers] | SST_BUFFER_BASE_SELECT);
           REG_GROUP_SET(hw, auxBufferStride, gc->state.shadow.auxBufferStride); 
         }
