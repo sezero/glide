@@ -289,7 +289,7 @@ _grTexDownload_Default_8_4(struct GrGC_s* gc, const FxU32 tmuBaseAddr,
       const FxU32 t0 = *(const FxU32*)src8;
       
       GDBG_INFO(195, "s = %d, t = %d, address = 0x%x\n", s, t,
-                (FxU32) tex_address - (FxU32) gc->tex_ptr + 0x200000);
+                (AnyPtr) tex_address - (AnyPtr) gc->tex_ptr + 0x200000);
       
       LINEAR_WRITE_SET_8(tex_address, t0);
       
@@ -382,7 +382,7 @@ _grTexDownload_Default_8_WideS(struct GrGC_s* gc, const FxU32 tmuBaseAddr,
         t1 = *(const FxU32*)(src8 + 4);
       
       GDBG_INFO(195, "s = %d, t = %d, address = 0x%x\n", s, t,
-                (FxU32) tex_address - (FxU32) gc->tex_ptr + 0x200000);
+                (AnyPtr) tex_address - (AnyPtr) gc->tex_ptr + 0x200000);
       
       LINEAR_WRITE_SET_8(tex_address + 0, t0);
       LINEAR_WRITE_SET_8(tex_address + 4, t1);
@@ -542,7 +542,7 @@ _grTexDownload_Default_16_WideS(struct GrGC_s* gc, const FxU32 tmuBaseAddr,
       const FxU32 t1 = *(const FxU32*)(src16 + 2);
       
       GDBG_INFO(195, "s = %d, t = %d, address = 0x%x\n", s, t,
-                (FxU32) tex_address - (FxU32) gc->tex_ptr + 0x200000);
+                (AnyPtr) tex_address - (AnyPtr) gc->tex_ptr + 0x200000);
       
       LINEAR_WRITE_SET_16(tex_address + 0, t0);
       LINEAR_WRITE_SET_16(tex_address + 4, t1);
@@ -609,7 +609,7 @@ _grTexDownload_Default_32_WideS(struct GrGC_s* gc, const FxU32 tmuBaseAddr,
       const FxU32 t1 = *(src32 + 1);
       
       GDBG_INFO(195, "s = %d, t = %d, address = 0x%x\n", s, t,
-                (FxU32) tex_address - (FxU32) gc->tex_ptr + 0x200000);
+                (AnyPtr) tex_address - (AnyPtr) gc->tex_ptr + 0x200000);
       
       LINEAR_WRITE_SET(tex_address,     t0);
       LINEAR_WRITE_SET(tex_address + 4, t1);

@@ -183,11 +183,17 @@ xtexdl_3dnow.o xtexdl_3dnow.lo: xtexdl.s fxgasm.h
 	$(CP) $*.o $*.lo
 	$(RM) -f $*.tmp.s
 
-cpudtect.o cpudtct.lo: cpudtect.s
+if FX_GLIDE_C_CPU_DETECT
+CPUSOURCES = cpudtect.c
+else
+CPUSOURCES = cpudtect.s 
+
+cpudtect.o cpudtect.lo: cpudtect.s
 	$(PREPROCESSOR) -DUSE_PACKET_FIFO=1 $< > $*.tmp.s
 	$(CC) $(AFLAGS) -c -o $*.o $*.tmp.s
 	$(CP) $*.o $*.lo
 	$(RM) -f $*.tmp.s
+endif
 
 #
 # Library definitions.
@@ -231,7 +237,7 @@ libglide3x_la_SOURCES   = fxinline.h fxgasm.h \
                           gbanner.c gerror.c gaa.c gdraw.c \
                           gglide.c distate.c gstrip.c distrip.c \
                           diget.c glfb.c gsst.c gtex.c gtexdl.c \
-                          fifo.c cpudtect.s $(VGLIDE_SRC)
+                          fifo.c $(CPUSOURCES) $(VGLIDE_SRC)
 libglide3x_la_LDFLAGS   = -version-info 13:0:10
 libglide3x_la_LIBADD    = $(WHOLE_LIBS) $(LINK_LIBS)
 

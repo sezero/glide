@@ -46,6 +46,12 @@ extern char *cmdAGPRegNames[];
 extern char *waxRegNames[];
 extern char *sstRegNames[];
 
+#ifdef __alpha__
+extern unsigned int _fxget32(unsigned int *);
+#define GET(s) _fxget32((unsigned int *)&s);
+#define SET(d,s) d = s
+#endif
+
 #ifndef GET
 #  define GET(s) s
 #  define SET(d, s)    d = s

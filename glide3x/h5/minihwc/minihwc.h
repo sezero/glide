@@ -313,14 +313,14 @@ typedef struct hwcPCIInfo_s {
 typedef struct hwcLinearInfo_s {
   FxBool
     initialized;
-  FxU32
+  AnyPtr
     linearAddress[HWC_NUM_BASE_ADDR];
 } hwcLinearInfo;
 
 typedef struct hwcRegInfo_s {
   FxBool
     initialized;
-  volatile FxU32
+  volatile AnyPtr
     ioMemBase,                  /* mem base for I/O aliases */
     cmdAGPBase,                 /* CMD/AGP register base */
     waxBase,                    /* 2D register base */
@@ -344,11 +344,14 @@ typedef struct hwcFifoInfo_s {
   FxBool
     agpFifo,
     initialized;
+  AnyPtr
+    agpVirtAddr;
   FxU32
-    agpVirtAddr,
     agpPhysAddr,
-    agpSize,
-    fifoStart,                  /* Beg of fifo (offset from base) */
+    agpSize;
+  AnyPtr
+    fifoStart;                  /* Beg of fifo (offset from base) */
+  FxU32
     fifoLength;                 /* Fifo size in bytes */
 } hwcFifoInfo;
 

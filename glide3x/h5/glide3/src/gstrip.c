@@ -207,10 +207,14 @@ _grDrawVertexList(FxU32 pktype, FxU32 type, FxI32 mode, FxI32 count, void *point
         FxU32 dataElem;
         float *vPtr;
         
-        vPtr = pointers;
-        if (mode)
-          vPtr = *(float **)vPtr;
-        (float *)pointers += stride;
+        if (mode) {
+          vPtr = *(float **)pointers;
+          (float **)pointers += stride;
+        }
+        else {
+          vPtr = (float *)pointers;
+          (float *)pointers += stride;
+        }
         
         TRI_SETF(FARRAY(vPtr, 0));
         dataElem = 0;
@@ -241,16 +245,20 @@ _grDrawVertexList(FxU32 pktype, FxU32 type, FxI32 mode, FxI32 count, void *point
       for (k = 0; k < vcount; k++) {
         float *vPtr;
         
-        vPtr = pointers;
-        if (mode)
-          vPtr = *(float **)vPtr;
+        if (mode) {
+          vPtr = *(float **)pointers;
+          (float **)pointers += stride;
+        }
+        else {
+          vPtr = (float *)pointers;
+          (float *)pointers += stride;
+        }
         oow = 1.0f / FARRAY(vPtr, gc->state.vData.wInfo.offset);
         /* x, y */
         TRI_SETF(FARRAY(vPtr, 0)
                  *oow*gc->state.Viewport.hwidth + gc->state.Viewport.ox);
         TRI_SETF(FARRAY(vPtr, 4)
                  *oow*gc->state.Viewport.hheight + gc->state.Viewport.oy);
-        (float *)pointers += stride;
 
         TRI_VP_SETFS(vPtr, oow);
       }

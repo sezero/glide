@@ -186,6 +186,12 @@ extern FxU32
 _grGet32(volatile FxU32* const sstAddr);
 #endif /* USE_PACKET_FIFO */
 
+#ifdef __linux__
+void _grImportFifo(AnyPtr fifoPtr, AnyPtr fifoRead);
+void _grExportFifo(FxU32 *fifoPtr, FxU32 *fifoRead);
+void _grInvalidateAll(void);
+#endif
+
 #if !USE_PACKET_FIFO
 /* NOTE: fifoFree is the number of entries, each is 8 bytes */
 #define GR_CHECK_FOR_ROOM(n,p) \
@@ -220,7 +226,7 @@ do { \
 /* NB: This should be used sparingly because it does a 'real' hw read
  * which is *SLOW*.
  */
-FxU32 _grHwFifoPtr(FxBool);
+AnyPtr _grHwFifoPtr(FxBool);
 #define HW_FIFO_PTR(a) _grHwFifoPtr(a)
 
 #if FIFO_ASSERT_FULL
@@ -231,7 +237,7 @@ FxU32 _grHwFifoPtr(FxBool);
 #else /* !FIFO_ASSERT_FULL */
 #define FIFO_ASSERT() \
 ASSERT_FAULT_IMMED((FxU32)gc->cmdTransportInfo.fifoRoom < gc->cmdTransportInfo.fifoSize); \
-ASSERT_FAULT_IMMED((FxU32)gc->cmdTransportInfo.fifoPtr < (FxU32)gc->cmdTransportInfo.fifoEnd)
+ASSERT_FAULT_IMMED((AnyPtr)gc->cmdTransportInfo.fifoPtr < (AnyPtr)gc->cmdTransportInfo.fifoEnd)
 #endif /* !FIFO_ASSERT_FULL */
 
 #if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
@@ -294,7 +300,7 @@ do {\
 #define GR_CHECK_FOR_ROOM(__n, __p) \
 do { \
   const FxU32 writeSize = (__n) + ((__p) * sizeof(FxU32));            /* Adjust for size of hdrs */ \
-  ASSERT(((FxU32)(gc->cmdTransportInfo.fifoPtr) & FIFO_ALIGN_MASK) == 0); /* alignment */ \
+  ASSERT(((AnyPtr)(gc->cmdTransportInfo.fifoPtr) & FIFO_ALIGN_MASK) == 0); /* alignment */ \
   ASSERT(writeSize < gc->cmdTransportInfo.fifoSize - sizeof(FxU32)); \
   FIFO_ASSERT(); \
   if (gc->cmdTransportInfo.fifoRoom < (FxI32)writeSize) { \
@@ -323,7 +329,7 @@ if (gc->cmdTransportInfo.autoBump) {\
 }
 
 #define GR_SET_FIFO_PTR(__n, __p) \
-  gc->checkPtr = (FxU32)gc->cmdTransportInfo.fifoPtr; \
+  gc->checkPtr = (AnyPtr)gc->cmdTransportInfo.fifoPtr; \
   gc->checkCounter = ((__n) + ((__p) << 2))
 #else
 #define GR_CHECK_FIFO_PTR() 
@@ -335,7 +341,7 @@ if (gc->cmdTransportInfo.autoBump) {\
                   GDBG_ERROR("GR_ASSERT_SIZE","byte counter should be %d but is %d\n", \
                               gc->expected_counter,gc->counter); \
                 GR_CHECK_FIFO_PTR(); \
-                gc->checkPtr = (FxU32)gc->cmdTransportInfo.fifoPtr; \
+                gc->checkPtr = (AnyPtr)gc->cmdTransportInfo.fifoPtr; \
                 gc->checkCounter = 0; \
                 ASSERT(gc->counter == gc->expected_counter); \
                 gc->counter = gc->expected_counter = 0
@@ -371,12 +377,17 @@ if (gc->cmdTransportInfo.autoBump) {\
 
 #if USE_PACKET_FIFO
 #if GLIDE_DEBUG
+#if defined(__alpha__) || defined(__LP64__)
+#define DEBUGFIFOWRITE(a,b,c)
+#define DEBUGFIFOFWRITE(a,b,c)
+#else
 void _grFifoWriteDebug(FxU32 addr, FxU32 val, FxU32 fifoPtr);
 #define DEBUGFIFOWRITE(a,b,c) \
 _grFifoWriteDebug((FxU32) a, (FxU32) b, (FxU32) c)
 void _grFifoFWriteDebug(FxU32 addr, float val, FxU32 fifoPtr);
 #define DEBUGFIFOFWRITE(a,b,c) \
 _grFifoFWriteDebug((FxU32) a, (float) b, (FxU32) c)
+#endif
 
 extern void _reg_group_begin_internal_wax( FxU32 regBase,
                                            FxU32 groupNum,             
@@ -756,7 +767,7 @@ do {                                                                     \
     GDBG_INFO(120, "REG_GROUP_SET:\n");                                  \
   }                                                                      \
   GDBG_INFO(120, "\tFile: %s Line %d\n", __FILE__, __LINE__);            \
-  GDBG_INFO(120, "\tfifoPtr: 0x%x, Val: 0x%x\n", (FxU32) _regGroupFifoPtr - (FxU32)gc->rawLfb, __val);\
+  GDBG_INFO(120, "\tfifoPtr: 0x%x, Val: 0x%x\n", (AnyPtr) _regGroupFifoPtr - (AnyPtr)gc->rawLfb, __val);\
   SET_FIFO(*_regGroupFifoPtr++, (__val)); \
   GR_INC_SIZE(sizeof(FxU32)); \
 } while(0)
@@ -777,7 +788,7 @@ do {                                                                     \
     GDBG_INFO(120, "REG_GROUP_SET:\n");                                  \
   }                                                                      \
   GDBG_INFO(120, "\tFile: %s Line %d\n", __FILE__, __LINE__);            \
-  GDBG_INFO(120, "\tfifoPtr: 0x%x, Val: 0x%x\n", (FxU32) _regGroupFifoPtr - (FxU32)gc->rawLfb, __val);\
+  GDBG_INFO(120, "\tfifoPtr: 0x%x, Val: 0x%x\n", (AnyPtr) _regGroupFifoPtr - (AnyPtr)gc->rawLfb, __val);\
   SET_FIFO(*_regGroupFifoPtr++, (__val)); \
   GR_INC_SIZE(sizeof(FxU32)); \
 } while(0)
@@ -793,7 +804,7 @@ do { \
   }                                                                      \
   GDBG_INFO(220, "REG_GROUP_SET_WAX:\n");\
   GDBG_INFO(220, "\tFile: %s Line %d\n", __FILE__, __LINE__);\
-  GDBG_INFO(220, "\tfifoPtr: 0x%x, Val: 0x%x\n", (FxU32) _regGroupFifoPtr - (FxU32)gc->rawLfb, __val);\
+  GDBG_INFO(220, "\tfifoPtr: 0x%x, Val: 0x%x\n", (AnyPtr) _regGroupFifoPtr - (AnyPtr)gc->rawLfb, __val);\
   SET_FIFO(*_regGroupFifoPtr++, (__val)); \
   GR_INC_SIZE(sizeof(FxU32)); \
 } while(0)
@@ -823,8 +834,8 @@ do { \
 
 #define REG_GROUP_END() \
   ASSERT(_checkP); \
-  ASSERT((((FxU32)_regGroupFifoPtr - (FxU32)gc->cmdTransportInfo.fifoPtr) >> 2) == _groupNum + 1); \
-  gc->cmdTransportInfo.fifoRoom -= ((FxU32)_regGroupFifoPtr - (FxU32)gc->cmdTransportInfo.fifoPtr); \
+  ASSERT((((AnyPtr)_regGroupFifoPtr - (AnyPtr)gc->cmdTransportInfo.fifoPtr) >> 2) == _groupNum + 1); \
+  gc->cmdTransportInfo.fifoRoom -= ((AnyPtr)_regGroupFifoPtr - (AnyPtr)gc->cmdTransportInfo.fifoPtr); \
   gc->cmdTransportInfo.fifoPtr = (FxU32*)_regGroupFifoPtr; \
   GDBG_INFO(gc->myLevel + 200, "\tGroupEnd: (0x%X : 0x%X)\n", \
             gc->cmdTransportInfo.fifoPtr, gc->cmdTransportInfo.fifoRoom); \
@@ -837,7 +848,7 @@ do { \
   if (gc->contextP) { \
     FxU32* curFifoPtr = gc->cmdTransportInfo.fifoPtr; \
     FXUNUSED(__base); \
-    GR_ASSERT(((FxU32)(curFifoPtr) & FIFO_ALIGN_MASK) == 0);    /* alignment */ \
+    GR_ASSERT(((AnyPtr)(curFifoPtr) & FIFO_ALIGN_MASK) == 0);    /* alignment */ \
     GR_CHECK_COMPATABILITY(FN_NAME, \
                            !gc->open, \
                            "Called before grSstWinOpen()"); \
@@ -880,7 +891,7 @@ do { \
   if (gc->contextP) { \
     FxU32* curFifoPtr = gc->cmdTransportInfo.fifoPtr; \
     FXUNUSED(__base); \
-    GR_ASSERT(((FxU32)(curFifoPtr) & FIFO_ALIGN_MASK) == 0);    /* alignment */ \
+    GR_ASSERT(((AnyPtr)(curFifoPtr) & FIFO_ALIGN_MASK) == 0);    /* alignment */ \
     GR_CHECK_COMPATABILITY(FN_NAME, \
                            !gc->open, \
                            "Called before grSstWinOpen()"); \
@@ -1036,10 +1047,10 @@ _grH3FifoDump_Linear(const FxU32* const linearPacketAddr);
   GR_CHECK_COMPATABILITY(FN_NAME, \
                          !gc->open, \
                          "Called before grSstWinOpen()"); \
-  GR_ASSERT(((FxU32)(tPackPtr) & FIFO_ALIGN_MASK) == 0);   /* alignment */ \
+  GR_ASSERT(((AnyPtr)(tPackPtr) & FIFO_ALIGN_MASK) == 0);   /* alignment */ \
   GR_ASSERT((((__nVerts) * (__vertSize)) + sizeof(FxU32)) <= (FxU32)gc->cmdTransportInfo.fifoRoom); \
-  GR_ASSERT((((FxU32)tPackPtr) + ((__nVerts) * (__vertSize)) + sizeof(FxU32)) < \
-            (FxU32)gc->cmdTransportInfo.fifoEnd); \
+  GR_ASSERT((((AnyPtr)tPackPtr) + ((__nVerts) * (__vertSize)) + sizeof(FxU32)) < \
+            (AnyPtr)gc->cmdTransportInfo.fifoEnd); \
   GR_ASSERT(nVertex < 0x10); \
   GR_ASSERT(nVertex > 0x00); \
   GR_ASSERT(((__packetHdr) & 0xE0000000UL) == 0x00UL); \
@@ -1050,27 +1061,27 @@ _grH3FifoDump_Linear(const FxU32* const linearPacketAddr);
   pCount++; \
   GDBG_INFO(gc->myLevel + 200, "\t(0x%X) : V#: 0x%X - P#: 0x%X - ParamVal: (%f : 0x%X)\n", \
             (FxU32)tPackPtr, \
-            ((FxU32)tPackPtr - ((FxU32)gc->cmdTransportInfo.fifoPtr + sizeof(FxU32))) / sVertex, \
-             (((FxU32)tPackPtr - ((FxU32)gc->cmdTransportInfo.fifoPtr + sizeof(FxU32))) % sVertex) >> 2, \
+            ((AnyPtr)tPackPtr - ((AnyPtr)gc->cmdTransportInfo.fifoPtr + sizeof(FxU32))) / sVertex, \
+             (((AnyPtr)tPackPtr - ((AnyPtr)gc->cmdTransportInfo.fifoPtr + sizeof(FxU32))) % sVertex) >> 2, \
             (((__val) < 786432.875) ? (__val) : ((__val) - 786432.875)), \
             (__floatVal))
 #define SETF_DUMP(__val) \
   pCount++; \
   GDBG_INFO(gc->myLevel + 200, "\t(0x%X) : V#: 0x%X - P#: 0x%X - ParamVal: %f\n", \
             (FxU32)tPackPtr, \
-            ((FxU32)tPackPtr - ((FxU32)gc->cmdTransportInfo.fifoPtr + sizeof(FxU32))) / sVertex, \
-             (((FxU32)tPackPtr - ((FxU32)gc->cmdTransportInfo.fifoPtr + sizeof(FxU32))) % sVertex) >> 2, \
+            ((AnyPtr)tPackPtr - ((AnyPtr)gc->cmdTransportInfo.fifoPtr + sizeof(FxU32))) / sVertex, \
+             (((AnyPtr)tPackPtr - ((AnyPtr)gc->cmdTransportInfo.fifoPtr + sizeof(FxU32))) % sVertex) >> 2, \
             (((__val) < 786432.875) ? (__val) : ((__val) - 786432.875)))
 #define SET_DUMP(__val) \
   pCount++; \
   GDBG_INFO(gc->myLevel + 200, "\t(0x%X) : V#: 0x%X - P#: 0x%X - ParamVal: 0x%X\n", \
             (FxU32)tPackPtr, \
-            ((FxU32)tPackPtr - ((FxU32)gc->cmdTransportInfo.fifoPtr + sizeof(FxU32))) / sVertex, \
-             (((FxU32)tPackPtr - ((FxU32)gc->cmdTransportInfo.fifoPtr + sizeof(FxU32))) % sVertex) >> 2, \
+            ((AnyPtr)tPackPtr - ((AnyPtr)gc->cmdTransportInfo.fifoPtr + sizeof(FxU32))) / sVertex, \
+             (((AnyPtr)tPackPtr - ((AnyPtr)gc->cmdTransportInfo.fifoPtr + sizeof(FxU32))) % sVertex) >> 2, \
             (__val))
 #define TRI_ASSERT() \
   GR_ASSERT(pCount == (nVertex * (sVertex >> 2))); \
-  ASSERT(((FxU32)tPackPtr - (FxU32)gc->cmdTransportInfo.fifoPtr) == (nVertex * sVertex) + sizeof(FxU32))
+  ASSERT(((AnyPtr)tPackPtr - (AnyPtr)gc->cmdTransportInfo.fifoPtr) == (nVertex * sVertex) + sizeof(FxU32))
 #else /* !GDBG_INFO_ON */
 #define DEBUGFIFODUMP_TRI(__packetAddr)
 #define DEBUGFIFODUMP_LINEAR(__packetAddr)
@@ -1135,7 +1146,7 @@ do { \
 
 #define TRI_END \
   TRI_ASSERT(); \
-  gc->cmdTransportInfo.fifoRoom -= ((FxU32)tPackPtr - (FxU32)gc->cmdTransportInfo.fifoPtr); \
+  gc->cmdTransportInfo.fifoRoom -= ((AnyPtr)tPackPtr - (AnyPtr)gc->cmdTransportInfo.fifoPtr); \
   gc->cmdTransportInfo.fifoPtr = tPackPtr; \
   GDBG_INFO(gc->myLevel + 200, "\tTriEnd: (0x%X : 0x%X)\n", tPackPtr, gc->cmdTransportInfo.fifoRoom); \
   FIFO_ASSERT(); \
@@ -1154,12 +1165,12 @@ do { \
   GR_CHECK_COMPATABILITY(FN_NAME, \
                          !gc->open, \
                          "Called before grSstWinOpen()"); \
-  GR_ASSERT(((FxU32)(packetPtr) & FIFO_ALIGN_MASK) == 0);        /* alignment */ \
+  GR_ASSERT(((AnyPtr)(packetPtr) & FIFO_ALIGN_MASK) == 0);        /* alignment */ \
   GR_ASSERT((__numWords) > 0);                                   /* packet size */ \
   GR_ASSERT((__numWords) < ((0x01 << 19) - 2)); \
   GR_ASSERT((((FxU32)(__numWords) + 2) << 2) <= (FxU32)gc->cmdTransportInfo.fifoRoom); \
-  GR_ASSERT(((FxU32)packetPtr + (((__numWords) + 2) << 2)) < \
-            (FxU32)gc->cmdTransportInfo.fifoEnd); \
+  GR_ASSERT(((AnyPtr)packetPtr + (((__numWords) + 2) << 2)) < \
+            (AnyPtr)gc->cmdTransportInfo.fifoEnd); \
   GR_ASSERT((hdr2 & 0xE0000000UL) == 0x00UL); \
   GR_ASSERT(((__addr) & 0x03UL) == 0x00UL); \
   FIFO_ASSERT(); \
@@ -1204,8 +1215,8 @@ do { \
 
 #define FIFO_LINEAR_WRITE_END \
   DEBUGFIFODUMP_LINEAR(gc->cmdTransportInfo.fifoPtr); \
-  GR_ASSERT((((FxU32)packetPtr - (FxU32)gc->cmdTransportInfo.fifoPtr) >> 2) == __writeSize + 2); \
-  gc->cmdTransportInfo.fifoRoom -= ((FxU32)packetPtr - (FxU32)gc->cmdTransportInfo.fifoPtr); \
+  GR_ASSERT((((AnyPtr)packetPtr - (AnyPtr)gc->cmdTransportInfo.fifoPtr) >> 2) == __writeSize + 2); \
+  gc->cmdTransportInfo.fifoRoom -= ((AnyPtr)packetPtr - (AnyPtr)gc->cmdTransportInfo.fifoPtr); \
   gc->cmdTransportInfo.fifoPtr = packetPtr; \
   GDBG_INFO(gc->myLevel + 200, "\tLinearEnd: (0x%X : 0x%X)\n", \
             packetPtr, gc->cmdTransportInfo.fifoRoom); \
@@ -1623,7 +1634,7 @@ GR_CHECK_SIZE()
     } \
     else { \
       FxU32 argb; \
-      argb = *((FxU32 *)((int)_s + i)) & 0x00ffffff; \
+      argb = *((FxU32 *)((long)_s + i)) & 0x00ffffff; \
       TRI_SETF(*((float *)&argb)); \
       dataElem++; \
       i = gc->tsuDataList[dataElem]; \

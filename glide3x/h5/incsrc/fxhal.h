@@ -105,7 +105,7 @@ FX_ENTRY void   FX_CALL fxHalPutenv(char *buf);
 FX_ENTRY HalInfo * FX_CALL fxHalInit(FxU32 flags);
 FX_ENTRY FxU32  FX_CALL fxHalNumBoardsInSystem(void);
 FX_ENTRY SstRegs * FX_CALL fxHalMapBoard(FxU32 boardNum);
-FX_ENTRY FxBool FX_CALL fxHalInitCmdFifo( SstRegs *sst, int which, FxU32 fifoStart,
+FX_ENTRY FxBool FX_CALL fxHalInitCmdFifo( SstRegs *sst, int which, AnyPtr fifoStart,
                   FxU32 size, FxBool directExec, FxBool disableHoles, FxBool agpEnable);
 FX_ENTRY FxBool FX_CALL fxHalInitRegisters(SstRegs *sst);
 FX_ENTRY FxBool FX_CALL fxHalInitRenderingRegisters(SstRegs *sst);
@@ -212,9 +212,18 @@ fxHalInitVideoOverlaySurface(
         #define AGPWRP(aHi,aLo,d)  AGPWRV( *agpPhysToVirt(aHi,aLo), d )
         #define AGPRDP(aHi,aLo)    AGPRDV( *agpPhysToVirt(aHi,aLo) )
 #else  // #ifdef HAL_CSIM                          // REAL hw
+#ifdef __alpha__
+extern unsigned char _fxget8(unsigned char *);
+extern unsigned short _fxget16(unsigned short *);
+extern unsigned int _fxget32(unsigned int *);
+	#define GET8(s) _fxget8((unsigned byte *)&s);
+	#define GET16(s) _fxget16((unsigned short *)&s);
+	#define GET(s) _fxget32((unsigned int *)&s);
+#else	
         #define GET8(s) s
         #define GET16(s) s
         #define GET(s) s
+#endif
         #define SET8(d,s) d = s
         #define SET16(d,s) d = s
         #define SET(d,s) d = s

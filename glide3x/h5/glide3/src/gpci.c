@@ -546,7 +546,7 @@ static GrTriSetupProc _triSetupProcs[][2][2][2] =
   {
     /* Window coords */
     {
-      { _trisetup_Default_win_nocull_valid,   _trisetup_Default_win_cull_valid },
+      { _trisetup_Default_win_nocull_valid, _trisetup_Default_win_cull_valid },
       { _trisetup_Default_win_nocull_invalid, _trisetup_Default_win_cull_invalid },
     },
 
@@ -561,8 +561,8 @@ static GrTriSetupProc _triSetupProcs[][2][2][2] =
   {
     /* Window coords */
     {
-      { _trisetup_3DNow_win_nocull_valid,  _trisetup_3DNow_win_cull_valid },
-      { _trisetup_3DNow_win_nocull_invalid,  _trisetup_3DNow_win_cull_invalid },
+      { _trisetup_3DNow_win_nocull_valid, _trisetup_3DNow_win_cull_valid },
+      { _trisetup_3DNow_win_nocull_invalid, _trisetup_3DNow_win_cull_invalid },
     },
     /* Clip coordinates */
     {
@@ -575,14 +575,14 @@ static GrTriSetupProc _triSetupProcs[][2][2][2] =
   {
     /* Window coords */
     {
-      { _trisetup_null, _trisetup_null },
-      { _trisetup_null, _trisetup_null },
+      { (GrTriSetupProc) _trisetup_null, (GrTriSetupProc) _trisetup_null },
+      { (GrTriSetupProc) _trisetup_null, (GrTriSetupProc) _trisetup_null },
     },
 
     /* Clip coordinates */
     {
-      { _trisetup_null, _trisetup_null },
-      { _trisetup_null, _trisetup_null },
+      { (GrTriSetupProc) _trisetup_null, (GrTriSetupProc) _trisetup_null },
+      { (GrTriSetupProc) _trisetup_null, (GrTriSetupProc) _trisetup_null },
     },
   },
 };
@@ -591,7 +591,7 @@ static GrTriSetupProc _triSetupProcs[][2][2][2] =
  * unset for C_TRISETUP. Currently, teh grDrawTriangle code will only
  * vector to the asm code if C_TRISETUP is not set.  
  */
-#if GLIDE_USE_C_TRISETUP || __POWERPC__
+#if GLIDE_USE_C_TRISETUP || __alpha__ || __POWERPC__
 static GrVertexListProc _vertexListProcs[][2] = {
   { _grDrawVertexList, _grDrawVertexList },
 #if GL_AMD3D
@@ -1561,7 +1561,7 @@ DllMain(HANDLE hInst, ULONG  ul_reason_for_call, LPVOID lpReserved)
       GR_DCL_GC;
 
       /* If there is no current gc in tls then set the current context. */
-      if (gc == NULL) setThreadValue((FxU32)&_GlideRoot.GCs[_GlideRoot.current_sst]);
+      if (gc == NULL) setThreadValue((AnyPtr)&_GlideRoot.GCs[_GlideRoot.current_sst]);
     }
     break;
   case DLL_THREAD_DETACH:

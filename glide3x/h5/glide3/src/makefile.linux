@@ -45,6 +45,13 @@ endif
 FX_GLIDE_REAL_HW=       1
 FX_GLIDE_NO_FIFO=       1
 
+MACHINETYPE=$(shell $(BUILD_ROOT_SWLIBS)/include/make/machinetype)
+ifeq ($(MACHINETYPE),alpha) 
+FX_GLIDE_CTRISETUP =    1
+else 
+FX_GLIDE_CTRISETUP =    0
+endif
+
 HWSPEC          =       fifo.c
 LCDEFS          +=      -DH3 $(CMDXPORTDEFS)
 INITLIB         =       $(BUILD_ROOT)/$(FX_GLIDE_HW)/lib$(FX_GLIDE_HW)init.a
@@ -202,8 +209,6 @@ LADEFS          +=      $(ASM_REGMAP_DEFS)
 LAINCS          =       -I$(BUILD_ROOT)/$(FX_GLIDE_HW)/include
 LAOPTS          =       $(DBGOPTS) $(DSPOPTS) $(OPTOPTS)
 
-AFILES          =       $(ASMTRISETUP) cpudtect.s
-
 # sources
 HEADERS         =       glide.h glidesys.h glideutl.h g3ext.h
 PRIVATE_HEADERS =       fxglide.h gsstdef.h fxinline.h fxcmd.h fxsplash.h
@@ -213,7 +218,7 @@ INSTALL_DESTINATION =   $(BUILD_ROOT)/$(FX_GLIDE_HW)
 CFILES          +=      gsplash.c g3df.c  gu.c gthread.c \
                         gpci.c diglide.c disst.c ditex.c \
                         gbanner.c gerror.c gaa.c gdraw.c gglide.c $(GLIDE3FILES) \
-                        glfb.c gsst.c gtex.c gtexdl.c $(HWSPEC) 
+                        glfb.c gsst.c gtex.c gtexdl.c cpudtect.c $(HWSPEC) 
 
 OFILES          =       $(CFILES:.c=.o)
 
@@ -285,7 +290,6 @@ PREPROCESSOR=/lib/cpp -$$
 
 xdraw2.o : xdraw2.s xdraw2.inc.s fxgasm.h
 xdraw3.o : xdraw3.s fxgasm.h
-cpudtect.o: cpudtect.s
 
 # 3DNow!(tm) dependencies
 # XXX_def.obj targets are the default targets

@@ -471,7 +471,7 @@ GR_DDFUNC(_grTexDownloadPalette,
         while(i < start + slopCount) {
           FxU32 entry;
           
-          entry = (0x80000000 | ((i & 0xFE) << 23) | pal->data[i] & 0xFFFFFF);
+          entry = (0x80000000 | ((i & 0xFE) << 23) | (pal->data[i] & 0xFFFFFF));
           
           gc->state.shadow.paletteRow[i>>3].data[i&7] = entry;
           REG_GROUP_SET(hw, nccTable0[4 + (i & 0x07)], entry );
@@ -489,7 +489,7 @@ GR_DDFUNC(_grTexDownloadPalette,
         while(i < endIndex) {
           FxU32 entry;
           
-          entry = (0x80000000 | ((i & 0xFE) << 23) | pal->data[i] & 0xFFFFFF);
+          entry = (0x80000000 | ((i & 0xFE) << 23) | (pal->data[i] & 0xFFFFFF));
           
           gc->state.shadow.paletteRow[i>>3].data[i&7] = entry;
           REG_GROUP_SET(hw, nccTable0[4 + (i & 0x07)], entry );
@@ -508,7 +508,7 @@ GR_DDFUNC(_grTexDownloadPalette,
         while(i <= end) {
           FxU32 entry;
           
-          entry = (0x80000000 | ((i & 0xFE) << 23) | pal->data[i] & 0xFFFFFF);
+          entry = (0x80000000 | ((i & 0xFE) << 23) | (pal->data[i] & 0xFFFFFF));
           
           gc->state.shadow.paletteRow[i>>3].data[i&7] = entry;
           REG_GROUP_SET(hw, nccTable0[4 + (i & 0x07)], entry );

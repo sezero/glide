@@ -658,7 +658,7 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t type, GrBuffer_t buffer,
         if ( gc->textureBuffer.on && 
            ( buffer == GR_BUFFER_TEXTUREBUFFER_EXT || buffer == GR_BUFFER_TEXTUREAUXBUFFER_EXT ))       {
           if (type == GR_LFB_READ_ONLY) {
-            info->lfbPtr = (void *)((FxU32)gc->rawLfb + gc->textureBuffer.addr);
+            info->lfbPtr = (void *)((AnyPtr)gc->rawLfb + gc->textureBuffer.addr);
             info->strideInBytes     = gc->textureBuffer.stride ;
 #if __POWERPC__
             if(IS_NAPALM(gc->bInfo->pciInfo.deviceID)) {
@@ -680,11 +680,11 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t type, GrBuffer_t buffer,
                    (!pixelPipeline) && 
                    /* Origin must be upper left since we will return raw lfb */
                    (origin != GR_ORIGIN_LOWER_LEFT)){
-            info->lfbPtr = (void *)((FxU32)gc->rawLfb + gc->textureBuffer.addr);
+            info->lfbPtr = (void *)((AnyPtr)gc->rawLfb + gc->textureBuffer.addr);
             info->strideInBytes     = gc->textureBuffer.stride ;
             
           } 
-#endif          
+#endif
             else {
 #ifdef __linux__
            /*
@@ -1117,7 +1117,7 @@ _grLfbWriteRegion(FxBool pixPipelineP,
     case GR_LFB_SRC_FMT_ZA16:
       dstData = (FxU32*)(((FxU16*)dstData) + dst_x);
       length  = src_width * 2;
-      aligned = !((int)dstData&0x2);
+      aligned = !((long)dstData&0x2);
       srcJump = src_stride - length;
       dstJump = info.strideInBytes - length;
       if (aligned) {
@@ -1322,7 +1322,7 @@ GR_ENTRY(grLfbReadRegion, FxBool, (GrBuffer_t src_buffer,
     length   = src_width * 2;
     dstJump  = dst_stride - length;
     srcJump  = info.strideInBytes - length;
-    aligned  = !((int)srcData&0x2);
+    aligned  = !((long)srcData&0x2);
     odd      = (src_y+src_height) & 0x1;
     
 #if __POWERPC__

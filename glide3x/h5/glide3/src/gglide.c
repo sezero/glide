@@ -1297,7 +1297,7 @@ _grTriFill(GrColor_t color, FxU32 depth, GrStencil_t stencil)
       {
         REG_GROUP_SET(hw, stencilMode, (GR_CMP_ALWAYS << SST_STENCIL_FUNC_SHIFT) |
                                        (stencil       << SST_STENCIL_REF_SHIFT)  |
-                                        stencilMode & (SST_STENCIL_WMASK | SST_STENCIL_MASK) |
+                                        (stencilMode & (SST_STENCIL_WMASK | SST_STENCIL_MASK)) |
                                         SST_STENCIL_ENABLE) ;
         REG_GROUP_SET(hw, stencilOp, (GR_STENCILOP_REPLACE << SST_STENCIL_SFAIL_OP_SHIFT) |
                                      (GR_STENCILOP_REPLACE << SST_STENCIL_ZFAIL_OP_SHIFT) |
@@ -2803,8 +2803,8 @@ GR_ENTRY(grDRIBufferSwap, void, (FxU32 swapInterval))
     for ( i = 0; i < MAX_BUFF_PENDING && j == -1; i++) {
       if (gc->bufferSwaps[i] == 0xffffffff) {
         gc->bufferSwaps[i] =
-          (FxU32) gc->cmdTransportInfo.fifoPtr -
-          (FxU32) gc->cmdTransportInfo.fifoStart; 
+          (AnyPtr) gc->cmdTransportInfo.fifoPtr -
+          (AnyPtr) gc->cmdTransportInfo.fifoStart; 
         j = i;
       }
     }
@@ -3860,7 +3860,7 @@ GR_ENTRY(grGlideShutdown, void, (void))
            * continuing so that any internal glide calls have a valid
            * gc from tls via GR_DCL_GC. F*ck this up at your own peril.
            */
-          setThreadValue((FxU32)gc);
+          setThreadValue((AnyPtr)gc);
 #if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
           /* Flush any remaining commands and cleanup any per gc state */
           grSurfaceReleaseContext((GrContext_t)gc);

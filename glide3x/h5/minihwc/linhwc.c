@@ -66,7 +66,15 @@ hwcCheckMemSize(hwcBoardInfo *bInfo, FxU32 xres, FxU32 yres, FxU32 nColBuffers,
 #include "lindri.h"
 
 static FxU32 fenceVar;
+#if defined(__i386__)
 #define P6FENCE asm("xchg %%eax, %0" : : "m" (fenceVar) : "eax");
+#elif defined(__alpha__)
+#define P6FENCE
+#elif defined(__ia64__)
+#define P6FENCE asm volatile("mf.a" ::: "memory")
+#elif
+Error - need to define P6FENCE
+#endif
 
 #define MAXFIFOSIZE     0x40000
 #define FIFOPAD         0x0000
@@ -235,8 +243,8 @@ hwcMapBoard(hwcBoardInfo *bInfo, FxU32 bAddrMask) {
   bInfo->linearInfo.initialized = FXTRUE;
   bInfo->osNT = FXFALSE;
   bInfo->procHandle = getpid();
-  bInfo->linearInfo.linearAddress[0]=(FxU32)driInfo.pRegs;
-  bInfo->linearInfo.linearAddress[1]=(FxU32)driInfo.pFB;
+  bInfo->linearInfo.linearAddress[0]=(AnyPtr)driInfo.pRegs;
+  bInfo->linearInfo.linearAddress[1]=(AnyPtr)driInfo.pFB;
   return FXTRUE;
 }
 
@@ -971,7 +979,7 @@ char hwcGetCH( void ) {
   return lin_getch();
 }
 
-void grDRIImportFifo(int fifoPtr, int fifoRead)
+void grDRIImportFifo(FxU32 fifoPtr, FxU32 fifoRead)
 {
   _grImportFifo(fifoPtr, fifoRead);
 }

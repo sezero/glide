@@ -495,7 +495,7 @@ GR_DIENTRY(grDrawVertexArrayContiguous, void , (FxU32 mode, FxU32 Count, void *p
     FxU32 i;
     for (i = 0; i < Count; i++)
       GDBG_INFO(110, "%s:  pointers[%d] = 0x%x\n",
-                FN_NAME, i, (int)pointers + gc->state.vData.vStride * i);
+                FN_NAME, i, (long)pointers + gc->state.vData.vStride * i);
   }
 #endif
 
@@ -550,10 +550,10 @@ GR_DIENTRY(grDrawVertexArrayContiguous, void , (FxU32 mode, FxU32 Count, void *p
     else {
       void *b_ptr, *c_ptr;
       while ((int)Count >= 3) {
-        b_ptr = (void *)((FxU32)pointers + stride);
-        c_ptr = (void *)((FxU32)pointers + stride*2);
+        b_ptr = (void *)((AnyPtr)pointers + stride);
+        c_ptr = (void *)((AnyPtr)pointers + stride*2);
         TRISETUP(pointers, b_ptr, c_ptr);
-        pointers = (void *)((FxU32)c_ptr + stride);
+        pointers = (void *)((AnyPtr)c_ptr + stride);
         Count -= 3;
       }
     }

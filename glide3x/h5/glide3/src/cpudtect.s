@@ -20,6 +20,10 @@
 
 /*  $Header$ *
 /*  $Log$
+/*  Revision 1.2  2000/06/27 19:59:34  joseph
+/*  Previous checkin of asm files were already preprocessed.
+/*  Fixed build rules for 3DNow optimized assembly.
+/*
 /*  Revision 1.1  2000/06/15 00:27:42  josep
 /*  Initial checkin into SourceForge
 /
@@ -46,6 +50,20 @@
 /*   */
 /*  2     3/04/97 9:10p Dow */
 
+
+#ifdef __ia64__
+
+	.align 32
+	.global _cpu_detect_asm
+	.proc _cpu_detect_asm
+
+_cpu_detect_asm:
+	mov ret0=0
+	br.ret.sptk.few b0
+
+	.end _cpu_detect_asm
+
+#else /* !__ia64__ */
 
 
 .file "cpudtect.asm"
@@ -322,3 +340,4 @@ double_precision_asm:
 .size double_precision_asm,.L_END_double_precision_asm-double_precision_asm
 
 .end
+#endif

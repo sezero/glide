@@ -182,7 +182,7 @@ GR_DIENTRY(grSstSelect, void, ( int which ))
     GrErrorCallback( "grSstSelect:  non-existent SST", FXTRUE );
 
   _GlideRoot.current_sst = which;
-  setThreadValue( (FxU32)&_GlideRoot.GCs[_GlideRoot.current_sst] );
+  setThreadValue( (AnyPtr)&_GlideRoot.GCs[_GlideRoot.current_sst] );
 
 #ifdef GLIDE_MULTIPLATFORM
   _GlideRoot.curGCFuncs = _GlideRoot.curGC->gcFuncs;

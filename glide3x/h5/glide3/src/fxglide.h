@@ -1273,7 +1273,7 @@ typedef struct {
  * the _archXXXX proc list that is selected at grGlideInit time.
  */
 
-#ifndef __linux__
+#if !defined(__linux__) || defined(GLIDE_USE_C_TRISETUP)
 typedef FxI32 (FX_CALL* GrTriSetupProc)(const void *a, const void *b, const void *c);
 #else   /* defined(__linux__) */
 typedef FxI32 (FX_CALL* GrTriSetupProc)(const void *g, const void *a, const void *b, const void *c);
@@ -1555,7 +1555,7 @@ typedef struct GrGC_s
           SET_FIFO(*curFifoPtr++, *curPktData++); \
         } \
         GR_INC_SIZE((__writeCount) * sizeof(FxU32)); \
-        gc->cmdTransportInfo.fifoRoom -= ((FxU32)curFifoPtr - (FxU32)gc->cmdTransportInfo.fifoPtr); \
+        gc->cmdTransportInfo.fifoRoom -= ((AnyPtr)curFifoPtr - (AnyPtr)gc->cmdTransportInfo.fifoPtr); \
         gc->cmdTransportInfo.fifoPtr = curFifoPtr; \
       } \
       GR_CHECK_SIZE(); \
@@ -1675,7 +1675,7 @@ typedef struct GrGC_s
                           */
     
     FxU32* fifoPtr;      /* Current write pointer into fifo */
-    FxU32  fifoRead;     /* Last known hw read ptr. 
+    AnyPtr  fifoRead;     /* Last known hw read ptr. 
                           * If on an sli enabled system this will be
                           * the 'closest' hw read ptr of the sli
                           * master and slave.
@@ -1747,7 +1747,7 @@ typedef struct GrGC_s
                                    occur every 64K writes. */
 
   } cmdTransportInfo;
-#ifndef	__linux__
+#if !defined(__linux__) || defined(GLIDE_USE_C_TRISETUP)
   FxI32 (FX_CALL *triSetupProc)(const void *a, const void *b, const void *c);
 #else	/* defined(__linux__) */
   FxI32 (FX_CALL *triSetupProc)(const void *g, const void *a, const void *b, const void *c);
@@ -1766,17 +1766,19 @@ typedef struct GrGC_s
   SstCRegs
     *slaveCRegs[3] ;            /* AJB - ptrs to slave chips cmd regs */
   FxU32
-    *rawLfb,
+    *rawLfb;
+  FxU32
     nBuffers,
     curBuffer,
     frontBuffer,
-    backBuffer,
+    backBuffer;
+  AnyPtr
     buffers0[4],
     buffers1[4],
     lfbBuffers[4];              /* Tile relative addresses of the color/aux
                                  * buffers for lfbReads.
                                  */  
-  FxU32 lockPtrs[2];        /* pointers to locked buffers */
+  AnyPtr lockPtrs[2];        /* pointers to locked buffers */
   FxU32 fbStride;
 
   FxBool colTiled,            // AJB - grBufferClear needs to know when target surfaces
@@ -1856,7 +1858,7 @@ typedef struct GrGC_s
   FxI32 expected_counter;       /* the number of bytes expected to be sent */
 
   FxU32 checkCounter;
-  FxU32 checkPtr;
+  AnyPtr checkPtr;
    
   FxVideoTimingInfo* vidTimings;/* init code overrides */
 
@@ -2085,6 +2087,11 @@ extern GrGCFuncs _curGCFuncs;
  * This is the __linux__ code.
  */
 #define P6FENCE asm("xchg %%eax, %0" : : "m" (_GlideRoot.p6Fencer) : "eax");
+#elif defined(__GNUC__) && defined(__alpha__)
+/* This might need to be a memory barrier on alpha - we'll see */
+#define P6FENCE
+#elif defined(__GNUC__) && defined(__ia64__)
+#define P6FENCE asm volatile("mf.a" ::: "memory")
 #else  /* !defined ( P6FENCE ) */
 #  error "P6 Fencing code needs to be added for this compiler"
 #endif /* !defined ( P6FENCE ) */
@@ -2243,7 +2250,11 @@ _trisetup_noclip_valid(const void *va, const void *vb, const void *vc );
 #define TRISETUP(_a, _b, _c) \
   ((FxI32 (*)(const void *va, const void *vb, const void *vc, GrGC *gc))*gc->triSetupProc)(_a, _b, _c, gc)
 #elif defined(__linux__)
+#ifdef GLIDE_USE_C_TRISETUP
+#define TRISETUP(a, b, c) (gc->triSetupProc)(a, b, c)
+#else
 #define TRISETUP(a, b, c) (gc->triSetupProc)(gc, a, b, c)
+#endif
 #else /* defined(__linux__) */
 #define TRISETUP \
   (*gc->triSetupProc)
@@ -2589,15 +2600,15 @@ getThreadValueFast() {
 #endif
 
 #if (GLIDE_PLATFORM & GLIDE_OS_MACOS)
-extern FxU32 _threadValueMacOS;
-__inline FxU32
+extern AnyPtr _threadValueMacOS;
+__inline AnyPtr
 getThreadValueFast() {
         return _threadValueMacOS;
 }
 #endif
 
 #ifdef __linux__
-extern FxU32 threadValueLinux;
+extern AnyPtr threadValueLinux;
 #define getThreadValueFast() threadValueLinux
 #endif /* defined(__linux__) */
 
@@ -2620,9 +2631,9 @@ void
 freeThreadStorage( void );
 
 void 
-setThreadValue( FxU32 value );
+setThreadValue( AnyPtr value );
 
-FxU32
+AnyPtr
 getThreadValueSLOW( void );
 
 void 
@@ -2860,7 +2871,7 @@ assertDefaultState( void );
                                 saveLevel = gc->myLevel; \
                                 myName = name;  \
                                 gc->myLevel = level; \
-                gc->checkPtr = (FxU32)gc->cmdTransportInfo.fifoPtr; \
+                gc->checkPtr = (AnyPtr)gc->cmdTransportInfo.fifoPtr; \
                 GDBG_INFO(gc->myLevel,myName); \
                 FXUNUSED(saveLevel); \
                 FXUNUSED(hw); \
@@ -2871,7 +2882,7 @@ assertDefaultState( void );
                 const char* myName = name;  \
                 GR_ASSERT(gc != NULL);  \
                 gc->myLevel = level; \
-                gc->checkPtr = (FxU32)gc->cmdTransportInfo.fifoPtr; \
+                gc->checkPtr = (AnyPtr)gc->cmdTransportInfo.fifoPtr; \
                 GDBG_INFO(gc->myLevel,myName); \
                 FXUNUSED(saveLevel); \
                 FXUNUSED(hw); \
@@ -3034,7 +3045,7 @@ extern FxU32 SST_TEXTURE_ALIGN;
 #define HW_TEX_PTR(__b)        ((FxU32*)(((FxU32)(__b)) + HW_TEXTURE_OFFSET))   
 
 /* access a floating point array with a byte index */
-#define FARRAY(p,i)    (*(float *)((i)+(int)(p)))
+#define FARRAY(p,i)    (*(float *)((i)+(long)(p)))
 #define ArraySize(__a) (sizeof(__a) / sizeof((__a)[0]))
 
 #if GDBG_INFO_ON

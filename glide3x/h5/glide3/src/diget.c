@@ -19,6 +19,10 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.2  2000/06/26 21:26:24  joseph
+** Merged with 3dfx internal source repository so that the source base stays
+** up to date.
+**
 ** 
 ** 93    9/09/99 4:19p Adamb
 ** Added TEXTUREBUFFER to GR_EXTENSION string
@@ -725,11 +729,11 @@ GR_DIENTRY(grGet, FxU32, (FxU32 pname, FxU32 plength, FxI32 *params))
     break;
 
   case GR_SURFACE_TEXTURE:
-    if (plength == 4) {
+    if (plength == sizeof(long)) {
       GR_DCL_GC;
 
 #ifdef GLIDE_INIT_HWC
-      *params = (FxU32) &gc->tBuffer;
+      *params = (AnyPtr) &gc->tBuffer;
       retVal = plength;
 #endif
     }

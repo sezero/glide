@@ -279,11 +279,19 @@ typedef volatile struct sstgregs {      // THE 2D CHIP
 
 #ifndef _H2INC
 
+#if defined(__alpha__) || defined(__LP64__)
+typedef unsigned int Reg32u;
+typedef int Reg32;
+#else
+typedef unsigned long Reg32u;
+typedef long Reg32;
+#endif
+
 //----------------- SST chip 3D layout -------------------------
 // registers are in groups of 8 for easy decode
 typedef struct vertex_Rec {
-    unsigned long x;            // 12.4 format
-    unsigned long y;            // 12.4
+    Reg32u x;            // 12.4 format
+    Reg32u y;            // 12.4
 } vtxRec;
 
 typedef volatile struct sstregs {       // THE 3D CHIP
@@ -294,127 +302,127 @@ typedef volatile struct sstregs {       // THE 3D CHIP
     vtxRec vB;
     vtxRec vC;
 
-    long r;             // 12.12        Parameters
-    long g;             // 12.12
-    long b;             // 12.12
-    long z;             // 20.12 in 16bpp, 28.4 in 32bpp (there is an ugly hack in csimio.c, search "//EVIL:")
-    long a;             // 12.12
-    long s;             // 14.18
-    long t;             // 14.18
-    long w;             //  2.30
+    Reg32 r;             // 12.12        Parameters
+    Reg32 g;             // 12.12
+    Reg32 b;             // 12.12
+    Reg32 z;             // 20.12 in 16bpp, 28.4 in 32bpp (there is an ugly hack in csimio.c, search "//EVIL:")
+    Reg32 a;             // 12.12
+    Reg32 s;             // 14.18
+    Reg32 t;             // 14.18
+    Reg32 w;             //  2.30
 
-    long drdx;                  // X Gradients
-    long dgdx;
-    long dbdx;
-    long dzdx;  //20.12 in 16bpp, 28.4 in 32bpp (there is an ugly hack in csimio.c, search "//EVIL:")
-    long dadx;
-    long dsdx;
-    long dtdx;
-    long dwdx;
+    Reg32 drdx;                  // X Gradients
+    Reg32 dgdx;
+    Reg32 dbdx;
+    Reg32 dzdx;  //20.12 in 16bpp, 28.4 in 32bpp (there is an ugly hack in csimio.c, search "//EVIL:")
+    Reg32 dadx;
+    Reg32 dsdx;
+    Reg32 dtdx;
+    Reg32 dwdx;
 
-    long drdy;                  // Y Gradients
-    long dgdy;
-    long dbdy;
-    long dzdy;  //20.12 in 16bpp, 28.4 in 32bpp (there is an ugly hack in csimio.c, search "//EVIL:")
-    long dady;
-    long dsdy;
-    long dtdy;
-    long dwdy;
+    Reg32 drdy;                  // Y Gradients
+    Reg32 dgdy;
+    Reg32 dbdy;
+    Reg32 dzdy;  //20.12 in 16bpp, 28.4 in 32bpp (there is an ugly hack in csimio.c, search "//EVIL:")
+    Reg32 dady;
+    Reg32 dsdy;
+    Reg32 dtdy;
+    Reg32 dwdy;
 
-    unsigned long triangleCMD;  // execute a triangle command (float)
-    unsigned long reservedA;
+    Reg32u triangleCMD;  // execute a triangle command (float)
+    Reg32u reservedA;
     vtxRec FvA;                 // floating point version
     vtxRec FvB;
     vtxRec FvC;
 
-    long Fr;                    // floating point version
-    long Fg;
-    long Fb;
-    long Fz;
-    long Fa;
-    long Fs;
-    long Ft;
-    long Fw;
+    Reg32 Fr;                    // floating point version
+    Reg32 Fg;
+    Reg32 Fb;
+    Reg32 Fz;
+    Reg32 Fa;
+    Reg32 Fs;
+    Reg32 Ft;
+    Reg32 Fw;
 
-    long Fdrdx;
-    long Fdgdx;
-    long Fdbdx;
-    long Fdzdx;
-    long Fdadx;
-    long Fdsdx;
-    long Fdtdx;
-    long Fdwdx;
+    Reg32 Fdrdx;
+    Reg32 Fdgdx;
+    Reg32 Fdbdx;
+    Reg32 Fdzdx;
+    Reg32 Fdadx;
+    Reg32 Fdsdx;
+    Reg32 Fdtdx;
+    Reg32 Fdwdx;
 
-    long Fdrdy;
-    long Fdgdy;
-    long Fdbdy;
-    long Fdzdy;
-    long Fdady;
-    long Fdsdy;
-    long Fdtdy;
-    long Fdwdy;
+    Reg32 Fdrdy;
+    Reg32 Fdgdy;
+    Reg32 Fdbdy;
+    Reg32 Fdzdy;
+    Reg32 Fdady;
+    Reg32 Fdsdy;
+    Reg32 Fdtdy;
+    Reg32 Fdwdy;
 
-    unsigned long FtriangleCMD;         // execute a triangle command
-    unsigned long fbzColorPath;         // color select and combine
-    unsigned long fogMode;              // fog Mode
-    unsigned long alphaMode;            // alpha Mode
-    unsigned long fbzMode;              // framebuffer and Z mode
-    unsigned long lfbMode;              // linear framebuffer Mode
-    unsigned long clipLeftRight;        // (6)10(6)10
-    unsigned long clipBottomTop;        // (6)10(6)10
+    Reg32u FtriangleCMD;         // execute a triangle command
+    Reg32u fbzColorPath;         // color select and combine
+    Reg32u fogMode;              // fog Mode
+    Reg32u alphaMode;            // alpha Mode
+    Reg32u fbzMode;              // framebuffer and Z mode
+    Reg32u lfbMode;              // linear framebuffer Mode
+    Reg32u clipLeftRight;        // (6)10(6)10
+    Reg32u clipBottomTop;        // (6)10(6)10
 
-    unsigned long nopCMD;       // execute a nop command
-    unsigned long fastfillCMD;  // execute a fast fill command
-    unsigned long swapbufferCMD;// execute a swapbuffer command
-    unsigned long fogColor;             // (8)888
-    unsigned long zaColor;              // 8.24
-    unsigned long chromaKey;            // (8)888
-    unsigned long chromaRange;
-    unsigned long userIntrCmd;
+    Reg32u nopCMD;       // execute a nop command
+    Reg32u fastfillCMD;  // execute a fast fill command
+    Reg32u swapbufferCMD;// execute a swapbuffer command
+    Reg32u fogColor;             // (8)888
+    Reg32u zaColor;              // 8.24
+    Reg32u chromaKey;            // (8)888
+    Reg32u chromaRange;
+    Reg32u userIntrCmd;
 
-    unsigned long stipple;              // 32 bits, MSB masks pixels
-    unsigned long c0;                   // 8.8.8.8 (ARGB)
-    unsigned long c1;                   // 8.8.8.8 (ARGB)
+    Reg32u stipple;              // 32 bits, MSB masks pixels
+    Reg32u c0;                   // 8.8.8.8 (ARGB)
+    Reg32u c1;                   // 8.8.8.8 (ARGB)
     struct {                            // statistic gathering variables
-        unsigned long fbiPixelsIn;
-        unsigned long fbiChromaFail;
-        unsigned long fbiZfuncFail;
-        unsigned long fbiAfuncFail;
-        unsigned long fbiPixelsOut;
+        Reg32u fbiPixelsIn;
+        Reg32u fbiChromaFail;
+        Reg32u fbiZfuncFail;
+        Reg32u fbiAfuncFail;
+        Reg32u fbiPixelsOut;
     } stats;
 
-    unsigned long fogTable[32];         // 64 entries, 2 per word, 2 bytes each
+    Reg32u fogTable[32];         // 64 entries, 2 per word, 2 bytes each
 
-    unsigned long renderMode;		// new 32bpp and 1555 modes
-    unsigned long stencilMode;
-    unsigned long stencilOp;
-    unsigned long colBufferAddr;        //This is the primary colBufferAddr
-    unsigned long colBufferStride;    
-    unsigned long auxBufferAddr;        //This is the primary auxBufferAddr
-    unsigned long auxBufferStride;
-    unsigned long fbiStencilFail;
+    Reg32u renderMode;		// new 32bpp and 1555 modes
+    Reg32u stencilMode;
+    Reg32u stencilOp;
+    Reg32u colBufferAddr;        //This is the primary colBufferAddr
+    Reg32u colBufferStride;    
+    Reg32u auxBufferAddr;        //This is the primary auxBufferAddr
+    Reg32u auxBufferStride;
+    Reg32u fbiStencilFail;
 
-    unsigned long clipLeftRight1;
-    unsigned long clipBottomTop1;
-    unsigned long combineMode;
-    unsigned long sliCtrl;
-    unsigned long aaCtrl;
-    unsigned long chipMask;
-    unsigned long leftDesktopBuf;
-    unsigned long reservedD[2];         // NOTE: used to store TMUprivate ptr  (reservedD[0])
+    Reg32u clipLeftRight1;
+    Reg32u clipBottomTop1;
+    Reg32u combineMode;
+    Reg32u sliCtrl;
+    Reg32u aaCtrl;
+    Reg32u chipMask;
+    Reg32u leftDesktopBuf;
+    Reg32u reservedD[2];         // NOTE: used to store TMUprivate ptr  (reservedD[0])
                                         // NOTE: used to store CSIMprivate ptr (reservedD[1])
 
-    unsigned long reservedE[7];         // NOTE: reservedE[0] stores the secondary colBufferAddr
+    Reg32u reservedE[7];         // NOTE: reservedE[0] stores the secondary colBufferAddr
                                         // NOTE: reservedE[1] stores the secondary auxBufferAddr  
                                         // NOTE: reservedE[2] stores the primary colBufferAddr  
                                         // NOTE: reservedE[3] stores the primary auxBufferAddr  
                       
-    unsigned long reservedF[3];  
-    unsigned long swapBufferPend;
-    unsigned long leftOverlayBuf;
-    unsigned long rightOverlayBuf;
-    unsigned long fbiSwapHistory;
-    unsigned long fbiTrianglesOut;      // triangles out counter
+    Reg32u reservedF[3];  
+    Reg32u swapBufferPend;
+    Reg32u leftOverlayBuf;
+    Reg32u rightOverlayBuf;
+    Reg32u fbiSwapHistory;
+    Reg32u fbiTrianglesOut;      // triangles out counter
 
     FxU32 sSetupMode;
     FxU32 sVx;
@@ -436,24 +444,24 @@ typedef volatile struct sstregs {       // THE 3D CHIP
 
     FxU32 sDrawTriCMD;
     FxU32 sBeginTriCMD;
-    unsigned long reservedG[6];
+    Reg32u reservedG[6];
 
-    unsigned long reservedH[8];
+    Reg32u reservedH[8];
 
-    unsigned long reservedI[8];
+    Reg32u reservedI[8];
 
-    unsigned long textureMode;          // texture Mode
-    unsigned long tLOD;                 // texture LOD settings
-    unsigned long tDetail;              // texture detail settings
-    unsigned long texBaseAddr;          // current texture base address
-    unsigned long texBaseAddr1;
-    unsigned long texBaseAddr2;
-    unsigned long texBaseAddr38;
-    unsigned long trexInit0;            // hardware init bits
-    unsigned long trexInit1;            // hardware init bits
+    Reg32u textureMode;          // texture Mode
+    Reg32u tLOD;                 // texture LOD settings
+    Reg32u tDetail;              // texture detail settings
+    Reg32u texBaseAddr;          // current texture base address
+    Reg32u texBaseAddr1;
+    Reg32u texBaseAddr2;
+    Reg32u texBaseAddr38;
+    Reg32u trexInit0;            // hardware init bits
+    Reg32u trexInit1;            // hardware init bits
    
-    unsigned long nccTable0[12];        // NCC decode tables, bits are packed
-    unsigned long nccTable1[12];        // 4 words Y, 4 words I, 4 words Q
+    Reg32u nccTable0[12];        // NCC decode tables, bits are packed
+    Reg32u nccTable1[12];        // 4 words Y, 4 words I, 4 words Q
 
 } SstRegs;
 

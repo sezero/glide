@@ -1146,8 +1146,8 @@ initGC ( GrGC *gc )
     gc->bufferSwaps[t] = 0xffffffff;
   }
   
-  gc->bufferSwaps[0] = ((FxU32) gc->cmdTransportInfo.fifoPtr -
-                        (FxU32) gc->cmdTransportInfo.fifoStart);
+  gc->bufferSwaps[0] = ((AnyPtr) gc->cmdTransportInfo.fifoPtr -
+                        (AnyPtr) gc->cmdTransportInfo.fifoStart);
   
   gc->swapsPending = 1;
   
@@ -1358,7 +1358,7 @@ GR_ENTRY(grSstWinOpen, GrContext_t, ( FxU32                   hWnd,
    * current gc. This gc is valid for all threads in the fullscreen
    * context.
    */
-  setThreadValue( (FxU32)&_GlideRoot.GCs[_GlideRoot.current_sst] );
+  setThreadValue( (AnyPtr)&_GlideRoot.GCs[_GlideRoot.current_sst] );
   
   {
     /* Partial Argument Validation */
@@ -1542,12 +1542,12 @@ GR_ENTRY(grSstWinOpen, GrContext_t, ( FxU32                   hWnd,
     for (buffer = 0; buffer < nColBuffers; buffer++) {
       gc->buffers0[buffer] = bufInfo->colBuffStart0[buffer];
       GDBG_INFO(80, "Buffer %d:  Start: 0x%x\n", buffer, gc->buffers0[buffer]);
-      gc->lfbBuffers[buffer] = (FxU32)gc->rawLfb + bufInfo->lfbBuffAddr0[buffer];
+      gc->lfbBuffers[buffer] = (AnyPtr)gc->rawLfb + bufInfo->lfbBuffAddr0[buffer];
     }
     if (nAuxBuffers != 0) {
       gc->buffers0[buffer] = bufInfo->auxBuffStart0;
       GDBG_INFO(80, "Aux Buffer:  Start: 0x%x\n", gc->buffers0[buffer]);
-      gc->lfbBuffers[buffer] = (FxU32)gc->rawLfb + bufInfo->lfbBuffAddr0[buffer];
+      gc->lfbBuffers[buffer] = (AnyPtr)gc->rawLfb + bufInfo->lfbBuffAddr0[buffer];
     }
   
     vInfo->hWnd     = gc->grHwnd;
@@ -1660,7 +1660,7 @@ GR_ENTRY(grSstWinOpen, GrContext_t, ( FxU32                   hWnd,
     GDBG_INFO(1, "autoBump: 0x%x\n", _GlideRoot.environment.autoBump);
     /* The logic for this is hosed for PowerPC, where we disable auto-bump even
        on PCI. */
-    if (gc->cmdTransportInfo.autoBump = _GlideRoot.environment.autoBump) {
+    if ((gc->cmdTransportInfo.autoBump = _GlideRoot.environment.autoBump)!=0) {
       if (!hwcInitFifo( bInfo, gc->cmdTransportInfo.autoBump)) {
         hwcRestoreVideo(bInfo);
         GrErrorCallback(hwcGetErrorString(), FXFALSE);
@@ -1700,7 +1700,7 @@ GR_ENTRY(grSstWinOpen, GrContext_t, ( FxU32                   hWnd,
     gc->tmu_state[0].total_mem = gc->tramSize;
 #else
     /* gc->fbOffset               = (FxU32)fxHalFbiGetMemory((SstRegs*)gc->reg_ptr); */
-    gc->fbOffset                  = (FxU32)gc->rawLfb;
+    gc->fbOffset                  = (AnyPtr)gc->rawLfb;
     gc->fbOffset                  = 0x0;
     gc->tmuMemInfo[0].tramOffset  = 0x200000;
     gc->tmuMemInfo[0].tramSize    = 0x200000;
@@ -1793,7 +1793,7 @@ GR_ENTRY(grSstWinOpen, GrContext_t, ( FxU32                   hWnd,
 
 #endif /*  defined( GLIDE_INIT_HAL )  */
 #else  /* !defined( USE_PACKET_FIFO ) */
-    gc->fbOffset                  = (FxU32)gc->rawLfb;
+    gc->fbOffset                  = (AnyPtr)gc->rawLfb;
     gc->fbOffset                  = 0x0;
     gc->tmuMemInfo[0].tramOffset  = 0x200000;
     gc->tmuMemInfo[0].tramSize    = 0x200000;
@@ -1829,7 +1829,7 @@ GR_ENTRY(grSstWinOpen, GrContext_t, ( FxU32                   hWnd,
       for ( buffer = 0; buffer < nColBuffers; buffer++ ) {
         gc->buffers0[buffer] = bufInfo->colBuffStart0[buffer];
         GDBG_INFO(80, "Buffer %d:  Start: 0x%x\n", buffer, gc->buffers0[buffer]);
-        gc->lfbBuffers[buffer] = (FxU32)gc->rawLfb + bufInfo->lfbBuffAddr0[buffer];
+        gc->lfbBuffers[buffer] = (AnyPtr)gc->rawLfb + bufInfo->lfbBuffAddr0[buffer];
         if (bInfo->buffInfo.enable2ndbuffer) {
           gc->buffers1[buffer] = bufInfo->colBuffStart1[buffer];
           GDBG_INFO(80, "Buffer %d:  Start: 0x%x\n", buffer, gc->buffers1[buffer]);
@@ -1838,7 +1838,7 @@ GR_ENTRY(grSstWinOpen, GrContext_t, ( FxU32                   hWnd,
       if (nAuxBuffers != 0) {
         gc->buffers0[buffer] = bufInfo->auxBuffStart0;
         GDBG_INFO(80, "Aux Buffer:  Start: 0x%x\n", gc->buffers0[buffer]);
-        gc->lfbBuffers[buffer] = (FxU32)gc->rawLfb + bufInfo->lfbBuffAddr0[buffer];
+        gc->lfbBuffers[buffer] = (AnyPtr)gc->rawLfb + bufInfo->lfbBuffAddr0[buffer];
         if (bInfo->buffInfo.enable2ndbuffer) {
           gc->buffers1[buffer] = bufInfo->auxBuffStart1;
           GDBG_INFO(80, "Aux Buffer:  Start: 0x%x\n", gc->buffers1[buffer]);
@@ -1990,7 +1990,7 @@ GR_ENTRY(grSstWinOpen, GrContext_t, ( FxU32                   hWnd,
               gcFifo->fifoPtr ); 
     
 #ifdef __linux__
-    _grImportFifo(*driInfo.fifoPtr, *driInfo.fifoRead);
+    _grImportFifo((AnyPtr)*driInfo.fifoPtr, (AnyPtr)*driInfo.fifoRead);
 #endif
 
     /* The hw is now in a usable state from the fifo macros.
@@ -2195,7 +2195,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
    * current gc. This gc is valid for all threads in the fullscreen
    * context.
    */
-  setThreadValue( (FxU32)&_GlideRoot.GCs[_GlideRoot.current_sst] );
+  setThreadValue( (AnyPtr)&_GlideRoot.GCs[_GlideRoot.current_sst] );
   
   {
     /* Partial Argument Validation */
@@ -2687,7 +2687,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
     for (buffer = 0; buffer < nColBuffers; buffer++) {
       gc->buffers0[buffer] = bufInfo->colBuffStart0[buffer];
       GDBG_INFO(80, "Buffer %d:  Start: 0x%x\n", buffer, gc->buffers0[buffer]);
-      gc->lfbBuffers[buffer] = (FxU32)gc->rawLfb + bufInfo->lfbBuffAddr0[buffer];
+      gc->lfbBuffers[buffer] = (AnyPtr)gc->rawLfb + bufInfo->lfbBuffAddr0[buffer];
       if (bInfo->buffInfo.enable2ndbuffer) {
         gc->buffers1[buffer] = bufInfo->colBuffStart1[buffer];
         GDBG_INFO(80, "Buffer %d:  Start: 0x%x\n", buffer, gc->buffers1[buffer]);
@@ -2696,7 +2696,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
     if (nAuxBuffers != 0) {
       gc->buffers0[buffer] = bufInfo->auxBuffStart0;
       GDBG_INFO(80, "Aux Buffer:  Start: 0x%x\n", gc->buffers0[buffer]);
-      gc->lfbBuffers[buffer] = (FxU32)gc->rawLfb + bufInfo->lfbBuffAddr0[buffer];
+      gc->lfbBuffers[buffer] = (AnyPtr)gc->rawLfb + bufInfo->lfbBuffAddr0[buffer];
       if (bInfo->buffInfo.enable2ndbuffer) {
         gc->buffers1[buffer] = bufInfo->auxBuffStart1;
         GDBG_INFO(80, "Aux Buffer:  Start: 0x%x\n", gc->buffers1[buffer]);
@@ -2899,7 +2899,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
       for ( buffer = 0; buffer < nColBuffers; buffer++ ) {
         gc->buffers0[buffer] = bufInfo->colBuffStart0[buffer];
         GDBG_INFO(80, "Buffer %d:  Start: 0x%x\n", buffer, gc->buffers0[buffer]);
-        gc->lfbBuffers[buffer] = (FxU32)gc->rawLfb + bufInfo->lfbBuffAddr0[buffer];
+        gc->lfbBuffers[buffer] = (AnyPtr)gc->rawLfb + bufInfo->lfbBuffAddr0[buffer];
         if (bInfo->buffInfo.enable2ndbuffer) {
           gc->buffers1[buffer] = bufInfo->colBuffStart1[buffer];
           GDBG_INFO(80, "Buffer %d:  Start: 0x%x\n", buffer, gc->buffers1[buffer]);
@@ -2908,7 +2908,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
       if (nAuxBuffers != 0) {
         gc->buffers0[buffer] = bufInfo->auxBuffStart0;
         GDBG_INFO(80, "Aux Buffer:  Start: 0x%x\n", gc->buffers0[buffer]);
-        gc->lfbBuffers[buffer] = (FxU32)gc->rawLfb + bufInfo->lfbBuffAddr0[buffer];
+        gc->lfbBuffers[buffer] = (AnyPtr)gc->rawLfb + bufInfo->lfbBuffAddr0[buffer];
         if (bInfo->buffInfo.enable2ndbuffer) {
           gc->buffers1[buffer] = bufInfo->auxBuffStart1;
           GDBG_INFO(80, "Aux Buffer:  Start: 0x%x\n", gc->buffers1[buffer]);
@@ -3057,7 +3057,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
       for ( buffer = 0; buffer < nColBuffers; buffer++ ) {
         gc->buffers0[buffer] = bufInfo->colBuffStart0[buffer];
         GDBG_INFO(80, "Buffer %d:  Start: 0x%x\n", buffer, gc->buffers0[buffer]);
-        gc->lfbBuffers[buffer] = (FxU32)gc->rawLfb + bufInfo->lfbBuffAddr0[buffer];
+        gc->lfbBuffers[buffer] = (AnyPtr)gc->rawLfb + bufInfo->lfbBuffAddr0[buffer];
         if (bInfo->buffInfo.enable2ndbuffer) {
           gc->buffers1[buffer] = bufInfo->colBuffStart1[buffer];
           GDBG_INFO(80, "Buffer %d:  Start: 0x%x\n", buffer, gc->buffers1[buffer]);
@@ -3066,7 +3066,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
       if (nAuxBuffers != 0) {
         gc->buffers0[buffer] = bufInfo->auxBuffStart0;
         GDBG_INFO(80, "Aux Buffer:  Start: 0x%x\n", gc->buffers0[buffer]);
-        gc->lfbBuffers[buffer] = (FxU32)gc->rawLfb + bufInfo->lfbBuffAddr0[buffer];
+        gc->lfbBuffers[buffer] = (AnyPtr)gc->rawLfb + bufInfo->lfbBuffAddr0[buffer];
         if (bInfo->buffInfo.enable2ndbuffer) {
           gc->buffers1[buffer] = bufInfo->auxBuffStart1;
           GDBG_INFO(80, "Aux Buffer:  Start: 0x%x\n", gc->buffers1[buffer]);
@@ -3219,7 +3219,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
               gcFifo->fifoPtr ); 
     
 #ifdef __linux__
-    _grImportFifo(*driInfo.fifoPtr, *driInfo.fifoRead);
+    _grImportFifo((AnyPtr)*driInfo.fifoPtr, (AnyPtr)*driInfo.fifoRead);
 #endif
 
     /* The hw is now in a usable state from the fifo macros.
@@ -3499,7 +3499,7 @@ GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
    * the tls gc explicitly otherwise other whacky-ness (read 'random
    * crashes' will ensue). 
    */
-  setThreadValue((FxU32)gc);
+  setThreadValue((AnyPtr)gc);
   if ((gc != NULL) && gc->open) grFlush();
 
   /* Make sure that the user specified gc is not whacked */
@@ -3798,8 +3798,8 @@ GR_ENTRY(grFlush, void, (void))
   if ( gc->windowed ) {
 #ifdef GLIDE_INIT_HWC
     GDBG_INFO(gc->myLevel + 200, FN_NAME": cmdSize(0x%X)\n",
-              ((FxU32)gc->cmdTransportInfo.fifoPtr - 
-               (FxU32)gc->cmdTransportInfo.hwcFifoInfo.cmdBuf.baseAddr));
+              ((AnyPtr)gc->cmdTransportInfo.fifoPtr - 
+               (AnyPtr)gc->cmdTransportInfo.hwcFifoInfo.cmdBuf.baseAddr));
     _FifoFlush();
 #endif
   } else if (!gc->cmdTransportInfo.autoBump) {

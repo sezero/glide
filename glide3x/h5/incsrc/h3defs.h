@@ -62,11 +62,21 @@
 
 // this crazy macro tests the sign bit of a float by loading it into
 // an integer register and then testing the sign bit of the integer
+#if defined(__LP64__) 
+/* On IA-64, it's faster to do this the obvious way... -davidm 00/08/09 */
+#define FLOAT_ISNEG(f) ((f) < 0.0)
+#else
 #define FLOAT_ISNEG(f) ((*(int *)(&(f))) < 0)
+#endif
 
 // these crazy macros returns the sign of a number (1 if >= 0; -1 if < 0)
+#if defined(__LP64__) 
+#define ISIGN(x) ((x) >= 0 ? 1 : -1)
+#define FSIGN(f) ((f) >= 0.0 ? 1 : -1)
+#else
 #define ISIGN(x) (((x) | 0x40000000L) >> 30)
 #define FSIGN(f) ISIGN(*(long *)&f)
+#endif
 
 #define BIT(n)  (1UL<<(n))
 #define SST_MASK(n) (0xFFFFFFFFL >> (32-(n)))
@@ -2013,9 +2023,9 @@
 
 //----------------- useful addressing macros -----------------------
 // return pointer to SST at specified WRAP, CHIP, or TREX
-#define SST_WRAP(sst,n) ((SstRegs *)((n)*0x4000+(FxI32)(sst)))
-#define SST_CHIP(sst,n) ((SstRegs *)((n)*0x400+(FxI32)(sst)))
-#define SST_TMU(sst,n)  ((SstRegs *)((0x800<<(n))+(FxI32)(sst)))
+#define SST_WRAP(sst,n) ((SstRegs *)((n)*0x4000+(long)(sst)))
+#define SST_CHIP(sst,n) ((SstRegs *)((n)*0x400+(long)(sst)))
+#define SST_TMU(sst,n)  ((SstRegs *)((0x800<<(n))+(long)(sst)))
 #define SST_TREX(sst,n) SST_TMU(sst,n)
 
 // offsets from the base of memBaseAddr0
@@ -2062,7 +2072,7 @@
 
 #define SST_IS_REGISTER_ADDR(a)  ( (a) >= SST_IO_OFFSET         && (a) < SST_TEX_OFFSET )
 
-#define SST_BASE_ADDRESS(sst)   ((FxI32)(sst)-SST_3D_OFFSET)
+#define SST_BASE_ADDRESS(sst)   ((AnyPtr)(sst)-SST_3D_OFFSET)
 #define SST_IO_ADDRESS(sst)     (SST_IO_OFFSET+SST_BASE_ADDRESS(sst))
 #define SST_CMDAGP_ADDRESS(sst) (SST_CMDAGP_OFFSET+SST_BASE_ADDRESS(sst))
 #define SST_GUI_ADDRESS(sst)    (SST_2D_OFFSET+SST_BASE_ADDRESS(sst))
