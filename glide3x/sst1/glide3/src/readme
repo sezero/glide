@@ -59,9 +59,13 @@ ToDo list:
  - stipple
  - clip coordinates
  - {STRIP|FAN}_CONTINUE
- - Rush INIT is kinda broken;
-   also, the xdraw96 doesn't currently
-   handle Packed Color Workaround (tm)
+
+Caveats:
+ - grDrawLine doesn't work for VoodooRush
+ - unlike the rest of Voodoo family, Rush
+   doesn't support ZBUFFER format with
+   WBUFFER functions. This is a special
+   case of depth buffering used in Mesa!
 
 Special note:
 The GCC optimizer sometimes delays FSTP in order to achieve

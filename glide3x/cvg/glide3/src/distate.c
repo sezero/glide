@@ -19,6 +19,9 @@
  **
  ** $Header$
  ** $Log$
+ ** Revision 1.1.1.1.8.2  2003/11/03 13:34:29  dborca
+ ** Voodoo2 happiness (DJGPP & Linux)
+ **
  ** Revision 1.1.1.1.8.1  2003/06/29 18:45:55  guillemj
  ** Fixed preprocessor invalid token errors.
  **
@@ -524,10 +527,10 @@ GR_DIENTRY(grStipplePattern, void , (GrStipplePattern_t stipple))
 {
  #define FN_NAME "grStipplePattern"
 
-  /* [dBorca] TODO
-   *
   GR_BEGIN_NOFIFOCHECK("grStipplePattern\n", 85);
 
+  /* [dBorca] TODO
+   *
   INVALIDATE(stipple);
 
   STOREARG(grStipplePattern, stipple);
@@ -550,10 +553,10 @@ GR_DIENTRY(grStippleMode, void , (GrStippleMode_t mode) )
 {
  #define FN_NAME "grStippleMode"
 
-  /* [dBorca] TODO
-   *
   GR_BEGIN_NOFIFOCHECK("grStippleMode\n", 85);
 
+  /* [dBorca] TODO
+   *
   INVALIDATE(fbzMode);
 
   STOREARG(grStippleMode, mode);

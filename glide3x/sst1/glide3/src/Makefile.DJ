@@ -81,9 +81,10 @@ CDEFS += -DSST1
 #CDEFS += -DGLIDE_USE_ALT_REGMAP
 else
 ifeq ($(FX_GLIDE_HW),sst96)
-CDEFS += -DSST6
+CDEFS += -DSST96
 CDEFS += -DSST96_FIFO
 #CDEFS += -DSST96_ALT_FIFO_WRAP
+#CDEFS += -DINIT96VGASWAP -DINIT_ACCESS_DIRECT
 endif
 endif
 
@@ -165,6 +166,15 @@ else
 GLIDE_OBJECTS += \
 	xdraw96.o
 endif
+endif
+
+ifeq ($(FX_GLIDE_HW),sst96)
+GLIDE_OBJECTS += \
+	sst96.o \
+	../../init/init96/init96.o \
+	../../init/init96/dxdrvr.o \
+	../../init/init96/initat3d.o \
+	../../init/init96/initmcrx.o
 endif
 
 GLIDE_OBJECTS += \
@@ -258,6 +268,29 @@ xdraw.o: xdraw.asm
 xdraw96.o: xdraw96.asm
 	$(AS) -o $@ $(ASFLAGS) $<
 
+ifeq ($(FX_GLIDE_HW),sst96)
+../../init/initvg/gamma.o: ../../init/initvg/gamma.c
+	$(CC) -o $@ $(CFLAGS) -USST96 -c $<
+../../init/initvg/dac.o: ../../init/initvg/dac.c
+	$(CC) -o $@ $(CFLAGS) -USST96 -c $<
+../../init/initvg/video.o: ../../init/initvg/video.c
+	$(CC) -o $@ $(CFLAGS) -USST96 -c $<
+../../init/initvg/parse.o: ../../init/initvg/parse.c
+	$(CC) -o $@ $(CFLAGS) -USST96 -c $<
+../../init/initvg/sli.o: ../../init/initvg/sli.c
+	$(CC) -o $@ $(CFLAGS) -USST96 -c $<
+../../init/initvg/util.o: ../../init/initvg/util.c
+	$(CC) -o $@ $(CFLAGS) -USST96 -c $<
+../../init/initvg/info.o: ../../init/initvg/info.c
+	$(CC) -o $@ $(CFLAGS) -USST96 -c $<
+../../init/initvg/print.o: ../../init/initvg/print.c
+	$(CC) -o $@ $(CFLAGS) -USST96 -c $<
+../../init/initvg/gdebug.o: ../../init/initvg/gdebug.c
+	$(CC) -o $@ $(CFLAGS) -USST96 -c $<
+../../init/initvg/sst1init.o: ../../init/initvg/sst1init.c
+	$(CC) -o $@ $(CFLAGS) -USST96 -c $<
+endif
+
 $(GLIDE_OBJECTS): fxinline.h fxgasm.h
 
 fxinline.h: fxgasm.exe
@@ -277,6 +310,7 @@ clean:
 	-$(call UNLINK,*.o)
 	-$(call UNLINK,../../init/*.o)
 	-$(call UNLINK,../../init/initvg/*.o)
+	-$(call UNLINK,../../init/init96/*.o)
 	-$(call UNLINK,$(FX_GLIDE_SW)/newpci/pcilib/*.o)
 	-$(call UNLINK,fxinline.h)
 	-$(call UNLINK,fxgasm.h)

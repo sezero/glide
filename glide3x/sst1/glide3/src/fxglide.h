@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.1  2004/03/02 07:55:29  dborca
+** Bastardised Glide3x for SST1
+**
 ** Revision 1.1.1.1  1999/12/07 21:48:52  joseph
 ** Initial checkin into SourceForge.
 **
@@ -297,6 +300,7 @@ typedef struct GrVoodooConfig_St {
 
 typedef struct GrSst96Config_St {
   int   fbRam;                  /* How much? */
+  int   vg96Rev;
   int   nTexelfx;
   GrTMUConfig_t tmuConfig;
 } GrSst96Config_t;
@@ -445,6 +449,7 @@ typedef struct
     FxU32   fogColor;
     FxU32   zaColor;
     FxU32   chromaKey;
+    FxU32   chromaRange;
      
     FxU32   stipple;
     FxU32   color0;
@@ -474,7 +479,7 @@ typedef struct
     allowLODdither,            /* allow LOD dithering            */
     checkFifo;                 /* Check fifo status as specified by hints */
   
-  FxU16
+  FxU32
     lfb_constant_depth;        /* Constant value for depth buffer (LFBs) */
   GrAlpha_t
     lfb_constant_alpha;        /* Constant value for alpha buffer (LFBs) */
@@ -514,6 +519,9 @@ typedef struct
   **  argment names.  This is very important, as there are macros in distate.c
   **  that require that.
   */
+  struct{
+    /* [dBorca] used for delayed validation */
+  } stateArgs;
   struct{
     GrEnableMode_t primitive_smooth_mode;
   } grEnableArgs;
@@ -1583,5 +1591,15 @@ GR_ENTRY(grTexDownloadTableExt,
 GR_ENTRY(grSetNumPendingBuffers,
          void,
          (FxI32 NumPendingBuffers));
+
+/*
+** Glide 3 extension APIs
+*/
+
+void FX_CALL 
+grChromaRangeMode(GrChromaRangeMode_t mode);
+
+void FX_CALL 
+grChromaRange( GrColor_t min, GrColor_t max , GrChromaRangeMode_t mode);
 
 #endif /* __FXGLIDE_H__ */

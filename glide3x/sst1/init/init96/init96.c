@@ -32,7 +32,11 @@ static char revString[] = "@#%$Workfile: INIT96.C $ $Revision$";
 #endif
 
 #ifdef __DOS32__
+#ifdef __DJGPP__
+#include <dos.h>
+#else
 #include <i86.h>
+#endif
 #endif
 
 #ifdef __WIN32__
@@ -46,6 +50,10 @@ static char revString[] = "@#%$Workfile: INIT96.C $ $Revision$";
 #if defined(__WATCOMC__)
 #define _inp inp
 #define _outp outp
+#endif
+
+#ifdef __DJGPP__
+#include <fxdpmi.h>
 #endif
 
 /* 3Dfx Headers */
@@ -698,9 +706,7 @@ INITVG96ENTRY(init96MapBoard, FxBool , (void *rd, void *info, FxU16 vID, FxU16 d
   
   switch (vID) {
   case AT3DVID:
-#if 0
     curHALData = initAT3DGetHALData();
-#endif
     break;
   case MCRXVID:
     curHALData = initMCRXGetHALData();

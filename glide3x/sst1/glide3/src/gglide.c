@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.1  2004/03/02 07:55:30  dborca
+** Bastardised Glide3x for SST1
+**
 ** Revision 1.1.1.1  1999/12/07 21:48:52  joseph
 ** Initial checkin into SourceForge.
 **
@@ -718,6 +721,84 @@ GR_ENTRY(grChromakeyMode, void, ( GrChromakeyMode_t mode ))
   GR_END();
 } /* grChromaKeyMode */
 
+/*-------------------------------------------------------------------
+  Function: grChromaModeExt
+  Date: 05-Jan-98
+  Implementor(s): atai
+  Description:
+  
+  Arguments:
+  
+  Return:
+  -------------------------------------------------------------------*/
+GR_DIENTRY(grChromaRangeMode, void , (GrChromakeyMode_t mode) )
+{
+#define FN_NAME "grChromaRangeMode"
+  GR_BEGIN("grChromaRangeMode\n",85,8);
+
+  FxU32 fbzMode = gc->state.fbi_config.fbzMode;
+  FxU32 chromaRange = gc->state.fbi_config.chromaRange;
+
+  /* [dBorca] inclusive intersection (ganked from sst.h) */
+#define SST_CHROMARANGE_BLUE_EX         BIT(24) // Blue value in exclusive mode
+#define SST_CHROMARANGE_GREEN_EX        BIT(25) // Green value in exclusive mode
+#define SST_CHROMARANGE_RED_EX          BIT(26) // Red  value in exclusive mode
+#define SST_CHROMARANGE_BLOCK_OR        BIT(27) // Union of all colors.
+#define SST_ENCHROMARANGE               BIT(28)
+
+  chromaRange &= ~(SST_CHROMARANGE_BLUE_EX |
+                   SST_CHROMARANGE_GREEN_EX |
+                   SST_CHROMARANGE_RED_EX |
+                   SST_CHROMARANGE_BLOCK_OR);
+
+  if (mode == GR_CHROMARANGE_ENABLE_EXT) {
+    chromaRange |= SST_ENCHROMARANGE;
+    /*
+    ** We need to enable both fbzMode chromakeymode and chrmarange mdoe
+    */
+    fbzMode |= SST_ENCHROMAKEY;
+  } else {
+    chromaRange &= ~SST_ENCHROMARANGE;
+    /*
+    ** [dBorca] We need to disable chromakey only if it wasn't enabled (see above)
+    ** if (gc->state.stateArgs.grChromakeyModeArgs.mode == GR_CHROMAKEY_DISABLE)
+    */
+    fbzMode &= ~SST_ENCHROMAKEY;
+  }
+
+  GR_SET( hw->chromaRange, chromaRange );
+  gc->state.fbi_config.chromaRange = chromaRange;
+  GR_SET( hw->fbzMode, fbzMode );
+  gc->state.fbi_config.fbzMode = fbzMode;
+  GR_END();
+
+#undef FN_NAME
+} /* grChromaRangeMode */
+
+/*---------------------------------------------------------------------------
+** grChromaRange
+*/
+
+GR_ENTRY(grChromaRange, void, (GrColor_t min, GrColor_t max, GrChromaRangeMode_t mode))
+{
+  GR_BEGIN("grChromaRange", 85, 8);
+  GDBG_INFO_MORE((gc->myLevel, "(0x%x)\n", min));
+  GDBG_INFO_MORE((gc->myLevel, "(0x%x)\n", max));
+  GDBG_INFO_MORE((gc->myLevel, "(0x%x)\n", mode));
+
+  FxU32 chromaRange = gc->state.fbi_config.chromaRange & SST_ENCHROMARANGE;
+
+  _grSwizzleColor(&min);
+  _grSwizzleColor(&max);
+
+  chromaRange |= (max & 0x00ffffff) | (mode << 24);
+  GR_SET( hw->chromaKey, min );
+  gc->state.fbi_config.chromaKey = min;
+  GR_SET( hw->chromaRange, chromaRange );
+  gc->state.fbi_config.chromaRange = chromaRange;
+  GR_END();
+} /* grChromaRange */
+
 /*---------------------------------------------------------------------------
 ** grChromakeyValue
 */
@@ -1328,7 +1409,7 @@ GR_ENTRY(grGlideShutdown, void, ( void ))
       
       for( i = 0; i < _GlideRoot.hwConfig.num_sst; i++ ) {
         grSstSelect( i );
-        grSstWinClose(0);
+        grSstWinClose((GrContext_t)(_GlideRoot.GCs + i));
       }
       
       initClose();

@@ -37,7 +37,7 @@
 
 /* This is currently disabled, thus breaking rush, until we can get some
  * sources from Aliance Semiconductor */
-#if 0
+#if SST96
 static FxBool setVideo( FxU32                   hWnd,
                         GrScreenResolution_t    sRes,
                         GrScreenRefresh_t       vRefresh,

@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.1  2004/03/02 07:55:29  dborca
+** Bastardised Glide3x for SST1
+**
 ** Revision 1.1.1.1.8.2  2003/12/08 13:13:11  dborca
 ** better Texus2 integration
 **
@@ -454,10 +457,10 @@ GR_DIENTRY(grGet, FxU32, (FxU32 pname, FxU32 plength, FxI32 *params))
     break;
   case GR_LFB_PIXEL_PIPE:
     if (plength == 4) {
-      if (_GlideRoot.hwConfig.SSTs[_GlideRoot.current_sst].type == GR_SSTTYPE_VOODOO)
-        *params = FXTRUE;
-      else
+      if (_GlideRoot.hwConfig.SSTs[_GlideRoot.current_sst].type == GR_SSTTYPE_SST96)
         *params = FXFALSE;
+      else
+        *params = FXTRUE;
       retVal = plength;
     }
     break;
@@ -525,7 +528,7 @@ GR_DIENTRY(grGet, FxU32, (FxU32 pname, FxU32 plength, FxI32 *params))
 #if GLIDE_INIT_HAL
         (_grSstDetectResources() ? _GlideRoot.hwConfig.num_sst : 0);
 #else /* !GLIDE_INIT_HAL */ 
-      sst1InitNumBoardsInSystem();
+      initNumBoardsInSystem();
 #endif /* !GLIDE_INIT_HAL */
       retVal = plength;
     }
@@ -538,10 +541,8 @@ GR_DIENTRY(grGet, FxU32, (FxU32 pname, FxU32 plength, FxI32 *params))
     break;
   case GR_NUM_FB:
     if (plength == 4) {
-      if (hwc->SSTs[_GlideRoot.current_sst].sstBoard.VoodooConfig.sliDetect)
-        *params = 2;
-      else
-        *params = 1;
+      /* [dBorca] we can use sliDetect for GR_SSTTYPE_VOODOO only */
+      *params = initNumBoardsInSystem();
       retVal = plength;
     }
     break;
@@ -564,7 +565,7 @@ GR_DIENTRY(grGet, FxU32, (FxU32 pname, FxU32 plength, FxI32 *params))
         *params = hwc->SSTs[_GlideRoot.current_sst].sstBoard.VoodooConfig.fbiRev;
         break;
       case GR_SSTTYPE_SST96:
-        retVal = FXFALSE;
+        *params = hwc->SSTs[_GlideRoot.current_sst].sstBoard.SST96Config.vg96Rev;
         break;
       default:
         retVal = FXFALSE;
@@ -660,11 +661,17 @@ GR_DIENTRY(grGet, FxU32, (FxU32 pname, FxU32 plength, FxI32 *params))
     }
     break;
   case GR_SWAP_HISTORY:
-    retVal = FXFALSE;
+    if (plength == 0) {
+      retVal = plength;
+    }
     break;
   case GR_SUPPORTS_PASSTHRU:
     if (plength == 4) {
+#if ( GLIDE_PLATFORM & GLIDE_HW_SST1 )
       *params = FXTRUE;
+#else ( GLIDE_PLATFORM & GLIDE_HW_SST96 )
+      *params = FXFALSE;
+#endif
       retVal = plength;
     }
     break;
@@ -679,8 +686,16 @@ GR_DIENTRY(grGet, FxU32, (FxU32 pname, FxU32 plength, FxI32 *params))
     break;
   case GR_VIDEO_POSITION:
     if (plength == 8) {
-      *params = _grSstVideoLine();
-      *(params+1) = 0; /* [dBorca] bogus value */
+      switch(hwc->SSTs[_GlideRoot.current_sst].type) {
+      case GR_SSTTYPE_VOODOO:
+        *params = _grSstVideoLine();
+        *(params+1) = 0; /* [dBorca] bogus value */
+        break;
+      case GR_SSTTYPE_SST96:
+        *params = 0;
+        *(params+1) = 0;
+        break;
+      }
       retVal = plength;
     }
   break;

@@ -20,6 +20,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.1  2004/03/02 07:55:30  dborca
+** Bastardised Glide3x for SST1
+**
 ** Revision 1.1.1.1  1999/12/07 21:48:52  joseph
 ** Initial checkin into SourceForge.
 **
@@ -94,7 +97,7 @@ _grErrorWindowsCallback( const char *s, FxBool fatal )
   {
     GDBG_ERROR("glide",s);
     MessageBox(NULL, s, NULL, MB_OK);
-    grSstWinClose(0);
+    grSstWinClose((GrContext_t)(_GlideRoot.GCs + _GlideRoot.current_sst));
     grGlideShutdown();
     exit(1);
   } else {
@@ -108,7 +111,7 @@ _grErrorDefaultCallback( const char *s, FxBool fatal )
 {
   if ( fatal )
   {
-    grSstWinClose(0);
+    grSstWinClose((GrContext_t)(_GlideRoot.GCs + _GlideRoot.current_sst));
     grGlideShutdown();
 
 #if (GLIDE_PLATFORM & GLIDE_HW_SST96) && (GLIDE_PLATFORM & GLIDE_OS_DOS32)    

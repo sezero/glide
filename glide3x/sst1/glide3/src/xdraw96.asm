@@ -19,6 +19,9 @@
 ;; $Header$
 ;; $Revision$
 ;; $Log$
+;; Revision 1.1.2.1  2004/03/02 07:55:30  dborca
+;; Bastardised Glide3x for SST1
+;;
 ;; Revision 1.1.1.1  1999/12/07 21:48:55  joseph
 ;; Initial checkin into SourceForge.
 ;;
@@ -452,12 +455,18 @@ next_parm:
     test    i,1
     jnz     secondary_packet
 
+%if 1 ; [dBorca] Packed Color Workaround (tm)
+    test    i, i
+    js      packed_color_workaround_tm
+%endif
+
     mov     tmpy, [fa + i]              ; tmpy = fa[i]
     flds    [fa + i]                    ;   pa
     fsubs   [fb + i]                    ;   dpAB
     flds    [fb + i]                    ;   |    pb
     fsubs   [fc + i]                    ;   dpAB dpBC 
 
+parameters_loaded:
     fld     st1                         ;   |    |    dpAB
     fmuls   dword [zdyBC]               ;   |    |    p0x
     fld     st1                         ;   |    |    |    dpBC
@@ -486,7 +495,7 @@ next_parm:
         align 4
 triangle_command:
     ; Write Triangle Command
-    mov     tmpx, zArea
+    mov     tmpx, [zArea]
     GR_SET_GW_ENTRY fifo, 0, tmpx
     test    fifo, 7h
     jnz     no_padding0
@@ -498,8 +507,8 @@ no_padding0:
     pop     esi
      pop     ebx
     mov     eax, 1h                     ; return 1 (triangle drawn)
-     ret    12       
-    
+     ret
+
 
         align 4
 zero_area:
@@ -514,7 +523,7 @@ backfaced:
     pop     esi
      pop     ebx
     xor     eax, eax                    ; return 0 (triangle drawn)
-     ret    12       
+     ret
 
         align 4
 wrap:
@@ -548,6 +557,59 @@ dofence:
     xchg    eax, [P6FenceVar]
     pop     eax
     jmp     fenceDone
+    
+%if 1 ; [dBorca] Packed Color Workaround (tm)
+        align 4
+packed_color_workaround_tm:
+    mov     tmpy, i
+    and     i, 0ffffffh
+    shr     tmpy, 24
+    and     tmpy, 3
+    add     i, tmpy
+    mov     tmpy, [fa + i]
+    and     tmpy, 0ffh
+    push    tmpy ;fa[i]
+    mov     tmpy, [fb + i]
+    fild    dword [esp]                ;   pa
+    and     tmpy, 0ffh
+    fst     dword [esp]                ;   pa
+    push    tmpy ;fb[i]
+    mov     tmpy, [fc + i]
+    fild    dword [esp]                ;   |    pb
+    and     tmpy, 0ffh
+    fsub TO st1                        ;   dpAB pb
+    push    tmpy ;fc[i]
+    fild    dword [esp]                ;   dpAB pb   pc
+    add     esp, 8
+    fsubp   st1                        ;   dpAB dpBC
+    pop     tmpy                       ; tmpy = fa[i]
+    jmp     parameters_loaded
+        align 4
+packed_color_workaround_tm_1:
+    mov     tmpy, i
+    and     i, 0ffffffh
+    shr     tmpy, 24
+    and     tmpy, 3
+    add     i, tmpy
+    mov     tmpy, [fa + i]
+    and     tmpy, 0ffh
+    push    tmpy ;fa[i]
+    mov     tmpy, [fb + i]
+    fild    dword [esp]                ;   pa
+    and     tmpy, 0ffh
+    fst     dword [esp]                ;   pa
+    push    tmpy ;fb[i]
+    mov     tmpy, [fc + i]
+    fild    dword [esp]                ;   |    pb
+    and     tmpy, 0ffh
+    fsub TO st1                        ;   dpAB pb
+    push    tmpy ;fc[i]
+    fild    dword [esp]                ;   dpAB pb   pc
+    add     esp, 8
+    fsubp   st1                        ;   dpAB dpBC
+    pop     tmpy                       ; tmpy = fa[i]
+    jmp     parameters_loaded_1
+%endif
 
         align 4
 secondary_packet:
@@ -576,12 +638,19 @@ no_padding1:
      add    dlp, SIZEOF_dataList
         align 4
 next_parm_1:
+
+%if 1 ; [dBorca] Packed Color Workaround (tm)
+    test    i, i
+    js      packed_color_workaround_tm_1
+%endif
+
     mov     tmpy, [fa + i]              ; tmpy = fa[i]
     flds    [fa + i]                    ;   pa
     fsubs   [fb + i]                    ;   dpAB
     flds    [fb + i]                    ;   |    pb
     fsubs   [fc + i]                    ;   dpAB dpBC 
 
+parameters_loaded_1:
     fld     st1                         ;   |    |    dpAB
     fmuls   dword [zdyBC]               ;   |    |    p0x
     fld     st1                         ;   |    |    |    dpBC
@@ -617,7 +686,7 @@ triangle_command_packet:
     mov     tmpy, 40000000h
 
     mov     tmpx, [gc + gwCommand]
-    mov     fa, zArea
+    mov     fa, [zArea]
 
     GR_SET_GW_CMD    fifo, 0, tmpx
     GR_SET_GW_HEADER fifo, 4, tmpy
@@ -630,7 +699,7 @@ triangle_command_packet:
     pop     esi
      pop     ebx
     mov     eax, 1h                     ; return 1 (triangle drawn)
-     ret    12       
+     ret
 
         align 4
 no_interpolation:

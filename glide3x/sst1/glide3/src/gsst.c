@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.1  2004/03/02 07:55:30  dborca
+** Bastardised Glide3x for SST1
+**
 ** Revision 1.1.1.1  1999/12/07 21:48:53  joseph
 ** Initial checkin into SourceForge.
 **
@@ -624,7 +627,7 @@ GR_ENTRY(grSstWinOpen, GrContext_t, (
 #if defined(FX_OEM_BUILD) && !defined(FX_STATIC_BUILD)
   else {
     GrErrorCallback("Missing fxoem2x.dll", FXTRUE);
-    grSstWinClose(0);
+    grSstWinClose((GrContext_t)(_GlideRoot.GCs + _GlideRoot.current_sst));
     exit(0);
   }
 #endif /* FX_STATIC_BUILD */
@@ -1436,7 +1439,7 @@ GR_ENTRY(guGammaCorrectionRGB, void, (float r, float g, float b))
    *
    * initGamma(gam);
    */
-  sst1InitGammaRGB(gc->reg_ptr, r, g, b);
+  initGammaRGB(/*gc->reg_ptr, */r, g, b);
 #endif /* !GLIDE_INIT_HAL */
 
   GR_END();
@@ -1462,7 +1465,7 @@ GR_DIENTRY(grLoadGammaTable, void, (FxU32 nentries, FxU32 *red, FxU32 *green, Fx
   grGet(GR_GAMMA_TABLE_ENTRIES, 4, &max);
   if (nentries > max)
     nentries = max;
-  sst1InitGammaTable(gc->reg_ptr, nentries, red, green, blue);
+  initGammaTable(/*gc->reg_ptr, */nentries, red, green, blue);
 
   GR_END();
 #undef FN_NAME

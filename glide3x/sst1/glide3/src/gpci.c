@@ -19,6 +19,9 @@
  **
  ** $Header$
  ** $Log$
+ ** Revision 1.1.2.1  2004/03/02 07:55:30  dborca
+ ** Bastardised Glide3x for SST1
+ **
  ** Revision 1.1.1.1  1999/12/07 21:48:52  joseph
  ** Initial checkin into SourceForge.
  **
@@ -275,6 +278,8 @@ _grSstDetectResources(void)
           info.hwDep.vg96Info.nTFX;
         _GlideRoot.hwConfig.SSTs[ctx].sstBoard.SST96Config.fbRam = 
           info.hwDep.vg96Info.vg96Ram >> 20;
+        _GlideRoot.hwConfig.SSTs[ctx].sstBoard.SST96Config.vg96Rev =
+          info.hwDep.vg96Info.vg96Rev;
         _GlideRoot.hwConfig.SSTs[ctx].sstBoard.SST96Config.tmuConfig.tmuRev =
           info.hwDep.vg96Info.tfxRev;
         _GlideRoot.hwConfig.SSTs[ctx].sstBoard.SST96Config.tmuConfig.tmuRam =
@@ -380,7 +385,7 @@ _GlideInitEnvironment( void )
 #if defined(FX_DLL_ENABLE) && (GLIDE_PLATFORM & GLIDE_OS_WIN32)
   {                             /* GMT: display the DLL pathname for sanity checking */
     char buf[132];
-    if (GetModuleFileName(GetModuleHandle("glide2x.dll"),buf,sizeof(buf))) {
+    if (GetModuleFileName(GetModuleHandle("glide3x.dll"),buf,sizeof(buf))) {
 #ifdef GLIDE_DEBUG
       GDBG_INFO((0,"DLL path: %s\n",buf)); /* unconditional display */
 #else
@@ -454,11 +459,11 @@ _GlideInitEnvironment( void )
     char s[128];
 #ifndef __linux__
     sprintf(s,
-            "_GlideInitEnvironment: glide2x.dll expected %s, none detected\n",
+            "_GlideInitEnvironment: glide3x.dll expected %s, none detected\n",
             GLIDE_DRIVER_NAME);
 #else
     sprintf(s,
-            "_GlideInitEnvironment: libglide2x.so expected %s, none detected\n",
+            "_GlideInitEnvironment: libglide3x.so expected %s, none detected\n",
             GLIDE_DRIVER_NAME);
 #endif
     GrErrorCallback(s, FXTRUE);

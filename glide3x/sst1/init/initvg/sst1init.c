@@ -714,7 +714,7 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitShutdown(FxU32 *sstbase)
      * 
      * We need to move this to the "appropriate" place, wherever that may be.
      */
-    /*pciClose(); [dBorca] Frankenstein: HACK & SLASH */
+    /*pciClose(); [dBorca] not just yet! We still need PCI to shutdown */
 #endif
 
     if(GETENV(("SST_NOSHUTDOWN")))

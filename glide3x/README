@@ -12,8 +12,7 @@ h3:	HW:		Voodoo Banshee, Velocity 100/200, Voodoo3/4/5
 	Maintainers:	Hiroshi Morii, Daniel Borca, Guillem Jover
 
 Notes:
-1) sst1 branch must be compiled separately for V1 and VR. Currently,
-   VR support is broken.
+1) sst1 branch must be compiled separately for V1 and VR.
 2) h3 & h5 have experimental non-DRI versions; they don't work yet!
 
 ---------------------------------------------------------------------

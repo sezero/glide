@@ -12,6 +12,8 @@
 #  Available options:
 #
 #    Environment variables:
+#	FX_GLIDE_HW	build for the given ASIC (sst1, sst96).
+#			default = sst1
 #	CPU		optimize for the given processor.
 #			default = pentium
 #
@@ -24,7 +26,16 @@
 .SUFFIXES: .c .o .exe
 .SECONDARY: tlib.o
 
-FX_GLIDE_HW = sst1
+FX_GLIDE_HW ?= sst1
+ifeq ($(FX_GLIDE_HW),sst1)
+HWDEF = -DSST1
+else
+ifeq ($(FX_GLIDE_HW),sst96)
+HWDEF = -DSST96
+endif
+endif
+
+override FX_GLIDE_HW = sst1
 TOP = ../../..
 CPU ?= pentium
 
@@ -32,7 +43,7 @@ CC = gcc
 CFLAGS = -Wall -O2 -ffast-math -mcpu=$(CPU)
 CFLAGS += -I$(TOP)/$(FX_GLIDE_HW)/glide3/src -I$(TOP)/$(FX_GLIDE_HW)/incsrc -I$(TOP)/$(FX_GLIDE_HW)/init
 CFLAGS += -I$(TOP)/swlibs/fxmisc
-CFLAGS += -DSST1
+CFLAGS += $(HWDEF)
 
 LDFLAGS = -s -L$(TOP)/$(FX_GLIDE_HW)/lib
 

@@ -18,6 +18,9 @@
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
 ** $Log$
+** Revision 1.1.2.1  2004/03/02 07:56:03  dborca
+** Bastardised Glide3x for SST1
+**
 ** Revision 1.1.1.1  1999/12/07 21:49:06  joseph
 ** Initial checkin into SourceForge.
 **
@@ -58,7 +61,11 @@
 #include <string.h>
 
 #ifdef __DOS32__
+#ifdef __DJGPP__
+#include <dos.h>
+#else
 #include <i86.h>
+#endif
 #endif
 
 #include <init.h>
