@@ -1,60 +1,86 @@
 Here are a few notes about building Glide3x from CVS.
 
-The Glide source trees are branced by platform and the platform names are
-internal names used at 3dfx.  Since theses name may not make sense to others
-here is a quick list.
+1.) Top Level Source Organization
+    The Glide source trees are branched by platform.  The platform
+    names are internal names used at 3dfx.  Since these names may not
+    make sense to others here is a quick list.
 
-sst1:  Voodoo Graphics
-sst96: Voodoo Rush
-cvg:   Voodoo 2
-h3:    Voodoo Banshee/Voodoo 3
-h5:    The VSA-100 chipset used in the Voodoo4 and Voodoo5 line of products.
+        sst1:  Voodoo Graphics
+        sst96: Voodoo Rush
+        cvg:   Voodoo 2
+        h3:    Voodoo Banshee/Voodoo 3
+        h5:    The VSA-100 chip set used in the Voodoo4 and Voodoo5
+               line of products.
 
-There is a single toplevel makefile for glide3x.  To select a build
-for either cvg or h3 set FX_GLIDE_HW to either cvg, h3, or h5.  The
-default is to build for h3.  Note that the h5 tree has a special build
-script, swlibs/include/make/napalmbuild.linux.  This script should be
-made executable and run to build the h5 glide library.  There is no
-Glide3x project for sst1 or sst96.
+2.) The New Way of getting Glide from CVS.
+    There is now a CVS module to get glide3 named Glide3.  If you get
+    this, you will get everything you need.  All of the relevant
+    projects, cvs, h3 and h5, are included, as well as swlibs.
 
-All glide source trees use a common set of libraries kept in the
-swlibs branch.  In order to build any glide library the swlibs branch
-must be moved inside the glide3x directory.  The swlibs branch is not
-stored here within the glide3x cvs tree because it is also shared with
-the glide2x branch.
+    See below for instructions on building.
 
-There are many other environment variables used to control the Glide
-build.  Here is a listing of some of the important ones:
+3.) The Old Way of getting Glide from CVS.
+    The top level module needed are glide3x and swlibs.  The glide3x
+    module has only the glide code, without swlibs.
 
-DEBUG=1:               Turn on debugging information, note this disables 
-                       the asm optimizations.
-FX_GLIDE_PIC=1:        Enable PIC in shared libraries.
-FX_GLIDE_CTRISETUP=1:  Use C versions as opposed to ASM versions of triangle
-                       setup code.
-GL_AMD3D=1:            Enable AMD 3DNow! optimizations.  Note this is broken
-                       on several platforms.
+    All glide source trees use a common set of libraries kept in the
+    swlibs branch.  In order to build any glide library the swlibs
+    branch must be moved inside the glide3x directory.  The swlibs
+    branch is not stored here within the glide3x cvs tree because it
+    is also shared with the glide2x branch.  NOTE: If you use the CVS
+    modules Glide2 or Glide3, swlibs will be in the right place.
 
-A special note about H3:
-The Glide3 H3 source can be built as a DRI client or as a standalone library.
-Controlling which gets built is done by setting up symlinks.  Since CVS
-doesn't understand symlinks the glide3x/h3 source is not setup to build in
-either configuration.
+    See below for instructions on building.
+    
+4.) Building Glide.
+    The makefiles for both Glide2 and Glide3 are all named
+    makefile.linux.  In particular, there is a makefile in the top
+    level directory.  To select a build for either cvg or h3 set
+    FX_GLIDE_HW to either cvg, h3, or h5.  The default is to build for
+    h3.  There is no Glide3x project for sst1 or sst96.
 
-To setup glide3x/h3 to build as a DRI client, create the following symlinks:
-  h3/minihwc/linhwc.c.dri    --> h3/minihwc/linhwc.c
-  h3/glide3/src/gglide.c.dri --> h3/glide3/src/gglide.c
-  h3/glide3/src/gsst.c.dri   --> h3/glide3/src/gsst.c
-  h3/glide3/src/glfb.c.dri   --> h3/glide3/src/glfb.c
+    NOTE: The script file swlibs/include/make/napalmbuild.linux can
+    be used to build Glide2 and Glide3 both.  Running it with the
+    usual --help parameter gives instruction on how to use it.
 
-To setup glide3x/h3 to build as a standalone library create the following 
-symlinks:
-  h3/minihwc/linhwc.c.save    --> h3/minihwc/linhwc.c
-  h3/glide3/src/gglide.c.save --> h3/glide3/src/gglide.c
-  h3/glide3/src/gsst.c.save   --> h3/glide3/src/gsst.c
-  h3/glide3/src/glfb.c.save   --> h3/glide3/src/glfb.c
+5.) Environment Variables
+    There are many other environment variables used to control the Glide
+    build.  Here is a listing of some of the important ones:
 
-Support to make this happen automatically will be added in the future.
+        DEBUG=1:               Turn on debugging information, note
+                               this disables the asm optimizations.
+        FX_GLIDE_PIC=1:        Enable PIC in shared libraries.
+                                                                                       FX_GLIDE_CTRISETUP=1:  Use C versions as opposed to ASM versions
+                               of triangle setup code.
+        GL_AMD3D=1:            Enable AMD 3DNow! optimizations.  Note
+                               this is broken on several platforms.
+    The build script napalmbuild.linux does not set these
+    environment ariables.
 
-A special not about H5: 
-The Glide3 H5 source can only be built as a DRI client, so the
-symlinks necessary for the H3 tree are not necessary for the H3 tree.
+6.) A special note about H3:
+    The Glide3 H3 source can be built as a DRI client or as a
+    stand alone library.  Controlling which gets built is done by
+    setting up symlinks.  Since CVS doesn't understand symlinks the
+    glide3x/h3 source is not setup to build in either configuration.
+
+    To setup glide3x/h3 to build as a DRI client, create the following
+    symlinks:
+        h3/minihwc/linhwc.c.dri    --> h3/minihwc/linhwc.c
+        h3/glide3/src/gglide.c.dri --> h3/glide3/src/gglide.c
+        h3/glide3/src/gsst.c.dri   --> h3/glide3/src/gsst.c
+        h3/glide3/src/glfb.c.dri   --> h3/glide3/src/glfb.c
+
+    To setup glide3x/h3 to build as a stand alone library create the
+    following symlinks:
+        h3/minihwc/linhwc.c.save    --> h3/minihwc/linhwc.c
+        h3/glide3/src/gglide.c.save --> h3/glide3/src/gglide.c
+        h3/glide3/src/gsst.c.save   --> h3/glide3/src/gsst.c
+        h3/glide3/src/glfb.c.save   --> h3/glide3/src/glfb.c
+
+    Support to make this happen automatically will be added in the
+    future. 
+
+7.) A special note about H5: 
+    The Glide3 H5 source can only be built as a DRI client, so the
+    symlinks necessary for the H3 tree are not necessary for the H3
+    tree.

@@ -64,19 +64,6 @@ function instrument_command() {
     diskreport $STARTDISK $ENDDISK
 }
 
-#
-# This function is really only useful for cutting
-# from this file and pasting into a shell window.
-#
-function fix_assembler_names() {
-	for file in `find . -name '*.s'`
-    do
-        dir=`dirname $file`
-        basename=`basename $file .s`
-        (set -x; mv $file $dir/$basename.S)
-    done
-}
-
 function normalize-directory-name() {
     (cd $1; pwd)
 }
@@ -85,7 +72,7 @@ export TOPDIR=`pwd`
 export NOISY_RECURSION=YES
 done=NO
 nomake=NO
-CCOMPILER=egcs
+CCOMPILER=
 while [ "$done" = NO ]
 do
     if [ -z "$1" ]
@@ -96,12 +83,17 @@ do
 	--help)
 		echo 'usage: napalmbuild.3dfx [options] [make-options]'
 		echo 'options:'
+        echo '--sst1:                           Voodoo Graphics'
+        echo '--sst96:                          Voodoo Rush'
+        echo '--cvg:                            Voodoo 2'
+        echo '--h3:                             Voodoo Banshee/Voodoo 3'
+        echo '--h5:                             The VSA-100 chipset used'
+        echo `                                  in the Voodoo4 and Voodoo5`
+        echo `                                  line of products.`
 		echo '-q, --quiet-directories           Do not echo directory names'
         echo '                                  when recursing into them.'
         echo '-s <dir>, --scriptdir <dir>       Look for the ostype script'
         echo '                                  in the given directory.'
-        echo '-f, --fix-assembler-names         Run the function to fix'
-        echo '                                  assembler file names.'
         echo '-n, --nomake                      Do not run make.'
 		echo '-b <dir>, --build-root <dir>      The build root directory'
         echo '                                  is set to the given one.'
@@ -113,6 +105,26 @@ do
         echo 'will be passed to make.'
 		exit 100
 		;;
+    --sst1)
+        export FX_GLIDE_HW=sst1
+        shift
+        ;;
+    --sst96)
+        export FX_GLIDE_HW=sst96
+        shift
+        ;;
+    --cvg)
+        export FX_GLIDE_HW=cvg
+        shift
+        ;;
+    --h3)
+        export FX_GLIDE_HW=h3
+        shift
+        ;;
+    --h5)
+        export FX_GLIDE_HW=h5
+        shift
+        ;;
 	-b|--build-root)
 	    shift
 		if [ -z "$1" ]
@@ -135,10 +147,6 @@ do
 		shift
 		export SCRIPTDIR="$1"
 		shift
-		;;
-	--fix-assembler-names)
-		shift
-		fix_assembler_names
 		;;
 	-n|--nomake)
 		nomake=YES
@@ -184,8 +192,12 @@ then
     echo "The script $0 only functions under Linux."
 	exit 100
 fi
+if [ ! -z "$CCOMPILER" ]
+then
+    CCOMPILER_SET_CMD="CC=$CCOMPILER"
+fi
 if [ "$nomake" != YES ]
 then
 	cd $TOPDIR
-    instrument_command make CC="$CCOMPILER" -f makefile.linux "$@"
+    instrument_command make $CCOMPILER_SET_CMD -f makefile.linux "$@"
 fi
