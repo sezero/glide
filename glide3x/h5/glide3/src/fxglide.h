@@ -2421,9 +2421,9 @@ grStencilFunc(GrCmpFnc_t fnc, GrStencil_t ref, GrStencil_t mask);
 void FX_CALL 
 grStencilMask(GrStencil_t write_mask);
 
-void FX_CALL
+/*void FX_CALL
 grStipplePattern(
-            GrStipplePattern_t stipple);
+            GrStipplePattern_t stipple);*/
 
 void FX_CALL 
 grStencilOp(
