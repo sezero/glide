@@ -1094,7 +1094,7 @@ static hwcBoardInfo *curBI = NULL;
 static void
 getRegPath(char *regpath) 
 {
-  if ((FxI32)OSInfo == OS_WIN32_NT4) {
+  if (*OSInfo == OS_WIN32_NT4) {
     HKEY hKey;
     DWORD type ;
     char strval[256];
@@ -1122,7 +1122,7 @@ getRegPath(char *regpath)
       }
       RegCloseKey(hKey);
     }
-  } else if (((FxI32)OSInfo == OS_WIN32_2K) || ((FxI32)OSInfo == OS_WIN32_XP)) {
+  } else if ((*OSInfo == OS_WIN32_2K) || (*OSInfo == OS_WIN32_XP)) {
     HKEY hKey;
     
     GDBG_INFO(80, "getRegPath: get registry path on 2K/XP\n");
@@ -1366,7 +1366,7 @@ hwcInit(FxU32 vID, FxU32 dID)
           data[num_monitor].dc = hdc;
           strcpy(data[num_monitor].DeviceName, DispDev.DeviceName);
           
-          if ( ((FxI32)OSInfo == OS_WIN32_98) || ((FxI32)OSInfo == OS_WIN32_ME) ) {
+          if ( (*OSInfo == OS_WIN32_98) || (*OSInfo == OS_WIN32_ME) ) {
             strcpy(data[num_monitor].RegPath, DispDev.DeviceKey);
           } else {
             char *pdest;
@@ -1625,7 +1625,32 @@ hwcInit(FxU32 vID, FxU32 dID)
     hInfo.boardInfo[monitor].pciInfo.initialized = 1;
     hInfo.boardInfo[monitor].h3pixelSize = 2;
     hInfo.boardInfo[monitor].h3nwaySli = 1;
-    
+
+#if 1 /* [koolsmoky] this must be in sync with gpci.c */
+    switch (hInfo.boardInfo[monitor].pciInfo.deviceID) {
+    case SST_DEVICE_ID_H3: /* Banshee */
+      hInfo.boardInfo[monitor].min_tramSize = 0x200000;
+      break;
+    case SST_DEVICE_ID_H4: /* Avenger low speed */
+    case SST_DEVICE_ID_H4_OEM: /* Avenger high speed */
+      hInfo.boardInfo[monitor].min_tramSize = 0x400000;
+      break;
+    default:
+      if ((hInfo.boardInfo[monitor].pciInfo.deviceID >= SST_DEVICE_ID_L_AP) &&
+          (hInfo.boardInfo[monitor].pciInfo.deviceID <= SST_DEVICE_ID_H_AP)) {
+        /* NAPALM */
+        hInfo.boardInfo[monitor].min_tramSize = 0x400000;
+      } else {
+        /* etc */
+        hInfo.boardInfo[monitor].min_tramSize = 0x200000;
+      }
+      break;
+    }
+
+    if (hInfo.boardInfo[monitor].h3Mem == 4) {
+      hInfo.boardInfo[monitor].min_tramSize = 0x200000;
+    }
+#else
     if (hInfo.boardInfo[monitor].h3Mem == 8) {
       hInfo.boardInfo[monitor].pciInfo.deviceID = SST_DEVICE_ID_H3 ; /* HACK ALERT: restricting to single TMU for Velocity? */
     }
@@ -1633,6 +1658,7 @@ hwcInit(FxU32 vID, FxU32 dID)
     hInfo.boardInfo[monitor].min_tramSize = 
       ((hInfo.boardInfo[monitor].h3Mem == 4 ) ||
        (hInfo.boardInfo[monitor].pciInfo.deviceID == SST_DEVICE_ID_H3)) ? 0x200000 : 0x400000;
+#endif
     
     if (GETENV("FX_GLIDE_TMU_MEMSIZE")) {
       FxU32 tmu_mem = atoi(GETENV("FX_GLIDE_TMU_MEMSIZE"));
@@ -4763,9 +4789,9 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
 
     GDBG_INFO(80, FN_NAME ": HWC_MINIVDD_HACK\n");
 
-	if (((FxI32)OSInfo == OS_WIN32_NT4) ||
-            ((FxI32)OSInfo == OS_WIN32_2K)  ||
-            ((FxI32)OSInfo == OS_WIN32_XP))
+	if ((*OSInfo == OS_WIN32_NT4) ||
+            (*OSInfo == OS_WIN32_2K)  ||
+            (*OSInfo == OS_WIN32_XP))
     {
       FxU32 retVal = FXTRUE;
       ctxReq.which = HWCEXT_SLI_AA_REQUEST ;
@@ -5452,9 +5478,9 @@ hwcRestoreVideo(hwcBoardInfo *bInfo)
 
     GDBG_INFO(80, FN_NAME ": HWC_MINIVDD_HACK\n");
 
-	if (((FxI32)OSInfo == OS_WIN32_NT4) ||
-            ((FxI32)OSInfo == OS_WIN32_2K)  ||
-            ((FxI32)OSInfo == OS_WIN32_XP))
+	if ((*OSInfo == OS_WIN32_NT4) ||
+            (*OSInfo == OS_WIN32_2K)  ||
+            (*OSInfo == OS_WIN32_XP))
     {
       hwcExtRequest_t ctxReq ;
       hwcExtResult_t  ctxRes ;
@@ -8953,9 +8979,9 @@ hwcShareContextData(hwcBoardInfo *bInfo, FxU32 **data)
   
   if( HWCEXT_PROTOCOL( bInfo->boardNum ) )
   {
-    if (((FxI32)OSInfo == OS_WIN32_NT4) ||
-        ((FxI32)OSInfo == OS_WIN32_2K)  ||
-        ((FxI32)OSInfo == OS_WIN32_XP))
+    if ((*OSInfo == OS_WIN32_NT4) ||
+        (*OSInfo == OS_WIN32_2K)  ||
+        (*OSInfo == OS_WIN32_XP))
       {
       hwcExtRequest_t
         ctxReq;
@@ -9125,9 +9151,9 @@ hwcUnmapMemory()
   hwcExtResult_t  ctxRes;
 
   if ( curBI ) {
-    if (((FxI32)OSInfo == OS_WIN32_NT4) ||
-        ((FxI32)OSInfo == OS_WIN32_2K)  ||
-        ((FxI32)OSInfo == OS_WIN32_XP))
+    if ((*OSInfo == OS_WIN32_NT4) ||
+        (*OSInfo == OS_WIN32_2K)  ||
+        (*OSInfo == OS_WIN32_XP))
       {
       hwcExtRequest_t
         ctxReq;
@@ -9670,5 +9696,6 @@ void
 hwcSetOSInfo(FxI32 *osInfo)
 {
   OSInfo = osInfo;
+  GDBG_INFO(80, "OS=%d\n", *OSInfo);
 } /* hwcSetOSInfo */
 #endif
