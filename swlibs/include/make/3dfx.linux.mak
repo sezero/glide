@@ -78,6 +78,10 @@ DEBUGDEFS      = -DGDBG_INFO_ON -DGLIDE_DEBUG
 GCDEFS         = -DENDB -DX11
 GCINCS	       = -I. -I$(BUILD_ROOT_SWLIBS)/include -I$(BUILD_ROOT_HW)/include
 GCOPTS	       = -Wall
+ifeq "$(FX_GLIDE_PIC)" "1"
+GCPTS	       := $(GCOPTS) -fPIC -DPIC
+endif
+
 # 
 # BIG_OPT Indicates O3(?) or better is being used. It changes the
 # assembly language in grDrawTriangle. Larger optimization removes
@@ -147,7 +151,9 @@ default: all
 
 all: incs libs bins
 
-OBJECTS	= $(CFILES:.c=.o) $(CPPFILES:.cpp=.o) $(LIBOBJS) $(AFILES:.s=.o)
+# We need to handle asm files with extensions of .s and .S
+OBJECTS	= $(CFILES:.c=.o) $(CPPFILES:.cpp=.o) $(LIBOBJS) \
+	$(patsubst %.s,%.o,$(patsubst %.S,%.o,$(AFILES)))
 #--------------------------------------------------------------------------
 # rules for INCS, LIBS, and BINS , the three major targets
 #
@@ -173,8 +179,11 @@ $(LIBRARIES): $(LIBPARTS)
 	$(AR) $*.a $(OBJECTS)
 
 ifneq ($(SHARED_LIBRARY),)
+SONAME := $(shell echo $(SHARED_LIBRARY) | cut -d "." -f 1-3)
+BASENAME := $(shell echo $(SHARED_LIBRARY) | cut -d "." -f 1-2)
+
 $(SHARED_LIBRARY): $(LIBPARTS) $(SUBLIBRARIES)
-	$(LINK) $(LDFLAGS) -shared -o $(SHARED_LIBRARY) \
+	$(LINK) $(LDFLAGS) -shared -Wl,-soname,$(SONAME) -o $(SHARED_LIBRARY) \
 		-Xlinker --whole-archive \
 		$(LIBRARIES) $(SUBLIBRARIES) \
 		-Xlinker --no-whole-archive \
@@ -187,6 +196,12 @@ ifdef INSTALL_DESTINATION
 	$(INSTALL) -m 444 $(LIBRARIES) $(INSTALL_DESTINATION)/lib
 ifneq "$(SHARED_LIBRARY)" ""
 	$(INSTALL) -m 444 $(SHARED_LIBRARY) $(INSTALL_DESTINATION)/lib
+	# Create proper symlinks for the shared library so that the binaries
+	# can link against it.
+	rm -f $(INSTALL_DESTINATION)/lib/$(SONAME)
+	ln -s $(SHARED_LIBRARY) $(INSTALL_DESTINATION)/lib/$(SONAME)
+	rm -f $(INSTALL_DESTINATION)/lib/$(BASENAME)
+	ln -s $(SONAME) $(INSTALL_DESTINATION)/lib/$(BASENAME)
 endif
 else
 	@echo INSTALL_DESTINATION not defined, not installing LIBRARIES

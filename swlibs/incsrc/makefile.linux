@@ -25,5 +25,5 @@ HEADERS=
 
 INSTALL_DESTINATION=$(BUILD_ROOT_SWLIBS)
 
-include $(BUILD_ROOT_SWLIBS)/include/make/3dfx.mak
+include $(BUILD_ROOT_SWLIBS)/include/make/3dfx.linux.mak
 
