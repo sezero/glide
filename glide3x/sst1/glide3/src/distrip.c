@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.1  2004/03/02 07:55:29  dborca
+** Bastardised Glide3x for SST1
+**
 ** Revision 1.1.1.1  1999/12/07 21:42:31  joseph
 ** Initial checkin into SourceForge.
 **
@@ -417,8 +420,8 @@ GR_DIENTRY(grDrawVertexArray, void , (FxU32 mode, FxU32 Count, void *pointers) )
   case GR_POLYGON:
   case GR_TRIANGLE_FAN:
     /* [dBorca] we need to cache the first & last vertices */
-    for (i = 1; i < Count - 1; i++) {
-        grDrawTriangle(vPtr[0], vPtr[i], vPtr[i+1]);
+    for (i = 2; i < Count; i++) {
+        grDrawTriangle(vPtr[0], vPtr[i-1], vPtr[i]);
     }
     break;
 
@@ -521,8 +524,8 @@ GR_DIENTRY(grDrawVertexArrayContiguous, void , (FxU32 mode, FxU32 Count, void *p
   case GR_POLYGON:
   case GR_TRIANGLE_FAN:
     /* [dBorca] we need to cache the first & last vertices */
-    for (i = 1; i < Count - 1; i++) {
-        grDrawTriangle(vPtr, vPtr + i * stride, vPtr + (i + 1) * stride);
+    for (i = 2; i < Count; i++) {
+        grDrawTriangle(vPtr, vPtr + (i - 1) * stride, vPtr + i * stride);
     }
     break;
       
