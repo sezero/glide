@@ -23,6 +23,7 @@ dnl Process this file with autoconf to produce a configure script.
 #
 AC_INIT(h5/glide3/src/glfb.c)
 AM_INIT_AUTOMAKE(glide, 3.0)
+AC_CANONICAL_TARGET
 AM_CONFIG_HEADER(swlibs/include/config.h)
 AC_PREFIX_DEFAULT([/usr])
 includedir='${prefix}/include/glide3'
@@ -151,6 +152,7 @@ AC_ARG_ENABLE([build-architecture],
                    ;;
                esac],[FX_GLIDE_BUILD_ARCHITECTURE=`uname -m`])
 AC_SUBST(FX_GLIDE_BUILD_ARCHITECTURE)
+
 #
 # Various tests needed at points in the build
 # First, we set defaults.
@@ -215,6 +217,8 @@ AM_CONDITIONAL(FX_GLIDE_VERTEX_TABLE,dnl
                test x$FX_GLIDE_VERTEX_TABLE = xtrue)
 AM_CONDITIONAL(FX_HOOPTI_TRI_SETUP_COMPARE,dnl
                test x$FX_HOOPTI_TRI_SETUP_COMPARE = xtrue)
+AM_CONDITIONAL(DRI_BUILD,dnl
+               test x$DRI_BUILD = xtrue)
 
 dnl Checks for programs.
 AC_PROG_CC
@@ -226,12 +230,13 @@ AC_CHECK_TOOL(CP, cp, false)
 AC_PROG_INSTALL
 AM_PROG_LIBTOOL
 AM_PROG_AS
-MAKE="make -f makefile.autoconf"
+AC_CHECK_PROG([MAKE], [gmake], [gmake -f makefile.autoconf], [make -f makefile.autoconf])
 AC_SUBST(MAKE)
 dnl Checks for libraries.
 
 dnl Checks for header files.
 AC_PATH_X
+AC_SUBST(x_includes)
 AC_HEADER_DIRENT
 AC_HEADER_STDC
 AC_CHECK_HEADERS(fcntl.h limits.h malloc.h sys/ioctl.h sys/time.h unistd.h)

@@ -23,6 +23,8 @@
 #
 # First, the variable defs.
 #
+LCFLAGS			= -I@x_includes@
+
 if GLIDE_DEBUG
 GLIDE_DEBUG_VDEFS=-DGDBG_INFO_ON
 endif
