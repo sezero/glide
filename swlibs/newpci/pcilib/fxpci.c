@@ -60,7 +60,7 @@ typedef struct _pciDeviceNode
   struct 
   {
     FxBool mapped;
-    FxU32  virtualAddress;
+    AnyPtr  virtualAddress;
   } addresses[MAX_PCI_BASEADDRESSES];
 
   struct _pciDeviceNode *next;
@@ -108,7 +108,7 @@ static PCIErr pciError[] = {
 FX_ENTRY FxU8 FX_CALL
 pioInByte ( unsigned short port )
 {
-  FxU8 data;
+  FxU8 data = 0;
 
   if (pciHwcCallbacks.pioInByte)
     data = pciHwcCallbacks.pioInByte(port);
@@ -120,7 +120,7 @@ pioInByte ( unsigned short port )
 FX_ENTRY FxU16 FX_CALL
 pioInWord ( unsigned short port )
 {
-  FxU16 data;
+  FxU16 data = 0;
 
   if (pciHwcCallbacks.pioInWord)
     data = pciHwcCallbacks.pioInWord(port);
@@ -132,7 +132,7 @@ pioInWord ( unsigned short port )
 FX_ENTRY FxU32 FX_CALL
 pioInLong ( unsigned short port )
 {
-  FxU32 data;
+  FxU32 data = 0;
 
   if (pciHwcCallbacks.pioInLong)
     data = pciHwcCallbacks.pioInLong(port);
@@ -252,7 +252,7 @@ static void printDeviceList(pciDeviceNode *head)
       for(index=0; index<MAX_PCI_BASEADDRESSES; index++)
 	{
 	  if(head->addresses[index].mapped)
-	    printf("   %s  virtual address: 0x%x\n", baseName[index],
+	    printf("   %s  virtual address: 0x%lx\n", baseName[index],
 		   head->addresses[index].virtualAddress);
 	}
       
@@ -372,10 +372,10 @@ _pciUpdateRegister( FxU32 offset, FxU32 data, FxU32 size_in_bytes,
   return;
 } /* _pciUpdateRegister */
 
-static FxU32 
+static AnyPtr
 find_mapped_address(FxU32 device_bus_func_number, FxU32 addrNum) 
 {
-  FxU32 retVal = 0x00UL;
+  AnyPtr retVal = 0x00UL;
 
   FxU32 bus, slot, function;
   pciDeviceNode *current = pciDeviceList;
@@ -406,7 +406,7 @@ find_mapped_address(FxU32 device_bus_func_number, FxU32 addrNum)
 }
 
 static void 
-set_mapped_address(FxU32 device_bus_func_number, FxU32 addrNum, FxU32 value) 
+set_mapped_address(FxU32 device_bus_func_number, FxU32 addrNum, AnyPtr value) 
 {
   FxU32 bus, slot, function;
   pciDeviceNode *current = pciDeviceList;
@@ -963,7 +963,8 @@ pciMapCardMulti(FxU32 vendorID, FxU32 deviceID,
                 FxU32 cardNum, FxU32 addressNum)
 {
   FxU32 
-    physAddress, 
+    physAddress;
+  AnyPtr
     virtAddress;
   
   /* 1) open the PCI device and scan it for devices
@@ -974,7 +975,7 @@ pciMapCardMulti(FxU32 vendorID, FxU32 deviceID,
 
   /* 3) find the current physcial address of the card */
   pciGetConfigData( baseAddresses[addressNum], *devNum, &physAddress );
-  if (length <= 0) return (FxU32*)length;
+  if (length <= 0) return (FxU32*)(long)length;
 
   /* Mask the memory type information bits off.
    *   [0]: Memory type indicator (0 memory/1 i/o)
@@ -1030,7 +1031,8 @@ pciMapCardMultiFunc(FxU32 vendorID, FxU32 deviceID,
 		    FxU32 cardNum, FxU32 addressNum)
 {
   FxU32 
-    physAddress, 
+    physAddress;
+  AnyPtr
     virtAddress;
   FxU32 functionNumber;
   
@@ -1045,7 +1047,7 @@ pciMapCardMultiFunc(FxU32 vendorID, FxU32 deviceID,
 
   /* 3) find the current physcial address of the card */
   pciGetConfigData( baseAddresses[addressNum], *devNum, &physAddress );
-  if (length <= 0) return (FxU32*)length;
+  if (length <= 0) return (FxU32*)(long)length;
 
   /* Mask the memory type information bits off.
    *   [0]: Memory type indicator (0 memory/1 i/o)
@@ -1093,7 +1095,7 @@ pciMapCard(FxU32 vendorID, FxU32 deviceID,
 } /* pciMapCard */
 
 FX_EXPORT FxBool FX_CSTYLE
-pciMapPhysicalToLinear( FxU32 *linear_addr, FxU32 physical_addr,
+pciMapPhysicalToLinear( AnyPtr *linear_addr, FxU32 physical_addr,
                         FxU32 *length ) 
 { 
   return pciMapPhysicalDeviceToLinear(linear_addr, 
@@ -1102,7 +1104,7 @@ pciMapPhysicalToLinear( FxU32 *linear_addr, FxU32 physical_addr,
 } /* pciMapPhysicalToLinear */
 
 FX_ENTRY FxBool FX_CALL 
-pciMapPhysicalDeviceToLinear(FxU32 *linear_addr, 
+pciMapPhysicalDeviceToLinear(AnyPtr *linear_addr, 
                              FxU32 busNumber, FxU32 physical_addr,
                              FxU32 *length)
 {
@@ -1112,7 +1114,7 @@ pciMapPhysicalDeviceToLinear(FxU32 *linear_addr,
 
 
 FX_EXPORT void FX_CSTYLE
-pciUnmapPhysical( FxU32 linear_addr, FxU32 length ) 
+pciUnmapPhysical( AnyPtr linear_addr, FxU32 length ) 
 {
   int baseAddressIndex;
   pciDeviceNode *current = pciDeviceList;
@@ -1158,7 +1160,7 @@ pciOutputDebugString(const char* msg)
 }
 
 FX_EXPORT FxBool FX_CSTYLE
-pciLinearRangeSetPermission(const FxU32 addrBase, const FxU32 addrLen, const FxBool writeableP)
+pciLinearRangeSetPermission(const AnyPtr addrBase, const FxU32 addrLen, const FxBool writeableP)
 {
   return pciLinearRangeSetPermissionDD(addrBase, addrLen, writeableP);
 }

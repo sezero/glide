@@ -197,7 +197,7 @@ FxBool _imgGuessType( FILE *stream, ImgType *type )
       	case 0xDA01:
 			*type = IMG_RGT;
 			break;
-      	case 'EL':
+      	case (('E'<<8) | 'L'):
 	  cookie = 0;
 	  if ( ( c = fgetc( stream ) ) == EOF )
 	    {
@@ -211,7 +211,7 @@ FxBool _imgGuessType( FILE *stream, ImgType *type )
 	      return FXFALSE;
 	    }
 	  cookie = (cookie << 8) | c;
-	  if (cookie == 'RS')
+	  if (cookie == (('R'<<8) | 'S'))
 	    *type = IMG_SRLE;
 	  break;
       	default: // Might Be TGA
@@ -1470,7 +1470,7 @@ FxBool _imgWriteP6Header( FILE *stream, const P6Info *info )
 {
 	imgErrorString = "Image write error.";
 	if ( 0 > fprintf( stream, "P6\n" ) ) return FXFALSE;
-	if ( 0 > fprintf( stream, "# PPM Comment\n", info->width ) ) return FXFALSE;
+	if ( 0 > fprintf( stream, "# PPM Comment\n" ) ) return FXFALSE;
 	if ( 0 > fprintf( stream, "%d ", info->width ) ) return FXFALSE;
 	if ( 0 > fprintf( stream, "%d\n", info->height ) ) return FXFALSE;
 	if ( 0 > fprintf( stream, "255\n" ) ) return FXFALSE;
@@ -1948,7 +1948,7 @@ FxBool imgReadFile(const char *filename, ImgInfo *info)
 	if (prefix) {					// if there's a path prefix
 	    char buf[1024], *p;
 	    strcpy(buf,prefix);			// copy and replace semicolon
-	    if (p = strchr(buf,';')) *p = '\0';
+	    if ((p = strchr(buf,';')) != NULL) *p = '\0';
 	    fprintf(stderr,buf);
 	    fprintf(stderr,"/");
 	}

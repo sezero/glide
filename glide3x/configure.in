@@ -171,7 +171,14 @@ GLIDE_SANITY_ALL=false
 GLIDE_SANITY_SIZE=false
 FX_DLL_BUILD=false
 FX_GLIDE_HW_CULL=false
+# Here we define whether we use C versions of cpu detection and triangle setup
 FX_GLIDE_CTRISETUP=false
+FX_GLIDE_C_CPU_DETECT=false
+# Override based on architecture
+if test "$FX_GLIDE_BUILD_ARCHITECTURE" = "alpha"; then
+FX_GLIDE_CTRISETUP=true
+FX_GLIDE_C_CPU_DETECT=true
+fi
 # Next, we read some configuration options
 # statically.  This is to avoid creating a bunch of
 # not-terribly-useful --enable options.
@@ -209,6 +216,8 @@ AM_CONDITIONAL(FX_GLIDE_HW_CULL,dnl
                test x$FX_GLIDE_HW_CULL = xtrue)
 AM_CONDITIONAL(FX_GLIDE_CTRISETUP,dnl
                test x$FX_GLIDE_CTRISETUP = xtrue)
+AM_CONDITIONAL(FX_GLIDE_C_CPU_DETECT,dnl
+               test x$FX_GLIDE_C_CPU_DETECT = xtrue)
 AM_CONDITIONAL(FX_GLIDE_PACKET_FIFO,dnl
                test x$FX_GLIDE_PACKET_FIFO = xtrue)
 AM_CONDITIONAL(FX_GLIDE_VERTEX_TABLE,dnl

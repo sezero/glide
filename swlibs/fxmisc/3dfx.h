@@ -30,8 +30,14 @@ typedef unsigned char   FxU8;
 typedef signed   char   FxI8;
 typedef unsigned short  FxU16;
 typedef signed   short  FxI16;
+#if defined(__alpha__) || defined (__LP64__)
+typedef signed   int    FxI32;
+typedef unsigned int    FxU32;
+#else
 typedef signed   long   FxI32;
 typedef unsigned long   FxU32;
+#endif
+typedef unsigned long   AnyPtr;
 typedef int             FxBool;
 typedef float           FxFloat;
 typedef double          FxDouble;

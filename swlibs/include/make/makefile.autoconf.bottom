@@ -51,9 +51,20 @@ ifeq ("@GLIDE_DEBUG@","true")
 GLIDE_DEBUG_GCFLAGS = -g -O
 GLIDE_DEBUG_GDEFS = -DGDBG_INFO_ON -DGLIDE_DEBUG
 else
-GLIDE_DEBUG_GCFLAGS = -O6 -m486
+ifeq ("@FX_GLIDE_BUILD_ARCHITECTURE@","alpha")
+GLIDE_DEBUG_GCFLAGS = -O2 -mcpu=ev6
+GLIDE_DEBUG_GDEFS = -DBIG_OPT
+else
+ifeq ("@FX_GLIDE_BUILD_ARCHITECTURE@","ia64")
+GLIDE_DEBUG_GCFLAGS = -O3
+GLIDE_DEBUG_GDEFS = -fomit-frame-pointer \
+	                -fexpensive-optimizations -ffast-math -DBIG_OPT
+else
+GLIDE_DEBUG_GCFLAGS = -O2 
 GLIDE_DEBUG_GDEFS = -fomit-frame-pointer -funroll-loops \
 	                -fexpensive-optimizations -ffast-math -DBIG_OPT
+endif
+endif
 endif
 GCFLAGS = $(GLIDE_DEBUG_GCFLAGS)
 #

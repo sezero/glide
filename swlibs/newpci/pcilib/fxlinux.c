@@ -35,10 +35,10 @@ static const char* pciIdentifyLinux(void);
 static FxBool pciOutputStringLinux(const char *msg);
 static FxBool pciInitializeLinux(void);
 static FxBool pciShutdownLinux(void);
-static FxBool pciMapLinearLinux(FxU32, FxU32 physical_addr, FxU32 *linear_addr,
+static FxBool pciMapLinearLinux(FxU32, FxU32 physical_addr, AnyPtr *linear_addr,
 				FxU32 *length);
-static FxBool pciUnmapLinearLinux(FxU32 linear_addr, FxU32 length);
-static FxBool pciSetPermissionLinux(const FxU32, const FxU32, const FxBool);
+static FxBool pciUnmapLinearLinux(AnyPtr linear_addr, FxU32 length);
+static FxBool pciSetPermissionLinux(const AnyPtr, const FxU32, const FxBool);
 static FxU8 pciPortInByteLinux(unsigned short port);
 static FxU16 pciPortInWordLinux(unsigned short port);
 static FxU32 pciPortInLongLinux(unsigned short port);
@@ -204,7 +204,7 @@ pciShutdownLinux(void)
 
 static FxBool 
 pciMapLinearLinux(FxU32 bus, FxU32 physical_addr,
-		  FxU32 *linear_addr, FxU32 *length) 
+		  AnyPtr *linear_addr, FxU32 *length) 
 {
   int fd;
   if (linuxDevFd!=-1) {
@@ -215,7 +215,7 @@ pciMapLinearLinux(FxU32 bus, FxU32 physical_addr,
       return FXFALSE;
     }
   }
-  if (((*linear_addr)=(FxU32)mmap(0, *length, PROT_READ|PROT_WRITE,
+  if (((*linear_addr)=(AnyPtr)mmap(0, *length, PROT_READ|PROT_WRITE,
 				  MAP_SHARED, fd, physical_addr))<0) {
     if (fd!=linuxDevFd) close(fd);
     return FXFALSE;
@@ -225,14 +225,14 @@ pciMapLinearLinux(FxU32 bus, FxU32 physical_addr,
 }
 
 static FxBool
-pciUnmapLinearLinux(FxU32 linear_addr, FxU32 length) 
+pciUnmapLinearLinux(AnyPtr linear_addr, FxU32 length) 
 {
   munmap((void*)linear_addr, length);
   return FXTRUE;
 }
 
 static FxBool
-pciSetPermissionLinux(const FxU32 addrBase, const FxU32 addrLen, 
+pciSetPermissionLinux(const AnyPtr addrBase, const FxU32 addrLen, 
 		      const FxBool writePermP)
 {
   return FXTRUE;
