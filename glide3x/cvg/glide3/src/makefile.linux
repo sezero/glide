@@ -216,8 +216,8 @@ CODFILES        =       $(CFILES:.c=.cod)
 # targets
 LDIRT           =       fxgasm.o fxgasm fxgasm.h fxinline.h fxbldno.obj fxbldnofxbldno.h
 
-LIBRARIES       =       libglide3x.a
-SHARED_LIBRARY  =	libglide3x.so
+LIBRARIES       =       libglide3.a
+SHARED_LIBRARY  =	libglide3.so.3.01
 RCFILE          =       glide.rc
 
 # Make a static link library for things like the diags.

@@ -198,11 +198,11 @@ CODFILES        =       $(CFILES:.c=.cod)
 LDIRT           =       fxgasm.o fxgasm fxgasm.h fxinline.h fxbldno.o fxbldno fxbldno.h 
 
 ifeq ($(FX_GLIDE3),1)
-LIBRARIES       =       libglide3x.a
-SHARED_LIBRARY  =	libglide3x.so
+LIBRARIES       =       libglide3.a
+SHARED_LIBRARY  =	libglide3.so.3.01
 else
-LIBRARIES       =       libglide2x.a
-SHARED_LIBRARY  =	libglide2x.so
+LIBRARIES       =       libglide.a
+SHARED_LIBRARY  =	libglide.so.2.53
 endif
 RCFILE          =       glide.rc
 

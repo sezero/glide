@@ -166,8 +166,8 @@ endif
 # targets
 LDIRT     = fxgasm.o fxgasm fxgasm.h
 
-LIBRARIES	    = libglide2x.a
-SHARED_LIBRARY      = libglide2x.so
+LIBRARIES	    = libglide.a
+SHARED_LIBRARY      = libglide.so.2.46
 
 include $(BUILD_ROOT_SWLIBS)/include/make/3dfx.mak
 

@@ -12,4 +12,4 @@ clean:
 	rm $(EXECS) *.o
 
 $(EXECS): $(OBJS) $(LIB_OBJS)
-	$(CC) -o $@ $@.o $(LIB_OBJS) -lglide3x -lm
+	$(CC) -o $@ $@.o $(LIB_OBJS) -lglide3 -lm

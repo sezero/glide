@@ -188,8 +188,15 @@ $(LIBRARIES): $(LIBPARTS)
 	/bin/rm -f $*.a
 	$(AR) $*.a $(LIBPARTS)
 
+# We need to glean the soname from the name of the library, this
+# is pretty good as long as shared library names are reasonable.
+ifneq "$(SHARED_LIBRARY)" ""
+SONAME := $(shell echo $(SHARED_LIBRARY) | cut -d "." -f 1-3)
+BASENAME := $(shell echo $(SHARED_LIBRARY) | cut -d "." -f 1-2)
+endif
+
 $(SHARED_LIBRARY): $(LIBPARTS) $(SUBLIBRARIES)
-	$(LINK) $(LDFLAGS) -shared -o $(SHARED_LIBRARY) \
+	$(LINK) $(LDFLAGS) -shared -Wl,-soname,$(SONAME) -o $(SHARED_LIBRARY) \
 		-Xlinker --whole-archive \
 		$(LIBRARIES) $(SUBLIBRARIES) \
 		-Xlinker --no-whole-archive \
@@ -201,6 +208,8 @@ ifdef INSTALL_DESTINATION
 	$(INSTALL) -m 444 $(LIBRARIES) $(INSTALL_DESTINATION)/lib
 ifneq "$(SHARED_LIBRARY)" ""
 	$(INSTALL) -m 444 $(SHARED_LIBRARY) $(INSTALL_DESTINATION)/lib
+	ln -s $(INSTALL_DESTINATION)/lib/$(SHARED_LIBRARY) $(INSTALL_DESTINATION)/lib/$(SONAME)
+	ln -s $(INSTALL_DESTINATION)/lib/$(SHARED_LIBRARY) $(INSTALL_DESTINATION)/lib/$(BASENAME)
 endif
 else
 	@echo INSTALL_DESTINATION not defined, not installing LIBRARIES

@@ -20,7 +20,7 @@ LDIRT= $(PROGRAMS)
 
 LIBOBJS = tlib.o plib.o
 
-LLDLIBS = $(LIBOBJS) -lglide2x
+LLDLIBS = $(LIBOBJS) -lglide
 
 PRIVATE_HEADERS = tlib.h tlib.c plib.h plib.c tldata.inc
 

@@ -39,7 +39,7 @@ CFILES  = texuslib.c clamp.c read.c resample.c mipmap.c quantize.c ncc.c \
 INSTALL_DESTINATION = $(BUILD_ROOT_SWLIBS)
 
 LIBRARIES = libtexus.a
-SHARED_LIBRARY = libtexus.so
+SHARED_LIBRARY = libtexus.so.1.1
 SUBLIBRARIES = $(BUILD_ROOT_SWLIBS)/lib/libfxmisc.a
 
 include $(BUILD_ROOT_SWLIBS)/include/make/3dfx.mak

@@ -17,7 +17,7 @@ LCINCS  += -I$(BUILD_ROOT)/$(FX_GLIDE_HW)/include
 
 LIBOBJS = tlib.o
 
-GLIDELIB        =       -L$(GLIDE_ROOT)/lib -lglide3x
+GLIDELIB        =       -L$(GLIDE_ROOT)/lib -lglide3
 
 LLDLIBS = $(LIBOBJS) $(GLIDELIB)
 
