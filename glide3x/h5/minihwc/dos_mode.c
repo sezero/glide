@@ -877,7 +877,7 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
         FxU32 vsyncOffsetPixels, vsyncOffsetChars, vsyncOffsetHXtra;
 
         if((analogSLI &&
-            !((numChips == 4) && sliEnable && aaEnable && !aaSampleHigh && !analogSLI && (chipNum != 2)) &&
+            !((numChips == 4) && sliEnable && aaEnable && !aaSampleHigh && analogSLI && (chipNum != 2)) &&
 			!((numChips == 4) && !sliEnable && aaEnable && aaSampleHigh && analogSLI && (chipNum != 2) && (vid2xMode == 0))) ||
 			((numChips == 4) && sliEnable && aaEnable && aaSampleHigh && !analogSLI && (chipNum == 2))) {
 
