@@ -869,14 +869,16 @@ typedef struct sli_aa_request {
 } SLI_AA_REQUEST, * PSLI_AA_REQUEST;
 #endif
 
-#if defined(__DJGPP__) || (GLIDE_PLATFORM & GLIDE_OS_UNIX)
+#if (GLIDE_PLATFORM & GLIDE_OS_DOS32) || (GLIDE_PLATFORM & GLIDE_OS_UNIX)
 #define _aligned_malloc(a, b) malloc(a)
 #define _aligned_free free
 /* don't like macros, because of side-effects */
+#ifndef __WATCOMC__
 static __inline int min (int x, int y)
 {
  return (x > y) ? y : x;
 }
+#endif
 #endif
 
 #ifdef __GNUC__
@@ -957,6 +959,14 @@ static __inline int min (int x, int y)
 		movl	%%eax, %0		\n\
 		movl	%%edx, %1		\n\
 	":"+a"(s), "+d"(dst):"D"(src_width), "g"(stride_diff));
+#elif defined(__WATCOMC__)
+
+#define MMX_RESET()
+#define MMX_SETUP2(ar, gb, ar1m, gb1m, ar2m, gb2m)
+#define MMX_LOOP2(s, dst, src_width, stride_diff)
+#define MMX_SETUP4()
+#define MMX_LOOP4(s, dst, src_width, stride_diff)
+
 #else
 
 #define MMX_RESET() __asm { _asm emms }
@@ -5415,7 +5425,7 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
     HWC_IO_STORE(bInfo->regInfo, pciInit0, pciInit0);
   }
 
-#if defined(__DJGPP__) || (GLIDE_PLATFORM & GLIDE_OS_UNIX)
+#if (GLIDE_PLATFORM & GLIDE_OS_DOS32) || (GLIDE_PLATFORM & GLIDE_OS_UNIX)
   HWC_IO_STORE(bInfo->regInfo, vidProcCfg, vidProcCfg | SST_VIDEO_PROCESSOR_EN);
 #endif
 
@@ -6280,6 +6290,7 @@ static void hwcReadRegion565(hwcBoardInfo *bInfo, FxU32 src, FxU32 src_x, FxU32 
                  0x00001080, /* a=00000000 r=10000100 */
                  0x10401080  /* g=10000010 b=10000100 */
       );
+#elif defined(__WATCOMC__)
 #else
       __asm {
 	    emms /* mmx */
@@ -6315,6 +6326,7 @@ static void hwcReadRegion565(hwcBoardInfo *bInfo, FxU32 src, FxU32 src_x, FxU32 
               /* This chip owns this scanline. */
 #ifdef __GNUC__
               MMX_LOOP2(s, dst, src_width, stride_diff);
+#elif defined(__WATCOMC__)
 #else
               __asm {
                 
@@ -6436,6 +6448,7 @@ static void hwcReadRegion1555(hwcBoardInfo *bInfo, FxU32 src, FxU32 src_x, FxU32
                  0x00001080, /* a=0000000000 r=1000010000 */
                  0x10801080  /* g=1000010000 b=1000010000 */
       );
+#elif defined(__WATCOMC__)
 #else
       __asm {
 	    emms /* mmx */
@@ -6471,6 +6484,7 @@ static void hwcReadRegion1555(hwcBoardInfo *bInfo, FxU32 src, FxU32 src_x, FxU32
                 /* This chip owns this scanline. */
 #ifdef __GNUC__
                 MMX_LOOP2(s, dst, src_width, stride_diff);
+#elif defined(__WATCOMC__)
 #else
                 __asm {
 
@@ -6586,6 +6600,7 @@ static void hwcReadRegion8888(hwcBoardInfo *bInfo, FxU32 src, FxU32 src_x, FxU32
       /* MMX Optimized Loop */
 #ifdef __GNUC__
       MMX_SETUP4();
+#elif defined(__WATCOMC__)
 #else
 		__asm {
 			emms /* mmx */
@@ -6600,6 +6615,7 @@ static void hwcReadRegion8888(hwcBoardInfo *bInfo, FxU32 src, FxU32 src_x, FxU32
             {
 #ifdef __GNUC__
               MMX_LOOP4(s, dst, src_width, stride_diff);
+#elif defined(__WATCOMC__)
 #else
               /* This chip owns this scanline. */
               __asm {
@@ -6975,6 +6991,7 @@ static void hwcCopyBuffer8888Flipped(hwcBoardInfo *bInfo, FxU16 *source, int w, 
       :
       :"a"(src), "d"(dst), "D"(endline), "S"(end), "m"(w)
       :"%ebx", "%ecx");
+#elif defined(__WATCOMC__)
 #else
       __asm
         {
@@ -7112,6 +7129,7 @@ static void hwcCopyBuffer8888FlippedShifted(hwcBoardInfo *bInfo, FxU16 *source, 
       :
       :"a"(src), "d"(dst), "D"(endline), "S"(end), "m"(w), "m"(aaShift)
       :"%ebx", "%ecx");
+#elif defined(__WATCOMC__)
 #else
       __asm
       {
@@ -7377,6 +7395,7 @@ static void hwcCopyBuffer8888FlippedDithered(hwcBoardInfo *bInfo, FxU16 *source,
       :
       :"a"(src), "d"(dst), "D"(endline), "S"(end), "m"(w), "m"(dither_mask), "g"(val_max), "m"(aaShift), "c"(sse_mmxplus)
       :"%ebx");
+#elif defined(__WATCOMC__)
 #else
       __asm
       {
@@ -7859,6 +7878,7 @@ static void hwcCopyBuffer565Shifted(hwcBoardInfo *bInfo, FxU16 *src, int w, int 
       :
       : "a"(src), "d"(dst), "D"(endline), "S"(end), "m"(stride_dest), "m"(stride_diff), "m"(aaShift)
       : "%ebx", "%ecx");
+#elif defined(__WATCOMC__)
 #else
 	  __asm
 	  {
@@ -9105,7 +9125,7 @@ hwcShareContextData(hwcBoardInfo *bInfo, FxU32 **data)
               ctxRes.optData.shareContextDWORDRes.contextDWORD); 
   }
 #endif
-#if HWC_GDX_INIT || defined(__DJGPP__) || (GLIDE_PLATFORM & GLIDE_OS_UNIX)
+#if HWC_GDX_INIT || (GLIDE_PLATFORM & GLIDE_OS_DOS32) || (GLIDE_PLATFORM & GLIDE_OS_UNIX)
   *data = &dummyContextDWORD;
 #endif
   return retVal;

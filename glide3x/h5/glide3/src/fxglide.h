@@ -526,7 +526,11 @@
 #include <cpuid.h>
 
 /* local */
+#ifdef __WATCOMC__
+#define GR_CDECL __cdecl
+#else
 #define GR_CDECL
+#endif
 #include "g3ext.h"
 #include "fxcmd.h"
 #include "gsfc.h"
@@ -547,15 +551,15 @@
 #define WIN32_LEANER_AND_MEANER
 #include <windows.h>
 #else
-FxBool fxSplashInit (FxU32 hWnd,
-                     FxU32 screenWidth, FxU32 screenHeight,
-                     FxU32 numColBuf, FxU32 numAuxBuf,
-                     GrColorFormat_t colorFormat);
-void fxSplashShutdown (void);
-void fxSplash (float x, float y, float w, float h, FxU32 frameNumber);
-const void *fxSplashPlug (FxU32* w, FxU32* h,
-                          FxI32* strideInBytes,
-                          GrLfbWriteMode_t* format);
+FxBool FX_CALL fxSplashInit (FxU32 hWnd,
+                             FxU32 screenWidth, FxU32 screenHeight,
+                             FxU32 numColBuf, FxU32 numAuxBuf,
+                             GrColorFormat_t colorFormat);
+void FX_CALL fxSplashShutdown (void);
+void FX_CALL fxSplash (float x, float y, float w, float h, FxU32 frameNumber);
+const void * FX_CALL fxSplashPlug (FxU32* w, FxU32* h,
+                                   FxI32* strideInBytes,
+                                   GrLfbWriteMode_t* format);
 #endif /* (GLIDE_PLATFORM & GLIDE_OS_WIN32) */
 
 /* -----------------------------------------------------------------------
@@ -1374,7 +1378,7 @@ void FX_CSTYLE _grDrawVertexList_SSE_Clip(FxU32 pktype, FxU32 type, FxI32 mode, 
 /* Define this structure otherwise it assumes the structure only exists
    within the function */
 struct GrGC_s;
-#endif	/* (GLIDE_PLATFORM & GLIDE_OS_UNIX) || defined(__DJGPP__) */
+#endif	/* __GNUC__ */
 
 /* _GlideRoot.curTexProcs is an array of (possibly specialized)
  * function pointers indexed by texture format size (8/16 bits for
@@ -2187,6 +2191,13 @@ extern GrGCFuncs _curGCFuncs;
  * This is the __linux__ code.
  */
 #define P6FENCE asm("xchg %%eax, %0" : : "m" (_GlideRoot.p6Fencer) : "eax");
+#elif defined(__WATCOMC__)
+void 
+p6Fence(void);
+#pragma aux p6Fence = \
+  "xchg eax, dword ptr _GlideRoot" \
+  modify [eax];
+#define P6FENCE p6Fence()
 #else  /* !defined ( P6FENCE ) */
 #  error "P6 Fencing code needs to be added for this compiler"
 #endif /* !defined ( P6FENCE ) */
@@ -2349,11 +2360,23 @@ _trisetup_noclip_valid(const void *va, const void *vb, const void *vc );
 #define TRISETUP \
   __asm(""::"d"(gc)); \
   (*gc->triSetupProc)
-#else /* (GLIDE_PLATFORM & GLIDE_OS_UNIX) || defined(__DJGPP__) */
+#elif defined(__WATCOMC__)
+extern void wat_trisetup (void *gc, const void *a, const void *b, const void *c);
+#pragma aux wat_trisetup = \
+	"push ecx" \
+	"push ebx" \
+	"push eax" \
+	parm [edx] [eax] [ebx] [ecx];
+#define TRISETUP(_a, _b, _c) \
+        do { \
+           wat_trisetup(gc, _a, _b, _c); \
+           ((FxI32 (*)(void))*gc->triSetupProc)(); \
+        } while (0)
+#else
 #define TRISETUP \
   (*gc->triSetupProc)
 #endif
-void
+void GR_CDECL
 _grValidateState();
 
 void FX_CSTYLE
@@ -2782,10 +2805,10 @@ extern FxU32 threadValueLinux;
 #define getThreadValueFast() threadValueLinux
 #endif /* defined(GLIDE_PLATFORM & GLIDE_OS_UNIX) */
 
-#ifdef __DJGPP__
-extern FxU32 threadValueDJGPP;
+#if (GLIDE_PLATFORM & GLIDE_OS_DOS32)
+extern FxU32 GR_CDECL threadValueDJGPP;
 #define getThreadValueFast() threadValueDJGPP
-#endif /* defined(__DJGPP__) */
+#endif /* DOS32 */
 
 #define CUR_TRI_PROC(__checkValidP, __cullP) \
   (*gc->archDispatchProcs.coorModeTriVector)[__checkValidP][__cullP]

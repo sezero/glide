@@ -194,7 +194,11 @@ FxBool checkResolutions (FxBool *supportedByResolution, FxU32 stride, void *hmon
 }
 
 
+#ifdef __WATCOMC__
+#include "h3cini~1.h"
+#else
 #include "h3cinitdd.h"
+#endif
 
 #define CFG_READ(_chip, _offset) \
   hwcReadConfigRegister(bInfo, _chip, offsetof(SstPCIConfigRegs, _offset))

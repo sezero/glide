@@ -3,6 +3,9 @@
  *
  * $Header$
  * $Log$
+ * Revision 1.1.2.9  2003/08/04 12:45:47  dborca
+ * Preparing for MinGW 2.0
+ *
  * Revision 1.1.2.8  2003/07/29 10:04:32  dborca
  * Shamelessness.
  * Safeguard in CPUID.
@@ -255,6 +258,8 @@ notamd:
     }
 #endif
 
+#ifndef __WATCOMC__
+ /* stupid watcom does not sigill... */
  if (dwFeature & _MMX_FEATURE_BIT) {
     feature |= _CPU_FEATURE_MMX;
     os_support |= has_feature(_CPU_FEATURE_MMX);
@@ -279,6 +284,7 @@ notamd:
     feature |= _CPU_FEATURE_SSE2;
     os_support |= has_feature(_CPU_FEATURE_SSE2);
  }
+#endif
 
  if (pinfo) {
     memset(pinfo, 0, sizeof(_p_info));

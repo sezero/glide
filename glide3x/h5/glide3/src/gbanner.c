@@ -188,7 +188,7 @@ static FxU16 *fxPlugData;
 
 
 
-void fxSplashShutdown (void)
+void FX_CALL fxSplashShutdown (void)
 {
 #if GLIDE_PLUG
  if (fxPlugData != NULL) {
@@ -200,10 +200,10 @@ void fxSplashShutdown (void)
 
 
 
-FxBool fxSplashInit (FxU32 hWnd,
-                     FxU32 screenWidth, FxU32 screenHeight,
-                     FxU32 numColBuf, FxU32 numAuxBuf,
-                     GrColorFormat_t colorFormat)
+FxBool FX_CALL fxSplashInit (FxU32 hWnd,
+                             FxU32 screenWidth, FxU32 screenHeight,
+                             FxU32 numColBuf, FxU32 numAuxBuf,
+                             GrColorFormat_t colorFormat)
 {
 #if GLIDE_PLUG
  if (fxPlugData == NULL) {
@@ -397,9 +397,9 @@ FxBool fxSplashInit (FxU32 hWnd,
 
 
 
-const void *fxSplashPlug (FxU32* w, FxU32* h,
-                          FxI32* strideInBytes,
-                          GrLfbWriteMode_t* format)
+const void * FX_CALL fxSplashPlug (FxU32* w, FxU32* h,
+                                   FxI32* strideInBytes,
+                                   GrLfbWriteMode_t* format)
 {
 #if GLIDE_PLUG
  *w = fxPlugWidth;
@@ -414,7 +414,7 @@ const void *fxSplashPlug (FxU32* w, FxU32* h,
 
 
 
-void fxSplash (float x, float y, float w, float h, FxU32 frameNumber)
+void FX_CALL fxSplash (float x, float y, float w, float h, FxU32 frameNumber)
 {
 }
 

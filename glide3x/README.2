@@ -107,7 +107,10 @@ h5:	Voodoo Banshee, Velocity 100/200, Voodoo3/4/5
 		Req:	DJGPP 2.04 (gcc 3.3.3, make 3.80)
 		Build:	make -f Makefile.DJ FX_GLIDE_HW=h5 [...]
 
-	DOS/OpenWatcom	N/A
+	DOS/OpenWatcom	working
+		Req:	OpenWatcom 1.2, GNU make 3.80
+		Build:	cd h5/glide3/src
+			make -f Makefile.wat FX_GLIDE_HW=h5 [...]
 
 	Linux		DRI working, DGA needs testing, CINIT broken
 		Req:	gcc

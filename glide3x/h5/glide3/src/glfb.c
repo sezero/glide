@@ -19,6 +19,12 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.7.4.18  2004/04/28 17:40:51  koolsmoky
+** Removed registry path from GETENV.
+** Removed FX_GLIDE_AA_PIXELCENTER, FX_GLIDE_AA_JITTERDISP, FX_GLIDE_AA_GRIDROTATION, and FX_GLIDE_FORCE_SST0.
+** Removed FX_GL_LFBLOCK_HACK and FX_GLIDE_USE_HWC_AA_FOR_LFB_READ.
+** Moved _grSstDetectResources into _GlideInitEnvironment so that it will not be called everytime _grGlideInit is called.
+**
 ** Revision 1.7.4.17  2003/10/14 15:04:07  dborca
 ** fixed minihwc; conditioned context checking; added Texus2 to Glide3
 **
@@ -471,8 +477,8 @@
 		movl	%%eax, (%%edi)	\n\
 		.p2align 3,,7		\n\
 	5:"::"g"(src), "g"(dst), "g"(width):"%eax", "%ecx", "%esi", "%edi")
-        
-#else
+
+#elif defined(__MSC__)
 
 #define MMX_RESET() __asm { emms }
 
@@ -646,6 +652,162 @@
 		__asm align	8		\
 	__asm finish_mmx_dstline4:		\
 	}
+        
+#elif defined(__WATCOMC__)
+
+#define MMX_RESET() __asm { emms }
+
+/* Desc: copy one row of pixels
+ *
+ * In  : length = number of bytes (pixels*bytesperpixel). Must be even (which
+ *                holds true, because we don't support 8bit. Also the existing
+ *                code assumes this, so this won't be a problem.
+ *       src    = source buffer
+ *       dst    = destination buffer
+ *
+ * Note: Aligns src (LFB) before copying. Clobbers eax, ecx, esi, edi
+ */
+extern void MMX_SRCLINE(FxU32 *src, FxU32 *dst, FxI32 length);
+#pragma aux MMX_SRCLINE = \
+		"cmp	ecx, 8"		\
+		"jb	small_move"	\
+		"test	esi, 2"		\
+		"jz	check4"		\
+		"mov	ax, [esi]"	\
+		"add	esi, 2"		\
+		"mov	[edi], ax"	\
+		"add	edi, 2"		\
+		"sub	ecx, 2"		\
+	"check4:"			\
+		"test	esi, 4"		\
+		"jz	aligned8"	\
+		"mov	eax, [esi]"	\
+		"add	esi, 4"		\
+		"mov	[edi], eax"	\
+		"add	edi, 4"		\
+		"sub	ecx, 4"		\
+	"aligned8:"			\
+		"mov	eax, ecx"	\
+		"and	ecx, 7"		\
+		"shr	eax, 3"		\
+		"jz	small_move"	\
+	"big_move:"			\
+		"movq	mm0, [esi]"	\
+		"add	esi, 8"		\
+		"movq	[edi], mm0"	\
+		"add	edi, 8"		\
+		"dec	eax"		\
+		"jnz	big_move"	\
+	"small_move:"			\
+		"test	ecx, 4"		\
+		"jz	check2"		\
+		"mov	eax, [esi]"	\
+		"add	esi, 4"		\
+		"mov	[edi], eax"	\
+		"add	edi, 4"		\
+	"check2:"			\
+		"test	ecx, 2"		\
+		"jz	finish"		\
+		"mov	ax, [esi]"	\
+		"mov	[edi], ax"	\
+	"finish:"			\
+        parm [esi] [edi] [ecx]		\
+        modify [eax ecx esi edi];
+
+/* Desc: copy one row of 16bit pixels
+ *
+ * In  : width = number of pixels
+ *       src   = source buffer
+ *       dst   = destination buffer
+ *
+ * Note: Aligns dst (LFB) before copying. Clobbers eax, ecx, esi, edi
+ */
+extern void MMX_DSTLINE2(FxU32 *src, FxU32 *dst, FxU32 width);
+#pragma aux MMX_DSTLINE2 = \
+		"cmp	ecx, 4"		\
+		"jb	small_move_mmx_dstline2"\
+		"test	edi, 2"		\
+		"jz	check4_mmx_dstline2"\
+		"mov	ax, [esi]"	\
+		"add	esi, 2"		\
+		"mov	[edi], ax"	\
+		"add	edi, 2"		\
+		"dec	ecx"		\
+	"check4_mmx_dstline2:"		\
+		"test	edi, 4"		\
+		"jz	aligned8_mmx_dstline2"\
+		"mov	eax, [esi]"	\
+		"add	esi, 4"		\
+		"mov	[edi], eax"	\
+		"add	edi, 4"		\
+		"sub	ecx, 2"		\
+	"aligned8_mmx_dstline2:"	\
+		"mov	eax, ecx"	\
+		"and	ecx, 3"		\
+		"shr	eax, 2"		\
+		"jz	small_move_mmx_dstline2"\
+	"big_move_mmx_dstline2:"	\
+		"movq	mm0, [esi]"	\
+		"add	esi, 8"		\
+		"movq	[edi], mm0"	\
+		"add	edi, 8"		\
+		"dec	eax"		\
+		"jnz	big_move_mmx_dstline2"\
+	"small_move_mmx_dstline2:"	\
+		"test	ecx, 2"		\
+		"jz	check2_mmx_dstline2"\
+		"mov	eax, [esi]"	\
+		"add	esi, 4"		\
+		"mov	[edi], eax"	\
+		"add	edi, 4"		\
+	"check2_mmx_dstline2:"		\
+		"test	ecx, 1"		\
+		"jz	finish_mmx_dstline2"\
+		"mov	ax, [esi]"	\
+		"mov	[edi], ax"	\
+	"finish_mmx_dstline2:"		\
+        parm [esi] [edi] [ecx]		\
+        modify [eax ecx esi edi];
+
+/* Desc: copy one row of 32bit pixels
+ *
+ * In  : width = number of pixels
+ *       src   = source buffer
+ *       dst   = destination buffer
+ *
+ * Note: Aligns dst (LFB) before copying. Clobbers eax, ecx, esi, edi
+ */
+extern void MMX_DSTLINE4(FxU32 *src, FxU32 *dst, FxU32 width);
+#pragma aux MMX_DSTLINE4 = \
+		"cmp	ecx, 2"		\
+		"jb	small_move_mmx_dstline4"\
+		"test	edi, 4"		\
+		"jz	aligned8_mmx_dstline4"\
+		"mov	eax, [esi]"	\
+		"add	esi, 4"		\
+		"mov	[edi], eax"	\
+		"add	edi, 4"		\
+		"dec	ecx"		\
+	"aligned8_mmx_dstline4:"	\
+		"mov	eax, ecx"	\
+		"and	ecx, 1"		\
+		"shr	eax, 1"		\
+		"jz	small_move_mmx_dstline4"\
+	"big_move_mmx_dstline4:"	\
+		"movq	mm0, [esi]"	\
+		"add	esi, 8"		\
+		"movq	[edi], mm0"	\
+		"add	edi, 8"		\
+		"dec	eax"		\
+		"jnz	big_move_mmx_dstline4"	\
+	"small_move_mmx_dstline4:"	\
+		"test	ecx, 1"		\
+		"jz	finish_mmx_dstline4"\
+		"mov	eax, [esi]"	\
+		"mov	[edi], eax"	\
+	"finish_mmx_dstline4:"		\
+        parm [esi] [edi] [ecx]		\
+        modify [eax ecx esi edi];
 
 #endif
 
@@ -796,7 +958,7 @@
 		.p2align 3,,7		\n\
 	5:"::"g"(src), "g"(dst), "g"(width):"%eax", "%ecx", "%esi", "%edi")
 
-#else
+#elif defined(__MSC__)
 
 #define FPU_SRCLINE(src, dst, length) __asm {\
 		__asm mov	ecx, length	\
@@ -942,6 +1104,134 @@
 		__asm align	8		\
 	__asm finish_fpu_dstline4:		\
 	}
+
+#elif defined(__WATCOMC__)
+
+extern void FPU_SRCLINE(FxU32 *src, FxU32 *dst, FxI32 length);
+#pragma aux FPU_SRCLINE = \
+		"cmp	ecx, 8"		\
+		"jb	small_move_fpu_srcline"\
+		"test	esi, 2"		\
+		"jz	check4_fpu_srcline"\
+		"mov	ax, [esi]"	\
+		"add	esi, 2"		\
+		"mov	[edi], ax"	\
+		"add	edi, 2"		\
+		"sub	ecx, 2"		\
+	"check4_fpu_srcline:"		\
+		"test	esi, 4"		\
+		"jz	aligned8_fpu_srcline"\
+		"mov	eax, [esi]"	\
+		"add	esi, 4"		\
+		"mov	[edi], eax"	\
+		"add	edi, 4"		\
+		"sub	ecx, 4"		\
+	"aligned8_fpu_srcline:"		\
+		"mov	eax, ecx"	\
+		"and	ecx, 7"		\
+		"shr	eax, 3"		\
+		"jz	small_move_fpu_srcline"\
+	"big_move_fpu_srcline:"		\
+		"fild	qword ptr [esi]"\
+		"add	esi, 8"		\
+		"fistp	qword ptr [edi]"\
+		"add	edi, 8"		\
+		"dec	eax"		\
+		"jnz	big_move_fpu_srcline"\
+	"small_move_fpu_srcline:"	\
+		"test	ecx, 4"		\
+		"jz	check2_fpu_srcline"\
+		"mov	eax, [esi]"	\
+		"add	esi, 4"		\
+		"mov	[edi], eax"	\
+		"add	edi, 4"		\
+	"check2_fpu_srcline:"		\
+		"test	ecx, 2"		\
+		"jz	finish_fpu_srcline"\
+		"mov	ax, [esi]"	\
+		"mov	[edi], ax"	\
+	"finish_fpu_srcline:"		\
+        parm [esi] [edi] [ecx]		\
+        modify [eax ecx esi edi];
+
+extern void FPU_DSTLINE2(FxU32 *src, FxU32 *dst, FxI32 length);
+#pragma aux FPU_DSTLINE2 = \
+		"cmp	ecx, 4"		\
+		"jb	small_move_fpu_dstline2"\
+		"test	edi, 2"		\
+		"jz	check4_fpu_dstline2"	\
+		"mov	ax, [esi]"	\
+		"add	esi, 2"		\
+		"mov	[edi], ax"	\
+		"add	edi, 2"		\
+		"dec	ecx"		\
+	"check4_fpu_dstline2:"		\
+		"test	edi, 4"		\
+		"jz	aligned8_fpu_dstline2"\
+		"mov	eax, [esi]"	\
+		"add	esi, 4"		\
+		"mov	[edi], eax"	\
+		"add	edi, 4"		\
+		"sub	ecx, 2"		\
+	"aligned8_fpu_dstline2:"	\
+		"mov	eax, ecx"	\
+		"and	ecx, 3"		\
+		"shr	eax, 2"		\
+		"jz	small_move_fpu_dstline2"\
+	"big_move_fpu_dstline2:"	\
+		"fild	qword ptr [esi]"\
+		"add	esi, 8"		\
+		"fistp	qword ptr [edi]"\
+		"add	edi, 8"		\
+		"dec	eax"		\
+		"jnz	big_move_fpu_dstline2"\
+	"small_move_fpu_dstline2:"	\
+		"test	ecx, 2"		\
+		"jz	check2_fpu_dstline2"\
+		"mov	eax, [esi]"	\
+		"add	esi, 4"		\
+		"mov	[edi], eax"	\
+		"add	edi, 4"		\
+	"check2_fpu_dstline2:"		\
+		"test	ecx, 1"		\
+		"jz	finish_fpu_dstline2"\
+		"mov	ax, [esi]"	\
+		"mov	[edi], ax"	\
+	"finish_fpu_dstline2:"		\
+        parm [esi] [edi] [ecx]		\
+        modify [eax ecx esi edi];
+
+extern void FPU_DSTLINE4(FxU32 *src, FxU32 *dst, FxI32 length);
+#pragma aux FPU_DSTLINE4 = \
+		"cmp	ecx, 2"		\
+		"jb	small_move_fpu_dstline4"\
+		"test	edi, 4"		\
+		"jz	aligned8_fpu_dstline4"\
+		"mov	eax, [esi]"	\
+		"add	esi, 4"		\
+		"mov	[edi], eax"	\
+		"add	edi, 4"		\
+		"dec	ecx"		\
+	"aligned8_fpu_dstline4:"	\
+		"mov	eax, ecx"	\
+		"and	ecx, 1"		\
+		"shr	eax, 1"		\
+		"jz	small_move_fpu_dstline4"\
+	"big_move_fpu_dstline4:"	\
+		"fild	qword ptr [esi]"\
+		"add	esi, 8"		\
+		"fistp	qword ptr [edi]"\
+		"add	edi, 8"		\
+		"dec	eax"		\
+		"jnz	big_move_fpu_dstline4"\
+	"small_move_fpu_dstline4:"	\
+		"test	ecx, 1"		\
+		"jz	finish_fpu_dstline4"\
+		"mov	eax, [esi]"	\
+		"mov	[edi], eax"	\
+	"finish_fpu_dstline4:"		\
+        parm [esi] [edi] [ecx]          \
+        modify [eax ecx esi edi];
 
 #endif
 
