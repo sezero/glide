@@ -96,11 +96,11 @@ static BOOL FAR PASCAL
 ddEnumCbEx( GUID FAR *guid, LPSTR desc, LPSTR name, LPVOID ctx, HMONITOR hmon ) 
 {
   EnumInfo* pEnumInfo = (EnumInfo*)ctx;
-  BOOL     rv     = DDENUMRET_OK;
+  BOOL      rv        = DDENUMRET_OK;
   
   if(pEnumInfo->hmon == hmon) {
     if ( guid ) CopyMemory(&pEnumInfo->guid, guid, sizeof(GUID));
-    rv     = DDENUMRET_CANCEL;
+    rv = DDENUMRET_CANCEL;
   }
   
   return rv;
@@ -229,6 +229,7 @@ setVideoMode( void *hwnd, int xRes, int yRes, int h3pixelSize, int refresh, void
       enumInfo.hmon = (HMONITOR)hmon;
       ddEnumEx( ddEnumCbEx, &enumInfo, DDENUM_ATTACHEDSECONDARYDEVICES );
       ddGuid = &enumInfo.guid;
+	  GDBG_INFO(80, "GUID %d\n", ddGuid);
     }
   }
 
@@ -238,14 +239,16 @@ setVideoMode( void *hwnd, int xRes, int yRes, int h3pixelSize, int refresh, void
   /* KoolSmoky - Hack for win95. make a disp struct if we don't get anything
    * from EnumDisplaySettings.
    */
-  if ((devMode.dmBitsPerPel < 8UL) || (devMode.dmBitsPerPel > 32UL)) {
-    HDC hdc = GetDC(NULL);
-    devMode.dmSize = sizeof(DEVMODE) ;
-    devMode.dmPelsWidth = GetSystemMetrics(SM_CXSCREEN) ;
-    devMode.dmPelsHeight = GetSystemMetrics(SM_CYSCREEN) ;
-    devMode.dmBitsPerPel = (DWORD)GetDeviceCaps(hdc, BITSPIXEL) ;
-    devMode.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT ;
-    ReleaseDC(NULL, hdc) ;
+  if ((devMode.dmBitsPerPel < 8UL) || (devMode.dmBitsPerPel > 32UL) || (hwcGetOS() == OS_WIN32_95)) {
+    devMode.dmSize       = sizeof(DEVMODE);
+    devMode.dmPelsWidth  = GetSystemMetrics(SM_CXSCREEN);
+    devMode.dmPelsHeight = GetSystemMetrics(SM_CYSCREEN);
+    devMode.dmFields     = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
+	{
+      HDC hdc = GetDC(NULL); /* grab DC of desktop */
+      devMode.dmBitsPerPel = (DWORD)GetDeviceCaps(hdc, BITSPIXEL) ;
+      ReleaseDC(NULL, hdc);
+	}
   }
 
   GDBG_INFO(80, "DeviceName: %s Display mode: %dx%dx%dbpp!\n", devicename, devMode.dmPelsWidth, devMode.dmPelsHeight, devMode.dmBitsPerPel);
@@ -592,27 +595,22 @@ checkResolutions(FxBool *supportedByResolution, FxU32 stride, void *hmon)
   HMODULE         ddraw = NULL; 
   HRESULT hResult;
   
-  hwndApp = GetActiveWindow();
-  
-  if ( hwndApp == NULL ) {
-    GDBG_INFO( 80, "Couldn't get a valid window handle\n" );
-  }
-  
   resStride = stride;
   
   ddGuid = NULL;
   ddraw = GetModuleHandle( "ddraw.dll" );      
-  if ( ddraw ) {
+  if ( ddraw != NULL ) {
     LPDIRECTDRAWENUMERATEEXA ddEnumEx;
     ddEnumEx = (void*)GetProcAddress( ddraw, "DirectDrawEnumerateExA" );
     if ( ddEnumEx ) {
-      DWORD   data[2];
-      data[0] = (DWORD)hmon;
-      data[1] = 0;
-      ddEnumEx( ddEnumCbEx, data, DDENUM_ATTACHEDSECONDARYDEVICES );
-      if ( data[1] ) {
-        ddGuid = (LPGUID)data[1];
-      }
+      EnumInfo enumInfo;
+
+      ZeroMemory(&enumInfo, sizeof(enumInfo));
+      ZeroMemory(&enumInfo.guid, sizeof(GUID));
+      enumInfo.hmon = (HMONITOR)hmon;
+      ddEnumEx( ddEnumCbEx, &enumInfo, DDENUM_ATTACHEDSECONDARYDEVICES );
+      ddGuid = &enumInfo.guid;
+	  GDBG_INFO(80, "GUID %d\n", ddGuid);
     }
   }
   
