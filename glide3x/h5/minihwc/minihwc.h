@@ -19,9 +19,6 @@
 **
 ** $Header: minihwc.h, 22, 5/9/2000 12:58:24 PM, Kenneth Dyke
 ** $Log:
-**  23   GlideXP   1.21.1      12/13/01 Ryan Nunn       Getting Alt-Tab on
-**       Windows XP to work. #define WINXP_ALT_TAB_FIX=1 to enable
-**  23   ve3d     1.21       12/09/01 KoolSmoky    Added NT5.1 flag
 **  22   3dfx      1.20.1.0    05/09/00 Kenneth Dyke    Added code to calculat
 **       chip values on Napalm
 **  21   3dfx      1.20        04/10/00 Kenneth Dyke    Added code to tak

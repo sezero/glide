@@ -19,8 +19,6 @@
  **
  ** $Header$
  ** $Log:
- **  12   GlideXP   1.5.2       12/10/01 Ryan Nunn       Commented out
- **        __declspec( naked ) for grDrawTriangle since it was causing problems
  **  11   3dfx      1.5.1.2.1.1 10/11/00 Brent           Forced check in to enforce
  **       branching.
  **  10   3dfx      1.5.1.2.1.0 07/10/00 troy thornton   changed grDrawPoints to

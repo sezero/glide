@@ -19,16 +19,9 @@
 ;; $Header$
 ;; $Revision$
 ;; $Log$
-;; Revision 1.1.8.3  2003/06/07 09:53:25  dborca
-;; initial checkin for NASM sources
-;;
-;; Revision 1.1.8.1  2003/04/06 18:23:10  koolsmoky
-;; initial checkin of dos win32 glide
 ;;
 ;; Revision 1.1  2000/06/15 00:27:43  joseph
 ;; Initial checkin into SourceForge.
-;;
-;; 11    1/09/03  KoolSmoky first cut at SSE2, support for MMX
 ;; 
 ;; 10    8/17/99 6:35p Atai
 ;; fixed amd debug mode

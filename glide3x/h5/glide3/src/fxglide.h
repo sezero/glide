@@ -19,16 +19,6 @@
 **
 ** $Header: fxglide.h, 44, 6/15/2000 9:18:11 AM, Bill White
 ** $Log:
-**  49   3dfxzone  1.44        02/26/03 Sandro          fast C clipping routine.
-**       define FAST_C_CLIP.
-**  48   GlideXP   1.43.4      12/14/01 Ryan Nunn       Removed calls to
-**       MultitextureAndTrilinear(). That will now be called by g3LodBiasPerChip()
-**  47   GlideXP   1.43.3      12/13/01 Ryan Nunn       Getting Alt-Tab on
-**       Windows XP to work. #define WINXP_ALT_TAB_FIX=1 to enable
-**  46   GlideXP   1.43.2      12/12/01 Ryan Nunn       Sub Sample LOD Dither Env
-**       settings
-**  45   GlideXP   1.43.1      12/10/01 Ryan Nunn       Define a TRISETUP macro 
-**       just for when GLIDE_USE_C_TRISETUP is defined.
 **  44   3dfx      1.42.1.0    06/15/00 Bill White      Merged changes to support
 **       Linux.
 **

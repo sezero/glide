@@ -19,25 +19,6 @@
 **
 ** $Header$
 ** $Log:
-**  45   GlideXP   1.35.6      12/14/01 Ryan Nunn       Removed calls to
-**       MultitextureAndTrilinear(). That will now be called by g3LodBiasPerChip()
-**  44   GlideXP   1.35.5      12/12/01 Ryan Nunn       4 Chip boards now have  
-**       Sub Sample LOD Dither in 2x
-**  43   GlideXP   1.35.4      12/12/01 Ryan Nunn       Changed the way env 
-**       FX_GLIDE_LOD_DITHER works. If set to -1, there will never be dithering.
-**  42   GlideXP   1.35.3      12/12/01 Ryan Nunn       Sub Sample LOD Dither Env
-**       settings
-**  41   GlideXP   1.35.2      12/12/01 Ryan Nunn       Make Sub Sample LOD Dither
-**       work on a Per TMU Basis
-**  40   GlideXP   1.35.1      12/12/01 Ryan Nunn       Removed the function
-**       _grTexFloatLODToFixedLOD because it's useless
-**  43   ve3d      1.38        05/31/02 KoolSmoky       Revised texture format
-**       detection and mipmap handling.
-**  42   ve3d      1.37        05/02/02 KoolSmoky       Subsample mipmap dithering
-**       with mipmap dithering
-**  41   ve3d      1.36        05/01/02 KoolSmoky       Colourless's subsample
-**       mipmap dithering trilinear approximation 
-**  40   ve3d      1.35        04/29/02 KoolSmoky       added DXT-ness
 **  39   3dfx      1.34.1.0.1.211/14/00 Jonny Cochrane  Implement multisample LOD
 **       Dithering for 2x and 4x FSAA modes 
 **  38   3dfx      1.34.1.0.1.110/11/00 Brent           Forced check in to enforce

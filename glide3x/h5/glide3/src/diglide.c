@@ -19,10 +19,6 @@
 **
 ** $Header$
 ** $Log:
-**  5    ve3d      1.1.1       04/07/02 KoolSmoky       moved _GlideInitEnvironment
-**       and thread initalizing routine from grGlideInit to grSstSelect.
-**  4    ve3d      1.1         03/28/02 KoolSmoky       let's detect glide devices
-**       *before* GETENV is called so we can do multimonitor.
 **  3    3dfx      1.0.1.0.1.0 10/11/00 Brent           Forced check in to enforce
 **       branching.
 **  2    3dfx      1.0.1.0     06/20/00 Joseph Kain     Changes to support the

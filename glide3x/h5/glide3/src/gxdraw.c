@@ -19,8 +19,6 @@
  **
  ** $Header$
  ** $Log:
- **  4    3dfxzone  1.1         02/26/03 Sandro          fast C clipping routine.
- **       define FAST_C_CLIP.
  **  3    3dfx      1.0.1.0.1.0 10/11/00 Brent           Forced check in to enforce
  **       branching.
  **  2    3dfx      1.0.1.0     06/20/00 Joseph Kain     Changes to support the

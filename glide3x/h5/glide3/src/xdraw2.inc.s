@@ -23,6 +23,7 @@
 /*  $Header$ *
 /*  $Revision$ *
 /*  $Log$
+/*
 /*  Revision 1.5  2000/11/17 21:31:06  joseph
 /*  Restored changes that were lost when I imported new sources from 3dfx's
 /*  internal source repository.

@@ -20,10 +20,6 @@
 ** 
 ** $Header$
 ** $Log:
-**  54   3dfxzone  1.44        02/26/03 Sandro          fast C clipping routine.
-**       define FAST_C_CLIP.
-**  53             1.43        11/30/02 KoolSmoky       added support for 2 and 8 t-buffers.
-**  52   ve3d      1.42        04/29/02 KoolSmoky       2-tri fill test code.
 **  51   3dfx      1.41.1.6.1.110/11/00 Brent           Forced check in to enforce
 **       branching.
 **  50   3dfx      1.41.1.6.1.008/29/00 Jonny Cochrane  Some 8x FSAA code

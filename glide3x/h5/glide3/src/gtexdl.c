@@ -19,7 +19,6 @@
 **
 ** $Header$
 ** $Log:
-**  12   ve3d      1.9         05/02/02 KoolSmoky       added DXT-ness
 **  11   3dfx      1.8.1.0.1.0 10/11/00 Brent           Forced check in to enforce
 **       branching.
 **  10   3dfx      1.8.1.0     06/20/00 Joseph Kain     Changes to support the

@@ -19,10 +19,6 @@
 ;;
 ;; $Header$
 ;; $Log$
-;; 2002/12/28  KoolSmoky detect SSE, SSE2
-;;
-;; Revision 1.5  2002/04/13 16:53:26  KoolSmoky
-;; detect multimonitor regpath for win98/2k/xp
 ;;
 ;; Revision 1.1  2000/06/15 00:27:42  joseph
 ;; Initial checkin into SourceForge.

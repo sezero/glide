@@ -25,10 +25,6 @@
 **
 **
 ** $Log: 
-**  1    GlideXP   1.0             12/10/01 Ryan Nunn       Automatically
-**       write Level 80 ouput to gdbg.txt when _DEBUG is defined
-**  02/23/03 KoolSmoky - merged with Colourless's glidexp
-**   1   ve3d      1.6         03/29/02 KoolSmoky    KERNEL_NT fix
 **
 */
 

@@ -19,48 +19,6 @@
 **
 ** $Header$
 ** $Log:
-** 100             1.72.8          05/30/03 KoolSmoky       fixed up asm routines
-**  99   GlideXP   1.72.7          12/28/01 Ryan Nunn       Removing stupid debug
-**       comments.
-**  98   GlideXP   1.72.6          12/28/01 Ryan Nunn       Improving faster WinXP 
-**       Alt-Tab Fix.
-**  97   GlideXP   1.72.5          12/23/01 Ryan Nunn       Faster WinXP Alt-Tab
-**       Fix.
-**  96   GlideXP   1.72.4          12/13/01 Ryan Nunn       Getting Alt-Tab on
-**       Windows XP to work. #define WINXP_ALT_TAB_FIX=1 to enable
-**  95   GlideXP   1.72.3          12/12/01 Ryan Nunn       Fixing Screenshots
-**       on 4 chip boards and improved accuracy
-**  94   GlideXP   1.72.2          12/10/01 Ryan Nunn       Working around 
-**       problems in Windows XP
-**  93   GlideXP   1.72.1          12/10/01 Ryan Nunn       Getting to compile
-**       In windows
-** 108             1.80       11/30/02 KoolSmoky   moved CEASE_ALL_GDBG because we need
-**        debug info for certain apps to run.
-** 107             1.79       11/27/02 KoolSmoky   make exception for winxp escapecalls.
-** 106             1.78       11/13/02 KoolSmoky   fixed flaw in escape calles.
-** 105   ve3d      1.77       07/22/02 KoolSmoky   revised QueryContextProc to handle
-**         windows hotkeys better (alt-tab).
-** 104   ve3d      1.76       05/28/02 KoolSmoky   fixed win9x regpath retrieve routine.
-** 103   ve3d      1.75       05/03/02 KoolSmoky   added Colourless's window handle pointer
-**         restorer. there should be no more crashes with screen changes within glide.
-** 102   ve3d      1.74       04/29/02 KoolSmoky   pave way for multimonitor support. hack to
-**         force secondary and beyond sst devices to be primary sst. added FX_GLIDE_SSTSELECT
-**         r/w to the secondary and beyond sst device seem to be efed. help me out here...
-** 101   ve3d      1.73.7     02/24/02 KoolSmoky   context bug fix faster screen restore.
-** 100   ve3d      1.73.6     02/15/02 KoolSmoky   context bug fix related to windows resizing.
-**  99   ve3d      1.73.5     12/27/01 KoolSmoky   Cleaned up code.
-**  98   ve3d      1.73.4     12/19/01 KoolSmoky   NT5.1 context fix. Still buggy but much better.
-**         Someone pleeeeeeez fix this! Added HWC_WINXP_MINIVDD_HACK, IS_ALT_TAB.
-**  97   ve3d      1.73.3     12/18/01 KoolSmoky   NT5.1 context madness! Why isn't
-**         the Device context obtained from the rendered window? we'll use the state of the
-**         rendered window instead.
-**  96   ve3d      1.73.2     12/15/01 KoolSmoky    New NT5.1 context fix. But still crashes. why?
-**  95   ve3d      1.73.1     12/14/01 KoolSmoky    more NT5.1 context temporal fix.
-**         STILL crashes on occasions. fix me!
-**  94   ve3d      1.73        12/13/01 KoolSmoky    NT5.1 context temporal fix.
-**         still crashes on occasions. fix me!
-**  93   ve3d      1.72        12/09/01 KoolSmoky    use dummycontext if NT5.1
-**         returns NULL for context.
 **  92   3dfx      1.71.1.6.1.4.1.711/08/00 Drew McMinn     Added
 **       FX_GLIDE_BRIGHTNESS and FX_GLIDE_CONTRAST modifiers
 **  91   3dfx      1.71.1.6.1.4.1.610/11/00 Brent           Forced check in to

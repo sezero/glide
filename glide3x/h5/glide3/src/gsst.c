@@ -20,19 +20,6 @@
 **
 ** $Header$
 ** $Log:
-**  73   GlideXP   1.53.3       12/23/01 Ryan Nunn       Had to disable the 
-**       call to hwcRestoreVideo that OpenGL uses.
-**  72   GlideXP   1.53.3       12/14/01 Ryan Nunn       Lost context checking for
-**       WinXP
-**  71   GlideXP   1.53.2       12/14/01 Ryan Nunn       Call GetCurrentWindow if no
-**       HWND was supplied to grSstWinOpen or grSstWinOpenExt
-**  70   GlideXP   1.53.1       12/11/01 Ryan Nunn       Only force Analog SLI on
-**       4 chip cards when doing FSAA.
-**  72   ve3d      1.56         04/29/02 KoolSmoky    2ppc env -1=off 1=on 0=glide decides
-**  71   ve3d      1.55         04/13/02 KoolSmoky    fixed a typo for rendering-column
-**       width validation.
-**  70   ve3d      1.53         12/10/01 KoolSmoky    Don't release Exclusive mode when
-**       WinClose is called if we're running OpenGL in NT5.1.
 **  69   3dfx      1.52.1.3.1.1111/08/00 Drew McMinn     Create initialise read and
 **       use useAppGamma flag, to allow us to disable applications changing gamma
 **       values.

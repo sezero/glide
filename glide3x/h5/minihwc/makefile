@@ -20,7 +20,6 @@
 # $Revision$
 # $Date$
 # $Log:
-# 1   ve3d      1.0         11/24/01 KoolSmoky    minihwc makefile
 #
 
 !include $(BUILD_ROOT)\config.mak

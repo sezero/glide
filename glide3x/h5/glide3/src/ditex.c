@@ -19,11 +19,6 @@
 **
 ** $Header$
 ** $Log
-**  11   GlideXP   1.5.1       12/12/01 Ryan Nunn       Removed the function
-**       _grTexFloatLODToFixedLOD because it's useless
-**  12   ve3d      1.51        05/31/02 KoolSmoky       Revised texture format
-**       detection.
-**  11   ve3d      1.5         04/29/02 KoolSmoky       added DXT-ness
 **  10   3dfx      1.4.1.3.1.0 10/11/00 Brent           Forced check in to enforce
 **       branching.
 **  9    3dfx      1.4.1.3     06/20/00 Joseph Kain     Fixed errors introduced by

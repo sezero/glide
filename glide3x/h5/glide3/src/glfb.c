@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.7.4.8  2003/07/03 10:35:34  koolsmoky
+** cleaned _grlfblock
+**
 ** Revision 1.7.4.7  2003/06/29 15:10:32  koolsmoky
 ** added LFB read/write FPU specializations
 **
@@ -28,8 +31,6 @@
 ** Revision 1.7.4.5  2003/06/27 10:40:52  dborca
 ** added LFB read/write MMX specializations
 **
-**
-**  02/23/03 KoolSmoky - merged with Colourless's sources
 **  14   3dfx      1.7.1.2.1.2 10/11/00 Brent           Forced check in to enforce
 **       branching.
 **  13   3dfx      1.7.1.2.1.1 08/29/00 Jonny Cochrane  Some 8x FSAA code

@@ -19,16 +19,9 @@
 ;; $Header$
 ;; $Revision$
 ;; $Log$
-;; Revision 1.1.8.3  2003/06/07 09:53:24  dborca
-;; initial checkin for NASM sources
-;;
-;; Revision 1.1.8.1  2003/04/06 18:23:09  koolsmoky
-;; initial checkin of dos win32 glide
 ;;
 ;; Revision 1.1  2000/06/15 00:27:43  joseph
 ;; Initial checkin into SourceForge.
-;;
-;; 13    1/10/03  KoolSmoky first cut at SSE
 ;; 
 ;; 12    4/05/99 11:34a Atai
 ;; added GLIDE_ALT_TAB for xdraw2.inc to query context in the retail build

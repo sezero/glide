@@ -21,7 +21,6 @@
 ** $Date$
 ** 
 ** $Log:
-** 1   ve3d      1.0 03/29/02        KoolSmoky    FX_GLIDE_SW_SETUP should work now
 */
 
 #include <stddef.h>

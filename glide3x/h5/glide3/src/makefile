@@ -18,7 +18,6 @@
 # COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 #
 # $Log:
-# 1   ve3d      1.0         11/24/01 KoolSmoky    win32 glide3x makefile
 #
 
 !include $(BUILD_ROOT)\config.mak

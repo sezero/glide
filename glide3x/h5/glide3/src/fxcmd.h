@@ -21,10 +21,6 @@
 ** $Revision$ 
 ** $Date$ 
 ** $Log:
-**  9    3dfxzone  1.6         02/26/03 Sandro          fast C clipping routine.
-**       define FAST_C_CLIP.
-**  8    ve3d      1.5         03/29/02 KoolSmoky       FX_GLIDE_SW_SETUP should 
-**       work now.
 **  7    3dfx      1.4.1.0.1.0 10/11/00 Brent           Forced check in to enforce
 **       branching.
 **  6    3dfx      1.4.1.0     06/20/00 Joseph Kain     Changes to support the

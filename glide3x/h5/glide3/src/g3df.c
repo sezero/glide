@@ -19,8 +19,6 @@
 **
 ** $Header$
 ** $Log:
-**  5    ve3d      1.1.1       04/29/02 KoolSmoky       DXT-ness
-**  4    ve3d      1.1         04/28/02 KoolSmoky       extra texture formats
 **  3    3dfx      1.0.1.0.1.0 10/11/00 Brent           Forced check in to enforce
 **       branching.
 **  2    3dfx      1.0.1.0     06/20/00 Joseph Kain     Changes to support the

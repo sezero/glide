@@ -18,23 +18,6 @@
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
 ** $Log:
-**  6    GlideXP   1.0.5           18/10/01 Ryan Nunn       Updating getModesRegPath
-**  5    GlideXP   1.0.4           18/10/01 Ryan Nunn       Fixing another multimonitor bug
-**  4    GlideXP   1.0.3           18/10/01 Ryan Nunn       Properly check refresh rates
-**  3    GlideXP   1.0.2           15/10/01 Ryan Nunn       Fixing a multimonitor bug
-**  2    GlideXP   1.0.1           14/10/01 Ryan Nunn       Check refresh rates
-**  1    GlideXP   1.0             12/10/01 Ryan Nunn       Getting to compile
-**       In windows for H5 Glide3. Copied from H3 Glide3.
-**  7               1.11        11/30/02 KoolSmoky    moved CEASE_ALL_GDBG because we need
-**        debug info for certain apps to run.
-**  6     ve3d      1.10        06/24/02 KoolSmoky    ditch changing display modes with ddraw
-**         and use changedisplaysettings instead. also removed ddraw from checkresolutions.
-**  5     ve3d      1.04        12/27/01 KoolSmoky    added a switch to cease all debug info.
-**  4     ve3d      1.03        11/30/01 KoolSmoky    output minimum debug info on release compiles.
-**  3     ve3d      1.02        11/29/01 KoolSmoky    better displaymode enum. checks for bpp & refresh
-**  2     ve3d      1.01        11/28/01 KoolSmoky    modified setVideoMode() to accept h3pixelSize
-**         and checkResolutions() to accept stride from minihwc.c. Misc fixes to compile.
-**  1     ve3d      1.00        11/25/01 KoolSmoky    copied from Glide\h3\minihwc\win_mode.c
 **
 */
 

@@ -19,26 +19,6 @@
 **
 ** $Header$
 ** $Log:
-**  48   GlideXP   1.35.4      12/12/01 Ryan Nunn       Changed the way env 
-**       FX_GLIDE_LOD_DITHER works. If set to -1, there will never be dithering.
-**  47   GlideXP   1.35.3      12/12/01 Ryan Nunn       Sub Sample LOD Dither Env
-**       settings
-**  46   GlideXP   1.35.2      12/11/01 Ryan Nunn       4 Chip can now use env vars
-**       to override 2x/4x FSAA sample positions.
-**  45   GlideXP   1.35.1      12/10/01 Ryan Nunn       Added gdbginfos to output  
-**       the cpu vendor (Intel and AMD) only.
-**  50             1.41        12/28/02 KoolSmoky       changes to support MMX,SSE,SSE2 optimizations
-**  49             1.40        12/27/02 KoolSmoky       subsample lod dither with less overhead
-**  48   ve3d      1.39        05/02/02 KoolSmoky       Colourless's subsample
-**       lod dithering envar FX_GLIDE_LOD_SUBSAMPLE_DITHER. 0=disable 1=enable
-**  48   ve3d      1.38        05/01/02 KoolSmoky       we now use Colourless's
-**       magical 4 chip offsets
-**  47   ve3d      1.37        04/30/02 KoolSmoky       env for UMA for TMUs and
-**       added envar FX_GLIDE_TEXTURE_UMA 1:enable 0:disable
-**  46   ve3d      1.36        04/07/02 KoolSmoky       _GlideInitEnvironment
-**       reads evar from the correct regpath.
-**  45   ve3d      1.35        04/06/02 KoolSmoky       Pave way for full multi-
-**       monitor support. GETENV calls hwcGetenvEx now.
 **  44   3dfx      1.34.1.2.1.511/08/00 Drew McMinn     Create initialise read and
 **       use useAppGamma flag, to allow us to disable applications changing gamma
 **       values.

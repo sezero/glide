@@ -19,7 +19,6 @@
  *
  ** $Header$
  ** $Log:
- **  15   GlideXP   1.9.0       12/14/01 Ryan Nunn       Changed an #ifdef to #if
  **  14   3dfx      1.8.1.2.1.1 10/11/00 Brent           Forced check in to enforce
  **       branching.
  **  13   3dfx      1.8.1.2.1.0 07/21/00 Adam Briggs     don't try to bump > 0xffff

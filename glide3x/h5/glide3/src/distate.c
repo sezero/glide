@@ -20,9 +20,6 @@
  **
  ** $Header$
  ** $Log:
- **  34   GlideXP   1.26.1      12/14/01 Ryan Nunn       Removed calls to
- **       MultitextureAndTrilinear(). That will now be called by g3LodBiasPerChip()
- **  34   ve3d      1.26        06/24/02 KoolSmoky       fixes for 4chip napalm
  **  33   3dfx      1.25.1.2.1.311/14/00 Jonny Cochrane  Implement multisample LOD
  **       Dithering for 2x and 4x FSAA modes 
  **  32   3dfx      1.25.1.2.1.210/11/00 Brent           Forced check in to enforce

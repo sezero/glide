@@ -16,7 +16,6 @@
 ;; 
 ;; COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 ;;
-;; 1/10/03  KoolSmoky first cut at SSE
 ;;
 
 %include "xos.inc"
