@@ -307,12 +307,12 @@ main( int argc, char **argv)
         packedrgb = !packedrgb;
         if (packedrgb) {
           grVertexLayout(GR_PARAM_PARGB,   GR_VERTEX_R_OFFSET << 2, GR_PARAM_ENABLE);
-          (FxU32)vtxList[0].r = 0xff0000ff;
-          (FxU32)vtxList[1].r = 0xff00ff00;
-          (FxU32)vtxList[2].r = 0xffff0000;
-          (FxU32)vtxList[3].r = 0xffff0000;
-          (FxU32)vtxList[4].r = 0xff00ff00;
-          (FxU32)vtxList[5].r = 0xff0000ff;
+          *(FxU32 *)&vtxList[0].r = 0xff0000ff;
+          *(FxU32 *)&vtxList[1].r = 0xff00ff00;
+          *(FxU32 *)&vtxList[2].r = 0xffff0000;
+          *(FxU32 *)&vtxList[3].r = 0xffff0000;
+          *(FxU32 *)&vtxList[4].r = 0xff00ff00;
+          *(FxU32 *)&vtxList[5].r = 0xff0000ff;
         }
         else {
           grVertexLayout(GR_PARAM_RGB, GR_VERTEX_R_OFFSET << 2, GR_PARAM_ENABLE);

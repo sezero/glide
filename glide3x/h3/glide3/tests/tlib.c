@@ -635,6 +635,7 @@ void tlConRender( void ) {
         grTexMipMapMode( GR_TMU0,
                          GR_MIPMAP_DISABLE,
                          FXFALSE );
+        grTexMultibase(GR_TMU0, FXFALSE);
         grDepthBufferFunction( GR_CMP_ALWAYS );
         grAlphaTestReferenceValue( 0x1 );
         grSstOrigin( GR_ORIGIN_UPPER_LEFT );

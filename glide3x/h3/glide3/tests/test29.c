@@ -238,7 +238,8 @@ void main(int argc, char **argv) {
     /* Download this in a sequential way to test the palette download */
     i = 0;
     while(i < 256) {
-      const int end = MIN((i + (rand() % 10)), 255);
+      const int max = i + (rand() % 10);
+      const int end = MIN(max, 255);
 
       grTexDownloadTablePartial(curPalType, &texPal, i, end);
       i = end + 1;

@@ -411,11 +411,11 @@ void main( int argc, char **argv) {
       exit( -1 );
     }
 
-    triDecal.smallLodLog2    = bgInfo.header.small_lod;
-    triDecal.largeLodLog2    = bgInfo.header.large_lod;
-    triDecal.aspectRatioLog2 = bgInfo.header.aspect_ratio;
-    triDecal.data            = bgInfo.data;
-    triDecal.format          = bgInfo.header.format;
+    triDecal.smallLodLog2    = triInfo.header.small_lod;
+    triDecal.largeLodLog2    = triInfo.header.large_lod;
+    triDecal.aspectRatioLog2 = triInfo.header.aspect_ratio;
+    triDecal.data            = triInfo.data;
+    triDecal.format          = triInfo.header.format;
     grTexDownloadMipMap( GR_TMU0, startAddress, GR_MIPMAPLEVELMASK_BOTH, &triDecal);
     grTexMipMapMode(GR_TMU0, GR_MIPMAP_NEAREST, FXTRUE);
     grTexClampMode( GR_TMU0, GR_TEXTURECLAMP_WRAP, GR_TEXTURECLAMP_WRAP);
