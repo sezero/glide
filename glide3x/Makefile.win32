@@ -251,16 +251,8 @@ FLAGS = $(FLAGS) -DGLIDE_SANITY_SIZE=1
 FLAGS = $(FLAGS) -DGLIDE_SANITY_ASSERT=1
 !endif
 
-# Obsolete. We now use WINXP_ALT_TAB_FIX
-# FLAGS = $(FLAGS) -DIS_ALT_TAB=1 -DGLIDE_ALT_TAB=1
-#
-# Remove this line to disable the WinXP Alt Tab fix. There will be a speed up
-# Shouldn't use this anymore. Faster generally works better, in particular for SDL
-# app. Doing it this way doesn't always detect vid mode switches
-# FLAGS = $(FLAGS) -DWINXP_ALT_TAB_FIX=1
-#
-# Faster WinXP Alt Tab fix.
-FLAGS = $(FLAGS) -DWINXP_FASTER_ALT_TAB_FIX=1 -DWINXP_SAFER_FASTER_ALT_TAB_FIX=1 -DGLIDE_ALT_TAB=1
+# Remove this line to disable the WinXP Alt Tab fix.
+FLAGS = $(FLAGS) -DWINXP_ALT_TAB_FIX=1 -DWINXP_SAFER_ALT_TAB_FIX=1
 
 # Sandro's fast C clipping routine. GLIDE_USE_C_TRISETUP=1 must be set.
 # FLAGS = $(FLAGS) -DFAST_C_CLIP=1
@@ -292,7 +284,7 @@ FLAGS = $(FLAGS) -DGLIDE_LIB=1
 FLAGS = $(FLAGS) -DFX_DLL_ENABLE=1
 
 # win32 exclusives
-FLAGS = $(FLAGS) -DHWC_ACCESS_DDRAW=1 -DHWC_EXT_INIT=1 -DGLIDE_INIT_HWC=1 -DNEED_MSGFILE_ASSIGN
+FLAGS = $(FLAGS) -DHWC_ACCESS_DDRAW=1 -DHWC_EXT_INIT=1 -DGLIDE_INIT_HWC=1 -DNEED_MSGFILE_ASSIGN -DGLIDE_ALT_TAB=1
 
 ##################################
 # compiler setup
@@ -519,6 +511,7 @@ clean::
 	$(RM) $(FX_GLIDE_HW)\$(FX_HW_PROJECTS)\src\fxinline.h
 	$(RM) $(FX_GLIDE_HW)\$(FX_HW_PROJECTS)\src\fxbldno.exe
 	$(RM) $(FX_GLIDE_HW)\$(FX_HW_PROJECTS)\src\fxbldno.h
+        $(RM) *.pdb
 	
 clobber::
 	$(RM) $(FX_GLIDE_HW)\lib\$(FX_HW_PROJECTS)x.*
