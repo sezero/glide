@@ -541,6 +541,7 @@ setVideoMode( HWND hwnd, int xRes, int yRes, int h3pixelSize, int refresh, void 
       style &= ~(WS_MAXIMIZE|WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX);
       style |= WS_POPUP;
       SetWindowLong(hwndApp, GWL_STYLE, style);*/
+      SetWindowPos(hwndApp, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 
       is_fullscreen = FXTRUE;
       
@@ -556,6 +557,7 @@ setVideoMode( HWND hwnd, int xRes, int yRes, int h3pixelSize, int refresh, void 
         style &= ~(WS_MAXIMIZE|WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX);
         style |= WS_POPUP;
         SetWindowLong(hwndApp, GWL_STYLE, style);*/
+        SetWindowPos(hwndApp, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 
         is_fullscreen = FXTRUE;
         
@@ -571,6 +573,7 @@ setVideoMode( HWND hwnd, int xRes, int yRes, int h3pixelSize, int refresh, void 
       style &= ~(WS_MAXIMIZE|WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX);
       style |= WS_POPUP;
       SetWindowLong(hwndApp, GWL_STYLE, style);*/
+      SetWindowPos(hwndApp, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 
       is_fullscreen = FXTRUE;
       
@@ -586,6 +589,7 @@ setVideoMode( HWND hwnd, int xRes, int yRes, int h3pixelSize, int refresh, void 
         style &= ~(WS_MAXIMIZE|WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX);
         style |= WS_POPUP;
         SetWindowLong(hwndApp, GWL_STYLE, style);*/
+        SetWindowPos(hwndApp, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 
         is_fullscreen = FXTRUE;
         
@@ -776,6 +780,11 @@ setVideoMode( HWND hwnd, int xRes, int yRes, int h3pixelSize, int refresh, void 
         GDBG_INFO(80, "Continuing operation due to relaxation condition\n");
       }
     }
+  }
+
+  if(hResult == DD_OK) {
+    /* ensure that any activity from other windows is obscured. */
+    SetWindowPos(hwndApp, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
   }
 #endif /* WINXP_FASTER_ALT_TAB_FIX || WINXP_ALT_TAB_FIX */
   
