@@ -932,6 +932,10 @@ grGlideGetVertexLayout( void *layout );
 FX_ENTRY void FX_CALL
 grGlideSetVertexLayout( const void *layout );
 
+#ifdef	__linux__
+FX_ENTRY FxBool FX_CALL
+grDRISetupFullScreen(FxBool state);
+#endif	/* defined(__linux__) */
 #endif /* FX_GLIDE_NO_FUNC_PROTO */
 
 #ifdef __cplusplus

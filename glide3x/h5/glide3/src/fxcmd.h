@@ -1691,4 +1691,8 @@ GR_CHECK_SIZE()
 
 #endif
 
+#ifdef	__linux__
+extern void _grImportFifo(int fifoPtr, int fifoRead);
+#endif	/* defined(__linux__) */
+
 #endif /* __FX_CMD_H__ */

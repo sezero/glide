@@ -2357,10 +2357,11 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
     } else {
       /* %%KCD - I pass in true because I know this will just fall through to hwcInitFifo() */
 #if __POWERPC__
-      if (!hwcInitAGPFifo(bInfo, FXFALSE)) {
+      if (!hwcInitAGPFifo(bInfo, FXFALSE))
 #else
-      if (!hwcInitAGPFifo(bInfo, FXTRUE)) {
-#endif      
+      if (!hwcInitAGPFifo(bInfo, FXTRUE))
+#endif
+      {
         hwcRestoreVideo(bInfo);
         GrErrorCallback(hwcGetErrorString(), FXFALSE);
         GDBG_INFO(gc->myLevel, "hwcInitFifo failed\n");
@@ -2676,10 +2677,9 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
     if (bInfo->fifoInfo.agpFifo) {
       gcFifo->fifoStart = (FxU32 *) bInfo->fifoInfo.agpVirtAddr;
       gcFifo->fifoOffset = bInfo->fifoInfo.agpPhysAddr;
-    } else {
-#else
-    {
+    } else
 #endif
+    {
       gcFifo->fifoStart = gc->rawLfb + ( gcFifo->fifoOffset >> 2 );
     }
     gcFifo->fifoEnd   = gcFifo->fifoStart + ( gcFifo->fifoSize >> 2 );
@@ -3934,13 +3934,16 @@ _grRenderMode(FxU32 pixelformat)
 } /* _grRenderMode */
 
 #ifdef __linux__
-
-void grDRISetupFullScreen(FxBool state) {
+/*
+ * Setup for full screen.  Most of the work is done in minihwc.
+ */
+GR_ENTRY(grDRISetupFullScreen, FxBool, (FxBool state))
+{
   GR_DCL_GC;
 
   /* hwcInitFifo(gc->bInfo, FXFALSE); */
   _grImportFifo(*driInfo.fifoPtr, *driInfo.fifoRead);
-  hwcSetupFullScreen(gc->bInfo, state);
+  return(hwcSetupFullScreen(gc->bInfo, state));
 }
 
 void grSetSliCount(int chips, int sli) {

@@ -76,7 +76,6 @@ static FxU32 fenceVar;
 #define HWC_TILED_BUFFER_BYTES    0x1000UL  /* 128 Bytes x 32 lines */
 #define HWC_TILED_BUFFER_Y_ALIGN  0x20000UL
 #define HWC_TILED_BUFFER_X_ADJUST 0x80UL
-#define HWC_RAW_LFB_STRIDE SST_RAW_LFB_ADDR_STRIDE_8K
 
 static hwcInfo hInfo;
 static char errorString[1024];
@@ -131,7 +130,8 @@ static void loadEnvFile() {
   char data[128];
   char *env, *val;
   envitem *item;
-  int first=1;
+  unsigned int sawError=0;
+  envitem *first=(envitem *)0;
 
   if (envinit) return;
   envinit=1;
@@ -143,9 +143,9 @@ static void loadEnvFile() {
     if (*data=='\n') continue;
     val=strchr(data, '=');
     if (!val) {
-      if (first) {
+      if (!sawError) {
 	fprintf(stderr, "In config file /etc/conf.3dfx/voodoo3:\n");
-	first=0;
+	sawError=1;
       }
       fprintf(stderr, "Malformed line: %s\n", data);
       continue;
@@ -319,6 +319,7 @@ hwcBufferLfbAddr(const hwcBoardInfo *bInfo, FxU32 physAddress)
   FxU32 tileRow;
   FxU32 lfbAddress;
   FxU32 lfbYOffset;
+  FxU32 lfbBufferStride = bInfo->buffInfo.bufLfbStride;
 
   if (bInfo->vidInfo.tiled) {    
     GDBG_INFO(80, "\tphysAddress: 0x%08lx\n",physAddress);
@@ -351,7 +352,9 @@ hwcBufferLfbAddr(const hwcBoardInfo *bInfo, FxU32 physAddress)
     lfbYOffset = ((tileRow * 32 + tileScanline) << (bInfo->h3nwaySli >> 1));
 
     /* Compute LFB address of tile start */
-    lfbAddress =  bInfo->primaryOffset + lfbYOffset * HWC_LFB_STRIDE + tileXOffset * 128;
+    lfbAddress =  bInfo->primaryOffset
+                  + lfbYOffset * lfbBufferStride 
+                  + tileXOffset * 128;
 
     GDBG_INFO(80, "\tlfbAddress: %08lx\n", lfbAddress);
     retVal = lfbAddress;
@@ -379,7 +382,7 @@ calculateLfbStride(FxU32 screenWidth)
 FxBool hwcSetupBufferFullscreen(hwcBoardInfo *bInfo, FxU32 nColBuffers,
 				FxU32 nAuxBuffers) 
 {
-#define FN_NAME "hwcAllocBuffersFullscreen"
+#define FN_NAME "hwcSetupBufferFullscreen"
   FxU32 bufStride, bufSize;
 
   if (bInfo->vidInfo.initialized == FXFALSE) {
@@ -479,6 +482,7 @@ hwcSetupBuffersWindowed(hwcBoardInfo *bInfo, FxU32 nColBuffers, FxU32 nAuxBuffer
 
   bInfo->buffInfo.bufStride = bufStride;
   bInfo->buffInfo.bufSize = bufSize;
+  bInfo->buffInfo.bufLfbStride = calculateLfbStride(bufStride);
 
   if (bInfo->vidInfo.tiled) {
     driInfo.fullScreenStride=bInfo->buffInfo.bufStrideInTiles = (bufStride >> 7);
@@ -546,6 +550,7 @@ hwcAllocBuffers(hwcBoardInfo *bInfo, FxU32 nColBuffers, FxU32 nAuxBuffers)
   GDBG_INFO(80, "\tbufStride:       0x%x\n", bInfo->buffInfo.bufStride);
   GDBG_INFO(80, "\tbufStrideInTiles:0x%x\n", bInfo->buffInfo.bufStrideInTiles);
   GDBG_INFO(80, "\tbufHeightInTiles:0x%x\n", bInfo->buffInfo.bufHeightInTiles);
+  GDBG_INFO(80, "\tbufLfbStride    :0x%x\n", bInfo->buffInfo.bufLfbStride);
   GDBG_INFO(80, "\tnColBuffers:     0x%x\n", bInfo->buffInfo.nColBuffers);
   GDBG_INFO(80, "\tcolBuffStart0[0]:    0x%x\n", bInfo->buffInfo.colBuffStart0[0]);
   GDBG_INFO(80, "\tcolBuffEnd0[0]:      0x%x\n", bInfo->buffInfo.colBuffEnd0[0]);
@@ -838,7 +843,7 @@ calcBufferStride(hwcBoardInfo *bInfo, FxU32 xres, FxBool tiled)
   if (tiled == FXTRUE) {
     /* Calculate tile width stuff */
     strideInTiles = (xres << shift) >> 7;
-    if ((xres << 1) & (HWC_TILE_WIDTH - 1))
+    if ((xres << shift) & (HWC_TILE_WIDTH - 1))
       strideInTiles++;
     
     return (strideInTiles * HWC_TILE_WIDTH);
@@ -1226,13 +1231,36 @@ void grDRIResetSAREA() {
   _grExportFifo(driInfo.fifoPtr, driInfo.fifoRead);
 }
 
-void hwcSetupFullScreen(hwcBoardInfo *bInfo, FxBool state) {
+Bool hwcSetupFullScreen(hwcBoardInfo *bInfo, FxBool state) {
   driInfo.isFullScreen=state;
   if (state) {
-    int vidScreenSize, lfbMemoryConfig;
+    int vidScreenSize;
+    int desktopBpp = driInfo.cpp;
+    int lg2desktopBpp;
 
+    switch (desktopBpp) {
+    case 2:
+        lg2desktopBpp = 1;
+        break;
+    case 3:
+        desktopBpp = 4;
+       /*
+        * Allez Oop.
+        */
+    case 4:
+        lg2desktopBpp = 2;
+        break;
+    default:
+       /*
+        * This cannot happen.
+        */
+        fprintf(stderr,
+                "Bad desktop BPP value %d in hwcSetupFullScreen\n",
+                desktopBpp);
+        return FXFALSE;
+    }
     HWC_IO_STORE(bInfo->regInfo, vidOverlayDudxOffsetSrcWidth,
-		 ((driInfo.sPriv->width << 1) << 19));
+		 ((driInfo.sPriv->width << lg2desktopBpp) << 19));
 
     /* Video pixel buffer threshold */
     {
@@ -1268,18 +1296,11 @@ void hwcSetupFullScreen(hwcBoardInfo *bInfo, FxBool state) {
       driInfo.stride);          /* distance between scanlines of the OS, in
                                    units of bytes for linear OS's and tiles for
                                    tiled OS's */
-    lfbMemoryConfig =
-      SST_RAW_LFB_TILE_BEGIN_PAGE_MUNGE((bInfo->buffInfo.colBuffStart0[0] >> 12))
-      | HWC_RAW_LFB_STRIDE
-      | (bInfo->buffInfo.bufStrideInTiles << SST_RAW_LFB_TILE_STRIDE_SHIFT);
-
-    HWC_IO_STORE(bInfo->regInfo, lfbMemoryConfig, lfbMemoryConfig);
-
     HWC_IO_STORE(bInfo->regInfo, vidOverlayStartCoords, 0);
     HWC_IO_STORE(bInfo->regInfo, vidOverlayEndScreenCoord,
 		 (driInfo.sPriv->height  << SST_OVERLAY_Y_SHIFT) |
 		 (driInfo.sPriv->width & SST_OVERLAY_X) );
-    HWC_IO_STORE(bInfo->regInfo, vidOverlayDudx, 0);
+    HWC_IO_STORE(bInfo->regInfo, vidOverlayDudx, driInfo.screenWidth);
     HWC_IO_STORE(bInfo->regInfo, vidOverlayDvdy, 0);
     HWC_IO_LOAD(bInfo->regInfo, vidScreenSize, vidScreenSize);
     vidScreenSize &= ~SST_VIDEO_SCREEN_DESKTOPADDR_FIFO_ENABLE;
@@ -1305,12 +1326,15 @@ void hwcSetupFullScreen(hwcBoardInfo *bInfo, FxBool state) {
 	}
       }
     }
+#if	0
     HWC_IO_STORE( bInfo->regInfo, vidDesktopOverlayStride,
 		  ( driInfo.stride << 16 ) |
                   driInfo.stride );
-
+#endif
     grSetSliCount(driInfo.sPriv->numChips, driInfo.sliCount);
-    _grEnableSliCtrl();
+    if (driInfo.sliCount > 1) {
+        _grEnableSliCtrl();
+    }
   } else {
     hwcInitVideoOverlaySurface(
       &bInfo->regInfo,
@@ -1333,4 +1357,5 @@ void hwcSetupFullScreen(hwcBoardInfo *bInfo, FxBool state) {
     grSetSliCount(1, 1);
     driInfo.stride=driInfo.windowedStride;
   }
+  return(FXTRUE);
 }

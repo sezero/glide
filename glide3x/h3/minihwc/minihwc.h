@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/11/24 21:45:07  joseph
+** Initial checkin for SourceForge
+**
 ** 
 ** 7     6/24/99 12:45a Stb_mmcclure
 ** Modifications to fix PRS 6627. Added hwcUnmapMemory9x for revised 9x
@@ -554,6 +557,16 @@ hwcAllocAuxRenderingBuffer(hwcBoardInfo *bInfo,
                            int width, int height);
 
 #endif /* __WIN32__ */
+
+#ifdef	__linux__
+/*
+ * Setup for full screen mode in Linux.
+ *
+ * The parameter "state" is true just in case we are
+ * entering full screen mode.
+ */
+extern Bool hwcSetupFullScreen(hwcBoardInfo *bInfo, FxBool state);
+#endif	/* defined(__linux__) */
 
 FxBool
 hwcGammaRGB(hwcBoardInfo *bInfo, float r, float g, float b);
