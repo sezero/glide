@@ -42,12 +42,12 @@
 // if debug info turned on then GDBG_INFO does something
 #ifdef GDBG_INFO_ON
 
-#define GDBG_INFO(level, format, ...) gdbg_info(level, format, ## __VA_ARGS__)
-#define GDBG_INFO_MORE(level, format, ...) gdbg_info_more(level, format, ## __VA_ARGS__)
-#define GDBG_PRINTF(format, ...) gdbg_printf(format, ## __VA_ARGS__)
+#define GDBG_INFO gdbg_info
+#define GDBG_INFO_MORE gdbg_info_more
+#define GDBG_PRINTF gdbg_printf
 
-#define GDBG_ERROR_SET_CALLBACK(p)   gdbg_error_set_callback(p)
-#define GDBG_ERROR_CLEAR_CALLBACK(p) gdbg_error_clear_callback(p)
+#define GDBG_ERROR_SET_CALLBACK   gdbg_error_set_callback
+#define GDBG_ERROR_CLEAR_CALLBACK gdbg_error_clear_callback
 
 #define GDBG_GET_DEBUGLEVEL	gdbg_get_debuglevel
 #define GDBG_SET_DEBUGLEVEL	gdbg_set_debuglevel
@@ -55,12 +55,30 @@
 // otherwise GDBG_INFO does nothing
 #else
 
+#if defined(__WATCOMC__) || defined(__WATCOM_CPLUSPLUS__)
+/* Turn off the dead code warnings. Also changed the macro definitions
+ * to use an 'if' rather than the ternary operator because the
+ * type of the result sub-expressions must match.
+ *
+ * w111: Meaningless use of an expression
+ * w201: Unreachable code
+ * w302: Expression only useful for side-effects.
+ */
+#pragma disable_message (111, 201, 302)
+#endif /* defined(__WATCOMC__) || defined(__WATCOM_CPLUSPLUS__) */
+
+#ifdef __GNUC__ /* variadic macros */
 #define GDBG_INFO(level, format, ...)
 #define GDBG_INFO_MORE(level, format, ...)
 #define GDBG_PRINTF(format, ...)
+#else
+#define GDBG_INFO      0 && (unsigned long)
+#define GDBG_INFO_MORE 0 && (unsigned long)
+#define GDBG_PRINTF    0 && (unsigned long)
+#endif
 
-#define GDBG_ERROR_SET_CALLBACK(p)
-#define GDBG_ERROR_CLEAR_CALLBACK(p)
+#define GDBG_ERROR_SET_CALLBACK
+#define GDBG_ERROR_CLEAR_CALLBACK
 
 #define GDBG_GET_DEBUGLEVEL(x) 0
 #define GDBG_SET_DEBUGLEVEL(a,b)
