@@ -22,7 +22,7 @@
 #			default = no
 #	XPATH		specify X libraries path; needed by DRI and DGA.
 #			target  = h3, h5
-#			default = /usr/X11/lib
+#			default = /usr/X11R6/lib
 #	H4=1		High speed Avenger/Napalm.
 #			target  = h3, h5
 #			default = no

@@ -19,7 +19,7 @@
 #	DGA=1		Build DGA version (experimental).
 #			default = no
 #	XPATH		specify X libraries path; needed by DRI and DGA.
-#			default = /usr/X11/lib
+#			default = /usr/X11R6/lib
 #	H4=1		High speed Avenger.
 #			default = no
 #	CPU		optimize for the given processor.
@@ -79,7 +79,7 @@ CP = cp
 
 # platform
 CDEFS = -D__linux__
-XPATH ?= /usr/X11/lib
+XPATH ?= /usr/X11R6/lib
 ifeq ($(DRI),1)
 CDEFS += -DDRI_BUILD
 LDFLAGS = -L$(XPATH)
@@ -268,7 +268,7 @@ $(GLIDE_LIBDIR)/$(GLIDE_SO): $(GLIDE_OBJECTS:.o=.lo)
 
 $(TEXUS_EXEDIR)/$(TEXUS_EXE): $(FX_GLIDE_SW)/texus2/cmd/cmd.c $(GLIDE_LIBDIR)/$(GLIDE_LIB)
 ifeq ($(TEXUS2),1)
-	$(CC) -o $@ -s $(CFLAGS) -L$(GLIDE_LIBDIR) $< -lgld3x
+	$(CC) -o $@ -s $(CFLAGS) -L$(GLIDE_LIBDIR) $< -lglide3 -lm
 else
 	$(warning Texus2 not enabled... Skipping $(TEXUS_EXE))
 endif
