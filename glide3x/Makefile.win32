@@ -315,7 +315,7 @@ LFLAGS  = $(LFLAGS) -debugtype:both /DEBUG
 ARFLAGS = $(ARFLAGS) -debugtype:both
 ASFLAGS = $(ASFLAGS) -g -DDEBUG=1
 !else
-CFLAGS  = $(CFLAGS) -Ox -MT -D_USRDLL -DNDEBUG
+CFLAGS  = $(CFLAGS) -O2 -MT -D_USRDLL -DNDEBUG
 !endif
 
 # So that we can get reasonable stuff from SoftIce etc even
