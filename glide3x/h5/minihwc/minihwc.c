@@ -8582,16 +8582,18 @@ hwcGammaTable(hwcBoardInfo *bInfo, FxU32 nEntries, FxU32 *r, FxU32 *g, FxU32 *b)
             FN_NAME, (vidProcCfg & SST_OVERLAY_CLUT_BYPASS) ? 1 : 0);
 
   for (i = 0; i < nEntries; i++) {
-    /*int repeat = 100;
+    int repeat = 100;
     while (repeat) {
       HWC_IO_STORE( bInfo->regInfo, dacAddr, dacBase + i);
       P6FENCE;
-      HWC_IO_STORE( bInfo->regInfo, dacData, gRamp[i]);
-      P6FENCE;
       HWC_IO_LOAD( bInfo->regInfo, dacAddr, rDacBase);
       P6FENCE;
-      HWC_IO_LOAD( bInfo->regInfo, dacData, rDacData);
-      P6FENCE;
+	  if (rDacBase == (dacBase + i)) {
+        HWC_IO_STORE( bInfo->regInfo, dacData, gRamp[i]);
+        P6FENCE;
+        HWC_IO_LOAD( bInfo->regInfo, dacData, rDacData);
+        P6FENCE;
+      }
       if ((rDacBase == (dacBase + i)) && (rDacData == gRamp[i]))
         break;
       repeat --;
@@ -8599,24 +8601,7 @@ hwcGammaTable(hwcBoardInfo *bInfo, FxU32 nEntries, FxU32 *r, FxU32 *g, FxU32 *b)
     if (!repeat) {
       GDBG_INFO(0, "%s: Error Writing DacData [%d, %x]. DacBase = %d\n",
                 FN_NAME, i, gRamp[i], dacBase);
-    }*/
-    int repeat = 100 ;
-    do {
-      HWC_IO_STORE( bInfo->regInfo, dacAddr, dacBase + i);
-      P6FENCE;
-      HWC_IO_LOAD( bInfo->regInfo, dacAddr, rDacBase);
-      P6FENCE;
-    } while (--repeat && (rDacBase != (dacBase + i)));
-	if (!repeat) GDBG_INFO(0, "%s: Error Writing DacBase = %d\n", FN_NAME, dacBase);
-    
-	repeat = 100 ;
-	do {
-      HWC_IO_STORE( bInfo->regInfo, dacData, gRamp[i]);
-      P6FENCE;
-      HWC_IO_LOAD( bInfo->regInfo, dacData, rDacData);
-      P6FENCE;
-	} while (--repeat && (rDacData != gRamp[i]));
-	if (!repeat) GDBG_INFO(0, "%s: Error Writing DacData [%d, %x]\n", FN_NAME, i, gRamp[i]);
+    }
   }
 
   return FXTRUE;
