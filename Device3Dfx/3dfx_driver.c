@@ -24,6 +24,7 @@
    2004-05-04   Guillem Jover   <guillem@debian.org>
 
    * Cleaned new kernel build system.
+   * Indentation fixes. Normalized ChangeLog date format.
 
    2004-02-13   Aristeu Sergio Rozanski Filho <aris@cathedrallabs.org>
 
@@ -35,32 +36,32 @@
 
    * Ported to 2.6 kernels.
 
-   2002/05/05   Guillem Jover   <guillem@hadrons.org>
+   2002-05-05   Guillem Jover   <guillem@hadrons.org>
 
    * Re-included VOODOO pci id, accidentally removed in last patch,
      thanks to Jan Kuipers to point this out.
 
-   2002/01/29   Guillem Jover   <guillem@hadrons.org>
+   2002-01-29   Guillem Jover   <guillem@hadrons.org>
 
    * Fixed bug when compiling for 2.4 kernels with modversions.
    * Added devfs support.
    * Added MODULE_* declarations.
    * Cleaned detection code.
 
-   2000/02/04   Joseph Kain     <joseph@3dfx.com>
-   
+   2000-02-04   Joseph Kain     <joseph@3dfx.com>
+
    * Updated Carlo Woord's email address.
 
-   1999/12/22   Joseph Kain     <joseph@3dfx.com>
-   
+   1999-12-22   Joseph Kain     <joseph@3dfx.com>
+
    * Support for new VMA structure in Kernels 2.3.14 and higher.
      This patch is based on Dieter Nuetzel's work.
 
-   1999/11/09   Joseph Kain     <joseph@3dfx.com>
-   
+   1999-11-09   Joseph Kain     <joseph@3dfx.com>
+
    * Made cards static to remove conflict with hisax ISDN driver.
 
-   1998/10/30	Carlo Wood	<carlo@alinoe.com>
+   1998-10-30   Carlo Wood      <carlo@alinoe.com>
 
    * Re-included module versions (this source was based on the
      source by Jon Taylor which was based on an older version
@@ -69,18 +70,18 @@
    * Use pci_find_device for 2.1/2.2 kernels instead of the old
      pcibios_find_device.  Idem pci_present().
 
-   1998/10/21   Carlo Wood      <carlo@alinoe.com>
+   1998-10-21   Carlo Wood      <carlo@alinoe.com>
 
    * Fixed compile bugs related to 2.0 kernels.
 
-   1998/10/21   Carlo Wood      <carlo@alinoe.com>
+   1998-10-21   Carlo Wood      <carlo@alinoe.com>
 
    * `struct file_operations' was changed as of kernel 2.1.118,
      fixed this module to also work with versions > 2.1.117.
 
    * Machines that don't have mtrr still need <asm/uaccess.h>.
 
-   1998/10/20   Carlo Wood      <carlo@alinoe.com>
+   1998-10-20   Carlo Wood      <carlo@alinoe.com>
 
    * Finally fixed in init_module() the right way.  This time I tested
      it too (it now really works).
@@ -91,13 +92,13 @@
      method WITHOUT MTRR, without being confused by sticky MTRR settings
      for instance.
 
-   1998/10/18   Carlo Wood      <carlo@alinoe.com>
+   1998-10-18   Carlo Wood      <carlo@alinoe.com>
 
    * Forgot the '== -EBUSY' in init_module(), causing the registration of
      character device to always fail.  You need to reboot if you tried
      the previous version (if there is junk in `cat /proc/devices' major 107).
 
-   1998/10/18   Carlo Wood      <carlo@alinoe.com>
+   1998-10-18   Carlo Wood      <carlo@alinoe.com>
 
    * struct file_operations fops_3dfx was initialized wrong:
      `release_3dfx' was put on the place of `fsync', causing weird
@@ -118,7 +119,7 @@
 #define KERNEL_VERSION(a,b,c) (((a) << 16) + ((b) << 8) + (c))
 #endif
 
-#define KERNEL_MIN_VER(a,b,c)	(LINUX_VERSION_CODE >= KERNEL_VERSION(a,b,c))
+#define KERNEL_MIN_VER(a,b,c) (LINUX_VERSION_CODE >= KERNEL_VERSION(a,b,c))
 
 #if !KERNEL_MIN_VER (2, 1, 115)
 /* It might work with smaller kernels, but I never tested that */
@@ -220,10 +221,11 @@ static char name_3dfx[] = "3dfx";
 #define pcibios_read_config_word(x,y,z,w) pci_read_config_word(y,z,w)
 #define pcibios_read_config_dword(x,y,z,w) pci_read_config_dword(y,z,w)
 #define pcibios_write_config_dword(x,y,z,w) pci_write_config_dword(y,z,w)
-#else	/* LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0) */
+
+#else /* LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0) */
 static struct pci_card {
-	unsigned short	vendor;
-	unsigned short	device;
+	unsigned short vendor;
+	unsigned short device;
 } pci_card_list[] = {
 	{PCI_VENDOR_ID_3DFX, 		PCI_DEVICE_ID_3DFX_VOODOO},
 	{PCI_VENDOR_ID_3DFX, 		PCI_DEVICE_ID_3DFX_VOODOO2},
@@ -232,7 +234,7 @@ static struct pci_card {
 	{PCI_VENDOR_ID_3DFX, 		PCI_DEVICE_ID_3DFX_VOODOO3},
 	{PCI_VENDOR_ID_3DFX, 		PCI_DEVICE_ID_3DFX_VOODOO4}
 };
-#endif	/* LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0) */
+#endif /* LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0) */
 
 #ifdef DEBUG
 #define DEBUGMSG(x) printk x
@@ -250,10 +252,10 @@ static struct pci_card {
 
 #if KERNEL_MIN_VER(2,6,0)
 #define my_remap_page_range(vma, start, ofs, len, prot) \
-        remap_page_range(vma, start, ofs, len, prot)
+	remap_page_range(vma, start, ofs, len, prot)
 #else
 #define my_remap_page_range(vma, start, ofs, len, prot) \
-        remap_page_range(start, ofs, len, prot)
+	remap_page_range(start, ofs, len, prot)
 #endif
 
 struct pioData_t {
@@ -267,11 +269,11 @@ struct cardInfo_t {
 	int vendor;
 	int type;
 	int addr0;
-  	int addr1;
+	int addr1;
 	int addr2;
 	unsigned char bus;
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
-	struct pci_dev	*dev;
+	struct pci_dev *dev;
 #else
 	unsigned char dev;
 #endif
@@ -293,7 +295,8 @@ void cleanup_module(void);
 
 static cardInfo cards[MAXCARDS];
 static int numCards = 0;
-#if KERNEL_MIN_VER(2,3,46) && LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0) || defined(DEVFS_SUPPORT)
+#if KERNEL_MIN_VER(2,3,46) && LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0) \
+    || defined(DEVFS_SUPPORT)
 static devfs_handle_t devfs_handle;
 #endif
 
@@ -301,6 +304,7 @@ static devfs_handle_t devfs_handle;
 static void findCardType(int vendor, int device)
 {
 	struct pci_dev *dev = NULL;
+
 	while (numCards < MAXCARDS && (dev = pci_find_device(vendor, device, dev))) {
 		pci_read_config_dword(dev, PCI_BASE_ADDRESS_0, &cards[numCards].addr0);
 		pci_read_config_dword(dev, PCI_BASE_ADDRESS_1, &cards[numCards].addr1);
@@ -324,11 +328,13 @@ static void findCardType(int vendor, int device)
 static int findCards(void)
 {
 	int i;
+
 	if (!pci_present())
 		return 0;
 	numCards = 0;
 	for (i = 0; i < (sizeof(pci_card_list)/sizeof(struct pci_card)); i++)
 		findCardType(pci_card_list[i].vendor, pci_card_list[i].device);
+
 	return numCards;
 }
 #endif
@@ -336,11 +342,13 @@ static int findCards(void)
 static int open_3dfx(struct inode *inode, struct file *file)
 {
 	DEBUGMSG(("3dfx: Entering open_3dfx\n"));
+
 	if (!numCards) {
 		printk("3dfx: No 3Dfx cards found\n");
 		return -ENODEV;
 	}
 	mod_inc_use_count;
+
 	return 0;
 }
 
@@ -349,6 +357,7 @@ static int release_3dfx(struct inode *inode, struct file *file)
 	int i;
 
 	DEBUGMSG(("3dfx: Entering release_3dfx\n"));
+
 	for (i = 0; i < numCards; ++i)
 		if (cards[i].curFile == file)
 			cards[i].curFile = 0;
@@ -363,14 +372,15 @@ static int mmap_3dfx(struct file *file, struct vm_area_struct *vma)
 	int i;
 
 	DEBUGMSG(("3dfx: Entering mmap_3dfx\n"));
+
 	for (i = 0; i < numCards; ++i) {
-	  if ((cards[i].addr0 == VM_OFFSET(vma)) ||
-	      (cards[i].addr1 == VM_OFFSET(vma)))	    
+		if ((cards[i].addr0 == VM_OFFSET(vma)) ||
+		    (cards[i].addr1 == VM_OFFSET(vma)))
 			break;
 	}
 	if (i == numCards) {
-		DEBUGMSG(("3dfx: Couldn't match address %lx to a card\n", 
-			  VM_OFFSET(vma)));
+		DEBUGMSG(("3dfx: Couldn't match address %lx to a card\n",
+			 VM_OFFSET(vma)));
 		return -EPERM;
 	}
 	/* This one is a special case, the macro doesn't help */
@@ -380,7 +390,7 @@ static int mmap_3dfx(struct file *file, struct vm_area_struct *vma)
 		return -ENXIO;
 	}
 #else
-	if ((vma->vm_pgoff) & ~PAGE_MASK) {	  
+	if ((vma->vm_pgoff) & ~PAGE_MASK) {
 		DEBUGMSG(("3dfx: Map request not page aligned\n"));
 		return -ENXIO;
 	}
@@ -393,8 +403,8 @@ static int mmap_3dfx(struct file *file, struct vm_area_struct *vma)
 #if defined(__i386__)
 	pgprot_val(vma->vm_page_prot) |= _PAGE_PCD;
 #endif
-	if (my_remap_page_range(vma, vma->vm_start, VM_OFFSET(vma), len, 
-			     vma->vm_page_prot)) {
+	if (my_remap_page_range(vma, vma->vm_start, VM_OFFSET(vma), len,
+			        vma->vm_page_prot)) {
 		DEBUGMSG(("3dfx: Page remap failed\n"));
 		return -EAGAIN;
 	}
@@ -417,6 +427,7 @@ static int doQueryFetch(pioData *desc)
 		return -EINVAL;
 	if ((retval = verify_area(VERIFY_WRITE, desc->value, desc->size)))
 		return retval;
+
 	switch (desc->port) {
 	case PCI_VENDOR_ID_LINUX:
 		if (desc->size != 2)
@@ -458,6 +469,7 @@ static int doQueryFetch(pioData *desc)
 	default:
 		return -EINVAL;
 	}
+
 	switch (desc->size) {
 	case 1:
 		pcibios_read_config_byte(cards[desc->device].bus, cards[desc->device].dev, desc->port, &retchar);
@@ -474,6 +486,7 @@ static int doQueryFetch(pioData *desc)
 	default:
 		return -EINVAL;
 	}
+
 	return 0;
 }
 
@@ -490,6 +503,7 @@ static int doQueryUpdate(pioData *desc)
 		return -EINVAL;
 	if ((retval = verify_area(VERIFY_WRITE, desc->value, desc->size)))
 		return retval;
+
 	switch (desc->port) {
 	case PCI_COMMAND_LINUX:
 		if (desc->size != 2)
@@ -514,6 +528,7 @@ static int doQueryUpdate(pioData *desc)
 	default:
 		return -EINVAL;
 	}
+
 	pcibios_read_config_dword(cards[desc->device].bus, cards[desc->device].dev, desc->port & ~0x3, &retval);
 	switch (desc->size) {
 	case 1:
@@ -534,8 +549,10 @@ static int doQueryUpdate(pioData *desc)
 	default:
 		return -EINVAL;
 	}
+
 	retval = (retval & ~mask) | preval;
 	pcibios_write_config_dword(cards[desc->device].bus, cards[desc->device].dev, desc->port, retval);
+
 	return 0;
 }
 
@@ -553,6 +570,7 @@ static int doQuery(unsigned int cmd, unsigned long arg)
 		return doQueryFetch(&desc);
 	if (_IOC_NR(cmd) == 4)
 		return doQueryUpdate(&desc);
+
 	return -EINVAL;
 }
 
@@ -580,27 +598,28 @@ static int doPIORead(pioData *desc)
 #else
 	/* full range */
 	{
-         int i = desc->device;
-         unsigned short port = desc->port;
-         unsigned short base;
-         if (i < 0 || i >= numCards) {
-            /* scan for valid SSTIO aperture */
-            for (i = 0; i < numCards; i++) {
-                base = cards[i].addr2 & ~1;
-                if (base <= port && port <= (base + 0x107)) {
-                   break;
-                }
-            }
-            if (i == numCards) {
-               return -EPERM;
-            }
-         } else {
-            /* check the given SSTIO aperture */
-            base = cards[i].addr2 & ~1;
-            if (base > port || port > (base + 0x107)) {
-                return -EPERM;
-            }
-         }
+	int i = desc->device;
+	unsigned short port = desc->port;
+	unsigned short base;
+
+	if (i < 0 || i >= numCards) {
+		/* scan for valid SSTIO aperture */
+		for (i = 0; i < numCards; i++) {
+			base = cards[i].addr2 & ~1;
+			if (base <= port && port <= (base + 0x107)) {
+				break;
+			}
+		}
+		if (i == numCards) {
+			return -EPERM;
+		}
+	} else {
+		/* check the given SSTIO aperture */
+		base = cards[i].addr2 & ~1;
+		if (base > port || port > (base + 0x107)) {
+			return -EPERM;
+		}
+	}
 	}
 #endif
 
@@ -645,27 +664,28 @@ static int doPIOWrite(pioData *desc)
 #else
 	/* full range */
 	{
-         int i = desc->device;
-         unsigned short port = desc->port;
-         unsigned short base;
-         if (i < 0 || i >= numCards) {
-            /* scan for valid SSTIO aperture */
-            for (i = 0; i < numCards; i++) {
-                base = cards[i].addr2 & ~1;
-                if (base <= port && port <= (base + 0x107)) {
-                   break;
-                }
-            }
-            if (i == numCards) {
-               return -EPERM;
-            }
-         } else {
-            /* check the given SSTIO aperture */
-            base = cards[i].addr2 & ~1;
-            if (base > port || port > (base + 0x107)) {
-                return -EPERM;
-            }
-         }
+	int i = desc->device;
+	unsigned short port = desc->port;
+	unsigned short base;
+
+	if (i < 0 || i >= numCards) {
+		/* scan for valid SSTIO aperture */
+		for (i = 0; i < numCards; i++) {
+			base = cards[i].addr2 & ~1;
+			if (base <= port && port <= (base + 0x107)) {
+				break;
+			}
+		}
+		if (i == numCards) {
+			return -EPERM;
+		}
+	} else {
+		/* check the given SSTIO aperture */
+		base = cards[i].addr2 & ~1;
+		if (base > port || port > (base + 0x107)) {
+			return -EPERM;
+		}
+	}
 	}
 #endif
 
@@ -706,6 +726,7 @@ static int doPIO(unsigned int cmd, unsigned long arg)
 static int ioctl_3dfx(struct inode *inode, struct file *file, unsigned int cmd, unsigned long arg)
 {
 	DEBUGMSG(("3dfx: Entering ioctl_3dfx, inode %p file %p cmd %x arg %lx\n", inode, file, cmd, arg));
+
 	switch (_IOC_TYPE(cmd)) {
 	case '3':
 		return doQuery(cmd, arg);
@@ -725,7 +746,9 @@ int setmtrr_3dfx(void)
 
 	/* First do a bios fixup if this system has a 82441FX chipset */
 	struct pci_dev *dev = NULL;
-	if ((dev = pci_find_device(PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82371SB_0, dev))) {
+	dev = pci_find_device(PCI_VENDOR_ID_INTEL,
+			      PCI_DEVICE_ID_INTEL_82371SB_0, dev);
+	if (dev) {
 		pci_read_config_byte(dev, 0x82, &dlc);
 		if (!(dlc & 1 << 1)) {
 			dlc |= 1 << 1;
@@ -737,53 +760,53 @@ int setmtrr_3dfx(void)
 	/* Set up the mtrr's */
 	if (numCards == 0)
 		return -EIO;
-	for (i = 0; i < numCards; i++) {	     
+	for (i = 0; i < numCards; i++) {
 		if ((cards[i].vendor != PCI_VENDOR_ID_3DFX) ||
-		    (cards[i].type>PCI_DEVICE_ID_3DFX_VOODOO3))
-		{
-			cards[i].mtrr_buf = -1;	/* Used as flag in resetmtrr_3dfx() */
+		    (cards[i].type > PCI_DEVICE_ID_3DFX_VOODOO3)) {
+			/* Used as flag in resetmtrr_3dfx() */
+			cards[i].mtrr_buf = -1;
 			continue;
 		}
 		switch (cards[i].type) {
 		case PCI_DEVICE_ID_3DFX_VOODOO:
 		case PCI_DEVICE_ID_3DFX_VOODOO2:
 			/* Frame buffer to write combining */
-		  	retval = cards[i].mtrr_buf = mtrr_add(cards[i].addr0, 0x400000, MTRR_TYPE_WRCOMB, 1);
-			if (retval>=0) {
+			retval = cards[i].mtrr_buf = mtrr_add(cards[i].addr0, 0x400000, MTRR_TYPE_WRCOMB, 1);
+			if (retval >= 0) {
 				retval = cards[i].mtrr_ctl = mtrr_add(cards[i].addr0, 0x1000, MTRR_TYPE_UNCACHABLE, 1);
 				if (retval<0) {
-				  mtrr_del(cards[i].mtrr_buf, 0, 0);
-				  cards[i].mtrr_buf=-1;
+					mtrr_del(cards[i].mtrr_buf, 0, 0);
+					cards[i].mtrr_buf = -1;
 				}
 			}
 			if (retval < 0) {
 				printk("3dfx: Could not set MTRR for Voodoo card\n");
-		     		/* Can still run */
-		     		return 0;
+				/* Can still run */
+				return 0;
 			}
 			break;
 		case PCI_DEVICE_ID_3DFX_BANSHEE:
 		case PCI_DEVICE_ID_3DFX_VOODOO3:
 			retval = cards[i].mtrr_buf = mtrr_add(cards[i].addr1, 0x1000000, MTRR_TYPE_WRCOMB, 1);
-	     		if (retval < 0) {
+			if (retval < 0) {
 				printk("3dfx: Could not set MTRR for Voodoo card\n");
-		     		/* Can still run */
-		     		return 0;
-		   	}
-			cards[i].mtrr_ctl=-1;
+				/* Can still run */
+				return 0;
+			}
+			cards[i].mtrr_ctl = -1;
 			break;
 		default:
-		  /* We should never hit this */
+			/* We should never hit this */
 		}
 	}
-	if (retval == -2)
-	{
+	if (retval == -2) {
 		DEBUGMSG(("3dfx: Could not set MTRR for this graphics card\n"));
 		retval = 0;	/* Can still run */
 	}
 #ifdef DEBUG
 	else if (retval >= 0)
-	  DEBUGMSG(("3dfx: Successfully set MTRR, mtrr register: %d\n", retval));
+		DEBUGMSG(("3dfx: Successfully set MTRR, mtrr register: %d\n",
+			 retval));
 #endif
 
 	return retval;
@@ -792,6 +815,7 @@ int setmtrr_3dfx(void)
 int resetmtrr_3dfx(void)
 {
 	int i, ret, retval = 0;
+
 	for (i = 0; i < numCards; i++) {
 		if (cards[i].mtrr_buf >= 0) {
 			ret = mtrr_del(cards[i].mtrr_buf, 0, 0);
@@ -806,6 +830,7 @@ int resetmtrr_3dfx(void)
 			}
 		}
 	}
+
 	return retval;
 }
 
@@ -813,12 +838,12 @@ int resetmtrr_3dfx(void)
 
 static struct file_operations fops_3dfx = {
 #if KERNEL_MIN_VER(2, 4, 0)
-	owner:			THIS_MODULE,
+	owner:		THIS_MODULE,
 #endif
-	ioctl:			ioctl_3dfx,		/* ioctl */
-	mmap:			mmap_3dfx,		/* mmap */
-	open:			open_3dfx,		/* open */
-	release:		release_3dfx,		/* release */
+	ioctl:		ioctl_3dfx,
+	mmap:		mmap_3dfx,
+	open:		open_3dfx,
+	release:	release_3dfx,
 };
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
@@ -836,8 +861,8 @@ static int probe_3dfx(struct pci_dev *dev, const struct pci_device_id *id)
 
 
 	DEBUGMSG(("3dfx: board vendor %d type %d located at %x/%x\n",
-		    dev->vendor, dev->device, cards[numCards].addr0,
-		    cards[numCards].addr1));
+		 dev->vendor, dev->device, cards[numCards].addr0,
+		 cards[numCards].addr1));
 	numCards++;
 
 	return 0;
@@ -875,12 +900,13 @@ static void findCards(void)
 {
 	pci_register_driver(&driver_3dfx);
 }
-#endif	/* LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0) */
+#endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0) */
 
 #ifdef MODULE
 int init_module(void)
 {
 	int ret;
+
 	DEBUGMSG(("3dfx: Entering init_module()\n"));
 
 	if ((ret = register_chrdev(MAJOR_3DFX, "3dfx", &fops_3dfx)) < 0) {
@@ -904,17 +930,16 @@ int init_module(void)
 
 #ifdef HAVE_MTRR
 	ret = setmtrr_3dfx();
-	if (ret < 0)
-	{
-	  DEBUGMSG(("setmtrr_3dfx() failed, returned %d\n", ret));
-	  /*
-	  unregister_chrdev(MAJOR_3DFX, "3dfx");
-	  return ret;
-	  */
+	if (ret < 0) {
+		DEBUGMSG(("setmtrr_3dfx() failed, returned %d\n", ret));
+		/*
+		unregister_chrdev(MAJOR_3DFX, "3dfx");
+		return ret;
+		*/
 	}
 #endif
 
- 	return 0;
+	return 0;
 }
 
 void cleanup_module(void)
@@ -930,10 +955,9 @@ void cleanup_module(void)
 	devfs_unregister(devfs_handle);
 #endif
 
-	if (unregister_chrdev(MAJOR_3DFX, "3dfx"))
-	{
-	  DEBUGMSG(("3dfx: unregister_chrdev failed\n"));
-	  return;
+	if (unregister_chrdev(MAJOR_3DFX, "3dfx")) {
+		DEBUGMSG(("3dfx: unregister_chrdev failed\n"));
+		return;
 	}
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
@@ -944,8 +968,7 @@ void cleanup_module(void)
 
 long init_3dfx(long mem_start, long mem_end)
 {
-	if (register_chrdev(MAJOR_3DFX, "3dfx", &fops_3dfx))
-	{
+	if (register_chrdev(MAJOR_3DFX, "3dfx", &fops_3dfx)) {
 		DEBUGMSG(("3dfx: Unable to register_chrdev with major %d\n", MAJOR_3DFX));
 		return 0;
 	}
@@ -984,11 +1007,12 @@ MODULE_LICENSE("GPL");
  */
 inline int verify_area(int type, const void * addr, unsigned long size)
 {
-  return access_ok(type,addr,size) ? 0 : -EFAULT;
+	return access_ok(type,addr,size) ? 0 : -EFAULT;
 }
 
 int a_last_dummy_function(int a)
 {
-  return a;
+	return a;
 }
 #endif
+
