@@ -1,17 +1,19 @@
 
 #define MANVERSION              2
-#define MANREVISION             53
+#define MANREVISION             56
 
-#define BUILD_NUMBER            0x666
+#define BUILD_NUMBER            40404
 
 #ifndef GLIDE3
-#define VERSIONSTR "2.53\0"
+#define VERSIONSTR "2.56\0"
 #else
 #define VERSIONSTR "3.0\0"
 #endif
 
 #if defined(CVG) || defined(VOODOO2)
-#   define HWSTR   " Voodoo^2(tm)\0"
+#   define HWSTR   " Voodoo(tm)\0" /* [koolsmoky] NB do not change. Required
+                                    * by Metabyte WickedGL to detect V2.
+                                    */
 #   ifdef NT_BUILD
 #     define PRODNAME "Glide(tm) for Voodoo^2\251 and Windows\256 NT\0"
 #   else
