@@ -20,6 +20,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/12/07 21:49:27  joseph
+** Initial checkin into SourceForge.
+**
 ** 
 ** 3     3/17/99 6:16p Dow
 ** Phantom Menace and other fixes.
@@ -159,35 +162,25 @@ GR_DIENTRY(grErrorSetCallback, void,
   GrErrorCallback = function;
 }
 
-#ifdef __WIN32__
 void
 _grErrorDefaultCallback( const char *s, FxBool fatal )
 {
   if ( fatal ) {
     GDBG_ERROR("glide", s);
     grGlideShutdown();
-    MessageBox(NULL, s, NULL, MB_OK);
-  }
-}
-#else
-void
-_grErrorDefaultCallback( const char *s, FxBool fatal )
-{
-  if ( fatal ) {
-    GDBG_ERROR("glide",s);
-    grGlideShutdown();
 
-#if (GLIDE_PLATFORM & GLIDE_OS_MACOS)
-                {
-                        Str255 errBuf;
-                        
-                        errBuf[0] = sprintf((char*)(errBuf + 1), "%s", s);
-                        DebugStr(errBuf);
-                }
+#ifdef __WIN32__
+    MessageBox(NULL, s, NULL, MB_OK);
+#elif (GLIDE_PLATFORM & GLIDE_OS_MACOS)
+    {
+      Str255 errBuf;
+
+      errBuf[0] = sprintf((char*)(errBuf + 1), "%s", s);
+      DebugStr(errBuf);
+    }
 #endif /* (GLIDE_PLATFORM * GLIDE_OS_MACOS) */
   }
 }
-#endif
 
 #ifdef __DOS__
 int _guHeapCheck( void )

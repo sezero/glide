@@ -209,38 +209,28 @@ GR_DIENTRY(grErrorSetCallback, void,
   GrErrorCallback = function;
 }
 
-#ifdef __WIN32__
 void
 _grErrorDefaultCallback( const char *s, FxBool fatal )
 {
   if ( fatal ) {
     GDBG_ERROR("glide", s);
     grGlideShutdown();
+
+#ifdef __WIN32__
     MessageBox(NULL, s, NULL, MB_OK);
     exit(1);
-  }
-}
-#else
-void
-_grErrorDefaultCallback( const char *s, FxBool fatal )
-{
-  if ( fatal ) {
-    GDBG_ERROR("glide",s);
-    grGlideShutdown();
+#elif (GLIDE_PLATFORM & GLIDE_OS_MACOS)
+    {
+       //Str255 errBuf;
 
-#if (GLIDE_PLATFORM & GLIDE_OS_MACOS)
-                {
-                        //Str255 errBuf;
-                        
-                        //errBuf[0] = sprintf((char*)(errBuf + 1), "%s", s);
-                        //DebugStr(errBuf);
-                        ErrorMacCallback(s);
-                        ExitToShell();
-                }
+       //errBuf[0] = sprintf((char*)(errBuf + 1), "%s", s);
+       //DebugStr(errBuf);
+       ErrorMacCallback(s);
+       ExitToShell();
+    }
 #endif /* (GLIDE_PLATFORM * GLIDE_OS_MACOS) */
   }
 }
-#endif
 
 void
 _grAssert(char *exp, char *fileName, int lineNo)

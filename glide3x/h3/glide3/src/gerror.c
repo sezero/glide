@@ -20,6 +20,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.2.6.4  2003/11/04 12:53:38  dborca
+** Removed balanced #endif.
+**
 ** Revision 1.2.6.3  2003/11/03 07:27:50  guillemj
 ** Remove unbalanced #endif.
 **
@@ -206,36 +209,26 @@ GR_DIENTRY(grErrorSetCallback, void,
   GrErrorCallback = function;
 }
 
-#ifdef __WIN32__
 void
 _grErrorDefaultCallback( const char *s, FxBool fatal )
 {
   if ( fatal ) {
     GDBG_ERROR("glide", s);
     grGlideShutdown();
+
+#ifdef __WIN32__
     MessageBox(NULL, s, NULL, MB_OK);
     exit(1);
-  }
-}
-#else
-void
-_grErrorDefaultCallback( const char *s, FxBool fatal )
-{
-  if ( fatal ) {
-    GDBG_ERROR("glide",s);
-    grGlideShutdown();
+#elif (GLIDE_PLATFORM & GLIDE_OS_MACOS)
+    {
+      Str255 errBuf;
 
-#if (GLIDE_PLATFORM & GLIDE_OS_MACOS)
-                {
-                        Str255 errBuf;
-                        
-                        errBuf[0] = sprintf((char*)(errBuf + 1), "%s", s);
-                        DebugStr(errBuf);
-                }
+      errBuf[0] = sprintf((char*)(errBuf + 1), "%s", s);
+      DebugStr(errBuf);
+    }
 #endif /* (GLIDE_PLATFORM * GLIDE_OS_MACOS) */
   }
 }
-#endif
 
 /*
 #if !defined(__linux__) && !defined(__FreeBSD__)
