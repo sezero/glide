@@ -1835,11 +1835,11 @@ hwcInit(FxU32 vID, FxU32 dID)
         }
 
         /* Evilness. Try to auto-detect how many chips we have by trying to
-         * read the vendor/deviceID register back from chips 1 through 3. */
+         * read the vendor/deviceID register back from chips 1 through 3.
+         * [dBorca] Hack alert: fails badly on bare Linux */
         if(IS_NAPALM(hInfo.boardInfo[i].pciInfo.deviceID)) {
           FxU32 device_vendor;
 
-#if !(GLIDE_PLATFORM & GLIDE_OS_UNIX) /* [dBorca] Hack alert: TODO bare Linux SLI */
           /* Detect two-chip board */
           device_vendor = hwcReadConfigRegister(&hInfo.boardInfo[i], 1, offsetof(SstPCIConfigRegs, deviceID_vendorID));
           if((device_vendor & 0xFFFF) == 0x121a && (IS_NAPALM((device_vendor >> 16)))) {
@@ -1866,7 +1866,6 @@ hwcInit(FxU32 vID, FxU32 dID)
             hInfo.boardInfo[i].pciInfo.pciBaseAddr[(chip << 2) + 2] = 
               hwcReadConfigRegister(&hInfo.boardInfo[i], chip, offsetof(SstPCIConfigRegs, ioBaseAddr));
           }
-#endif
         }        
 
         // Save realNumChips
@@ -6906,7 +6905,12 @@ FxU32 hwcAAReadRegion16(hwcBoardInfo *bInfo, FxU32 colBufNum,
 
 /* Gamma table */
 FxU32 gss_red[256], gss_green[256], gss_blue[256], gss_red_shifted[256];
-/*ZZZ*/FxU32 _gss_red[256], _gss_green[256], _gss_blue[256], _gss_red_shifted[256];
+#if (GLIDE_PLATFORM & GLIDE_OS_UNIX)
+/* [dBorca] ZZZ
+ * ugly hack to allow bare Linux compilation. Revise this ASAP!!!
+ */
+FxU32 _gss_red[256], _gss_green[256], _gss_blue[256], _gss_red_shifted[256];
+#endif
 
 static void hwcCopyBuffer8888Flipped(hwcBoardInfo *bInfo, FxU16 *source, int w, int h, FxU8 *dst, int aaShift)
 {

@@ -76,7 +76,6 @@
  do { \
    FILE *dbg = fopen("debug.txt","a"); \
    fprintf x ; \
-   fflush(dbg); \
    fclose(dbg); \
  } while(0);
 #endif
@@ -173,42 +172,7 @@ resetVideo( void )
 } /* resetVideo */
 
 
-#include <conio.h>
-
-/* Snarfed from h3cinitdd.h */
-#if defined(__WATCOMC__)
-#define _inp inp
-#define _outp outp
-
-#define _inpw inpw
-#define _outpw outpw
-
-#define _inpd inpd
-#define _outpd outpd
-
-#endif
-
-
-#define SSTIOADDR(regName)      ((FxU16)offsetof(SstIORegs, regName))
-
-#define ISET32(addr, value)     _outpd((FxU16) ((FxU16) regBase + (FxU16) (SSTIOADDR(addr))), value)
-#define IGET32(addr)            _inpd((FxU16) ((FxU16) regBase + (FxU16) (SSTIOADDR(addr))))
-
-
-#define ISET8PHYS(a,b) {\
-FxU16 port = (FxU16) (regBase) + (FxU16) (a);\
-GDBG_INFO(120, "OUT8:  Port 0x%x Value 0x%x\n", port, b);\
-_outp(port, (FxU8) (b));}
-
-#define ISET16PHYS(a,b) {\
-FxU16 port = (FxU16)(regBase) + (FxU16)(a);\
-GDBG_INFO(120, "OUT16:  Port 0x%x Value 0x%x\n", port, b);\
-_outpw(port, (FxU16) (b));}
-
-#define IGET8PHYS(a) _inp((FxU16) ((FxU16) (regBase) + (FxU16) (a)))
-#define IGET16PHYS(a) _inpw((FxU16) ((FxU16) (regBase) + (FxU16)(a)))
-
-#define CHECKFORROOM while (! (_inp((FxU16) regBase) & (FxU16)(0x3f)))
+#include "h3cinitdd.h"
 
 #define CFG_READ(_chip, _offset) \
   hwcReadConfigRegister(bInfo, _chip, offsetof(SstPCIConfigRegs, _offset))

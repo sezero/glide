@@ -331,6 +331,8 @@ fxbldno: $(FXBLDNO:.h=.c)
 ###############################################################################
 
 clean:
+	-$(RM) $(FX_GLIDE_HW)/cinit/*.o
+	-$(RM) $(FX_GLIDE_HW)/cinit/*.lo
 	-$(RM) $(FX_GLIDE_HW)/glide3/src/*.o
 	-$(RM) $(FX_GLIDE_HW)/glide3/src/*.lo
 	-$(RM) $(FX_GLIDE_HW)/minihwc/*.o

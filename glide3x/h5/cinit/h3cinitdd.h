@@ -20,7 +20,6 @@
 ** $Revision$
 ** $Date$
 */
-#include <conio.h>
 #include <stddef.h>
 
 /* [dBorca] */
@@ -29,6 +28,8 @@
 #endif
 
 #if defined(__WATCOMC__)
+#include <conio.h>
+
 #define _inp inp
 #define _outp outp
 
@@ -38,6 +39,15 @@
 #define _inpd inpd
 #define _outpd outpd
 
+#endif
+
+#ifdef __linux__
+#define _inp pioInByte
+#define _outp pioOutByte
+#define _inpw pioInWord
+#define _outpw pioOutWord
+#define _inpd pioInLong
+#define _outpd pioOutLong
 #endif
 
 
