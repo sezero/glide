@@ -21,7 +21,10 @@
 
 /*  $Header$ */
 /*  $Revision$ */
-/*  $Log$ */
+/*  $Log$
+/*  Revision 1.1.1.1  1999/11/24 21:44:58  joseph
+/*  Initial checkin for SourceForge
+/* */
 /*   */
 /*  2     10/30/97 6:53p Peter */
 /*  first real cut at tri asm */
@@ -198,7 +201,7 @@ LOCAL(no_validation):
 	cmp tempVal , %ebx	/*  fifo space required >= space available ? */
 	jge LOCAL(__triBegin)	/*  yup, push out triangle data to Voodoo */
 
-	push $__LINE__	/*  line number inside this function */
+	pushl $__LINE__	/*  line number inside this function */
 	push $0x0	/*  pointer to function name = NULL */
 
 	push tempVal	/*  fifo space required */
@@ -783,7 +786,7 @@ LOCAL(nocull):
 
 	jge LOCAL(__triBegin)
 
-	push $__LINE__
+	pushl $__LINE__
 	push $0x0
 
 	push %eax

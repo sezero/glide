@@ -37,7 +37,7 @@
  * macros for creating assembler offset files
  *----------------------------------------------------------------------*/
 
-#ifndef __linux__
+#if !defined(__linux__) && !defined(__FreeBSD__)
 #define NEWLINE printf("\n")
 #define COMMENT printf(";----------------------------------------------------------------------\n")
 

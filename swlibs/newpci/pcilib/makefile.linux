@@ -26,7 +26,14 @@
 HEADERS             = fxpci.h sst1_pci.h
 PRIVATE_HEADERS     += pcilib.h
 INSTALL_DESTINATION = $(BUILD_ROOT_SWLIBS)
+
+ifeq ($(shell $(BUILD_ROOT_SWLIBS)/include/make/ostype), Linux)
 EXTPCIFILES = fxlinux.c
+endif
+ifeq ($(shell $(BUILD_ROOT_SWLIBS)/include/make/ostype), FreeBSD)
+EXTPCIFILES = fxfreebsd.c
+endif
+
 CFILES              = fxpci.c fxinfo.c fxmsr.c sst1_pci.c $(EXTPCIFILES)
 #FX_DLL_COMPILE      = 1
 

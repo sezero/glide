@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
+#include <string.h>
 #include "linutil.h"
 
 static init_done=0;

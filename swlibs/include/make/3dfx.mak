@@ -92,7 +92,24 @@ CDEBUG	       = -g -O
 #CDEBUG	       = -pg -g -O
 #GCDEFS	       =
 endif
-  
+
+ifeq "$(OS)" "FreeBSD"
+GCINCS	       = -I. -I$(BUILD_ROOT_SWLIBS)/include -I$(BUILD_ROOT_HW)/include -I/usr/X11R6/include
+GCOPTS	       = -Wall
+# 
+# BIG_OPT Indicates O3(?) or better is being used. It changes the
+# assembly language in grDrawTriangle. Larger optimization removes
+# an extra push in the calling sequence.
+#
+CNODEBUG       = -O6 -m486 -fomit-frame-pointer -funroll-loops \
+	-fexpensive-optimizations -ffast-math -DBIG_OPT
+
+CDEBUG	       = -g -O
+# Profiling
+#CDEBUG	       = -pg -g -O
+#GCDEFS	       =
+endif
+
 # if we are not debugging then replace debug flags with nodebug flags
 
 # DEBUG = xx
@@ -145,6 +162,11 @@ ifeq "$(OS)" "Linux"
 AR      = /usr/bin/ar crsl
 ECHO	= /bin/echo
 INSTALL = /usr/bin/install
+endif
+ifeq "$(OS)" "FreeBSD"
+AR      = /usr/bin/ar crsl
+ECHO	= /bin/echo
+INSTALL = /usr/bin/install -c
 endif
 
 DATE	= date

@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/11/24 21:44:57  joseph
+** Initial checkin for SourceForge
+**
 ** 
 ** 4     4/06/99 3:54p Dow
 ** Alt tab again.
@@ -101,7 +104,7 @@ n** -----------------------------------------------------------------------
 #endif
 
 /* Check for OS */
-#if defined(__IRIX__) || defined(__sparc__) || defined(__linux__)
+#if defined(__IRIX__) || defined(__sparc__) || defined(__linux__) || defined(__FreeBSD__)
 #  define GLIDE_OS        GLIDE_OS_UNIX
 #elif defined(__DOS__)
 #  define GLIDE_OS        GLIDE_OS_DOS32

@@ -193,7 +193,7 @@ _grDrawTriangles_3DNow:
 	cmp %ecx , %eax	/*  fifo space avail >= packet size ? */
 	jge .L_grDrawTriangles_3DNow_win_tri_begin_ND	/*  yup, start writing triangle data */
 
-	push $__LINE__	/*  line number inside this function */
+	pushl $__LINE__	/*  line number inside this function */
 	push $0x0	/*  pointer to function name = NULL */
 
 	push %ecx	/*  fifo space needed */
@@ -423,7 +423,7 @@ _grDrawTriangles_3DNow:
 	cmp %ecx , %eax	/*  fifo space avail >= packet size ? */
 	jge .L_grDrawTriangles_3DNow_win_tri_begin_D	/*  yup, start writing triangle data */
 
-	push $__LINE__	/*  line number inside this function */
+	pushl $__LINE__	/*  line number inside this function */
 	push $0x0	/*  pointer to function name = NULL */
 
 	push %ecx	/*  fifo space needed */
@@ -668,7 +668,7 @@ _grDrawTriangles_3DNow:
 	cmp %ecx , %eax	/*  fifo space avail >= packet size ? */
 	jge .L_grDrawTriangles_3DNow_clip_tri_begin	/*  yup, start writing triangle data */
 
-	push $__LINE__	/*  line number inside this function */
+	pushl $__LINE__	/*  line number inside this function */
 	push $0x0	/*  pointer to function name = NULL */
 
 	push %ecx	/*  fifo space needed */
@@ -1196,7 +1196,7 @@ _grDrawVertexList_3DNow_Window:
 	cmp %ecx , %eax	/*  fifo space avail >= packet size ? */
 	jge .L_grDrawVertexList_3DNow_Window_win_strip_begin_ND	/*  yup, start writing strip data */
 
-	push $__LINE__	/*  line number inside this function */
+	pushl $__LINE__	/*  line number inside this function */
 	push $0x0	/*  pointer to function name = NULL */
 
 	push %ecx	/*  fifo space needed */
@@ -1458,7 +1458,7 @@ _grDrawVertexList_3DNow_Window:
 	cmp %ecx , %eax	/*  fifo space avail >= packet size ? */
 	jge .L_grDrawVertexList_3DNow_Window_win_strip_begin_D	/*  yup, start writing strip data */
 
-	push $__LINE__	/*  line number inside this function */
+	pushl $__LINE__	/*  line number inside this function */
 	push $0x0	/*  pointer to function name = NULL */
 
 	push %ecx	/*  fifo space needed */
@@ -1786,7 +1786,7 @@ _grDrawVertexList_3DNow_Clip:
 	cmp %ecx , %eax	/*  fifo space avail >= packet size ? */
 	jge .L_grDrawVertexList_3DNow_Clip_clip_strip_begin	/*  yup, start writing strip data */
 
-	push $__LINE__	/*  line number inside this function */
+	pushl $__LINE__	/*  line number inside this function */
 	push $0x0	/*  pointer to function name = NULL */
 
 	push %ecx	/*  fifo space needed */
@@ -2334,7 +2334,7 @@ _drawvertexlist:
 	add $4 , %eax
 	cmp %eax , %ecx
 	jge .L_drawvertexlist_win_strip_begin
-	push $__LINE__
+	pushl $__LINE__
 	push $0x0
 	push %eax
 	call _grCommandTransportMakeRoom
@@ -2545,7 +2545,7 @@ _vpdrawvertexlist:
 	add $4 , %eax
 	cmp %eax , %ecx
 	jge .L_vpdrawvertexlist_clip_strip_begin
-	push $__LINE__
+	pushl $__LINE__
 	push $0x0
 	push %eax
 	call _grCommandTransportMakeRoom
@@ -2976,7 +2976,7 @@ _vptrisetup_cull:
 	cmp %eax , %ecx
 	jge .L_vptrisetup_cull_setup_pkt_hdr
 
-	push $__LINE__	/*  line number inside this function */
+	pushl $__LINE__	/*  line number inside this function */
 	push $0x0	/*  pointer to function name = NULL */
 
 	push %eax

@@ -20,6 +20,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/11/24 21:44:56  joseph
+** Initial checkin for SourceForge
+**
 ** 
 ** 4     4/06/99 3:54p Dow
 ** Alt tab again.
@@ -234,7 +237,7 @@ int _guHeapCheck( void )
 }
 #endif
 
-#ifndef __linux__
+#if !defined(__linux__) && !defined(__FreeBSD__)
 void
 i3(void) 
 {

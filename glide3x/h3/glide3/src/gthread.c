@@ -144,7 +144,7 @@ void endCriticalSection(void)
 {
 }
 
-#elif defined(__linux__)
+#elif defined(__linux__) || defined(__FreeBSD__)
 
 
 #include <3dfx.h>

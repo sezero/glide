@@ -19,6 +19,9 @@
  **
  ** $Header$
  ** $Log$
+ ** Revision 1.1.1.1  1999/11/24 21:44:56  joseph
+ ** Initial checkin for SourceForge
+ **
 ** 
 ** 7     4/24/99 11:17a Atai
 ** check if we have valid gc and lostcontext pointer
@@ -282,7 +285,7 @@ GR_ENTRY(grDrawTriangle, void, (const void *a, const void *b, const void *c))
     }
     lostContext: ; /* <-- my, that's odd, but MSVC was insistent  */
   }
-#elif defined( __linux__ )
+#elif defined( __linux__ ) || defined(__FreeBSD__)
   {
     GR_BEGIN_NOFIFOCHECK("grDrawTriangle",92);
     TRISETUP(a, b, c);

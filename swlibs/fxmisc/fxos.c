@@ -59,7 +59,7 @@ float fxTime(void)
     return (tb.time - once) + tb.millitm * .001;
     
 #else
-#if defined ( WIN32 ) || ( __DOS__ )
+#if defined ( WIN32 ) || ( __DOS__ ) || defined(__FreeBSD__)
 #   include <time.h>
 #   define times(a) clock()
 #   define HZ   CLOCKS_PER_SEC

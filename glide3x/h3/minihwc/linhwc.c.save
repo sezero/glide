@@ -212,7 +212,7 @@ hwcInit(FxU32 vID, FxU32 dID) {
 
   pciOpen();
 
-  hInfo.nBoards = 0;
+  /* hInfo.nBoards = 0; */
 
   errorString[0] = '\0';
 

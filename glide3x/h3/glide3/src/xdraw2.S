@@ -20,7 +20,10 @@
 
 /*  $Header$ */
 /*  $Revision$ */
-/*  $Log$ */
+/*  $Log$
+/*  Revision 1.1.1.1  1999/11/24 21:44:58  joseph
+/*  Initial checkin for SourceForge
+/* */
 /*   */
 /*  4     4/06/99 3:54p Dow */
 /*  Alt tab again. */
@@ -361,8 +364,8 @@ _trisetup_clip_coor_thunk:
 	lea _va-STKOFF(%esp) , %vPtr	/*  Get vertex pointer address */
 	mov drawTrianglesProc(%gc) , %procPtr	/*  Prefetch drawTriangles proc addr */
 
-	push %vPtr	/*  vertex array address */
-	push $3	/*  3 vertices */
+	pushl %vPtr	/*  vertex array address */
+	pushl $3	/*  3 vertices */
 
 /*  If debugging make sure that we're in clip coordinates */
 #ifdef GLIDE_DEBUG
@@ -374,7 +377,7 @@ _trisetup_clip_coor_thunk:
 L_trisetup_clip_coor_thunk__clipSpace:
 #endif	/*  GLIDE_DEBUG */
 
-	push $1	/*  mode = grDrawVertexArray */
+	pushl $1	/*  mode = grDrawVertexArray */
 	call %procPtr	/*  (*gc->curArchProcs.drawTrianglesProc)(grDrawVertexArray, 3, vPtr) */
 
 	ret	/*  pop 3 dwords (vertex addrs) and return     */
