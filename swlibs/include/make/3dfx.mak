@@ -149,7 +149,7 @@ endif
 
 # if we are not debugging then replace debug flags with nodebug flags
 
-DEBUG = xx
+# DEBUG = xx
 
 ifndef DEBUG
 CDEBUG   = $(CNODEBUG)
