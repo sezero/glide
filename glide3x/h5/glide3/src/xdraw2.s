@@ -1,203 +1,118 @@
-# 1 "xdraw2.S"
- 
+/* 
+** THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONLY
+** PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGHT
+** TO USE THE GLIDE TRADEMARK WITHOUT PRIOR WRITTEN PERMISSION OF 3DFX
+** INTERACTIVE, INC. A COPY OF THIS LICENSE MAY BE OBTAINED FROM THE
+** DISTRIBUTOR OR BY CONTACTING 3DFX INTERACTIVE INC(info@3dfx.com).
+** THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER
+** EXPRESSED OR IMPLIED. SEE THE 3DFX GLIDE GENERAL PUBLIC LICENSE FOR 
+** FULL TEXT OF THE NON-WARRANTY PROVISIONS. 
+**
+** USE, DUPLICATION OR DISCLOSURE BY THE GOVERNMENT IS SUBJECT TO
+** RESTRICTIONS AS SET FORTH IN SUBDIVISION (C)(1)(II) OF THE RIGHTS IN
+** TECHNICAL DATA AND COMPUTER SOFTWARE CLAUSE AT DFARS 252.227-7013,
+** AND/OR IN SIMILAR OR SUCCESSOR CLAUSES IN THE FAR, DOD OR NASA FAR
+** SUPPLEMENT. UNPUBLISHED RIGHTS RESERVED UNDER THE COPYRIGHT LAWS OF
+** THE UNITED STATES. 
+**
+** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
+ */
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
+/*  $Header$ */
+/*  $Revision$ */
+/*  $Log$
+/*  Revision 1.1  2000/06/15 00:27:43  joseph
+/*  Initial checkin into SourceForge.
+/*
+/*  Revision 1.1.1.1  2000/04/26 20:35:33  poppa
+/*  Initial Napalm Glide from Precision Insight
+/*
+/*  Revision 1.2  2000/04/18 15:58:15  poppa
+/*  h5/glide3/src/glide.h: Define grSwapBuffers as grDRISwapBuffers.  This
+/*                         may not be right.
+/*  h5/glide3/src/makefile.linux:
+/*                         Added definition of AFLAGS.
+/*  h5/glide3/src/xdraw2.S:Fixed some macros to make the assembler work on
+/*                         this file.
+/*  h5/glide3/src/xdraw2.inc.s
+/*                         Fixed some macros to make the assembler work on
+/*                         this file.
+/*  h5/minihwc/gdebug.c:   Apparently fclose(NULL) fails in Linux.  This
+/*                         is the POSIX behavior as I recall.
+/* */
+/*   */
+/*  4     4/06/99 3:54p Dow */
+/*  Alt tab again. */
+/*   */
+/*  12    4/05/99 11:34a Atai */
+/*  added GLIDE_ALT_TAB for xdraw2.inc to query context in the retail build */
+/*   */
+/*  11    3/19/99 11:26a Peter */
+/*  expose direct fifo for gl */
+/*   */
+/*  10    10/14/98 12:05p Peter */
+/*  fixed my effed up assumption about non-volatile regs */
+/*   */
+/*  9     10/12/98 9:51a Peter */
+/*  dynamic 3DNow!(tm) */
+/*   */
+/*  8     9/24/98 11:17a Dow */
+/*  AMD 3DNow! (tm) mods */
+/*   */
+/*  7     8/30/98 1:34p Dow */
+/*  State & other optimizations */
+/*   */
+/*  6     8/29/98 8:12p Dow */
+/*  Clip optimization */
+/*   */
+/*  5     7/01/98 8:41a Jdt */
+/*  removed gc arg from trisetup funcs */
+/*   */
+/*  4     8/03/98 6:36a Jdt */
+/*  Add GC to trisetup arglist */
+/*   */
+/*  3     6/09/98 11:59a Atai */
+/*  1. update glide header */
+/*  2. fix cull mode */
+/*  3. fix tri stats */
+/*   */
+/*  8     5/18/98 3:21p Peter */
+/*  dynamic culling changes */
+/*   */
+/*  6     1/15/98 1:12p Peter */
+/*  dispatch w/o packing */
+/*   */
+/*  5     11/06/97 3:47p Peter */
+/*  dispatch code w/ simulator */
+/*   */
+/*  4     11/04/97 5:04p Peter */
+/*  cataclysm part deux */
+/*   */
+/*  3     11/01/97 10:01a Peter */
+/*  tri dispatch stuff */
+/*   */
+/*  2     10/30/97 6:53p Peter */
+/*  first real cut at tri asm */
+/*   */
+/*  1     10/30/97 4:29p Peter */
+/*  asm tri code */
+/*   */
+/*  2     7/07/97 2:14p Jdt */
+/*  assembly now on par with C code. */
+/*   */
+/*  1     7/07/97 8:37a Jdt */
+/*  B4 Chip field fix. */
 
 
 .file "xdraw2.asm"
 
 
- 
-# 1 "fxgasm.h" 1
+/*  Definitions of cvg regs and glide root structures. */
+#include "fxgasm.h"
 
- 
- 
- 
 
-
-
- 
- 
- 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
- 
- 
- 
-
-
-
-
-
-
-
-
-
-
-
-
-# 111 "xdraw2.S" 2
-
-
-
-
-
+#ifdef HAL_CSIM
+#endif
 
 .data
 	.type	One,@object
@@ -211,1771 +126,306 @@ Area:	.int	0
 .section	.rodata
 	.type	T2003,@object
 	.size	T2003,4
-T2003:	.int	0x46400000	 
+T2003:	.int	0x46400000	/*  12288 */
 	.type	T2005,@object
 	.size	T2005,4
-T2005:	.int	0x3f800000	 
+T2005:	.int	0x3f800000	/*  1 */
 	.type	T2006,@object
 	.size	T2006,4
-T2006:	.int	0x43800000	 
+T2006:	.int	0x43800000	/*  256 */
 
- 
+/*  Arguments (STKOFF = 16 from 4 pushes) */
+#define STKOFF 16
+#define _gc 4  + STKOFF
+#define _va 8 + STKOFF
+#define _vb 12 + STKOFF
+#define _vc 16 + STKOFF
 
+/*  coordinate offsets into vertex. */
+/*  NB:  These are constants and are not */
+/*       user settable like the rest of the */
+/*       parameter offset. Weird. */
+#define X 0
+#define Y 4
 
+#ifdef GL_AMD3D
+#define PROC_TYPE(arg) _trisetup_3DNow_##arg
+#define END_PROC_TYPE(arg) .L_END_trisetup_3Dnow_##arg
+#else
+#define PROC_TYPE(arg) _trisetup_Default_##arg
+#define END_PROC_TYPE(arg) .L_END_trisetup_Default_##arg
+#endif
 
+/*  enables/disables trisProcessed and trisDrawn counters */
+#define STATS 1
 
+/*  offsets into vertex struct */
+#define X 0
+#define Y 4
 
+/*  NB:  All of the base triangle procs expect to have the gc */
+/*       passed from the caller in edx so that we can avoid */
+/*       the agi from the far pointer. Screw w/ this at your */
+/*       own peril. */
 
- 
- 
- 
- 
+/*       YOU HAVE BEEN WARNED */
 
-
-
-
-
-
-
-
-
-
-
- 
-
-
- 
-
-
-
- 
- 
- 
- 
-
- 
-
- 
+/* -------------------------------------------------------------------------- */
 
 .text
 
 
 .align 32
-.globl _trisetup_Default_clip_nocull_invalid  
-.type _trisetup_Default_clip_nocull_invalid  ,@function
-_trisetup_Default_clip_nocull_invalid  :
+.globl PROC_TYPE(clip_nocull_invalid)
+.type PROC_TYPE(clip_nocull_invalid),@function
+PROC_TYPE(clip_nocull_invalid):
 
-
-
-
-
+#ifdef LOCAL
+#undef LOCAL
+#endif
+#define LOCAL(arg) L_clip_nocull_invalid##arg
 	
+#define GLIDE_VALIDATE_STATE 1
+#define GLIDE_CLIP_COORDS 1
+#define GLIDE_CULLING 0
+#define GLIDE_PACK_RGB 0
+#define GLIDE_PACK_ALPHA 0
+#define GLIDE_GENERIC_SETUP 0
+#include "xdraw2.inc.s"
+#undef GLIDE_GENERIC_SETUP
+#undef GLIDE_PACK_ALPHA
+#undef GLIDE_PACK_RGB
+#undef GLIDE_CULLING
+#undef GLIDE_CLIP_COORDS
+#undef GLIDE_VALIDATE_STATE
 
-
-
-
-
-
-# 1 "xdraw2.inc.s" 1
- 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
- 
-
- 
- 
- 
- 
- 
-/
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
-
-# 674 "xdraw2.inc.s"
-
-
-
-
-
- 
- 
- 
-
-.file "xdraw2.inc.S"
-
-
-
-
- 
- 
- 
-
-
-
-
-
-
-
-
-
-
-
- 
- 
- 
-
-
-
-
-# 960 "xdraw2.inc.s"
-
-
-# 194 "xdraw2.S" 2
-
-
-
-
-
-
-
-
-.L_END_trisetup_Default_clip_nocull_invalid  :
-.size _trisetup_Default_clip_nocull_invalid  ,.L_END_trisetup_Default_clip_nocull_invalid  - _trisetup_Default_clip_nocull_invalid  
+END_PROC_TYPE(clip_nocull_invalid):
+.size PROC_TYPE(clip_nocull_invalid),END_PROC_TYPE(clip_nocull_invalid)-PROC_TYPE(clip_nocull_invalid)
 
 .align 32
-.globl _trisetup_Default_clip_cull_invalid  
-.type _trisetup_Default_clip_cull_invalid  ,@function
-_trisetup_Default_clip_cull_invalid  :
+.globl PROC_TYPE(clip_cull_invalid)
+.type PROC_TYPE(clip_cull_invalid),@function
+PROC_TYPE(clip_cull_invalid):
 
-
+#define LOCL(arg) .L_clip_cull_invalid_##arg
 	
+#define GLIDE_VALIDATE_STATE 1
+#define GLIDE_CLIP_COORDS 1
+#define GLIDE_CULLING 1
+#define GLIDE_PACK_RGB 0
+#define GLIDE_PACK_ALPHA 0
+#define GLIDE_GENERIC_SETUP 0
+#include "xdraw2.inc.s"
+#undef GLIDE_GENERIC_SETUP
+#undef GLIDE_PACK_ALPHA
+#undef GLIDE_PACK_RGB
+#undef GLIDE_CULLING
+#undef GLIDE_CLIP_COORDS
+#undef GLIDE_VALIDATE_STATE
 
-
-
-
-
-
-# 1 "xdraw2.inc.s" 1
- 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
- 
-
- 
- 
- 
- 
- 
-/
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
-
-# 674 "xdraw2.inc.s"
-
-
-
-
-
- 
- 
- 
-
-.file "xdraw2.inc.S"
-
-
-
-
- 
- 
- 
-
-
-
-
-
-
-
-
-
-
-
- 
- 
- 
-
-
-
-
-# 960 "xdraw2.inc.s"
-
-
-# 218 "xdraw2.S" 2
-
-
-
-
-
-
-
-
-.L_END_trisetup_Default_clip_cull_invalid  :
-.size _trisetup_Default_clip_cull_invalid  ,.L_END_trisetup_Default_clip_cull_invalid  - _trisetup_Default_clip_cull_invalid  
+END_PROC_TYPE(clip_cull_invalid):
+.size PROC_TYPE(clip_cull_invalid),END_PROC_TYPE(clip_cull_invalid)-PROC_TYPE(clip_cull_invalid)
 
 .align 32
-.globl _trisetup_Default_clip_cull_valid  
-.type _trisetup_Default_clip_cull_valid  ,@function
-_trisetup_Default_clip_cull_valid  :
+.globl PROC_TYPE(clip_cull_valid)
+.type PROC_TYPE(clip_cull_valid),@function
+PROC_TYPE(clip_cull_valid):
 
-
-
-
-
+#ifdef LOCAL
+#undef LOCAL
+#endif
+#define LOCAL(arg) L_clip_cull_valid_##arg
 	
+#define GLIDE_VALIDATE_STATE 0
+#define GLIDE_CLIP_COORDS 1
+#define GLIDE_CULLING 1
+#define GLIDE_PACK_RGB 0
+#define GLIDE_PACK_ALPHA 0
+#define GLIDE_GENERIC_SETUP 0
+#include "xdraw2.inc.s"
+#undef GLIDE_GENERIC_SETUP
+#undef GLIDE_PACK_ALPHA
+#undef GLIDE_PACK_RGB
+#undef GLIDE_CULLING
+#undef GLIDE_CLIP_COORDS
+#undef GLIDE_VALIDATE_STATE
 
-
-
-
-
-
-# 1 "xdraw2.inc.s" 1
- 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
- 
-
- 
- 
- 
- 
- 
-/
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
-
-# 674 "xdraw2.inc.s"
-
-
-
-
-
- 
- 
- 
-
-.file "xdraw2.inc.S"
-
-
-
-
- 
- 
- 
-
-
-
-
-
-
-
-
-
-
-
- 
- 
- 
-
-
-
-
-# 960 "xdraw2.inc.s"
-
-
-# 245 "xdraw2.S" 2
-
-
-
-
-
-
-
-
-.L_END_trisetup_Default_clip_cull_valid  :
-.size _trisetup_Default_clip_cull_valid  ,.L_END_trisetup_Default_clip_cull_valid  - _trisetup_Default_clip_cull_valid  
+END_PROC_TYPE(clip_cull_valid):
+.size PROC_TYPE(clip_cull_valid),END_PROC_TYPE(clip_cull_valid)-PROC_TYPE(clip_cull_valid)
 
 .align 32
-.globl _trisetup_Default_clip_nocull_valid  
-.type _trisetup_Default_clip_nocull_valid  ,@function
-_trisetup_Default_clip_nocull_valid  :
+.globl PROC_TYPE(clip_nocull_valid)
+.type PROC_TYPE(clip_nocull_valid),@function
+PROC_TYPE(clip_nocull_valid):
 
-
-
-
-
+#ifdef LOCAL
+#undef LOCAL
+#endif
+#define LOCAL(arg) L_clip_nocull_valid_##arg
 	
+#define GLIDE_VALIDATE_STATE 0
+#define GLIDE_CLIP_COORDS 1
+#define GLIDE_CULLING 0
+#define GLIDE_PACK_RGB 0
+#define GLIDE_PACK_ALPHA 0
+#define GLIDE_GENERIC_SETUP 0
+#include "xdraw2.inc.s"
+#undef GLIDE_GENERIC_SETUP
+#undef GLIDE_PACK_ALPHA
+#undef GLIDE_PACK_RGB
+#undef GLIDE_CULLING
+#undef GLIDE_CLIP_COORDS
+#undef GLIDE_VALIDATE_STATE
 
-
-
-
-
-
-# 1 "xdraw2.inc.s" 1
- 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
- 
-
- 
- 
- 
- 
- 
-/
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
-
-# 674 "xdraw2.inc.s"
-
-
-
-
-
- 
- 
- 
-
-.file "xdraw2.inc.S"
-
-
-
-
- 
- 
- 
-
-
-
-
-
-
-
-
-
-
-
- 
- 
- 
-
-
-
-
-# 960 "xdraw2.inc.s"
-
-
-# 272 "xdraw2.S" 2
-
-
-
-
-
-
-
-
-.L_END_trisetup_Default_clip_nocull_valid  :
-.size _trisetup_Default_clip_nocull_valid  ,.L_END_trisetup_Default_clip_nocull_valid  - _trisetup_Default_clip_nocull_valid  
+END_PROC_TYPE(clip_nocull_valid):
+.size PROC_TYPE(clip_nocull_valid),END_PROC_TYPE(clip_nocull_valid)-PROC_TYPE(clip_nocull_valid)
 
 .align 32
-.globl _trisetup_Default_win_nocull_invalid  
-.type _trisetup_Default_win_nocull_invalid  ,@function
-_trisetup_Default_win_nocull_invalid  :
+.globl PROC_TYPE(win_nocull_invalid)
+.type PROC_TYPE(win_nocull_invalid),@function
+PROC_TYPE(win_nocull_invalid):
 
-
-
-
-
+#ifdef LOCAL
+#undef LOCAL
+#endif
+#define LOCAL(arg) L_win_nocull_invalid_##arg
 	
-
-
-
-
-
-
-# 1 "xdraw2.inc.s" 1
- 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
- 
-
- 
- 
- 
- 
- 
-/
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
-
-# 674 "xdraw2.inc.s"
-
-
-
-
-
- 
- 
- 
-
-.file "xdraw2.inc.S"
-
-
-
-
- 
- 
- 
-
-
-
-
-
-
-
-
-
-
-# 709 "xdraw2.inc.s"
-
- 
-	push %esi
-	push %edi
-
-	push %ebx
-	push %ebp
-
-	mov 4  + 16  (%esp) , %esi 
-	
- 
- 
-
-# 737 "xdraw2.inc.s"
-
- 
-
-# 751 "xdraw2.inc.s"
-
-	
-L_win_nocull_invalid_pastContextTest  :
-
- 
-	movl 0x00000b78 (%esi ) , %edx
-	test %edx , %edx
-	je L_win_nocull_invalid_no_validation  
-	call _grValidateState
-.align 4
-
-	
-L_win_nocull_invalid_no_validation  :
-# 823 "xdraw2.inc.s"
-
-
-L_win_nocull_invalid_nocull  :
- 
- 
-	mov 0x0000004c (%esi ) , %eax
-	mov 0x00000dec (%esi ) , %ebx
-
-	add $4 , %eax
-	cmp %eax , %ebx
-
-	jge L_win_nocull_invalid___triBegin  
-
-	pushl $836
-	push $0x0
-
-	push %eax
-	call _grCommandTransportMakeRoom
-	add $12, %esp
-
- 
-
-
-
-
-
-
-
-
-
-.macro GR_FIFO_WRITE __addr __offset __data
-# 866 "xdraw2.inc.s"
-
-	mov \__data , \__offset(\__addr)
-
-.endm	 
-
-.align 4
-L_win_nocull_invalid___triBegin  :
-	mov 0x00000de4 (%esi ) , %ebp 	 
-	mov $8 + 16  - 16  , %ecx 	 
-
-	mov 0x00000dd8 (%esi ) , %eax	 
-	nop 
-
-	GR_FIFO_WRITE %ebp  , 0 , %eax	 
-	add $4 , %ebp 	 
-
-.align 4
-L_win_nocull_invalid___vertexStart  :
-	mov 16 (%esp, %ecx ) , %edx 	 
-	add $8 , %ebp 
-
-	nop 	 
-	nop 
-
-	movl (%edx ) , %eax	 
-	lea 0x00000124 (%esi ) , %ebx 	 
-
-	GR_FIFO_WRITE %ebp  , -8 , %eax	 
-	movl 4(%edx ) , %eax	 
-
-	xor %edi  , %edi 	 
-	GR_FIFO_WRITE %ebp  , -4 , %eax	 
-
-L_win_nocull_invalid___doParams  :
-	movl (%ebx ) , %eax	 
-	add $4 , %ebx 	 
-
-	cmp $0 , %eax	 
-	je L_win_nocull_invalid___nextVertex  
-
- 
- 
-	nop 
-	nop 
-
-L_win_nocull_invalid___paramLoop  :
-	movl (%eax,%edx ) , %edi 	 
-	add $4 , %ebp 	 
-
-	movl (%ebx ) , %eax	 
-	add $4 , %ebx 	 
-
-	cmp $0 , %eax	 
-	GR_FIFO_WRITE %ebp  , -4 , %edi 	 
-
-	jne L_win_nocull_invalid___paramLoop  
-
-.align 4
-L_win_nocull_invalid___nextVertex  :
- 
-	add $4 , %ecx 
-
-	cmp $16 + 16  - 16 +4 , %ecx 	 
-	jne L_win_nocull_invalid___vertexStart  
-
- 
-	mov %ebp  , %eax
-	mov 0x00000de4 (%esi ) , %ebx
-
-	mov %ebp  , 0x00000de4 (%esi )
-	sub %ebx , %eax
-
-	mov 0x00000010 (%esi ) , %ebx	 
-	sub %eax , 0x00000dec (%esi )
-
-	add $1 , %ebx
-	mov %ebx , 0x00000010 (%esi )
-
- 
-	mov $0x1 , %eax
-
-L_win_nocull_invalid___triDone  :
- 
-	mov 0x0000000c (%esi ) , %ecx
-	pop %ebp
-
-	add $1 , %ecx	 
-	pop %ebx
-
-	pop %edi
-	mov %ecx , 0x0000000c (%esi )
-
-	pop %esi
-	ret
-
-
-# 299 "xdraw2.S" 2
-
-
-
-
-
-
-
-
-.L_END_trisetup_Default_win_nocull_invalid  :
-.size _trisetup_Default_win_nocull_invalid  ,.L_END_trisetup_Default_win_nocull_invalid  - _trisetup_Default_win_nocull_invalid  
+#define GLIDE_VALIDATE_STATE 1
+#define GLIDE_CLIP_COORDS 0
+#define GLIDE_CULLING 0
+#define GLIDE_PACK_RGB 0
+#define GLIDE_PACK_ALPHA 0
+#define GLIDE_GENERIC_SETUP 0
+#include "xdraw2.inc.s"
+#undef GLIDE_GENERIC_SETUP
+#undef GLIDE_PACK_ALPHA
+#undef GLIDE_PACK_RGB
+#undef GLIDE_CULLING
+#undef GLIDE_CLIP_COORDS
+#undef GLIDE_VALIDATE_STATE
+
+END_PROC_TYPE(win_nocull_invalid):
+.size PROC_TYPE(win_nocull_invalid),END_PROC_TYPE(win_nocull_invalid)-PROC_TYPE(win_nocull_invalid)
 
 .align 32
-.globl _trisetup_Default_win_cull_invalid  
+.globl PROC_TYPE(win_cull_invalid)
 
-.type _trisetup_Default_win_cull_invalid  ,@function
-_trisetup_Default_win_cull_invalid  :
+.type PROC_TYPE(win_cull_invalid),@function
+PROC_TYPE(win_cull_invalid):
 
-
-
-
-
+#ifdef LOCAL
+#undef LOCAL
+#endif
+#define LOCAL(arg) L_win_cull_invalid_##arg
 	
-
-
-
-
-
-
-# 1 "xdraw2.inc.s" 1
- 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
- 
-
- 
- 
- 
- 
- 
-/
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
-
-# 674 "xdraw2.inc.s"
-
-
-
-
-
- 
- 
- 
-
-.file "xdraw2.inc.S"
-
-
-
-
- 
- 
- 
-
-
-
-
-
-
-
-
-
-
-# 709 "xdraw2.inc.s"
-
- 
-	push %esi
-	push %edi
-
-	push %ebx
-	push %ebp
-
-	mov 4  + 16  (%esp) , %esi 
-	
- 
- 
-
-# 737 "xdraw2.inc.s"
-
- 
-
-# 751 "xdraw2.inc.s"
-
-	
-L_win_cull_invalid_pastContextTest  :
-
- 
-	movl 0x00000b78 (%esi ) , %edx
-	test %edx , %edx
-	je L_win_cull_invalid_no_validation  
-	call _grValidateState
-.align 4
-
-	
-L_win_cull_invalid_no_validation  :
-
-
-
-
-
-
-
-
- 
- 
-	mov 8 + 16  (%esp) , %eax 
-	mov 12 + 16  (%esp) , %ebx 
-
-	mov 0x000001e0 (%esi ) , %edx 
-	mov 16 + 16  (%esp) , %ecx 
-
-	test %edx  , %edx 
-	jz L_win_cull_invalid_nocull  
-
-	shl $31 , %edx 	 
-
-L_win_cull_invalid_Area_Computation  :
- 
- 
-	flds 0 (%eax )	 
-	fsubs 0 (%ebx )	 
-	flds 0 (%ebx )	 
-	fsubs 0 (%ecx )	 
-	flds 4 (%ebx )	 
-	fsubs 4 (%ecx )	 
-	flds 4 (%eax )	 
-	fsubs 4 (%ebx )	 
-	fld %st(3)	 
-	fmul %st(2) , %st	 
-	fld %st(3)	 
-	fmul %st(2) , %st	 
-	fsubrp %st , %st(1)	 
-	fsts One+0x04 	 
-
- 
-	fstp %st(0)	 
-	fstp %st(0)	 
-	fstp %st(0)	 
-	fstp %st(0)	 
-	fstp %st(0)	 
-
-	mov One+0x04  , %ebp 	 
-	xor %eax , %eax	 
-
- 
-	and $0x7fffffff , %ebp 	 
-	jz L_win_cull_invalid___triDone  
-
- 
-	mov One+0x04  , %ebp 	 
-	xor %edx  , %ebp 	 
-
-	jge L_win_cull_invalid___triDone  
-.align 4
-
-
-L_win_cull_invalid_nocull  :
- 
- 
-	mov 0x0000004c (%esi ) , %eax
-	mov 0x00000dec (%esi ) , %ebx
-
-	add $4 , %eax
-	cmp %eax , %ebx
-
-	jge L_win_cull_invalid___triBegin  
-
-	pushl $836
-	push $0x0
-
-	push %eax
-	call _grCommandTransportMakeRoom
-	add $12, %esp
-
- 
-
-
-
-
-
-
-
-
-
-.macro GR_FIFO_WRITE __addr __offset __data
-# 866 "xdraw2.inc.s"
-
-	mov \__data , \__offset(\__addr)
-
-.endm	 
-
-.align 4
-L_win_cull_invalid___triBegin  :
-	mov 0x00000de4 (%esi ) , %ebp 	 
-	mov $8 + 16  - 16  , %ecx 	 
-
-	mov 0x00000dd8 (%esi ) , %eax	 
-	nop 
-
-	GR_FIFO_WRITE %ebp  , 0 , %eax	 
-	add $4 , %ebp 	 
-
-.align 4
-L_win_cull_invalid___vertexStart  :
-	mov 16 (%esp, %ecx ) , %edx 	 
-	add $8 , %ebp 
-
-	nop 	 
-	nop 
-
-	movl (%edx ) , %eax	 
-	lea 0x00000124 (%esi ) , %ebx 	 
-
-	GR_FIFO_WRITE %ebp  , -8 , %eax	 
-	movl 4(%edx ) , %eax	 
-
-	xor %edi  , %edi 	 
-	GR_FIFO_WRITE %ebp  , -4 , %eax	 
-
-L_win_cull_invalid___doParams  :
-	movl (%ebx ) , %eax	 
-	add $4 , %ebx 	 
-
-	cmp $0 , %eax	 
-	je L_win_cull_invalid___nextVertex  
-
- 
- 
-	nop 
-	nop 
-
-L_win_cull_invalid___paramLoop  :
-	movl (%eax,%edx ) , %edi 	 
-	add $4 , %ebp 	 
-
-	movl (%ebx ) , %eax	 
-	add $4 , %ebx 	 
-
-	cmp $0 , %eax	 
-	GR_FIFO_WRITE %ebp  , -4 , %edi 	 
-
-	jne L_win_cull_invalid___paramLoop  
-
-.align 4
-L_win_cull_invalid___nextVertex  :
- 
-	add $4 , %ecx 
-
-	cmp $16 + 16  - 16 +4 , %ecx 	 
-	jne L_win_cull_invalid___vertexStart  
-
- 
-	mov %ebp  , %eax
-	mov 0x00000de4 (%esi ) , %ebx
-
-	mov %ebp  , 0x00000de4 (%esi )
-	sub %ebx , %eax
-
-	mov 0x00000010 (%esi ) , %ebx	 
-	sub %eax , 0x00000dec (%esi )
-
-	add $1 , %ebx
-	mov %ebx , 0x00000010 (%esi )
-
- 
-	mov $0x1 , %eax
-
-L_win_cull_invalid___triDone  :
- 
-	mov 0x0000000c (%esi ) , %ecx
-	pop %ebp
-
-	add $1 , %ecx	 
-	pop %ebx
-
-	pop %edi
-	mov %ecx , 0x0000000c (%esi )
-
-	pop %esi
-	ret
-
-
-# 327 "xdraw2.S" 2
-
-
-
-
-
-
-
-
-.L_END_trisetup_Default_win_cull_invalid  :
-.size _trisetup_Default_win_cull_invalid  ,.L_END_trisetup_Default_win_cull_invalid  - _trisetup_Default_win_cull_invalid  
+#define GLIDE_VALIDATE_STATE 1
+#define GLIDE_CLIP_COORDS 0
+#define GLIDE_CULLING 1
+#define GLIDE_PACK_RGB 0
+#define GLIDE_PACK_ALPHA 0
+#define GLIDE_GENERIC_SETUP 0
+#include "xdraw2.inc.s"
+#undef GLIDE_GENERIC_SETUP
+#undef GLIDE_PACK_ALPHA
+#undef GLIDE_PACK_RGB
+#undef GLIDE_CULLING
+#undef GLIDE_CLIP_COORDS
+#undef GLIDE_VALIDATE_STATE
+
+END_PROC_TYPE(win_cull_invalid):
+.size PROC_TYPE(win_cull_invalid),END_PROC_TYPE(win_cull_invalid)-PROC_TYPE(win_cull_invalid)
 
 .align 32
-.globl _trisetup_Default_win_cull_valid  
-.type _trisetup_Default_win_cull_valid  ,@function
-_trisetup_Default_win_cull_valid  :
+.globl PROC_TYPE(win_cull_valid)
+.type PROC_TYPE(win_cull_valid),@function
+PROC_TYPE(win_cull_valid):
 
-
-
-
-
+#ifdef LOCAL
+#undef LOCAL
+#endif
+#define LOCAL(arg) L_win_cull_valid_##arg
 	
-
-
-
-
-
-
-# 1 "xdraw2.inc.s" 1
- 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
- 
-
- 
- 
- 
- 
- 
-/
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
-
-# 674 "xdraw2.inc.s"
-
-
-
-
-
- 
- 
- 
-
-.file "xdraw2.inc.S"
-
-
-
-
- 
- 
- 
-
-
-
-
-
-
-
-
-
-
-# 709 "xdraw2.inc.s"
-
- 
-	push %esi
-	push %edi
-
-	push %ebx
-	push %ebp
-
-	mov 4  + 16  (%esp) , %esi 
-	
- 
- 
-
-# 737 "xdraw2.inc.s"
-
- 
-
-# 751 "xdraw2.inc.s"
-
-	
-L_win_cull_valid_pastContextTest  :
-
-
-
-
-
-
-
-
-	
-L_win_cull_valid_no_validation  :
-
-
-
-
-
-
-
-
- 
- 
-	mov 8 + 16  (%esp) , %eax 
-	mov 12 + 16  (%esp) , %ebx 
-
-	mov 0x000001e0 (%esi ) , %edx 
-	mov 16 + 16  (%esp) , %ecx 
-
-	test %edx  , %edx 
-	jz L_win_cull_valid_nocull  
-
-	shl $31 , %edx 	 
-
-L_win_cull_valid_Area_Computation  :
- 
- 
-	flds 0 (%eax )	 
-	fsubs 0 (%ebx )	 
-	flds 0 (%ebx )	 
-	fsubs 0 (%ecx )	 
-	flds 4 (%ebx )	 
-	fsubs 4 (%ecx )	 
-	flds 4 (%eax )	 
-	fsubs 4 (%ebx )	 
-	fld %st(3)	 
-	fmul %st(2) , %st	 
-	fld %st(3)	 
-	fmul %st(2) , %st	 
-	fsubrp %st , %st(1)	 
-	fsts One+0x04 	 
-
- 
-	fstp %st(0)	 
-	fstp %st(0)	 
-	fstp %st(0)	 
-	fstp %st(0)	 
-	fstp %st(0)	 
-
-	mov One+0x04  , %ebp 	 
-	xor %eax , %eax	 
-
- 
-	and $0x7fffffff , %ebp 	 
-	jz L_win_cull_valid___triDone  
-
- 
-	mov One+0x04  , %ebp 	 
-	xor %edx  , %ebp 	 
-
-	jge L_win_cull_valid___triDone  
-.align 4
-
-
-L_win_cull_valid_nocull  :
- 
- 
-	mov 0x0000004c (%esi ) , %eax
-	mov 0x00000dec (%esi ) , %ebx
-
-	add $4 , %eax
-	cmp %eax , %ebx
-
-	jge L_win_cull_valid___triBegin  
-
-	pushl $836
-	push $0x0
-
-	push %eax
-	call _grCommandTransportMakeRoom
-	add $12, %esp
-
- 
-
-
-
-
-
-
-
-
-
-.macro GR_FIFO_WRITE __addr __offset __data
-# 866 "xdraw2.inc.s"
-
-	mov \__data , \__offset(\__addr)
-
-.endm	 
-
-.align 4
-L_win_cull_valid___triBegin  :
-	mov 0x00000de4 (%esi ) , %ebp 	 
-	mov $8 + 16  - 16  , %ecx 	 
-
-	mov 0x00000dd8 (%esi ) , %eax	 
-	nop 
-
-	GR_FIFO_WRITE %ebp  , 0 , %eax	 
-	add $4 , %ebp 	 
-
-.align 4
-L_win_cull_valid___vertexStart  :
-	mov 16 (%esp, %ecx ) , %edx 	 
-	add $8 , %ebp 
-
-	nop 	 
-	nop 
-
-	movl (%edx ) , %eax	 
-	lea 0x00000124 (%esi ) , %ebx 	 
-
-	GR_FIFO_WRITE %ebp  , -8 , %eax	 
-	movl 4(%edx ) , %eax	 
-
-	xor %edi  , %edi 	 
-	GR_FIFO_WRITE %ebp  , -4 , %eax	 
-
-L_win_cull_valid___doParams  :
-	movl (%ebx ) , %eax	 
-	add $4 , %ebx 	 
-
-	cmp $0 , %eax	 
-	je L_win_cull_valid___nextVertex  
-
- 
- 
-	nop 
-	nop 
-
-L_win_cull_valid___paramLoop  :
-	movl (%eax,%edx ) , %edi 	 
-	add $4 , %ebp 	 
-
-	movl (%ebx ) , %eax	 
-	add $4 , %ebx 	 
-
-	cmp $0 , %eax	 
-	GR_FIFO_WRITE %ebp  , -4 , %edi 	 
-
-	jne L_win_cull_valid___paramLoop  
-
-.align 4
-L_win_cull_valid___nextVertex  :
- 
-	add $4 , %ecx 
-
-	cmp $16 + 16  - 16 +4 , %ecx 	 
-	jne L_win_cull_valid___vertexStart  
-
- 
-	mov %ebp  , %eax
-	mov 0x00000de4 (%esi ) , %ebx
-
-	mov %ebp  , 0x00000de4 (%esi )
-	sub %ebx , %eax
-
-	mov 0x00000010 (%esi ) , %ebx	 
-	sub %eax , 0x00000dec (%esi )
-
-	add $1 , %ebx
-	mov %ebx , 0x00000010 (%esi )
-
- 
-	mov $0x1 , %eax
-
-L_win_cull_valid___triDone  :
- 
-	mov 0x0000000c (%esi ) , %ecx
-	pop %ebp
-
-	add $1 , %ecx	 
-	pop %ebx
-
-	pop %edi
-	mov %ecx , 0x0000000c (%esi )
-
-	pop %esi
-	ret
-
-
-# 354 "xdraw2.S" 2
-
-
-
-
-
-
-
-
-.L_END_trisetup_Default_win_cull_valid  :
-.size _trisetup_Default_win_cull_valid  ,.L_END_trisetup_Default_win_cull_valid  - _trisetup_Default_win_cull_valid  
+#define GLIDE_VALIDATE_STATE 0
+#define GLIDE_CLIP_COORDS 0
+#define GLIDE_CULLING 1
+#define GLIDE_PACK_RGB 0
+#define GLIDE_PACK_ALPHA 0
+#define GLIDE_GENERIC_SETUP 0
+#include "xdraw2.inc.s"
+#undef GLIDE_GENERIC_SETUP
+#undef GLIDE_PACK_ALPHA
+#undef GLIDE_PACK_RGB
+#undef GLIDE_CULLING
+#undef GLIDE_CLIP_COORDS
+#undef GLIDE_VALIDATE_STATE
+
+END_PROC_TYPE(win_cull_valid):
+.size PROC_TYPE(win_cull_valid),END_PROC_TYPE(win_cull_valid)-PROC_TYPE(win_cull_valid)
 
 .align 32
-.globl _trisetup_Default_win_nocull_valid  
-.type _trisetup_Default_win_nocull_valid  ,@function
-_trisetup_Default_win_nocull_valid  :
+.globl PROC_TYPE(win_nocull_valid)
+.type PROC_TYPE(win_nocull_valid),@function
+PROC_TYPE(win_nocull_valid):
 
-
-
-
-
+#ifdef LOCAL
+#undef LOCAL
+#endif
+#define LOCAL(arg) L_win_nocull_valid_##arg
 	
-
-
-
-
-
-
-# 1 "xdraw2.inc.s" 1
- 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
- 
-
- 
- 
- 
- 
- 
-/
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
-
-# 674 "xdraw2.inc.s"
-
-
-
-
-
- 
- 
- 
-
-.file "xdraw2.inc.S"
-
-
-
-
- 
- 
- 
-
-
-
-
-
-
-
-
-
-
-# 709 "xdraw2.inc.s"
-
- 
-	push %esi
-	push %edi
-
-	push %ebx
-	push %ebp
-
-	mov 4  + 16  (%esp) , %esi 
-	
- 
- 
-
-# 737 "xdraw2.inc.s"
-
- 
-
-# 751 "xdraw2.inc.s"
-
-	
-L_win_nocull_valid_pastContextTest  :
-
-
-
-
-
-
-
-
-	
-L_win_nocull_valid_no_validation  :
-# 823 "xdraw2.inc.s"
-
-
-L_win_nocull_valid_nocull  :
- 
- 
-	mov 0x0000004c (%esi ) , %eax
-	mov 0x00000dec (%esi ) , %ebx
-
-	add $4 , %eax
-	cmp %eax , %ebx
-
-	jge L_win_nocull_valid___triBegin  
-
-	pushl $836
-	push $0x0
-
-	push %eax
-	call _grCommandTransportMakeRoom
-	add $12, %esp
-
- 
-
-
-
-
-
-
-
-
-
-.macro GR_FIFO_WRITE __addr __offset __data
-# 866 "xdraw2.inc.s"
-
-	mov \__data , \__offset(\__addr)
-
-.endm	 
-
-.align 4
-L_win_nocull_valid___triBegin  :
-	mov 0x00000de4 (%esi ) , %ebp 	 
-	mov $8 + 16  - 16  , %ecx 	 
-
-	mov 0x00000dd8 (%esi ) , %eax	 
-	nop 
-
-	GR_FIFO_WRITE %ebp  , 0 , %eax	 
-	add $4 , %ebp 	 
-
-.align 4
-L_win_nocull_valid___vertexStart  :
-	mov 16 (%esp, %ecx ) , %edx 	 
-	add $8 , %ebp 
-
-	nop 	 
-	nop 
-
-	movl (%edx ) , %eax	 
-	lea 0x00000124 (%esi ) , %ebx 	 
-
-	GR_FIFO_WRITE %ebp  , -8 , %eax	 
-	movl 4(%edx ) , %eax	 
-
-	xor %edi  , %edi 	 
-	GR_FIFO_WRITE %ebp  , -4 , %eax	 
-
-L_win_nocull_valid___doParams  :
-	movl (%ebx ) , %eax	 
-	add $4 , %ebx 	 
-
-	cmp $0 , %eax	 
-	je L_win_nocull_valid___nextVertex  
-
- 
- 
-	nop 
-	nop 
-
-L_win_nocull_valid___paramLoop  :
-	movl (%eax,%edx ) , %edi 	 
-	add $4 , %ebp 	 
-
-	movl (%ebx ) , %eax	 
-	add $4 , %ebx 	 
-
-	cmp $0 , %eax	 
-	GR_FIFO_WRITE %ebp  , -4 , %edi 	 
-
-	jne L_win_nocull_valid___paramLoop  
-
-.align 4
-L_win_nocull_valid___nextVertex  :
- 
-	add $4 , %ecx 
-
-	cmp $16 + 16  - 16 +4 , %ecx 	 
-	jne L_win_nocull_valid___vertexStart  
-
- 
-	mov %ebp  , %eax
-	mov 0x00000de4 (%esi ) , %ebx
-
-	mov %ebp  , 0x00000de4 (%esi )
-	sub %ebx , %eax
-
-	mov 0x00000010 (%esi ) , %ebx	 
-	sub %eax , 0x00000dec (%esi )
-
-	add $1 , %ebx
-	mov %ebx , 0x00000010 (%esi )
-
- 
-	mov $0x1 , %eax
-
-L_win_nocull_valid___triDone  :
- 
-	mov 0x0000000c (%esi ) , %ecx
-	pop %ebp
-
-	add $1 , %ecx	 
-	pop %ebx
-
-	pop %edi
-	mov %ecx , 0x0000000c (%esi )
-
-	pop %esi
-	ret
-
-
-# 381 "xdraw2.S" 2
-
-
-
-
-
-
-
-
-.L_END_trisetup_Default_win_nocull_valid  :
-.size _trisetup_Default_win_nocull_valid  ,.L_END_trisetup_Default_win_nocull_valid  - _trisetup_Default_win_nocull_valid  
-
-# 428 "xdraw2.S"
-
+#define GLIDE_VALIDATE_STATE 0
+#define GLIDE_CLIP_COORDS 0
+#define GLIDE_CULLING 0
+#define GLIDE_PACK_RGB 0
+#define GLIDE_PACK_ALPHA 0
+#define GLIDE_GENERIC_SETUP 0
+#include "xdraw2.inc.s"
+#undef GLIDE_GENERIC_SETUP
+#undef GLIDE_PACK_ALPHA
+#undef GLIDE_PACK_RGB
+#undef GLIDE_CULLING
+#undef GLIDE_CLIP_COORDS
+#undef GLIDE_VALIDATE_STATE
+
+END_PROC_TYPE(win_nocull_valid):
+.size PROC_TYPE(win_nocull_valid),END_PROC_TYPE(win_nocull_valid)-PROC_TYPE(win_nocull_valid)
+
+#ifdef GL_AMD3D
+.align 32
+.globl _trisetup_clip_coor_thunk
+.type _trisetup_clip_coor_thunk,@function
+_trisetup_clip_coor_thunk:
+
+#define procPtr %eax
+#define vPtr %ecx
+#define gc %edx	/*  Current graphics context passed implicitly through edx */
+
+/*  Call through to the gc->curArchProcs.drawTrianglesProc w/o */
+/*  adding extra stuff to the stack. I wish we could actually *
+/*  do a direct return here w/o too much work. */
+	lea _va-STKOFF(%esp) , vPtr	/*  Get vertex pointer address */
+	mov drawTrianglesProc(gc) , procPtr	/*  Prefetch drawTriangles proc addr */
+
+	push vPtr	/*  vertex array address */
+	push $3	/*  3 vertices */
+
+/*  If debugging make sure that we're in clip coordinates */
+#ifdef GLIDE_DEBUG
+	mov CoordinateSpace(gc) , %eax
+	test $1 , %eax
+	jnz L_trisetup_clip_coor_thunk__clipSpace
+	xor %eax , %eax
+	mov %eax , (%eax)
+L_trisetup_clip_coor_thunk__clipSpace:
+#endif	/*  GLIDE_DEBUG */
+
+	push $1	/*  mode = grDrawVertexArray */
+	call procPtr	/*  (*gc->curArchProcs.drawTrianglesProc)(grDrawVertexArray, 3, vPtr) */
+
+	ret	/*  pop 3 dwords (vertex addrs) and return     */
+L_END__trisetup_clip_coor_thunk:
+.size _trisetup_clip_coor_thunk,L_END__trisetup_clip_coor_thunk-_trisetup_clip_coor_thunk
+
+#endif	/*  GL_AMD3D     */
 
 .end
 

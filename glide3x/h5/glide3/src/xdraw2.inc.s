@@ -1,46 +1,46 @@
-/* 
+/*
 ** THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONLY
 ** PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGHT
 ** TO USE THE GLIDE TRADEMARK WITHOUT PRIOR WRITTEN PERMISSION OF 3DFX
-** INTERACTIVE, INC. A COPY OF THIS LICENSE MAY BE OBTAINED FROM THE  
-** DISTRIBUTOR OR BY CONTACTING 3DFX INTERACTIVE INC(info@3dfx.com).  
-** THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER 
-** EXPRESSED OR IMPLIED. SEE THE 3DFX GLIDE GENERAL PUBLIC LICENSE FOR A
-** FULL TEXT OF THE NON-WARRANTY PROVISIONS.  
-** 
+** INTERACTIVE, INC. A COPY OF THIS LICENSE MAY BE OBTAINED FROM THE
+** DISTRIBUTOR OR BY CONTACTING 3DFX INTERACTIVE INC(info@3dfx.com).
+** THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER
+** EXPRESSED OR IMPLIED. SEE THE 3DFX GLIDE GENERAL PUBLIC LICENSE FOR 
+** FULL TEXT OF THE NON-WARRANTY PROVISIONS. 
+**
 ** USE, DUPLICATION OR DISCLOSURE BY THE GOVERNMENT IS SUBJECT TO
 ** RESTRICTIONS AS SET FORTH IN SUBDIVISION (C)(1)(II) OF THE RIGHTS IN
 ** TECHNICAL DATA AND COMPUTER SOFTWARE CLAUSE AT DFARS 252.227-7013,
 ** AND/OR IN SIMILAR OR SUCCESSOR CLAUSES IN THE FAR, DOD OR NASA FAR
 ** SUPPLEMENT. UNPUBLISHED RIGHTS RESERVED UNDER THE COPYRIGHT LAWS OF
 ** THE UNITED STATES. 
-** 
+**
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
-*/
+ */
 
 /*  -*-asm-*- */
 
-/*  $Header$ */
-/*  $Revision$ */
-/*  $Log$ */
-/*  Revision 1.1  2000/06/15 00:27:43  joseph */
-/*  Initial checkin into SourceForge. */
+/*  $Header$ *
+/*  $Revision$ *
+/*  $Log$
+/*  Revision 1.1  2000/06/15 00:27:43  joseph
+/*  Initial checkin into SourceForge.
 /
-/*  Revision 1.1.1.1  2000/04/26 20:35:32  poppa */
-/*  Initial Napalm Glide from Precision Insight */
-/* */
-/*  Revision 1.2  2000/04/18 15:58:15  poppa */
-/*  h5/glide3/src/glide.h: Define grSwapBuffers as grDRISwapBuffers.  This */
-/*                         may not be right. */
-/*  h5/glide3/src/makefile.linux: */
-/*                         Added definition of AFLAGS. */
-/*  h5/glide3/src/xdraw2.S:Fixed some macros to make the assembler work on */
-/*                         this file. */
-/*  h5/glide3/src/xdraw2.inc.S: */
-/*                         Fixed some macros to make the assembler work on */
-/*                         this file. */
-/*  h5/minihwc/gdebug.c:   Apparently fclose(NULL) fails in Linux.  This */
-/*                         is the POSIX behavior as I recall. */
+/*  Revision 1.1.1.1  2000/04/26 20:35:32  poppa
+/*  Initial Napalm Glide from Precision Insight
+/*
+/*  Revision 1.2  2000/04/18 15:58:15  poppa
+/*  h5/glide3/src/glide.h: Define grSwapBuffers as grDRISwapBuffers.  This
+/*                         may not be right.
+/*  h5/glide3/src/makefile.linux:
+/*                         Added definition of AFLAGS.
+/*  h5/glide3/src/xdraw2.S:Fixed some macros to make the assembler work on
+/*                         this file.
+/*  h5/glide3/src/xdraw2.inc.S:
+/*                         Fixed some macros to make the assembler work on
+/*                         this file.
+/*  h5/minihwc/gdebug.c:   Apparently fclose(NULL) fails in Linux.  This
+/*                         is the POSIX behavior as I recall.
 /* */
 /*   */
 /*  2     10/30/97 6:53p Peter */
@@ -245,7 +245,7 @@ LOCAL(no_validation):
 	cmp tempVal , %ebx	/*  fifo space required >= space available ? */
 	jge LOCAL(__triBegin)	/*  yup, push out triangle data to Voodoo */
 
-	pushl $__LINE__	/*  line number inside this function */
+	push $__LINE__	/*  line number inside this function */
 	push $0x0	/*  pointer to function name = NULL */
 
 	push tempVal	/*  fifo space required */
@@ -833,7 +833,7 @@ LOCAL(nocull):
 
 	jge LOCAL(__triBegin)
 
-	pushl $__LINE__
+	push $__LINE__
 	push $0x0
 
 	push %eax
