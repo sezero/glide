@@ -868,7 +868,7 @@ hwcSetMemClock(hwcBoardInfo *bInfo, FxU32 speedInMHz)
 } /* hwcSetMemClock */
 
 char *
-hwcGetenv(char *a) 
+hwcGetenv(const char *a) 
 {
   envitem *ptr;
 
