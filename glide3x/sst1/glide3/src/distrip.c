@@ -19,7 +19,6 @@
 **
 ** $Header$
 ** $Log$
-**
 ** Revision 1.1.2.1  2004/03/02 07:55:29  dborca
 ** Bastardised Glide3x for SST1
 **
