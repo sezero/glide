@@ -707,25 +707,13 @@ int resetmtrr_3dfx(void)
 #endif /* HAVE_MTRR */
 
 static struct file_operations fops_3dfx = {
-	NULL,			/* llseek (2.1) / lseek (2.0) */
-	NULL,			/* read */
-	NULL,			/* write */
-	NULL,			/* readdir */
-	NULL,			/* poll (2.1) / select (2.0) */
-	ioctl_3dfx,		/* ioctl */
-	mmap_3dfx,		/* mmap */
-	open_3dfx,		/* open */
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 1, 118)
-	NULL,			/* flush (2.1.118+) */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 4, 0)
+	owner:			THIS_MODULE,
 #endif
-	release_3dfx,		/* release */
-	NULL,			/* fsync */
-	NULL,			/* fasync */
-	NULL,			/* check_media_change */
-	NULL,			/* revalidate */
-#ifdef KERNEL_VER_2_1
-	NULL			/* lock (2.1) */
-#endif
+	ioctl:			ioctl_3dfx,		/* ioctl */
+	mmap:			mmap_3dfx,		/* mmap */
+	open:			open_3dfx,		/* open */
+	release:		release_3dfx,		/* release */
 };
 
 #ifdef MODULE
