@@ -35,11 +35,12 @@ XPATH ?= /usr/X11/lib
 
 CC = gcc
 CFLAGS = -Wall -O2 -ffast-math -mcpu=$(CPU)
-CFLAGS += -Iinclude
+CFLAGS += -I$(TOP)/$(FX_GLIDE_HW)/glide3/src -I$(TOP)/$(FX_GLIDE_HW)/incsrc
+CFLAGS += -I$(TOP)/swlibs/fxmisc
 CFLAGS += -DH3
 CFLAGS += -DFX_GLIDE_NAPALM=1
 
-LDFLAGS = -s -Llib
+LDFLAGS = -s -L$(TOP)/$(FX_GLIDE_HW)/lib
 
 LDLIBS = -lglide3
 ifeq ($(DGA),1)
