@@ -19,12 +19,18 @@
 #
 # $Header$
 # $Log$
+# Revision 1.1.1.1  1999/12/07 21:48:51  joseph
+# Initial checkin into SourceForge.
+#
 # 
 # 2     3/04/97 9:10p Dow
 # Neutered mutiplatform multiheaded monster.
 #
 #
 
+# This used to be cpudtect.s but I renamed it as a quick way to make it work
+# with the shared 3dfx.mak
+	
 .file  "cpudtect.s"
 
 # 586P

@@ -189,11 +189,11 @@ ASM_DEFINES += -DGLIDE_DEBUG=0
 endif
 
 xdraw.o : fxgasm.h xdraw.S
-	$(CC) -c -o $@ xdraw.S $(ASM_OPTS) $(LAOPTS)
-#	gasp xdraw.s $(ASM_DEFINES) | as -V -Qy -o xdraw.o
+#	$(CC) -c -o $@ xdraw.S $(ASM_OPTS) $(LAOPTS)
+	gasp xdraw.S $(ASM_DEFINES) | as -V -Qy -o xdraw.o
 
 xdraw96.o : fxgasm.h xdraw96.
-	$(CC) -c -o $@ xdraw96.S $(ASM_OPTS) $(LAOPTS)
-#	gasp xdraw96.s $(ASM_DEFINES) | as -V -Qy -o xdraw96.o
+#	$(CC) -c -o $@ xdraw96.S $(ASM_OPTS) $(LAOPTS)
+	gasp xdraw96.S $(ASM_DEFINES) | as -V -Qy -o xdraw96.o
 
 gsplash.o : gsplash.c splshdat.c fxinline.h

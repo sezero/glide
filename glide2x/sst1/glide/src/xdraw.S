@@ -18,6 +18,9 @@
 #
 # $Header$
 # $Log$
+# Revision 1.2  1999/12/11 00:41:48  joseph
+# Changed \(.data) to .section .data to fix build errors with binutils 2.9.5.
+#
 # Revision 1.1.1.1  1999/12/07 21:48:55  joseph
 # Initial checkin into SourceForge.
 #
@@ -42,6 +45,9 @@
 #
 #
 
+# This used to be xdraw.s but I renamed it as a quick way to make it work
+# with the shared 3dfx.mak
+	
 # This is a GASP input file
 	
 .file  "xdraw.s"

@@ -19,6 +19,9 @@
 ## $Header$
 ## $Revision$
 ## $Log$
+## Revision 1.1.1.1  1999/12/07 21:48:55  joseph
+## Initial checkin into SourceForge.
+##
 # 
 # 2     7/07/97 2:14p Jdt
 # assembly now on par with C code.
@@ -27,6 +30,9 @@
 # B4 Chip field fix.
 ##
 
+# This used to be xdraw96.s but I renamed it as a quick way to make it work
+# with the shared 3dfx.mak
+	
 .file   "xdraw96.s"
 #OPTION OLDSTRUCTS       
 #.586P
