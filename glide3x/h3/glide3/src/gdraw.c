@@ -19,6 +19,9 @@
  **
  ** $Header$
  ** $Log$
+ ** Revision 1.2.2.3  2000/11/20 16:30:11  alanh
+ ** cast &ADY and &DX to int* instead of long*
+ **
  ** Revision 1.2.2.2  2000/11/02 10:27:24  alanh
  ** Commit some of Dave Mosberger's code:
  **
@@ -181,7 +184,9 @@
 
 #include <memory.h>
 
+#include "config.h"
 #include <3dfx.h>
+#include <glidesys.h>
 
 #define FX_DLL_DEFINITION
 #include <fxdll.h>
@@ -301,7 +306,7 @@ GR_ENTRY(grDrawTriangle, void, (const void *a, const void *b, const void *c))
     }
     lostContext: ; /* <-- my, that's odd, but MSVC was insistent  */
   }
-#elif defined( __linux__ ) || defined(__FreeBSD__)
+#elif (GLIDE_PLATFORM & GLIDE_OS_UNIX)
   {
     GR_BEGIN_NOFIFOCHECK("grDrawTriangle",92);
     TRISETUP(a, b, c);

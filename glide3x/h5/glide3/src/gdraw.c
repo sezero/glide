@@ -281,7 +281,7 @@ GR_ENTRY(grDrawLine, void, (const void *a, const void *b))
             _grDrawLineStrip(GR_VTX_PTR_ARRAY, GR_LINES, 2, verts);
         }
 #else
-#ifdef __linux__
+#ifdef DRI_BUILD
   {
     const void *verts[2] = { a,b };
     if (gc->state.grEnableArgs.primitive_smooth_mode & GR_AA_ORDERED_LINES_MASK)
@@ -289,12 +289,12 @@ GR_ENTRY(grDrawLine, void, (const void *a, const void *b))
     else
       _grDrawLineStrip(GR_VTX_PTR_ARRAY, GR_LINES, 2, verts);
   }
-#else	/* defined(__linux__) */
+#else	/* defined(DRI_BUILD) */
   if (gc->state.grEnableArgs.primitive_smooth_mode & GR_AA_ORDERED_LINES_MASK)
     _grAADrawLineStrip(GR_VTX_PTR_ARRAY, GR_LINES, 2, &(void *)a);
   else
     _grDrawLineStrip(GR_VTX_PTR_ARRAY, GR_LINES, 2, &(void *)a);
-#endif	/* defined(__linux__) */
+#endif	/* defined(DRI_BUILD) */
 #endif
     
 #undef FN_NAME
@@ -305,9 +305,9 @@ GR_ENTRY(grDrawLine, void, (const void *a, const void *b))
  */
 
 #if !defined(__POWERPC__) || GLIDE_USE_C_TRISETUP
-#if !defined(GLIDE_DEBUG) && !defined(__linux__)
+#if !defined(GLIDE_DEBUG) && !defined(DRI_BUILD)
 __declspec( naked )
-#endif	/* !defined(GLIDE_DEBUG) && !defined(__linux__) */
+#endif	/* !defined(GLIDE_DEBUG) && !defined(DRI_BUILD) */
 GR_ENTRY(grDrawTriangle, void, (const void *a, const void *b, const void *c))
 {
 #define FN_NAME "grDrawTriangle"
@@ -355,14 +355,14 @@ GR_ENTRY(grDrawTriangle, void, (const void *a, const void *b, const void *c))
     }
     lostContext: ; /* <-- my, that's odd, but MSVC was insistent  */
   }
-#elif defined(__linux__)
+#elif defined(DRI_BUILD)
   {
     GR_BEGIN_NOFIFOCHECK("grDrawTriangle",92);
     TRISETUP(a, b, c);
     GR_END();
   }
   
-#else /* defined(__linux__) */
+#else /* defined(DRI_BUILD) */
 #error "Write triangle proc dispatch for this compiler"
 #endif /* Triangle proc dispatch routine */
 #undef FN_NAME
@@ -1178,4 +1178,5 @@ _grDrawTriangles_Default(FxI32 mode, FxI32 count, void *pointers)
 #endif
 #undef FN_NAME
 } /* _grDrawTriangles */
+
 

@@ -272,6 +272,7 @@
  * 
 **
 */
+#include "config.h"
 #include <3dfx.h>
 #define FX_DLL_DEFINITION
 #include <fxdll.h>
@@ -280,9 +281,9 @@
 #include "fxglide.h"
 #include "fxcmd.h"
 
-#ifdef	__linux__
+#ifdef DRI_BUILD
 #include <lindri.h>
-#endif	/* defined(__linux__) */
+#endif	/* defined(DRI_BUILD) */
 
 /*---------------------------------------------------------------------------
 ** grLfbConstantAlpha
@@ -643,19 +644,19 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t type, GrBuffer_t buffer,
       }
 
       if (rv) {
-#ifdef	__linux__
+#ifdef	DRI_BUILD
         if (!colBufferIndex) {
           info->strideInBytes = driInfo.stride;
         } else {
           info->strideInBytes     = gc->bInfo->buffInfo.bufLfbStride;
         }
-#else	/* defined(__linux__) */
+#else	/* defined(DRI_BUILD) */
        /*
         * This is the default for 3D LFBs,
         * which are always 2048 pixels wide.
         */
         info->strideInBytes     = 0x1000;
-#endif	/* defined(__linux__) */
+#endif	/* defined(DRI_BUILD) */
         info->origin            = origin;
 
     /* tbext. Kind of ugly. Kind of duplicate / unfolded code
@@ -699,17 +700,15 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t type, GrBuffer_t buffer,
           } 
 #endif          
             else {
-#ifdef __linux__
+#ifdef	defined(DRI_BUILD)
            /*
             * For Linux, we just return the correct address and
             * stride.
             */
 	    info->strideInBytes   = gc->bInfo->buffInfo.bufLfbStride;
             info->lfbPtr          = (void *)gc->lfbBuffers[colBufferIndex];
-#else	/* defined(__linux__) */
+#else	/* defined(DRI_BUILD) */
             info->lfbPtr          = (void *)gc->lfb_ptr;
-#endif	/* defined(__linux__) */
-#ifndef	__linux__
             switch (writeMode) {
             case GR_LFBWRITEMODE_565_DEPTH:
             case GR_LFBWRITEMODE_555_DEPTH:
@@ -720,7 +719,7 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t type, GrBuffer_t buffer,
               info->strideInBytes <<= 1;
               break;
             }
-#endif	/* defined(__linux__) */
+#endif	/* defined(DRI_BUILD) */
           }
           REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 2, 0x3);
           REG_GROUP_SET(hw, colBufferAddr, gc->textureBuffer.addr );
@@ -729,15 +728,15 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t type, GrBuffer_t buffer,
         } else /* else !gc->textureBuffer.on  */        {
           if (type == GR_LFB_READ_ONLY) {
             info->lfbPtr        = (void *)gc->lfbBuffers[colBufferIndex];
-#if	defined(__linux__)
+#if	defined(DRI_BUILD)
             if (colBufferIndex == 0) {
                 info->strideInBytes = driInfo.stride;
             } else {
                 info->strideInBytes     = gc->bInfo->buffInfo.bufLfbStride;
             }
-#else	/* defined(__linux__) */
+#else	/* defined(DRI_BUILD) */
             info->strideInBytes     = gc->bInfo->buffInfo.bufLfbStride;
-#endif	/* defined(__linux__) */
+#endif	/* defined(DRI_BUILD) */
 #if __POWERPC__
             if(IS_NAPALM(gc->bInfo->pciInfo.deviceID)) {
               if(gc->grPixelSize == 2) {
@@ -787,18 +786,15 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t type, GrBuffer_t buffer,
             /* Make sure dither rotation is disabled for 3D LFBs. */
             _3dlfb = FXTRUE;
             
-#if	defined(__linux__)
+#if	defined(DRI_BUILD)
            /*
             * For Linux, we just return the correct address and
             * stride.
             */
 	    info->strideInBytes   = gc->bInfo->buffInfo.bufLfbStride;
             info->lfbPtr          = (void *)gc->lfbBuffers[colBufferIndex];
-#else	/* defined(__linux__) */
+#else	/* defined(DRI_BUILD) */
             info->lfbPtr          = (void *)gc->lfb_ptr;
-#endif	/* defined(__linux__) */
-
-#ifndef	__linux__
             switch (writeMode) {
             case GR_LFBWRITEMODE_565_DEPTH:
             case GR_LFBWRITEMODE_555_DEPTH:
@@ -809,7 +805,7 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t type, GrBuffer_t buffer,
               info->strideInBytes <<= 1;
               break;
             }
-#endif	/* defined(__linux__) */
+#endif	/* defined(DRI_BUILD) */
           }
         }
         
@@ -1500,4 +1496,5 @@ GR_ENTRY(grLfbReadRegion, FxBool, (GrBuffer_t src_buffer,
 #undef FN_NAME
 }/* grLfbReadRegion */
 #endif /* if __POWERPC__ */
+
 

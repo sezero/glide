@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/11/24 21:44:57  joseph
+** Initial checkin for SourceForge
+**
 ** 
 ** 4     4/06/99 3:54p Dow
 ** Alt tab again.
@@ -66,6 +69,7 @@
 
 #include <3dfx.h>
 
+#include "config.h"
 #define FX_DLL_DEFINITION
 #include <fxdll.h>
 #include <glide.h>

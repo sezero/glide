@@ -325,6 +325,7 @@
 
 #ifdef GLIDE3
 
+#include "config.h"
 #include <3dfx.h>
 #include <glidesys.h>
 
@@ -840,7 +841,7 @@ GR_EXT_ENTRY(grLfbConstantStencil, void , (GrStencil_t value) )
   
   Return:
   -------------------------------------------------------------------*/
-#ifdef __linux__
+#ifdef DRI_BUILD
 GR_EXT_ENTRY(grStipplePattern, void , (GrStipplePattern_t stipple))
 {
  #define FN_NAME "grStipplePattern"
@@ -853,7 +854,7 @@ GR_EXT_ENTRY(grStipplePattern, void , (GrStipplePattern_t stipple))
 
  #undef FN_NAME
 } /* grStipplePattern */
-#endif /* __linux__ */
+#endif /* DRI_BUILD */
 
 
 /*-------------------------------------------------------------------
@@ -1016,7 +1017,7 @@ GR_EXT_ENTRY(grAlphaCombineExt, void , (GrACUColor_t     a,
   
   Return:
   -------------------------------------------------------------------*/
-#ifdef __linux__
+#ifdef DRI_BUILD
 GR_DIENTRY(grStippleMode, void , (GrStippleMode_t mode) )
 {
  #define FN_NAME "grStippleMode"
@@ -1029,7 +1030,7 @@ GR_DIENTRY(grStippleMode, void , (GrStippleMode_t mode) )
 
  #undef FN_NAME
 } /* grStippleMode */
-#endif /* __linux__ */
+#endif /* DRI_BUILD */
 
 /*-------------------------------------------------------------------
   Function: grDitherMode
@@ -2071,9 +2072,9 @@ _grValidateState()
     _grDepthBufferFunction(LOADARG(grDepthBufferFunction, fnc));
     _grDepthBufferMode(LOADARG(grDepthBufferMode, mode));
     _grDitherMode(LOADARG(grDitherMode, mode));
-#ifdef __linux__
+#ifdef DRI_BUILD
     _grStippleMode(LOADARG(grStippleMode, mode));
-#endif /* __linux__ */
+#endif /* DRI_BUILD */
     _grSstOrigin(LOADARG(grSstOrigin, origin));
     _grRenderBuffer(LOADARG(grRenderBuffer, buffer));
         /* tbext */
@@ -2286,7 +2287,7 @@ _grValidateState()
     REG_GROUP_END();
   }
 
-#ifdef __linux__
+#ifdef DRI_BUILD
   if (NOTVALID(stipple)) {
     gc->state.shadow.stipple = LOADARG(grStipplePattern, stipple);
     REG_GROUP_BEGIN(BROADCAST_ID, stipple, 1, 0x01);
@@ -2295,7 +2296,7 @@ _grValidateState()
     }
     REG_GROUP_END();
   }
-#endif /* __linux__ */
+#endif /* DRI_BUILD */
 
   if (NOTVALID(stencilOp)) {
     FxU32 stencilOp = gc->state.shadow.stencilOp;
@@ -2836,7 +2837,7 @@ GR_DIENTRY(grViewport, void , (FxI32 x, FxI32 y, FxI32 width, FxI32 height) )
 #undef FN_NAME
 } /* grViewport */
 
-#ifdef __linux__
+#ifdef DRI_BUILD
 void
 _grInvalidateAll()
 {
@@ -2844,6 +2845,7 @@ _grInvalidateAll()
 
   grGlideSetState(&gc->state);
 }
-#endif  /* defined(__linux__) */
+#endif  /* DRI_BUILD */
 
 #endif /* GLIDE3 */
+

@@ -58,6 +58,12 @@ float fxTime(void)
         once = tb.time;                 // as float is not big enough
     return (tb.time - once) + tb.millitm * .001;
     
+#elif defined(__FreeBSD__)
+#include <sys/time.h>
+    struct timeval t;
+    struct timezone tz;
+    gettimeofday(&t, &tz);
+    return ((float)t.tv_sec + ((float)t.tv_usec)/1000000.0);
 #else
 #if defined ( WIN32 ) || ( __DOS__ )
 #   include <time.h>

@@ -19,6 +19,9 @@
  **
  ** $Header$
  ** $Log$
+ ** Revision 1.1.1.1.2.1  2000/11/24 18:38:46  alanh
+ ** Add new grStippleMode and grStipplePattern functions for Voodoo3 and Voodoo5.
+ **
  ** Revision 1.1.1.1  1999/11/24 21:44:54  joseph
  ** Initial checkin for SourceForge
  **
@@ -175,6 +178,7 @@
 
 #ifdef GLIDE3
 
+#include "config.h"
 #include <3dfx.h>
 #include <glidesys.h>
 
@@ -549,7 +553,7 @@ GR_DIENTRY(grDepthBufferMode, void , (GrDepthBufferMode_t mode) )
   
   Return:
   -------------------------------------------------------------------*/
-#ifdef __linux__
+#if defined(DRI_BUILD)
 GR_EXT_ENTRY(grStipplePattern, void , (GrStipplePattern_t stipple))
 {
  #define FN_NAME "grStipplePattern"
@@ -562,7 +566,7 @@ GR_EXT_ENTRY(grStipplePattern, void , (GrStipplePattern_t stipple))
 
  #undef FN_NAME
 } /* grStipplePattern */
-#endif /* __linux__ */
+#endif /* DRI_BUILD */
 
  /*-------------------------------------------------------------------
   Function: grStippleMode
@@ -574,7 +578,7 @@ GR_EXT_ENTRY(grStipplePattern, void , (GrStipplePattern_t stipple))
   
   Return:
   -------------------------------------------------------------------*/
-#ifdef __linux__
+#if defined(DRI_BUILD)
 GR_DIENTRY(grStippleMode, void , (GrStippleMode_t mode) )
 {
  #define FN_NAME "grStippleMode"
@@ -587,7 +591,7 @@ GR_DIENTRY(grStippleMode, void , (GrStippleMode_t mode) )
 
  #undef FN_NAME
 } /* grStippleMode */
-#endif /* __linux__ */
+#endif /* DRI_BUILD */
 
 /*-------------------------------------------------------------------
   Function: grDitherMode
@@ -948,9 +952,9 @@ _grValidateState()
     _grDepthBufferFunction(LOADARG(grDepthBufferFunction, fnc));
     _grDepthBufferMode(LOADARG(grDepthBufferMode, mode));
     _grDitherMode(LOADARG(grDitherMode, mode));
-#ifdef __linux__
+#if defined(DRI_BUILD)
     _grStippleMode(LOADARG(grStippleMode, mode));
-#endif /* __linux__ */
+#endif
     _grSstOrigin(LOADARG(grSstOrigin, origin));
     _grRenderBuffer(LOADARG(grRenderBuffer, buffer));
 
@@ -982,19 +986,19 @@ _grValidateState()
       
       if (enableColorMask) fbzMode |= SST_RGBWRMASK;
       if (enableDepthMask) {
-        GR_CHECK_COMPATABILITY(FN_NAME,
+        /*GR_CHECK_COMPATABILITY(FN_NAME,
                                ((enableAlphaMask != 0) && (gc->state.shadow.fbzMode & SST_ENALPHABUFFER)),
-                               "alpha writes enabled even though depth buffering");
+                               "alpha writes enabled even though depth buffering");*/
 
         fbzMode |= SST_ZAWRMASK;
       } else if (enableAlphaMask > 0) {
-        GR_CHECK_COMPATABILITY(FN_NAME,
+	/*GR_CHECK_COMPATABILITY(FN_NAME,
                                (fbzMode & SST_ENDEPTHBUFFER),
                                "alpha writes enabled even though depth buffering");
 
         GR_CHECK_COMPATABILITY(FN_NAME,
                                (gc->grAuxBuf == 0),
-                               "cannot enable alpha buffering w/o allocating one");
+                               "cannot enable alpha buffering w/o allocating one");*/
 
         fbzMode |= SST_ENALPHABUFFER | SST_ZAWRMASK;
       }
@@ -1009,7 +1013,7 @@ _grValidateState()
     reg_cnt++;
   }
 
-#ifdef __linux__
+#if defined(DRI_BUILD)
   if (NOTVALID(stipple)) {
     gc->state.shadow.stipple = LOADARG(grStipplePattern, stipple);
     REG_GROUP_BEGIN(BROADCAST_ID, stipple, 1, 0x01);
@@ -1018,7 +1022,7 @@ _grValidateState()
     }
     REG_GROUP_END();
   }
-#endif /* __linux__ */
+#endif /* DRI_BUILD */
 
   if (NOTVALID(lfbMode)) {
     FxU32
@@ -1388,7 +1392,7 @@ GR_DIENTRY(grViewport, void , (FxI32 x, FxI32 y, FxI32 width, FxI32 height) )
 #undef FN_NAME
 } /* grViewport */
 
-#ifdef __linux__
+#if (GLIDE_PLATFORM & GLIDE_OS_UNIX)
 void
 _grInvalidateAll()
 {

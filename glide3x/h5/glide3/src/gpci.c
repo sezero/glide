@@ -995,13 +995,13 @@ _grSstDetectResources(void)
       chipCount = atoi(envChipNum);
 
 
-#ifndef __linux__
+#ifndef DRI_BUILD
     if ((hInfo = hwcInit(0x121a, 0x3)) == NULL)
       goto __errExit; 
-#else	/* defined(__linux__) */
+#else	/* defined(DRI_BUILD) */
     if ((hInfo = hwcInit(0x121a, 0x9)) == NULL)
       goto __errExit; 
-#endif	/* defined(__linux__) */
+#endif	/* defined(DRI_BUILD) */
 
     /* Iterate through boards found */
     for (ctx = 0; ctx < hInfo->nBoards; ctx++) {
@@ -1725,3 +1725,4 @@ DllMain(HANDLE hInst, ULONG  ul_reason_for_call, LPVOID lpReserved)
 
 } /* DllMain */
 #endif
+

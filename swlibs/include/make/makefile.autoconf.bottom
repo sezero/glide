@@ -105,7 +105,8 @@ GINCLUDES = $(CVG_VINCLUDES) $(H3_VINCLUDES) $(H5_VINCLUDES) \
             -I$(top_srcdir)/swlibs/fxmemmap \
             -I$(top_srcdir)/swlibs/fxmisc \
             -I$(top_srcdir)/swlibs/newpci/pcilib \
-            -I$(top_srcdir)/swlibs/@TEXTURE_UTILITIES_DIR@/lib
+            -I$(top_srcdir)/swlibs/@TEXTURE_UTILITIES_DIR@/lib \
+            -I$(top_srcdir)/swlibs/include
 
 ########################################################################
 #

@@ -23,6 +23,8 @@
 #include <string.h>
 #include <math.h>
 
+#include <glidesys.h>
+
 #include "texusint.h"
 
 #ifdef GLIDE3
@@ -448,11 +450,11 @@ _txParseCmdline(int argc, char **argv, TxOpts *txOptions)
 
 }
 
-#if	defined(__linux__)
+#if (GLIDE_PLATFORM & GLIDE_OS_UNIX)
 #define MAIN_RETURN_TYPE int
-#else	/* defined(__linux__) */
+#else	/* (GLIDE_PLATFORM & GLIDE_OS_UNIX) */
 #define	MAIN_RETURN_TYPE void
-#endif	/* defined(__linux__) */
+#endif	/* (GLIDE_PLATFORM & GLIDE_OS_UNIX) */
 
 MAIN_RETURN_TYPE
 main(int argc, char **argv)
@@ -762,3 +764,4 @@ main(int argc, char **argv)
   }
   exit(0);
 }
+

@@ -52,6 +52,9 @@
 unsigned char inverse_pal[1<<INVERSE_PAL_TOTAL_BITS];
 #endif
 
+#ifndef uint
+typedef unsigned int	uint;
+#endif
 typedef unsigned long   ulong;
 typedef unsigned char   uchar;
 typedef unsigned short  ushort;

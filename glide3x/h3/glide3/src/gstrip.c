@@ -19,6 +19,15 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.2.1  2000/11/02 10:27:24  alanh
+** Commit some of Dave Mosberger's code:
+**
+** If mode is not zero, initialize "stride" to the
+** number of floats that corresponds to the size of a pointer (1 on a
+** 32-bit platform, 2 on a 64-bit platform).  This code works
+** properly as long as sizeof(void*)==N*sizeof(float) for some
+** integer constant N.
+**
 ** Revision 1.1.1.1  1999/11/24 21:44:57  joseph
 ** Initial checkin for SourceForge
 **
@@ -119,6 +128,7 @@
 **
 */
 #ifdef GLIDE3
+#include "config.h"
 #include <3dfx.h>
 #include <glidesys.h>
 

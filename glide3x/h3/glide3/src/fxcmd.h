@@ -21,6 +21,9 @@
 ** $Revision$ 
 ** $Date$ 
 ** $Log$
+** Revision 1.1.1.1.2.2  2000/09/07 15:29:52  alanh
+** fix white space
+**
 ** Revision 1.1.1.1.2.1  2000/08/30 08:47:03  alanh
 ** Changes for Voodoo3 for 64bit architectures
 **
@@ -139,6 +142,10 @@
 #ifndef __FX_CMD_H__
 #define __FX_CMD_H__
 
+#ifndef GLIDE_PLATFORM
+#error no glidesys.h
+#endif
+
 /*--------------------------------------------------------
   Command Transport Macros and Functions
   --------------------------------------------------------*/
@@ -151,11 +158,11 @@ extern FxU32
 _grGet32(volatile FxU32* const sstAddr);
 #endif /* USE_PACKET_FIFO */
 
-#ifdef __linux__
+#if defined(DRI_BUILD)
 void _grImportFifo(AnyPtr fifoPtr, AnyPtr fifoRead);
 void _grExportFifo(FxU32 *fifoPtr, FxU32 *fifoRead);
 void _grInvalidateAll(void);
-#endif /* __linux__ */
+#endif /* DRI_BUILD*/
 
 #if !USE_PACKET_FIFO
 /* NOTE: fifoFree is the number of entries, each is 8 bytes */
@@ -318,7 +325,7 @@ if (gc->cmdTransportInfo.autoBump) {\
 
 
 #if USE_PACKET_FIFO
-#if GLIDE_DEBUG
+#if GDBG_INFO_ON
 void _grFifoWriteDebug(FxU32 addr, FxU32 val, FxU32 fifoPtr);
 #define DEBUGFIFOWRITE(a,b,c) \
 _grFifoWriteDebug((FxU32) a, (FxU32) b, (FxU32) c)

@@ -254,13 +254,13 @@ int _guHeapCheck( void )
 }
 #endif
 
-#if !__POWERPC__ && !defined(__linux__)
+#if !__POWERPC__ && !(GLIDE_PLATFORM & GLIDE_OS_UNIX)
 void
 i3(void) 
 {
   __asm int 3;
 } 
-#endif /* !__POWERPC__ && !defined(__linux__) */
+#endif /* !__POWERPC__ && !(GLIDE_PLATFORM & GLIDE_OS_UNIX) */
 
 void
 _grAssert(char *exp, char *fileName, int lineNo)
@@ -323,3 +323,5 @@ _grAssert(char *exp, char *fileName, int lineNo)
   exit(-1);
 
 } /* _grAssert */
+
+

@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "config.h"
 #include <3dfx.h>
 #include <glidesys.h>
 
@@ -37,7 +38,7 @@
  * macros for creating assembler offset files
  *----------------------------------------------------------------------*/
 
-#ifndef	__linux
+#if !(GLIDE_PLATFORM & GLIDE_OS_UNIX)
 #define NEWLINE printf("\n")
 #define COMMENT printf(";----------------------------------------------------------------------\n")
 
@@ -57,7 +58,7 @@
         printf("SIZEOF_%s\t= %08xh\n",pname,sizeof(p)); \
     else printf("SIZEOF_%s\t= %10d\n",pname,sizeof(p))
 
-#else	/* defined(__linux__) */
+#else	/* !(GLIDE_PLATFORM & GLIDE_OS_UNIX) */
 
 #define NEWLINE printf("\n");
 #define COMMENT printf("/*----------------------------------------------------------------------*/\n")
@@ -77,7 +78,7 @@
 #define SIZEOF(p,pname) if (hex) \
         printf("#define SIZEOF_%s 0x%08x\n",pname,sizeof(p)); \
     else printf("#define SIZEOF_%s %10d\n",pname,sizeof(p))
-#endif	/* defined(__linux__) */
+#endif	/* !(GLIDE_PLATFORM & GLIDE_OS_UNIX) */
 
 int
 main (int argc, char **argv)
@@ -240,3 +241,4 @@ main (int argc, char **argv)
 
     return 0;
 }
+

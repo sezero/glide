@@ -1136,14 +1136,14 @@ typedef struct {
     struct {
       GrDitherMode_t mode;
     } grDitherModeArgs;
-#ifdef __linux__
+#ifdef DRI_BUILD
     struct {
       GrStippleMode_t mode;
     } grStippleModeArgs;
     struct {
       GrStipplePattern_t stipple;
     } grStipplePatternArgs;
-#endif /* __linux__ */
+#endif /* DRI_BUILD */
     struct {
       GrBuffer_t buffer;
     } grRenderBufferArgs;
@@ -1282,11 +1282,11 @@ typedef struct {
  * the _archXXXX proc list that is selected at grGlideInit time.
  */
 
-#if !defined(__linux__) || defined(GLIDE_USE_C_TRISETUP)
+#if !defined(DRI_BUILD) || defined(GLIDE_USE_C_TRISETUP)
 typedef FxI32 (FX_CALL* GrTriSetupProc)(const void *a, const void *b, const void *c);
-#else   /* defined(__linux__) */
+#else   /* defined(DRI_BUILD) */
 typedef FxI32 (FX_CALL* GrTriSetupProc)(const void *g, const void *a, const void *b, const void *c);
-#endif  /* defined(__linux__) */
+#endif  /* defined(DRI_BUILD) */
 
 typedef void  (FX_CALL* GrVertexListProc)(FxU32 pkType, FxU32 type, FxI32 mode, FxI32 count, void* ptrs);
 typedef void  (FX_CALL* GrDrawTrianglesProc)(FxI32 mode, FxI32 count, void* vPtrs);
@@ -1339,11 +1339,11 @@ void FX_CSTYLE _grDrawVertexList_3DNow_Window(FxU32 pktype, FxU32 type, FxI32 mo
 void FX_CSTYLE _grDrawVertexList_3DNow_Clip(FxU32 pktype, FxU32 type, FxI32 mode, FxI32 count, void *pointers);
 #endif /* GL_AMD3D */
 
-#ifdef __linux__
+#ifdef DRI_BUILD
 /* Define this structure otherwise it assumes the structure only exists
    within the function */
 struct GrGC_s;
-#endif	/* defined(__linux__) */
+#endif	/* defined(DRI_BUILD) */
 
 /* _GlideRoot.curTexProcs is an array of (possibly specialized)
  * function pointers indexed by texture format size (8/16 bits for
@@ -1756,11 +1756,11 @@ typedef struct GrGC_s
                                    occur every 64K writes. */
 
   } cmdTransportInfo;
-#if !defined(__linux__) || defined(GLIDE_USE_C_TRISETUP)
+#if !defined(DRI_BUILD) || defined(GLIDE_USE_C_TRISETUP)
   FxI32 (FX_CALL *triSetupProc)(const void *a, const void *b, const void *c);
-#else	/* defined(__linux__) */
+#else	/* defined(DRI_BUILD) */
   FxI32 (FX_CALL *triSetupProc)(const void *g, const void *a, const void *b, const void *c);
-#endif	/* defined(__linux__) */
+#endif	/* defined(DRI_BUILD) */
   
   SstIORegs
     *ioRegs;                    /* I/O remap regs */
@@ -2259,16 +2259,16 @@ _trisetup_noclip_valid(const void *va, const void *vb, const void *vc );
 #elif defined(__POWERPC__)
 #define TRISETUP(_a, _b, _c) \
   ((FxI32 (*)(const void *va, const void *vb, const void *vc, GrGC *gc))*gc->triSetupProc)(_a, _b, _c, gc)
-#elif defined(__linux__)
+#elif defined(DRI_BUILD)
 #ifdef GLIDE_USE_C_TRISETUP
 #define TRISETUP(a, b, c) (gc->triSetupProc)(a, b, c)
 #else
 #define TRISETUP(a, b, c) (gc->triSetupProc)(gc, a, b, c)
 #endif
-#else /* defined(__linux__) */
+#else /* defined(DRI_BUILD) */
 #define TRISETUP \
   (*gc->triSetupProc)
-#endif	/* defined(__linux__) */
+#endif	/* defined(DRI_BUILD) */
 void
 _grValidateState();
 
@@ -2337,11 +2337,11 @@ grStencilFunc(GrCmpFnc_t fnc, GrStencil_t ref, GrStencil_t mask);
 void FX_CALL 
 grStencilMask(GrStencil_t write_mask);
 
-#ifdef __linux__
+#ifdef DRI_BUILD
 void FX_CALL
 grStipplePattern(
             GrStipplePattern_t stipple);
-#endif /* __linux__ */
+#endif /* DRI_BUILD */
 
 void FX_CALL 
 grStencilOp(
@@ -2517,10 +2517,10 @@ _grDepthBufferMode( GrDepthBufferMode_t mode );
 void
 _grDitherMode( GrDitherMode_t mode );
 
-#ifdef __linux__
+#ifdef DRI_BUILD
 void
 _grStippleMode( GrStippleMode_t mode );
-#endif /* __linux__ */
+#endif /* DRI_BUILD */
 
 void
 _grRenderBuffer( GrBuffer_t buffer );
@@ -2628,10 +2628,10 @@ getThreadValueFast() {
 }
 #endif
 
-#ifdef __linux__
+#ifdef DRI_BUILD
 extern AnyPtr threadValueLinux;
 #define getThreadValueFast() threadValueLinux
-#endif /* defined(__linux__) */
+#endif /* defined(DRI_BUILD) */
 
 #define CUR_TRI_PROC(__checkValidP, __cullP) \
   (*gc->archDispatchProcs.coorModeTriVector)[__checkValidP][__cullP]
@@ -3174,4 +3174,5 @@ extern void g3LodBiasPerChip(void);
 extern FxBool MultitextureAndTrilinear(void);
 
 #endif /* __FXGLIDE_H__ */
+
 

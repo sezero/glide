@@ -176,6 +176,7 @@
 #ifndef __FX_CMD_H__
 #define __FX_CMD_H__
 
+#include "config.h"
 /*--------------------------------------------------------
   Command Transport Macros and Functions
   --------------------------------------------------------*/
@@ -188,7 +189,7 @@ extern FxU32
 _grGet32(volatile FxU32* const sstAddr);
 #endif /* USE_PACKET_FIFO */
 
-#ifdef __linux__
+#ifdef DRI_BUILD
 void _grImportFifo(AnyPtr fifoPtr, AnyPtr fifoRead);
 void _grExportFifo(FxU32 *fifoPtr, FxU32 *fifoRead);
 void _grInvalidateAll(void);
@@ -1703,3 +1704,4 @@ GR_CHECK_SIZE()
 #endif
 
 #endif /* __FX_CMD_H__ */
+

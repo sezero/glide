@@ -19,6 +19,9 @@
  **
  ** $Header$
  ** $Log$
+ ** Revision 1.1.1.1.2.1  2000/08/30 08:47:03  alanh
+ ** Changes for Voodoo3 for 64bit architectures
+ **
  ** Revision 1.1.1.1  1999/11/24 21:44:55  joseph
  ** Initial checkin for SourceForge
  **
@@ -164,6 +167,7 @@
 #include <windows.h>
 #endif
 
+#include "config.h"
 #include <3dfx.h>
 #include <glidesys.h>
 
@@ -694,7 +698,7 @@ _grCommandTransportMakeRoom(const FxI32 blockSize, const char* fName, const int 
   GR_BEGIN_NOFIFOCHECK(FN_NAME, 400);
 
   if ( gc->windowed ) {
-#if defined( GLIDE_INIT_HWC ) && !defined(__linux__)
+#if defined( GLIDE_INIT_HWC ) && !defined(DRI_BUILD)
     struct cmdTransportInfo*
       gcFifo = &gc->cmdTransportInfo;
     HwcWinFifo 
@@ -827,7 +831,7 @@ _grCommandTransportMakeRoom(const FxI32 blockSize, const char* fName, const int 
      * we wrap check the current hw fifo pointer which is going to be the
      * 2d driver's fifo if we lost our context.
      */
-#if defined(GLIDE_INIT_HWC) && !defined(__linux__)
+#if defined(GLIDE_INIT_HWC) && !defined(DRI_BUILD)
     gc->contextP = hwcQueryContext(gc->bInfo);
 #else
     gc->contextP = 1; 
@@ -1171,7 +1175,7 @@ _reg_group_begin_internal_wax( FxU32 __regBase,
 #endif /* GLIDE_DEBUG */
 #endif /* USE_PACKET_FIFO */
 
-#ifdef __linux__
+#ifdef DRI_BUILD
 
 #ifdef __alpha__
 unsigned char _fxget8( unsigned char *pval ) {
@@ -1234,5 +1238,5 @@ _grExportFifo(FxU32 *fifoPtr, FxU32 *fifoRead) {
   *fifoRead=(gcFifo->fifoRead-(AnyPtr)gc->rawLfb);
 }
 
-#endif
+#endif /* DRI_BUILD */
 

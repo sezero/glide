@@ -25,11 +25,6 @@
 */
 
 
-/* NOTE: This file is compiled to naught if we aren't
-   running under Win32 */
-
-#if defined( __WIN32__ )
-
 #include <3dfx.h>
 #include <glidesys.h>
 
@@ -40,9 +35,12 @@
 #include "fxglide.h"
 #include "fxcmd.h"
 
+/* NOTE: This file is compiled to naught if we aren't
+   running under Win32 */
+
 #if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
+
 #include <windows.h>
-#endif
 
 static CRITICAL_SECTION criticalSectionObject;
 static DWORD            tlsIndex;
@@ -113,17 +111,7 @@ void endCriticalSection( void ) {
     LeaveCriticalSection( &criticalSectionObject );
 }
 
-#elif defined(macintosh)
-
-#include <3dfx.h>
-#include <glidesys.h>
-
-#define FX_DLL_DEFINITION
-#include <fxdll.h>
-#include <glide.h>
-
-#include "fxglide.h"
-#include "fxcmd.h"
+#elif (GLIDE_PLATFORM & GLIDE_OS_MACOS)
 
 AnyPtr _threadValueMacOS;
 
@@ -157,17 +145,7 @@ void endCriticalSection(void)
 {
 }
 
-#elif defined(__linux__)
-
-#include <3dfx.h>
-#include <glidesys.h>
-
-#define FX_DLL_DEFINITION
-#include <fxdll.h>
-#include <glide.h>
-
-#include "fxglide.h"
-#include "fxcmd.h"
+#elif (GLIDE_PLATFORM & GLIDE_OS_UNIX)
 
 AnyPtr threadValueLinux;
 
@@ -199,6 +177,7 @@ void endCriticalSection(void)
 {
 }
 
-#else	/* defined(__linux__) */
+#else	/* (GLIDE_PLATFORM & GLIDE_OS_UNIX) */
 #  error "No thread synchronization/storage functions defined for this OS"
 #endif
+

@@ -30,6 +30,7 @@
 #include <string.h>
 
 #include <3dfx.h>
+#include <glidesys.h>
 
 #if __MWERKS__
 /* Dork w/ the console window */
@@ -97,7 +98,7 @@ extern int __cdecl klvfprintf(FILE        *stream,
 static FILE *gdbg_msgfile;	// GDBG info/error file
 #else /* #ifdef KERNEL */
 
-#ifndef __linux__
+#if !(GLIDE_PLATFORM & GLIDE_OS_UNIX)
 static FILE *gdbg_msgfile = stdout;	// GDBG info/error file
 #else
 static FILE *gdbg_msgfile;
@@ -168,7 +169,7 @@ gdbg_init(void)
 	SIOUXSettings.asktosaveonclose 	= false;
 #endif      
 
-#ifdef __linux__
+#if (GLIDE_PLATFORM & GLIDE_OS_UNIX)
     gdbg_msgfile = stderr;
 #endif
 

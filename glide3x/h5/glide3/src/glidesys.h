@@ -109,7 +109,7 @@ n** -----------------------------------------------------------------------
 #endif
 
 /* Check for OS */
-#if defined(__IRIX__) || defined(__sparc__) || defined(__linux__)
+#if defined(__IRIX__) || defined(__sparc__) || defined(__linux__) || defined(__FreeBSD__)
 #  define GLIDE_OS        GLIDE_OS_UNIX
 #elif defined(__DOS__)
 #  define GLIDE_OS        GLIDE_OS_DOS32

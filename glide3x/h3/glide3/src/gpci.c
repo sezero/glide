@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.2.2  2001/03/05 15:04:08  alanh
+** set FX_GLIDE_SWAPINTERVAL to 0 by default
+**
 ** Revision 1.1.1.1.2.1  2000/08/30 08:47:03  alanh
 ** Changes for Voodoo3 for 64bit architectures
 **
@@ -333,6 +336,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "config.h"
 #include <3dfx.h>
 #include <glidesys.h>
 

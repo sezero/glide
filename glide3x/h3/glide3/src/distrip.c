@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.2.1  2000/08/30 08:47:03  alanh
+** Changes for Voodoo3 for 64bit architectures
+**
 ** Revision 1.1.1.1  1999/11/24 21:44:54  joseph
 ** Initial checkin for SourceForge
 **
@@ -167,6 +170,7 @@
 */
 #ifdef GLIDE3
 
+#include "config.h"
 #include <3dfx.h>
 #include <glidesys.h>
 

@@ -20,6 +20,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.2.2.1  2000/08/30 08:47:03  alanh
+** Changes for Voodoo3 for 64bit architectures
+**
 ** Revision 1.2  2000/02/15 22:35:58  joseph
 ** Changes to support FreeBSD (patch submitted by Doug Rabson)
 **
@@ -153,7 +156,10 @@
 #  include <windows.h>
 #endif
 
+#include "config.h"
 #include <3dfx.h>
+#include <glidesys.h>
+
 #define FX_DLL_DEFINITION
 #include <fxdll.h>
 #include <glide.h>
@@ -240,7 +246,7 @@ int _guHeapCheck( void )
 }
 #endif
 
-#if !defined(__linux__) && !defined(__FreeBSD__)
+#if !(GLIDE_PLATFORM & GLIDE_OS_UNIX)
 void
 i3(void) 
 {
@@ -299,7 +305,7 @@ _grAssert(char *exp, char *fileName, int lineNo)
       gdbg_printf("\t\tStatus:            0x%X\n", GR_GET(hw->status));
     }
   }
-#endif /* (GLIDE_PLATFORM & GLIDE_HW_CVG) && USE_PACKET_FIFO */
+#endif /* USE_PACKET_FIFO */
 
   gdbg_printf("ABNORMAL TERMINATION\n");
 

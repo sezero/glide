@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/11/24 21:44:54  joseph
+** Initial checkin for SourceForge
+**
 ** 
 ** 4     4/06/99 3:54p Dow
 ** Alt tab again.
@@ -126,6 +129,8 @@
 */
 
 #include <string.h>
+
+#include "config.h"
 #include <3dfx.h>
 #include <glidesys.h>
 

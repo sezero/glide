@@ -743,7 +743,7 @@ _grCommandTransportMakeRoom(const FxI32 blockSize, const char* fName, const int 
   GR_BEGIN_NOFIFOCHECK(FN_NAME, 400);
 
   if ( gc->windowed ) {
-#if defined(GLIDE_INIT_HWC) && !defined(__linux__)
+#if defined(GLIDE_INIT_HWC) && !defined(DRI_BUILD)
     struct cmdTransportInfo*
       gcFifo = &gc->cmdTransportInfo;
     HwcWinFifo 
@@ -869,18 +869,18 @@ _grCommandTransportMakeRoom(const FxI32 blockSize, const char* fName, const int 
     }
     
     GR_SET_FIFO_PTR( 0, 0 );
-#endif /* defined(GLIDE_INIT_HWC) && !defined(__linux__) */
+#endif /* defined(GLIDE_INIT_HWC) && !defined(DRI_BUILD) */
   } else {
     /* Check here to see if we have a valid context since the last time
      * we checked. This is to protect us from loosing our context before
      * we wrap check the current hw fifo pointer which is going to be the
      * 2d driver's fifo if we lost our context.
      */
-#if defined(GLIDE_INIT_HWC) && !defined(__linux__)
+#if defined(GLIDE_INIT_HWC) && !defined(DRI_BUILD)
     gc->contextP = !(*gc->lostContext) ;
-#else /* defined(GLIDE_INIT_HWC) && !defined(__linux__) */
+#else /* defined(GLIDE_INIT_HWC) && !defined(DRI_BUILD) */
     gc->contextP = 1; /* always has context in CSIM */
-#endif /* defined(GLIDE_INIT_HWC) && !defined(__linux__) */
+#endif /* defined(GLIDE_INIT_HWC) && !defined(DRI_BUILD) */
     if (gc->contextP) {
       AnyPtr wrapAddr = 0x00UL;
       FxU32 checks;
@@ -1366,7 +1366,7 @@ _reg_group_begin_internal_wax( FxU32 __regBase,
 #endif /* GLIDE_DEBUG */
 #endif /* USE_PACKET_FIFO */
 
-#ifdef __linux__
+#ifdef DRI_BUILD
 
 #ifdef __alpha__
 unsigned char _fxget8( unsigned char *pval ) {
@@ -1436,4 +1436,5 @@ grFifoGetStalls() {
   return gc->stats.fifoStalls;
 }
 
-#endif  /* defined(__linux__) */
+#endif  /* defined(DRI_BUILD) */
+

@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.2.3  2000/11/24 18:38:46  alanh
+** Add new grStippleMode and grStipplePattern functions for Voodoo3 and Voodoo5.
+**
 ** Revision 1.1.1.1.2.2  2000/10/03 08:18:09  alanh
 ** merge trunk into Glide3-64bit branch.
 **
@@ -272,6 +275,7 @@
 #include <stdlib.h>
 
 /* 3dfx */
+#include "config.h"
 #include <3dfx.h>
 #include <glidesys.h>
 #include <gdebug.h>
@@ -775,14 +779,14 @@ typedef struct {
     struct {
       GrDitherMode_t mode;
     } grDitherModeArgs;
-#ifdef __linux__
+#ifdef DRI_BUILD
     struct {
       GrStippleMode_t mode;
     } grStippleModeArgs;
     struct {
       GrStipplePattern_t stipple;
     } grStipplePatternArgs;
-#endif /* __linux__ */
+#endif /* DRI_BUILD */
     struct {
       GrBuffer_t buffer;
     } grRenderBufferArgs;
@@ -831,7 +835,7 @@ typedef struct {
 */
 #define GR_MEMTYPE      GR_GET_RESERVED_1
 
-#ifndef __linux__
+#if !defined(DRI_BUILD)
 #define TRISETUPARGS const void *a, const void *b, const void *c
 #else
 #define TRISETUPARGS const void *g, const void *a, const void *b, const void *c
@@ -1240,7 +1244,7 @@ typedef struct GrGC_s
       windowedState;
 #endif /* GLIDE_INIT_HWC */
   } cmdTransportInfo;
-#ifndef __linux__
+#if !defined(DRI_BUILD)
   FxI32 (FX_CALL *triSetupProc)(const void *a, const void *b, const void *c);
 #else
   FxI32 (FX_CALL *triSetupProc)(const void *gc, const void *a, const void *b, const void *c);
@@ -1627,7 +1631,7 @@ _trisetup_noclip_valid(TRISETUPARGS);
 
 #else
 
-#if defined( __linux__ )
+#ifdef DRI_BUILD
 
 #define TRISETUP(a, b, c) (gc->triSetupProc)(gc, a, b, c)
 
@@ -1671,11 +1675,11 @@ _grColorCombine(
                FxBool invert );
 
 
-#ifdef __linux__
+#ifdef DRI_BUILD
 void FX_CALL
 grStipplePattern(
             GrStipplePattern_t stipple);
-#endif /* __linux__ */
+#endif
 
 void FX_CALL 
 grChromaRangeMode(GrChromaRangeMode_t mode);
@@ -1719,10 +1723,10 @@ _grDepthBufferMode( GrDepthBufferMode_t mode );
 void
 _grDitherMode( GrDitherMode_t mode );
 
-#ifdef __linux__ 
+#ifdef DRI_BUILD
 void
 _grStippleMode( GrStippleMode_t mode );
-#endif /* __linux__ */
+#endif
 
 void
 _grRenderBuffer( GrBuffer_t buffer );
@@ -1830,7 +1834,7 @@ getThreadValueFast() {
 }
 #endif
 
-#ifdef __linux__
+#if (GLIDE_PLATFORM & GLIDE_OS_UNIX)
 extern AnyPtr threadValueLinux;
 #define getThreadValueFast() threadValueLinux
 #endif

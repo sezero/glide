@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/11/24 21:44:57  joseph
+** Initial checkin for SourceForge
+**
 ** 
 ** 11    6/24/99 1:46a Stb_mmcclure
 ** Modifications to fix PRS 6627. Added hwcUnmapMemory9x for revised 9x
@@ -171,6 +174,7 @@
 */
 
 /* Surface extension currently only really works on Windows anyway */
+#include "config.h"
 #include <3dfx.h>
 
 #define FX_DLL_DEFINITION

@@ -27,12 +27,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <3dfx.h>
+#include <glidesys.h>
 #define FX_DLL_DEFINITION
 #include <fxdll.h>
 #include <fxmemmap.h>
 #include "fxpci.h"
 #include "pcilib.h"
-#ifdef __linux__
+#if (GLIDE_PLATFORM & GLIDE_OS_UNIX)
 #include "fxlinux.h"
 #endif
 
@@ -422,7 +423,7 @@ sampleVendorID(int deviceNumber, int configMode)
   }
 }
 
-#ifdef __linux__
+#if (GLIDE_PLATFORM & GLIDE_OS_UNIX)
 FxBool
 pciOpenLinux(void)
 {
@@ -445,7 +446,7 @@ pciOpenLinux(void)
   }      
   return pciLibraryInitialized;
 }
-#endif /* defined(__linux__) */
+#endif /* (GLIDE_PLATFORM & GLIDE_OS_UNIX) */
 
 FX_EXPORT FxBool FX_CSTYLE
 pciOpen( void )
@@ -469,9 +470,9 @@ pciOpen( void )
   **      Scan All PCI device numbers
   */ 
 
-#ifdef __linux__
+#if (GLIDE_PLATFORM & GLIDE_OS_UNIX)
   if (hasDev3DfxLinux) return pciOpenLinux();
-#endif /* defined(__linux__) */
+#endif /* (GLIDE_PLATFORM & GLIDE_OS_UNIX) */
 
   
   for ( deviceNumber = 0; deviceNumber < MAX_PCI_DEVICES; deviceNumber++ ) {
@@ -570,7 +571,7 @@ pciGetConfigData( PciRegister reg, FxU32 device_bus_func_number, FxU32 *data )
     return FXFALSE;
   }
 
-#ifdef __linux__  
+#if (GLIDE_PLATFORM & GLIDE_OS_UNIX) 
   if (hasDev3DfxLinux()) {
     *data = pciFetchRegisterLinux(reg.regAddress, reg.sizeInBytes,
 				  device_bus_func_number);
@@ -609,7 +610,7 @@ pciSetConfigData( PciRegister reg, FxU32 device_bus_func_number, FxU32 *data )
     return FXFALSE;
   }
 
-#ifdef __linux__
+#if (GLIDE_PLATFORM & GLIDE_OS_UNIX)
   if (hasDev3DfxLinux()) {
     return pciUpdateRegisterLinux(reg.regAddress, *data, reg.sizeInBytes,
 				  device_bus_func_number);

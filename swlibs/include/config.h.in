@@ -92,3 +92,19 @@
 
 /* Configure in texture display in texus2 */
 #undef TEXTURE_DISPLAY
+
+/* Enable various debugging code */
+#undef GLIDE_DEBUG
+
+/* Enable Glide for DRI */
+#undef DRI_BUILD
+
+/* Voodoo3 Hardware */
+#undef FX_GLIDE_H3
+
+/* Voodoo5 Hardware */
+#undef FX_GLIDE_H5
+
+/* Banshee Hardware */
+#undef FX_GLIDE_CVG
+

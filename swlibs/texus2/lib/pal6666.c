@@ -40,6 +40,9 @@
 
 #include "texusint.h"
 
+#ifndef uint
+typedef unsigned int	uint;
+#endif
 typedef unsigned long   ulong;
 typedef unsigned char   uchar;
 typedef unsigned short  ushort;

@@ -35,40 +35,58 @@ AC_SUBST(FX_HW_PROJECTS)
 # --enable-fx-glide-hw chooses which ASIC to build for.
 #
 AC_ARG_ENABLE([fx-glide-hw],
-              [dnl
+              [
   --enable-fx-glide-hw=ASIC   Build for the given ASIC
-                                h5: VoodooV
+                                h5: Voodoo5
                                 h3: Voodoo3
                                 cvg: Voodoo2
                                 [default=h5]],
-            [case ${enableval} in
-             h3|h5|cvg)
-                 FX_GLIDE_HW="${enableval}"
-                 ;;
-            *)
-                 AC_MSG_ERROR([Illegal value ($enable_fx_glide_hw) for --enable-fx-glide-hw])
-                 ;;
-            esac],[FX_GLIDE_HW=h5])
+            [FX_GLIDE_HW="${enableval}"],[FX_GLIDE_HW=h5])
+case ${FX_GLIDE_HW} in
+    h3)
+    FX_GLIDE_H3=1
+    AC_DEFINE(FX_GLIDE_H3)
+    ;;
+    h5)
+    FX_GLIDE_H5=1
+    AC_DEFINE(FX_GLIDE_H5)
+    ;;
+    cvg)
+    FX_GLIDE_CVG=1
+    AC_DEFINE(FX_GLIDE_CVG)
+    ;;
+    *)
+        AC_MSG_ERROR([Illegal value ($enable_fx_glide_hw) for --enable-fx-glide-hw])
+        ;;
+esac
+
 AC_SUBST(FX_GLIDE_HW)
+AM_CONDITIONAL(FX_GLIDE_H3,  test x$FX_GLIDE_H3 = x1)
+AM_CONDITIONAL(FX_GLIDE_H5,  test x$FX_GLIDE_H5 = x1)
+AM_CONDITIONAL(FX_GLIDE_CVG, test x$FX_GLIDE_CVG = x1)
 #
 # --enable-fx-dri-build chooses to build with or without DRI.
 #
 AC_ARG_ENABLE([fx-dri-build],
-              [dnl
+              [
   --enable-fx-build-dri       Build for DRI. [default=yes]],
               [case ${enableval} in
                true|yes)
-                   DRI_BUILD=true
+                   DRI_BUILD=1
                    ;;
                false|no)
-                   DRI_BUILD=false
+                   DRI_BUILD=0
                    ;;
                *)
                    AC_MSG_ERROR([Illegal value (${enableval}) for --enable-fx-build-dri])
                    ;;
-               esac],[DRI_BUILD=true])
-AM_CONDITIONAL(DRI_BUILD,test x$DRI_BUILD = xtrue)
+               esac],[DRI_BUILD=1])
+AM_CONDITIONAL(DRI_BUILD,test x$DRI_BUILD = x1)
 AC_SUBST(DRI_BUILD)
+if test "$DRI_BUILD" = "1"
+then
+  AC_DEFINE(DRI_BUILD)
+fi
 #
 # This is makefile.linux behavior.  I don't know exactly
 # what this does.
@@ -78,26 +96,31 @@ AM_CONDITIONAL(HAL_HW, test "$FX_GLIDE_HW"=cvg && test ! -z "$HAL_HW")
 # Define debugging
 #
 AC_ARG_ENABLE([fx-debug],
-              [dnl
+              [
   --enable-fx-debug           Enable a debugging glide build [default=no]],
               [case ${enableval} in
                true|yes)
-                   GLIDE_DEBUG=true
+                   GLIDE_DEBUG=1
                    ;;
                false|no)
-                   GLIDE_DEBUG=false
+                   GLIDE_DEBUG=0
                    ;;
                *)
                    AC_MSG_ERROR([Illegal value (${enableval}) for --enable-fx-debug])
                    ;;
-               esac],[GLIDE_DEBUG=false])
-AM_CONDITIONAL(GLIDE_DEBUG,test x$GLIDE_DEBUG = xtrue)
+               esac],[GLIDE_DEBUG=0])
+AM_CONDITIONAL(GLIDE_DEBUG,test x$GLIDE_DEBUG = x1)
 AC_SUBST(GLIDE_DEBUG)
+if test "$GLIDE_DEBUG" = "1"
+then
+  AC_DEFINE(GLIDE_DEBUG)
+fi
+
 #
 # Define --enable-amd3d
 #
 AC_ARG_ENABLE([amd3d],
-              [dnl
+              [
   --enable-amd3d              Enable AMD 3DNow instructions [default=no]],
               [case ${enableval} in
                true|yes)
@@ -115,7 +138,7 @@ AM_CONDITIONAL(GL_AMD3D,     test x$enable_amd3d = xtrue)
 # --enable-fx-texlib=texus2 enables new texus library.
 #
 AC_ARG_ENABLE([fx-texlib],
-              [dnl
+              [
   --enable-fx-tex=dir         Enable enhanced texture utilities library
                                 texus  - original library
                                 texus2 - library for compressed textures
@@ -129,18 +152,12 @@ AC_ARG_ENABLE([fx-texlib],
                    ;;
                esac],[TEXTURE_UTILITIES_DIR=texus2])
 AC_SUBST(TEXTURE_UTILITIES_DIR)
-#
-# These are conditional variables whose value is set by
-# one of the other enable macros.
-#
-AM_CONDITIONAL(FX_GLIDE_H3,  test x$FX_GLIDE_HW = xh3)
-AM_CONDITIONAL(FX_GLIDE_H5,  test x$FX_GLIDE_HW = xh5)
-AM_CONDITIONAL(FX_GLIDE_CVG, test x$FX_GLIDE_HW = xcvg)
+
 #
 # Architecture
 #
 AC_ARG_ENABLE([build-architecture],
-              [dnl
+              [
   --enable-build-architecture Enable AMD 3DNow instructions [default=current]],
               [case ${enableval} in
                i[3456]86|alpha)
@@ -237,12 +254,13 @@ AC_CHECK_TOOL(DLLTOOL, dlltool, false)
 AC_CHECK_TOOL(CP, cp, false)
 AC_PROG_INSTALL
 AM_PROG_LIBTOOL
-MAKE="make -f makefile.autoconf"
+MAKE="gmake -f makefile.autoconf"
 AC_SUBST(MAKE)
 dnl Checks for libraries.
 
 dnl Checks for header files.
 AC_PATH_X
+AC_SUBST(x_includes)
 AC_HEADER_DIRENT
 AC_HEADER_STDC
 AC_CHECK_HEADERS(fcntl.h limits.h malloc.h sys/ioctl.h sys/time.h unistd.h)
@@ -297,4 +315,34 @@ AC_OUTPUT(build.3dfx
           swlibs/texus2/cmd/makefile.autoconf:swlibs/texus2/cmd/makefile.autoconf.in:swlibs/include/make/makefile.autoconf.bottom
           )
 AC_OUTPUT_COMMANDS([chmod +x build.3dfx])
+
+echo "Configuration complete."
+echo ""
+echo -n "Chipset configured    : "
+if test "$FX_GLIDE_HW" = "cvg"
+then
+  echo "cvg (Voodoo2)"
+elif  test "$FX_GLIDE_HW" = "h3"
+then
+  echo "h3 (Voodoo3)"
+elif test "$FX_GLIDE_HW" = "h5"
+then
+  echo "h5 (Voodoo5)"
+fi
+
+echo -n "DRI Build:              "
+if test "$DRI_BUILD" = "1"
+then
+  echo "enabled"
+else
+  echo "disabled"
+fi
+
+echo -n "Debug code:             "
+if test "$GLIDE_DEBUG" = "1"
+then
+  echo "enabled"
+else
+  echo "disabled"
+fi
 

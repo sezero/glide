@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "config.h"
 #include <3dfx.h>
 #include <glidesys.h>
 
@@ -37,7 +38,7 @@
  * macros for creating assembler offset files
  *----------------------------------------------------------------------*/
 
-#if !defined(__linux__) && !defined(__FreeBSD__)
+#if !(GLIDE_PLATFORM & GLIDE_OS_UNIX)
 #define NEWLINE printf("\n")
 #define COMMENT printf(";----------------------------------------------------------------------\n")
 
