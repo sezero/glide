@@ -19,6 +19,9 @@
  **
  ** $Header$
  ** $Log$
+ ** Revision 1.3  2000/01/17 22:18:41  joseph
+ ** A nicer, cleaner fix than the evil hack.
+ **
  ** Revision 1.2  2000/01/15 00:08:22  joseph
  ** Evil nasty hack to fix dispatch code using binutils 2.9.5.
  **
@@ -687,16 +690,53 @@ all_done:
   }
 #endif
 #if defined( __linux__ )
+
+  /* Here's the basic strategy for this dispatch code:
+   *   We jump to _GlideRoot.curGC->archDispatchProcs.triSetupProc
+   *   which contains code that looks like a function, we leave the
+   *   paramters passed to grDrawTriangle on the stack and the dispatched
+   *   function picks them up.  However we have to compensate for 
+   *   the compiler pushing anything on the stack.  The following describes
+   *   why and when we have to pop.
+   *
+   * BIG_OPT: gcc pushes a frame pointer to maintain things, BIG_OPT
+   *          turns on -fomit-frame-pointer so we don't have to pop it.
+   *
+   * PIC:     When using position independant code gcc stores eip in ebx
+   *          so it saves ebx from the previous call automatically.  
+   *          Therefore, once we have the jump address we have to pop ebx
+   *          to restore the stack.  
+   *
+   * The syntax is further complicated by the fact that gcc can (and will)
+   * emit code between the asm statements, so they all need to be in a single
+   * asm statement, wrapped with #ifdef's.  This means we have fun with 
+   * deciding if we need to list trashed registers and when we need commas
+   * between them.
+   */
+
+  asm (
+#if defined(PIC)
+       "popl %%ebx\n\t"
+#endif 
 #if !defined(BIG_OPT)
-  asm( "popl %%ebp" : /* no outputs*/ : /* no inputs */ : "ebp");
+       "popl %%ebp\n\t"
 #endif
-
-  asm( "jmp *%0"
-       : /* no outputs */
+       "jmp *%0" 
+       : /* no outputs */        
        : "m" (_GlideRoot.curGC->cmdTransportInfo.triSetupProc)
+#if defined (PIC) || !defined (BIG_OPT)
+       :
+#endif
+#if defined (PIC)
+        "ebx"
+#endif
+#if defined (PIC) && !defined (BIG_OPT)
+       ,
+#endif
+#if !defined(BIG_OPT)
+        "ebp"
+#endif
        );
-
-
 #endif
 #endif
 #undef FN_NAME

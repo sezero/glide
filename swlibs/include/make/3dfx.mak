@@ -76,6 +76,9 @@ endif
 ifeq "$(OS)" "Linux"
 GCINCS	       = -I. -I$(BUILD_ROOT_SWLIBS)/include -I$(BUILD_ROOT_HW)/include
 GCOPTS	       = -Wall
+ifeq "$(FX_GLIDE_PIC)" "1"
+GCOPTS	       := $(GCOPTS) -fPIC -DPIC
+endif
 # 
 # BIG_OPT Indicates O3(?) or better is being used. It changes the
 # assembly language in grDrawTriangle. Larger optimization removes
@@ -208,8 +211,8 @@ ifdef INSTALL_DESTINATION
 	$(INSTALL) -m 444 $(LIBRARIES) $(INSTALL_DESTINATION)/lib
 ifneq "$(SHARED_LIBRARY)" ""
 	$(INSTALL) -m 444 $(SHARED_LIBRARY) $(INSTALL_DESTINATION)/lib
-	ln -s $(INSTALL_DESTINATION)/lib/$(SHARED_LIBRARY) $(INSTALL_DESTINATION)/lib/$(SONAME)
-	ln -s $(INSTALL_DESTINATION)/lib/$(SHARED_LIBRARY) $(INSTALL_DESTINATION)/lib/$(BASENAME)
+	ln -sf $(INSTALL_DESTINATION)/lib/$(SHARED_LIBRARY) $(INSTALL_DESTINATION)/lib/$(SONAME)
+	ln -sf $(INSTALL_DESTINATION)/lib/$(SHARED_LIBRARY) $(INSTALL_DESTINATION)/lib/$(BASENAME)
 endif
 else
 	@echo INSTALL_DESTINATION not defined, not installing LIBRARIES
