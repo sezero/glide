@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.2  2003/11/07 13:38:38  dborca
+** unite the clans
+**
 ** Revision 1.1.1.1.8.1  2003/11/03 13:34:29  dborca
 ** Voodoo2 happiness (DJGPP & Linux)
 **
@@ -451,7 +454,7 @@ GR_ENTRY(grTexDownloadTableExt,
 {
   GR_BEGIN_NOFIFOCHECK("grTexDownloadTableExt",89);
   GDBG_INFO_MORE(gc->myLevel,"(%d,%d,0x%x)\n",tmu,type,data);
-  GR_CHECK_TMU(FN_NAME,tmu);
+  /*GR_CHECK_TMU(FN_NAME,tmu);*/
   GR_CHECK_F(myName, type > GR_TEXTABLE_PALETTE_6666_EXT, "invalid table specified");
   GR_CHECK_F(myName, !data, "invalid data pointer");
 

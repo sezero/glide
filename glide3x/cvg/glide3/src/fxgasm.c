@@ -162,6 +162,9 @@ main (int argc, char **argv)
 #ifndef GLIDE3
     OFFSET (gc, regDataList,"regDataList\t");
 #endif
+#ifdef GLIDE_DEBUG
+    OFFSET (gc,checkPtr,"checkPtr\t\t");
+#endif
     OFFSET (gc, tsuDataList,"tsuDataList\t");
 #ifdef GLIDE3_SCALER
     OFFSET (gc, tsuDataListScaler,"tsuDatLstScal\t");

@@ -411,8 +411,10 @@ clean:
 	-$(call UNLINK,$(FX_GLIDE_SW)/newpci/pcilib/*.o)
 	-$(call UNLINK,$(FX_GLIDE_HW)/glide3/src/fxinline.h)
 	-$(call UNLINK,$(FX_GLIDE_HW)/glide3/src/fxgasm.h)
+ifeq ($(FX_GLIDE_HW),h5)
 	-$(call UNLINK,$(GENDATE))
 	-$(call UNLINK,$(FXBLDNO))
+endif
 	-$(call UNLINK,$(FX_GLIDE_SW)/texus2/lib/*.o)
 
 realclean: clean
