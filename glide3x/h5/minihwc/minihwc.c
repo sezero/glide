@@ -1635,7 +1635,7 @@ hwcInit(FxU32 vID, FxU32 dID)
       hInfo.boardInfo[monitor].h3nwaySli = 1;
 
       if (hInfo.boardInfo[monitor].h3Mem == 8) {
-        hInfo.boardInfo[monitor].pciInfo.deviceID = SST_DEVICE_ID_H3 ;
+        hInfo.boardInfo[monitor].pciInfo.deviceID = SST_DEVICE_ID_H3 ; /* HACK ALERT: restricting to single TMU for Velocity? */
       }
       
       hInfo.boardInfo[monitor].min_tramSize = 
