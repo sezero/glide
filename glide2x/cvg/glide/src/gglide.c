@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.2.2.4  2004/12/27 20:46:37  koolsmoky
+** added dll entry point to call grGlideShutdown when a process is detached
+**
 ** Revision 1.2.2.3  2004/12/23 21:03:14  koolsmoky
 ** swapinterval
 **
@@ -797,10 +800,10 @@ GR_ENTRY(grBufferSwap, void, (int swapInterval))
   vSync = (swapInterval > 0);
 
   /* when triple buffering, vsync must be enabled and swapbuffer interval must be 0 */
-  if (gc->grColBuf >= 3) {
+  /*if (gc->grColBuf >= 3) {
     vSync = FXTRUE;
     swapInterval = 0;
-  }
+  }*/
   
   if (swapInterval > 0) swapInterval--;
   
@@ -2149,29 +2152,35 @@ _grUpdateTriPacketHdr(FxU32 paramMask,
    * select on cpu type as well to determine if we should
    * do sw culling or not.
    */
-  if ((paramMask & SSTCP_PKT3_PACKEDCOLOR) == SSTCP_PKT3_PACKEDCOLOR) {
-    const FxU32 colorComp = paramMask & COLOR_COMP_MASK;
+  {
+    GrTriSetupProcVector* curTriProcVector = TRISETUP_NORGB;
 
-    switch(colorComp) {
-    case COLOR_COMP_ARGB:
-      gc->curArchProcs.triSetupProc = TRISETUP_ARGB(cullMode);
-      break;
+#if GLIDE_PACKED_RGB
+    if ((paramMask & SSTCP_PKT3_PACKEDCOLOR) == SSTCP_PKT3_PACKEDCOLOR) {
+      const FxU32 colorComp = paramMask & COLOR_COMP_MASK;
 
-    case COLOR_COMP_RGB:
-      gc->curArchProcs.triSetupProc = TRISETUP_RGB(cullMode);
-      break;
+      switch(colorComp) {
+      case COLOR_COMP_ARGB:
+        curTriProcVector = TRISETUP_ARGB;
+        break;
 
-      /* If no rgb data then it is not worthwhile to pack
-       * just alpha so just mask off the packed color bit
-       * and just use the looping proc.
-       */
-    default:
-      gc->curArchProcs.triSetupProc = TRISETUP_NORGB(cullMode);
-      paramMask &= ~SSTCP_PKT3_PACKEDCOLOR;
-      break;
+      case COLOR_COMP_RGB:
+        curTriProcVector = TRISETUP_RGB;
+        break;
+
+        /* If no rgb data then it is not worthwhile to pack
+         * just alpha so just mask off the packed color bit
+         * and just use the looping proc.
+         */
+      default:
+        curTriProcVector = TRISETUP_NORGB;
+        paramMask &= ~SSTCP_PKT3_PACKEDCOLOR;
+        break;
+      }
     }
-  } else {
-    gc->curArchProcs.triSetupProc = TRISETUP_NORGB(cullMode);
+#endif
+
+    gc->curArchProcs.triSetupProc = PROC_SELECT_TRISETUP(*curTriProcVector, cullMode);
   }
 #endif /* GLIDE_DISPATCH_SETUP */
 

@@ -19,6 +19,9 @@
  **
  ** $Header$
  ** $Log$
+ ** Revision 1.1.1.1  1999/12/07 21:49:11  joseph
+ ** Initial checkin into SourceForge.
+ **
 ** 
 ** 61    3/17/98 3:00p Peter
 ** removed vertex sorting
@@ -250,8 +253,8 @@ GR_DDFUNC(_trisetup_nogradients,
           const int* dataList = gc->tsuDataList;
 
 #if GLIDE_PACKED_RGB
+          if ((gc->cmdTransportInfo.paramMask & SSTCP_PKT3_PACKEDCOLOR) != 0)
           {
-            FxBool doColorP = FXFALSE;
             FxU32 packedColor = 0x00;
             
             if (*dataList == (GR_VERTEX_R_OFFSET << 2)) {
@@ -259,16 +262,14 @@ GR_DDFUNC(_trisetup_nogradients,
                              RGBA_COMP_CLAMP(FARRAY(vector, (GR_VERTEX_G_OFFSET << 2)), G) |
                              RGBA_COMP_CLAMP(FARRAY(vector, (GR_VERTEX_R_OFFSET << 2)), R));
               dataList++;
-              doColorP = FXTRUE;
             }
 
             if (*dataList == (GR_VERTEX_A_OFFSET << 2)) {
               packedColor |= RGBA_COMP_CLAMP(FARRAY(vector, (GR_VERTEX_A_OFFSET << 2)), A);
               dataList++;
-              doColorP = FXTRUE;
             }
             
-            if (doColorP) TRI_SET(packedColor);
+            TRI_SET(packedColor);
           }
 #endif /* GLIDE_PACKED_RGB */
 

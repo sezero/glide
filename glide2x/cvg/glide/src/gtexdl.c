@@ -19,6 +19,10 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.2.2.1  2004/12/23 20:45:56  koolsmoky
+** converted to nasm syntax
+** added x86 asm, 3dnow! triangle and mmx, 3dnow! texture download optimizations
+**
 ** Revision 1.2  2000/10/03 18:28:33  mercury
 ** 003-clean_up_cvg-000, cvg tree cleanup.
 **
@@ -505,10 +509,10 @@ GR_ENTRY(grTexDownloadMipMapLevelPartial,
     
     _GlideRoot.stats.texBytes += max_s * (max_t - t + 1) * 4;
     
-    (*((*gc->curArchProcs.texDownloadProcs)[formatSel][widthSel]))(gc, 
-								   tmuBaseAddr,
-								   max_s, t, max_t,
-								   data);
+    (*((*_GlideRoot.deviceArchProcs.curTexProcs)[formatSel][widthSel]))(gc, 
+                                                                        tmuBaseAddr,
+                                                                        max_s, t, max_t,
+                                                                        data);
   }
 #else
   /*------------------------------------------------------------
@@ -546,7 +550,7 @@ GR_ENTRY(grTexDownloadMipMapLevelPartial,
         LINEAR_WRITE_END();
       
         src8 += width;
-        tex_address += TEX_ROW_ADDR_INCR(1, thisLod);
+        tex_address += TEX_ROW_ADDR_INCR(1);
       }
       break;
 

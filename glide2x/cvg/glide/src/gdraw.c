@@ -19,6 +19,10 @@
  **
  ** $Header$
  ** $Log$
+ ** Revision 1.4.2.1  2004/12/23 20:45:56  koolsmoky
+ ** converted to nasm syntax
+ ** added x86 asm, 3dnow! triangle and mmx, 3dnow! texture download optimizations
+ **
  ** Revision 1.4  2000/01/28 20:52:17  joseph
  ** Changes to support building shared libraries with PIC support.
  **
@@ -781,7 +785,8 @@ GR_ENTRY(grDrawPlanarPolygon,
     /* now all the gradients are loaded into the chip, so we just have to */
     /* draw all the rest of the triangles */
     for (i = i+1; i < nVerts - 1; i++) {
-      _trisetup_nogradients(firstv, &vList[iList[i]], &vList[iList[i+1]]);
+      //_trisetup_nogradients(firstv, &vList[iList[i]], &vList[iList[i+1]]);
+      TRISETUP(firstv, &vList[iList[i]], &vList[iList[i+1]]);
     }
   }
 all_done:
@@ -819,7 +824,8 @@ GR_ENTRY(grDrawPlanarPolygonVertexList, void, (int nVerts, const GrVertex vList[
     /* now all the gradients are loaded into the chip, so we just have to */
     /* draw all the rest of the triangles */
     for (i = i+1; i < nVerts - 1; i++) {
-      _trisetup_nogradients(firstv, &vList[i], &vList[i+1]);
+      //_trisetup_nogradients(firstv, &vList[i], &vList[i+1]);
+      TRISETUP(firstv, &vList[i], &vList[i+1]);
     }
       
 all_done:
@@ -894,25 +900,23 @@ __doPolyVertexSend:
           const int* dataList = gc->tsuDataList;
 
 #if GLIDE_PACKED_RGB
+          if ((gc->cmdTransportInfo.paramMask & SSTCP_PKT3_PACKEDCOLOR) != 0)
           {
-            FxBool doColorP = FXFALSE;
             FxU32 packedColor = 0x00;
           
             if (*dataList == (GR_VERTEX_R_OFFSET << 2)) {
               packedColor = (RGBA_COMP_CLAMP(FARRAY(vertex, (GR_VERTEX_B_OFFSET << 2)), B) | 
                              RGBA_COMP_CLAMP(FARRAY(vertex, (GR_VERTEX_G_OFFSET << 2)), G) |
                              RGBA_COMP_CLAMP(FARRAY(vertex, (GR_VERTEX_R_OFFSET << 2)), R));
-              doColorP = FXTRUE;
               dataList++;
             }
             
             if (*dataList == (GR_VERTEX_A_OFFSET << 2)) {
               packedColor |= RGBA_COMP_CLAMP(FARRAY(vertex, (GR_VERTEX_A_OFFSET << 2)), A);
-              doColorP = FXTRUE;
               dataList++;
             }
             
-            if (doColorP) TRI_SET(packedColor);
+            TRI_SET(packedColor);
           }
 #endif /* GLIDE_PACKED_RGB */
 
@@ -957,7 +961,7 @@ __doPolyVertexSend:
   {
     int i;
     for (i = 1; i < nVerts - 1; i++) {
-      grDrawTriangle(&vList[iList[0]], &vList[iList[i]], &vList[iList[i+1]]);
+      TRISETUP(&vList[iList[0]], &vList[iList[i]], &vList[iList[i+1]]);
     }
   }
 #endif /* !(GLIDE_HW_TRI_SETUP && GLIDE_PACKET3_TRI_SETUP) */
@@ -1016,37 +1020,23 @@ __doPolyVertexSend:
           const int* dataList = gc->tsuDataList;
 
 #if GLIDE_PACKED_RGB
-          /* dpc - 10 feb 1998 -
-           * Some apps send color values outside of the range [0..255]
-           */
-#undef RGBA_COMP
-#define RGBA_COMP(__fpVal, __fpBias, __fpShift, __fpMask) \
-((_GlideRoot.pool.ftemp1 = (float)((float)(__fpVal) + (float)(__fpBias))), \
- ((((float)(__fpVal)) > 255.0f) \
-  ? (__fpMask) \
-  : ((((float)(__fpVal)) < 0.0f) \
-     ? 0x00UL \
-     : ((*(const FxU32*)&_GlideRoot.pool.ftemp1) & (__fpMask)))) << (__fpShift))
-
+          if ((gc->cmdTransportInfo.paramMask & SSTCP_PKT3_PACKEDCOLOR) != 0)
           {
-            FxBool doColorP = FXFALSE;
             FxU32 packedColor = 0x00;
           
             if (*dataList == (GR_VERTEX_R_OFFSET << 2)) {
               packedColor = (RGBA_COMP_CLAMP(FARRAY(vertex, (GR_VERTEX_B_OFFSET << 2)), B) | 
                              RGBA_COMP_CLAMP(FARRAY(vertex, (GR_VERTEX_G_OFFSET << 2)), G) |
                              RGBA_COMP_CLAMP(FARRAY(vertex, (GR_VERTEX_R_OFFSET << 2)), R));
-              doColorP = FXTRUE;
               dataList++;
             }
             
             if (*dataList == (GR_VERTEX_A_OFFSET << 2)) {
               packedColor |= RGBA_COMP_CLAMP(FARRAY(vertex, (GR_VERTEX_A_OFFSET << 2)), A);
-              doColorP = FXTRUE;
               dataList++;
             }
             
-            if (doColorP) TRI_SET(packedColor);
+            TRI_SET(packedColor);
           }
 #endif /* GLIDE_PACKED_RGB */
 
@@ -1091,7 +1081,7 @@ __doPolyVertexSend:
     int i;
     
     for (i = 1; i < nVerts - 1; i++) {
-      grDrawTriangle(&vList[0], &vList[i], &vList[i+1]);
+      TRISETUP(&vList[0], &vList[i], &vList[i+1]);
     }
   }
 #endif /* !(GLIDE_HW_TRI_SETUP && GLIDE_PACKET3_TRI_SETUP) */

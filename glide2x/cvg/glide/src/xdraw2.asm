@@ -19,6 +19,9 @@
 ;; $Header$
 ;; $Revision$
 ;; $Log$
+;; Revision 1.1.1.1.2.2  2005/01/13 16:11:39  koolsmoky
+;; prepare for packed rgb
+;;
 ;; Revision 1.1.1.1.2.1  2004/12/23 20:45:56  koolsmoky
 ;; converted to nasm syntax
 ;; added x86 asm, 3dnow! triangle and mmx, 3dnow! texture download optimizations
@@ -65,8 +68,8 @@ extrn   _FifoMakeRoom
 
 %ifdef GL_AMD3D
 ;; 3dnow!
-%MACRO WRITE_MM1_FIFO_ALIGNED 1
-    movq      [fifo+%1], mm1        ; store current param | previous param
+%MACRO WRITE_MM1_FIFO_ALIGNED 0
+    movq      [fifo], mm1           ; store current param | previous param
 %ENDMACRO ; WRITE_MM1_FIFO_ALIGNED
 
 %MACRO WRITE_MM1LOW_FIFO 0

@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/12/07 21:49:09  joseph
+** Initial checkin into SourceForge.
+**
 ** 
 ** 64    5/18/98 12:15p Peter
 ** crybaby check for alpha enable
@@ -366,19 +369,19 @@ GR_ENTRY(grAADrawPoint, void, (const GrVertex *e))
     a.a =  
       b.a =  _GlideRoot.pool.f0;
       
-    grDrawTriangle(&a, &b, e);    /* A B E */
+    TRISETUP(&a, &b, e);    /* A B E */
       
     b.x -= 2.0F;                  /* compute point D */
     b.y += 2.0F;
-    grDrawTriangle(&a, e, &b);    /* A E D */
+    TRISETUP(&a, e, &b);    /* A E D */
       
     a.x += 2.0F;                  /* compute point C */
     a.y += 2.0F;
-    grDrawTriangle(&b, e, &a);    /* D E C */
+    TRISETUP(&b, e, &a);    /* D E C */
       
     b.x += 2.0F;
     b.y -= 2.0F;
-    grDrawTriangle(&a, e, &b);    /* C E B */
+    TRISETUP(&a, e, &b);    /* C E B */
   }
 #endif /* GLIDE_HW_TRI_SETUP && GLIDE_PACKET3_TRI_SETUP */
   
@@ -663,6 +666,23 @@ GR_ENTRY(grAADrawLine, void, (const GrVertex *v1, const GrVertex *v2))
     v2->a = 0.0f;
     datalist = gc->tsuDataList;
 
+#if GLIDE_PACKED_RGB
+    if ((gc->cmdTransportInfo.paramMask & SSTCP_PKT3_PACKEDCOLOR) != 0) {
+      FxU32 packedColor = 0x00;
+      
+      if (*datalist == (GR_VERTEX_R_OFFSET << 2)) {
+        packedColor = (RGBA_COMP_CLAMP(FARRAY(v2, (GR_VERTEX_B_OFFSET << 2)), B) | 
+                       RGBA_COMP_CLAMP(FARRAY(v2, (GR_VERTEX_G_OFFSET << 2)), G) |
+                       RGBA_COMP_CLAMP(FARRAY(v2, (GR_VERTEX_R_OFFSET << 2)), R));
+        
+        datalist++;
+      }
+      
+      TRI_SET(packedColor);
+      datalist++;
+    }
+#endif
+
     while( *datalist != 0 ) {
         TRI_SETF(FARRAY(v2, *datalist));
         datalist++;
@@ -680,6 +700,23 @@ GR_ENTRY(grAADrawLine, void, (const GrVertex *v1, const GrVertex *v2))
     v1->a = 0.0f;
     datalist = gc->tsuDataList;
 
+#if GLIDE_PACKED_RGB
+    if ((gc->cmdTransportInfo.paramMask & SSTCP_PKT3_PACKEDCOLOR) != 0) {
+      FxU32 packedColor = 0x00;
+      
+      if (*datalist == (GR_VERTEX_R_OFFSET << 2)) {
+        packedColor = (RGBA_COMP_CLAMP(FARRAY(v1, (GR_VERTEX_B_OFFSET << 2)), B) | 
+                       RGBA_COMP_CLAMP(FARRAY(v1, (GR_VERTEX_G_OFFSET << 2)), G) |
+                       RGBA_COMP_CLAMP(FARRAY(v1, (GR_VERTEX_R_OFFSET << 2)), R));
+        
+        datalist++;
+      }
+      
+      TRI_SET(packedColor);
+      datalist++;
+    }
+#endif /* GLIDE_PACKED_RGB */
+
     while( *datalist != 0 ) {
         TRI_SETF(FARRAY(v1, *datalist));
         datalist++;
@@ -692,6 +729,25 @@ GR_ENTRY(grAADrawLine, void, (const GrVertex *v1, const GrVertex *v2))
 
     TRI_SETF( v2->x );
     TRI_SETF( v2->y );
+
+#if GLIDE_PACKED_RGB
+    if ((gc->cmdTransportInfo.paramMask & SSTCP_PKT3_PACKEDCOLOR) != 0) {
+      FxU32 packedColor = 0x00;
+      
+      if (*datalist == (GR_VERTEX_R_OFFSET << 2)) {
+        packedColor = (RGBA_COMP_CLAMP(FARRAY(v2, (GR_VERTEX_B_OFFSET << 2)), B) | 
+                       RGBA_COMP_CLAMP(FARRAY(v2, (GR_VERTEX_G_OFFSET << 2)), G) |
+                       RGBA_COMP_CLAMP(FARRAY(v2, (GR_VERTEX_R_OFFSET << 2)), R));
+        
+        datalist++;
+      }
+      
+      packedColor |= RGBA_COMP_CLAMP(FARRAY(v2, (GR_VERTEX_A_OFFSET << 2)), A);
+      datalist++;
+      
+      TRI_SET(packedColor);
+    }
+#endif /* GLIDE_PACKED_RGB */
       
     while( *datalist != 0 ) {
         TRI_SETF(FARRAY(v2, *datalist));
@@ -703,6 +759,25 @@ GR_ENTRY(grAADrawLine, void, (const GrVertex *v1, const GrVertex *v2))
 
     TRI_SETF( v1->x );
     TRI_SETF( v1->y );
+
+#if GLIDE_PACKED_RGB
+    if ((gc->cmdTransportInfo.paramMask & SSTCP_PKT3_PACKEDCOLOR) != 0) {
+      FxU32 packedColor = 0x00;
+      
+      if (*datalist == (GR_VERTEX_R_OFFSET << 2)) {
+        packedColor = (RGBA_COMP_CLAMP(FARRAY(v1, (GR_VERTEX_B_OFFSET << 2)), B) | 
+                       RGBA_COMP_CLAMP(FARRAY(v1, (GR_VERTEX_G_OFFSET << 2)), G) |
+                       RGBA_COMP_CLAMP(FARRAY(v1, (GR_VERTEX_R_OFFSET << 2)), R));
+        
+        datalist++;
+      }
+      
+      packedColor |= RGBA_COMP_CLAMP(FARRAY(v1, (GR_VERTEX_A_OFFSET << 2)), A);
+      datalist++;
+      
+      TRI_SET(packedColor);
+    }
+#endif /* GLIDE_PACKED_RGB */
       
     while( *datalist != 0 ) {
         TRI_SETF(FARRAY(v1, *datalist));
@@ -718,6 +793,23 @@ GR_ENTRY(grAADrawLine, void, (const GrVertex *v1, const GrVertex *v2))
     alpha = v2->a;
     v2->a = 0.0f;
     datalist = gc->tsuDataList;
+
+#if GLIDE_PACKED_RGB
+    if ((gc->cmdTransportInfo.paramMask & SSTCP_PKT3_PACKEDCOLOR) != 0) {
+      FxU32 packedColor = 0x00;
+      
+      if (*datalist == (GR_VERTEX_R_OFFSET << 2)) {
+        packedColor = (RGBA_COMP_CLAMP(FARRAY(v2, (GR_VERTEX_B_OFFSET << 2)), B) | 
+                       RGBA_COMP_CLAMP(FARRAY(v2, (GR_VERTEX_G_OFFSET << 2)), G) |
+                       RGBA_COMP_CLAMP(FARRAY(v2, (GR_VERTEX_R_OFFSET << 2)), R));
+        
+        datalist++;
+      }
+      
+      TRI_SET(packedColor);
+      datalist++;
+    }
+#endif /* GLIDE_PACKED_RGB */
 
     while( *datalist != 0 ) {
         TRI_SETF(FARRAY(v2, *datalist));
@@ -736,6 +828,22 @@ GR_ENTRY(grAADrawLine, void, (const GrVertex *v1, const GrVertex *v2))
     v1->a = 0.0f;
     datalist = gc->tsuDataList;
 
+#if GLIDE_PACKED_RGB
+    if ((gc->cmdTransportInfo.paramMask & SSTCP_PKT3_PACKEDCOLOR) != 0) {
+      FxU32 packedColor = 0x00;
+      
+      if (*datalist == (GR_VERTEX_R_OFFSET << 2)) {
+        packedColor = (RGBA_COMP_CLAMP(FARRAY(v1, (GR_VERTEX_B_OFFSET << 2)), B) | 
+                       RGBA_COMP_CLAMP(FARRAY(v1, (GR_VERTEX_G_OFFSET << 2)), G) |
+                       RGBA_COMP_CLAMP(FARRAY(v1, (GR_VERTEX_R_OFFSET << 2)), R));
+        
+        datalist++;
+      }
+      
+      TRI_SET(packedColor);
+      datalist++;
+    }
+#endif /* GLIDE_PACKED_RGB */
 
     while( *datalist != 0 ) {
         TRI_SETF(FARRAY(v1, *datalist));
@@ -797,10 +905,10 @@ GR_ENTRY(grAADrawLine, void, (const GrVertex *v1, const GrVertex *v2))
     f.y += _GlideRoot.pool.f1;
     f.a = 0.F;
 
-    grDrawTriangle(&a, v2, &b);
-    grDrawTriangle(&a, v2, v1);
-    grDrawTriangle(v1, &f, &e);
-    grDrawTriangle(v1, v2, &f);
+    TRISETUP(&a, v2, &b);
+    TRISETUP(&a, v2, v1);
+    TRISETUP(v1, &f, &e);
+    TRISETUP(v1, v2, &f);
   } else {                      /* Y major line */
     a.x += _GlideRoot.pool.f1;
     a.a = 0.F;
@@ -811,10 +919,10 @@ GR_ENTRY(grAADrawLine, void, (const GrVertex *v1, const GrVertex *v2))
     f.x -= _GlideRoot.pool.f1;
     f.a = 0.F;
 
-    grDrawTriangle(&a, &b, v2);
-    grDrawTriangle(v1, &a, v2);
-    grDrawTriangle(v1, &f, &e);
-    grDrawTriangle(v1, v2, &f);
+    TRISETUP(&a, &b, v2);
+    TRISETUP(v1, &a, v2);
+    TRISETUP(v1, &f, &e);
+    TRISETUP(v1, v2, &f);
   }
 
   gc->state.cull_mode = cullSave;

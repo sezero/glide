@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.2.5  2005/01/13 16:09:05  koolsmoky
+** Restict calls to pciOpen() pciClose() when compiled with DIRECTX option. this fixes problems with the win32 miniport opened in exclusive mode.
+**
 ** Revision 1.1.1.1.2.4  2005/01/02 04:15:53  koolsmoky
 ** disabled mtrr's on sli slave devices
 **
@@ -245,24 +248,28 @@
 
 #if GLIDE_DISPATCH_SETUP 
 /* Collection of all of the known procs for a given system */
-#if GLIDE_PACKED_RBG
-static GrTriSetupProc _triSetupProcs[][6] =
-#else /* !GLIDE_PACKED_RBG */
-static GrTriSetupProc _triSetupProcs[][2] =
-#endif /* !GLIDE_PACKED_RBG */
+#if GLIDE_PACKED_RGB
+static GrTriSetupProc _triSetupProcs[][3][2] =
+#else /* !GLIDE_PACKED_RGB */
+static GrTriSetupProc _triSetupProcs[][1][2] =
+#endif /* !GLIDE_PACKED_RGB */
 {
   /* Default Procs */
-  { _trisetup, _trisetup_cull
-#if GLIDE_PACKED_RBG
-    , _trisetup_rgb, _trisetup_cull_rgb, _trisetup_argb, _trisetup_cull_argb
-#endif /* GLIDE_PACKED_RBG */
+  {
+    {_trisetup, _trisetup_cull}
+#if GLIDE_PACKED_RGB
+   ,{_trisetup_rgb, _trisetup_cull_rgb},
+    {_trisetup_argb, _trisetup_cull_argb}
+#endif /* GLIDE_PACKED_RGB */
   }
 #if GL_AMD3D
   /* 3DNow!(tm) Procs */
-  ,{ _trisetup_3DNow, _trisetup_cull_3DNow
-#if GLIDE_PACKED_RBG
-    , _trisetup_rgb_3DNow, _trisetup_cull_rgb_3DNow, _trisetup_argb_3DNow, _trisetup_cull_argb_3DNow
-#endif /* GLIDE_PACKED_RBG */
+ ,{
+    {_trisetup_3DNow, _trisetup_cull_3DNow}
+#if GLIDE_PACKED_RGB
+   ,{_trisetup_rgb_3DNow, _trisetup_cull_rgb_3DNow},
+    {_trisetup_argb_3DNow, _trisetup_cull_argb_3DNow}
+#endif /* GLIDE_PACKED_RGB */
   }
 #endif /* GL_AMD3D */
 };
@@ -336,7 +343,7 @@ DllMain(HANDLE hInst, ULONG  ul_reason_for_call, LPVOID lpReserved)
   case DLL_PROCESS_ATTACH:
     if (!pciOpen()) {
       GDBG_INFO(80, "pci bus could not be opened\n");
-      GR_RETURN(FXFALSE);
+      return FALSE;
     }
     GDBG_INFO(80, "DllMain: DLL_PROCESS_ATTACH\n");
     break;

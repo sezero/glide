@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.2.2.3  2005/01/13 16:09:06  koolsmoky
+** Restict calls to pciOpen() pciClose() when compiled with DIRECTX option. this fixes problems with the win32 miniport opened in exclusive mode.
+**
 ** Revision 1.2.2.2  2004/12/23 20:45:56  koolsmoky
 ** converted to nasm syntax
 ** added x86 asm, 3dnow! triangle and mmx, 3dnow! texture download optimizations
@@ -1361,12 +1364,6 @@ __errSliExit:
   
   /* We're effectively open now */
   gc->open = FXTRUE;
-
-  /* Setup the procs that we can do w/o any mode knowledge */
-#if GLIDE_DISPATCH_SETUP || GLIDE_DISPATCH_DOWNLOAD
-  gc->curArchProcs.texDownloadProcs  = _GlideRoot.deviceArchProcs.curTexProcs;
-  gc->curArchProcs.coorTriSetupVector = _GlideRoot.deviceArchProcs.curTriProcs;
-#endif /* GLIDE_DISPATCH_SETUP || GLIDE_DISPATCH_DOWNLOAD */
 
   /*------------------------------------------------------
     GC Init

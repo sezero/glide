@@ -19,6 +19,10 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.2.2  2004/12/23 20:45:56  koolsmoky
+** converted to nasm syntax
+** added x86 asm, 3dnow! triangle and mmx, 3dnow! texture download optimizations
+**
 ** Revision 1.1.1.1.2.1  2004/12/12 15:18:58  koolsmoky
 ** changes to support new cpuid; moved single_precision_asm(), double_precision_asm() from cpudetect.asm
 **
@@ -148,6 +152,9 @@ void single_precision_asm()
     fldcw WORD PTR [esp]
     pop   eax
     }
+#elif __GNUC__
+  asm("push %eax \n fnclex \n fstcw (%esp) \n movl (%esp), %eax \n "
+      "and $0x0000fcff, %eax \n movl %eax, (%esp) \n fldcw (%esp) \n pop %eax");
 #else
 #error "Need to implement single_precision_asm() for this compiler"
 #endif
@@ -171,6 +178,10 @@ void double_precision_asm()
     fldcw WORD PTR [esp]
     pop   eax
     }
+#elif __GNUC__
+  asm("push %eax \n fnclex \n fstcw (%esp) \n movw (%esp), %eax \n "
+      "and $0x0000fcff, %eax \n or $0x000002ff, %eax \n mov %eax, (%esp) \n "
+      "fldcw (%esp) \n pop %eax");
 #else
 #error "Need to implement double_precision_asm() for this compiler"
 #endif
@@ -263,26 +274,26 @@ _grSwizzleColor(GrColor_t *color)
     break;
 
   case GR_COLORFORMAT_ABGR:
-    red     = *color & 0x00ff;
-    blue    = (*color >> 16) & 0xff;
-    *color &= 0xff00ff00;
-    *color |= ((red << 16) | blue);
+    red     = (*color & 0x000000ff) << 16; /* 00RR0000 */
+    blue    = (*color & 0x00ff0000) >> 16; /* 000000BB */
+    *color &= 0xff00ff00;                  /* AA00GG00 */
+    *color |= (red | blue);                /* AARRGGBB */
     break;
 
   case GR_COLORFORMAT_RGBA:
-    blue   = (*color & 0x0000ff00) >> 8;
-    green  = (*color & 0x00ff0000) >> 16;
-    red    = (*color & 0xff000000) >> 24;
-    alpha  = (*color & 0x000000ff);
-    *color = (alpha << 24) | (red << 16) | (green << 8) | blue;
+    blue   = (*color & 0x0000ff00) >> 8;  /* 000000BB */
+    green  = (*color & 0x00ff0000) >> 8;  /* 0000GG00 */
+    red    = (*color & 0xff000000) >> 8;  /* 00RR0000 */
+    alpha  = (*color & 0x000000ff) << 24; /* AA000000 */
+    *color = alpha | red | green | blue;  /* AARRGGBB */
     break;
 
   case GR_COLORFORMAT_BGRA:
-    blue   = (*color & 0xff000000) >> 24;
-    green  = (*color & 0x00ff0000) >> 16;
-    red    = (*color & 0x0000ff00) >> 8;
-    alpha  = (*color & 0x000000ff);
-    *color = (alpha << 24) | (red << 16) | (green << 8) | blue;
+    blue   = (*color & 0xff000000) >> 24; /* 000000BB */
+    green  = (*color & 0x00ff0000) >> 8;  /* 0000GG00 */
+    red    = (*color & 0x0000ff00) << 8;  /* 00RR0000 */
+    alpha  = (*color & 0x000000ff) << 24; /* AA000000 */
+    *color = alpha | red | green | blue;  /* AARRGGBB */
     break;
 
   default:

@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/12/07 21:49:11  joseph
+** Initial checkin into SourceForge.
+**
  * 
  * 12    12/15/97 5:52p Atai
  * disable obsolete glide2 api for glide3
@@ -293,9 +296,9 @@ GR_DIENTRY(guDrawTriangleWithClip, void,
       )
   {
 #ifdef GLIDE3
-    grDrawTriangle( (void *)a, (void *)b, (void *)c );
+    TRISETUP( (void *)a, (void *)b, (void *)c );
 #else
-    grDrawTriangle( a, b, c );
+    TRISETUP( a, b, c );
 #endif
     return;
   }

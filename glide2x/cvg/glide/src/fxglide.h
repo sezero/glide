@@ -19,6 +19,10 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.2.2.2  2004/12/23 20:45:56  koolsmoky
+** converted to nasm syntax
+** added x86 asm, 3dnow! triangle and mmx, 3dnow! texture download optimizations
+**
 ** Revision 1.2.2.1  2004/12/12 15:17:18  koolsmoky
 ** support new cpuid
 **
@@ -519,12 +523,12 @@ struct _GrState_s
  */
 
 typedef FxI32 (FX_CALL* GrTriSetupProc)(const void*, const void*, const void*);
-#if GLIDE_PACKED_RBG
-typedef GrTriSetupProc GrTriSetupProcVector[6];
-#else
 typedef GrTriSetupProc GrTriSetupProcVector[2];
+#if GLIDE_PACKED_RGB
+typedef GrTriSetupProcVector GrTriSetupProcArchVector[3];
+#else
+typedef GrTriSetupProcVector GrTriSetupProcArchVector[1];
 #endif
-typedef GrTriSetupProcVector GrTriSetupProcArchVector;
 
 /* Decalrations of the dispatchable procs found in xdraw2.asm and
  * xtexdl.c for teh triangle and texture download procs respectively.  
@@ -631,30 +635,15 @@ typedef struct GrGC_s
   GrState
     state;                      /* state of Glide/SST */
 
-#if GLIDE_DISPATCH_SETUP || GLIDE_DISPATCH_DOWNLOAD
-  struct {
 #if GLIDE_DISPATCH_SETUP
+  struct {
     /* Current triangle rendering proc specialized for culling/no
      * culling and viewport/window coordinates.
      */
-    GrTriSetupProc      triSetupProc;
-    
-    /* Vector to choose triangle rendering proc from based
-     * on culling or no-cull this vector should be specialized
-     * on viewport vs window coordinates.
-     */
-    GrTriSetupProcVector* coorTriSetupVector;
-#endif /* GLIDE_DISPATCH_SETUP */
-    
-#if GLIDE_DISPATCH_DOWNLOAD
-    /* Vector of texture download procs specialized by size
-     * and processor vendor type.
-     */
-    GrTexDownloadProcVector* texDownloadProcs;
-#endif /* GLIDE_DISPATCH_DOWNLOAD */
+    GrTriSetupProc triSetupProc;
   } curArchProcs;
-#endif /* GLIDE_DISPATCH_SETUP || GLIDE_DISPATCH_DOWNLOAD */
-
+#endif /* GLIDE_DISPATCH_SETUP */
+  
   struct cmdTransportInfo {
     FxU32  triPacketHdr; /* Pre-computed packet header for
                           * independent triangles. 
@@ -1017,21 +1006,12 @@ extern GrGCFuncs _curGCFuncs;
 void _grMipMapInit(void);
 
 #if GLIDE_DISPATCH_SETUP
-#define TRISETUP_NORGB(__cullMode) (((__cullMode) == GR_CULL_DISABLE) \
-                                    ? (*gc->curArchProcs.coorTriSetupVector)[0] \
-                                    : (*gc->curArchProcs.coorTriSetupVector)[1])
-#if GLIDE_PACKED_RBG
-#define TRISETUP_RGB(__cullMode) (((__cullMode) == GR_CULL_DISABLE) \
-                                  ? (*gc->curArchProcs.coorTriSetupVector)[2] \
-                                  : (*gc->curArchProcs.coorTriSetupVector)[3])
-#define TRISETUP_ARGB(__cullMode) (((__cullMode) == GR_CULL_DISABLE) \
-                                   ? (*gc->curArchProcs.coorTriSetupVector)[4] \
-                                   : (*gc->curArchProcs.coorTriSetupVector)[5])
-
-#else /* !GLIDE_PACKED_RGB */
-#define TRISETUP_RGB(__cullMode)   TRISETUP_NORGB(__cullMode)
-#define TRISETUP_ARGB(__cullMode)  TRISETUP_NORGB(__cullMode)
+#define TRISETUP_NORGB (*_GlideRoot.deviceArchProcs.curTriProcs + 0)
+#if GLIDE_PACKED_RGB
+#define TRISETUP_RGB   (*_GlideRoot.deviceArchProcs.curTriProcs + 1)
+#define TRISETUP_ARGB  (*_GlideRoot.deviceArchProcs.curTriProcs + 2)
 #endif /* !GLIDE_PACKED_RGB */
+#define PROC_SELECT_TRISETUP(__procVector, __cullMode) (__procVector)[(__cullMode) != GR_CULL_DISABLE]
 #define TRISETUP (*gc->curArchProcs.triSetupProc)
 #else /* !GLIDE_DISPATCH_SETUP */
 FxI32 FX_CSTYLE
@@ -2027,11 +2007,21 @@ _grCVGFifoDump_Linear(const FxU32* const linearPacketAddr);
  * probably do something silly like wrap around zero.
  */
 #if GLIDE_PACKED_RGB
-#define RGBA_COMP(__fpVal, __fpBias, __fpShift, __fpMask) \
+/*#define RGBA_COMP(__fpVal, __fpBias, __fpShift, __fpMask) \
 ((_GlideRoot.pool.ftemp1 = (float)((float)(__fpVal) + (float)(__fpBias))), \
  GR_ASSERT((__fpVal) >= 0.0f), \
  GR_ASSERT((__fpVal) < 256.0f), \
- (((*(const FxU32*)&_GlideRoot.pool.ftemp1) & (__fpMask)) << (__fpShift)))
+ (((*(const FxU32*)&_GlideRoot.pool.ftemp1) & (__fpMask)) << (__fpShift)))*/
+/* dpc - 10 feb 1998 -
+ * Some apps send color values outside of the range [0..255]
+ */
+#define RGBA_COMP(__fpVal, __fpBias, __fpShift, __fpMask) \
+((_GlideRoot.pool.ftemp1 = (float)((float)(__fpVal) + (float)(__fpBias))), \
+ ((((float)(__fpVal)) > 255.0f) \
+  ? (__fpMask) \
+  : ((((float)(__fpVal)) < 0.0f) \
+     ? 0x00UL \
+     : ((*(const FxU32*)&_GlideRoot.pool.ftemp1) & (__fpMask)))) << (__fpShift))
                                                   
 #define RGBA_COMP_CLAMP(__fpVal, __compToken) \
    RGBA_COMP(__fpVal, kPackBias##__compToken, kPackShift##__compToken, kPackMask##__compToken)
