@@ -21,16 +21,41 @@
 # $Date$
 #
 
-# Which hardware are you building for?
-ifeq ($(FX_GLIDE_HW),)
-export FX_GLIDE_HW=sst1
-#export FX_GLIDE_HW=sst96
-endif
+export TOPDIR := $(shell pwd)
 
 THISDIR = devel
-SUBDIRS = swlibs sst1
+SUBDIRS = swlibs 
 
-TOPDIR := $(shell pwd)
-export TOPDIR
+# We branched glide starting w/ Voodoo2(aka CVG) so 
+# make sure that the right thing happens. If this sort
+# of branching happens again then add it to the list below.
+ifeq ($(FX_GLIDE_HW),sst1)
+  SUBDIRS	+= sst1
+else
+  ifeq  ($(FX_GLIDE_HW),sst96)
+    SUBDIRS += sst1
+  else
+    ifeq ($(FX_GLIDE_HW),cvg)
+      SUBDIRS	+= cvg
+    else
+      ifeq ($(FX_GLIDE_HW),h3)
+        SUBDIRS	+= h3
+      else
+        FX_GLIDE_HW = h3
+        SUBDIRS += h3
+      endif
+    endif
+  endif
+endif
 
-include $(TOPDIR)/swlibs/include/make/3dfx.mak
+#
+# Other variables we need to set
+#
+export FX_HW_PROJECTS=glide
+ifeq ($HAL_HW,)
+  export HAL_HW=1
+endif
+export FX_NO_GET_BOF=1
+export FX_GLIDE_HW
+
+include swlibs/include/make/3dfx.mak

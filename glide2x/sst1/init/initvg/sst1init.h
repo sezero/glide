@@ -706,12 +706,19 @@ extern "C" {
   FxU32 boardsInSystem;
   FxU32 sst1InitSliEnabled = 0;
   FxU32 *sst1InitSliSlaveVirtAddr;
+
+#if 0
+  /* In the newer revisions of swlibs these have moved to 
+     newpci/pcilib/sst1_pci.c.  Please make modifications there instead. */
   const PciRegister SST1_PCI_INIT_ENABLE   = { 0x40, 4, READ_WRITE };
   const PciRegister SST1_PCI_BUS_SNOOP0    = { 0x44, 4, WRITE_ONLY };
   const PciRegister SST1_PCI_BUS_SNOOP1    = { 0x48, 4, WRITE_ONLY };
   const PciRegister SST1_PCI_CFG_STATUS    = { 0x4c, 4, READ_ONLY };
   const PciRegister SST1_PCI_VCLK_ENABLE   = { 0xc0, 4, WRITE_ONLY };
   const PciRegister SST1_PCI_VCLK_DISABLE  = { 0xe0, 4, WRITE_ONLY };
+#else
+#include <sst1_pci.h>
+#endif
 
 #else
   extern FxBool sst1InitUseVoodooFile;
@@ -728,12 +735,20 @@ extern "C" {
   extern FxU32 boardsInSystem;
   extern FxU32 sst1InitSliEnabled;
   extern FxU32 *sst1InitSliSlaveVirtAddr;
+
+#if 0
+  /* In the newer revisions of swlibs these have moved to 
+     newpci/pcilib/sst1_pci.h.  Please make modification there instead. */
   extern PciRegister SST1_PCI_INIT_ENABLE;
   extern PciRegister SST1_PCI_BUS_SNOOP0;
   extern PciRegister SST1_PCI_BUS_SNOOP1;
   extern PciRegister SST1_PCI_CFG_STATUS;
   extern PciRegister SST1_PCI_VCLK_ENABLE;
   extern PciRegister SST1_PCI_VCLK_DISABLE;
+#else
+#include <sst1_pci.h>
+#endif
+
 #endif /* SST1INIT_ALLOCATE */
 
 #ifdef __cplusplus

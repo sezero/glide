@@ -66,7 +66,7 @@ ifeq ($(FX_GLIDE_HW),)
 error "FX_GLIDE_HW not defined"
 endif
 
-# Display Options (Simulator, Hardware)
+# Display Options
 DSPOPTS =
 SUBLIBRARIES =
 DSPOPTS         +=      -DGLIDE_INIT_HWC

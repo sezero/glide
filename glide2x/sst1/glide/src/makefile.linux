@@ -34,8 +34,8 @@ ifeq ($(FX_GLIDE_HW),SST96)
 HWSPEC          = sst96.c
 LCDEFS          += -DSST96 -DGLIDE_USE_ALT_REGMAP
 
-ASMTRISETUP	= xdraw96.s
-LIBOBJS		= xdraw96.o
+ASMTRISETUP	= xdraw96.S
+# LIBOBJS		= xdraw96.o
 
 FX_GLIDE_FIFO96 = 1
 FX_GLIDE_GROUP_WRITE=1
@@ -48,8 +48,8 @@ endif
 else # Default to SST1
 LCDEFS          +=       -DSST1
 LADEFS          +=       /DSST1
-ASMTRISETUP	= xdraw.s
-LIBOBJS		= xdraw.o
+ASMTRISETUP	= xdraw.S
+# LIBOBJS		= xdraw.o
 endif
 
 # Optimization Options
@@ -188,10 +188,12 @@ else
 ASM_DEFINES += -DGLIDE_DEBUG=0
 endif
 
-xdraw.o : fxgasm.h xdraw.s
-	gasp xdraw.s $(ASM_DEFINES) | as -V -Qy -o xdraw.o
+xdraw.o : fxgasm.h xdraw.S
+	$(CC) -c -o $@ xdraw.S $(ASM_OPTS) $(LAOPTS)
+#	gasp xdraw.s $(ASM_DEFINES) | as -V -Qy -o xdraw.o
 
-xdraw96.o : fxgasm.h xdraw96.s
-	gasp xdraw96.s $(ASM_DEFINES) | as -V -Qy -o xdraw96.o
+xdraw96.o : fxgasm.h xdraw96.
+	$(CC) -c -o $@ xdraw96.S $(ASM_OPTS) $(LAOPTS)
+#	gasp xdraw96.s $(ASM_DEFINES) | as -V -Qy -o xdraw96.o
 
 gsplash.o : gsplash.c splshdat.c fxinline.h

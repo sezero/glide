@@ -317,8 +317,13 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitRegisters(FxU32 *sstbase)
     PCICFG_WR(SST1_PCI_INIT_ENABLE, SST_INITWR_EN);
 
     /* Reset Snoop registers to default values */
+#if 0
     PCICFG_WR(SST1_PCI_BUS_SNOOP0, SST_PCI_BUS_SNOOP_DEFAULT);
     PCICFG_WR(SST1_PCI_BUS_SNOOP1, SST_PCI_BUS_SNOOP_DEFAULT);
+#else
+    PCICFG_WR(SST1_PCI_BUS_SNOOP_0, SST_PCI_BUS_SNOOP_DEFAULT);
+    PCICFG_WR(SST1_PCI_BUS_SNOOP_1, SST_PCI_BUS_SNOOP_DEFAULT);
+#endif
     sst1InitReturnStatus(sstbase); /* Stall - can't call IdleFbi because */
                                    /* FBI could be hung at this stage */
     sst1InitReturnStatus(sstbase);

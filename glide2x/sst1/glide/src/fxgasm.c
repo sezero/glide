@@ -62,29 +62,29 @@
     else printf("SIZEOF_%s\t= %10d\n",pname,sizeof(p))
 #else
 #define NEWLINE printf("\n");
-#define COMMENT printf("#----------------------------------------------------------------------\n")
+#define COMMENT printf("/*----------------------------------------------------------------------*/\n")
 
 #define HEADER(str)     NEWLINE; COMMENT; \
-                        printf("# Assembler offsets for %s struct\n",str);\
+                        printf("/* Assembler offsets for %s struct */\n",str);\
                         COMMENT; NEWLINE
 
 #define OFFSET(p,o,pname) if (hex) \
-        printf("%s\t .EQU %08x\n",pname,((int)&p.o)-(int)&p); \
-    else printf("%s\t .EQU %10d\n",pname,((int)&p.o)-(int)&p)
+        printf("#define %s\t 0x%08x\n",pname,((int)&p.o)-(int)&p); \
+    else printf("#define %s\t %10d\n",pname,((int)&p.o)-(int)&p)
 
 #if (GLIDE_PLATFORM & GLIDE_HW_SST96)
 #define HWOFFSET(p, o, pname) if (hex) \
-        printf("%s\t .EQU %08x\n",pname,(((int) &p.o)-(int)&p)>>2);\
-    else printf("%s\t .EQU %10d\n",pname,(((int)&p.o)-(int)&p))
+        printf("#define %s\t 0x%08x\n",pname,(((int) &p.o)-(int)&p)>>2);\
+    else printf("#define %s\t %10d\n",pname,(((int)&p.o)-(int)&p))
 #endif /* (GLIDE_PLATFORM & GLIDE_HW_SST96) */
 
 #define OFFSET2(p,o,pname) if (hex) \
-        printf("%s\t .EQU %08x\n",pname,((int)&o)-(int)&p); \
-    else printf("%s\t .EQU %10d\n",pname,((int)&o)-(int)&p)
+        printf("#define %s\t  0x%08x\n",pname,((int)&o)-(int)&p); \
+    else printf("#define %s\t %10d\n",pname,((int)&o)-(int)&p)
 
 #define SIZEOF(p,pname) if (hex) \
-        printf("SIZEOF_%s\t .EQU %08x\n",pname,sizeof(p)); \
-    else printf("SIZEOF_%s\t .EQU %10d\n",pname,sizeof(p))
+        printf("#define SIZEOF_%s\t 0x%08x\n",pname,sizeof(p)); \
+    else printf("#define SIZEOF_%s\t  %10d\n",pname,sizeof(p))
 #endif
 
 int
@@ -120,7 +120,7 @@ main (int argc, char **argv)
 #ifndef __linux__
     printf("SST_CHIP_MASK = 0%xh\n",SST_CHIP_MASK);
 #else
-    printf("SST_CHIP_MASK .EQU 0x%x\n", SST_CHIP_MASK);
+    printf("#define SST_CHIP_MASK 0x%x\n", SST_CHIP_MASK);
 #endif
 
     HEADER ("SSTREGS");
