@@ -19,6 +19,13 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.6.4  2004/03/02 07:30:58  dborca
+** changed the build process to make the branches independent
+** made glide.h consistent across all branches
+** grQueryResolution now works in DOS
+** more tests in CVG branch
+** some other fixes
+**
 ** Revision 1.1.1.1.6.3  2003/11/07 13:38:39  dborca
 ** unite the clans
 **
@@ -3624,7 +3631,7 @@ hwcBufferLfbAddr(FxU32 bufNum,
                  FxBool colBufAlignP)
 {
   FxU32 retVal = 0x00UL;
-
+#if 0
   if (bInfo->vidInfo.tiled) {
     retVal = (bInfo->fbOffset + 
               pow2Round(bufNum * bInfo->vidInfo.yRes * HWC_TILED_BUFFER_BYTES, 
@@ -3635,7 +3642,70 @@ hwcBufferLfbAddr(FxU32 bufNum,
   } else if (bufNum == bInfo->buffInfo.nColBuffers) {
     retVal = bInfo->buffInfo.auxBuffStart;
   }
+#else
+  /* [dBorca] Hack alert:
+   * the code above gives bad AUX buffer
+   * for 320x200, 320x240, 400x300, 640x400
+   * My Voodoo3 agrees with the code below.
+   * Always!
+   */
+  FxU32 tileAddress;
+  FxU32 tileNumber;
+  FxU32 tileOffset;
+  FxU32 tileXOffset;
+  FxU32 tileScanline;
+  FxU32 tileRow;
+  FxU32 lfbAddress;
+  FxU32 lfbYOffset;
 
+  FxU32 physAddress;
+  if (bufNum < bInfo->buffInfo.nColBuffers) {
+    physAddress = bInfo->buffInfo.colBuffStart[bufNum];
+  } else if (bufNum == bInfo->buffInfo.nColBuffers) {
+    physAddress = bInfo->buffInfo.auxBuffStart;
+  } else {
+    /*GR_ASSERT(bufNum <= bInfo->buffInfo.nColBuffers);*/
+  }
+
+  if (bInfo->vidInfo.tiled) {    
+    GDBG_INFO(80, "\tphysAddress: 0x%08lx\n",physAddress);
+
+    /* Compute address in tile space */
+    tileAddress = physAddress - bInfo->fbOffset;
+    GDBG_INFO(80, "\ttileAddress: 0x%08lx\n",tileAddress);
+
+    /* Compute tile number we're in (each tile is 4K bytes) */
+    tileNumber = tileAddress >> 12;
+    GDBG_INFO(80, "\ttileNumber: 0x%08lx (%d)\n",tileNumber,tileNumber);
+
+    /* Compute base tile row we're in */
+    tileRow = tileNumber / bInfo->buffInfo.bufStrideInTiles;
+    GDBG_INFO(80, "\ttileRow: %d  (stride = %d)\n",tileNumber,bInfo->buffInfo.bufStrideInTiles);
+
+    /* Compute offset within the tile */
+    tileOffset = tileAddress - (tileNumber << 12);
+    GDBG_INFO(80, "\ttileOffset: 0x%08lx\n",tileOffset);
+
+    /* Compute scanline within the tile */
+    tileScanline = tileOffset >> 7;
+    GDBG_INFO(80, "\ttileScanline: 0x%08lx\n",tileScanline);
+
+    /* Compute tile X offset within the row */
+    tileXOffset = tileNumber - (tileRow * bInfo->buffInfo.bufStrideInTiles);
+    GDBG_INFO(80, "\ttileXOffset: %d\n",tileXOffset);
+
+    /* Compute Y offset in LFB space */
+    lfbYOffset = tileRow * 32 + tileScanline;
+
+    /* Compute LFB address of tile start */
+    lfbAddress =  bInfo->fbOffset + lfbYOffset * LFBSTRIDE + tileXOffset * 128;
+
+    GDBG_INFO(80, "\tlfbAddress: %08lx\n", lfbAddress);
+    retVal = lfbAddress;
+  } else {
+    retVal = physAddress;
+  }
+#endif
   return retVal;
 }
 
