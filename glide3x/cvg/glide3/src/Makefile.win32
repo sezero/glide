@@ -92,13 +92,6 @@ CDEFS += -DGLIDE_BLIT_CLEAR=1
 # tmus using chipfield. chipfield will always be set to 0xf
 CDEFS += -DGLIDE_CHIP_BROADCAST=1
 
-# special sli buffer clears
-CDEFS += -DGLIDE_BLIT_CLEAR=1
-
-# workaround for CVGs with broken tsus which cannot send commands to multiple 
-# tmus using chipfield. chipfield will always be set to 0xf
-CDEFS += -DGLIDE_CHIP_BROADCAST=1
-
 # subsystem
 CDEFS += -DCVG
 
