@@ -193,12 +193,12 @@ GLIDE_OBJECTS = \
 	gtex.obj \
 	gtexdl.obj \
 	gutex.obj \
-	cpuid.obj
+	cpuid.obj \
+	xtexdl_def.obj
 
 ifeq ($(USE_X86),1)
 GLIDE_OBJECTS += \
-	xdraw2_def.obj \
-        xtexdl_def.obj
+	xdraw2_def.obj
 ifeq ($(USE_MMX),1)
 GLIDE_OBJECTS += \
 	xtexdl_mmx.obj
