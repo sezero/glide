@@ -24,9 +24,7 @@
 ** Initialization code for initializing supported SST-1 DACs
 **
 */
-#ifdef _WIN32
 #pragma optimize ("",off)
-#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -1369,6 +1367,4 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitDacIndexedEnable(FxU32 *sstbase,
     return(FXTRUE);
 }
 
-#ifdef _WIN32
 #pragma optimize ("",on)
-#endif

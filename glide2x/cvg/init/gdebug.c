@@ -30,6 +30,7 @@
 #include <string.h>
 
 #include <3dfx.h>
+#include <fxpci.h>
 
 #if __MWERKS__
 /* Dork w/ the console window */
@@ -42,7 +43,6 @@
 
 #define FX_DLL_DEFINITION
 #include <fxdll.h>
-#include <fxpci.h>
 #include <gdebug.h>
 
 #if defined(__WIN32__) && !defined(KERNEL)
@@ -252,10 +252,8 @@ gdbg_vprintf (const char *format,va_list args)
 
 #if __DOS32__
       pciOutputDebugString(msgBuf);
-#elif __WIN32
-      OutputDebugString(msgBuf);
 #else
-      fprintf(stderr, msgBuf);
+      OutputDebugString(msgBuf);
 #endif /* !__DOS32__ */
     } else
 #endif /* USE_DEBUG_STRING */

@@ -25,9 +25,7 @@
 ** Initialization code for initializing SST-1 video unit
 **
 */
-#ifdef _WIN32
 #pragma optimize ("",off)
-#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -222,21 +220,21 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitVideoBuffers(FxU32 *sstbase,
     
     // Setup SST video timing registers
     if(GETENV(("SSTV2_HSYNC"))) {
-        SSCANF(GETENV(("SSTV2_HSYNC")), "%ld", &vtmp);
+        SSCANF(GETENV(("SSTV2_HSYNC")), "%i", &vtmp);
         INIT_PRINTF(("sst1InitVideo(): Using SST_HSYNC=0x%x\n", vtmp));
         ISET(sst->hSync, vtmp);
     } else
         ISET(sst->hSync, ((sstVideoRez->hSyncOff << SST_VIDEO_HSYNC_OFF_SHIFT) |
                       (sstVideoRez->hSyncOn << SST_VIDEO_HSYNC_ON_SHIFT)));
     if(GETENV(("SSTV2_VSYNC"))) {
-        SSCANF(GETENV(("SSTV2_VSYNC")), "%ld", &vtmp);
+        SSCANF(GETENV(("SSTV2_VSYNC")), "%i", &vtmp);
         INIT_PRINTF(("sst1InitVideo(): Using SST_VSYNC=0x%x\n", vtmp));
         ISET(sst->vSync, vtmp);
     } else
         ISET(sst->vSync, ((sstVideoRez->vSyncOff << SST_VIDEO_VSYNC_OFF_SHIFT) |
                       (sstVideoRez->vSyncOn << SST_VIDEO_VSYNC_ON_SHIFT)));
     if(GETENV(("SSTV2_BACKPORCH"))) {
-        SSCANF(GETENV(("SSTV2_BACKPORCH")), "%ld", &vtmp);
+        SSCANF(GETENV(("SSTV2_BACKPORCH")), "%i", &vtmp);
         INIT_PRINTF(("sst1InitVideo(): Using SST_BACKPORCH=0x%x\n", vtmp));
         ISET(sst->backPorch, vtmp);
     } else
@@ -244,7 +242,7 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitVideoBuffers(FxU32 *sstbase,
                      ((sstVideoRez->vBackPorch << SST_VIDEO_VBACKPORCH_SHIFT) |
                       (sstVideoRez->hBackPorch << SST_VIDEO_HBACKPORCH_SHIFT)));
     if(GETENV(("SSTV2_DIMENSIONS"))) {
-        SSCANF(GETENV(("SSTV2_DIMENSIONS")), "%ld", &vtmp);
+        SSCANF(GETENV(("SSTV2_DIMENSIONS")), "%i", &vtmp);
         INIT_PRINTF(("sst1InitVideo(): Using SST_DIMENSIONS=0x%x\n", vtmp));
         sstVideoRez->yDimension = (vtmp >>  SST_VIDEO_YDIM_SHIFT) & 0x3ff;
         sstVideoRez->xDimension = vtmp & 0x3ff;
@@ -253,12 +251,12 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitVideoBuffers(FxU32 *sstbase,
                      ((sstVideoRez->yDimension << SST_VIDEO_YDIM_SHIFT) |
                       ((sstVideoRez->xDimension-1) << SST_VIDEO_XDIM_SHIFT)));
     if(GETENV(("SSTV2_MEMOFFSET"))) {
-        SSCANF(GETENV(("SSTV2_MEMOFFSET")), "%ld", &vtmp);
+        SSCANF(GETENV(("SSTV2_MEMOFFSET")), "%i", &vtmp);
         INIT_PRINTF(("sst1InitVideo(): Using video memOffset=0x%x\n", vtmp));
         sstVideoRez->memOffset = vtmp;
     }
     if(GETENV(("SSTV2_TILESINX"))) {
-        SSCANF(GETENV(("SSTV2_TILESINX")), "%ld", &vtmp);
+        SSCANF(GETENV(("SSTV2_TILESINX")), "%i", &vtmp);
         INIT_PRINTF(("sst1InitVideo(): Using video tilesInX=0x%x\n", vtmp));
         sstVideoRez->tilesInX = vtmp;
     }
@@ -320,13 +318,13 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitVideoBuffers(FxU32 *sstbase,
 
     memFifoLwm = 23;
     if(GETENV(("SSTV2_MEMFIFO_LWM")))
-        SSCANF(GETENV(("SSTV2_MEMFIFO_LWM")), "%ld", &memFifoLwm);
+        SSCANF(GETENV(("SSTV2_MEMFIFO_LWM")), "%i", &memFifoLwm);
     memFifoHwm = 54;
     if(GETENV(("SSTV2_MEMFIFO_HWM")))
-        SSCANF(GETENV(("SSTV2_MEMFIFO_HWM")), "%ld", &memFifoHwm);
+        SSCANF(GETENV(("SSTV2_MEMFIFO_HWM")), "%i", &memFifoHwm);
     pciFifoLwm = 13;
     if(GETENV(("SSTV2_PCIFIFO_LWM")))
-        SSCANF(GETENV(("SSTV2_PCIFIFO_LWM")), "%ld", &pciFifoLwm);
+        SSCANF(GETENV(("SSTV2_PCIFIFO_LWM")), "%i", &pciFifoLwm);
     INIT_PRINTF(("sst1InitVideo(): pciFifoLwm:%d  memFifoLwm:%d  memFifoHwm:%d\n",
         pciFifoLwm, memFifoLwm, memFifoHwm));
 
@@ -384,7 +382,7 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitVideoBuffers(FxU32 *sstbase,
           return(FXFALSE);
         }
         if(GETENV(("SSTV2_MEMFIFO_ENTRIES")))
-            SSCANF(GETENV(("SSTV2_MEMFIFO_ENTRIES")), "%d", &memFifoEntries);
+            SSCANF(GETENV(("SSTV2_MEMFIFO_ENTRIES")), "%i", &memFifoEntries);
         INIT_PRINTF(("sst1InitVideo(): Enabling Memory FIFO (Entries=%d)...\n",
             65536 - (memFifoEntries << 5)));
 
@@ -402,11 +400,11 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitVideoBuffers(FxU32 *sstbase,
 
     vInClkDel = 1;
     if(GETENV(("SSTV2_VIN_CLKDEL")))
-        SSCANF(GETENV(("SSTV2_VIN_CLKDEL")), "%ld", &vInClkDel);
+        SSCANF(GETENV(("SSTV2_VIN_CLKDEL")), "%i", &vInClkDel);
 
     vOutClkDel = 0;
     if(GETENV(("SSTV2_VOUT_CLKDEL")))
-        SSCANF(GETENV(("SSTV2_VOUT_CLKDEL")), "%ld", &vOutClkDel);
+        SSCANF(GETENV(("SSTV2_VOUT_CLKDEL")), "%i", &vOutClkDel);
 
     INIT_PRINTF(("sst1InitVideo(): vInClkDel=0x%x  vOutClkDel=0x%x\n",
 
@@ -471,7 +469,7 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitVideoBuffers(FxU32 *sstbase,
         if(!GETENV(("SSTV2_VIDEO_FILTER_DISABLE"))) {
             ISET(sst->fbiInit1, IGET(sst->fbiInit1) | SST_VIDEO_FILTER_EN);
             if(GETENV(("SSTV2_VIDEO_FILTER_THRESHOLD"))) {
-                SSCANF(GETENV(("SSTV2_VIDEO_FILTER_THRESHOLD")), "%ld", &n);
+                SSCANF(GETENV(("SSTV2_VIDEO_FILTER_THRESHOLD")), "%i", &n);
                 INIT_PRINTF(("sst1InitVideo(): Setting Video Filtering Treshold to 0x%x...\n", n));
 
                 ISET(sst->videoFilterRgbThreshold, n);
@@ -605,7 +603,7 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitVideoBuffers(FxU32 *sstbase,
         FxU32 pagesToFill;
 
         if(GETENV(("SSTV2_VIDEO_CLEARCOLOR")))
-            SSCANF(GETENV(("SSTV2_VIDEO_CLEARCOLOR")), "%ld", &clearColor);
+            SSCANF(GETENV(("SSTV2_VIDEO_CLEARCOLOR")), "%i", &clearColor);
 
         if(sst1CurrentBoard->fbiMemSize == 1)
            pagesToFill = 256;
@@ -728,6 +726,8 @@ FX_EXPORT FxBool FX_CSTYLE
 sst1InitAllocBuffers(FxU32 *sstbase, FxU32 nColorBuffs, FxU32 nAuxBuffs)
 {
    SstRegs *sst = (SstRegs *) sstbase;
+   FxU32 nCol = nColorBuffs;
+   FxU32 nAux = nAuxBuffs;
    FxBool retVal;
 
    if(!sst)
@@ -1262,7 +1262,7 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitMonitorDetect(FxU32 *sstbase)
    // }
 
    if(GETENV(("SSTV2_MDETECT_CONST"))) {
-     SSCANF(GETENV(("SSTV2_MDETECT_CONST")), "%ld", &gammaCorrectConstant);
+     SSCANF(GETENV(("SSTV2_MDETECT_CONST")), "%i", &gammaCorrectConstant);
      INIT_PRINTF(("sst1InitMonitorDetect(): Using value 0x%x for constant gamma value...\n", gammaCorrectConstant));
    }
 
@@ -1426,13 +1426,13 @@ setDelays:
 
    // Override with environment variables
    if(GETENV(("SSTV2_FT_CLKDEL")))
-       SSCANF(GETENV(("SSTV2_FT_CLKDEL")), "%ld", &ft_clkdel);
+       SSCANF(GETENV(("SSTV2_FT_CLKDEL")), "%i", &ft_clkdel);
    if(GETENV(("SSTV2_TF0_CLKDEL")))
-       SSCANF(GETENV(("SSTV2_TF0_CLKDEL")), "%ld", &tf0_clkdel);
+       SSCANF(GETENV(("SSTV2_TF0_CLKDEL")), "%i", &tf0_clkdel);
    if(GETENV(("SSTV2_TF1_CLKDEL")))
-       SSCANF(GETENV(("SSTV2_TF1_CLKDEL")), "%ld", &tf1_clkdel);
+       SSCANF(GETENV(("SSTV2_TF1_CLKDEL")), "%i", &tf1_clkdel);
    if(GETENV(("SSTV2_TF2_CLKDEL")))
-       SSCANF(GETENV(("SSTV2_TF2_CLKDEL")), "%ld", &tf2_clkdel);
+       SSCANF(GETENV(("SSTV2_TF2_CLKDEL")), "%i", &tf2_clkdel);
 
    INIT_PRINTF(("sst1InitSetClkDelays(): Setting FBI-to-TREX clock delay to 0x%x...\n", ft_clkdel));
    INIT_PRINTF(("sst1InitSetClkDelays(): Setting TREX#0 TREX-to-FBI clock delay to 0x%x\n",
@@ -1462,6 +1462,4 @@ setDelays:
    return(FXTRUE);
 }
 
-#ifdef _WIN32
 #pragma optimize ("",on)
-#endif

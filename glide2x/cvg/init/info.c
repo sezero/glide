@@ -25,9 +25,7 @@
 ** configuration information.
 **
 */
-#ifdef _WIN32
 #pragma optimize ("",off)
-#endif
 #include <stdio.h>
 #include <stdlib.h>
 #ifdef BUILD_FOR_SST1
@@ -237,7 +235,7 @@ getTmuConfigData(FxU32 *sstbase, sst1DeviceInfoStruct *info)
     ISET(SST_TREX(sst,2)->trexInit1, info->tmuInit1[2]);
 
 	if(GETENV(("SSTV2_TMUCFG")))
-        SSCANF(GETENV(("SSTV2_TMUCFG")), "%ld", &info->tmuConfig);
+        SSCANF(GETENV(("SSTV2_TMUCFG")), "%i", &info->tmuConfig);
 
 	return(FXTRUE);
 }
@@ -514,7 +512,7 @@ sst1InitGetFbiInfo(FxU32 *sstbase, sst1DeviceInfoStruct *info)
   
 	/* Detect board identification and memory speed */
 	if(GETENV(("SSTV2_FBICFG")))
-    SSCANF(GETENV(("SSTV2_FBICFG")), "%ld", &info->fbiConfig);
+    SSCANF(GETENV(("SSTV2_FBICFG")), "%i", &info->fbiConfig);
   else
 		info->fbiConfig = (IGET(sst->fbiInit3) & SST_FBI_MEM_TYPE) >>
 			SST_FBI_MEM_TYPE_SHIFT;
@@ -567,12 +565,12 @@ FxBool sst1InitFillDeviceInfo(FxU32 *sstbase, sst1DeviceInfoStruct *info)
     	INIT_PRINTF(("sst1DeviceInfo: Filling info Struct with default values...\n"));
 
 		if(GETENV(("SSTV2_FBICFG")))
-        	SSCANF(GETENV(("SSTV2_FBICFG")), "%ld", &info->fbiConfig);
+        	SSCANF(GETENV(("SSTV2_FBICFG")), "%i", &info->fbiConfig);
 		else
 	        info->fbiConfig = 0x0;
 
 		if(GETENV(("SSTV2_TMUCFG")))
-        	SSCANF(GETENV(("SSTV2_TMUCFG")), "%ld", &info->tmuConfig);
+        	SSCANF(GETENV(("SSTV2_TMUCFG")), "%i", &info->tmuConfig);
 		else
 	        info->tmuConfig = 0x0;
 
@@ -652,6 +650,4 @@ FxBool sst1InitFillDeviceInfo(FxU32 *sstbase, sst1DeviceInfoStruct *info)
 
     return(FXTRUE);
 }
-#ifdef _WIN32
 #pragma optimize ("",on)
-#endif

@@ -25,9 +25,7 @@
 ** Parsing code for grabbing information from "voodoo2.ini" initialization file
 **
 */
-#ifdef _WIN32
 #pragma optimize ("",off)
-#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -51,21 +49,16 @@
 
 static int sst1InitFgets(char *, FILE *);
 static int sst1InitFgetc(FILE *);
-#ifndef INIT_LINUX
 static int sst1InitParseFieldDac(char *);
-#endif
 static int sst1InitParseFieldCfg(char *);
-#ifndef INIT_LINUX
 static int sst1InitParseDacRdWrString(char *, sst1InitDacStruct *);
 static int sst1InitParseDacRdWr(char *, sst1InitDacRdWrStruct *);
 static int sst1InitParseSetVideoString(char *, sst1InitDacStruct *);
 static int sst1InitParseSetMemClkString(char *, sst1InitDacStruct *);
 static int sst1InitParseSetVideoModeString(char *, sst1InitDacStruct *);
-#endif
+static void sst1InitPrintDacRdWr(sst1InitDacRdWrStruct *, char *);
 static void sst1InitToLower(char *string);
-#if __DOS32__
 static void sst1InitFixFilename(char *dst, char *src);
-#endif
 
 static FxBool checkedFileP = FXFALSE;
 
@@ -102,15 +95,15 @@ FX_ENTRY FxBool FX_CALL sst1InitVoodooFile()
 
 	  if(getenv("VOODOO2_FILE")) {
 	    /* Override voodoo2.ini name */
-	    strncpy(filename, getenv("VOODOO2_FILE"), 255);
+	    strcpy(filename, getenv("VOODOO2_FILE"));
 	    if(!(file = fopen(filename, "r"))) goto __errExit;
 	  } else {
 	    /* Override path setting */
 	    if(getenv("VOODOO2_PATH"))
-	      strncpy(path, getenv("VOODOO2_PATH"), 511);
+	      strcpy(path, getenv("VOODOO2_PATH"));
 	    else if(getenv("PATH")) {
 	      strcpy(path, ".;");
-	      strncat(path, getenv("PATH"), 511 - strlen (path));
+	      strcat(path, getenv("PATH"));
 	    } else
 	      strcpy(path, ".;");
 
@@ -287,6 +280,7 @@ __errExit:
 */
 FX_ENTRY FxBool FX_CALL sst1InitVoodooFile() {
   static FxBool retVal = FXFALSE;
+  int inCfg, inDac;
   FILE *file = 0;
   char buffer[1024], filename[256];
   char *tmpPtr;
@@ -298,13 +292,13 @@ FX_ENTRY FxBool FX_CALL sst1InitVoodooFile() {
 
   if (getenv("VOODOO2_FILE")) {
     /* Override voodoo2.ini name */
-    strncpy(filename, getenv("VOODOO2_FILE"), 255);
+    strcpy(filename, getenv("VOODOO2_FILE"));
     if (!(file = fopen(filename, "r"))) 
       goto __errExit;
   } else {
     /* Override path setting */
     if (getenv("VOODOO2_PATH")) {
-      strncpy(path, getenv("VOODOO2_PATH"), 511);
+      strcpy(path, getenv("VOODOO2_PATH"));
     } else {
       strcpy(path, "/etc/conf.3dfx");
     }
@@ -318,11 +312,11 @@ FX_ENTRY FxBool FX_CALL sst1InitVoodooFile() {
 	if ((tmpPtr = strtok(NULL, ":")) == NULL)
 	  break;
       }
-      strncpy(filename, tmpPtr, 255);
+      strcpy(filename, tmpPtr);
       if (filename[strlen(filename)-1] == '\\')
-	snprintf(filename, 255, "%s/voodoo2", filename);
+	sprintf(filename, "%voodoo2", filename);
       else
-	snprintf(filename, 255, "%s/voodoo2", filename);
+	sprintf(filename, "%s/voodoo2", filename);
       i++;
       if ((file = fopen(filename, "r")))
 	break;
@@ -350,9 +344,90 @@ __errExit:
 }
 #endif
 
-#if defined(INIT_DOS) || defined(INIT_LINUX)
+#if defined(INIT_DOS) || defined(INIT_LINUX) || defined(__WIN32__)
 
-#if __DOS32__
+#if TEST
+/* void main(int argc, char **argv) */
+static void foo(int argc, char **argv)
+{
+    char buffer[2048]; /* buffer for command line inputs */
+    int inCfg, inDac;
+    sst1InitEnvVarStruct *envVarsPtr;
+    sst1InitDacStruct *dacPtr;
+    sst1InitDacSetVideoStruct *setVideo;
+    sst1InitDacSetMemClkStruct *setMemClk;
+    FILE *file = fopen(argv[1], "r");
+
+    inCfg = inDac = 0;
+    while(sst1InitFgets(buffer, file)) {
+        buffer[strlen(buffer)-1] = (char) NULL;
+        if(!strcmp(buffer, "[CFG]")) {
+            inCfg = 1; inDac = 0;
+            continue;
+        } else if (!strcmp(buffer, "[DAC]")) {
+            inCfg = 0; inDac = 1;
+            continue;
+        } else if(buffer[0] == '[') {
+            inCfg = 0; inDac = 0;
+            continue;
+        }
+        if(inCfg) {
+            if(!sst1InitParseFieldCfg(buffer))
+                /* Error processing .ini file */
+                exit(1);
+        } else if(inDac) {
+            if(!sst1InitParseFieldDac(buffer))
+                /* Error processing .ini file */
+                exit(1);
+        }
+    }
+
+    /* Dump CFG Data... */
+    envVarsPtr = envVarsBase;
+    while(envVarsPtr) {
+        printf("ENV VAR:%s  VALUE:%s\n", envVarsPtr->envVariable,
+            envVarsPtr->envValue);
+        envVarsPtr = (sst1InitEnvVarStruct *) envVarsPtr->nextVar;
+    }
+
+    /* Dump Dac Data... */
+    dacPtr = dacStructBase;
+    while(dacPtr) {
+        printf("DAC MANU:%s  DEVICE:%s\n", dacPtr->dacManufacturer,
+            dacPtr->dacDevice);
+        if(dacPtr->detect) {
+            printf("\tDetect:\n");
+            sst1InitPrintDacRdWr(dacPtr->detect, "\t\t");
+        }
+        if(dacPtr->setVideo) {
+            setVideo = dacPtr->setVideo;
+            while(1) {
+                printf("\tsetVideo (%dx%d @ %d Hz)\n",
+                  setVideo->width, setVideo->height, setVideo->refresh);
+                sst1InitPrintDacRdWr(setVideo->setVideoRdWr, "\t\t");
+                if(!setVideo->nextSetVideo)
+                    break;
+                else
+                    setVideo = setVideo->nextSetVideo;
+            }
+        }
+        if(dacPtr->setMemClk) {
+            setMemClk = dacPtr->setMemClk;
+            while(1) {
+                printf("\tsetMemClk (%d MHz)\n", setMemClk->frequency);
+                sst1InitPrintDacRdWr(setMemClk->setMemClkRdWr, "\t\t");
+                if(!setMemClk->nextSetMemClk)
+                    break;
+                else
+                    setMemClk = setMemClk->nextSetMemClk;
+            }
+        }
+        dacPtr = dacPtr->nextDac;
+    }
+    fclose(file);
+}
+#endif
+
 static void sst1InitFixFilename(char *dst, char *src)
 {
     while(*src) {
@@ -363,7 +438,6 @@ static void sst1InitFixFilename(char *dst, char *src)
     }
     *dst = (char) NULL;
 }
-#endif
 
 
 static int sst1InitFgets(char *string, FILE *stream)
@@ -468,7 +542,6 @@ static int sst1InitParseFieldCfg(char *string)
     return(1);
 }
 
-#ifndef INIT_LINUX
 static int sst1InitParseFieldDac(char *string)
 {
     char *dacFieldReference, *dacFieldValue;
@@ -668,6 +741,33 @@ static int sst1InitParseDacRdWr(char *string, sst1InitDacRdWrStruct *dacRdWrPtr)
 
     return(1);
 }
+
+#if TEST
+static void sst1InitPrintDacRdWr(sst1InitDacRdWrStruct *dacRdWrBase,
+  char *prefix)
+{
+    sst1InitDacRdWrStruct *dacRdWrPtr = dacRdWrBase;
+
+    while(dacRdWrPtr) {
+        if(dacRdWrPtr->type == DACRDWR_TYPE_WR) {
+            printf("%sDacWR", prefix);
+            printf("(0x%x,0x%x)\n", dacRdWrPtr->addr, dacRdWrPtr->data);
+        } else if(dacRdWrPtr->type == DACRDWR_TYPE_RDMODWR) {
+            printf("%sDacRD-MOD-WR", prefix);
+            printf("(0x%x,0x%x,0x%x)\n", dacRdWrPtr->addr, dacRdWrPtr->mask,
+              dacRdWrPtr->data);
+        } else if(dacRdWrPtr->type == DACRDWR_TYPE_RDNOCHECK) {
+            printf("%sDacRD-NOCHECK", prefix);
+            printf("(0x%x)\n", dacRdWrPtr->addr);
+        } else if(dacRdWrPtr->type == DACRDWR_TYPE_RDCHECK) {
+            printf("%sDacRD-CHECK", prefix);
+            printf("(0x%x,0x%x)\n", dacRdWrPtr->addr, dacRdWrPtr->data);
+        } else
+            printf("%sDAC???", prefix);
+        dacRdWrPtr = dacRdWrPtr->nextRdWr;
+    }
+}
+#endif /* TEST */
 
 static int sst1InitParseSetVideoString(char *string, sst1InitDacStruct *dacBase)
 {
@@ -869,7 +969,6 @@ static int sst1InitParseSetVideoModeString(char *string,
     }
     return(1);
 }
-#endif
 
 static void sst1InitToLower(char *string)
 {
@@ -1019,6 +1118,4 @@ FX_ENTRY char* FX_CALL sst1InitGetenv(char *string)
 }
 #endif  /* INIT_DOS */
 
-#ifdef _WIN32
 #pragma optimize ("",on)
-#endif
