@@ -42,7 +42,13 @@
 
 #define FX_DLL_DEFINITION
 #include <fxdll.h>
-#include <fxpci.h>
+#ifdef FX_DLL_ENABLE
+  #undef FX_DLL_ENABLE
+  #include <fxpci.h>
+  #define FX_DLL_ENABLE
+#else
+  #include <fxpci.h>
+#endif
 #include <gdebug.h>
 
 #if defined(__WIN32__) && !defined(KERNEL)

@@ -5,7 +5,15 @@
 #include <conio.h>
 #endif
 #include <3dfx.h>
-#include <fxpci.h>
+#define FX_DLL_DEFINITION
+#include <fxdll.h>
+#ifdef FX_DLL_ENABLE
+  #undef FX_DLL_ENABLE
+  #include <fxpci.h>
+  #define FX_DLL_ENABLE
+#else
+  #include <fxpci.h>
+#endif
 
 #define null               0
 #define SIZE_SST1_NEEDED   0x100000
