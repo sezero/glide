@@ -232,6 +232,8 @@ hwcInit(FxU32 vID, FxU32 dID) {
   }
 }
 
+extern int getpid();
+
 FxBool
 hwcMapBoard(hwcBoardInfo *bInfo, FxU32 bAddrMask) {
   if (bInfo->pciInfo.initialized == FXFALSE) {
@@ -332,6 +334,11 @@ hwcBufferLfbAddr(const hwcBoardInfo *bInfo, FxU32 physAddress)
   FxU32 tileScanline;
   FxU32 tileRow;
   FxU32 lfbAddress;
+  /*
+   * This is the tile aperture stride.  It should be
+   * a power of two between 1k and 16k.
+   */
+  FxU32 lfbBufferStride = bInfo->buffInfo.bufLfbStride;
   FxU32 lfbYOffset;
 
   if (bInfo->vidInfo.tiled) {    
