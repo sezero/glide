@@ -1,4 +1,4 @@
-# Linux makefile for Glide3(h5)
+# Linux makefile for Glide3(h5) and Texus2
 #
 #  Copyright (c) 2003 - Borca Daniel
 #  Email : dborca@users.sourceforge.net
@@ -36,6 +36,8 @@
 #			default = no
 #	USE_SSE2=1	(see USE_3DNOW)
 #			default = no
+#	TEXUS2=1	embed Texus2 functions into Glide3 library.
+#			default = no
 #
 #    Targets:
 #	all:		build everything
@@ -58,10 +60,12 @@ export PATH := $(PATH):.
 
 GLIDE_LIB = libglide3.a
 GLIDE_SO  = libglide3.so
+TEXUS_EXE = texus2
 
 FX_GLIDE_HW = h5
 FX_GLIDE_SW = swlibs
 GLIDE_LIBDIR = $(FX_GLIDE_HW)/lib
+TEXUS_EXEDIR = $(FX_GLIDE_SW)/bin
 
 ###############################################################################
 #	tools
@@ -137,6 +141,7 @@ endif
 
 CFLAGS += -I$(FX_GLIDE_HW)/glide3/src -I$(FX_GLIDE_HW)/incsrc -I$(FX_GLIDE_HW)/minihwc -I$(FX_GLIDE_HW)/cinit
 CFLAGS += -I$(FX_GLIDE_SW)/fxmisc -I$(FX_GLIDE_SW)/newpci/pcilib -I$(FX_GLIDE_SW)/fxmemmap
+CFLAGS += -I$(FX_GLIDE_SW)/texus2/lib
 CFLAGS += $(CDEFS)
 
 ifeq ($(USE_3DNOW),1)
@@ -237,6 +242,35 @@ GLIDE_OBJECTS += \
 	$(FX_GLIDE_HW)/minihwc/lin_mode.o
 endif
 
+TEXUS_SOURCES = \
+	$(FX_GLIDE_SW)/texus2/lib/texuslib.c \
+	$(FX_GLIDE_SW)/texus2/lib/clamp.c \
+	$(FX_GLIDE_SW)/texus2/lib/read.c \
+	$(FX_GLIDE_SW)/texus2/lib/resample.c \
+	$(FX_GLIDE_SW)/texus2/lib/mipmap.c \
+	$(FX_GLIDE_SW)/texus2/lib/quantize.c \
+	$(FX_GLIDE_SW)/texus2/lib/ncc.c \
+	$(FX_GLIDE_SW)/texus2/lib/nccnnet.c \
+	$(FX_GLIDE_SW)/texus2/lib/pal256.c \
+	$(FX_GLIDE_SW)/texus2/lib/pal6666.c \
+	$(FX_GLIDE_SW)/texus2/lib/dequant.c \
+	$(FX_GLIDE_SW)/texus2/lib/view.c \
+	$(FX_GLIDE_SW)/texus2/lib/util.c \
+	$(FX_GLIDE_SW)/texus2/lib/diffuse.c \
+	$(FX_GLIDE_SW)/texus2/lib/write.c \
+	$(FX_GLIDE_SW)/texus2/lib/tga.c \
+	$(FX_GLIDE_SW)/texus2/lib/3df.c \
+	$(FX_GLIDE_SW)/texus2/lib/ppm.c \
+	$(FX_GLIDE_SW)/texus2/lib/rgt.c \
+	$(FX_GLIDE_SW)/texus2/lib/txs.c \
+	$(FX_GLIDE_SW)/texus2/lib/codec.c \
+	$(FX_GLIDE_SW)/texus2/lib/eigen.c \
+	$(FX_GLIDE_SW)/texus2/lib/bitcoder.c
+
+ifeq ($(TEXUS2),1)
+GLIDE_OBJECTS += $(TEXUS_SOURCES:.c=.o)
+endif
+
 ###############################################################################
 #	rules
 ###############################################################################
@@ -249,7 +283,7 @@ endif
 ###############################################################################
 #	main
 ###############################################################################
-all: glide3x
+all: glide3x $(TEXUS_EXEDIR)/$(TEXUS_EXE)
 
 glide3x: $(GLIDE_LIBDIR)/$(GLIDE_LIB) $(GLIDE_LIBDIR)/$(GLIDE_SO)
 
@@ -258,6 +292,13 @@ $(GLIDE_LIBDIR)/$(GLIDE_LIB): $(GLIDE_OBJECTS)
 
 $(GLIDE_LIBDIR)/$(GLIDE_SO): $(GLIDE_OBJECTS:.o=.lo)
 	$(CC) -o $@ -shared $^ $(LDFLAGS) $(LDLIBS)
+
+$(TEXUS_EXEDIR)/$(TEXUS_EXE): $(FX_GLIDE_SW)/texus2/cmd/cmd.c $(GLIDE_LIBDIR)/$(GLIDE_LIB)
+ifeq ($(TEXUS2),1)
+	$(CC) -o $@ -s $(CFLAGS) -L$(GLIDE_LIBDIR) $< -lglide3 -lm
+else
+	$(warning Texus2 not enabled... Skipping $(TEXUS_EXE))
+endif
 
 ###############################################################################
 #	rules(2)
@@ -346,7 +387,10 @@ clean:
 	-$(RM) $(FX_GLIDE_HW)/glide3/src/fxgasm.h
 	-$(RM) $(GENDATE)
 	-$(RM) $(FXBLDNO)
+	-$(RM) $(FX_GLIDE_SW)/texus2/lib/*.o)
+	-$(RM) $(FX_GLIDE_SW)/texus2/lib/*.lo)
 
 realclean: clean
 	-$(RM) $(GLIDE_LIBDIR)/$(GLIDE_LIB)
 	-$(RM) $(GLIDE_LIBDIR)/$(GLIDE_SO)
+	-$(RM) $(TEXUS_EXEDIR)/$(TEXUS_EXE))

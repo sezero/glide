@@ -394,30 +394,32 @@ GLIDE3_OBJ = $(GLIDE3_OBJ)\
 GLIDE3_OBJ = $(GLIDE3_OBJ) $(FX_GLIDE_HW)\glide3\src\gxdraw.obj
 !endif
 
-GLIDE3_OBJ = $(GLIDE3_OBJ)\
-	$(FX_GLIDE_SWLIBS)/texus2/lib/texuslib.obj\
-	$(FX_GLIDE_SWLIBS)/texus2/lib/clamp.obj\
-	$(FX_GLIDE_SWLIBS)/texus2/lib/read.obj\
-	$(FX_GLIDE_SWLIBS)/texus2/lib/resample.obj\
-	$(FX_GLIDE_SWLIBS)/texus2/lib/mipmap.obj\
-	$(FX_GLIDE_SWLIBS)/texus2/lib/quantize.obj\
-	$(FX_GLIDE_SWLIBS)/texus2/lib/ncc.obj\
-	$(FX_GLIDE_SWLIBS)/texus2/lib/nccnnet.obj\
-	$(FX_GLIDE_SWLIBS)/texus2/lib/pal256.obj\
-	$(FX_GLIDE_SWLIBS)/texus2/lib/pal6666.obj\
-	$(FX_GLIDE_SWLIBS)/texus2/lib/dequant.obj\
-	$(FX_GLIDE_SWLIBS)/texus2/lib/view.obj\
-	$(FX_GLIDE_SWLIBS)/texus2/lib/util.obj\
-	$(FX_GLIDE_SWLIBS)/texus2/lib/diffuse.obj\
-	$(FX_GLIDE_SWLIBS)/texus2/lib/write.obj\
-	$(FX_GLIDE_SWLIBS)/texus2/lib/tga.obj\
-	$(FX_GLIDE_SWLIBS)/texus2/lib/3df.obj\
-	$(FX_GLIDE_SWLIBS)/texus2/lib/ppm.obj\
-	$(FX_GLIDE_SWLIBS)/texus2/lib/rgt.obj\
-	$(FX_GLIDE_SWLIBS)/texus2/lib/txs.obj\
-	$(FX_GLIDE_SWLIBS)/texus2/lib/codec.obj\
-	$(FX_GLIDE_SWLIBS)/texus2/lib/eigen.obj\
-	$(FX_GLIDE_SWLIBS)/texus2/lib/bitcoder.obj
+TEXUS2_OBJ = \
+	$(FX_GLIDE_SWLIBS)\texus2\lib\texuslib.obj\
+	$(FX_GLIDE_SWLIBS)\texus2\lib\clamp.obj\
+	$(FX_GLIDE_SWLIBS)\texus2\lib\read.obj\
+	$(FX_GLIDE_SWLIBS)\texus2\lib\resample.obj\
+	$(FX_GLIDE_SWLIBS)\texus2\lib\mipmap.obj\
+	$(FX_GLIDE_SWLIBS)\texus2\lib\quantize.obj\
+	$(FX_GLIDE_SWLIBS)\texus2\lib\ncc.obj\
+	$(FX_GLIDE_SWLIBS)\texus2\lib\nccnnet.obj\
+	$(FX_GLIDE_SWLIBS)\texus2\lib\pal256.obj\
+	$(FX_GLIDE_SWLIBS)\texus2\lib\pal6666.obj\
+	$(FX_GLIDE_SWLIBS)\texus2\lib\dequant.obj\
+	$(FX_GLIDE_SWLIBS)\texus2\lib\view.obj\
+	$(FX_GLIDE_SWLIBS)\texus2\lib\util.obj\
+	$(FX_GLIDE_SWLIBS)\texus2\lib\diffuse.obj\
+	$(FX_GLIDE_SWLIBS)\texus2\lib\write.obj\
+	$(FX_GLIDE_SWLIBS)\texus2\lib\tga.obj\
+	$(FX_GLIDE_SWLIBS)\texus2\lib\3df.obj\
+	$(FX_GLIDE_SWLIBS)\texus2\lib\ppm.obj\
+	$(FX_GLIDE_SWLIBS)\texus2\lib\rgt.obj\
+	$(FX_GLIDE_SWLIBS)\texus2\lib\txs.obj\
+	$(FX_GLIDE_SWLIBS)\texus2\lib\codec.obj\
+	$(FX_GLIDE_SWLIBS)\texus2\lib\eigen.obj\
+	$(FX_GLIDE_SWLIBS)\texus2\lib\bitcoder.obj
+
+GLIDE3_OBJ = $(GLIDE3_OBJ) $(TEXUS2_OBJ)
 
 GLIDE3_RES = $(FX_GLIDE_HW)\glide3\src\glide.res
 
@@ -537,9 +539,9 @@ clean::
 	$(RM) $(FX_GLIDE_HW)\$(FX_HW_PROJECTS)\src\fxinline.h
 	$(RM) $(FX_GLIDE_HW)\$(FX_HW_PROJECTS)\src\fxbldno.exe
 	$(RM) $(FX_GLIDE_HW)\$(FX_HW_PROJECTS)\src\fxbldno.h
+	$(RM) $(FX_GLIDE_SWLIBS)\texus2\lib\*.obj
         $(RM) *.pdb
-        $(RM) $(FX_GLIDE_SWLIBS)\texus2\lib\*.obj
-
+	
 clobber::
 	$(RM) $(FX_GLIDE_HW)\lib\$(FX_HW_PROJECTS)x.*
 	$(RM) $(FX_GLIDE_HW)\bin\$(FX_HW_PROJECTS)x.*
