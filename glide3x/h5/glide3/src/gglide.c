@@ -2711,21 +2711,6 @@ GR_ENTRY(grBufferSwap, void, (FxU32 swapInterval))
       taaFrame ^= 1;
     }
   }
-
-  // 4x FSAA or greater FSAA
-  if (0 && gc->grPixelSample >= 4) {
-    int sample = gc->stats.bufferSwaps%4;
-    
-    // We want to accumulate swaps so don't swap now
-    if (sample) {
-      _grChipMask(0x1 << sample);
-      gc->chipmask = sample;
-      gc->stats.bufferSwaps++;
-      return;
-    }
-    //grTBufferWriteMaskExt(0xF);
-    
-  }
   
   if (IS_NAPALM(gc->bInfo->pciInfo.deviceID)) {
     _grChipMask( SST_CHIP_MASK_ALL_CHIPS );
@@ -2955,13 +2940,6 @@ GR_ENTRY(grBufferSwap, void, (FxU32 swapInterval))
   /* Bump & Grind if called for */
   if (!gc->cmdTransportInfo.autoBump)
     GR_BUMP_N_GRIND;
-
-  // 4x FSAA or greater FSAA
-  if (0 && gc->grPixelSample >= 4) {
-    _grChipMask(1);
-    gc->chipmask = 1;
-    //   grTBufferWriteMaskExt(0x11);
-  }
 
   GR_END();
 #undef FN_NAME  
@@ -3939,7 +3917,12 @@ GR_STATE_ENTRY(grDitherMode, void, (GrDitherMode_t mode))
         fbzMode &= ~(SST_ENDITHERSUBTRACT);  
     break;
   }
-   
+  
+  /* disable dithering when in 32bpp */
+  if (gc->bInfo->h3pixelSize == 4) {
+    fbzMode &= ~SST_ENDITHER;
+  }
+  
   gc->state.shadow.fbzMode = fbzMode;
 
 #if !GLIDE3
