@@ -1,0 +1,68 @@
+REM
+REM THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONLY
+REM PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGHT
+REM TO USE THE GLIDE TRADEMARK WITHOUT PRIOR WRITTEN PERMISSION OF 3DFX
+REM INTERACTIVE, INC. A COPY OF THIS LICENSE MAY BE OBTAINED FROM THE 
+REM DISTRIBUTOR OR BY CONTACTING 3DFX INTERACTIVE INC(info@3dfx.com). 
+REM THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER 
+REM EXPRESSED OR IMPLIED. SEE THE 3DFX GLIDE GENERAL PUBLIC LICENSE FOR A
+REM FULL TEXT OF THE NON-WARRANTY PROVISIONS.  
+REM 
+REM USE, DUPLICATION OR DISCLOSURE BY THE GOVERNMENT IS SUBJECT TO
+REM RESTRICTIONS AS SET FORTH IN SUBDIVISION (C)(1)(II) OF THE RIGHTS IN
+REM TECHNICAL DATA AND COMPUTER SOFTWARE CLAUSE AT DFARS 252.227-7013,
+REM AND/OR IN SIMILAR OR SUCCESSOR CLAUSES IN THE FAR, DOD OR NASA FAR
+REM SUPPLEMENT. UNPUBLISHED RIGHTS RESERVED UNDER THE COPYRIGHT LAWS OF
+REM THE UNITED STATES.  
+REM 
+REM COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
+REM
+
+@echo off
+REM
+REM if FX_GLIDE_TEST_DSTIMG is not initiated, the default directory is
+REM \3dfx\devel\sst1\glide\images
+REM
+if [%FX_GLIDE_TEST_DSTIMG%]==[] goto Default
+
+goto Output
+
+:Default
+set FX_GLIDE_TEST_DSTIMG=%BUILD_ROOT_SST1%\glide\images
+
+:Output
+set tdir=%FX_GLIDE_TEST_DSTIMG%
+
+@echo on
+test00 -d %tdir%\test00.tst
+sleep 1
+test01 -d %tdir%\test01.tst
+sleep 1
+test02 -d %tdir%\test02.tst
+sleep 1
+test03 -d %tdir%\test03.tst
+sleep 1
+test04 -d %tdir%\test04.tst
+sleep 1
+test05 -d %tdir%\test05.tst
+sleep 1
+test06 -d %tdir%\test06.tst
+sleep 1
+test07 -d %tdir%\test07.tst
+sleep 1
+test08 -d %tdir%\test08.tst
+sleep 1
+test09 -d %tdir%\test09.tst
+sleep 1
+test10 -d %tdir%\test10.tst
+sleep 1
+test13 -d %tdir%\test13.tst
+sleep 1
+test16 -d %tdir%\test16.tst
+sleep 1
+test17 -d %tdir%\test17.tst
+sleep 1
+test18 -d %tdir%\test18.tst
+sleep 1
+test19 -d %tdir%\test19.tst
+sleep 1

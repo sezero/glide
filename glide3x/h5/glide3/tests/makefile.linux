@@ -1,0 +1,104 @@
+#
+# THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONLY
+# PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGHT
+# TO USE THE GLIDE TRADEMARK WITHOUT PRIOR WRITTEN PERMISSION OF 3DFX
+# INTERACTIVE, INC. A COPY OF THIS LICENSE MAY BE OBTAINED FROM THE 
+# DISTRIBUTOR OR BY CONTACTING 3DFX INTERACTIVE INC(info@3dfx.com). 
+# THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER 
+# EXPRESSED OR IMPLIED. SEE THE 3DFX GLIDE GENERAL PUBLIC LICENSE FOR A
+# FULL TEXT OF THE NON-WARRANTY PROVISIONS.  
+# 
+# USE, DUPLICATION OR DISCLOSURE BY THE GOVERNMENT IS SUBJECT TO
+# RESTRICTIONS AS SET FORTH IN SUBDIVISION (C)(1)(II) OF THE RIGHTS IN
+# TECHNICAL DATA AND COMPUTER SOFTWARE CLAUSE AT DFARS 252.227-7013,
+# AND/OR IN SIMILAR OR SUCCESSOR CLAUSES IN THE FAR, DOD OR NASA FAR
+# SUPPLEMENT. UNPUBLISHED RIGHTS RESERVED UNDER THE COPYRIGHT LAWS OF
+# THE UNITED STATES.  
+# 
+# COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
+#
+
+LDIRT= $(wildcard test?? *.o lib*)
+
+# Special case rush because its built off of the sst1 tree
+ifeq ($(FX_GLIDE_HW),SST96)
+GLIDE_ROOT      =       $(BUILD_ROOT)/sst1
+else
+GLIDE_ROOT      =       $(BUILD_ROOT)/$(FX_GLIDE_HW)
+endif
+
+LCINCS  += -I$(GLIDE_ROOT)/include
+
+ifeq ($(FX_GLIDE_HW), h5)
+LCDEFS		+=	-DFX_GLIDE_NAPALM=1
+endif
+
+LIBOBJS = tlib.o
+
+GLIDELIB        =       -L$(GLIDE_ROOT)/lib -lglide3x
+
+LLDLIBS = $(LIBOBJS) $(GLIDELIB) 
+
+PRIVATE_HEADERS = tlib.h tlib.c tldata.inc
+
+CFILES   = test00.c \
+           test01.c \
+           test02.c \
+           test03.c \
+           test04.c \
+           test05.c \
+           test06.c \
+           test07.c \
+           test08.c \
+           test09.c \
+           test10.c \
+           test11.c \
+           test12.c \
+           test13.c \
+           test14.c \
+           test15.c \
+           test16.c \
+           test17.c \
+           test18.c \
+           test19.c \
+           test20.c \
+           test21.c \
+           test22.c \
+           test23.c \
+           test24.c \
+           test25.c \
+           test26.c \
+           test27.c \
+           test28.c \
+           test29.c \
+           test30.c \
+           test31.c \
+           test32.c \
+           test33.c \
+           test34.c \
+           test35.c \
+           test36.c \
+           test37.c \
+           test38.c \
+           test39.c \
+	   test40.c \
+	   test41.c \
+	   test42.c \
+           test43.c \
+           test44.c \
+           test45.c \
+           test46.c \
+           test47.c \
+           test48.c \
+           test49.c \
+           display.c \
+           sbench.c
+
+PROGRAMS = $(CFILES:.c=)
+
+DATAFILES = alpha.3df decal1.3df lava.3df light.3df matt1.3df miro.3df
+
+include $(BUILD_ROOT)/swlibs/include/make/3dfx.mak
+
+$(PROGRAMS):  $(LIBOBJS)
+
