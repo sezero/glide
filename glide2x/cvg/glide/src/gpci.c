@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/12/07 21:49:10  joseph
+** Initial checkin into SourceForge.
+**
 ** 
 ** 110   6/30/98 6:08p Jeske
 ** fixed bug where we tried to setup MTRRs on old (<p6) systems which
@@ -324,7 +327,7 @@ _grSstDetectResources(void)
            * pair then we don't want to waste mtrr's that we're never
            * really going to write to.  
            */
-          if (!inSliPairP && (_GlideRoot.CPUType >= 6)) {
+          if (!inSliPairP && (_GlideRoot.CPUType.family >= 6)) {
 		sst1InitCaching((FxU32*)devRegs, FXTRUE);
 	  }
 
@@ -442,7 +445,7 @@ _grSstDetectResources(void)
 #if GLIDE_INIT_HAL
             fxHalShutdown(devRegs);
 #else /* !GLIDE_INIT_HAL */
-            if (_GlideRoot.CPUType >= 6) {
+            if (_GlideRoot.CPUType.family >= 6) {
               sst1InitCaching((FxU32*)devRegs, FXFALSE);
             }
             pciUnmapPhysical((FxU32)devRegs, 0x1000000UL);
@@ -543,8 +546,24 @@ _GlideInitEnvironment(void)
   }
 #endif
 
-  _GlideRoot.CPUType = _cpu_detect_asm();
-  if (GETENV("FX_CPU")) _GlideRoot.CPUType = atoi(GETENV("FX_CPU"));
+  /* Get CPU Info */
+  _cpuid(&_GlideRoot.CPUType);
+
+  /* Check for vendor specific optimization cases */
+  GDBG_INFO( 0,"   CPU Vendor: %s\n", _GlideRoot.CPUType.v_name);
+  GDBG_INFO(80,"   MMX Support: %c\n", _GlideRoot.CPUType.os_support&_CPU_FEATURE_MMX ? 'Y' : 'N');
+  GDBG_INFO(80,"   SSE Support: %c\n", _GlideRoot.CPUType.os_support&_CPU_FEATURE_SSE ? 'Y' : 'N');
+  GDBG_INFO(80,"  SSE2 Support: %c\n", _GlideRoot.CPUType.os_support&_CPU_FEATURE_SSE2 ? 'Y' : 'N');
+  GDBG_INFO(80," 3DNow Support: %c\n", _GlideRoot.CPUType.os_support&_CPU_FEATURE_3DNOW ? 'Y' : 'N');
+  GDBG_INFO(80,"  MMX+ Support: %c\n", _GlideRoot.CPUType.os_support&_CPU_FEATURE_MMXPLUS ? 'Y' : 'N');
+  GDBG_INFO(80,"3DNow+ Support: %c\n", _GlideRoot.CPUType.os_support&_CPU_FEATURE_3DNOWPLUS ? 'Y' : 'N');
+  
+  /* No CPU Extensions Allowed */
+  if (GETENV("FX_GLIDE_NO_CPU_EXTENSIONS"))
+  {
+    _GlideRoot.CPUType.feature = _GlideRoot.CPUType.os_support = 0;
+    GDBG_INFO(0,"CPU Extensions disabled\n");
+  }
 
   /* Check for user environment tweaks */
   {
@@ -557,7 +576,6 @@ _GlideInitEnvironment(void)
     _GlideRoot.environment.noSplash          = (GETENV("FX_GLIDE_NO_SPLASH") != NULL);
     _GlideRoot.environment.shamelessPlug     = (GETENV("FX_GLIDE_SHAMELESS_PLUG") != NULL);
     _GlideRoot.environment.ignoreReopen      = (GETENV("FX_GLIDE_IGNORE_REOPEN") != NULL);
-    _GlideRoot.environment.disableDitherSub  = (GETENV("FX_GLIDE_NO_DITHER_SUB") != NULL);
     _GlideRoot.environment.texLodDither      = ((GETENV("FX_GLIDE_LOD_DITHER") == NULL)
                                                 ? 0x00UL
                                                 : SST_TLODDITHER);
@@ -572,12 +590,18 @@ _GlideInitEnvironment(void)
     }
     
     _GlideRoot.environment.snapshot          = GLIDE_GETENV("FX_SNAPSHOT", 0);
+
+    /* set default to disable alpha dither subtraction */
+    if ((envStr = GETENV("FX_GLIDE_NO_DITHER_SUB")) == NULL) {
+      _GlideRoot.environment.disableDitherSub = FXTRUE;
+    } else {
+      _GlideRoot.environment.disableDitherSub = (atol(envStr) != 0);
+    }
     
     GDBG_INFO(80,"    triBoundsCheck: %d\n",_GlideRoot.environment.triBoundsCheck);
     GDBG_INFO(80,"      swapInterval: %d\n",_GlideRoot.environment.swapInterval);
     GDBG_INFO(80,"          noSplash: %d\n",_GlideRoot.environment.noSplash);
     GDBG_INFO(80,"     shamelessPlug: %d\n",_GlideRoot.environment.shamelessPlug);
-    GDBG_INFO(80,"               cpu: %d\n",_GlideRoot.CPUType);
     GDBG_INFO(80,"          snapshot: %d\n",_GlideRoot.environment.snapshot);
     GDBG_INFO(80,"  disableDitherSub: %d\n",_GlideRoot.environment.disableDitherSub);
   }
