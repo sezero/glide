@@ -18,6 +18,13 @@
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 */
 
+#if !defined(GDBG_INFO_ON) || (GDBG_INFO_ON == 0)
+#if defined(GDBG_INFO_ON)
+#undef GDBG_INFO_ON
+#endif /* defined(GDBG_INFO_ON) */
+#define GDBG_INFO_ON
+#endif /* !defined(GDBG_INFO_ON) || (GDBG_INFO_ON == 0) */
+
 #include <stdio.h>
 #include <3dfx.h>
 #include <gdebug.h>
@@ -67,23 +74,22 @@ _parseFilename(char *name)
 static int _set_exclusive_relaxed;
 static int _set_vidmode_relaxed;
 
+typedef struct _enumInfoStruct {
+  GUID guid;
+  HMONITOR hmon;
+} EnumInfo;
+
 static BOOL FAR PASCAL
 ddEnumCbEx( GUID FAR *guid, LPSTR desc, LPSTR name, LPVOID ctx, HMONITOR hmon ) 
 {
-  DWORD    *data  = (DWORD*)ctx;
-  HMONITOR target = (HMONITOR)data[0];
-  BOOL     rv     = DDENUMRET_OK;
+  EnumInfo* pEnumInfo = (EnumInfo*)ctx;
+  BOOL      rv        = DDENUMRET_OK;
   
-  if ( target == hmon ) {
-    if ( guid ) {
-      GUID fooGuid = *guid;
-      data[1] = (DWORD)&fooGuid;
-    } else {
-      /* guid for primary display device */
-      data[1] = 0;
-    }
-    rv     = DDENUMRET_CANCEL;
+  if(pEnumInfo->hmon == hmon) {
+    if ( guid ) CopyMemory(&pEnumInfo->guid, guid, sizeof(GUID));
+    rv = DDENUMRET_CANCEL;
   }
+  
   return rv;
 }
 
@@ -234,13 +240,14 @@ setVideoMode( HWND hwnd, int xRes, int yRes, int refresh, void *hmon )
     LPDIRECTDRAWENUMERATEEXA ddEnumEx;
     ddEnumEx = (void*)GetProcAddress( ddraw, "DirectDrawEnumerateExA" );
     if ( ddEnumEx ) {
-      DWORD   data[2];
-      data[0] = (DWORD)hmon;
-      data[1] = 0;
-      ddEnumEx( ddEnumCbEx, data, DDENUM_ATTACHEDSECONDARYDEVICES );
-      if ( data[1] ) {
-        ddGuid = (LPGUID)data[1];
-      }
+      EnumInfo enumInfo;
+
+      ZeroMemory(&enumInfo, sizeof(enumInfo));
+      ZeroMemory(&enumInfo.guid, sizeof(GUID));
+      enumInfo.hmon = (HMONITOR)hmon;
+      ddEnumEx( ddEnumCbEx, &enumInfo, DDENUM_ATTACHEDSECONDARYDEVICES );
+      ddGuid = &enumInfo.guid;
+	  GDBG_INFO(80, "GUID %d\n", ddGuid);
     }
   }
   
@@ -650,13 +657,14 @@ checkResolutions(FxBool *supportedByResolution, void *hmon)
     LPDIRECTDRAWENUMERATEEXA ddEnumEx;
     ddEnumEx = (void*)GetProcAddress( ddraw, "DirectDrawEnumerateExA" );
     if ( ddEnumEx ) {
-      DWORD   data[2];
-      data[0] = (DWORD)hmon;
-      data[1] = 0;
-      ddEnumEx( ddEnumCbEx, data, DDENUM_ATTACHEDSECONDARYDEVICES );
-      if ( data[1] ) {
-        ddGuid = (LPGUID)data[1];
-      }
+      EnumInfo enumInfo;
+
+      ZeroMemory(&enumInfo, sizeof(enumInfo));
+      ZeroMemory(&enumInfo.guid, sizeof(GUID));
+      enumInfo.hmon = (HMONITOR)hmon;
+      ddEnumEx( ddEnumCbEx, &enumInfo, DDENUM_ATTACHEDSECONDARYDEVICES );
+      ddGuid = &enumInfo.guid;
+	  GDBG_INFO(80, "GUID %d\n", ddGuid);
     }
   }
   
@@ -664,7 +672,7 @@ checkResolutions(FxBool *supportedByResolution, void *hmon)
   if (lpDD == NULL) {
     /* only create directdraw object once */
     if ( DirectDrawCreate( ddGuid, &lpDD1, NULL ) != DD_OK) {
-      GDBG_INFO(80, "DDraw Obj Create Failed!\n");
+      GDBG_INFO(80, "DDraw Obj Create Failed!3\n");
     }
     else GDBG_INFO(80, "DDraw Obj created!\n");
     if ( IDirectDraw_QueryInterface( lpDD1, &IID_IDirectDraw2, 
