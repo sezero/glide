@@ -2012,6 +2012,99 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
       return 0;
     }
 
+    // test
+    if (gc->chipCount == 4 && gc->grPixelSample == 2) {
+      _GlideRoot.environment.aaXOffset[13][0] =
+      _GlideRoot.environment.aaXOffset[13][4] = _GlideRoot.environment.aaXOffset[6][0];
+      _GlideRoot.environment.aaXOffset[13][2] =
+      _GlideRoot.environment.aaXOffset[13][6] = _GlideRoot.environment.aaXOffset[6][2];
+      _GlideRoot.environment.aaYOffset[13][0] =
+      _GlideRoot.environment.aaYOffset[13][4] = _GlideRoot.environment.aaYOffset[6][0];
+      _GlideRoot.environment.aaYOffset[13][2] =
+      _GlideRoot.environment.aaYOffset[13][6] = _GlideRoot.environment.aaYOffset[6][2];
+      
+      _GlideRoot.environment.aaXOffset[14][0] =
+      _GlideRoot.environment.aaXOffset[14][4] = _GlideRoot.environment.aaXOffset[6][1];
+      _GlideRoot.environment.aaXOffset[14][2] =
+      _GlideRoot.environment.aaXOffset[14][6] = _GlideRoot.environment.aaXOffset[6][3];
+      _GlideRoot.environment.aaYOffset[14][0] =
+      _GlideRoot.environment.aaYOffset[14][4] = _GlideRoot.environment.aaYOffset[6][1];
+      _GlideRoot.environment.aaYOffset[14][2] =
+      _GlideRoot.environment.aaYOffset[14][6] = _GlideRoot.environment.aaYOffset[6][3];
+    }
+    else if (gc->chipCount == 4 && gc->grPixelSample == 4) {
+      _GlideRoot.environment.aaXOffset[13][0] = _GlideRoot.environment.aaXOffset[12][0];
+      _GlideRoot.environment.aaXOffset[13][2] = _GlideRoot.environment.aaXOffset[12][2];
+      _GlideRoot.environment.aaXOffset[13][4] = _GlideRoot.environment.aaXOffset[12][4];
+      _GlideRoot.environment.aaXOffset[13][6] = _GlideRoot.environment.aaXOffset[12][6];
+      _GlideRoot.environment.aaYOffset[13][0] = _GlideRoot.environment.aaYOffset[12][0];
+      _GlideRoot.environment.aaYOffset[13][2] = _GlideRoot.environment.aaYOffset[12][2];
+      _GlideRoot.environment.aaYOffset[13][4] = _GlideRoot.environment.aaYOffset[12][4];
+      _GlideRoot.environment.aaYOffset[13][6] = _GlideRoot.environment.aaYOffset[12][6];
+      
+      _GlideRoot.environment.aaXOffset[14][0] = _GlideRoot.environment.aaXOffset[12][1];
+      _GlideRoot.environment.aaXOffset[14][2] = _GlideRoot.environment.aaXOffset[12][3];
+      _GlideRoot.environment.aaXOffset[14][4] = _GlideRoot.environment.aaXOffset[12][5];
+      _GlideRoot.environment.aaXOffset[14][6] = _GlideRoot.environment.aaXOffset[12][7];
+      _GlideRoot.environment.aaYOffset[14][0] = _GlideRoot.environment.aaYOffset[12][1];
+      _GlideRoot.environment.aaYOffset[14][2] = _GlideRoot.environment.aaYOffset[12][3];
+      _GlideRoot.environment.aaYOffset[14][4] = _GlideRoot.environment.aaYOffset[12][5];
+      _GlideRoot.environment.aaYOffset[14][6] = _GlideRoot.environment.aaYOffset[12][7];
+    }
+    else if (gc->chipCount == 4 && gc->grPixelSample == 8) {
+      /* TODO: temporalAA over 4-chip 8xFSAA
+       * probably too slow and probably not needed anyway
+       */
+    }
+    else if (gc->chipCount == 2 && gc->grPixelSample == 2) {
+      _GlideRoot.environment.aaXOffset[13][0] = _GlideRoot.environment.aaXOffset[6][0];
+      _GlideRoot.environment.aaXOffset[13][2] = _GlideRoot.environment.aaXOffset[6][2];
+      _GlideRoot.environment.aaYOffset[13][0] = _GlideRoot.environment.aaYOffset[6][0];
+      _GlideRoot.environment.aaYOffset[13][2] = _GlideRoot.environment.aaYOffset[6][2];
+      
+      _GlideRoot.environment.aaXOffset[14][0] = _GlideRoot.environment.aaXOffset[6][1];
+      _GlideRoot.environment.aaXOffset[14][2] = _GlideRoot.environment.aaXOffset[6][3];
+      _GlideRoot.environment.aaYOffset[14][0] = _GlideRoot.environment.aaYOffset[6][1];
+      _GlideRoot.environment.aaYOffset[14][2] = _GlideRoot.environment.aaYOffset[6][3];
+    }
+    else if (gc->chipCount == 2 && gc->grPixelSample == 4) {
+      _GlideRoot.environment.aaXOffset[13][0] = _GlideRoot.environment.aaXOffset[12][0];
+      _GlideRoot.environment.aaXOffset[13][1] = _GlideRoot.environment.aaXOffset[12][2];
+      _GlideRoot.environment.aaXOffset[13][2] = _GlideRoot.environment.aaXOffset[12][4];
+      _GlideRoot.environment.aaXOffset[13][3] = _GlideRoot.environment.aaXOffset[12][6];
+      _GlideRoot.environment.aaYOffset[13][0] = _GlideRoot.environment.aaYOffset[12][0];
+      _GlideRoot.environment.aaYOffset[13][1] = _GlideRoot.environment.aaYOffset[12][2];
+      _GlideRoot.environment.aaYOffset[13][2] = _GlideRoot.environment.aaYOffset[12][4];
+      _GlideRoot.environment.aaYOffset[13][3] = _GlideRoot.environment.aaYOffset[12][6];
+      
+      _GlideRoot.environment.aaXOffset[14][0] = _GlideRoot.environment.aaXOffset[12][1];
+      _GlideRoot.environment.aaXOffset[14][1] = _GlideRoot.environment.aaXOffset[12][3];
+      _GlideRoot.environment.aaXOffset[14][2] = _GlideRoot.environment.aaXOffset[12][5];
+      _GlideRoot.environment.aaXOffset[14][3] = _GlideRoot.environment.aaXOffset[12][7];
+      _GlideRoot.environment.aaYOffset[14][0] = _GlideRoot.environment.aaYOffset[12][1];
+      _GlideRoot.environment.aaYOffset[14][1] = _GlideRoot.environment.aaYOffset[12][3];
+      _GlideRoot.environment.aaYOffset[14][2] = _GlideRoot.environment.aaYOffset[12][5];
+      _GlideRoot.environment.aaYOffset[14][3] = _GlideRoot.environment.aaYOffset[12][7];
+    }
+    else if (gc->chipCount == 1 && gc->grPixelSample == 2) {
+      /* TODO: temporalAA over 1-chip 2xFSAA
+       * probably too slow
+       */
+    }
+    if (gc->grPixelSample < 2) {
+      int i;
+      /* default perturbation values */
+      for (i = 0; i < 8; i++) {
+        _GlideRoot.environment.aaXOffset[13][i] = _GlideRoot.environment.aaXOffset[0][i];
+        _GlideRoot.environment.aaYOffset[13][i] = _GlideRoot.environment.aaYOffset[0][i];
+      }
+      /* jittered values */
+      for (i = 0; i < 8; i++) {
+        _GlideRoot.environment.aaXOffset[14][i] = _GlideRoot.environment.aaXOffset[13][i] + 0x6;
+        _GlideRoot.environment.aaYOffset[14][i] = _GlideRoot.environment.aaXOffset[13][i] + 0x6;
+      }
+    }
+
     /*
     ** 2 pixel per clock rendering will only be enabled if 
     ** 1) we are in 15/16 bpp rendering mode (may not help in high res)

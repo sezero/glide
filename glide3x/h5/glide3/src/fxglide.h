@@ -2085,7 +2085,7 @@ struct _GlideRoot_s {
     FxI32  forceOldAA;          /* Force AA to use SLI when possible */
     FxI32  waxon ;              /* Enable use of WAX */
     FxU32  aaToggleKey;         /* Raw Key code for AA toggle */
-    FxU32  aaScreenshotKey;         /* Raw Key code for AA toggle */
+    FxU32  aaScreenshotKey;     /* Raw Key code for AA toggle */
     FxI32  analogSli ;          /* force digital or analog sli */
     FxI32  lodBias;             /* User-adjustable lod bias value (signed) */
     FxU32  sliBandHeightForce;  /* Force user-specified band height */
@@ -2105,8 +2105,8 @@ struct _GlideRoot_s {
     FxU32  columnWidth;         /* 'n' in columns of n */
 
     /* Anti-aliasing default perturbation values */
-    FxU32  aaXOffset[13][8];	/* increase arrays for 8xaa */
-    FxU32  aaYOffset[13][8];
+    FxU32  aaXOffset[15][8];	/* increase arrays for 8xaa */
+    FxU32  aaYOffset[15][8];
     /* Limit number of writes between fences */
     FxI32  fenceLimit;
     FxBool texSubLodDither;     /* always do subsample mipmap dithering */
@@ -2121,6 +2121,8 @@ struct _GlideRoot_s {
 #endif
 
     FxU32  ditherHwcAA;		/* Specifies whether to use HwcAAReadRegion should dither */
+    FxU32  taaToggleKey;        /* Raw key code for TemporalAA toggle */
+    FxBool taaEnabled;          /* TemporalAA enabled */
   } environment;
 
   GrHwConfiguration     hwConfig;

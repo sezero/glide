@@ -579,8 +579,8 @@
         #define PRIBUFVTXOFFX_4SMPL_CHP0_CORRECT_DEF      "-0.125"
         #define PRIBUFVTXOFFX_4SMPL_CHP1_CORRECT_DEF      "-0.375"
         #define PRIBUFVTXOFFX_8SMPL_CHP0_CORRECT_DEF      "-0.125"
-        #define PRIBUFVTXOFFX_8SMPL_CHP1_CORRECT_DEF      "0.375"
-        #define PRIBUFVTXOFFX_8SMPL_CHP2_CORRECT_DEF      "-0.375"
+        #define PRIBUFVTXOFFX_8SMPL_CHP1_CORRECT_DEF      "-0.375"
+        #define PRIBUFVTXOFFX_8SMPL_CHP2_CORRECT_DEF      "0.375"
         #define PRIBUFVTXOFFX_8SMPL_CHP3_CORRECT_DEF      "0.125"
 // Note: Glide uses the binary values, and these are still the *original* values that ar
 //       centered around the pixel center, rather than offset by -0.5
@@ -605,8 +605,8 @@
         #define PRIBUFVTXOFFY_4SMPL_CHP0_CORRECT_DEF      "-0.375"
         #define PRIBUFVTXOFFY_4SMPL_CHP1_CORRECT_DEF      "0.125"
         #define PRIBUFVTXOFFY_8SMPL_CHP0_CORRECT_DEF      "-0.375"
-        #define PRIBUFVTXOFFY_8SMPL_CHP1_CORRECT_DEF      "-0.125"
-        #define PRIBUFVTXOFFY_8SMPL_CHP2_CORRECT_DEF      "0.125"
+        #define PRIBUFVTXOFFY_8SMPL_CHP1_CORRECT_DEF      "0.125"
+        #define PRIBUFVTXOFFY_8SMPL_CHP2_CORRECT_DEF      "-0.125"
         #define PRIBUFVTXOFFY_8SMPL_CHP3_CORRECT_DEF      "0.375"
 // Note: Glide uses the binary values, and these are still the *original* values that ar
 //       centered around the pixel center, rather than offset by -0.5
@@ -631,9 +631,9 @@
         #define SECBUFVTXOFFX_4SMPL_CHP0_CORRECT_DEF      "0.375"
         #define SECBUFVTXOFFX_4SMPL_CHP1_CORRECT_DEF      "0.125"
         #define SECBUFVTXOFFX_8SMPL_CHP0_CORRECT_DEF      "-0.25"
-        #define SECBUFVTXOFFX_8SMPL_CHP1_CORRECT_DEF      "0.125"
-        #define SECBUFVTXOFFX_8SMPL_CHP2_CORRECT_DEF      "0.25"
-        #define SECBUFVTXOFFX_8SMPL_CHP3_CORRECT_DEF      "-0.125"
+        #define SECBUFVTXOFFX_8SMPL_CHP1_CORRECT_DEF      "-0.125"
+        #define SECBUFVTXOFFX_8SMPL_CHP2_CORRECT_DEF      "0.125"
+        #define SECBUFVTXOFFX_8SMPL_CHP3_CORRECT_DEF      "0.25"
 // Note: Glide uses the binary values, and these are still the *original* values that ar
 //       centered around the pixel center, rather than offset by -0.5
         #define SECBUFVTXOFFX_2SMPL_DEF_VAL               0x04
@@ -657,9 +657,9 @@
         #define SECBUFVTXOFFY_4SMPL_CHP0_CORRECT_DEF      "-0.125"
         #define SECBUFVTXOFFY_4SMPL_CHP1_CORRECT_DEF      "0.375"
         #define SECBUFVTXOFFY_8SMPL_CHP0_CORRECT_DEF      "-0.125"
-        #define SECBUFVTXOFFY_8SMPL_CHP1_CORRECT_DEF      "-0.25"
-        #define SECBUFVTXOFFY_8SMPL_CHP2_CORRECT_DEF      "0.125"
-        #define SECBUFVTXOFFY_8SMPL_CHP3_CORRECT_DEF      "0.25"
+        #define SECBUFVTXOFFY_8SMPL_CHP1_CORRECT_DEF      "0.25"
+        #define SECBUFVTXOFFY_8SMPL_CHP2_CORRECT_DEF      "-0.25"
+        #define SECBUFVTXOFFY_8SMPL_CHP3_CORRECT_DEF      "0.125"
 // Note: Glide uses the binary values, and these are still the *original* values that ar
 //       centered around the pixel center, rather than offset by -0.5
         #define SECBUFVTXOFFY_2SMPL_DEF_VAL               0x04

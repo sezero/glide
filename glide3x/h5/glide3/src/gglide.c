@@ -2644,6 +2644,16 @@ GR_ENTRY(grBufferClear, void, (GrColor_t color, GrAlpha_t alpha, FxU32 depth))
 } /* grBufferClear */
 #endif
 
+#if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
+#define KBHIT(key) ((GetAsyncKeyState(key) & 0x8001) == 0x8001)
+#elif (GLIDE_PLATFORM & GLIDE_OS_UNIX)
+#define KBHIT(key) (0)
+#elif defined(__DJGPP__)
+#define KBHIT(key) (0)
+#else
+#define KBHIT(key) (0)
+#endif
+
 #ifndef DRI_BUILD
 /*---------------------------------------------------------------------------
 ** grBufferSwap
@@ -2656,6 +2666,8 @@ GR_ENTRY(grBufferClear, void, (GrColor_t color, GrAlpha_t alpha, FxU32 depth))
 GR_ENTRY(grBufferSwap, void, (FxU32 swapInterval))
 {
 #define FN_NAME "grBufferSwap"
+  static FxU32 aaEnabled = 1;
+  
   GR_BEGIN_NOFIFOCHECK(FN_NAME,86);
   GDBG_INFO_MORE(gc->myLevel,"(%d)\n",swapInterval);
 
@@ -2671,6 +2683,34 @@ GR_ENTRY(grBufferSwap, void, (FxU32 swapInterval))
     return;
   }
 #endif
+
+  // test
+  if (aaEnabled) {
+    /* aaEnabled doesn't mean we have AA.
+     * It only means the user didn't forbid any kind of AA
+     * at run-time with _GlideRoot.environment.aaToggleKey
+     */
+    static FxU32 taaFrame = 1;
+    if (KBHIT(_GlideRoot.environment.taaToggleKey)) {
+      _GlideRoot.environment.taaEnabled ^= 1;
+      if (!_GlideRoot.environment.taaEnabled) {
+        int jOffset = 0; /* reset the offsets to default */
+        if (gc->grPixelSample > 1) {
+          /* reset the offsets to whatever our AA defaults */
+          jOffset = gc->sampleOffsetIndex;
+        }
+        _grAAOffsetValue(_GlideRoot.environment.aaXOffset[jOffset],
+                         _GlideRoot.environment.aaYOffset[jOffset],
+                         0, gc->chipCount - 1, FXTRUE, gc->enableSecondaryBuffer);
+      }
+    }
+    if (_GlideRoot.environment.taaEnabled) {
+      _grAAOffsetValue(_GlideRoot.environment.aaXOffset[13 + taaFrame],
+                       _GlideRoot.environment.aaYOffset[13 + taaFrame],
+                       0, gc->chipCount - 1, FXTRUE, gc->enableSecondaryBuffer);
+      taaFrame ^= 1;
+    }
+  }
 
   // 4x FSAA or greater FSAA
   if (0 && gc->grPixelSample >= 4) {
@@ -2698,9 +2738,8 @@ GR_ENTRY(grBufferSwap, void, (FxU32 swapInterval))
 #if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
   if (_GlideRoot.environment.aaToggleKey) {
     if(gc->grPixelSample > 1) {
-      FxU16 keyState = GetAsyncKeyState(_GlideRoot.environment.aaToggleKey);
-      if((keyState & 0x8001) == 0x8001) {
-        static FxU32 aaEnabled = 1;
+      if (KBHIT(_GlideRoot.environment.aaToggleKey)) {
+        //static FxU32 aaEnabled = 1;
         
         aaEnabled ^= 1;
         if(aaEnabled) {
@@ -2712,8 +2751,7 @@ GR_ENTRY(grBufferSwap, void, (FxU32 swapInterval))
     }  
   }  
   if(_GlideRoot.environment.aaScreenshotKey) {
-    FxU16 keyState = GetAsyncKeyState(_GlideRoot.environment.aaScreenshotKey);
-    if((keyState & 0x8001) == 0x8001) {
+    if (KBHIT(_GlideRoot.environment.aaScreenshotKey)) {
       grFinish();
       hwcAAScreenShot(gc->bInfo, gc->curBuffer, _GlideRoot.environment.ditherHwcAA);
     }
@@ -2947,6 +2985,34 @@ GR_ENTRY(grDRIBufferSwap, void, (FxU32 swapInterval))
   GDBG_INFO_MORE(gc->myLevel,"(%d)\n",swapInterval);
 
 #ifdef FX_GLIDE_NAPALM
+  // test
+  if (1/*aaEnabled*/) {
+    /* aaEnabled doesn't mean we have AA.
+     * It only means the user didn't forbid any kind of AA
+     * at run-time with _GlideRoot.environment.aaToggleKey
+     */
+    static FxU32 taaFrame = 1;
+    if (KBHIT(_GlideRoot.environment.taaToggleKey)) {
+      _GlideRoot.environment.taaEnabled ^= 1;
+      if (!_GlideRoot.environment.taaEnabled) {
+        int jOffset = 0; /* reset the offsets to default */
+        if (gc->grPixelSample > 1) {
+          /* reset the offsets to whatever our AA defaults */
+          jOffset = gc->sampleOffsetIndex;
+        }
+        _grAAOffsetValue(_GlideRoot.environment.aaXOffset[jOffset],
+                         _GlideRoot.environment.aaYOffset[jOffset],
+                         0, gc->chipCount - 1, FXTRUE, gc->enableSecondaryBuffer);
+      }
+    }
+    if (_GlideRoot.environment.taaEnabled) {
+      _grAAOffsetValue(_GlideRoot.environment.aaXOffset[13 + taaFrame],
+                       _GlideRoot.environment.aaYOffset[13 + taaFrame],
+                       0, gc->chipCount - 1, FXTRUE, gc->enableSecondaryBuffer);
+      taaFrame ^= 1;
+    }
+  }
+
   if (IS_NAPALM(gc->bInfo->pciInfo.deviceID)) {
     _grChipMask( SST_CHIP_MASK_ALL_CHIPS );
   }
