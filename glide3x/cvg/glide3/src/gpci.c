@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.1  2004/02/16 07:42:15  dborca
+** grSetNumPendingBuffers visible with grGetProcAddress
+**
 ** Revision 1.1.1.1  1999/12/07 21:42:33  joseph
 ** Initial checkin into SourceForge.
 **
@@ -277,6 +280,22 @@ static GrTexDownloadProc _texDownloadProcs[][2][4] =
     },
   }
 #endif /* GL_AMD3D */
+#if GL_MMX
+  ,{ 
+    { 
+      _grTexDownload_Default_8_1, 
+      _grTexDownload_Default_8_2, 
+      _grTexDownload_Default_8_4, 
+      _grTexDownload_MMX, 
+    },
+    {
+      _grTexDownload_Default_16_1,
+      _grTexDownload_Default_16_2,
+      _grTexDownload_MMX,
+      _grTexDownload_MMX,
+    },
+  }
+#endif /* GL_MMX */
 };
 #endif /* GLIDE_DISPATCH_DOWNLOAD */
 
@@ -577,8 +596,24 @@ _GlideInitEnvironment(void)
 
   /* Setup the basic proc tables based on the cpu type. */
   {
-    _GlideRoot.CPUType = _cpu_detect_asm();
-    if (GETENV("FX_CPU")) _GlideRoot.CPUType = atoi(GETENV("FX_CPU"));
+    /* Get CPU Info */
+    _cpuid (&_GlideRoot.CPUType);
+
+    /* Check for vendor specific optimization cases */
+    GDBG_INFO( 0,"   CPU Vendor: %s\n", _GlideRoot.CPUType.v_name);
+    GDBG_INFO(80,"   MMX Support: %c\n", _GlideRoot.CPUType.os_support&_CPU_FEATURE_MMX ? 'Y' : 'N');
+    GDBG_INFO(80,"   SSE Support: %c\n", _GlideRoot.CPUType.os_support&_CPU_FEATURE_SSE ? 'Y' : 'N');
+    GDBG_INFO(80,"  SSE2 Support: %c\n", _GlideRoot.CPUType.os_support&_CPU_FEATURE_SSE2 ? 'Y' : 'N');
+    GDBG_INFO(80," 3DNow Support: %c\n", _GlideRoot.CPUType.os_support&_CPU_FEATURE_3DNOW ? 'Y' : 'N');
+    GDBG_INFO(80,"  MMX+ Support: %c\n", _GlideRoot.CPUType.os_support&_CPU_FEATURE_MMXPLUS ? 'Y' : 'N');
+    GDBG_INFO(80,"3DNow+ Support: %c\n", _GlideRoot.CPUType.os_support&_CPU_FEATURE_3DNOWPLUS ? 'Y' : 'N');
+    
+    /* No CPU Extensions Allowed */
+    if (GETENV("FX_GLIDE_NO_CPU_EXTENSIONS"))
+    {
+      _GlideRoot.CPUType.feature = _GlideRoot.CPUType.os_support = 0;
+      GDBG_INFO(0,"CPU Extensions disabled\n");
+    }
 
     /* Default case */
 #if GLIDE_DISPATCH_SETUP || GLIDE_DISPATCH_DOWNLOAD
@@ -593,33 +628,26 @@ _GlideInitEnvironment(void)
 #endif /* GLIDE_DISPATCH_DOWNLOAD */
 
     /* Check for vendor specific optimization cases */
-    switch((_GlideRoot.CPUType & 0xFFFF0000UL) >> 16UL) {
-    case kCPUVendorIntel:
-      break;
-
-    case kCPUVendorAMD:
-      if ((_GlideRoot.CPUType & 0xFFFFUL) == 0x02UL) {
-#if GLIDE_DISPATCH_SETUP
-        _GlideRoot.deviceArchProcs.curTriProcs        = _triSetupProcs + 0;
+#ifdef GL_MMX
+    if (_GlideRoot.CPUType.os_support & _CPU_FEATURE_MMX) {
+#if GLIDE_DISPATCH_DOWNLOAD
+      _GlideRoot.deviceArchProcs.curTexProcs = _texDownloadProcs + 2;
+#endif /* GLIDE_DISPATCH_DOWNLOAD */
+    }
+#endif /* GL_MMX */
 #ifdef GL_AMD3D
-        _GlideRoot.deviceArchProcs.curDrawTrisProc    = _grDrawTriangles_3DNow;
-        _GlideRoot.deviceArchProcs.curLineProc        = _grDrawTextureLine_3DNow;
-#else
-        _GlideRoot.deviceArchProcs.curDrawTrisProc    = _grDrawTriangles_Default;
-        _GlideRoot.deviceArchProcs.curLineProc        = _grDrawTextureLine_Default;
-#endif
-        _GlideRoot.deviceArchProcs.curVertexListProcs = _vertexListProcs[0];
+    if (_GlideRoot.CPUType.os_support & _CPU_FEATURE_3DNOW) {
+#if GLIDE_DISPATCH_SETUP
+      _GlideRoot.deviceArchProcs.curTriProcs        = _triSetupProcs + 1;
+      _GlideRoot.deviceArchProcs.curDrawTrisProc    = _grDrawTriangles_3DNow;
+      _GlideRoot.deviceArchProcs.curVertexListProcs = _vertexListProcs[1];
+      _GlideRoot.deviceArchProcs.curLineProc        = _grDrawTextureLine_3DNow;
 #endif /* GLIDE_DISPATCH_SETUP */
 #if GLIDE_DISPATCH_DOWNLOAD
-        _GlideRoot.deviceArchProcs.curTexProcs = _texDownloadProcs + 0;
+      _GlideRoot.deviceArchProcs.curTexProcs = _texDownloadProcs + 1;
 #endif /* GLIDE_DISPATCH_DOWNLOAD */
-      }
-      break;
-      
-    case kCPUVendorUnknown:
-    default:
-      break;
     }
+#endif /* GL_AMD3D */
 #endif /* GLIDE_DISPATCH_SETUP || GLIDE_DISPATCH_DOWNLOAD */
   }
 
@@ -634,7 +662,6 @@ _GlideInitEnvironment(void)
     _GlideRoot.environment.noSplash          = (GETENV("FX_GLIDE_NO_SPLASH") != NULL);
     _GlideRoot.environment.shamelessPlug     = (GETENV("FX_GLIDE_SHAMELESS_PLUG") != NULL);
     _GlideRoot.environment.ignoreReopen      = (GETENV("FX_GLIDE_IGNORE_REOPEN") != NULL);
-    _GlideRoot.environment.disableDitherSub  = (GETENV("FX_GLIDE_NO_DITHER_SUB") != NULL);
     _GlideRoot.environment.texLodDither      = ((GETENV("FX_GLIDE_LOD_DITHER") == NULL)
                                                 ? 0x00UL
                                                 : SST_TLODDITHER);
@@ -651,17 +678,29 @@ _GlideInitEnvironment(void)
     /* wait until there's 6 or fewer buffer swaps pending */
     /* the hardware counter is only 3 bits so we don't want it to overflow */
     /* also the latency gets too long */
-    _GlideRoot.environment.swapPendingCount  = 4;
+    /*_GlideRoot.environment.swapPendingCount  = 4;*/
+    _GlideRoot.environment.swapPendingCount  = GLIDE_GETENV("FX_GLIDE_SWAPPENDINGCOUNT", 1L);
+    if (_GlideRoot.environment.swapPendingCount > 6)
+      _GlideRoot.environment.swapPendingCount = 6;
+    if (_GlideRoot.environment.swapPendingCount < 0)
+      _GlideRoot.environment.swapPendingCount = 0;
 
     _GlideRoot.environment.snapshot          = GLIDE_GETENV("FX_SNAPSHOT", 0);
-    
+
+    /* set default to disable alpha dither subtraction */
+    if ((envStr = GETENV("FX_GLIDE_NO_DITHER_SUB")) == NULL) {
+      _GlideRoot.environment.disableDitherSub = FXTRUE;
+    } else {
+      _GlideRoot.environment.disableDitherSub = (atol(envStr) != 0);
+    }
+
     GDBG_INFO(80,"    triBoundsCheck: %d\n",_GlideRoot.environment.triBoundsCheck);
     GDBG_INFO(80,"      swapInterval: %d\n",_GlideRoot.environment.swapInterval);
     GDBG_INFO(80,"          noSplash: %d\n",_GlideRoot.environment.noSplash);
     GDBG_INFO(80,"     shamelessPlug: %d\n",_GlideRoot.environment.shamelessPlug);
-    GDBG_INFO(80,"               cpu: %d\n",_GlideRoot.CPUType);
     GDBG_INFO(80,"          snapshot: %d\n",_GlideRoot.environment.snapshot);
     GDBG_INFO(80,"  disableDitherSub: %d\n",_GlideRoot.environment.disableDitherSub);
+    GDBG_INFO(80," swapPendingCount : %d\n",_GlideRoot.environment.swapPendingCount);
   }
 
   /* constant pool */

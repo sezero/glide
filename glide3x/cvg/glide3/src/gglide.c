@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.1  2004/02/16 07:42:15  dborca
+** grSetNumPendingBuffers visible with grGetProcAddress
+**
 ** Revision 1.1.1.1  1999/12/07 21:42:32  joseph
 ** Initial checkin into SourceForge.
 **
@@ -970,9 +973,13 @@ GR_ENTRY(grBufferSwap, void, (FxU32 swapInterval))
    * any better. If, however, the user has not chosen, but the app
    * wants something other than 0 then we need to honor their choice.  
    */
-  swapInterval = ((_GlideRoot.environment.swapInterval >= 0)
+  /*swapInterval = ((_GlideRoot.environment.swapInterval >= 0)
                   ? _GlideRoot.environment.swapInterval
-                  : (gc->scanline_interleaved ? MAX(swapInterval, 1) : swapInterval));
+                  : (gc->scanline_interleaved ? MAX(swapInterval, 1) : swapInterval));*/
+  /* always allow user override */
+  if (_GlideRoot.environment.swapInterval >= 0) {
+    swapInterval = _GlideRoot.environment.swapInterval;
+  }
   
   GR_CHECK_F(myName,
              (swapInterval > 255) || (swapInterval < 0),
@@ -988,6 +995,12 @@ GR_ENTRY(grBufferSwap, void, (FxU32 swapInterval))
 
   /* if the interval is non-zero turn on VSYNC waiting */
   vSync = (swapInterval > 0);
+  
+  /* when triple buffering, vsync must be enabled and swapbuffer interval must be 0 */
+  if (gc->grColBuf >= 3) {
+    vSync = FXTRUE;
+    swapInterval = 0;
+  }
   
   if (swapInterval > 0) swapInterval--;
   
@@ -1728,21 +1741,21 @@ GR_STATE_ENTRY(grDitherMode, void, (GrDitherMode_t mode))
   GDBG_INFO_MORE(gc->myLevel, "(%d)\n", mode);
 
   fbzMode = gc->state.fbi_config.fbzMode;
-  if (_GlideRoot.environment.disableDitherSub == FXTRUE) 
-    fbzMode &= ~(SST_ENDITHER | SST_DITHER2x2);
-  else
-    fbzMode &= ~(SST_ENDITHER | SST_DITHER2x2 | SST_ENDITHERSUBTRACT);
+  fbzMode &= ~(SST_ENDITHER | SST_DITHER2x2 | SST_ENDITHERSUBTRACT);
 
   switch (mode) {
   case GR_DITHER_DISABLE:
-    break;
-        
-  case GR_DITHER_2x2:
-    fbzMode |= (SST_ENDITHER | SST_DITHER2x2);
+    /* alpha dither subtract should be disabled */
     break;
 
+  case GR_DITHER_2x2:
   case GR_DITHER_4x4:
-    fbzMode |= (SST_ENDITHER | SST_ENDITHERSUBTRACT);
+    /* always force 2x2 dither because it looks better */
+    fbzMode |= (SST_ENDITHER | SST_DITHER2x2 | SST_ENDITHERSUBTRACT);
+
+    /* disable alpha blending dither subtraction according to user request */
+    if (_GlideRoot.environment.disableDitherSub == FXTRUE)
+      fbzMode &= ~(SST_ENDITHERSUBTRACT);
     break;
   }
 
