@@ -198,7 +198,7 @@ AC_ARG_ENABLE([build-architecture],
               [dnl
   --enable-build-architecture Enable AMD 3DNow instructions [default=current]],
               [case ${enableval} in
-               i[3456]86|alpha)
+               i[[3456]]86|alpha)
                    FX_GLIDE_BUILD_ARCHITECTURE=${enableval}
                    ;;
                *)
