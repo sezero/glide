@@ -466,8 +466,10 @@ GR_ENTRY(grAADrawTriangle,
                 verts[2] = c;
                 (*gc->archDispatchProcs.drawTrianglesProc)(GR_VTX_PTR_ARRAY, 3, verts);
         }
-#else
+#elif defined(__MSC__)
   grDrawTriangle(a, b, c);
+#else
+  (*gc->archDispatchProcs.drawTrianglesProc)(GR_VTX_PTR_ARRAY, 3, (void*)&a);
 #endif
   /* Disable depth buffer writes for edge triangles */
   fbzMode = fbzModeOld;

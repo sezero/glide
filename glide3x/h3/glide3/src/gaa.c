@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.6.1  2004/10/04 09:26:31  dborca
+** DOS/OpenWatcom support
+**
 ** Revision 1.1.1.1  1999/11/24 21:44:56  joseph
 ** Initial checkin for SourceForge
 **
@@ -455,7 +458,9 @@ GR_ENTRY(grAADrawTriangle,
                 verts[2] = c;
                 (*gc->archDispatchProcs.drawTrianglesProc)(GR_VTX_PTR_ARRAY, 3, verts);
         }
-#else  
+#elif defined(__MSC__)
+  grDrawTriangle(a, b, c);
+#else
   (*gc->archDispatchProcs.drawTrianglesProc)(GR_VTX_PTR_ARRAY, 3, (void*)&a);
 #endif   
   /* Disable depth buffer writes for edge triangles */
