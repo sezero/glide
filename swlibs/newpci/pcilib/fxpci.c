@@ -781,13 +781,12 @@ pciUnmapPhysical( FxU32 linear_addr, FxU32 length )
       if(linearAddressMapList[i].addrList[j].addr == linear_addr) { 
         linearAddressMapList[i].addrList[j].addr = 0x00UL;
         linearAddressMapList[i].addrList[j].mapped = FXFALSE;
-
-        break;
+	
+	pciUnmapLinearDD(linear_addr, length);
+	return;
       }
     }
   }
-
-  if (i != MAX_PCI_DEVICES) pciUnmapLinearDD(linear_addr, length);
 }
 
 FX_EXPORT FxBool FX_CSTYLE
