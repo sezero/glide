@@ -436,14 +436,6 @@ GR_ENTRY(grAADrawTriangle,
   GDBG_INFO_MORE(gc->myLevel,"(0x%x,0x%x,0x%x,%d,%d,%d)\n",
                  a,b,c,ab_antialias,bc_antialias,ca_antialias);
 
-#ifdef FX_GLIDE_NAPALM
-  /* all primitives are AA'ed in FSAA mode */
-  if (gc->grPixelSample > 1) {
-    grDrawTriangle(a, b, c);
-    return;
-  }
-#endif
-  
   GR_FLUSH_STATE();
 
   fbzModeOld = gc->state.shadow.fbzMode;

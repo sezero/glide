@@ -2710,13 +2710,6 @@ GR_DIENTRY(grEnable, void , (GrEnableMode_t mode) )
 #endif
   }
 
-#ifdef FX_GLIDE_NAPALM
-  /* all primitives are AA'ed in FSAA mode */
-  if (gc->grPixelSample > 1) {
-    gc->state.grEnableArgs.primitive_smooth_mode = 0;
-  }
-#endif
-
 #undef FN_NAME
 } /* grEnable */
 
