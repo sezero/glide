@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.2  2004/03/08 07:42:21  dborca
+** Voodoo Rush fixes
+**
 ** Revision 1.1.2.1  2004/03/02 07:55:29  dborca
 ** Bastardised Glide3x for SST1
 **
@@ -210,8 +213,13 @@
 **                   should ONLY be defined by a makefile intended to build
 **                   GLIDE.LIB or glide.a.
 **
+** GLIDE_SIMULATOR:  Defined if GLIDE should use the software simulator.  An
+**                   application is responsible for defining this macro.
+**                   This macro is mutually exclusive with GLIDE_HARDWARE.
+**
 ** GLIDE_HARDWARE:   Defined if GLIDE should use the actual SST hardware.  An
 **                   application is responsible for defining this macro.
+**                   This macro is mutually exclusive with GLIDE_SIMULATOR.
 **
 ** GLIDE_NUM_TMU:    Number of physical TMUs installed.  Valid values are 1
 **                   and 2.  If this macro is not defined by the application
@@ -246,17 +254,8 @@
 #define GR_CDECL
 #endif
 
-/*
-** interanl constant for constrained query
-*/
-#define GR_MAX_RESOLUTION  15
-#define GR_MAX_REFRESH      8
-#define GR_MAX_COLOR_BUF    3
-#define GR_MAX_AUX_BUF      1
-#define GR_MIN_RESOLUTION   0
-#define GR_MIN_REFRESH      0
-#define GR_MIN_COLOR_BUF    2
-#define GR_MIN_AUX_BUF      0
+/* limits */
+#define MAX_NUM_SST 4
 
 /*
 ** grGet defines
@@ -269,6 +268,34 @@
 #define SST1_WDEPTHVALUE_FARTHEST    0xFFFF
 
 /*
+** interanl constant for constrained query
+*/
+#define GR_MAX_RESOLUTION  15
+#define GR_MAX_REFRESH      8
+#define GR_MAX_COLOR_BUF    3
+#define GR_MAX_AUX_BUF      1
+#define GR_MIN_RESOLUTION   0
+#define GR_MIN_REFRESH      0
+#define GR_MIN_COLOR_BUF    2
+#define GR_MIN_AUX_BUF      0
+
+typedef int GrSstType;
+#define GR_SSTTYPE_VOODOO    0
+#define GR_SSTTYPE_SST96     1
+#define GR_SSTTYPE_AT3D      2
+#define GR_SSTTYPE_Voodoo2   3
+#define GR_SSTTYPE_Banshee   4
+
+/*
+** sound stuttering if GR_HINT_FIFOCHECKHINT is not called
+*/
+typedef FxU32 GrHint_t;
+#define GR_HINT_STWHINT                 0
+#define GR_HINT_FIFOCHECKHINT           1
+#define GR_HINT_FPUPRECISION            2
+#define GR_HINT_ALLOW_MIPMAP_DITHER     3
+
+/*
 ** AA Mode for OpenGL
 */
 #define GR_AA_ORDERED_OGL               0x00010000
@@ -279,11 +306,6 @@
 #define GR_AA_ORDERED_POINTS_MASK       0x01
 #define GR_AA_ORDERED_LINES_MASK        0x02
 #define GR_AA_ORDERED_TRIANGLES_MASK    0x04
-
-typedef int GrSstType;
-#define GR_SSTTYPE_VOODOO    0
-#define GR_SSTTYPE_SST96     1
-#define GR_SSTTYPE_AT3D      2
 
 typedef struct GrTMUConfig_St {
   int    tmuRev;                /* Rev of Texelfx chip */
@@ -324,39 +346,9 @@ typedef struct {
   } SSTs[MAX_NUM_SST];          /* configuration for each board */
 } GrHwConfiguration;
 
-typedef FxU32 GrHint_t;
-#define GR_HINTTYPE_MIN                 0
-#define GR_HINT_STWHINT                 0
-#define GR_HINT_FIFOCHECKHINT           1
-#define GR_HINT_FPUPRECISION            2
-#define GR_HINT_ALLOW_MIPMAP_DITHER     3
-#define GR_HINT_LFB_WRITE               4
-#define GR_HINT_LFB_PROTECT             5
-#define GR_HINT_LFB_RESET               6
-#define GR_HINTTYPE_MAX                 GR_HINT_LFB_RESET
-#ifdef H3D
-#define GR_HINT_H3DENABLE               GR_HINTTYPE_MAX
-#undef  GR_HINTTYPE_MAX
-#define GR_HINTTYPE_MAX                 GR_HIT_H3DENABLE
-#endif
-
-typedef FxU32 GrSTWHint_t;
-#define GR_STWHINT_W_DIFF_FBI   FXBIT(0)
-#define GR_STWHINT_W_DIFF_TMU0  FXBIT(1)
-#define GR_STWHINT_ST_DIFF_TMU0 FXBIT(2)
-#define GR_STWHINT_W_DIFF_TMU1  FXBIT(3)
-#define GR_STWHINT_ST_DIFF_TMU1 FXBIT(4)
-#define GR_STWHINT_W_DIFF_TMU2  FXBIT(5)
-#define GR_STWHINT_ST_DIFF_TMU2 FXBIT(6)
-
 typedef FxU32 GrControl_t;
 #define GR_CONTROL_ACTIVATE   0x1
 #define GR_CONTROL_DEACTIVATE 0x2
-#define GR_CONTROL_RESIZE     0x3
-#define GR_CONTROL_MOVE       0x4
-
-#define GR_GENERATE_FIFOCHECK_HINT_MASK(swHWM, swLWM) \
-  (((swHWM & 0xffff) << 16) | (swLWM & 0xffff))
 
 /*
 ** -----------------------------------------------------------------------
@@ -378,6 +370,29 @@ typedef FxU32 GrControl_t;
 #define GR_TEXTURE_OFFSET_T     (1 << 2)
 #define GR_TEXTURE_OFFSET_W     (2 << 2)
 
+#define GR_DLIST_END            0x00
+#define GR_VTX_PTR              0x00
+#define GR_VTX_PTR_ARRAY        0x01
+#define GR_SCALE_OOW            0x00
+#define GR_SCALE_COLOR          0x01
+#define GR_SCALE_STW            0x02
+
+#define SSTCP_PKT3_BDDDDD       1
+#define SSTCP_PKT3_DDDDDD       0
+
+/*
+** packed color
+*/
+#define GR_PARGB_A              3
+#define GR_PARGB_R              2
+#define GR_PARGB_G              1
+#define GR_PARGB_B              0
+
+/*
+** snap bias for VG/VR
+*/
+#define SNAP_BIAS ((float)(3<<18))
+
 typedef struct {
   FxU32
     mode;                       /* enable / disable */
@@ -385,13 +400,12 @@ typedef struct {
     offset;                     /* offset to the parameter data */
 } GrVParamInfo;
 
-typedef struct  {
+typedef struct {
   GrVParamInfo
     vertexInfo,          /* xy */
     zInfo,               /* z(ooz) */
     wInfo,               /* w(oow) */
     aInfo,               /* a float */
-    fogInfo,             /* fog */
     rgbInfo,             /* rgb float */
     pargbInfo,           /* pargb byte */
     st0Info,             /* st0 */
@@ -405,6 +419,65 @@ typedef struct  {
   FxU32
    colorType;           /* float or byte */
 } GrVertexLayout;
+
+/*============================================================
+ **  State Monster Stuff:
+ **============================================================*/
+#define GR_FLUSH_STATE() \
+  if (gc->state.invalid) _grValidateState()
+
+
+/* Look in distate.c:grValidateState (NOTVALID macro) to see how these
+   are used I wanted to keep the mixed-case register names here, and
+   that's why they are mixed case */
+#define alphaModeBIT            FXBIT(0)
+#define fbzColorPathBIT         FXBIT(1)
+#define fbzModeBIT              FXBIT(2)
+#define chromaKeyBIT            FXBIT(3)
+#define clipRegsBIT             FXBIT(4)
+#define zaColorBIT              FXBIT(5)
+#define fogModeBIT              FXBIT(6)
+#define fogColorBIT             FXBIT(7)
+#define lfbModeBIT              FXBIT(8)
+#define c0c1BIT                 FXBIT(9)
+/*
+** lazy evaluate vertexlayout.
+** it is not part of the registers so we add the bit in MSB
+*/ 
+#define vtxlayoutBIT            FXBIT(31)
+
+/*============================================================
+ **  Video Stuff:
+ **============================================================*/
+#define VRETRACEMASK            0x00000fff
+#define HRETRACEPOS             16
+
+
+/* SST-2 research flags         */
+#define SST2_SKIP_SWAP   1
+#define SST2_SKIP_CLEAR  2
+#define SST2_SKIP_TRI    4
+#define SST2_TRI_8F      8
+#define SST2_TRI_8F_MEM 16
+
+/*
+** vertex buffer definition for GR_TRIANGLE_STRIP_CONTINUE and GR_TRIANGLE_FAN_CONTINUE
+*/
+typedef struct {
+  float  sow;                   /* s texture ordinate (s over w) */
+  float  tow;                   /* t texture ordinate (t over w) */  
+  float  oow;                   /* 1/w (used mipmapping - really 0xfff/w) */
+}  GrTmuVertexBuff;
+
+typedef struct
+{
+  float x, y, z;                /* X, Y, and Z of scrn space -- Z is ignored */
+  float r, g, b;                /* R, G, B, ([0..255.0]) */
+  float ooz;                    /* 65535/Z (used for Z-buffering) */
+  float a;                      /* Alpha [0..255.0] */
+  float oow;                    /* 1/W (used for W-buffering, texturing) */
+  GrTmuVertexBuff  tmuvtx[GLIDE_NUM_TMU];
+} GrVertexBuff;
 
 /*==========================================================================*/
 /*
@@ -467,6 +540,7 @@ typedef struct
     GrMipMapMode_t mmMode;      /* saved to allow MM en/dis */
     GrLOD_t        smallLod, largeLod; /* saved to allow MM en/dis */
     FxU32          evenOdd;
+    float   st_scale[2];
     GrNCCTable_t   nccTable;
   } tmu_config[GLIDE_NUM_TMU];  /* tmu register shadow           */
   
@@ -490,6 +564,10 @@ typedef struct
   GrColorFormat_t
     color_format;              /* ARGB, RGBA, etc. */
   
+  GrMipMapId_t
+    current_mm[GLIDE_NUM_TMU]; /* Which guTex** thing is the TMU set
+                                  up for? THIS NEEDS TO GO!!! */
+  
   float
     clipwindowf_xmin, clipwindowf_ymin, /* Clipping info */
     clipwindowf_xmax, clipwindowf_ymax;
@@ -497,7 +575,7 @@ typedef struct
     screen_width, screen_height; /* Screen width and height */
   float
     a, r, g, b;                /* Constant color values for Delta0 mode */
-
+  
   /* viewport and clip space coordinate related stuff */
 
   struct {
@@ -511,6 +589,54 @@ typedef struct
 
   /* Strip Stuff */
   GrVertexLayout vData;
+#ifdef GLIDE_VERTEX_TABLE
+  FxU32 vTable[16];
+#endif
+
+  /*============================================================
+  **  State Monster Stuff:
+  **============================================================*/
+  /*  
+  **   The following DWORD is used to determine what state (if any) needs to
+  **   be flushed when a rendering primative occurs.
+  */
+  FxU32
+    invalid;
+  /* invalid contains bits representing:
+     alphaMode register:
+        modified by grAlphaBlendFunction, grAlphaTestFunction,
+        grAlphaTestReferenceValue  
+
+     fbzColorPath register:
+        modified by grAlphaCombine, grAlphaControlsITRGBLighting,
+        grColorCombine
+
+     fbzMode register:
+        modified by grChromaKeyMode, grDepthBufferFunction,
+        grDeptBufferMode, grDepthMask, grDitherMode, grRenderBuffer,
+        grSstOrigin, grColorMask 
+
+     chromaKey register:
+        modified by grChromaKeyValue
+
+     clipLeftRight, clipBottomTop registers:
+        modified by grClipWindow
+
+     zaColor register:
+        modified by grDepthBiasLevel
+
+     fogMode register:
+        modified by grFogMode
+
+     fogColor register:
+        modified by grFocColorValue
+
+     lfbMode register:
+        modified by grLfbWriteColorFormat, grLfbWriteColorSwizzle 
+
+     c0 & c1 registers:
+        modified by grConstanColorValue
+   */
 
   /*
   **  Argument storage for State Monster:
@@ -519,11 +645,98 @@ typedef struct
   **  argment names.  This is very important, as there are macros in distate.c
   **  that require that.
   */
-  struct{
-    /* [dBorca] used for delayed validation */
+  struct {
+    struct {
+      GrAlphaBlendFnc_t rgb_sf;
+      GrAlphaBlendFnc_t rgb_df;
+      GrAlphaBlendFnc_t alpha_sf;
+      GrAlphaBlendFnc_t alpha_df;
+    } grAlphaBlendFunctionArgs;
+    struct {
+      GrCmpFnc_t fnc;
+    } grAlphaTestFunctionArgs;
+    struct {
+      GrAlpha_t value;
+    } grAlphaTestReferenceValueArgs; 
+    struct {
+      GrCombineFunction_t function;
+      GrCombineFactor_t factor;
+      GrCombineLocal_t local;
+      GrCombineOther_t other;
+      FxBool invert;
+    } grAlphaCombineArgs;
+    struct {
+      FxBool enable;
+    } grAlphaControlsITRGBLightingArgs;
+    struct {
+      GrCombineFunction_t function;
+      GrCombineFactor_t factor;
+      GrCombineLocal_t local;
+      GrCombineOther_t other;
+      FxBool invert;
+    } grColorCombineArgs;
+    struct {
+      FxBool rgb;
+      FxBool alpha;
+    } grColorMaskArgs;
+    struct {
+      GrChromakeyMode_t mode;
+    } grChromakeyModeArgs;
+    struct {
+      GrColor_t color;
+    } grChromakeyValueArgs;
+    struct {
+      GrColor_t range;
+      GrChromaRangeMode_t mode;
+    } grChromaRangeArgs;
+    struct {
+      FxBool enable;
+    } grDepthMaskArgs;
+    struct {
+      GrCmpFnc_t fnc;
+    } grDepthBufferFunctionArgs;
+    struct {
+      GrDepthBufferMode_t mode;
+    } grDepthBufferModeArgs;
+    struct {
+      GrDitherMode_t mode;
+    } grDitherModeArgs;
+    struct {
+      GrBuffer_t buffer;
+    } grRenderBufferArgs;
+    struct {
+      GrOriginLocation_t origin;
+    } grSstOriginArgs;
+    struct {
+      FxU32 minx;
+      FxU32 miny;
+      FxU32 maxx;
+      FxU32 maxy;
+    } grClipWindowArgs;
+    struct {
+      FxU32 level;
+    } grDepthBiasLevelArgs;
+    struct {
+      GrFogMode_t mode;
+    } grFogModeArgs;
+    struct {
+      GrColor_t color;
+    } grFogColorValueArgs;
+    struct {
+      GrColorFormat_t colorFormat;
+    } grLfbWriteColorFormatArgs;
+    struct {
+      FxBool swizzleBytes;
+      FxBool swapWords;
+    } grLfbWriteColorSwizzleArgs;
+    struct {
+      GrColor_t color;
+    } grConstantColorValueArgs;
   } stateArgs;
   struct{
     GrEnableMode_t primitive_smooth_mode;
+    GrEnableMode_t shameless_plug_mode;
+    GrEnableMode_t video_smooth_mode;
   } grEnableArgs;
   struct{
     GrCoordinateSpaceMode_t coordinate_space_mode;
@@ -549,6 +762,9 @@ typedef struct GrGC_s
   struct dataList_s {
     int i;                      /* index into GrVertex struct for src data */
     float *addr;                /* address of hardware register to write to */
+    FxU32 bddr;                 /* byte address of color component in vertex */
+    FxU32 mask;                 /* mask for packed color */
+    FxU32 shift;                /* shift for packed color */
   } dataList[20+12*GLIDE_NUM_TMU+3];/* add 3 for:
                                        fbi-tmu0 trans
                                        tmu0-tmu1 trans
@@ -556,6 +772,12 @@ typedef struct GrGC_s
                                        */
   GrState
     state;                      /* state of Glide/SST */
+
+  GrVertexBuff vert1;
+  GrVertexBuff vert2;
+  FxBool vert2_status;
+  FxBool flip;
+  int w_index;
 
   FxBool
     nopCMD;                     /* Have we placed a NOP in the FIFO ? */
@@ -685,7 +907,7 @@ struct _GlideRoot_s {
     FxBool triBoundsCheck;      /* check triangle bounds        */
     FxBool noSplash;            /* don't draw it                */
     FxBool shamelessPlug;       /* translucent 3Dfx logo in lower right */
-    FxU32  rsrchFlags;           
+    FxU32  sst2Flags;           /* research flags for SST-2     */
     FxI32  swapInterval;        /* swapinterval override        */
     FxI32  swFifoLWM;
     FxU32  snapshot;            /* register trace snapshot      */
@@ -731,7 +953,10 @@ type FX_CSTYLE name args
 FX_ENTRY type FX_CSTYLE name args
 
 #define GR_DIENTRY(name, type, args) \
-FX_ENTRY type FX_CSTYLE name args
+type FX_CSTYLE name args
+
+#define GR_STATE_ENTRY(name, type, args) \
+   type _##name args
 
 /*==========================================================================*/
 
@@ -811,7 +1036,7 @@ FX_ENTRY type FX_CSTYLE name args
                      GWH_FSTARTT_BIT | GWH_FDTDX_BIT | GWH_FDTDY_BIT)
 #define GWH_W_BITS (GWH_FSTARTW_BIT | GWH_FDWDX_BIT | GWH_FDWDY_BIT)
 
-/* All gradient bits... used in trisetup_nogradients hack */
+/* All gradient bits... used in slimy trisetup_nogradients hack */
 #define GWH_DXY_BITS ( \
         GWH_FDRDX_BIT | GWH_FDRDY_BIT | GWH_FDGDX_BIT | GWH_FDGDY_BIT | \
         GWH_FDBDX_BIT | GWH_FDBDY_BIT | GWH_FDZDX_BIT | GWH_FDZDY_BIT | \
@@ -1006,7 +1231,7 @@ GWH_INC_WSH;\
 #elif   ( GLIDE_PLATFORM & GLIDE_HW_SST96 )
 #define GLIDE_DRIVER_NAME "Voodoo Rush"
 #else
-#define GLIDE_DRIVER_NAME "Unknown"
+#define GLIDE_DRIVER_NAME "HOOPTI???"
 #endif
 
 #if (GLIDE_PLATFORM & GLIDE_HW_SST1)
@@ -1047,8 +1272,7 @@ GWH_INC_WSH;\
 /* GMT: a very useful macro for making sure that SST commands are properly
    fenced on a P6, e.g. P6FENCH_CMD( GR_SET(hw->nopCMD,1) );
 */
-/* #if (GLIDE_PLATFORM & GLIDE_HW_SST1) */
-#if 1
+#if (GLIDE_PLATFORM & GLIDE_HW_SST1)
 #define P6FENCE_CMD( cmd ) \
     if (_GlideRoot.CPUType == 6) {     /* if it's a p6 */ \
       GR_P6FENCE;                      /* then fence off the cmd */ \
@@ -1071,56 +1295,26 @@ FxI32 FX_CSTYLE
 _trisetup(const void *va, const void *vb, const void *vc );
 FxI32 FX_CSTYLE
 _trisetup_nogradients(const void *va, const void *vb, const void *vc );
-
 #endif /* FX_GLIDE_NO_FUNC_PROTO */
 
 /* GMT: BUG need to make this dynamically switchable */
-#if defined(GLIDE_USE_C_TRISETUP)
+#ifdef GLIDE_USE_C_TRISETUP
   #define TRISETUP _trisetup
 #else
   #define TRISETUP _trisetup_asm
 #endif /* GLIDE_USE_C_TRISETUP */
 
-void FX_CSTYLE
-_grAADrawPoint ( const void *e );
-
-void FX_CSTYLE
-_grAADrawLine ( const void *v1, const void *v2 );
-
-FxBool FX_CSTYLE
-_grSstIsBusy( void );
-
-FxBool FX_CSTYLE
-_grSstControl(GrControl_t code);
-
-FxU32 FX_CSTYLE
-_grSstStatus(void);
-
-FxU32 FX_CSTYLE
-_grSstVideoLine(void);
-
-int FX_CSTYLE
-_grBufferNumPending(void);
-
-void FX_CSTYLE
-_grSstResetPerfStats(void);
-
-void FX_CSTYLE
-_grSstPerfStats(GrSstPerfStats_t *pStats);
-
-void FX_CSTYLE
-_grTriStats(FxU32 *trisProcessed, FxU32 *trisDrawn);
-
-void FX_CSTYLE
-_grResetTriStats();
-
-FX_ENTRY void FX_CALL
-grHints(GrHint_t hintType, FxU32 hintMask);
-
 /*==========================================================================*/
 /* 
 **  Function Prototypes
 */
+
+FxI32 FX_CSTYLE
+_trisetup_mixed_datalist(const void *va, const void *vb, const void *vc, FxBool aflag, FxBool bflag, FxBool cflag );
+
+FxI32 FX_CSTYLE
+_vp_trisetup_mixed_datalist(const void *va, const void *vb, const void *vc, FxBool aflag, FxBool bflag, FxBool cflag );
+
 #ifdef GLIDE_DEBUG
 FxBool
 _grCanSupportDepthBuffer( void );
@@ -1130,6 +1324,16 @@ void
 _grClipNormalizeAndGenerateRegValues(FxU32 minx, FxU32 miny, FxU32 maxx,
                                      FxU32 maxy, FxU32 *clipLeftRight,
                                      FxU32 *clipBottomTop);
+
+/*
+** extension
+*/
+void FX_CALL 
+guQueryResolutionXY(GrScreenResolution_t res, FxU32 *x, FxU32 *y);
+
+/*
+** state routine
+*/
 
 void 
 _grSwizzleColor( GrColor_t *color );
@@ -1158,6 +1362,9 @@ extern void
 void GR_CDECL
 _grFence( void );
 
+int
+_guHeapCheck( void );
+
 void FX_CSTYLE
 _grRebuildDataList( void );
 
@@ -1180,11 +1387,12 @@ void FX_CSTYLE
 _grTexDetailControl( GrChipID_t tmu, FxU32 detail );
 
 void FX_CSTYLE
-_grTexDownloadNccTable( FxU32 which,
+_grTexDownloadNccTable( GrChipID_t tmu, FxU32 which,
                         const GuNccTable *ncc_table,
                         int start, int end );
 void FX_CSTYLE
-_grTexDownloadPalette( GuTexPalette *pal,
+_grTexDownloadPalette( GrChipID_t   tmu, 
+                       GuTexPalette *pal,
                        int start, int end );
 
 FxU32
@@ -1211,9 +1419,7 @@ grSstConfigPipeline(GrChipID_t chip, GrSstRegister reg, FxU32 value);
 /*==========================================================================*/
 /*  GMT: have to figure out when to include this and when not to
 */
-#if defined(GLIDE_DEBUG) || defined(GLIDE_ASSERT) || \
-	defined(GLIDE_SANITY_ASSERT) || defined(GLIDE_SANITY_SIZE) || \
-	defined(GDBG_INFO_ON)
+#if defined(GLIDE_DEBUG) || defined(GLIDE_ASSERT) || defined(GLIDE_SANITY_ASSERT) || defined(GLIDE_SANITY_SIZE)
 #define DEBUG_MODE 1
 #include <assert.h>
 
@@ -1403,7 +1609,9 @@ void
 _grAssert(char *, char *, int);
 
 #if defined(SST96)
-/* sst.h defines SET,GET,SETF, and SET16 */
+/* Since we're ganking init off the simulator, and if the simulator is set
+   up, sst.h defines SET,GET,SETF, and SET16 to be function calls to the
+   simulator, we need to #undef them here */
 #undef SET
 #undef SETF
 #undef SET16
@@ -1440,7 +1648,7 @@ _grFifoFWriteDebug((FxU32) a, (float) b, (FxU32) c)
 **
 **  That would be all well and good except for one thing:  If the
 **  frame time is very short, Jr, doesn't like the Nudge Of Love.  So,
-**  instead of a whole bunch of nopCmds, we must draw a smallish
+**  instead of a shitpot of nopCmds, we must draw a smallish
 **  triangle.  The problem with that, however, is the app may be
 **  reusing the contents of the color or depth buffers.  Thus, we have
 **  to disable the color and depth mask before drawing the triangle
@@ -1549,7 +1757,8 @@ if (_GlideRoot.CPUType == 6) {\
 
 #endif /* defined(SST96) */
 
-#if defined(GLIDE_DEBUG) && !defined(SST96)
+#if defined(GLIDE_DEBUG) && !(GLIDE_PLATFORM & GLIDE_SST_SIM) && !defined(SST96)
+  /* if building a DEBUG library without the simulator */
   extern FxU32 GR_CDECL _GR_GET(void *);
   extern void GR_CDECL _GR_SET16(void *, unsigned short);
   extern void GR_CDECL _GR_SET(void *, unsigned long);
@@ -1560,8 +1769,9 @@ if (_GlideRoot.CPUType == 6) {\
   #define GR_SETF(d,s)  {_GR_SETF(&(d),s); SETF(d,s); GR_INC_SIZE(4);}
   #define GR_SET16(d,s) {_GR_SET16(&(d),s); SET16(d,s); GR_INC_SIZE(2);}
 #else
+  /* [dBorca] HACK ALERT!!! Win32 version runs amok without this... */
   #define GR_GET(s)     GET(s)
-  #define GR_SET(d,s)   {SET(d,s); GR_INC_SIZE(4);}
+  #define GR_SET(d,s)   {GR_P6FENCE; SET(d,s); GR_INC_SIZE(4);}
   #define GR_SETF(d,s)  {SETF(d,s); GR_INC_SIZE(4);}
   #define GR_SET16(d,s) {SET16(d,s); GR_INC_SIZE(2);}
 #endif
@@ -1578,28 +1788,223 @@ if (_GlideRoot.CPUType == 6) {\
 #define SST96_TEX_PTR(a) \
         ((FxU32 *) (((FxU32) a) + VG96_TEXTURE_OFFSET))
 
+void rle_decode_line_asm(FxU16 *tlut,FxU8 *src,FxU16 *dest);
 
+extern FxU16 rle_line[256];
+extern FxU16 *rle_line_end;
+
+#define RLE_CODE                        0xE0
+#define NOT_RLE_CODE            31
+
+#ifdef  __WATCOMC__
+#pragma aux rle_decode_line_asm parm [edx] [edi] [esi] value [edi] modify exact [eax ebx ecx edx esi edi] = \
+"  next_pixel:                   "  \
+"  xor   ecx,ecx                 "  \
+"  mov   al,byte ptr[edi]        "  \
+"  mov   cl,byte ptr[edi]        "  \
+"  inc   edi                     "  \
+"                                "  \
+"  and   al,0xE0                 "  \
+"  cmp   al,0xE0                 "  \
+"  jne   unique                  "  \
+"                                "  \
+"  and   cl,0x1F                 "  \
+"  mov   al,cl                   "  \
+"  jz    done_rle                "  \
+"                                "  \
+"  mov   cl,byte ptr[edi]        "  \
+"  inc   edi                     "  \
+"  mov   bx,word ptr[edx+ecx*2]  "  \
+"                                "  \
+"  copy_block:                   "  \
+"  mov   word ptr[esi],bx        "  \
+"  add   esi,0x2                 "  \
+"  dec   al                      "  \
+"  jz    next_pixel              "  \
+"  jmp   copy_block              "  \
+"                                "  \
+"  unique:                       "  \
+"  mov   bx,word ptr[edx+ecx*2]  "  \
+"  mov   word ptr[esi],bx        "  \
+"  add   esi,0x2                 "  \
+"  jmp   next_pixel              "  \
+"  done_rle:                     "; 
+#endif /* __WATCOMC__ */
 
 #define TEX_INFO(ptr,field)                         ptr field##Log2
 #define G3_LOD_TRANSLATE(lod)                       (0x8-lod)
 #define G3_ASPECT_TRANSLATE(aspect)                 (0x3-(aspect))
 
-GR_ENTRY(grTexDownloadTableExt,
-         void,
-         (GrChipID_t tmu, GrTexTable_t type,  void *data));
+enum {
+   kSetupStrip           = 0x00,
+   kSetupFan             = 0x01,
+   kSetupCullDisable     = 0x00,
+   kSetupCullEnable      = 0x02,
+   kSetupCullPositive    = 0x00,
+   kSetupCullNegative    = 0x04,
+   kSetupPingPongNorm    = 0x00,
+   kSetupPingPongDisable = 0x08
+};
 
-GR_ENTRY(grSetNumPendingBuffers,
-         void,
-         (FxI32 NumPendingBuffers));
+void GR_CDECL
+_grValidateState();
 
-/*
-** Glide 3 extension APIs
-*/
+void FX_CSTYLE
+_grDrawVertexList(FxU32 type, FxI32 mode, FxI32 count, void *pointers);
+
+void FX_CSTYLE
+_grDrawVertexListContinue(FxU32 type, FxI32 mode, FxI32 count, void *pointers);
+
+void
+_grAlphaBlendFunction(
+                     GrAlphaBlendFnc_t rgb_sf,   GrAlphaBlendFnc_t rgb_df,
+                     GrAlphaBlendFnc_t alpha_sf, GrAlphaBlendFnc_t alpha_df
+                     );
+void
+_grAlphaTestFunction( GrCmpFnc_t function );
+
+void
+_grAlphaTestReferenceValue( GrAlpha_t value );
+
+void
+_grAlphaCombine(
+               GrCombineFunction_t function, GrCombineFactor_t factor,
+               GrCombineLocal_t local, GrCombineOther_t other,
+               FxBool invert
+               );
+
+void
+_grAlphaControlsITRGBLighting( FxBool enable );
+
+void
+_grColorCombine(
+               GrCombineFunction_t function, GrCombineFactor_t factor,
+               GrCombineLocal_t local, GrCombineOther_t other,
+               FxBool invert );
 
 void FX_CALL 
-grChromaRangeMode(GrChromaRangeMode_t mode);
+_grChromaModeExt(GrChromakeyMode_t mode);
+void FX_CALL 
+_grChromaRangeExt( GrColor_t min, GrColor_t max , GrChromaRangeMode_t mode);
 
 void FX_CALL 
-grChromaRange( GrColor_t min, GrColor_t max , GrChromaRangeMode_t mode);
+_grTexChromaModeExt(GrChipID_t tmu, GrChromakeyMode_t mode);
+void FX_CALL 
+_grTexChromaRangeExt(GrChipID_t tmu, GrColor_t min, GrColor_t max);
+
+void
+_grChromaRange( GrColor_t min, GrColor_t max , GrChromaRangeMode_t mode);
+
+void FX_CSTYLE
+_guTexMemReset(void);
+
+int FX_CSTYLE
+_grBufferNumPending(void);
+
+FxBool FX_CSTYLE
+_grSstIsBusy(void);
+
+void FX_CSTYLE
+_grSstResetPerfStats(void);
+
+FxBool FX_CSTYLE
+_grSstControl(GrControl_t code);
+
+void FX_CSTYLE
+_grResetTriStats(void);
+
+FxU32 FX_CSTYLE
+_grSstStatus(void);
+
+FxU32 FX_CSTYLE
+_grSstVideoLine(void);
+
+FxBool FX_CSTYLE
+_grSstVRetraceOn(void);
+
+FxI32 FX_CSTYLE
+_grVpDrawTriangle( const void *a, const void *b, const void *c );
+
+void FX_CSTYLE
+_grDrawPoints(FxI32 mode, FxI32 count, void *pointers);
+
+void FX_CSTYLE
+_grDrawLineStrip(FxI32 mode, FxI32 count, FxI32 ltype, void *pointers);
+
+void FX_CSTYLE
+_grDrawTriangles(FxI32 mode, FxI32 count, void *pointers);
+
+void FX_CSTYLE
+_grAADrawPoints(FxI32 mode, FxI32 count, void *pointers);
+
+void FX_CSTYLE
+_grAADrawLineStrip(FxI32 mode, FxI32 ltype, FxI32 count, void *pointers);
+
+void FX_CSTYLE
+_grAADrawLines(FxI32 mode, FxI32 count, void *pointers);
+
+void FX_CSTYLE
+_grAADrawTriangles(FxI32 mode, FxI32 ttype, FxI32 count, void *pointers);
+
+void FX_CSTYLE
+_grAAVpDrawTriangle(const void *a, const void *b, const void *c,
+                    FxBool ab_antialias, FxBool bc_antialias, FxBool ca_antialias);
+
+void FX_CSTYLE
+_grAADrawVertexList(FxU32 type, FxI32 mode, FxI32 count, void *pointers);
+
+void FX_CALL 
+_grChromaModeExt(GrChromakeyMode_t mode);
+
+void FX_CALL 
+_grChromaRangeExt( GrColor_t min, GrColor_t max , GrChromaRangeMode_t mode);
+
+void
+_grChromakeyMode( GrChromakeyMode_t mode );
+
+void
+_grDepthMask( FxBool mask );
+
+void
+_grDepthBufferFunction( GrCmpFnc_t function );
+
+void
+_grDepthBufferMode( GrDepthBufferMode_t mode );
+
+void
+_grDitherMode( GrDitherMode_t mode );
+
+void
+_grRenderBuffer( GrBuffer_t buffer );
+
+void
+_grColorMask( FxBool rgb, FxBool a );
+
+void
+_grSstOrigin(GrOriginLocation_t  origin);
+
+void
+_grClipWindow( FxU32 minx, FxU32 miny, FxU32 maxx, FxU32 maxy );
+
+void
+_grDepthBiasLevel( FxI32 level );
+
+void
+_grFogMode( GrFogMode_t mode );
+
+void
+_grFogColorValue( GrColor_t fogcolor );
+
+void
+_grLfbWriteColorFormat(GrColorFormat_t colorFormat);
+
+void
+_grLfbWriteColorSwizzle(FxBool swizzleBytes, FxBool swapWords);
+
+void
+_grConstantColorValue( GrColor_t value );
+
+void 
+_grHints(GrHint_t hintType, FxU32 hints);
 
 #endif /* __FXGLIDE_H__ */

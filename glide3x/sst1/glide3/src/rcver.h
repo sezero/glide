@@ -19,9 +19,9 @@
  */
 
 #define MANVERSION              3
-#define MANREVISION             0
+#define MANREVISION             1
 
-#define VERSIONSTR "3.0\0"
+#define VERSIONSTR "3.01.0001\0"
 
 #ifdef SST1
 #   define HWSTR   "Voodoo Graphics(tm)\0"

@@ -43,7 +43,7 @@ GLIDE_PLATFORM:
 
 Hiya,
 
-This is the first cut of Glide3x for Voodoo Graphics / Voodoo Rush.
+This is the second cut of Glide3x for Voodoo Graphics / Voodoo Rush.
 It is a funky combination of Glide2x.SST1 and Glide3x.CVG! While it
 is by no means a complete (super-optimized) Glide3, it provides full
 compatibility with MesaFX.
@@ -57,8 +57,6 @@ The main things that I had to change during porting:
 
 ToDo list:
  - stipple
- - clip coordinates
- - {STRIP|FAN}_CONTINUE
  - testing, compatibility (especially for Rush)
 
 Special note:

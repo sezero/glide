@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.1  2004/03/02 07:55:30  dborca
+** Bastardised Glide3x for SST1
+**
 ** Revision 1.1.1.1  1999/12/07 21:48:53  joseph
 ** Initial checkin into SourceForge.
 **
@@ -471,56 +474,6 @@ GR_ENTRY(grTexMipMapMode, void, ( GrChipID_t tmu, GrMipMapMode_t mmMode, FxBool 
     and grTExDownloadLevel()
   -------------------------------------------------------------------*/
 /*-------------------------------------------------------------------
-  Function: grTexNCCTableExt
-  Date: 6/3
-  Implementor(s): jdt
-  Library: glide
-  Description:
-    select one of the two NCC tables
-  Arguments:
-    tmu - which tmu
-    table - which table to select
-        One of:
-            GR_TEXTABLE_NCC0
-            GR_TEXTABLE_NCC1
-            GR_TEXTABLE_PALETTE
-  Return:
-    none
-  -------------------------------------------------------------------*/
-
-GR_ENTRY(grTexNCCTableExt, void, ( GrChipID_t tmu, GrNCCTable_t table ))
-{
-  FxU32 texMode;
-  
-  GR_BEGIN("grTexNCCTableExt",88,4+2*PACKER_WORKAROUND_SIZE);
-  GDBG_INFO_MORE((gc->myLevel,"(%d)\n",tmu));
-  GR_CHECK_TMU(myName,tmu);
-  GR_CHECK_F(myName, table>0x1, "invalid ncc table specified");
-
-  /*------------------------------------------------------------------
-    Update local state
-    ------------------------------------------------------------------*/
-  gc->state.tmu_config[tmu].nccTable = table;
-  
-  /*------------------------------------------------------------------
-    Grab shadow texMode, update TexMode, update shadow/real register
-    ------------------------------------------------------------------*/
-  texMode  = gc->state.tmu_config[tmu].textureMode;
-  texMode &= ~( SST_TNCCSELECT );
-  if ( table )
-    texMode |= SST_TNCCSELECT;
-  else 
-    texMode &= ~(SST_TNCCSELECT);
-
-  PACKER_WORKAROUND;
-  GR_SET( SST_TMU(hw,tmu)->textureMode , texMode );
-  PACKER_WORKAROUND;
-
-  gc->state.tmu_config[tmu].textureMode = texMode;
-  GR_END();
-} /* grTexNCCTableExt */
-
-/*-------------------------------------------------------------------
   Function: grTexNCCTable
   Date: 6/3
   Implementor(s): jdt
@@ -540,14 +493,38 @@ GR_ENTRY(grTexNCCTableExt, void, ( GrChipID_t tmu, GrNCCTable_t table ))
 
 GR_ENTRY(grTexNCCTable, void, ( GrNCCTable_t table ))
 {
-  /* [dBorca] broadcast: there must be a better way */
-  GR_DCL_GC;
-  if (gc->num_tmu > 1) {
-     grTexNCCTableExt(GR_TMU1, table);
-  }
-  grTexNCCTableExt(GR_TMU0, table);
-} /* grTexNCCTable */
+  FxU32 texMode, i;
+  
+  GR_BEGIN("grTexNCCTable",88,(4+2*PACKER_WORKAROUND_SIZE)*GLIDE_NUM_TMU);
+  /* GDBG_INFO_MORE((gc->myLevel,"(%d)\n",tmu)); */
+  /* GR_CHECK_TMU(myName,tmu); */
+  GR_CHECK_F(myName, table>0x1, "invalid ncc table specified");
 
+  /*------------------------------------------------------------------
+    Update local state
+    ------------------------------------------------------------------*/
+  for (i = 0; i < GLIDE_NUM_TMU; i++)
+    gc->state.tmu_config[i].nccTable = table;
+  
+  /*------------------------------------------------------------------
+    Grab shadow texMode, update TexMode, update shadow/real register
+    ------------------------------------------------------------------*/
+  for (i = 0; i < GLIDE_NUM_TMU; i++) {
+    texMode  = gc->state.tmu_config[i].textureMode;
+    texMode &= ~( SST_TNCCSELECT );
+    if ( table )
+      texMode |= SST_TNCCSELECT;
+    else 
+      texMode &= ~(SST_TNCCSELECT);
+    
+    PACKER_WORKAROUND;
+    GR_SET( SST_TMU(hw,i)->textureMode , texMode );
+    PACKER_WORKAROUND;
+    
+    gc->state.tmu_config[i].textureMode = texMode;
+  }
+  GR_END();
+} /* grTexNCCTable */
 
 /*-------------------------------------------------------------------
   Function: grTexSource
@@ -596,11 +573,12 @@ GR_ENTRY(grTexSource, void, ( GrChipID_t tmu, FxU32 startAddress, FxU32 evenOdd,
   /*-------------------------------------------------------------
     Calculate Base Address
     -------------------------------------------------------------*/
-  baseAddress = _grTexCalcBaseAddress( startAddress,
+  baseAddress = _grTexCalcBaseAddress(startAddress,
                                        G3_LOD_TRANSLATE(TEX_INFO(info->,largeLod)),
                                        G3_ASPECT_TRANSLATE(TEX_INFO(info->,aspectRatio)),
                                        info->format,
-                                       evenOdd ) >> 3;
+                                       evenOdd) >> 3;
+
   /*-------------------------------------------------------------
     Update Texture Mode
     -------------------------------------------------------------*/
@@ -633,6 +611,39 @@ GR_ENTRY(grTexSource, void, ( GrChipID_t tmu, FxU32 startAddress, FxU32 evenOdd,
   gc->state.tmu_config[tmu].textureMode = texMode; 
   gc->state.tmu_config[tmu].tLOD        = tLod; 
   
+  /*
+  ** Update s and t scale for clip coordinates
+  */
+  switch (info->aspectRatioLog2) {
+  case GR_ASPECT_LOG2_8x1:
+    gc->state.tmu_config[tmu].st_scale[0] = 256.f;
+    gc->state.tmu_config[tmu].st_scale[1] = 32.f;
+    break;
+  case GR_ASPECT_LOG2_4x1:
+    gc->state.tmu_config[tmu].st_scale[0] = 256.f;
+    gc->state.tmu_config[tmu].st_scale[1] = 64.f;
+    break;
+  case GR_ASPECT_LOG2_2x1:
+    gc->state.tmu_config[tmu].st_scale[0] = 256.f;
+    gc->state.tmu_config[tmu].st_scale[1] = 128.f;
+    break;
+  case GR_ASPECT_LOG2_1x1:
+    gc->state.tmu_config[tmu].st_scale[0] = 256.f;
+    gc->state.tmu_config[tmu].st_scale[1] = 256.f;
+    break;
+  case GR_ASPECT_LOG2_1x2:
+    gc->state.tmu_config[tmu].st_scale[0] = 128.f;
+    gc->state.tmu_config[tmu].st_scale[1] = 256.f;
+    break;
+  case GR_ASPECT_LOG2_1x4:
+    gc->state.tmu_config[tmu].st_scale[0] = 64.f;
+    gc->state.tmu_config[tmu].st_scale[1] = 256.f;
+    break;
+  case GR_ASPECT_LOG2_1x8:
+    gc->state.tmu_config[tmu].st_scale[0] = 32.f;
+    gc->state.tmu_config[tmu].st_scale[1] = 256.f;
+    break;
+  }
   GR_END();
 } /* grTexSource */
 
@@ -708,7 +719,7 @@ GR_ENTRY(grTexMultibaseAddress, void, ( GrChipID_t tmu, GrTexBaseRange_t range, 
   GR_CHECK_F( myName, range > GR_TEXBASE_256, "invalid range" );
   GR_CHECK_F( myName, startAddress >= gc->tmu_state[tmu].total_mem, "invalid startAddress" );
   GR_CHECK_F( myName, evenOdd > 0x3, "evenOdd mask invalid" );
-  GR_CHECK_F( myName, info == NULL, "invalid info pointer" );
+  GR_CHECK_F( myName, !info, "invalid info pointer" );
   
 
   /* Write relevant registers out to hardware and shadows */
@@ -716,38 +727,38 @@ GR_ENTRY(grTexMultibaseAddress, void, ( GrChipID_t tmu, GrTexBaseRange_t range, 
   hw = SST_TMU(hw,tmu);
   switch (range) {
     case GR_TEXBASE_256:
-      baseAddress = _grTexCalcBaseAddress( startAddress,
+      baseAddress = _grTexCalcBaseAddress(startAddress,
                                            G3_LOD_TRANSLATE(GR_LOD_LOG2_256),
                                            G3_ASPECT_TRANSLATE(TEX_INFO(info->,aspectRatio)),
                                            info->format,
-                                           evenOdd ) >> 3;
+                                           evenOdd) >> 3;
       GR_SET( hw->texBaseAddr , baseAddress );
       gc->state.tmu_config[tmu].texBaseAddr = baseAddress; 
       break;
     case GR_TEXBASE_128:
-      baseAddress = _grTexCalcBaseAddress( startAddress,
+      baseAddress = _grTexCalcBaseAddress(startAddress,
                                            G3_LOD_TRANSLATE(GR_LOD_LOG2_128),
                                            G3_ASPECT_TRANSLATE(TEX_INFO(info->,aspectRatio)),
                                            info->format,
-                                           evenOdd ) >> 3;
+                                           evenOdd) >> 3;
       GR_SET( hw->texBaseAddr1 , baseAddress );
       gc->state.tmu_config[tmu].texBaseAddr_1 = baseAddress; 
       break;
     case GR_TEXBASE_64:
-      baseAddress = _grTexCalcBaseAddress( startAddress,
+      baseAddress = _grTexCalcBaseAddress(startAddress,
                                            G3_LOD_TRANSLATE(GR_LOD_LOG2_64),
                                            G3_ASPECT_TRANSLATE(TEX_INFO(info->,aspectRatio)),
                                            info->format,
-                                           evenOdd ) >> 3;
+                                           evenOdd) >> 3;
       GR_SET( hw->texBaseAddr2 , baseAddress );
       gc->state.tmu_config[tmu].texBaseAddr_2 = baseAddress; 
       break;
     case GR_TEXBASE_32_TO_1:
-      baseAddress = _grTexCalcBaseAddress( startAddress,
+      baseAddress = _grTexCalcBaseAddress(startAddress,
                                            G3_LOD_TRANSLATE(GR_LOD_LOG2_32),
                                            G3_ASPECT_TRANSLATE(TEX_INFO(info->,aspectRatio)),
                                            info->format,
-                                           evenOdd ) >> 3;
+                                           evenOdd) >> 3;
       GR_SET( hw->texBaseAddr38 , baseAddress );
       gc->state.tmu_config[tmu].texBaseAddr_3_8 = baseAddress; 
       break;

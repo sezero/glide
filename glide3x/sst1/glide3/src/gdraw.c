@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.1  2004/03/02 07:55:30  dborca
+** Bastardised Glide3x for SST1
+**
 ** Revision 1.1.1.1  1999/12/07 21:48:52  joseph
 ** Initial checkin into SourceForge.
 **
@@ -74,20 +77,14 @@
 #define SST_XY_HALF      ( 1 << ( SST_XY_FRACBITS - 1 ) )
 #define SST_XY_ONE       ( 1 << SST_XY_FRACBITS )
 
-#define OUTBOUNDSX(a) ((FARRAY(a, GR_VERTEX_X_OFFSET) < 0.f) || (FARRAY(a, GR_VERTEX_X_OFFSET) > gc->state.screen_width))
-#define OUTBOUNDSY(a) ((FARRAY(a, GR_VERTEX_Y_OFFSET) < 0.f) || (FARRAY(a, GR_VERTEX_Y_OFFSET) > gc->state.screen_height))
+#define OUTBOUNDSX(a) ((*(float *)a < 0.f ? 1 : 0) || (*(float *)a > gc->state.screen_width ? 1 : 0))
+#define OUTBOUNDSY(a) ((*((float *)a+1) < 0.f ? 1 : 0) || (*((float *)a+1) > gc->state.screen_height ? 1 : 0))
 #define OUTBOUNDS(a) (OUTBOUNDSX(a) || OUTBOUNDSY(a))
 
 /* access a floating point array with a byte index */
 #define FARRAY(p,i) (*(float *)((i)+(int)(p)))
 /* access a byte array with a byte index and convert to float */
 #define FbARRAY(p,i) (float)(((unsigned char *)p)[i])
-
-/* X and Y have fixed position. These represent offsets when
- * the vertex structure is seen as an array of bytes
- */
-#define GR_VERTEX_X_OFFSET 0
-#define GR_VERTEX_Y_OFFSET 4
 
 /*---------------------------------------------------------------------------
   NOTE: by Gary Tarolli
@@ -110,90 +107,11 @@
 
 GR_ENTRY(grDrawPoint, void, ( const void *p ))
 {
-  int i, x,y;
-  struct dataList_s *dlp;
-
-  /* GMT: gross overestimate of fifo requirements */
-  GR_BEGIN("grDrawPoint",90,_GlideRoot.curTriSize);
-  GDBG_INFO_MORE((gc->myLevel,"(0x%x)\n",p));\
-
-  /* [dBorca] jump to anti-aliased function if GR_AA_ORDERED */
-  if (gc->state.grEnableArgs.primitive_smooth_mode & GR_AA_ORDERED_POINTS_MASK) {
-     _grAADrawPoint(p);
-     return;
-  }
-
-  /* we snap to an integer by adding a large enough number that it
-   * shoves all fraction bits off the right side of the mantissa.
-   *
-   * NB: IEEE rounds to nearest integer by default, but applications
-   * can change the rounding mode so that it is difficult to get the
-   * correct truncation/ceiling operation w/ a simple adjustment to
-   * the bias. 
-   *
-   * NB: The constant kNumMantissaBits defines how many bits of
-   * integer precision a coordinate can have. This needs to be atleast
-   * as large as the maximum hw screen resolution. We later use this
-   * to compute a logical 1/2 value to fill an entire pixel.
-   */
-#define kNumMantissaBits 18UL
-  {
-    const float bias  = (const float)(3UL << kNumMantissaBits);
-
-    /* Convert to 32-bit representation */
-#define FP_TRUNC_BIAS(__fpVal, __fpBias) \
-    ((__fpVal) < (__fpBias) ? (float)((__fpVal) + (__fpBias)) : (__fpVal))
-    _GlideRoot.pool.ftemp1 = FP_TRUNC_BIAS(FARRAY(p, GR_VERTEX_X_OFFSET), bias);
-    _GlideRoot.pool.ftemp2 = FP_TRUNC_BIAS(FARRAY(p, GR_VERTEX_Y_OFFSET), bias);
-
-    /* Mask off the real fractional bits from the mantissa */
-    x = ((*(FxU32*)&_GlideRoot.pool.ftemp1 & (0xFFFFFFFFUL << (22UL - kNumMantissaBits))) +
-         (0x01UL << (21UL - kNumMantissaBits)));
-    y = ((*(FxU32*)&_GlideRoot.pool.ftemp2 & (0xFFFFFFFFUL << (22UL - kNumMantissaBits))) +
-         (0x01UL << (21UL - kNumMantissaBits)));
-  }
-
-#ifdef GLIDE_USE_ALT_REGMAP
-  hw = SST_WRAP(hw,128);                /* use alternate register mapping */
-#endif
-
-  _GlideRoot.stats.pointsDrawn++;
-  
-  /* draw a little triangle, with the lower left corner at pixel center */
-  GR_SET( hw->vA.x, x );
-  GR_SET( hw->vA.y, y );
-  
-  x += (0x01UL << (21UL - kNumMantissaBits));
-  GR_SET( hw->vB.x, x );
-  GR_SET( hw->vB.y, y );
-
-  y += (0x01UL << (21UL - kNumMantissaBits));
-  GR_SET( hw->vC.y, y );
-  GR_SET( hw->vC.x, x );
-
-  /* we don't care what the slopes are because the pixel center that is drawn */
-  /* is exactly at vertex A - isn't that wonderful */
-  dlp = gc->dataList;
-  i = dlp->i;
-  while (i) {
-    if (i & 1) {        /* packer bug check */
-      if (i & 2) P6FENCE;
-      GR_SETF( *dlp->addr, 0.0F );
-      if (i & 2) P6FENCE;
-    }
-    else if (i >= 0) {
-      GR_SETF( *dlp->addr, FARRAY(p,i) );
-    } else {
-      /* [dBorca] Packed Color Workaround (tm) */
-      i = (i & 0xffffff) + ((i >> 24) & 3);
-      GR_SETF( *dlp->addr, FbARRAY(p,i) );
-    }
-    dlp++;
-    i = dlp->i;
-  }
-  P6FENCE_CMD( GR_SET( hw->triangleCMD, 0x0000001UL) );
-
-  GR_END_SLOPPY();
+  GR_DCL_GC;
+  if (gc->state.grEnableArgs.primitive_smooth_mode & GR_AA_ORDERED_POINTS_MASK)
+    _grAADrawPoints(GR_VTX_PTR_ARRAY, 1, (void *)&p);
+  else
+    _grDrawPoints(GR_VTX_PTR_ARRAY, 1, (void *)&p);
 } /* grDrawPoint */
 
 /*---------------------------------------------------------------------------
@@ -222,174 +140,19 @@ GR_ENTRY(grDrawPoint, void, ( const void *p ))
 
 GR_ENTRY(grDrawLine, void, ( const void *a, const void *b ))
 {
-  float    m, dp;
-  #define  DX _GlideRoot.pool.ftemp1
-  #define ADY _GlideRoot.pool.ftemp2
+  GR_DCL_GC;
 
-  int i,j;
-  float *fp;
-  struct dataList_s *dlp;
-
-
-  GR_BEGIN("grDrawLine",91,12+ _GlideRoot.curTriSize);
-  GDBG_INFO_MORE((gc->myLevel,"(0x%x,0x%x)\n",a,b));
-
-  /* [dBorca] jump to anti-aliased function if GR_AA_ORDERED */
-  if (gc->state.grEnableArgs.primitive_smooth_mode & GR_AA_ORDERED_LINES_MASK) {
-     _grAADrawLine(a, b);
-     return;
-  }
-
-#ifdef GLIDE_USE_ALT_REGMAP
-  hw = SST_WRAP(hw,128);                /* use alternate register mapping */
-#endif
-   /*
-   ** compute absolute deltas and draw from low Y to high Y
-   */
-   ADY = FARRAY(b, GR_VERTEX_Y_OFFSET) - FARRAY(a, GR_VERTEX_Y_OFFSET);
-   i = *(long *)&ADY;
-   if ( i < 0 ) {
-     const void *tv;
-     tv = a; a = b; b = tv;
-     i ^= 0x80000000;        /* ady = -ady; */
-     (*(long *)&ADY) = i;
-   }
-
-   DX = FARRAY(b, GR_VERTEX_X_OFFSET) - FARRAY(a, GR_VERTEX_X_OFFSET);
-   j = *(long *)&DX;
-   if (j < 0 ) {
-     j ^= 0x80000000;        /* adx = -adx; */
-   }
-
-   /*
-   ** X major line
-   */
-   if (j >= i ) {                       /* if (adx > ady) */
-     if (j == 0) goto all_done;         /* check for zero-length lines */
-     /* start up divide and overlap with as much integer stuff as possible*/
-     m = _GlideRoot.pool.f1 / DX;
-       dlp = gc->dataList;
-      GR_SETF(hw->FvA.x,FARRAY(a, GR_VERTEX_X_OFFSET));
-       dp = FARRAY(b, GR_VERTEX_X_OFFSET);
-      GR_SETF(hw->FvB.x,dp);
-      GR_SETF(hw->FvC.x,dp)
-       _GlideRoot.stats.linesDrawn++;
-      
-     GR_SETF(hw->FvA.y,FARRAY(a, GR_VERTEX_Y_OFFSET) - _GlideRoot.pool.fHalf);
-
-     dp = FARRAY(b, GR_VERTEX_Y_OFFSET);
-     GR_SETF(hw->FvB.y,dp - _GlideRoot.pool.fHalf);
-
-      i = dlp->i;
-     GR_SETF(hw->FvC.y,dp + _GlideRoot.pool.fHalf);
-
-     while (i) {
-       fp = dlp->addr;
-       if (i & 1) {     /* packer bug check */
-         if (i & 2) P6FENCE;
-         GR_SETF( fp[0], 0.0f);
-         if (i & 2) P6FENCE;
-         dlp++;
-         i = dlp->i;
-       }
-       else if (i >= 0) {
-         dp = FARRAY(a,i);
-         GR_SETF( fp[0], dp );
-         dp = FARRAY(b,i) - dp;
-         GR_SETF( fp[DPDX_OFFSET>>2] , dp * m );
-         dlp++;
-         i = dlp->i;
-         GR_SETF( fp[DPDY_OFFSET>>2] , _GlideRoot.pool.f0 );
-       }
-       else {
-         /* [dBorca] Packed Color Workaround (tm) */
-         i = (i & 0xffffff) + ((i >> 24) & 3);
-         dp = FbARRAY(a,i);
-         GR_SETF( fp[0], dp );
-         dp = FbARRAY(b,i) - dp;
-         GR_SETF( fp[DPDX_OFFSET>>2] , dp * m );
-         dlp++;
-         i = dlp->i;
-         GR_SETF( fp[DPDY_OFFSET>>2] , _GlideRoot.pool.f0 );
-       }
-     }
-     P6FENCE_CMD( GR_SETF(hw->FtriangleCMD,_GlideRoot.pool.ftemp1) );
-
-     GR_SETF(hw->FvB.x,FARRAY(a, GR_VERTEX_X_OFFSET));
-     GR_SETF(hw->FvB.y,FARRAY(a, GR_VERTEX_Y_OFFSET) + _GlideRoot.pool.fHalf);
-     P6FENCE_CMD( GR_SETF(hw->FtriangleCMD,-_GlideRoot.pool.ftemp1));
-   }
-
-   /*
-   ** Y major line
-   */
-   else {
-     m = _GlideRoot.pool.f1 / ADY;
-     dlp = gc->dataList;
-     GR_SETF(hw->FvA.y,FARRAY(a, GR_VERTEX_Y_OFFSET));
-     dp = FARRAY(b, GR_VERTEX_Y_OFFSET);
-     GR_SETF(hw->FvB.y,dp);
-     _GlideRoot.stats.linesDrawn++;
-     GR_SETF(hw->FvC.y,dp);
-     
-     GR_SETF(hw->FvA.x,FARRAY(a, GR_VERTEX_X_OFFSET) - _GlideRoot.pool.fHalf);
-
-     dp = FARRAY(b, GR_VERTEX_X_OFFSET);
-     GR_SETF(hw->FvB.x,dp - _GlideRoot.pool.fHalf);
-
-     i = dlp->i;
-     GR_SETF(hw->FvC.x,dp + _GlideRoot.pool.fHalf);
-       
-     while (i) {
-       fp = dlp->addr;
-       if (i & 1) {     /* packer bug check */
-         if (i & 2) P6FENCE;
-         GR_SETF( fp[0], 0.0f );
-         if (i & 2) P6FENCE;
-         dlp++;
-         i = dlp->i;
-       }
-       else if (i >= 0) {
-         dp = FARRAY(a,i);
-         GR_SETF( fp[0], dp );
-         dp = FARRAY(b,i) - dp;
-         GR_SETF( fp[DPDX_OFFSET>>2] , _GlideRoot.pool.f0 );
-         dlp++;
-         i = dlp->i;
-         GR_SETF( fp[DPDY_OFFSET>>2] , dp * m );
-       }
-       else {
-         /* [dBorca] Packed Color Workaround (tm) */
-         i = (i & 0xffffff) + ((i >> 24) & 3);
-         dp = FbARRAY(a,i);
-         GR_SETF( fp[0], dp );
-         dp = FbARRAY(b,i) - dp;
-         GR_SETF( fp[DPDX_OFFSET>>2] , _GlideRoot.pool.f0 );
-         dlp++;
-         i = dlp->i;
-         GR_SETF( fp[DPDY_OFFSET>>2] , dp * m );
-       }
-     }
-     P6FENCE_CMD( GR_SET( hw->triangleCMD, 0xFFFFFFFF) );
-     
-     GR_SETF(hw->FvB.x,FARRAY(a, GR_VERTEX_X_OFFSET) + _GlideRoot.pool.fHalf);
-     GR_SETF(hw->FvB.y,FARRAY(a, GR_VERTEX_Y_OFFSET));
-     P6FENCE_CMD( GR_SET( hw->triangleCMD, 1) );
-   }
-
-  GR_END_SLOPPY();
-  return;
-
-all_done:  /* come here on degenerate lines */
-  _GlideRoot.stats.linesDrawn++;
-  GR_END_SLOPPY();
+  if (gc->state.grEnableArgs.primitive_smooth_mode & GR_AA_ORDERED_LINES_MASK)
+    _grAADrawLineStrip(GR_VTX_PTR_ARRAY, GR_LINES, 2, (void *)&a);
+  else
+    _grDrawLineStrip(GR_VTX_PTR_ARRAY, GR_LINES, 2, (void *)&a);
 } /* grDrawLine */
 
 /*---------------------------------------------------------------------------
 ** grDrawTriangle
 */
 
-#if defined(GLIDE_USE_C_TRISETUP)
+#if defined(GLIDE_USE_C_TRISETUP) || defined(__MSC__)
 GR_ENTRY(grDrawTriangle, void, ( const void *a, const void *b, const void *c ))
 {
   GR_BEGIN_NOFIFOCHECK("grDrawTriangle",92);
@@ -400,27 +163,13 @@ GR_ENTRY(grDrawTriangle, void, ( const void *a, const void *b, const void *c ))
   if ( 0 ) goto all_done;
 
 #ifdef GLIDE_DEBUG
-#if 0
-if (0) {                        /* GMT: only use this if needed */
-  FxU32 statBits;               /* bits we care about in status register */
-  FxU32 status;
-
-  status = GR_GET(hw->status);
-  if ((statBits = status & SST_FIFOLEVEL) < _GlideRoot.stats.minPciFIFOFree)
-    _GlideRoot.stats.minPciFIFOFree = statBits;
-
-  statBits = (status >> SST_MEMFIFOLEVEL_SHIFT) & 0xffff;
-  if (statBits < _GlideRoot.stats.minMemFIFOFree)
-    _GlideRoot.stats.minMemFIFOFree = statBits;
-}
-#endif
 
   if (_GlideRoot.environment.triBoundsCheck) {
     if (OUTBOUNDS(a) || OUTBOUNDS(b) || OUTBOUNDS(c)) {
       GDBG_PRINTF(("Triangle out of bounds:\n"));
-      GDBG_PRINTF(("a->x = %3.2f, a->y = %3.2f\n", FARRAY(a, GR_VERTEX_X_OFFSET), FARRAY(a, GR_VERTEX_Y_OFFSET)));
-      GDBG_PRINTF(("b->x = %3.2f, b->y = %3.2f\n", FARRAY(b, GR_VERTEX_X_OFFSET), FARRAY(b, GR_VERTEX_Y_OFFSET)));
-      GDBG_PRINTF(("c->x = %3.2f, c->y = %3.2f\n", FARRAY(c, GR_VERTEX_X_OFFSET), FARRAY(c, GR_VERTEX_Y_OFFSET)));
+      GDBG_PRINTF(("a->x = %3.2f, a->y = %3.2f\n", *(float *)a, *((float *)a+1)));
+      GDBG_PRINTF(("b->x = %3.2f, b->y = %3.2f\n", *(float *)b, *((float *)b+1)));
+      GDBG_PRINTF(("c->x = %3.2f, c->y = %3.2f\n", *(float *)c, *((float *)c+1)));
       GDBG_PRINTF(("Culling triangle based on these bogus values.\n"));
       goto all_done;
     }
@@ -433,6 +182,1168 @@ if (0) {                        /* GMT: only use this if needed */
 all_done:
   GR_END();
 } /* grDrawTriangle */
+#endif
+
+/*---------------------------------------------------------------------------
+** grVpDrawTriangle
+*/
+#if ( GLIDE_PLATFORM & GLIDE_HW_SST96 )
+FxI32 FX_CSTYLE
+_grVpDrawTriangle( const void *va, const void *vb, const void *vc )
+{
+  GR_DCL_GC;
+  GR_DCL_HW;
+  FxI32 xindex = (gc->state.vData.vertexInfo.offset >> 2);
+  FxI32 yindex = xindex + 1;
+  const float *fa = (const float *)va + xindex;
+  const float *fb = (const float *)vb + xindex;
+  const float *fc = (const float *)vc + xindex;
+  float ooa, dxAB, dxBC, dyAB, dyBC;
+  int i,j,culltest;
+  int ay, by, cy;
+  float *fp;
+  struct dataList_s *dlp;
+  float oowa, oowb, oowc;
+  int k;
+  volatile FxU32 *fifoPtr;
+  float snap_xa, snap_ya, snap_xb, snap_yb, snap_xc, snap_yc;
+  float tmp_snap_ya, tmp_snap_yb, tmp_snap_yc;
+  FxU32 paramIndex = gc->state.paramIndex;
+
+  culltest = gc->state.cull_mode; /* 1 if negative, 0 if positive */
+  _GlideRoot.stats.trisProcessed++;
+
+  /*
+  ** oow
+  */
+  oowa = 1.0f / FARRAY(fa, gc->state.vData.wInfo.offset);
+  oowb = 1.0f / FARRAY(fb, gc->state.vData.wInfo.offset);
+  oowc = 1.0f / FARRAY(fc, gc->state.vData.wInfo.offset);
+  
+  /*
+   **  Sort the vertices.
+   **  Whenever the radial order is reversed (from counter-clockwise to
+   **  clockwise), we need to change the area of the triangle.  Note
+   **  that we know the first two elements are X & Y by looking at the
+   **  grVertex structure.  
+   */
+  snap_ya = tmp_snap_ya = (volatile float) (*((const float *)va + yindex) * oowa * gc->state.Viewport.hheight + gc->state.Viewport.oy + SNAP_BIAS);
+  snap_yb = tmp_snap_yb = (volatile float) (*((const float *)vb + yindex) * oowb * gc->state.Viewport.hheight + gc->state.Viewport.oy + SNAP_BIAS);
+  snap_yc = tmp_snap_yc = (volatile float) (*((const float *)vc + yindex) * oowc * gc->state.Viewport.hheight + gc->state.Viewport.oy + SNAP_BIAS);
+
+  ay = *(int *)&tmp_snap_ya;
+  by = *(int *)&tmp_snap_yb;
+  if (ay < 0) ay ^= 0x7FFFFFFF;
+  cy = *(int *)&tmp_snap_yc;
+  if (by < 0) by ^= 0x7FFFFFFF;
+  if (cy < 0) cy ^= 0x7FFFFFFF;
+  if (ay < by) {
+    if (by > cy) {              /* acb */
+      if (ay < cy) {
+        fa = (const float *)va + xindex;
+        fb = (const float *)vc + xindex;
+        fc = (const float *)vb + xindex;
+        snap_ya = tmp_snap_ya;
+        snap_yb = tmp_snap_yc;
+        snap_yc = tmp_snap_yb;
+        culltest ^= 1;
+      } else {                  /* cab */
+        fa = (const float *)vc + xindex;
+        fb = (const float *)va + xindex;
+        fc = (const float *)vb + xindex;
+        snap_ya = tmp_snap_yc;
+        snap_yb = tmp_snap_ya;
+        snap_yc = tmp_snap_yb;
+      }
+      /* else it's already sorted */
+    }
+  } else {
+    if (by < cy) {              /* bac */
+      if (ay < cy) {
+        fa = (const float *)vb + xindex;
+        fb = (const float *)va + xindex;
+        fc = (const float *)vc + xindex;
+        snap_ya = tmp_snap_yb;
+        snap_yb = tmp_snap_ya;
+        snap_yc = tmp_snap_yc;
+        culltest ^= 1;
+      } else {                  /* bca */
+        fa = (const float *)vb + xindex;
+        fb = (const float *)vc + xindex;
+        fc = (const float *)va + xindex;
+        snap_ya = tmp_snap_yb;
+        snap_yb = tmp_snap_yc;
+        snap_yc = tmp_snap_ya;
+      }
+    } else {                    /* cba */
+      fa = (const float *)vc + xindex;
+      fb = (const float *)vb + xindex;
+      fc = (const float *)va + xindex;
+      snap_ya = tmp_snap_yc;
+      snap_yb = tmp_snap_yb;
+      snap_yc = tmp_snap_ya;
+      culltest ^= 1;
+    }
+  }
+
+  snap_xa = (volatile float) (*((const float *)fa + xindex) * oowa * gc->state.Viewport.hwidth + gc->state.Viewport.ox + SNAP_BIAS);
+  snap_xb = (volatile float) (*((const float *)fb + xindex) * oowb * gc->state.Viewport.hwidth + gc->state.Viewport.ox + SNAP_BIAS);
+  snap_xc = (volatile float) (*((const float *)fc + xindex) * oowc * gc->state.Viewport.hwidth + gc->state.Viewport.ox + SNAP_BIAS);
+
+  /* Compute Area */
+  dxAB = snap_xa - snap_xb;
+  dxBC = snap_xb - snap_xc;
+  
+  dyAB = snap_ya - snap_yb;
+  dyBC = snap_yb - snap_yc;
+  
+  /* this is where we store the area */
+  _GlideRoot.pool.ftemp1 = dxAB * dyBC - dxBC * dyAB;
+  
+  /* Zero-area triangles are BAD!! */
+  j = *(long *)&_GlideRoot.pool.ftemp1;
+  if ((j & 0x7FFFFFFF) == 0)
+    return 0;
+  
+  /* Backface culling, use sign bit as test */
+  if (gc->state.cull_mode != GR_CULL_DISABLE) {
+    if ((j ^ (culltest<<31)) >= 0) {
+      return -1;
+    }
+  }
+  
+  
+  /* Fence On P6 If Necessary */
+  if ( _GlideRoot.CPUType == 6 ) {
+      /* In the macro there is a slop of 4 DWORDS that I have removed */
+      if ( (gc->hwDep.sst96Dep.writesSinceFence + ( _GlideRoot.curTriSize >> 2 )) > 128 ) {
+          P6FENCE;
+          gc->hwDep.sst96Dep.writesSinceFence = 0;
+      }
+      gc->hwDep.sst96Dep.writesSinceFence      += 
+          _GlideRoot.curTriSize>>2;
+  }
+
+  /* Wrap Fifo now if triangle is going to incur a wrap */
+  if (gc->fifoData.hwDep.vg96FIFOData.fifoSize < (FxU32) _GlideRoot.curTriSize ) {
+#if SST96_ALT_FIFO_WRAP
+    gc->fifoData.hwDep.vg96FIFOData.blockSize = _GlideRoot.curTriSize;
+    initWrapFIFO(&gc->fifoData);
+#else
+    _grSst96FifoMakeRoom();
+#endif
+  }
+  
+  GR_FLUSH_STATE();
+
+  GR_SET_EXPECTED_SIZE(_GlideRoot.curTriSize);
+  
+  /* Grab fifo pointer into a local */
+  fifoPtr = gc->fifoData.hwDep.vg96FIFOData.fifoPtr;
+  
+  /* Settle Bookeeping */
+  gc->fifoData.hwDep.vg96FIFOData.fifoSize -= _GlideRoot.curTriSize;
+  gc->fifoData.hwDep.vg96FIFOData.fifoPtr  += _GlideRoot.curTriSize>>2;
+  
+  /* Start first group write packet */
+  SET_GW_CMD(    fifoPtr, 0, gc->hwDep.sst96Dep.gwCommand );
+  SET_GW_HEADER( fifoPtr, 1, gc->hwDep.sst96Dep.gwHeaders[0] );
+
+  ooa = _GlideRoot.pool.f1 / _GlideRoot.pool.ftemp1;
+  /* GMT: note that we spread out our PCI writes */
+  /* write out X & Y for vertex A */
+  FSET_GW_ENTRY( fifoPtr, 2, snap_xa );
+  FSET_GW_ENTRY( fifoPtr, 3, snap_ya );
+
+  dlp = gc->dataList;
+  i = dlp->i;
+  
+  /* write out X & Y for vertex B */
+  FSET_GW_ENTRY( fifoPtr, 4, snap_xb );
+  FSET_GW_ENTRY( fifoPtr, 5, snap_yb );
+  
+  /* write out X & Y for vertex C */
+  FSET_GW_ENTRY( fifoPtr, 6, snap_xc );
+  FSET_GW_ENTRY( fifoPtr, 7, snap_yc );
+  fifoPtr += 8;
+
+  /*
+  ** Divide the deltas by the area for gradient calculation.
+  */
+  dxBC *= ooa;
+  dyAB *= ooa;
+  dxAB *= ooa;
+  dyBC *= ooa;
+
+  /* 
+  ** The src vector contains offsets from fa, fb, and fc to for which
+  **  gradients need to be calculated, and is null-terminated.
+  */
+  if (paramIndex & STATE_REQUIRES_IT_DRGB) {
+    for (k = 0; k < 3; k++) {
+      fp = dlp->addr;
+      /* chip field change */
+      if (i & 1) {
+        paramIndex &= ~STATE_REQUIRES_IT_DRGB;
+        goto secondary_packet;
+      }
+      else {
+        float dpAB, dpBC,dpdx, dpdy;
+        FxU32 bddr = dlp->bddr;
+        
+        if (bddr) {
+          dpBC = FbARRAY(fb,bddr);
+          dpdx = FbARRAY(fa,bddr);
+          FSET_GW_ENTRY( fifoPtr, 0, dpdx );
+        
+          dpAB = dpdx - dpBC;
+          dpBC = dpBC - FbARRAY(fc,bddr);
+        }
+        else {
+          dpBC = FARRAY(fb,i) * _GlideRoot.pool.f255;
+          dpdx = FARRAY(fa,i) * _GlideRoot.pool.f255;
+          FSET_GW_ENTRY( fifoPtr, 0, dpdx );
+        
+          dpAB = dpdx - dpBC;
+          dpBC = dpBC - FARRAY(fc,i) * _GlideRoot.pool.f255;
+        }
+        dpdx = dpAB * dyBC - dpBC * dyAB;
+        
+        FSET_GW_ENTRY( fifoPtr, 1, dpdx );
+        dpdy = dpBC * dxAB - dpAB * dxBC;
+
+        dlp++;
+        i = dlp->i;
+        FSET_GW_ENTRY( fifoPtr, 2, dpdy );
+        fifoPtr += 3;
+      }
+    }
+  }
+  if (paramIndex & STATE_REQUIRES_OOZ) {
+    fp = dlp->addr;
+    /* chip field change */
+    if (i & 1) {
+      paramIndex &= ~STATE_REQUIRES_OOZ;
+      goto secondary_packet;
+    }
+    else {
+      float dpAB, dpBC,dpdx, dpdy;
+      
+      dpBC = FARRAY(fb,i) * oowb * gc->state.Viewport.hdepth + gc->state.Viewport.oz;
+      dpdx = FARRAY(fa,i) * oowa * gc->state.Viewport.hdepth + gc->state.Viewport.oz;
+      FSET_GW_ENTRY( fifoPtr, 0, dpdx );
+      
+      dpAB = dpdx - dpBC;
+      dpBC = dpBC - FARRAY(fc,i) * oowc * gc->state.Viewport.hdepth + gc->state.Viewport.oz;
+      dpdx = dpAB * dyBC - dpBC * dyAB;
+      
+      FSET_GW_ENTRY( fifoPtr, 1, dpdx );
+      dpdy = dpBC * dxAB - dpAB * dxBC;
+      
+      dlp++;
+      i = dlp->i;
+      FSET_GW_ENTRY( fifoPtr, 2, dpdy );
+      fifoPtr += 3;
+    }
+  }
+  if (paramIndex & STATE_REQUIRES_IT_ALPHA) {
+    fp = dlp->addr;
+    /* chip field change */
+    if (i & 1) {
+      paramIndex &= ~STATE_REQUIRES_IT_ALPHA;
+      goto secondary_packet;
+    }
+    else {
+      float dpAB, dpBC,dpdx, dpdy;
+      
+      FxU32 bddr = dlp->bddr;
+      if (bddr) {
+        dpBC = FbARRAY(fb,bddr);
+        dpdx = FbARRAY(fa,bddr);
+        FSET_GW_ENTRY( fifoPtr, 0, dpdx );
+      
+        dpAB = dpdx - dpBC;
+        dpBC = dpBC - FbARRAY(fc,bddr);
+      }
+      else {
+        dpBC = FARRAY(fb,i) * _GlideRoot.pool.f255;
+        dpdx = FARRAY(fa,i) * _GlideRoot.pool.f255;
+        FSET_GW_ENTRY( fifoPtr, 0, dpdx );
+      
+        dpAB = dpdx - dpBC;
+        dpBC = dpBC - FARRAY(fc,i) * _GlideRoot.pool.f255;
+      }
+      dpdx = dpAB * dyBC - dpBC * dyAB;
+      
+      FSET_GW_ENTRY( fifoPtr, 1, dpdx );
+      dpdy = dpBC * dxAB - dpAB * dxBC;
+      
+      dlp++;
+      i = dlp->i;
+      FSET_GW_ENTRY( fifoPtr, 2, dpdy );
+      fifoPtr += 3;
+    }
+  }
+  if (paramIndex & STATE_REQUIRES_ST_TMU0) {
+    for (k = 0; k < 2; k++) {
+      fp = dlp->addr;
+      /* chip field change */
+      if (i & 1) {
+        paramIndex &= ~STATE_REQUIRES_ST_TMU0;
+        goto secondary_packet;
+      }
+      else {
+        float dpAB, dpBC,dpdx, dpdy;
+        
+        dpBC = FARRAY(fb,i) * oowb * gc->state.tmu_config[0].st_scale[k];
+        dpdx = FARRAY(fa,i) * oowa * gc->state.tmu_config[0].st_scale[k];
+        FSET_GW_ENTRY( fifoPtr, 0, dpdx );
+        
+        dpAB = dpdx - dpBC;
+        dpBC = dpBC - FARRAY(fc,i) * oowc * gc->state.tmu_config[0].st_scale[k];
+        dpdx = dpAB * dyBC - dpBC * dyAB;
+        
+        FSET_GW_ENTRY( fifoPtr, 1, dpdx );
+        dpdy = dpBC * dxAB - dpAB * dxBC;
+        
+        dlp++;
+        i = dlp->i;
+        FSET_GW_ENTRY( fifoPtr, 2, dpdy );
+        fifoPtr += 3;
+      }
+    }
+  }
+  if (paramIndex & STATE_REQUIRES_OOW_FBI) {
+    fp = dlp->addr;
+    /* chip field change */
+    if (i & 1) {
+      paramIndex &= ~STATE_REQUIRES_OOW_FBI;
+      goto secondary_packet;
+    }
+    else {
+      float dpAB, dpBC,dpdx, dpdy;
+      
+      if (gc->state.vData.qInfo.mode == GR_PARAM_ENABLE) {
+        dpBC = FARRAY(fb,i) * oowb;
+        dpdx = FARRAY(fa,i) * oowa;
+        FSET_GW_ENTRY( fifoPtr, 0, dpdx );
+        
+        dpAB = dpdx - dpBC;
+        dpBC = dpBC - FARRAY(fc,i) * oowc;
+        dpdx = dpAB * dyBC - dpBC * dyAB;
+      
+        FSET_GW_ENTRY( fifoPtr, 1, dpdx );
+      }
+      else {
+        dpBC = oowb;
+        dpdx = oowa;
+        FSET_GW_ENTRY( fifoPtr, 0, dpdx );
+        
+        dpAB = dpdx - dpBC;
+        dpBC = dpBC - oowc;
+        dpdx = dpAB * dyBC - dpBC * dyAB;
+      
+        FSET_GW_ENTRY( fifoPtr, 1, dpdx );
+      }
+      dpdy = dpBC * dxAB - dpAB * dxBC;
+      
+      dlp++;
+      i = dlp->i;
+      FSET_GW_ENTRY( fifoPtr, 2, dpdy );
+      fifoPtr += 3;
+    }
+  }
+  if (paramIndex & STATE_REQUIRES_W_TMU0) {
+    fp = dlp->addr;
+    /* chip field change */
+    if (i & 1)
+      goto secondary_packet;
+    else {
+      float dpAB, dpBC,dpdx, dpdy;
+
+      if (gc->state.vData.q0Info.mode == GR_PARAM_ENABLE) {
+        dpBC = FARRAY(fb,i) * oowb;
+        dpdx = FARRAY(fa,i) * oowa;
+        FSET_GW_ENTRY( fifoPtr, 0, dpdx );
+        
+        dpAB = dpdx - dpBC;
+        dpBC = dpBC - FARRAY(fc,i) * oowc;
+      }
+      else {
+        dpBC = oowb;
+        dpdx = oowa;
+        FSET_GW_ENTRY( fifoPtr, 0, dpdx );
+        
+        dpAB = dpdx - dpBC;
+        dpBC = dpBC - oowc;
+      }
+
+      dpdx = dpAB * dyBC - dpBC * dyAB;
+
+GDBG_INFO((285,"p0,1x: %g %g dpdx: %g\n",dpAB * dyBC,dpBC * dyAB,dpdx));
+      FSET_GW_ENTRY( fifoPtr, 1, dpdx );
+      dpdy = dpBC * dxAB - dpAB * dxBC;
+
+GDBG_INFO((285,"p0,1y: %g %g dpdy: %g\n",dpBC * dxAB,dpAB * dxBC,dpdy));
+      dlp++;
+      i = dlp->i;
+      FSET_GW_ENTRY( fifoPtr, 2, dpdy );
+      fifoPtr += 3;
+    }
+  }
+  if (paramIndex & STATE_REQUIRES_ST_TMU1) {
+    for (k = 0; i < 2; k++) {
+      fp = dlp->addr;
+      /* chip field change */
+      if (i & 1)
+        goto secondary_packet;
+      else {
+        float dpAB, dpBC,dpdx, dpdy;
+        
+        dpBC = FARRAY(fb,i) * oowb * gc->state.tmu_config[1].st_scale[k];
+        dpdx = FARRAY(fa,i) * oowa * gc->state.tmu_config[1].st_scale[k];
+        FSET_GW_ENTRY( fifoPtr, 0, dpdx );
+        
+        dpAB = dpdx - dpBC;
+        dpBC = dpBC - FARRAY(fc,i) * oowc * gc->state.tmu_config[1].st_scale[k];
+        dpdx = dpAB * dyBC - dpBC * dyAB;
+        
+        GDBG_INFO((285,"p0,1x: %g %g dpdx: %g\n",dpAB * dyBC,dpBC * dyAB,dpdx));
+        FSET_GW_ENTRY( fifoPtr, 1, dpdx );
+        dpdy = dpBC * dxAB - dpAB * dxBC;
+        
+        GDBG_INFO((285,"p0,1y: %g %g dpdy: %g\n",dpBC * dxAB,dpAB * dxBC,dpdy));
+        dlp++;
+        i = dlp->i;
+        FSET_GW_ENTRY( fifoPtr, 2, dpdy );
+        fifoPtr += 3;
+      }
+    }
+  }
+  if (paramIndex & STATE_REQUIRES_W_TMU1) {
+    fp = dlp->addr;
+    /* chip field change */
+    if (i & 1)
+      goto secondary_packet;
+    else {
+      float dpAB, dpBC,dpdx, dpdy;
+
+      if (gc->state.vData.q0Info.mode == GR_PARAM_ENABLE) {
+        dpBC = FARRAY(fb,i) * oowb;
+        dpdx = FARRAY(fa,i) * oowa;
+        FSET_GW_ENTRY( fifoPtr, 0, dpdx );
+
+        dpAB = dpdx - dpBC;
+        dpBC = dpBC - FARRAY(fc,i) * oowc;
+      }
+      else {
+        dpBC = oowb;
+        dpdx = oowa;
+        FSET_GW_ENTRY( fifoPtr, 0, dpdx );
+
+        dpAB = dpdx - dpBC;
+        dpBC = dpBC - oowc;
+      }
+      dpdx = dpAB * dyBC - dpBC * dyAB;
+
+GDBG_INFO((285,"p0,1x: %g %g dpdx: %g\n",dpAB * dyBC,dpBC * dyAB,dpdx));
+      FSET_GW_ENTRY( fifoPtr, 1, dpdx );
+      dpdy = dpBC * dxAB - dpAB * dxBC;
+
+GDBG_INFO((285,"p0,1y: %g %g dpdy: %g\n",dpBC * dxAB,dpAB * dxBC,dpdy));
+      dlp++;
+      i = dlp->i;
+      FSET_GW_ENTRY( fifoPtr, 2, dpdy );
+      fifoPtr += 3;
+    }
+  }
+
+  /* write triangle command */
+triangle_command:
+  FSET_GW_ENTRY( fifoPtr, 0, _GlideRoot.pool.ftemp1 );
+  fifoPtr+=1;
+  
+  if (((FxU32)fifoPtr) & 0x7) {
+    FSET_GW_ENTRY( fifoPtr, 0, 0.0f );
+    fifoPtr += 1;
+  }
+
+  GR_ASSERT(fifoPtr == gc->fifoData.hwDep.vg96FIFOData.fifoPtr);
+
+  _GlideRoot.stats.trisDrawn++;
+
+  GR_CHECK_SIZE_SLOPPY();
+  return 1;
+secondary_packet:
+  /* Round out last header */
+  if (((FxU32) fifoPtr) & 0x7) {
+    FSET_GW_ENTRY( fifoPtr, 0, 0.0f );
+    fifoPtr  += 1;
+  }
+  /* Start new packet
+     note, there can only ever be two different packets 
+     using gwHeaderNum++ would be more general, but this
+     reflects the actual implementation */
+  SET_GW_CMD(    fifoPtr, 0, (FxU32)fp );
+  SET_GW_HEADER( fifoPtr, 1, gc->hwDep.sst96Dep.gwHeaders[1] );
+  fifoPtr+=2;
+  dlp++;
+  i = dlp->i;
+
+  if (paramIndex & STATE_REQUIRES_IT_DRGB) {
+    for (k = 0; k < 3; k++) {
+      float dpAB, dpBC,dpdx, dpdy;
+      FxU32 bddr = dlp->bddr;
+      fp = dlp->addr;
+      if (bddr) {
+        /* packed data (color) */
+        dpBC = FbARRAY(fb,bddr);
+        dpdx = FbARRAY(fa,bddr);
+        FSET_GW_ENTRY( fifoPtr, 0, dpdx );
+        dpAB = dpdx - dpBC;
+        dpBC = dpBC - FbARRAY(fc,bddr);
+      }
+      else {
+        /* non packed data */
+        dpBC = FARRAY(fb,i) * _GlideRoot.pool.f255;
+        dpdx = FARRAY(fa,i) * _GlideRoot.pool.f255;
+        FSET_GW_ENTRY( fifoPtr, 0, dpdx );
+        dpAB = dpdx - dpBC;
+        dpBC = dpBC - FARRAY(fc,i) * _GlideRoot.pool.f255;
+      }
+      dpdx = dpAB * dyBC - dpBC * dyAB;
+      FSET_GW_ENTRY( fifoPtr, 1, dpdx );
+      dpdy = dpBC * dxAB - dpAB * dxBC;
+      dlp++;
+      i = dlp->i;
+      FSET_GW_ENTRY( fifoPtr, 2, dpdy );
+      fifoPtr += 3;
+    }
+  }
+  if (paramIndex & STATE_REQUIRES_OOZ) {
+    float dpAB, dpBC,dpdx, dpdy;
+    fp = dlp->addr;
+    /* non packed data */
+    dpBC = FARRAY(fb,i) * oowb * gc->state.Viewport.hdepth + gc->state.Viewport.oz;
+    dpdx = FARRAY(fa,i) * oowa * gc->state.Viewport.hdepth + gc->state.Viewport.oz;
+    FSET_GW_ENTRY( fifoPtr, 0, dpdx );
+    dpAB = dpdx - dpBC;
+    dpBC = dpBC - FARRAY(fc,i) * oowc * gc->state.Viewport.hdepth + gc->state.Viewport.oz;
+    dpdx = dpAB * dyBC - dpBC * dyAB;
+    FSET_GW_ENTRY( fifoPtr, 1, dpdx );
+    dpdy = dpBC * dxAB - dpAB * dxBC;
+    dlp++;
+    i = dlp->i;
+    FSET_GW_ENTRY( fifoPtr, 2, dpdy );
+    fifoPtr += 3;
+  }
+  if (gc->state.paramIndex & STATE_REQUIRES_IT_ALPHA) {
+    float dpAB, dpBC,dpdx, dpdy;
+    FxU32 bddr = dlp->bddr;
+    fp = dlp->addr;
+    if (bddr) {
+      /* packed data (color) */
+      dpBC = FbARRAY(fb,bddr);
+      dpdx = FbARRAY(fa,bddr);
+      FSET_GW_ENTRY( fifoPtr, 0, dpdx );
+      dpAB = dpdx - dpBC;
+      dpBC = dpBC - FbARRAY(fc,bddr);
+    }
+    else {
+      /* non packed data */
+      dpBC = FARRAY(fb,i) * _GlideRoot.pool.f255;
+      dpdx = FARRAY(fa,i) * _GlideRoot.pool.f255;
+      FSET_GW_ENTRY( fifoPtr, 0, dpdx );
+      dpAB = dpdx - dpBC;
+      dpBC = dpBC - FARRAY(fc,i) * _GlideRoot.pool.f255;
+    }
+    dpdx = dpAB * dyBC - dpBC * dyAB;
+    FSET_GW_ENTRY( fifoPtr, 1, dpdx );
+    dpdy = dpBC * dxAB - dpAB * dxBC;
+    dlp++;
+    i = dlp->i;
+    FSET_GW_ENTRY( fifoPtr, 2, dpdy );
+    fifoPtr += 3;
+  }
+  if (paramIndex & STATE_REQUIRES_ST_TMU0) {
+    for (k = 0; k < 2; k++) {
+      float dpAB, dpBC,dpdx, dpdy;
+      fp = dlp->addr;
+      dpBC = FARRAY(fb,i) * oowb * gc->state.tmu_config[0].st_scale[k];
+      dpdx = FARRAY(fa,i) * oowa * gc->state.tmu_config[0].st_scale[k];
+      FSET_GW_ENTRY( fifoPtr, 0, dpdx );
+      dpAB = dpdx - dpBC;
+      dpBC = dpBC - FARRAY(fc,i) * oowc * gc->state.tmu_config[0].st_scale[k];
+      dpdx = dpAB * dyBC - dpBC * dyAB;
+      FSET_GW_ENTRY( fifoPtr, 1, dpdx );
+      dpdy = dpBC * dxAB - dpAB * dxBC;
+      dlp++;
+      i = dlp->i;
+      FSET_GW_ENTRY( fifoPtr, 2, dpdy );
+      fifoPtr += 3;
+    }
+  }
+  if (paramIndex & STATE_REQUIRES_OOW_FBI) {
+    float dpAB, dpBC,dpdx, dpdy;
+    if (gc->state.vData.qInfo.mode == GR_PARAM_ENABLE) {
+      fp = dlp->addr;
+      dpBC = FARRAY(fb,i) * oowb;
+      dpdx = FARRAY(fa,i) * oowa;
+      FSET_GW_ENTRY( fifoPtr, 0, dpdx );
+      dpAB = dpdx - dpBC;
+      dpBC = dpBC - FARRAY(fc,i) * oowc;
+      dpdx = dpAB * dyBC - dpBC * dyAB;
+      FSET_GW_ENTRY( fifoPtr, 1, dpdx );
+    }
+    else {
+      fp = dlp->addr;
+      dpBC = oowb;
+      dpdx = oowa;
+      FSET_GW_ENTRY( fifoPtr, 0, dpdx );
+      dpAB = dpdx - dpBC;
+      dpBC = dpBC - oowc;
+      dpdx = dpAB * dyBC - dpBC * dyAB;
+      FSET_GW_ENTRY( fifoPtr, 1, dpdx );
+    }
+    dpdy = dpBC * dxAB - dpAB * dxBC;
+    dlp++;
+    i = dlp->i;
+    FSET_GW_ENTRY( fifoPtr, 2, dpdy );
+    fifoPtr += 3;
+  }
+  if (paramIndex & STATE_REQUIRES_W_TMU0) {
+    float dpAB, dpBC,dpdx, dpdy;
+    fp = dlp->addr;
+    if (gc->state.vData.q0Info.mode == GR_PARAM_ENABLE) {
+      dpBC = FARRAY(fb,i) * oowb;
+      dpdx = FARRAY(fa,i) * oowa;
+      FSET_GW_ENTRY( fifoPtr, 0, dpdx );
+      dpAB = dpdx - dpBC;
+      dpBC = dpBC - FARRAY(fc,i) * oowc;
+    }
+    else {
+      dpBC = oowb;
+      dpdx = oowa;
+      FSET_GW_ENTRY( fifoPtr, 0, dpdx );
+      dpAB = dpdx - dpBC;
+      dpBC = dpBC - oowc;
+    }
+    dpdx = dpAB * dyBC - dpBC * dyAB;
+    FSET_GW_ENTRY( fifoPtr, 1, dpdx );
+    dpdy = dpBC * dxAB - dpAB * dxBC;
+    dlp++;
+    i = dlp->i;
+    FSET_GW_ENTRY( fifoPtr, 2, dpdy );
+    fifoPtr += 3;
+  }
+  if (paramIndex & STATE_REQUIRES_ST_TMU1) {
+    for (k = 0; k < 2; k++) {
+      float dpAB, dpBC,dpdx, dpdy;
+      fp = dlp->addr;
+      dpBC = FARRAY(fb,i) * oowb * gc->state.tmu_config[1].st_scale[k];
+      dpdx = FARRAY(fa,i) * oowa * gc->state.tmu_config[1].st_scale[k];
+      FSET_GW_ENTRY( fifoPtr, 0, dpdx );
+      dpAB = dpdx - dpBC;
+      dpBC = dpBC - FARRAY(fc,i) * oowc * gc->state.tmu_config[1].st_scale[k];
+      dpdx = dpAB * dyBC - dpBC * dyAB;
+      FSET_GW_ENTRY( fifoPtr, 1, dpdx );
+      dpdy = dpBC * dxAB - dpAB * dxBC;
+      dlp++;
+      i = dlp->i;
+      FSET_GW_ENTRY( fifoPtr, 2, dpdy );
+      fifoPtr += 3;
+    }
+  }
+  if (paramIndex & STATE_REQUIRES_W_TMU1) {
+    float dpAB, dpBC,dpdx, dpdy;
+    fp = dlp->addr;
+    if (gc->state.vData.q1Info.mode == GR_PARAM_ENABLE) {
+      dpBC = FARRAY(fb,i) * oowb;
+      dpdx = FARRAY(fa,i) * oowa;
+      FSET_GW_ENTRY( fifoPtr, 0, dpdx );
+      dpAB = dpdx - dpBC;
+      dpBC = dpBC - FARRAY(fc,i) * oowc;
+    }
+    else {
+      dpBC = oowb;
+      dpdx = oowa;
+      FSET_GW_ENTRY( fifoPtr, 0, dpdx );
+      dpAB = dpdx - dpBC;
+      dpBC = dpBC - oowc;
+    }
+    dpdx = dpAB * dyBC - dpBC * dyAB;
+    FSET_GW_ENTRY( fifoPtr, 1, dpdx );
+    dpdy = dpBC * dxAB - dpAB * dxBC;
+    dlp++;
+    i = dlp->i;
+    FSET_GW_ENTRY( fifoPtr, 2, dpdy );
+    fifoPtr += 3;
+  }
+
+  if (((FxU32)fifoPtr) & 0x7) {
+    FSET_GW_ENTRY( fifoPtr, 0, 0.0f );
+    fifoPtr += 1;
+  }
+  SET_GW_CMD(    fifoPtr, 0, gc->hwDep.sst96Dep.gwCommand );
+  SET_GW_HEADER( fifoPtr, 1, GW_TRICMD_MASK );
+  fifoPtr += 2;
+  goto triangle_command;
+} /* grVpDrawTriangle */
+#elif ( GLIDE_PLATFORM & GLIDE_HW_SST1 )
+FxI32 FX_CSTYLE
+_grVpDrawTriangle( const void *va, const void *vb, const void *vc )
+{
+  GR_DCL_GC;
+  GR_DCL_HW;
+  FxI32 xindex = (gc->state.vData.vertexInfo.offset >> 2);
+  FxI32 yindex = xindex + 1;
+  const float *fa = (const float *)va + xindex;
+  const float *fb = (const float *)vb + xindex;
+  const float *fc = (const float *)vc + xindex;
+  float ooa, dxAB, dxBC, dyAB, dyBC;
+  int i,j,culltest;
+  int ay, by, cy;
+  float *fp;
+  struct dataList_s *dlp;
+  float oowa, oowb, oowc;
+  int k;
+  float snap_xa, snap_ya, snap_xb, snap_yb, snap_xc, snap_yc;
+  float tmp_snap_ya, tmp_snap_yb, tmp_snap_yc;
+
+  culltest = gc->state.cull_mode; /* 1 if negative, 0 if positive */
+  _GlideRoot.stats.trisProcessed++;
+
+  /*
+  ** oow
+  */
+  oowa = 1.0f / FARRAY(fa, gc->state.vData.wInfo.offset);
+  oowb = 1.0f / FARRAY(fb, gc->state.vData.wInfo.offset);
+  oowc = 1.0f / FARRAY(fc, gc->state.vData.wInfo.offset);
+  
+  /*
+   **  Sort the vertices.
+   **  Whenever the radial order is reversed (from counter-clockwise to
+   **  clockwise), we need to change the area of the triangle.  Note
+   **  that we know the first two elements are X & Y by looking at the
+   **  grVertex structure.  
+   */
+  snap_ya = tmp_snap_ya = (volatile float) (*((const float *)va + yindex) * oowa * gc->state.Viewport.hheight + gc->state.Viewport.oy + SNAP_BIAS);
+  snap_yb = tmp_snap_yb = (volatile float) (*((const float *)vb + yindex) * oowb * gc->state.Viewport.hheight + gc->state.Viewport.oy + SNAP_BIAS);
+  snap_yc = tmp_snap_yc = (volatile float) (*((const float *)vc + yindex) * oowc * gc->state.Viewport.hheight + gc->state.Viewport.oy + SNAP_BIAS);
+
+  ay = *(int *)&tmp_snap_ya;
+  by = *(int *)&tmp_snap_yb;
+  if (ay < 0) ay ^= 0x7FFFFFFF;
+  cy = *(int *)&tmp_snap_yc;
+  if (by < 0) by ^= 0x7FFFFFFF;
+  if (cy < 0) cy ^= 0x7FFFFFFF;
+  if (ay < by) {
+    if (by > cy) {              /* acb */
+      if (ay < cy) {
+        fa = (const float *)va + xindex;
+        fb = (const float *)vc + xindex;
+        fc = (const float *)vb + xindex;
+        snap_ya = tmp_snap_ya;
+        snap_yb = tmp_snap_yc;
+        snap_yc = tmp_snap_yb;
+        culltest ^= 1;
+      } else {                  /* cab */
+        fa = (const float *)vc + xindex;
+        fb = (const float *)va + xindex;
+        fc = (const float *)vb + xindex;
+        snap_ya = tmp_snap_yc;
+        snap_yb = tmp_snap_ya;
+        snap_yc = tmp_snap_yb;
+      }
+      /* else it's already sorted */
+    }
+  } else {
+    if (by < cy) {              /* bac */
+      if (ay < cy) {
+        fa = (const float *)vb + xindex;
+        fb = (const float *)va + xindex;
+        fc = (const float *)vc + xindex;
+        snap_ya = tmp_snap_yb;
+        snap_yb = tmp_snap_ya;
+        snap_yc = tmp_snap_yc;
+        culltest ^= 1;
+      } else {                  /* bca */
+        fa = (const float *)vb + xindex;
+        fb = (const float *)vc + xindex;
+        fc = (const float *)va + xindex;
+        snap_ya = tmp_snap_yb;
+        snap_yb = tmp_snap_yc;
+        snap_yc = tmp_snap_ya;
+      }
+    } else {                    /* cba */
+      fa = (const float *)vc + xindex;
+      fb = (const float *)vb + xindex;
+      fc = (const float *)va + xindex;
+      snap_ya = tmp_snap_yc;
+      snap_yb = tmp_snap_yb;
+      snap_yc = tmp_snap_ya;
+      culltest ^= 1;
+    }
+  }
+
+  snap_xa = (volatile float) (*((const float *)fa + xindex) * oowa * gc->state.Viewport.hwidth + gc->state.Viewport.ox + SNAP_BIAS);
+  snap_xb = (volatile float) (*((const float *)fb + xindex) * oowb * gc->state.Viewport.hwidth + gc->state.Viewport.ox + SNAP_BIAS);
+  snap_xc = (volatile float) (*((const float *)fc + xindex) * oowc * gc->state.Viewport.hwidth + gc->state.Viewport.ox + SNAP_BIAS);
+
+  /* Compute Area */
+  dxAB = snap_xa - snap_xb;
+  dxBC = snap_xb - snap_xc;
+  
+  dyAB = snap_ya - snap_yb;
+  dyBC = snap_yb - snap_yc;
+  
+  /* this is where we store the area */
+  _GlideRoot.pool.ftemp1 = dxAB * dyBC - dxBC * dyAB;
+  
+  /* Zero-area triangles are BAD!! */
+  j = *(long *)&_GlideRoot.pool.ftemp1;
+  if ((j & 0x7FFFFFFF) == 0)
+    return 0;
+  
+  /* Backface culling, use sign bit as test */
+  if (gc->state.cull_mode != GR_CULL_DISABLE) {
+    if ((j ^ (culltest<<31)) >= 0) {
+      return -1;
+    }
+  }
+  
+  GR_FLUSH_STATE();
+
+  GR_SET_EXPECTED_SIZE(_GlideRoot.curTriSize);
+  
+  ooa = _GlideRoot.pool.f1 / _GlideRoot.pool.ftemp1;
+  /* GMT: note that we spread out our PCI writes */
+  /* write out X & Y for vertex A */
+  GR_SETF( hw->FvA.x, snap_xa);
+  GR_SETF( hw->FvA.y, snap_ya);
+
+  dlp = gc->dataList;
+  i = dlp->i;
+  
+  /* write out X & Y for vertex B */
+  GR_SETF( hw->FvB.x, snap_xb);
+  GR_SETF( hw->FvB.y, snap_yb);
+  
+  /* write out X & Y for vertex C */
+  GR_SETF( hw->FvC.x, snap_xc);
+  GR_SETF( hw->FvC.y, snap_yc);
+
+  /*
+  ** Divide the deltas by the area for gradient calculation.
+  */
+  dxBC *= ooa;
+  dyAB *= ooa;
+  dxAB *= ooa;
+  dyBC *= ooa;
+
+  /* 
+  ** The src vector contains offsets from fa, fb, and fc to for which
+  **  gradients need to be calculated, and is null-terminated.
+  */
+  if (gc->state.paramIndex & STATE_REQUIRES_IT_DRGB) {
+    for (k = 0; k < 3; k++) {
+      fp = dlp->addr;
+      if (i & 1) {                   /* packer bug check */
+        if (i & 2) P6FENCE;
+        GR_SETF( fp[0], 0.0F );
+        if (i & 2) P6FENCE;
+        dlp++;
+        i = dlp->i;
+      }
+      else {
+        float dpAB, dpBC,dpdx, dpdy;
+        FxU32 bddr = dlp->bddr;
+        
+        if (bddr) {
+          dpBC = FbARRAY(fb,bddr);
+          dpdx = FbARRAY(fa,bddr);
+          GR_SETF( fp[0], dpdx );
+        
+          dpAB = dpdx - dpBC;
+          dpBC = dpBC - FbARRAY(fc,bddr);
+        }
+        else {
+          dpBC = FARRAY(fb,i) * _GlideRoot.pool.f255;
+          dpdx = FARRAY(fa,i) * _GlideRoot.pool.f255;
+          GR_SETF( fp[0], dpdx );
+        
+          dpAB = dpdx - dpBC;
+          dpBC = dpBC - FARRAY(fc,i) * _GlideRoot.pool.f255;
+        }
+        dpdx = dpAB * dyBC - dpBC * dyAB;
+        
+        GR_SETF( fp[DPDX_OFFSET>>2] , dpdx );
+        dpdy = dpBC * dxAB - dpAB * dxBC;
+
+        dlp++;
+        i = dlp->i;
+        GR_SETF( fp[DPDY_OFFSET>>2] , dpdy );
+      }
+    }
+  }
+  if (gc->state.paramIndex & STATE_REQUIRES_OOZ) {
+    fp = dlp->addr;
+    if (i & 1) {                   /* packer bug check */
+      if (i & 2) P6FENCE;
+      GR_SETF( fp[0], 0.0F );
+      if (i & 2) P6FENCE;
+      dlp++;
+      i = dlp->i;
+    }
+    else {
+      float dpAB, dpBC,dpdx, dpdy;
+      
+      dpBC = FARRAY(fb,i) * oowb * gc->state.Viewport.hdepth + gc->state.Viewport.oz;
+      dpdx = FARRAY(fa,i) * oowa * gc->state.Viewport.hdepth + gc->state.Viewport.oz;
+      GR_SETF( fp[0], dpdx );
+      
+      dpAB = dpdx - dpBC;
+      dpBC = dpBC - FARRAY(fc,i) * oowc * gc->state.Viewport.hdepth + gc->state.Viewport.oz;
+      dpdx = dpAB * dyBC - dpBC * dyAB;
+      
+      GR_SETF( fp[DPDX_OFFSET>>2] , dpdx );
+      dpdy = dpBC * dxAB - dpAB * dxBC;
+      
+      dlp++;
+      i = dlp->i;
+      GR_SETF( fp[DPDY_OFFSET>>2] , dpdy );
+    }
+  }
+  if (gc->state.paramIndex & STATE_REQUIRES_IT_ALPHA) {
+    fp = dlp->addr;
+    if (i & 1) {                   /* packer bug check */
+      if (i & 2) P6FENCE;
+      GR_SETF( fp[0], 0.0F );
+      if (i & 2) P6FENCE;
+      dlp++;
+        i = dlp->i;
+    }
+    else {
+      float dpAB, dpBC,dpdx, dpdy;
+      
+      FxU32 bddr = dlp->bddr;
+      if (bddr) {
+        dpBC = FbARRAY(fb,bddr);
+        dpdx = FbARRAY(fa,bddr);
+        GR_SETF( fp[0], dpdx );
+      
+        dpAB = dpdx - dpBC;
+        dpBC = dpBC - FbARRAY(fc,bddr);
+      }
+      else {
+        dpBC = FARRAY(fb,i) * _GlideRoot.pool.f255;
+        dpdx = FARRAY(fa,i) * _GlideRoot.pool.f255;
+        GR_SETF( fp[0], dpdx );
+      
+        dpAB = dpdx - dpBC;
+        dpBC = dpBC - FARRAY(fc,i) * _GlideRoot.pool.f255;
+      }
+      dpdx = dpAB * dyBC - dpBC * dyAB;
+      
+      GR_SETF( fp[DPDX_OFFSET>>2] , dpdx );
+      dpdy = dpBC * dxAB - dpAB * dxBC;
+      
+      dlp++;
+      i = dlp->i;
+      GR_SETF( fp[DPDY_OFFSET>>2] , dpdy );
+    }
+  }
+  if (gc->state.paramIndex & STATE_REQUIRES_ST_TMU0) {
+    for (k = 0; k < 2; k++) {
+      fp = dlp->addr;
+      if (i & 1) {                   /* packer bug check */
+        if (i & 2) P6FENCE;
+        GR_SETF( fp[0], 0.0F );
+        if (i & 2) P6FENCE;
+        dlp++;
+        i = dlp->i;
+      }
+      else {
+        float dpAB, dpBC,dpdx, dpdy;
+        
+        dpBC = FARRAY(fb,i) * oowb * gc->state.tmu_config[0].st_scale[k];
+        dpdx = FARRAY(fa,i) * oowa * gc->state.tmu_config[0].st_scale[k];
+        GR_SETF( fp[0], dpdx );
+        
+        dpAB = dpdx - dpBC;
+        dpBC = dpBC - FARRAY(fc,i) * oowc * gc->state.tmu_config[0].st_scale[k];
+        dpdx = dpAB * dyBC - dpBC * dyAB;
+        
+        GR_SETF( fp[DPDX_OFFSET>>2] , dpdx );
+        dpdy = dpBC * dxAB - dpAB * dxBC;
+        
+        dlp++;
+        i = dlp->i;
+        GR_SETF( fp[DPDY_OFFSET>>2] , dpdy );
+      }
+    }
+  }
+  if (gc->state.paramIndex & STATE_REQUIRES_OOW_FBI) {
+    fp = dlp->addr;
+    if (i & 1) {                   /* packer bug check */
+      if (i & 2) P6FENCE;
+      GR_SETF( fp[0], 0.0F );
+      if (i & 2) P6FENCE;
+      dlp++;
+        i = dlp->i;
+    }
+    else {
+      float dpAB, dpBC,dpdx, dpdy;
+      
+      if (gc->state.vData.qInfo.mode == GR_PARAM_ENABLE) {
+        dpBC = FARRAY(fb,i) * oowb;
+        dpdx = FARRAY(fa,i) * oowa;
+        GR_SETF( fp[0], dpdx );
+        
+        dpAB = dpdx - dpBC;
+        dpBC = dpBC - FARRAY(fc,i) * oowc;
+        dpdx = dpAB * dyBC - dpBC * dyAB;
+        
+        GR_SETF( fp[DPDX_OFFSET>>2] , dpdx );
+      }
+      else {
+        dpBC = oowb;
+        dpdx = oowa;
+        GR_SETF( fp[0], dpdx );
+        
+        dpAB = dpdx - dpBC;
+        dpBC = dpBC - oowc;
+        dpdx = dpAB * dyBC - dpBC * dyAB;
+        
+        GR_SETF( fp[DPDX_OFFSET>>2] , dpdx );
+      }
+      dpdy = dpBC * dxAB - dpAB * dxBC;
+      
+      dlp++;
+      i = dlp->i;
+      GR_SETF( fp[DPDY_OFFSET>>2] , dpdy );
+    }
+  }
+  if (gc->state.paramIndex & STATE_REQUIRES_W_TMU0) {
+    fp = dlp->addr;
+    if (i & 1) {                   /* packer bug check */
+      if (i & 2) P6FENCE;
+      GR_SETF( fp[0], 0.0F );
+      if (i & 2) P6FENCE;
+      dlp++;
+      i = dlp->i;
+    }
+    else {
+      float dpAB, dpBC,dpdx, dpdy;
+
+      if (gc->state.vData.q0Info.mode == GR_PARAM_ENABLE) {
+        dpBC = FARRAY(fb,i) * oowb;
+        dpdx = FARRAY(fa,i) * oowa;
+        GR_SETF( fp[0], dpdx );
+        
+        dpAB = dpdx - dpBC;
+        dpBC = dpBC - FARRAY(fc,i) * oowc;
+      }
+      else {
+        dpBC = oowb;
+        dpdx = oowa;
+        GR_SETF( fp[0], dpdx );
+        
+        dpAB = dpdx - dpBC;
+        dpBC = dpBC - oowc;
+      }
+      dpdx = dpAB * dyBC - dpBC * dyAB;
+
+GDBG_INFO((285,"p0,1x: %g %g dpdx: %g\n",dpAB * dyBC,dpBC * dyAB,dpdx));
+      GR_SETF( fp[DPDX_OFFSET>>2] , dpdx );
+      dpdy = dpBC * dxAB - dpAB * dxBC;
+
+GDBG_INFO((285,"p0,1y: %g %g dpdy: %g\n",dpBC * dxAB,dpAB * dxBC,dpdy));
+      dlp++;
+      i = dlp->i;
+      GR_SETF( fp[DPDY_OFFSET>>2] , dpdy );
+    }
+  }
+  if (gc->state.paramIndex & STATE_REQUIRES_ST_TMU1) {
+    for (k = 0; k < 2; k++) {
+      fp = dlp->addr;
+      if (i & 1) {                   /* packer bug check */
+        if (i & 2) P6FENCE;
+        GR_SETF( fp[0], 0.0F );
+        if (i & 2) P6FENCE;
+        dlp++;
+        i = dlp->i;
+      }
+      else {
+        float dpAB, dpBC,dpdx, dpdy;
+        
+        dpBC = FARRAY(fb,i) * oowb * gc->state.tmu_config[1].st_scale[k];
+        dpdx = FARRAY(fa,i) * oowa * gc->state.tmu_config[1].st_scale[k];
+        GR_SETF( fp[0], dpdx );
+        
+        dpAB = dpdx - dpBC;
+        dpBC = dpBC - FARRAY(fc,i) * oowc * gc->state.tmu_config[1].st_scale[k];
+        dpdx = dpAB * dyBC - dpBC * dyAB;
+        
+        GDBG_INFO((285,"p0,1x: %g %g dpdx: %g\n",dpAB * dyBC,dpBC * dyAB,dpdx));
+        GR_SETF( fp[DPDX_OFFSET>>2] , dpdx );
+        dpdy = dpBC * dxAB - dpAB * dxBC;
+        
+        GDBG_INFO((285,"p0,1y: %g %g dpdy: %g\n",dpBC * dxAB,dpAB * dxBC,dpdy));
+        dlp++;
+        i = dlp->i;
+        GR_SETF( fp[DPDY_OFFSET>>2] , dpdy );
+      }
+    }
+  }
+  if (gc->state.paramIndex & STATE_REQUIRES_W_TMU1) {
+    fp = dlp->addr;
+    if (i & 1) {                   /* packer bug check */
+      if (i & 2) P6FENCE;
+      GR_SETF( fp[0], 0.0F );
+      if (i & 2) P6FENCE;
+      dlp++;
+      i = dlp->i;
+    }
+    else {
+      float dpAB, dpBC,dpdx, dpdy;
+
+      if (gc->state.vData.q1Info.mode == GR_PARAM_ENABLE) {
+        dpBC = FARRAY(fb,i) * oowb;
+        dpdx = FARRAY(fa,i) * oowa;
+        GR_SETF( fp[0], dpdx );
+
+        dpAB = dpdx - dpBC;
+        dpBC = dpBC - FARRAY(fc,i) * oowc;
+      }
+      else {
+        dpBC = oowb;
+        dpdx = oowa;
+        GR_SETF( fp[0], dpdx );
+
+        dpAB = dpdx - dpBC;
+        dpBC = dpBC - oowc;
+      }
+      dpdx = dpAB * dyBC - dpBC * dyAB;
+
+GDBG_INFO((285,"p0,1x: %g %g dpdx: %g\n",dpAB * dyBC,dpBC * dyAB,dpdx));
+      GR_SETF( fp[DPDX_OFFSET>>2] , dpdx );
+      dpdy = dpBC * dxAB - dpAB * dxBC;
+
+GDBG_INFO((285,"p0,1y: %g %g dpdy: %g\n",dpBC * dxAB,dpAB * dxBC,dpdy));
+      dlp++;
+      i = dlp->i;
+      GR_SETF( fp[DPDY_OFFSET>>2] , dpdy );
+    }
+  }
+
+  /* Draw the triangle by writing the area to the triangleCMD register */
+  P6FENCE_CMD( GR_SETF( hw->FtriangleCMD, _GlideRoot.pool.ftemp1 ) );
+  _GlideRoot.stats.trisDrawn++;
+
+  GR_CHECK_SIZE_SLOPPY();
+  return 1;
+} /* grVpDrawTriangle */
 #endif
 
 /*---------------------------------------------------------------------------
@@ -465,3 +1376,1075 @@ GR_DDFUNC(_grColorCombineDelta0Mode, void, ( FxBool delta0mode ))
   GR_END();
 
 } /* _grColorCombineDeltaMode */
+
+/*-------------------------------------------------------------------
+  Function: _grDrawPoints
+  Date: 13-Oct-97
+  Implementor(s): atai
+  Description:
+  Draw array points
+  Arguments:
+  
+  Return:
+  -------------------------------------------------------------------*/
+void FX_CSTYLE
+_grDrawPoints(FxI32 mode, FxI32 count, void *pointers)
+{
+#define FN_NAME "_grDrawPoints"
+
+  int i, x,y;
+  float fx,fy;
+  float bias = (3<<22) - 0.5f;
+  struct dataList_s *dlp;
+  FxI32 stride = mode;
+  FxI32 index;
+
+  GR_BEGIN_NOFIFOCHECK("grDrawPoint",90);
+  GDBG_INFO_MORE((gc->myLevel,"(%d,%d,0x%x)\n",mode,count,pointers));
+  
+  /* we snap to an integer by adding a large enough number that it shoves
+     all fraction bits off the right side of the mantissa
+     NOTE: IEEE rounds to nearest integer by default so we sub 0.5 in
+     the bias to force truncation (FLOOR)
+     */
+
+  GR_FLUSH_STATE();
+
+  if (stride == 0)
+    stride = gc->state.vData.vStride;
+  
+  if (gc->state.grCoordinateSpaceArgs.coordinate_space_mode == GR_WINDOW_COORDS) {
+    for (index = 0; index < count; index++) {
+      float *vPtr;
+      
+      GR_SET_EXPECTED_SIZE(_GlideRoot.curTriSize);
+      if (mode)
+        vPtr = *(float **)pointers;
+      else
+        vPtr = pointers;
+    
+      (float *)pointers += stride;
+      
+#if 0 //def GLIDE_USE_ALT_REGMAP
+      hw = SST_WRAP(hw,128);                /* use alternate register mapping */
+#endif
+      fx = *vPtr + bias;
+      fy = *(vPtr+1) + bias;
+      _GlideRoot.pool.ftemp1 = (float)fx;
+      _GlideRoot.pool.ftemp2 = (float)fy;
+      x = *(int *)&_GlideRoot.pool.ftemp1;
+      y = *(int *)&_GlideRoot.pool.ftemp2;
+      x <<= SST_XY_FRACBITS;                /* convert to fixed point */
+      x += SST_XY_HALF;                     /* and center within pixel */
+    
+      /* draw a little triangle, with the lower left corner at pixel center */
+      GR_SET( hw->vA.x, x );
+      y <<= SST_XY_FRACBITS;
+      y += SST_XY_HALF;
+      GR_SET( hw->vA.y, y );
+      x += SST_XY_HALF;
+      i = _GlideRoot.stats.pointsDrawn;
+      
+      GR_SET( hw->vB.x, x );
+      _GlideRoot.stats.pointsDrawn = ++i;
+      dlp = gc->dataList;
+      GR_SET( hw->vB.y, y );
+      y += SST_XY_HALF;
+      GR_SET( hw->vC.x, x );
+      i = dlp->i;
+      GR_SET( hw->vC.y, y );
+    
+      /* we don't care what the slopes are because the pixel center that is drawn */
+      /* is exactly at vertex A - isn't that wonderful */
+      while (i) {
+        if (i & 1) {        /* packer bug check */
+          if (i & 2) P6FENCE;
+          GR_SETF( *dlp->addr, 0.0F );
+          if (i & 2) P6FENCE;
+        }
+        else {
+          FxU32 bddr = dlp->bddr;
+          if (bddr) {
+            /* packed color */
+            GR_SETF( *dlp->addr, FbARRAY(vPtr,bddr) );
+          }
+          else {
+            /* non packed color */
+            GR_SETF( *dlp->addr, FARRAY(vPtr,i) );
+          }
+        }
+        dlp++;
+        i = dlp->i;
+      }
+      P6FENCE_CMD( GR_SET( hw->triangleCMD, 1) );
+      GR_CHECK_SIZE_SLOPPY();
+    }
+  }
+  else {
+    float oow;
+    FxU32 k;
+
+    for (index = 0; index < count; index++) {
+      float *vPtr;
+      
+      GR_SET_EXPECTED_SIZE(_GlideRoot.curTriSize);
+      if (mode)
+        vPtr = *(float **)pointers;
+      else
+        vPtr = pointers;
+
+      oow = 1.0f / FARRAY(vPtr, gc->state.vData.wInfo.offset);        
+      (float *)pointers += stride;
+      
+#if 0 //def GLIDE_USE_ALT_REGMAP
+      hw = SST_WRAP(hw,128);                /* use alternate register mapping */
+#endif
+      fx = FARRAY(vPtr, 0)*oow*gc->state.Viewport.hwidth
+        + gc->state.Viewport.ox + bias;
+      fy = FARRAY(vPtr, 4)*oow*gc->state.Viewport.hheight
+        + gc->state.Viewport.oy + bias;
+
+      _GlideRoot.pool.ftemp1 = (float)fx;
+      _GlideRoot.pool.ftemp2 = (float)fy;
+      x = *(int *)&_GlideRoot.pool.ftemp1;
+      y = *(int *)&_GlideRoot.pool.ftemp2;
+      x <<= SST_XY_FRACBITS;                /* convert to fixed point */
+      x += SST_XY_HALF;                     /* and center within pixel */
+    
+      /* draw a little triangle, with the lower left corner at pixel center */
+      GR_SET( hw->vA.x, x );
+      y <<= SST_XY_FRACBITS;
+      y += SST_XY_HALF;
+      GR_SET( hw->vA.y, y );
+      x += SST_XY_HALF;
+      i = _GlideRoot.stats.pointsDrawn;
+      
+      GR_SET( hw->vB.x, x );
+      _GlideRoot.stats.pointsDrawn = ++i;
+      dlp = gc->dataList;
+      GR_SET( hw->vB.y, y );
+      y += SST_XY_HALF;
+      GR_SET( hw->vC.x, x );
+      i = dlp->i;
+      GR_SET( hw->vC.y, y );
+    
+      /* we don't care what the slopes are because the pixel center that is drawn */
+      /* is exactly at vertex A - isn't that wonderful */
+      if (gc->state.paramIndex & STATE_REQUIRES_IT_DRGB) {
+        for (k = 0; k < 3; k++) {
+          if (i & 1) {        /* packer bug check */
+            if (i & 2) P6FENCE;
+            GR_SETF( *dlp->addr, 0.0F );
+            if (i & 2) P6FENCE;
+          }
+          else {
+            FxU32 bddr = dlp->bddr;
+            if (bddr) {
+              GR_SETF( *dlp->addr, FbARRAY(vPtr,bddr));
+            } else {
+              GR_SETF( *dlp->addr, FARRAY(vPtr,i) * _GlideRoot.pool.f255);
+            }
+          }
+          dlp++;
+          i = dlp->i;
+        }
+      }
+      if (gc->state.paramIndex & STATE_REQUIRES_OOZ) {
+        if (i & 1) {        /* packer bug check */
+          if (i & 2) P6FENCE;
+          GR_SETF( *dlp->addr, 0.0F );
+          if (i & 2) P6FENCE;
+        }
+        else {
+          GR_SETF( *dlp->addr, FARRAY(vPtr,i) * oow * gc->state.Viewport.hdepth + gc->state.Viewport.oz );
+        }
+        dlp++;
+        i = dlp->i;
+      }
+      if (gc->state.paramIndex & STATE_REQUIRES_IT_ALPHA) {
+        if (i & 1) {        /* packer bug check */
+          if (i & 2) P6FENCE;
+          GR_SETF( *dlp->addr, 0.0F );
+            if (i & 2) P6FENCE;
+        }
+        else {
+          FxU32 bddr = dlp->bddr;
+          if (bddr) {
+            GR_SETF( *dlp->addr, FbARRAY(vPtr,bddr));
+          } else {
+            GR_SETF( *dlp->addr, FARRAY(vPtr,i) * _GlideRoot.pool.f255);
+          }
+        }
+        dlp++;
+        i = dlp->i;
+      }
+      if (gc->state.paramIndex & STATE_REQUIRES_ST_TMU0) {
+        for (k = 0; k < 2; k++) {
+          if (i & 1) {        /* packer bug check */
+            if (i & 2) P6FENCE;
+            GR_SETF( *dlp->addr, 0.0F );
+            if (i & 2) P6FENCE;
+          }
+          else {
+            GR_SETF( *dlp->addr, FARRAY(vPtr,i) * oow * gc->state.tmu_config[0].st_scale[k]);
+          }
+          dlp++;
+          i = dlp->i;
+        }
+      }
+      if (gc->state.paramIndex & STATE_REQUIRES_OOW_FBI) {
+        if (i & 1) {        /* packer bug check */
+          if (i & 2) P6FENCE;
+          GR_SETF( *dlp->addr, 0.0F );
+          if (i & 2) P6FENCE;
+        }
+        else { 
+          if (gc->state.vData.qInfo.mode == GR_PARAM_ENABLE) {
+            GR_SETF( *dlp->addr, FARRAY(vPtr,i) * oow );
+          }
+          else {
+            GR_SETF( *dlp->addr, oow );
+          }
+        }
+        dlp++;
+        i = dlp->i;
+      }
+      if (gc->state.paramIndex & STATE_REQUIRES_W_TMU0) {
+        if (i & 1) {        /* packer bug check */
+          if (i & 2) P6FENCE;
+          GR_SETF( *dlp->addr, 0.0F );
+          if (i & 2) P6FENCE;
+        }
+        else {
+          if (gc->state.vData.q0Info.mode == GR_PARAM_ENABLE) {
+            GR_SETF( *dlp->addr, FARRAY(vPtr,i) * oow );
+          }
+          else {
+            GR_SETF( *dlp->addr, oow );
+          }
+        }
+        dlp++;
+        i = dlp->i;
+      }
+      if (gc->state.paramIndex & STATE_REQUIRES_ST_TMU1) {
+        for (k = 0; k < 2; k++) {
+          if (i & 1) {        /* packer bug check */
+            if (i & 2) P6FENCE;
+            GR_SETF( *dlp->addr, 0.0F );
+            if (i & 2) P6FENCE;
+          }
+          else {
+            GR_SETF( *dlp->addr, FARRAY(vPtr,i) * oow * gc->state.tmu_config[1].st_scale[k] );
+          }
+          dlp++;
+          i = dlp->i;
+        }
+      }
+      if (gc->state.paramIndex & STATE_REQUIRES_W_TMU1) {
+        if (i & 1) {        /* packer bug check */
+          if (i & 2) P6FENCE;
+          GR_SETF( *dlp->addr, 0.0F );
+          if (i & 2) P6FENCE;
+        }
+        else {
+          if (gc->state.vData.q1Info.mode == GR_PARAM_ENABLE) {
+            GR_SETF( *dlp->addr, FARRAY(vPtr,i) * oow );
+          }
+          else {
+            GR_SETF( *dlp->addr, oow );
+          }
+        }
+        dlp++;
+        i = dlp->i;
+      }
+
+      P6FENCE_CMD( GR_SET( hw->triangleCMD, 1) );
+      GR_CHECK_SIZE_SLOPPY();
+    }
+  }
+
+#undef FN_NAME
+} /* _grDrawPoints */
+
+/*-------------------------------------------------------------------
+  Function: _grDrawLineStrip
+  Date: 13-Oct-97
+  Implementor(s): atai
+  Description:
+  Draw strip line
+  Arguments:
+  
+  Return:
+  -------------------------------------------------------------------*/
+void FX_CSTYLE
+_grDrawLineStrip(FxI32 mode, FxI32 ltype, FxI32 count, void *pointers)
+{
+#define FN_NAME "_grDrawLineStrip"
+
+  float    m, dp;
+  #define  DX _GlideRoot.pool.ftemp1
+  #define ADY _GlideRoot.pool.ftemp2
+
+  int i,j;
+  float *fp;
+  struct dataList_s *dlp;
+  FxI32 index;
+  FxI32 stride = mode;
+
+  GR_BEGIN_NOFIFOCHECK("grDrawLine",91);
+  GDBG_INFO_MORE((gc->myLevel,"(%d,%d,%d,0x%x)\n",mode,ltype,count,pointers));
+
+  GR_FLUSH_STATE();
+
+  if (stride == 0)
+    stride = gc->state.vData.vStride;
+
+  if (ltype == GR_LINES)
+    count >>= 1;    /* line list */
+  else
+    count -= 1;     /* strip line */
+
+  if (gc->state.grCoordinateSpaceArgs.coordinate_space_mode == GR_WINDOW_COORDS) {
+    for (index = 0; index < count; index++) {
+      float *a, *b;
+      float snap_xa, snap_ya, snap_xb, snap_yb;
+
+      GR_SET_EXPECTED_SIZE(12+_GlideRoot.curTriSize);
+      
+      if (mode) {
+        a = *(float **)pointers;
+        b = *((float **)pointers+1);
+      }
+      else {
+        a = pointers;
+        b = (float *)pointers+stride;
+      }
+
+      snap_xa = (volatile float) (*a + SNAP_BIAS);
+      snap_xb = (volatile float) (*b + SNAP_BIAS);
+      snap_ya = (volatile float) (*(a+1) + SNAP_BIAS);
+      snap_yb = (volatile float) (*(b+1) + SNAP_BIAS);
+
+      (float *)pointers += stride;
+      if (ltype == GR_LINES)
+        (float *)pointers += stride;
+      
+#if 0 //def GLIDE_USE_ALT_REGMAP
+      hw = SST_WRAP(hw,128);                /* use alternate register mapping */
+#endif
+      /*
+      ** compute absolute deltas and draw from low Y to high Y
+      */
+      ADY = snap_yb - snap_ya;
+      i = *(long *)&ADY;
+      if ( i < 0 ) {
+        float *tv, ts;
+        tv = a; a = b; b = tv;
+        i ^= 0x80000000;        /* ady = -ady; */
+        (*(long *)&ADY) = i;
+	ts = snap_xa; snap_xa = snap_xb; snap_xb = ts;
+	ts = snap_ya; snap_ya = snap_yb; snap_yb = ts;
+      }
+      
+      DX = snap_xb - snap_xa;
+      j = *(long *)&DX;
+      if (j < 0 ) {
+        j ^= 0x80000000;        /* adx = -adx; */
+      }
+      
+      /*
+      ** X major line
+      */
+      if (j >= i ) {                       /* if (adx > ady) */
+        if (j == 0) goto all_done;         /* check for zero-length lines */
+        /* start up divide and overlap with as much integer stuff as possible*/
+        m = _GlideRoot.pool.f1 / DX;
+        dlp = gc->dataList;
+        GR_SETF(hw->FvA.x, snap_xa);
+        dp = snap_xb;
+        GR_SETF(hw->FvB.x,dp);
+        GR_SETF(hw->FvC.x,dp);
+        _GlideRoot.stats.linesDrawn++;
+        
+        GR_SETF(hw->FvA.y, snap_ya - _GlideRoot.pool.fHalf);
+        
+        dp = snap_yb;
+        GR_SETF(hw->FvB.y,dp - _GlideRoot.pool.fHalf);
+        
+        i = dlp->i;
+        GR_SETF(hw->FvC.y,dp + _GlideRoot.pool.fHalf);
+      
+        while (i) {
+          fp = dlp->addr;
+          if (i & 1) {     /* packer bug check */
+            if (i & 2) P6FENCE;
+            GR_SETF( fp[0], 0.0f);
+            if (i & 2) P6FENCE;
+            dlp++;
+            i = dlp->i;
+          }
+          else {
+            FxU32 bddr = dlp->bddr;
+            if (bddr) {
+              /* packed color */
+              dp = FbARRAY(a,bddr);
+              GR_SETF( fp[0], dp );
+              dp = FbARRAY(b,bddr) - dp;
+            }
+            else {
+              /* non-packed color */
+              dp = FARRAY(a,i);
+              GR_SETF( fp[0], dp );
+              dp = FARRAY(b,i) - dp;
+            }
+            GR_SETF( fp[DPDX_OFFSET>>2] , dp * m );
+            dlp++;
+            i = dlp->i;
+            GR_SETF( fp[DPDY_OFFSET>>2] , _GlideRoot.pool.f0 );
+          }
+        }
+        P6FENCE_CMD( GR_SETF(hw->FtriangleCMD,_GlideRoot.pool.ftemp1) );
+        
+        GR_SETF(hw->FvB.x, snap_xa);
+        GR_SETF(hw->FvB.y, snap_ya + _GlideRoot.pool.fHalf);
+        P6FENCE_CMD( GR_SETF(hw->FtriangleCMD,-_GlideRoot.pool.ftemp1));
+      }
+      
+      /*
+      ** Y major line
+      */
+      else {
+        m = _GlideRoot.pool.f1 / ADY;
+        dlp = gc->dataList;
+        GR_SETF(hw->FvA.y, snap_ya);
+        dp = snap_yb;
+        GR_SETF(hw->FvB.y,dp);
+        _GlideRoot.stats.linesDrawn++;
+        GR_SETF(hw->FvC.y,dp);
+        
+        GR_SETF(hw->FvA.x, snap_xa - _GlideRoot.pool.fHalf);
+        
+        dp = snap_xb;
+        GR_SETF(hw->FvB.x,dp - _GlideRoot.pool.fHalf);
+        
+        i = dlp->i;
+        GR_SETF(hw->FvC.x,dp + _GlideRoot.pool.fHalf);
+        
+        while (i) {
+          fp = dlp->addr;
+          if (i & 1) {     /* packer bug check */
+            if (i & 2) P6FENCE;
+            GR_SETF( fp[0], 0.0f );
+            if (i & 2) P6FENCE;
+            dlp++;
+            i = dlp->i;
+          }
+          else {
+            FxU32 bddr = dlp->bddr;
+            if (bddr) {
+              /* packed color */
+              dp = FbARRAY(a,bddr);
+              GR_SETF( fp[0], dp );
+              dp = FbARRAY(b,bddr) - dp;
+            }
+            else {
+              /* non-packed color */
+              dp = FARRAY(a,i);
+              GR_SETF( fp[0], dp );
+              dp = FARRAY(b,i) - dp;
+            }
+            GR_SETF( fp[DPDX_OFFSET>>2] , _GlideRoot.pool.f0 );
+            dlp++;
+            i = dlp->i;
+            GR_SETF( fp[DPDY_OFFSET>>2] , dp * m );
+          }
+        }
+        P6FENCE_CMD( GR_SET( hw->triangleCMD, 0xFFFFFFFF) );
+        
+        GR_SETF(hw->FvB.x, snap_xa + _GlideRoot.pool.fHalf);
+        GR_SETF(hw->FvB.y, snap_ya);
+        P6FENCE_CMD( GR_SET( hw->triangleCMD, 1) );
+      }
+      
+    all_done:  /* come here on degenerate lines */
+      GR_CHECK_SIZE_SLOPPY();
+      
+      _GlideRoot.stats.linesDrawn++;
+    }
+    
+  }
+  else {
+
+    float oowa, oowb, owa, owb, tmp1, tmp2, fax, fay, fbx, fby;
+    float *a, *b;
+    int k;
+
+    if (ltype == GR_LINE_STRIP) {
+      a = (float *)pointers;
+      if (mode) {
+        a = *(float **)a;
+      }
+      oowb = 1.0f / FARRAY(a, gc->state.vData.wInfo.offset);        
+    }
+
+    for (index = 0; index < count; index++) {
+      GR_SET_EXPECTED_SIZE(12+_GlideRoot.curTriSize);
+      
+      if (ltype == GR_LINES) {
+        a = (float *)pointers;
+        b = (float *)pointers + stride;
+        if (mode) {
+          a = *(float **)a;
+          b = *(float **)b;
+        }
+        (float *)pointers += stride;
+        owa = oowa = 1.0f / FARRAY(a, gc->state.vData.wInfo.offset);        
+        owb = oowb = 1.0f / FARRAY(b, gc->state.vData.wInfo.offset);        
+      }
+      else {
+        owa = oowa = oowb;
+        a = (float *)pointers;
+        b = (float *)pointers + stride;
+        if (mode) {
+          a = *(float **)a;
+          b = *(float **)b;
+        }
+        owb = oowb = 1.0f / FARRAY(b, gc->state.vData.wInfo.offset);
+      }
+      fay = tmp1 = FARRAY(a, gc->state.vData.vertexInfo.offset+4)
+        *oowa*gc->state.Viewport.hheight+gc->state.Viewport.oy + SNAP_BIAS;
+      fby = tmp2 = FARRAY(b, gc->state.vData.vertexInfo.offset+4)
+        *oowb*gc->state.Viewport.hheight+gc->state.Viewport.oy + SNAP_BIAS;        
+      fax = FARRAY(a, gc->state.vData.vertexInfo.offset)
+        *owa*gc->state.Viewport.hwidth+gc->state.Viewport.ox + SNAP_BIAS;
+      fbx = FARRAY(b, gc->state.vData.vertexInfo.offset)
+        *owb*gc->state.Viewport.hwidth+gc->state.Viewport.ox + SNAP_BIAS;
+
+      (float *)pointers += stride;
+#if 0 //def GLIDE_USE_ALT_REGMAP
+      hw = SST_WRAP(hw,128);                /* use alternate register mapping */
+#endif
+      /*
+      ** compute absolute deltas and draw from low Y to high Y
+      */
+      ADY = tmp2 - tmp1;
+      i = *(long *)&ADY;
+      if ( i < 0 ) {
+        float *tv, ts;
+        owa = oowb; owb = oowa;
+        tv = a; a = b; b = tv;
+        i ^= 0x80000000;        /* ady = -ady; */
+        (*(long *)&ADY) = i;
+	ts = fax; fax = fbx; fbx = ts;
+	ts = fay; fay = fby; fby = ts;
+      }
+      
+      DX = fbx - fax;
+      j = *(long *)&DX;
+      if (j < 0 ) {
+        j ^= 0x80000000;        /* adx = -adx; */
+      }
+      
+      /*
+      ** X major line
+      */
+      if (j >= i ) {                       /* if (adx > ady) */
+        if (j == 0) goto all_done_vp;         /* check for zero-length lines */
+        /* start up divide and overlap with as much integer stuff as possible*/
+        m = _GlideRoot.pool.f1 / DX;
+        dlp = gc->dataList;
+        GR_SETF(hw->FvA.x, fax);
+        GR_SETF(hw->FvB.x, fbx);
+        GR_SETF(hw->FvC.x, fbx);
+        _GlideRoot.stats.linesDrawn++;
+        
+        GR_SETF(hw->FvA.y, fay - _GlideRoot.pool.fHalf);
+        GR_SETF(hw->FvB.y, fby - _GlideRoot.pool.fHalf);
+        i = dlp->i;
+        GR_SETF(hw->FvC.y, fby + _GlideRoot.pool.fHalf);
+
+        if (gc->state.paramIndex & STATE_REQUIRES_IT_DRGB) {
+          for (k = 0; k < 3; k++) {
+            fp = dlp->addr;
+            if (i & 1) {     /* packer bug check */
+              if (i & 2) P6FENCE;
+              GR_SETF( fp[0], 0.0f);
+              if (i & 2) P6FENCE;
+              dlp++;
+              i = dlp->i;
+            }
+            else {
+              FxU32 bddr = dlp->bddr;
+              if (bddr) {
+                dp = FbARRAY(a,bddr);
+                GR_SETF( fp[0], dp );
+                dp = FbARRAY(b,bddr) - dp;
+              }
+              else {
+                dp = FARRAY(a,i) * _GlideRoot.pool.f255;
+                GR_SETF( fp[0], dp );
+                dp = FARRAY(b,i) * _GlideRoot.pool.f255 - dp;
+              }
+              GR_SETF( fp[DPDX_OFFSET>>2] , dp * m );
+              dlp++;
+              i = dlp->i;
+              GR_SETF( fp[DPDY_OFFSET>>2] , _GlideRoot.pool.f0 );
+            }
+          }
+        }
+        if (gc->state.paramIndex & STATE_REQUIRES_OOZ) {
+          fp = dlp->addr;
+          if (i & 1) {     /* packer bug check */
+            if (i & 2) P6FENCE;
+            GR_SETF( fp[0], 0.0f);
+            if (i & 2) P6FENCE;
+            dlp++;
+            i = dlp->i;
+          }
+          else {
+            dp = FARRAY(a,i) * oowa * gc->state.Viewport.hdepth + gc->state.Viewport.oz;
+            GR_SETF( fp[0], dp );
+            dp = FARRAY(b,i) * oowb * gc->state.Viewport.hdepth + gc->state.Viewport.oz - dp;
+            GR_SETF( fp[DPDX_OFFSET>>2] , dp * m );
+            dlp++;
+            i = dlp->i;
+            GR_SETF( fp[DPDY_OFFSET>>2] , _GlideRoot.pool.f0 );
+          }
+        }
+        if (gc->state.paramIndex & STATE_REQUIRES_IT_ALPHA) {
+          fp = dlp->addr;
+          if (i & 1) {     /* packer bug check */
+            if (i & 2) P6FENCE;
+            GR_SETF( fp[0], 0.0f);
+            if (i & 2) P6FENCE;
+            dlp++;
+            i = dlp->i;
+          }
+          else {
+            FxU32 bddr = dlp->bddr;
+            if (bddr) {
+              dp = FbARRAY(a,bddr);
+              GR_SETF( fp[0], dp );
+              dp = FbARRAY(b,bddr) - dp;
+            }
+            else {
+              dp = FARRAY(a,i) * _GlideRoot.pool.f255;
+              GR_SETF( fp[0], dp );
+              dp = FARRAY(b,i) * _GlideRoot.pool.f255 - dp;
+            }
+            GR_SETF( fp[DPDX_OFFSET>>2] , dp * m );
+            dlp++;
+            i = dlp->i;
+            GR_SETF( fp[DPDY_OFFSET>>2] , _GlideRoot.pool.f0 );
+          }
+        }
+        if (gc->state.paramIndex & STATE_REQUIRES_ST_TMU0) {
+          for (k = 0; k < 2; k++) {
+            fp = dlp->addr;
+            if (i & 1) {     /* packer bug check */
+              if (i & 2) P6FENCE;
+              GR_SETF( fp[0], 0.0f);
+              if (i & 2) P6FENCE;
+              dlp++;
+              i = dlp->i;
+            }
+            else {
+              dp = FARRAY(a,i) * oowa * gc->state.tmu_config[0].st_scale[k];
+              GR_SETF( fp[0], dp );
+              dp = FARRAY(b,i) * oowb * gc->state.tmu_config[0].st_scale[k] - dp;
+              GR_SETF( fp[DPDX_OFFSET>>2] , dp * m );
+              dlp++;
+              i = dlp->i;
+              GR_SETF( fp[DPDY_OFFSET>>2] , _GlideRoot.pool.f0 );
+            }
+          }
+        }
+        if (gc->state.paramIndex & STATE_REQUIRES_OOW_FBI) {
+          fp = dlp->addr;
+          if (i & 1) {     /* packer bug check */
+            if (i & 2) P6FENCE;
+            GR_SETF( fp[0], 0.0f);
+            if (i & 2) P6FENCE;
+            dlp++;
+            i = dlp->i;
+          }
+          else {
+            if (gc->state.vData.qInfo.mode == GR_PARAM_ENABLE) {
+              dp = FARRAY(a,i) * oowa;
+              GR_SETF( fp[0], dp );
+              dp = FARRAY(b,i) * oowb - dp;
+              GR_SETF( fp[DPDX_OFFSET>>2] , dp * m );
+            }
+            else {
+              dp = oowa;
+              GR_SETF( fp[0], dp );
+              dp = oowb - dp;
+              GR_SETF( fp[DPDX_OFFSET>>2] , dp * m );
+            }
+            dlp++;
+            i = dlp->i;
+            GR_SETF( fp[DPDY_OFFSET>>2] , _GlideRoot.pool.f0 );
+          }
+        }
+        if (gc->state.paramIndex & STATE_REQUIRES_W_TMU0) {
+          fp = dlp->addr;
+          if (i & 1) {     /* packer bug check */
+            if (i & 2) P6FENCE;
+            GR_SETF( fp[0], 0.0f);
+            if (i & 2) P6FENCE;
+            dlp++;
+            i = dlp->i;
+          }
+          else {
+            if (gc->state.vData.q0Info.mode == GR_PARAM_ENABLE) {
+              dp = FARRAY(a,i) * oowa;
+              GR_SETF( fp[0], dp );
+              dp = FARRAY(b,i) * oowb - dp;
+            }
+            else {
+              dp = oowa;
+              GR_SETF( fp[0], dp );
+              dp = oowb - dp;
+            }
+            GR_SETF( fp[DPDX_OFFSET>>2] , dp * m );
+            dlp++;
+            i = dlp->i;
+            GR_SETF( fp[DPDY_OFFSET>>2] , _GlideRoot.pool.f0 );
+          }
+        }
+        if (gc->state.paramIndex & STATE_REQUIRES_ST_TMU1) {
+          for (k = 0; k < 2; k++) {
+            fp = dlp->addr;
+            if (i & 1) {     /* packer bug check */
+              if (i & 2) P6FENCE;
+              GR_SETF( fp[0], 0.0f);
+              if (i & 2) P6FENCE;
+              dlp++;
+              i = dlp->i;
+            }
+            else {
+              dp = FARRAY(a,i) * oowa * gc->state.tmu_config[1].st_scale[k];
+              GR_SETF( fp[0], dp );
+              dp = FARRAY(b,i) * oowb * gc->state.tmu_config[1].st_scale[k] - dp;
+              GR_SETF( fp[DPDX_OFFSET>>2] , dp * m );
+              dlp++;
+              i = dlp->i;
+              GR_SETF( fp[DPDY_OFFSET>>2] , _GlideRoot.pool.f0 );
+            }
+          }
+        }
+        if (gc->state.paramIndex & STATE_REQUIRES_W_TMU1) {
+          fp = dlp->addr;
+          if (i & 1) {     /* packer bug check */
+            if (i & 2) P6FENCE;
+            GR_SETF( fp[0], 0.0f);
+            if (i & 2) P6FENCE;
+            dlp++;
+            i = dlp->i;
+          }
+          else {
+            if (gc->state.vData.q1Info.mode == GR_PARAM_ENABLE) {
+              dp = FARRAY(a,i) * oowa;
+              GR_SETF( fp[0], dp );
+              dp = FARRAY(b,i) * oowb - dp;
+            }
+            else {
+              dp = oowa;
+              GR_SETF( fp[0], dp );
+              dp = oowb - dp;
+            }
+            GR_SETF( fp[DPDX_OFFSET>>2] , dp * m );
+            dlp++;
+            i = dlp->i;
+            GR_SETF( fp[DPDY_OFFSET>>2] , _GlideRoot.pool.f0 );
+          }
+        }
+        
+        P6FENCE_CMD( GR_SETF(hw->FtriangleCMD,_GlideRoot.pool.ftemp1) );
+        
+        GR_SETF(hw->FvB.x, fax);
+        GR_SETF(hw->FvB.y, fay + _GlideRoot.pool.fHalf);
+        P6FENCE_CMD( GR_SETF(hw->FtriangleCMD,-_GlideRoot.pool.ftemp1));
+      }
+      
+      /*
+      ** Y major line
+      */
+      else {
+        m = _GlideRoot.pool.f1 / ADY;
+        dlp = gc->dataList;
+        GR_SETF(hw->FvA.y, fay);
+        GR_SETF(hw->FvB.y, fby);
+        _GlideRoot.stats.linesDrawn++;
+        GR_SETF(hw->FvC.y, fby);
+        
+        GR_SETF(hw->FvA.x, fax - _GlideRoot.pool.fHalf);
+        GR_SETF(hw->FvB.x, fbx - _GlideRoot.pool.fHalf);
+        
+        i = dlp->i;
+        GR_SETF(hw->FvC.x, fbx + _GlideRoot.pool.fHalf);
+        
+        if (gc->state.paramIndex & STATE_REQUIRES_IT_DRGB) {
+          for (k = 0; k < 3; k++) {
+            fp = dlp->addr;
+            if (i & 1) {     /* packer bug check */
+              if (i & 2) P6FENCE;
+              GR_SETF( fp[0], 0.0f);
+              if (i & 2) P6FENCE;
+              dlp++;
+              i = dlp->i;
+            }
+            else {
+              FxU32 bddr = dlp->bddr;
+              if (bddr) {
+                dp = FbARRAY(a,bddr);
+                GR_SETF( fp[0], dp );
+                dp = FbARRAY(b,bddr) - dp;
+              }
+              else {
+                dp = FARRAY(a,i) * _GlideRoot.pool.f255;
+                GR_SETF( fp[0], dp );
+                dp = FARRAY(b,i) * _GlideRoot.pool.f255 - dp;
+              }
+              GR_SETF( fp[DPDX_OFFSET>>2] , _GlideRoot.pool.f0 );
+              dlp++;
+              i = dlp->i;
+              GR_SETF( fp[DPDY_OFFSET>>2] , dp * m );
+            }
+          }
+        }
+        if (gc->state.paramIndex & STATE_REQUIRES_OOZ) {
+          fp = dlp->addr;
+          if (i & 1) {     /* packer bug check */
+            if (i & 2) P6FENCE;
+            GR_SETF( fp[0], 0.0f);
+            if (i & 2) P6FENCE;
+            dlp++;
+            i = dlp->i;
+          }
+          else {
+            dp = FARRAY(a,i) * oowa * gc->state.Viewport.hdepth + gc->state.Viewport.oz;
+            GR_SETF( fp[0], dp );
+            dp = FARRAY(b,i) * oowb * gc->state.Viewport.hdepth + gc->state.Viewport.oz - dp;
+            GR_SETF( fp[DPDX_OFFSET>>2] , _GlideRoot.pool.f0 );
+            dlp++;
+            i = dlp->i;
+            GR_SETF( fp[DPDY_OFFSET>>2] , dp * m );
+          }
+        }
+        if (gc->state.paramIndex & STATE_REQUIRES_IT_ALPHA) {
+          fp = dlp->addr;
+          if (i & 1) {     /* packer bug check */
+            if (i & 2) P6FENCE;
+            GR_SETF( fp[0], 0.0f);
+            if (i & 2) P6FENCE;
+            dlp++;
+            i = dlp->i;
+          }
+          else {
+            FxU32 bddr = dlp->bddr;
+            if (bddr) {
+              dp = FbARRAY(a,bddr);
+              GR_SETF( fp[0], dp );
+              dp = FbARRAY(b,bddr) - dp;
+            }
+            else {
+              dp = FARRAY(a,i) * _GlideRoot.pool.f255;
+              GR_SETF( fp[0], dp );
+              dp = FARRAY(b,i) * _GlideRoot.pool.f255 - dp;
+            }
+            GR_SETF( fp[DPDX_OFFSET>>2] , _GlideRoot.pool.f0 );
+            dlp++;
+            i = dlp->i;
+            GR_SETF( fp[DPDY_OFFSET>>2] , dp * m );
+          }
+        }
+        if (gc->state.paramIndex & STATE_REQUIRES_ST_TMU0) {
+          for (k = 0; k < 2; k++) {
+            fp = dlp->addr;
+            if (i & 1) {     /* packer bug check */
+              if (i & 2) P6FENCE;
+              GR_SETF( fp[0], 0.0f);
+              if (i & 2) P6FENCE;
+              dlp++;
+              i = dlp->i;
+            }
+            else {
+              dp = FARRAY(a,i) * oowa * gc->state.tmu_config[0].st_scale[k];
+              GR_SETF( fp[0], dp );
+              dp = FARRAY(b,i) * oowb * gc->state.tmu_config[0].st_scale[k] - dp;
+              GR_SETF( fp[DPDX_OFFSET>>2] , _GlideRoot.pool.f0 );
+              dlp++;
+              i = dlp->i;
+              GR_SETF( fp[DPDY_OFFSET>>2] , dp * m );
+            }
+          }
+        }
+        if (gc->state.paramIndex & STATE_REQUIRES_OOW_FBI) {
+          fp = dlp->addr;
+          if (i & 1) {     /* packer bug check */
+            if (i & 2) P6FENCE;
+            GR_SETF( fp[0], 0.0f);
+            if (i & 2) P6FENCE;
+            dlp++;
+            i = dlp->i;
+          }
+          else {
+            if (gc->state.vData.qInfo.mode == GR_PARAM_ENABLE) {
+              dp = FARRAY(a,i) * oowa;
+              GR_SETF( fp[0], dp );
+              dp = FARRAY(a,i) * oowb - dp;
+              GR_SETF( fp[DPDX_OFFSET>>2] , _GlideRoot.pool.f0 );
+            }
+            else {
+              dp = oowa;
+              GR_SETF( fp[0], dp );
+              dp = oowb - dp;
+              GR_SETF( fp[DPDX_OFFSET>>2] , _GlideRoot.pool.f0 );
+            }
+            dlp++;
+            i = dlp->i;
+            GR_SETF( fp[DPDY_OFFSET>>2] , dp * m );
+          }
+        }
+        if (gc->state.paramIndex & STATE_REQUIRES_W_TMU0) {
+          fp = dlp->addr;
+          if (i & 1) {     /* packer bug check */
+            if (i & 2) P6FENCE;
+            GR_SETF( fp[0], 0.0f);
+            if (i & 2) P6FENCE;
+            dlp++;
+            i = dlp->i;
+          }
+          else {
+            if (gc->state.vData.q0Info.mode == GR_PARAM_ENABLE) {
+              dp = FARRAY(a,i) * oowa;
+              GR_SETF( fp[0], dp );
+              dp = FARRAY(b,i) * oowb - dp;
+            }
+            else {
+              dp = oowa;
+              GR_SETF( fp[0], dp );
+              dp = oowb - dp;
+            }
+            GR_SETF( fp[DPDX_OFFSET>>2] , _GlideRoot.pool.f0 );
+            dlp++;
+            i = dlp->i;
+            GR_SETF( fp[DPDY_OFFSET>>2] , dp * m );
+          }
+        }
+        if (gc->state.paramIndex & STATE_REQUIRES_ST_TMU1) {
+          for (k = 0; k < 2; k++) {
+            fp = dlp->addr;
+            if (i & 1) {     /* packer bug check */
+              if (i & 2) P6FENCE;
+              GR_SETF( fp[0], 0.0f);
+              if (i & 2) P6FENCE;
+              dlp++;
+              i = dlp->i;
+            }
+            else {
+              dp = FARRAY(a,i) * oowa * gc->state.tmu_config[1].st_scale[k];
+              GR_SETF( fp[0], dp );
+              dp = FARRAY(b,i) * oowb * gc->state.tmu_config[1].st_scale[k] - dp;
+              GR_SETF( fp[DPDX_OFFSET>>2] , _GlideRoot.pool.f0 );
+              dlp++;
+              i = dlp->i;
+              GR_SETF( fp[DPDY_OFFSET>>2] , dp * m );
+            }
+          }
+        }
+        if (gc->state.paramIndex & STATE_REQUIRES_W_TMU1) {
+          fp = dlp->addr;
+          if (i & 1) {     /* packer bug check */
+            if (i & 2) P6FENCE;
+            GR_SETF( fp[0], 0.0f);
+            if (i & 2) P6FENCE;
+            dlp++;
+            i = dlp->i;
+          }
+          else {
+            if (gc->state.vData.q1Info.mode == GR_PARAM_ENABLE) {
+              dp = FARRAY(a,i) * oowa;
+              GR_SETF( fp[0], dp );
+              dp = FARRAY(b,i) * oowb - dp;
+            }
+            else {
+              dp = oowa;
+              GR_SETF( fp[0], dp );
+              dp = oowb - dp;
+            }
+            GR_SETF( fp[DPDX_OFFSET>>2] , _GlideRoot.pool.f0 );
+            dlp++;
+            i = dlp->i;
+            GR_SETF( fp[DPDY_OFFSET>>2] , dp * m );
+          }
+        }
+        
+        P6FENCE_CMD( GR_SET( hw->triangleCMD, 0xFFFFFFFF) );
+        
+        GR_SETF(hw->FvB.x, fax + _GlideRoot.pool.fHalf);
+        GR_SETF(hw->FvB.y, fay);
+        P6FENCE_CMD( GR_SET( hw->triangleCMD, 1) );
+      }
+      
+    all_done_vp:  /* come here on degenerate lines */
+      GR_CHECK_SIZE_SLOPPY();
+      
+      _GlideRoot.stats.linesDrawn++;
+    }
+    
+  }
+
+#undef FN_NAME
+} /* _grDrawLineStrip */
+
+/*-------------------------------------------------------------------
+  Function: _grDrawTriangles
+  Date: 13-Oct-97
+  Implementor(s): atai
+  Description:
+  Draw triangles
+  Arguments:
+    mode - 0 if grDrawVertexArrayLinear
+           1 if grDrawVertexArray
+    count - number of triangles. 
+    pointer - pointer to vertex data (mode = 0) or vertex array (mode = 1)
+  Return:
+  -------------------------------------------------------------------*/
+void FX_CSTYLE
+_grDrawTriangles(FxI32 mode, FxI32 count, void *pointers)
+{
+#define FN_NAME "_grDrawTriangles"
+
+  FxI32 stride = mode;
+  GR_BEGIN_NOFIFOCHECK(FN_NAME, 90);
+
+  if (stride == 0)
+    stride = gc->state.vData.vStride;
+
+  while (count > 0) {
+    float *va, *vb, *vc;
+    if (mode) {
+      va = *(float **)pointers;
+      vb = *((float **)pointers+1);
+      vc = *((float **)pointers+2);
+    }
+    else {
+      va = pointers;
+      vb = (float *)pointers+stride;
+      vc = (float *)pointers+(stride<<1);
+    }
+
+    (float *)pointers += (stride+(stride<<1));
+      
+    if (gc->state.grCoordinateSpaceArgs.coordinate_space_mode == GR_WINDOW_COORDS)
+      grDrawTriangle(va, vb, vc);
+    else
+      _grVpDrawTriangle(va, vb, vc);
+        
+    count -= 3;
+  }
+
+#undef FN_NAME
+} /* _grDrawTriangles */

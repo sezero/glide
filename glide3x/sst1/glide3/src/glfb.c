@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.1  2004/03/02 07:55:30  dborca
+** Bastardised Glide3x for SST1
+**
 ** Revision 1.1.1.1  1999/12/07 21:48:52  joseph
 ** Initial checkin into SourceForge.
 **
@@ -143,6 +146,7 @@ GR_ENTRY(grLfbLock, FxBool,( GrLock_t type, GrBuffer_t buffer,  GrLfbWriteMode_t
   FxBool rv = FXTRUE;
   FxU32  lockIdle;
   
+
   GR_BEGIN_NOFIFOCHECK("grLfbLock",82);
   GDBG_INFO_MORE((gc->myLevel,"(%d,%d,0x%x)\n", type, buffer, info));
   
@@ -153,7 +157,9 @@ GR_ENTRY(grLfbLock, FxBool,( GrLock_t type, GrBuffer_t buffer,  GrLfbWriteMode_t
 
   GR_CHECK_W(myName, (info->size != sizeof( GrLfbInfo_t )),
              "Invalid size sent to grLfbLock()");
-  
+
+  _grValidateState();
+
   lockIdle = !(type & GR_LFB_NOIDLE);
   type = type & ~(GR_LFB_NOIDLE);
   
@@ -312,7 +318,7 @@ GR_ENTRY(grLfbLock, FxBool,( GrLock_t type, GrBuffer_t buffer,  GrLfbWriteMode_t
              if a direct LFB read is done aftewards, the lfbMode register might
              not have settled in yet, and the pixel may be read in the wrong
              mode.  However, the 2 write above help reduce the chance of this.
-             The proper thing to do is to call grFinish() here, but that's 
+             The proper thing to do is to call grSstIdle() here, but that's 
              too slow.
              */
 
@@ -355,7 +361,7 @@ GR_ENTRY(grLfbLock, FxBool,( GrLock_t type, GrBuffer_t buffer,  GrLfbWriteMode_t
       GDBG_INFO(( 83, "Read lock failure due to existing lock" ));
       rv = FXFALSE;
     } else {
-      info->lfbPtr = initGetBufferPtr( buffer, &info->strideInBytes );
+      info->lfbPtr = initGetBufferPtr( buffer, (int *)&info->strideInBytes );
       if ( origin != GR_ORIGIN_UPPER_LEFT ) {
         GDBG_INFO((gc->myLevel,  
                    "Lock failed because of unsu"
@@ -372,7 +378,7 @@ GR_ENTRY(grLfbLock, FxBool,( GrLock_t type, GrBuffer_t buffer,  GrLfbWriteMode_t
       GDBG_INFO(( 83, "Read lock failure due to existing lock" ));
       rv = FXFALSE;
     } else {
-      info->lfbPtr = initGetBufferPtr( buffer, &info->strideInBytes );
+      info->lfbPtr = initGetBufferPtr( buffer, (int *)&info->strideInBytes );
       if ( !info->lfbPtr ) {
         GDBG_INFO((gc->myLevel,  
                    "Lock failed because buffer doesn't exist" ));
@@ -523,7 +529,7 @@ GR_ENTRY(grLfbUnlock, FxBool, ( GrLock_t type, GrBuffer_t buffer ) )
 **
 */
 
-GR_ENTRY(grLfbWriteColorFormat, void, (GrColorFormat_t colorFormat))
+GR_STATE_ENTRY(grLfbWriteColorFormat, void, (GrColorFormat_t colorFormat))
 {
 #if !(GLIDE_PLATFORM & GLIDE_HW_SST96)
   FxU32 lfbMode;
@@ -559,7 +565,7 @@ GR_ENTRY(grLfbWriteColorFormat, void, (GrColorFormat_t colorFormat))
 **  WARNING:  GMT: SST_LFB_WRITE_SWAP16 changes pixel addressing!!!
 */
 
-GR_ENTRY(grLfbWriteColorSwizzle, void, (FxBool swizzleBytes, FxBool swapWords))
+GR_STATE_ENTRY(grLfbWriteColorSwizzle, void, (FxBool swizzleBytes, FxBool swapWords))
 {
 #if !(GLIDE_PLATFORM & GLIDE_HW_SST96)
   FxU32 lfbMode;
@@ -607,12 +613,12 @@ GR_ENTRY(grLfbWriteColorSwizzle, void, (FxBool swizzleBytes, FxBool swapWords))
   FXTRUE  succeed
   FXFALSE fail
   -------------------------------------------------------------------*/
-GR_ENTRY(grLfbWriteRegion, FxBool, ( GrBuffer_t dst_buffer, 
-                                     FxU32 dst_x, FxU32 dst_y, 
-                                     GrLfbSrcFmt_t src_format, 
-                                     FxU32 src_width, FxU32 src_height, 
-                                     FxBool pixelPipeline,
-                                     FxI32 src_stride, void *src_data ))
+GR_ENTRY(grLfbWriteRegion, FxBool, (GrBuffer_t dst_buffer, 
+                                    FxU32 dst_x, FxU32 dst_y, 
+                                    GrLfbSrcFmt_t src_format, 
+                                    FxU32 src_width, FxU32 src_height, 
+                                    FxBool pixelPipeline,
+                                    FxI32 src_stride, void *src_data))
 {
   FxBool           rv = FXTRUE;
   GrLfbInfo_t      info;
@@ -634,11 +640,11 @@ GR_ENTRY(grLfbWriteRegion, FxBool, ( GrBuffer_t dst_buffer,
   info.size = sizeof( info );
   
   if ( grLfbLock( GR_LFB_WRITE_ONLY | GR_LFB_NOIDLE, 
-                 dst_buffer, 
-                 writeMode,
-                 GR_ORIGIN_UPPER_LEFT,
-                 pixelPipeline,
-                 &info ) ) {
+                  dst_buffer, 
+                  writeMode,
+                  GR_ORIGIN_UPPER_LEFT,
+                  pixelPipeline,
+                  &info ) ) {
     FxU32 *srcData;             /* Tracking Source Pointer */
     FxU32 *dstData;             /* Tracking Destination Pointer */
     FxU32 *end;                 /* Demarks End of each Scanline */
@@ -1021,3 +1027,4 @@ GR_ENTRY(grLfbReadRegion, FxBool, ( GrBuffer_t src_buffer,
 #endif
   GR_RETURN( rv );
 }/* grLfbReadRegion */
+

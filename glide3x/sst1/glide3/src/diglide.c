@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.1  2004/03/02 07:55:29  dborca
+** Bastardised Glide3x for SST1
+**
 ** Revision 1.1.1.1  1999/12/07 21:48:51  joseph
 ** Initial checkin into SourceForge.
 **
@@ -208,6 +211,17 @@ _grSwizzleColor( GrColor_t *color )
 } /* _grSwizzleColor */
 
 /*---------------------------------------------------------------------------
+** grGlideGetVersion
+** NOTE: allow this to be called before grGlideInit()
+*/
+GR_DIENTRY(grGlideGetVersion, void, ( char version[80] ))
+{
+  GDBG_INFO((87,"grGlideGetVersion(0x%x) => \"%s\"\n",version,glideIdent+3));
+  GR_ASSERT(version != NULL);
+  strcpy(version,glideIdent+3);
+} /* grGlideGetVersion */
+
+/*---------------------------------------------------------------------------
 ** grGlideGetState
 */
 GR_DIENTRY(grGlideGetState, void, ( void *state ))
@@ -215,14 +229,18 @@ GR_DIENTRY(grGlideGetState, void, ( void *state ))
   GR_BEGIN_NOFIFOCHECK("grGlideGetState",87);
   GDBG_INFO_MORE((gc->myLevel,"(0x%x)\n",state));
   GR_ASSERT(state != NULL);
+  _grValidateState();
   *((GrState *)state) = gc->state;
   GR_END();
 } /* grGlideGetState */
 
-/*---------------------------------------------------------------------------
-** grHints
+/*
+** sound stuttering if GR_HINT_FIFOCHECKHINT is not called
 */
-GR_DIENTRY(grHints, void, (GrHint_t hintType, FxU32 hints))
+/*---------------------------------------------------------------------------
+** _grHints
+*/
+void _grHints(GrHint_t hintType, FxU32 hints)
 {
   extern void GR_CDECL single_precision_asm(void);
   extern void GR_CDECL double_precision_asm(void);
@@ -230,6 +248,8 @@ GR_DIENTRY(grHints, void, (GrHint_t hintType, FxU32 hints))
   GDBG_INFO_MORE((gc->myLevel,"(%d,0x%x)\n",hintType,hints));
 
   switch (hintType) {
+    case GR_HINT_STWHINT:
+      break;
     case GR_HINT_FIFOCHECKHINT:
       if (hints) {
         gc->state.checkFifo = FXTRUE;
@@ -246,6 +266,9 @@ GR_DIENTRY(grHints, void, (GrHint_t hintType, FxU32 hints))
       break;
     case GR_HINT_FPUPRECISION:
       hints ? double_precision_asm() : single_precision_asm();
+      break;
+    case GR_HINT_ALLOW_MIPMAP_DITHER:
+      gc->state.allowLODdither = hints;
       break;
     default:
       GR_CHECK_F( myName, 1, "invalid hints type" );
@@ -269,12 +292,27 @@ GR_DIENTRY(grGlideInit, void, ( void ))
 } /* grGlideInit */
 
 
+/*---------------------------------------------------------------------------
+**  grGlideShamelessPlug - grGlideShamelessPlug
+**
+**  Returns:
+**
+**  Notes:
+**
+*/
+GR_DIENTRY(grGlideShamelessPlug, void, ( const FxBool mode ))
+{
+  GDBG_INFO((80,"grGlideShamelessPlug(%d)\n",mode));
+  _GlideRoot.environment.shamelessPlug = mode;
+} /* grGlideShamelessPlug */
+
+
 
 /*---------------------------------------------------------------------------
 **  grResetTriStats - Set triangle counters to zero.
 */
 void FX_CSTYLE
-_grResetTriStats ( void )
+_grResetTriStats(void)
 {
   GDBG_INFO((80,"grResetTriStats()\n"));
   _GlideRoot.stats.fifoSpins = 0;
@@ -292,8 +330,7 @@ _grResetTriStats ( void )
 /*---------------------------------------------------------------------------
 **  grResetTriStats - Set triangle counters to zero.
 */
-void FX_CSTYLE
-_grTriStats ( FxU32 *trisProcessed, FxU32 *trisDrawn )
+GR_DIENTRY(grTriStats, void, ( FxU32 *trisProcessed, FxU32 *trisDrawn ))
 {
   GDBG_INFO((80,"grTriStats() => %d %d\n",
                 _GlideRoot.stats.trisProcessed,

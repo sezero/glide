@@ -19,6 +19,9 @@
  **
  ** $Header$
  ** $Log$
+ ** Revision 1.1.2.2  2004/03/08 07:42:21  dborca
+ ** Voodoo Rush fixes
+ **
  ** Revision 1.1.2.1  2004/03/02 07:55:30  dborca
  ** Bastardised Glide3x for SST1
  **
@@ -139,6 +142,9 @@
 #include "fxglide.h"
 
 #include <sst1vid.h>
+#if ( GLIDE_PLATFORM & GLIDE_SST_SIM )
+#include <gsim.h>
+#endif
 
 #include <init.h>
 
@@ -278,7 +284,7 @@ _grSstDetectResources(void)
           info.hwDep.vg96Info.nTFX;
         _GlideRoot.hwConfig.SSTs[ctx].sstBoard.SST96Config.fbRam = 
           info.hwDep.vg96Info.vg96Ram >> 20;
-        _GlideRoot.hwConfig.SSTs[ctx].sstBoard.SST96Config.vg96Rev =
+        _GlideRoot.hwConfig.SSTs[ctx].sstBoard.SST96Config.vg96Rev = 
           info.hwDep.vg96Info.vg96Rev;
         _GlideRoot.hwConfig.SSTs[ctx].sstBoard.SST96Config.tmuConfig.tmuRev =
           info.hwDep.vg96Info.tfxRev;
@@ -351,11 +357,31 @@ displayBoardInfo( int i, GrHwConfiguration *hwc )
   }
 } /* displayBoardInfo */
 
+/* Returns 16:16 pair indicating the cpu's manufacturer and its
+ * capabilities. Non-Intel processors should have a vendor id w/ the
+ * high bit set so that it appears to be a negative #. The value of
+ * the capability field is assumed to be a monotonically increasing
+ * inclusive set.
+ *
+ * Unknown:
+ *   0xFFFF:0xFFFF
+ *
+ * Intel: 0x0000
+ *  4: 486 and lower
+ *  5: Pentium
+ *  6: P6 Core or better
+ *
+ * AMD: 0x8001
+ *  1: MMX
+ *  2: 3DNow!(tm)
+ */
 
-FxU32
-GR_CDECL
-
-
+enum {
+  kCPUVendorIntel   = 0x0000,
+  kCPUVendorAMD     = 0x8001,
+  kCPUVendorUnknown = 0xFFFF
+};
+extern FxI32 GR_CDECL
 _cpu_detect_asm(void);
 
 #if defined(FX_DLL_ENABLE) && (GLIDE_PLATFORM & GLIDE_OS_WIN32)
@@ -396,31 +422,16 @@ _GlideInitEnvironment( void )
 #endif
 
   _GlideRoot.CPUType = _cpu_detect_asm();
-
   if (getenv("FX_CPU")) _GlideRoot.CPUType = atoi(getenv("FX_CPU"));
-  _GlideRoot.environment.triBoundsCheck = 
-    getenv("FX_GLIDE_BOUNDS_CHECK") != NULL;
+
   _GlideRoot.environment.swapInterval = -1;
-  _GlideRoot.environment.swFifoLWM = -1;
-  _GlideRoot.environment.noSplash = 
-    getenv("FX_GLIDE_NO_SPLASH") != NULL;
-  _GlideRoot.environment.shamelessPlug = 
-    getenv("FX_GLIDE_SHAMELESS_PLUG") != NULL;
-  if (getenv("FX_GLIDE_LWM"))
-    _GlideRoot.environment.swFifoLWM = atoi(getenv("FX_GLIDE_LWM"));
-  if (getenv("FX_GLIDE_SWAPINTERVAL")) {
-    _GlideRoot.environment.swapInterval = 
-      atoi(getenv("FX_GLIDE_SWAPINTERVAL"));
-    if (_GlideRoot.environment.swapInterval < 0)
-      _GlideRoot.environment.swapInterval = 0;
-  }
+  _GlideRoot.environment.swFifoLWM    = -1;
 
-  if (getenv("FX_GLIDE_IGNORE_REOPEN"))
-    _GlideRoot.environment.ignoreReopen = FXTRUE;
-
-  if (getenv("FX_GLIDE_NO_DITHER_SUB")) {
-    _GlideRoot.environment.disableDitherSub = FXTRUE;
-  }
+  _GlideRoot.environment.triBoundsCheck   = (getenv("FX_GLIDE_BOUNDS_CHECK") != NULL);
+  _GlideRoot.environment.noSplash         = (getenv("FX_GLIDE_NO_SPLASH") != NULL);
+  _GlideRoot.environment.shamelessPlug    = (getenv("FX_GLIDE_SHAMELESS_PLUG") != NULL);
+  _GlideRoot.environment.ignoreReopen     = (getenv("FX_GLIDE_IGNORE_REOPEN") != NULL);
+  _GlideRoot.environment.disableDitherSub = (getenv("FX_GLIDE_NO_DITHER_SUB") != NULL);
 
 #if (GLIDE_PLATFORM & GLIDE_HW_SST96)
   _GlideRoot.environment.swapPendingCount = 3;
@@ -431,17 +442,24 @@ _GlideInitEnvironment( void )
   _GlideRoot.environment.swapPendingCount = 6;
 #endif
 
-  if (getenv("FX_SNAPSHOT"))
-    _GlideRoot.environment.snapshot = atoi(getenv("FX_SNAPSHOT"));
+  if (getenv("FX_SNAPSHOT"))  _GlideRoot.environment.snapshot = atoi(getenv("FX_SNAPSHOT"));
+  if (getenv("FX_SST2"))      _GlideRoot.environment.sst2Flags = atoi(getenv("FX_SST2"));
+  if (getenv("FX_GLIDE_LWM")) _GlideRoot.environment.swFifoLWM = atoi(getenv("FX_GLIDE_LWM"));
+
+  if (getenv("FX_GLIDE_SWAPINTERVAL")) {
+    _GlideRoot.environment.swapInterval = atoi(getenv("FX_GLIDE_SWAPINTERVAL"));
+    if (_GlideRoot.environment.swapInterval < 0) _GlideRoot.environment.swapInterval = 0;
+  }
   
   GDBG_INFO((80,"    triBoundsCheck: %d\n",_GlideRoot.environment.triBoundsCheck));
   GDBG_INFO((80,"      swapInterval: %d\n",_GlideRoot.environment.swapInterval));
   GDBG_INFO((80,"          noSplash: %d\n",_GlideRoot.environment.noSplash));
   GDBG_INFO((80,"     shamelessPlug: %d\n",_GlideRoot.environment.shamelessPlug));
-  GDBG_INFO((80,"        rsrchFlags: %d\n",_GlideRoot.environment.rsrchFlags));
+  GDBG_INFO((80,"         sst2Flags: %d\n",_GlideRoot.environment.sst2Flags));
   GDBG_INFO((80,"               cpu: %d\n",_GlideRoot.CPUType));
   GDBG_INFO((80,"          snapshot: %d\n",_GlideRoot.environment.snapshot));
   GDBG_INFO((80,"  disableDitherSub: %d\n",_GlideRoot.environment.disableDitherSub));  
+
   /* GMT: BUG these are hardware dependent and really should come from the init code */
   _GlideRoot.stats.minMemFIFOFree = 0xffff;
   _GlideRoot.stats.minPciFIFOFree = 0x3f;
@@ -457,21 +475,19 @@ _GlideInitEnvironment( void )
   _GlideRoot.curGC = &_GlideRoot.GCs[0]; /* just for 'booting' the library */
   if (!_grSstDetectResources()) {
     char s[128];
-#ifndef __linux__
     sprintf(s,
             "_GlideInitEnvironment: glide3x.dll expected %s, none detected\n",
             GLIDE_DRIVER_NAME);
-#else
-    sprintf(s,
-            "_GlideInitEnvironment: libglide3x.so expected %s, none detected\n",
-            GLIDE_DRIVER_NAME);
-#endif
     GrErrorCallback(s, FXTRUE);
   }
 
   /* GMT: this isn't really necessary since GlideRoot is static */
   for (i = 0; i < _GlideRoot.hwConfig.num_sst; i++) {
     displayBoardInfo( i, &_GlideRoot.hwConfig );
+
+    /* Force initial fullscreen context state */
+    _GlideRoot.GCs[i].open    = FXFALSE;
+    _GlideRoot.GCs[i].closedP = FXFALSE;
   }
 
   _grMipMapInit();
@@ -482,7 +498,7 @@ _GlideInitEnvironment( void )
 
 
 
-#if defined(GLIDE_DEBUG)
+#if defined(GLIDE_DEBUG) && !(GLIDE_PLATFORM & GLIDE_SST_SIM)
 
 /* GMT: tracing utilities */
 
@@ -836,6 +852,8 @@ _GR_SET(void *addr, unsigned long data)
     if (reg < MAXREGADDR) {
       GDBG_INFO((120,"       SET(0x%x,%11d(0x%08x)) %d\t%s\n",
                                  iaddr,data,data, chip,ri->name));
+      /* [dBorca] HACK ALERT!!! Win32 version runs amok without this... */
+      GR_P6FENCE;
     }
     else
       GDBG_ERROR("SET","CHIP #%d bad register address=0x%x, data=%d(x%x)\n",
@@ -860,7 +878,7 @@ _GR_SET16(void *addr, unsigned short data)
   last_addr = 0;
 } /* _GR_SET16 */
 
-#endif /* defined(GLIDE_DEBUG) */
+#endif /* defined(GLIDE_DEBUG) && !(GLIDE_PLATFORM & GLIDE_SST_SIM) */
 
 #if defined( GLIDE_DEBUG ) && ( GLIDE_PLATFORM & GLIDE_HW_SST96 ) 
 
@@ -1031,10 +1049,9 @@ _GR_SET_GW_ENTRY( volatile void *addr, unsigned long data ) {
         
     if ( bit ) {
       GDBG_INFO((128, 
-                 "  REG: %s DATA: 0x%x(%f)\n",
+                 "  REG: %s DATA: 0x%x\n",
                  regNames[reg],
-                 data,
-                 *(float*)&data ));
+                 data));
     } else {
       GDBG_INFO((128, 
                  "  PADDING\n" ));
@@ -1045,3 +1062,4 @@ _GR_SET_GW_ENTRY( volatile void *addr, unsigned long data ) {
 }
 
 #endif /* defined( GLIDE_DEBUG) && ( GLIDE_PLATFORM & GLIDE_HW_SST96 ) */
+

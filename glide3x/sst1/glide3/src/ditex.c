@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.1  2004/03/02 07:55:29  dborca
+** Bastardised Glide3x for SST1
+**
 ** Revision 1.1.1.1  1999/12/07 21:48:51  joseph
 ** Initial checkin into SourceForge.
 **
@@ -68,7 +71,7 @@
 #include <glide.h>
 #include "fxglide.h"
 
-const FxU32 _gr_aspect_index_table[] =
+FxU32 _gr_aspect_index_table[] =
 {
    3,
    2,
@@ -80,7 +83,7 @@ const FxU32 _gr_aspect_index_table[] =
 };
 
 /* size in texels  */
-const FxU32 _grMipMapHostSize[4][16] =
+FxU32 _grMipMapHostSize[4][16] = 
 {
   {                             /* 1:1 aspect ratio */
     65536,                      /* 0 : 256x256  */
@@ -131,86 +134,86 @@ const FxU32 _grMipMapHostSize[4][16] =
 const int _grMipMapHostWH[G3_ASPECT_TRANSLATE(GR_ASPECT_LOG2_1x8)+1][G3_LOD_TRANSLATE(GR_LOD_LOG2_1)+1][2] =
 {
    { 
-     { 256 , 32 }, 
-     { 128 , 16 }, 
-     { 64  , 8 }, 
-     { 32  , 4 }, 
-     { 16  , 2 }, 
-     { 8   , 1 }, 
-     { 4   , 1 }, 
-     { 2   , 1 }, 
-     { 1   , 1 }
+     { 256 , 32  },
+     { 128 , 16  },
+     { 64  , 8   },
+     { 32  , 4   },
+     { 16  , 2   },
+     { 8   , 1   },
+     { 4   , 1   },
+     { 2   , 1   },
+     { 1   , 1   }
    },
    { 
-     { 256 , 64 }, 
-     { 128 , 32 }, 
-     { 64  , 16 }, 
-     { 32  , 8 }, 
-     { 16  , 4 }, 
-     { 8   , 2 },
-     { 4   , 1 }, 
-     { 2   , 1 }, 
-     { 1   , 1 }
-   } ,
-   { 
-     { 256 , 128 }, 
-     { 128 , 64 }, 
-     { 64  , 32 }, 
-     { 32  , 16 },
-     { 16  , 8 },
-     { 8   , 4 }, 
-     { 4   , 2 }, 
-     { 2   , 1 }, 
-     { 1   , 1 }
+     { 256 , 64  },
+     { 128 , 32  },
+     { 64  , 16  },
+     { 32  , 8   },
+     { 16  , 4   },
+     { 8   , 2   },
+     { 4   , 1   },
+     { 2   , 1   },
+     { 1   , 1   }
    },
    { 
-     { 256 , 256 }, 
-     { 128 , 128 }, 
-     { 64  , 64 },
-     { 32  , 32 },
-     { 16  , 16 },
-     { 8   , 8 }, 
-     { 4   , 4 }, 
-     { 2   , 2 }, 
-     { 1   , 1 }
+     { 256 , 128 },
+     { 128 , 64  },
+     { 64  , 32  },
+     { 32  , 16  },
+     { 16  , 8   },
+     { 8   , 4   },
+     { 4   , 2   },
+     { 2   , 1   },
+     { 1   , 1   }
    },
    { 
-     { 128, 256 },
-     { 64,  128 },
-     { 32,  64  },
-     { 16,  32  },
-     { 8,   16  }, 
-     { 4,   8   }, 
-     { 2,   4   }, 
-     { 1,   2   }, 
-     { 1,   1 }
+     { 256 , 256 },
+     { 128 , 128 },
+     { 64  , 64  },
+     { 32  , 32  },
+     { 16  , 16  },
+     { 8   , 8   },
+     { 4   , 4   },
+     { 2   , 2   },
+     { 1   , 1   }
+   },
+   { 
+     { 128 , 256 },
+     { 64  , 128 },
+     { 32  , 64  },
+     { 16  , 32  },
+     { 8   , 16  },
+     { 4   , 8   },
+     { 2   , 4   },
+     { 1   , 2   },
+     { 1   , 1   }
    },
    {
-     { 64,  256 },
-     { 32,  128 },
-     { 16,  64  },
-     { 8,   32  },
-     { 4,   16  },
-     { 2,   8   }, 
-     { 1,   4   }, 
-     { 1,   2   }, 
-     { 1,   1 }
+     { 64  , 256 },
+     { 32  , 128 },
+     { 16  , 64  },
+     { 8   , 32  },
+     { 4   , 16  },
+     { 2   , 8   },
+     { 1   , 4   },
+     { 1   , 2   },
+     { 1   , 1   }
    },
    { 
-     { 32,  256 },
-     { 16,  128 },
-     { 8,   64  },
-     { 4,   32  },
-     { 2,   16  },
-     { 1,   8   }, 
-     { 1,   4   }, 
-     { 1,   2   },
-     { 1,   1 }
+     { 32  , 256 },
+     { 16  , 128 },
+     { 8   , 64  },
+     { 4   , 32  },
+     { 2   , 16  },
+     { 1   , 8   },
+     { 1   , 4   },
+     { 1   , 2   },
+     { 1   , 1   }
    }
 };
 
 /* translates GR_ASPECT_* to bits for the TLOD register */
-const FxU32 _gr_aspect_xlate_table[] =
+FxU32 _gr_aspect_xlate_table[] =
 {
    (3<< SST_LOD_ASPECT_SHIFT) | SST_LOD_S_IS_WIDER,
    (2<< SST_LOD_ASPECT_SHIFT) | SST_LOD_S_IS_WIDER,
@@ -221,7 +224,7 @@ const FxU32 _gr_aspect_xlate_table[] =
     3<< SST_LOD_ASPECT_SHIFT
 };
 
-const FxU32 _gr_evenOdd_xlate_table[] =
+FxU32 _gr_evenOdd_xlate_table[] = 
 {
   0xFFFFFFFF,                      /* invalid */
   SST_LOD_TSPLIT,                  /* even */
@@ -231,7 +234,7 @@ const FxU32 _gr_evenOdd_xlate_table[] =
 
 /* the size of each mipmap level in texels, 4 is the minimum no matter what */
 /* index is [aspect_ratio][lod]                                             */
-static const FxU32 _grMipMapSize[4][16] = {
+unsigned long _grMipMapSize[4][16] = {
   {   /* 8:1 aspect ratio */
     0x02000,        /* 0 : 256x32   */
     0x00800,        /* 1 : 128x16   */
@@ -281,8 +284,8 @@ static const FxU32 _grMipMapSize[4][16] = {
 
 /* the offset from mipmap level 0 of each mipmap level in texels            */
 /* index is [aspect_ratio][lod]                                             */
-static FxU32 _grMipMapOffset[4][16];
-static FxU32 _grMipMapOffset_Tsplit[4][16];
+unsigned long _grMipMapOffset[4][16];
+unsigned long _grMipMapOffset_Tsplit[4][16];
 
 /* initialize the MipMap Offset arrays */
 void
@@ -306,8 +309,7 @@ _grMipMapInit(void)
 } /* _grMipMapInit */
 
 /*---------------------------------------------------------------------------
-**  This is not DI anymore.  Perhaps all of these size routines need
-**  to be in gtex.c now.
+**
 */
 FxU32
 _grTexTextureMemRequired( GrLOD_t small_lod, GrLOD_t large_lod, 
@@ -560,10 +562,6 @@ GR_DIENTRY(grTexDownloadMipMap, void,
     Download one mipmap level at a time
     ---------------------------------------------------------------*/
   for( lod = TEX_INFO(info->,largeLod); lod >= TEX_INFO(info->,smallLod); lod-- ) {
-    /*
-    ** note for glide3 lod translation:
-    ** we are calling gr* routine so the lod data should remain the same 
-    */
     grTexDownloadMipMapLevel( tmu, 
                               startAddress, 
                               lod,
@@ -603,6 +601,7 @@ GR_DIENTRY(grTexDownloadTablePartial, void,
 {
   GR_BEGIN_NOFIFOCHECK("grTexDownloadTablePartial",89);
   GDBG_INFO_MORE((gc->myLevel,"(%d,0x%x, %d,%d)\n",type,data,start,end));
+  /* GR_CHECK_TMU(myName,tmu); */
   GR_CHECK_F(myName, type > 0x2, "invalid table specified");
   GR_CHECK_F(myName, !data, "invalid data pointer");
 #if (GLIDE_PLATFORM & GLIDE_HW_SST1)
@@ -611,9 +610,9 @@ GR_DIENTRY(grTexDownloadTablePartial, void,
 #endif
 
   if ( type == GR_TEXTABLE_PALETTE )     /* Need Palette Download Code */
-    _grTexDownloadPalette( (GuTexPalette *)data, start, end );
+    _grTexDownloadPalette( GR_TMU0, (GuTexPalette *)data, start, end );
   else {                                 /* Type is an ncc table */
-    _grTexDownloadNccTable( type, (GuNccTable*)data, start, end );
+    _grTexDownloadNccTable( GR_TMU0, type, (GuNccTable*)data, start, end );
   }
   GR_END();
 } /* grTexDownloadTable */
@@ -630,10 +629,6 @@ GR_DIENTRY(grTexDownloadMipMapLevel, void,
   GDBG_INFO_MORE((gc->myLevel,"(%d,0x%x, %d,%d,%d, %d,%d 0x%x)\n",
                   tmu,startAddress,thisLod,largeLod,aspectRatio,
                   format,evenOdd,data));
-  /*
-  ** note for glide3 lod translation:
-  ** we are calling gr* routine so the lod data should remain the same 
-  */
   grTexDownloadMipMapLevelPartial( tmu, startAddress,
                                    thisLod, largeLod, 
                                    aspectRatio, format,
@@ -641,3 +636,13 @@ GR_DIENTRY(grTexDownloadMipMapLevel, void,
                                    0, _grMipMapHostWH[G3_ASPECT_TRANSLATE(aspectRatio)][G3_LOD_TRANSLATE(thisLod)][1]-1 );
   GR_END();
 } /* grTexDownloadMipmapLevel */
+
+FxU16 rle_line[256];
+FxU16 *rle_line_end;
+
+#ifdef __WIN32__
+void rle_decode_line_asm(FxU16 *tlut,FxU8 *src,FxU16 *dest)
+{
+   /* don't do anything just shut up the compiler */
+}
+#endif

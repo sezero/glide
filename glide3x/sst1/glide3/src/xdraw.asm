@@ -18,6 +18,9 @@
 ;;
 ;; $Header$
 ;; $Log$
+;; Revision 1.1.2.1  2004/03/02 07:55:30  dborca
+;; Bastardised Glide3x for SST1
+;;
 ;; Revision 1.1.1.1  1999/12/07 21:48:54  joseph
 ;; Initial checkin into SourceForge.
 ;;
@@ -43,12 +46,16 @@
 ;;
 
 %include "xos.inc"
-
+        
 extrn   _GlideRoot
 extrn   _grSpinFifo
+extrn   _grValidateState
+extrn   _grVpDrawTriangle, 12
+extrn   _trisetup, 12
         
 ; some useful floating load and store macros <ala gmt>
 %define flds    fld  DWORD
+%define fadds   fadd DWORD
 %define fsubs   fsub DWORD
 %define fmuls   fmul DWORD
 
@@ -60,7 +67,16 @@ segment		DATA
     dyAB        DD  0
     dyBC        DD  0
     culltest    DD  0
-    P6FenceVar  DD  0  
+    P6FenceVar  DD  0
+    snap_xa     DD  0
+    snap_ya     DD  0
+    snap_xb     DD  0
+    snap_yb     DD  0
+    snap_xc     DD  0
+    snap_yc     DD  0
+
+segment		CONST
+    SNAP_BIAS   DD  786432.0
 
 ; Ugly, but seems to workaround the problem with locally defined
 ; data segment globals not getting relocated properly when using
@@ -72,6 +88,12 @@ segment		DATA
 %define zdyAB   One+10h
 %define zdyBC   One+14h
 %define zculltest One+18h
+%define zsnap_xa  One+20h
+%define zsnap_ya  One+24h
+%define zsnap_xb  One+28h
+%define zsnap_yb  One+2ch
+%define zsnap_xc  One+30h
+%define zsnap_yc  One+34h
 
 ;;; Some useful SST-1 offsets
 %include "fxgasm.h"
@@ -98,6 +120,46 @@ extrn _grFence
 %else
 %macro P6Fence 0
     xchg    eax, [P6FenceVar]
+%endmacro
+%endif
+
+%ifdef GLIDE_SIMULATOR
+
+extrn   sstStore32
+extrn   sstStore32f
+
+%macro GR_SET 3
+    push    eax
+    push    ecx
+    push    edx
+
+    push    %3
+    lea     eax,[%1 + %2]
+    push    eax
+    call    sstStore32
+    add     esp, 8
+
+    pop     edx
+    pop     ecx
+    pop     eax
+%endmacro
+
+%macro GR_SETF_P 3
+   
+    push    eax
+    push    ecx
+    push    edx
+
+    fstp    DWORD [esp-4]
+    sub     esp,4
+    lea     eax,[%1 + %2]
+    push    eax
+    call    sstStore32f
+    add     esp, 8
+
+    pop     edx
+    pop     ecx
+    pop     eax
 %endmacro
 %endif
 
@@ -176,9 +238,11 @@ segment		TEXT
 
 ;--------------------------------------------------------------------------        
 
+%if XOS != XOS_WIN32
             align 4
 proc grDrawTriangle, 12
 endp
+%endif
 
 ; FALL THRU to _trisetup
 
@@ -231,6 +295,43 @@ proc _trisetup_asm, 12
 ;
 ;;;;;;;;;;;;;;
 
+    GET_GC
+    mov     tmpy, [gc + coord_space]     ; load gc->state.invalid
+    test    tmpy, tmpy
+    je      packed_color
+    mov     fc, [esp + _vc$]
+    mov     fb, [esp + _vb$]
+    mov     fa, [esp + _va$]    ; 1
+    invoke  _grVpDrawTriangle, fa, fb, fc
+    pop     ebp
+    pop     edi
+    pop     esi
+    pop     ebx
+    ret
+
+packed_color:
+    mov     tmpy, [gc + color_type]     ; load gc->state.invalid
+    test    tmpy, tmpy
+    je      validate_state
+    mov     fc, [esp + _vc$]
+    mov     fb, [esp + _vb$]
+    mov     fa, [esp + _va$]    ; 1
+    invoke  _trisetup, fa, fb, fc
+    pop     ebp
+    pop     edi
+    pop     esi
+    pop     ebx
+    ret
+        
+validate_state: 
+    GET_GC
+    mov     tmpy, [gc + invalid]     ; load gc->state.invalid
+    test    tmpy, tmpy
+    je      cull_test
+    call    _grValidateState
+
+    align 4
+cull_test:      
 
 ;--------------------------------------------------------------------------        
     mov     fa, [esp + _va$]    ; 1
@@ -239,8 +340,20 @@ proc _trisetup_asm, 12
      mov     tmpy, [_GlideRoot + trisProcessed]    ; _GlideRoot.stats.trisProcessed++;
 ; 36-3
 vertex_y_load:
-    mov     fa, [fa + Y]        ; 2
-     mov     fb, [fb + Y]
+
+;;; snap y coordinate to sort vertices
+    flds    [fa + Y]            ;
+    fadds   [SNAP_BIAS]         ;
+    fstp    dword [zsnap_ya]    ;
+    flds    [fb + Y]            ;
+    fadds   [SNAP_BIAS]         ;
+    fstp    dword [zsnap_yb]    ;
+    flds    [fc + Y]            ;
+    fadds   [SNAP_BIAS]         ;
+    fstp    dword [zsnap_yc]    ;
+
+    mov     fa, [zsnap_ya]      ; 2
+     mov     fb, [zsnap_yb]
     cmp     fa, 0               ; 3
      jge     a_positive
     xor     fa, 7fffffffh 
@@ -251,8 +364,8 @@ a_positive:
     xor     fb, 7fffffffh 
             align 4
 b_positive:
-    mov     fc, [fc + Y]        ; 5
-     mov     gc, [_GlideRoot + curGC]
+    mov     fc, [zsnap_yc]      ; 5
+     GET_GC
     cmp     fc, 0               ; 6
      jge     c_positive
     xor     fc, 7fffffffh
@@ -328,16 +441,36 @@ vertex_y_sort:
 ;--------------------------------------------------------------------------        
             align 4
 Area_Computation:
+;;; snap x, y
+    flds    [fa + X]            ;
+    fadds   [SNAP_BIAS]         ;
+    fstp    dword [zsnap_xa]    ;
+    flds    [fa + Y]            ;
+    fadds   [SNAP_BIAS]         ;
+    fstp    dword [zsnap_ya]    ;
+    flds    [fb + X]            ;
+    fadds   [SNAP_BIAS]         ;
+    fstp    dword [zsnap_xb]    ;
+    flds    [fb + Y]            ;
+    fadds   [SNAP_BIAS]         ;
+    fstp    dword [zsnap_yb]    ;
+    flds    [fc + X]            ;
+    fadds   [SNAP_BIAS]         ;
+    fstp    dword [zsnap_xc]    ;
+    flds    [fc + Y]            ;
+    fadds   [SNAP_BIAS]         ;
+    fstp    dword [zsnap_yc]    ;
+
 ; 47-3
 ; jmp ret_pop0f
-    flds    [fa + X]            ;  xa
-    fsubs   [fb + X]            ;  dxAB
-    flds    [fb + X]            ;  |    xb
-    fsubs   [fc + X]            ;  |    dxBC
-    flds    [fb + Y]            ;  |    |    yb
-    fsubs   [fc + Y]            ;  |    |    dyBC
-    flds    [fa + Y]            ;  |    |    |    ya
-    fsubs   [fb + Y]            ;  |    |    |    dyAB
+    flds    [zsnap_xa]          ;  xa
+    fsubs   [zsnap_xb]          ;  dxAB
+    flds    [zsnap_xb]          ;  |    xb
+    fsubs   [zsnap_xc]          ;  |    dxBC
+    flds    [zsnap_yb]          ;  |    |    yb
+    fsubs   [zsnap_yc]          ;  |    |    dyBC
+    flds    [zsnap_ya]          ;  |    |    |    ya
+    fsubs   [zsnap_yb]          ;  |    |    |    dyAB
     fld     st3                 ;  |    |    |    |    dxAB
     fmul    st0, st2            ;  |    |    |    |    t0         t0=dxAB*dyBC
     fld     st3                 ;  |    |    |    |    |    dxBC
@@ -377,7 +510,7 @@ nostall:
 ; 57 with directy fall thru
 
 ;--------------------------------------------------------------------------        
-    fdivr   dword [One]                 ; ooa = 1.0f / area; takes 20-38 clks
+    fdivr   dword [One]         ; ooa = 1.0f / area; takes 20-38 clks
 Cull_by_area_sign:
     sal     tmpx, 31                    ; culltest<<31
      mov     tmpy, [gc + cull_mode]     ; load gc->state.cull_mode
@@ -390,16 +523,16 @@ Cull_by_area_sign:
 
             align 4
 nocull1:                                ; culling DISABLED
-    mov     tmpx, [fa + X]              ; load fa[X]
-     mov     tmpy, [fa + Y]             ; load fa[Y]
-    GR_SET  hw,FVAX,tmpx        ; GR_SETF( hw->FvA.x, fa[X] )
-     GR_SET  hw,FVAY,tmpy       ; GR_SETF( hw->FvA.y, fa[Y] )
-    mov     tmpx, [fb + X]              ; load fb[X]
-     mov     tmpy, [fb + Y]              ; load fb[Y]
-    GR_SET  hw,FVBX,tmpx        ; GR_SETF( hw->FvB.x, fb[X] )
-     GR_SET  hw,FVBY,tmpy       ; GR_SETF( hw->FvB.y, fb[Y] )
-    mov     tmpx, [fc + X]              ; load fc[X]
-     mov     tmpy, [fc + Y]              ; load fc[Y]
+    mov     tmpx, [zsnap_xa]            ; load fa[X]
+     mov     tmpy, [zsnap_ya]           ; load fa[Y]
+    GR_SET  hw,FVAX,tmpx                ; GR_SETF( hw->FvA.x, fa[X] )
+     GR_SET  hw,FVAY,tmpy               ; GR_SETF( hw->FvA.y, fa[Y] )
+    mov     tmpx, [zsnap_xb]            ; load fb[X]
+     mov     tmpy, [zsnap_yb]           ; load fb[Y]
+    GR_SET  hw,FVBX,tmpx                ; GR_SETF( hw->FvB.x, fb[X] )
+     GR_SET  hw,FVBY,tmpy               ; GR_SETF( hw->FvB.y, fb[Y] )
+    mov     tmpx, [zsnap_xc]            ; load fc[X]
+     mov     tmpy, [zsnap_yc]           ; load fc[Y]
     GR_SET  hw,FVCX,tmpx                ; GR_SETF( hw->FvC.x, fc[X] )
      GR_SET  hw,FVCY,tmpy               ; GR_SETF( hw->FvC.y, fc[Y] )
 
@@ -447,10 +580,6 @@ merge1:                         ; Stack looks like
         align 4
 next_parm:
     mov     hw, [dlp + dl_addr]         ; fp = dlp->addr
-%if 1 ; [dBorca] Packed Color Workaround (tm)
-     test    i, i
-    js      packed_color_workaround_tm
-%endif
      mov     tmpy, [fa + i]             ; tmpy = fa[i]
 %if 1
     test    i,1                         ; if (i & 1) {
@@ -461,6 +590,9 @@ next_parm:
     
   no_p6_1:
     GR_SET  hw,0,0                      ; GR_SETF( *fp, 0.0f );
+%ifdef GLIDE_SIMULATOR
+    test    i,2                         ; if (i & 2)
+%endif
      je      no_p6_2
     P6Fence                             ; if (i & 2) P6FENCE
   no_p6_2:
@@ -472,34 +604,6 @@ next_parm:
      mov    fa, [_GlideRoot + trisDrawn];  _GlideRoot.stats.trisDrawn++
     jmp     dotri
 
-%if 1 ; [dBorca] Packed Color Workaround (tm)
-        align 4
-packed_color_workaround_tm:
-    mov     tmpy, i
-    and     i, 0ffffffh
-    shr     tmpy, 24
-    and     tmpy, 3
-    add     i, tmpy
-    mov     tmpy, [fa + i]
-    and     tmpy, 0ffh
-    push    tmpy ;fa[i]
-    mov     tmpy, [fb + i]
-    fild    dword [esp]                ;   pa
-    and     tmpy, 0ffh
-    fst     dword [esp]                ;   pa
-    push    tmpy ;fb[i]
-    mov     tmpy, [fc + i]
-    fild    dword [esp]                ;   |    pb
-    and     tmpy, 0ffh
-    fsub TO st1                        ;   dpAB pb
-    push    tmpy ;fc[i]
-    fild    dword [esp]                ;   dpAB pb   pc
-    add     esp, 8
-    fsubp   st1                        ;   dpAB dpBC
-    pop     tmpy                       ; tmpy = fa[i]
-    jmp     parameters_loaded
-%endif
-
         align 4
 no_packer_fix:                          ;   dpAB dpBC 
 %endif
@@ -508,16 +612,15 @@ no_packer_fix:                          ;   dpAB dpBC
     flds    [fb + i]                    ;   |    pb
     fsubs   [fc + i]                    ;   dpAB dpBC 
 
-parameters_loaded:
     fld     st1                         ;   |    |    dpAB
-    fmuls   dword [zdyBC]               ;   |    |    p0x
+    fmuls   [zdyBC]                     ;   |    |    p0x
     fld     st1                         ;   |    |    |    dpBC
-    fmuls   dword [zdyAB]               ;   |    |    |    p1x
+    fmuls   [zdyAB]                     ;   |    |    |    p1x
      fxch    st3                        ;   p1x  |    |    dpAB
     GR_SET  hw,0,tmpy                   ;   |    |    |    |
-    fmuls   dword [zdxBC]               ;   |    |    |    p1y
+    fmuls   [zdxBC]                     ;   |    |    |    p1y
      fxch    st2                        ;   |    p1y  |    dpBC
-    fmuls   dword [zdxAB]               ;   |    |    |    p0y
+    fmuls   [zdxAB]                     ;   |    |    |    p0y
      fxch    st3                        ;   p0y  |    |    p1x
     fsubp   st1,st0                     ;   |    |    dpdx
      fxch    st2                        ;   dpdx |    p0y
@@ -551,6 +654,9 @@ dotri:
     
   no_p6_3:
     GR_SET  hw,0,tmpx                   ; GR_SET( hw->FtriangleCMD, area );
+%ifdef GLIDE_SIMULATOR
+    test    tmpy,2                      ; if (i & 2)
+%endif
      je      no_p6_4
     P6Fence                             ; if (i & 2) P6FENCE
   no_p6_4:
@@ -576,6 +682,9 @@ no_interpolation:
             align 4
 nofence1:
         GR_SET  hw,FTRIANGLECMD,tmpx    ; hit the triangleCmd 
+%ifdef GLIDE_SIMULATOR
+        test    tmpy,2                  ; if (i & 2)
+%endif
          je      nofence2
         P6Fence                         ; Fence off the triangleCmd
          nop

@@ -132,6 +132,7 @@ endif
 GLIDE_OBJECTS = \
 	distate.o \
 	diget.o \
+	gstrip.o \
 	distrip.o \
 	cpuid.o \
 	diglide.o \

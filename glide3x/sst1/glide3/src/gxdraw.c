@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.1  2004/03/02 07:55:30  dborca
+** Bastardised Glide3x for SST1
+**
 ** Revision 1.1.1.1  1999/12/07 21:48:53  joseph
 ** Initial checkin into SourceForge.
 **
@@ -96,16 +99,31 @@
 #include <glide.h>
 #include "fxglide.h"
 
-/* access a int array with a byte index */
-#define IARRAY(p,i) (*(int *)((i)+(int)(p)))
+/* access a floating point array with a byte index */
+#define FARRAY(p,i) (*(float *)((i)+(int)(p)))
 /* access a byte array with a byte index and convert to float */
 #define FbARRAY(p,i) (float)(((unsigned char *)p)[i])
 
-/* X and Y have fixed position. These represent indices when
- * the vertex structure is seen as an array of floats/ints
- */
-#define GR_VERTEX_X_OFFSET 0
-#define GR_VERTEX_Y_OFFSET 1
+#ifdef GDBG_INFO_ON
+  /* Some debugging information */
+static char *indexNames[] = {  
+  "GR_VERTEX_X_OFFSET",         /* 0 */
+  "GR_VERTEX_Y_OFFSET",         /* 1 */
+  "GR_VERTEX_Z_OFFSET",         /* 2 */
+  "GR_VERTEX_R_OFFSET",         /* 3 */
+  "GR_VERTEX_G_OFFSET",         /* 4 */
+  "GR_VERTEX_B_OFFSET",         /* 5 */
+  "GR_VERTEX_OOZ_OFFSET",       /* 6 */
+  "GR_VERTEX_A_OFFSET",         /* 7 */
+  "GR_VERTEX_OOW_OFFSET",       /* 8 */
+  "GR_VERTEX_SOW_TMU0_OFFSET",  /* 9 */
+  "GR_VERTEX_TOW_TMU0_OFFSET",  /* 10 */
+  "GR_VERTEX_OOW_TMU0_OFFSET",  /* 11 */
+  "GR_VERTEX_SOW_TMU1_OFFSET",  /* 12 */
+  "GR_VERTEX_TOW_TMU1_OFFSET",  /* 13 */
+  "GR_VERTEX_OOW_TMU1_OFFSET"  /* 14 */
+};  
+#endif
 
 /*
  **  _trisetup
@@ -118,26 +136,34 @@
  **  fast spans, polygons, etc) is needed, this code should be used as
  **  the starting point.
 **
-*/
+*/  
 
 #if ( GLIDE_PLATFORM & GLIDE_HW_SST96 )
 GR_DDFUNC(_trisetup, FxI32, ( const void *va, const void *vb, const void *vc ))
 {
   GR_DCL_GC;
   GR_DCL_HW;
-  const float *fa = va;
-  const float *fb = vb;
-  const float *fc = vc;
+  FxI32 xindex = (gc->state.vData.vertexInfo.offset >> 2);
+  FxI32 yindex = xindex + 1;
+  const float *fa = (const float *)va + xindex;
+  const float *fb = (const float *)vb + xindex;
+  const float *fc = (const float *)vc + xindex;
   float ooa, dxAB, dxBC, dyAB, dyBC;
   int i,j,culltest;
   int ay, by, cy;
   float *fp;
   struct dataList_s *dlp;
   volatile FxU32 *fifoPtr;
+  float snap_xa, snap_ya, snap_xb, snap_yb, snap_xc, snap_yc;
   
   culltest = gc->state.cull_mode; /* 1 if negative, 0 if positive */
   _GlideRoot.stats.trisProcessed++;
   
+  {
+    snap_ya = (volatile float) (*((float *)va + yindex) + SNAP_BIAS);
+    snap_yb = (volatile float) (*((float *)vb + yindex) + SNAP_BIAS);
+    snap_yc = (volatile float) (*((float *)vc + yindex) + SNAP_BIAS);
+  }
   /*
    **  Sort the vertices.
    **  Whenever the radial order is reversed (from counter-clockwise to
@@ -145,52 +171,60 @@ GR_DDFUNC(_trisetup, FxI32, ( const void *va, const void *vb, const void *vc ))
    **  that we know the first two elements are X & Y by looking at the
    **  grVertex structure.  
    */
-  ay = IARRAY(va, GR_VERTEX_Y_OFFSET*4);
-  by = IARRAY(vb, GR_VERTEX_Y_OFFSET*4);
+  ay = *(int *)&snap_ya;
+  by = *(int *)&snap_yb;
   if (ay < 0) ay ^= 0x7FFFFFFF;
-  cy = IARRAY(vc, GR_VERTEX_Y_OFFSET*4);
+  cy = *(int *)&snap_yc;
   if (by < 0) by ^= 0x7FFFFFFF;
   if (cy < 0) cy ^= 0x7FFFFFFF;
   if (ay < by) {
     if (by > cy) {              /* acb */
       if (ay < cy) {
-        fa = va;
-        fb = vc;
-        fc = vb;
+        fa = (const float *)va + xindex;
+        fb = (const float *)vc + xindex;
+        fc = (const float *)vb + xindex;
         culltest ^= 1;
       } else {                  /* cab */
-        fa = vc;
-        fb = va;
-        fc = vb;
+        fa = (const float *)vc + xindex;
+        fb = (const float *)va + xindex;
+        fc = (const float *)vb + xindex;
       }
       /* else it's already sorted */
     }
   } else {
     if (by < cy) {              /* bac */
       if (ay < cy) {
-        fa = vb;
-        fb = va;
-        fc = vc;
+        fa = (const float *)vb + xindex;
+        fb = (const float *)va + xindex;
+        fc = (const float *)vc + xindex;
         culltest ^= 1;
       } else {                  /* bca */
-        fa = vb;
-        fb = vc;
-        fc = va;
+        fa = (const float *)vb + xindex;
+        fb = (const float *)vc + xindex;
+        fc = (const float *)va + xindex;
       }
     } else {                    /* cba */
-      fa = vc;
-      fb = vb;
-      fc = va;
+      fa = (const float *)vc + xindex;
+      fb = (const float *)vb + xindex;
+      fc = (const float *)va + xindex;
       culltest ^= 1;
     }
   }
+  {
+    snap_xa = (volatile float) (*((float *)fa + xindex) + SNAP_BIAS);
+    snap_xb = (volatile float) (*((float *)fb + xindex) + SNAP_BIAS);
+    snap_xc = (volatile float) (*((float *)fc + xindex) + SNAP_BIAS);
+    snap_ya = (volatile float) (*((float *)fa + yindex) + SNAP_BIAS);
+    snap_yb = (volatile float) (*((float *)fb + yindex) + SNAP_BIAS);
+    snap_yc = (volatile float) (*((float *)fc + yindex) + SNAP_BIAS);
+  }
 
   /* Compute Area */
-  dxAB = fa[GR_VERTEX_X_OFFSET] - fb[GR_VERTEX_X_OFFSET];
-  dxBC = fb[GR_VERTEX_X_OFFSET] - fc[GR_VERTEX_X_OFFSET];
+  dxAB = snap_xa - snap_xb;
+  dxBC = snap_xb - snap_xc;
   
-  dyAB = fa[GR_VERTEX_Y_OFFSET] - fb[GR_VERTEX_Y_OFFSET];
-  dyBC = fb[GR_VERTEX_Y_OFFSET] - fc[GR_VERTEX_Y_OFFSET];
+  dyAB = snap_ya - snap_yb;
+  dyBC = snap_yb - snap_yc;
   
   /* this is where we store the area */
   _GlideRoot.pool.ftemp1 = dxAB * dyBC - dxBC * dyAB;
@@ -228,6 +262,8 @@ GR_DDFUNC(_trisetup, FxI32, ( const void *va, const void *vb, const void *vc ))
 #endif
   }
   
+  GR_FLUSH_STATE();
+
   GR_SET_EXPECTED_SIZE(_GlideRoot.curTriSize);
 
   /* Grab fifo pointer into a local */
@@ -244,19 +280,19 @@ GR_DDFUNC(_trisetup, FxI32, ( const void *va, const void *vb, const void *vc ))
   ooa = _GlideRoot.pool.f1 / _GlideRoot.pool.ftemp1;
   /* GMT: note that we spread out our PCI writes */
   /* write out X & Y for vertex A */
-  FSET_GW_ENTRY( fifoPtr, 2, fa[0] );
-  FSET_GW_ENTRY( fifoPtr, 3, fa[1] );
+  FSET_GW_ENTRY( fifoPtr, 2, snap_xa );
+  FSET_GW_ENTRY( fifoPtr, 3, snap_ya );
 
   dlp = gc->dataList;
   i = dlp->i;
   
   /* write out X & Y for vertex B */
-  FSET_GW_ENTRY( fifoPtr, 4, fb[0] );
-  FSET_GW_ENTRY( fifoPtr, 5, fb[1] );
+  FSET_GW_ENTRY( fifoPtr, 4, snap_xb );
+  FSET_GW_ENTRY( fifoPtr, 5, snap_yb );
 
   /* write out X & Y for vertex C */
-  FSET_GW_ENTRY( fifoPtr, 6, fc[0] );
-  FSET_GW_ENTRY( fifoPtr, 7, fc[1] );
+  FSET_GW_ENTRY( fifoPtr, 6, snap_xc );
+  FSET_GW_ENTRY( fifoPtr, 7, snap_yc );
   fifoPtr += 8;
 
   /*
@@ -267,40 +303,30 @@ GR_DDFUNC(_trisetup, FxI32, ( const void *va, const void *vb, const void *vc ))
   dxAB *= ooa;
   dyBC *= ooa;
 
-/* access a floating point array with a byte index */
-#define FARRAY(p,i) (*(float *)((i)+(int)(p)))
-
   while (i) {
     fp = dlp->addr;
     /* chip field change */
     if (i & 1) 
-        goto secondary_packet;
-    else if (i >= 0) {
-      float dpAB, dpBC,dpdx, dpdy;
-      
-      dpBC = FARRAY(fb,i);
-      dpdx = FARRAY(fa,i);
-      FSET_GW_ENTRY( fifoPtr, 0, dpdx );
-      dpAB = dpdx - dpBC;
-      dpBC = dpBC - FARRAY(fc,i);
-      dpdx = dpAB * dyBC - dpBC * dyAB;
-      FSET_GW_ENTRY( fifoPtr, 1, dpdx );
-      dpdy = dpBC * dxAB - dpAB * dxBC;
-      dlp++;
-      i = dlp->i;
-      FSET_GW_ENTRY( fifoPtr, 2, dpdy );
-      fifoPtr += 3;
-    }
+      goto secondary_packet;
     else {
       float dpAB, dpBC,dpdx, dpdy;
-      /* [dBorca] Packed Color Workaround (tm) */
-      i = (i & 0xffffff) + ((i >> 24) & 3);
-      
-      dpBC = FbARRAY(fb,i);
-      dpdx = FbARRAY(fa,i);
-      FSET_GW_ENTRY( fifoPtr, 0, dpdx );
-      dpAB = dpdx - dpBC;
-      dpBC = dpBC - FbARRAY(fc,i);
+      FxU32 bddr = dlp->bddr;
+      if (bddr) {
+        /* packed data (color) */
+        dpBC = FbARRAY(fb,bddr);
+        dpdx = FbARRAY(fa,bddr);
+        FSET_GW_ENTRY( fifoPtr, 0, dpdx );
+        dpAB = dpdx - dpBC;
+        dpBC = dpBC - FbARRAY(fc,bddr);
+      }
+      else {
+        /* non packed data */
+        dpBC = FARRAY(fb,i);
+        dpdx = FARRAY(fa,i);
+        FSET_GW_ENTRY( fifoPtr, 0, dpdx );
+        dpAB = dpdx - dpBC;
+        dpBC = dpBC - FARRAY(fc,i);
+      }
       dpdx = dpAB * dyBC - dpBC * dyAB;
       FSET_GW_ENTRY( fifoPtr, 1, dpdx );
       dpdy = dpBC * dxAB - dpAB * dxBC;
@@ -345,42 +371,34 @@ secondary_packet:
   dlp++;
   i = dlp->i;
   while( i ) {
-    if (i >= 0) {
-       float dpAB, dpBC,dpdx, dpdy;
-   
-       fp = dlp->addr;
-       dpBC = FARRAY(fb,i);
-       dpdx = FARRAY(fa,i);
-       FSET_GW_ENTRY( fifoPtr, 0, dpdx );
-       dpAB = dpdx - dpBC;
-       dpBC = dpBC - FARRAY(fc,i);
-       dpdx = dpAB * dyBC - dpBC * dyAB;
-       FSET_GW_ENTRY( fifoPtr, 1, dpdx );
-       dpdy = dpBC * dxAB - dpAB * dxBC;
-       dlp++;
-       i = dlp->i;
-       FSET_GW_ENTRY( fifoPtr, 2, dpdy );
-       fifoPtr += 3;
-    } else {
-       float dpAB, dpBC,dpdx, dpdy;
-       /* [dBorca] Packed Color Workaround (tm) */
-       i = (i & 0xffffff) + ((i >> 24) & 3);
-   
-       fp = dlp->addr;
-       dpBC = FbARRAY(fb,i);
-       dpdx = FbARRAY(fa,i);
-       FSET_GW_ENTRY( fifoPtr, 0, dpdx );
-       dpAB = dpdx - dpBC;
-       dpBC = dpBC - FbARRAY(fc,i);
-       dpdx = dpAB * dyBC - dpBC * dyAB;
-       FSET_GW_ENTRY( fifoPtr, 1, dpdx );
-       dpdy = dpBC * dxAB - dpAB * dxBC;
-       dlp++;
-       i = dlp->i;
-       FSET_GW_ENTRY( fifoPtr, 2, dpdy );
-       fifoPtr += 3;
+    float dpAB, dpBC,dpdx, dpdy;
+    FxU32 bddr = dlp->bddr;
+    fp = dlp->addr;
+    if (bddr) {
+      /* packed data (color) */
+      dpBC = FbARRAY(fb,bddr);
+      dpdx = FbARRAY(fa,bddr);
+      FSET_GW_ENTRY( fifoPtr, 0, dpdx );
+      dpAB = dpdx - dpBC;
+      dpBC = dpBC - FbARRAY(fc,bddr);
     }
+    else {
+      /* non packed data */
+      dpBC = FARRAY(fb,i);
+      dpdx = FARRAY(fa,i);
+      FSET_GW_ENTRY( fifoPtr, 0, dpdx );
+      dpAB = dpdx - dpBC;
+      dpBC = dpBC - FARRAY(fc,i);
+    }
+    dpdx = dpAB * dyBC - dpBC * dyAB;
+    FSET_GW_ENTRY( fifoPtr, 1, dpdx );
+    dpdy = dpBC * dxAB - dpAB * dxBC;
+    dlp++;
+    i = dlp->i;
+    FSET_GW_ENTRY( fifoPtr, 2, dpdy );
+    fifoPtr += 3;
   }
+
   if (((FxU32)fifoPtr) & 0x7) {
     FSET_GW_ENTRY( fifoPtr, 0, 0.0f );
     fifoPtr += 1;
@@ -395,18 +413,26 @@ GR_DDFUNC(_trisetup, FxI32, ( const void *va, const void *vb, const void *vc ))
 {
   GR_DCL_GC;
   GR_DCL_HW;
-  const float *fa = va;
-  const float *fb = vb;
-  const float *fc = vc;
+  FxI32 xindex = (gc->state.vData.vertexInfo.offset >> 2);
+  FxI32 yindex = xindex + 1;
+  const float *fa = (const float *)va + xindex;
+  const float *fb = (const float *)vb + xindex;
+  const float *fc = (const float *)vc + xindex;
   float ooa, dxAB, dxBC, dyAB, dyBC;
   int i,j,culltest;
   int ay, by, cy;
   float *fp;
   struct dataList_s *dlp;
-  
+  float snap_xa, snap_ya, snap_xb, snap_yb, snap_xc, snap_yc;
+
   culltest = gc->state.cull_mode; /* 1 if negative, 0 if positive */
   _GlideRoot.stats.trisProcessed++;
   
+  {
+    snap_ya = (volatile float) (*((float *)va + yindex) + SNAP_BIAS);
+    snap_yb = (volatile float) (*((float *)vb + yindex) + SNAP_BIAS);
+    snap_yc = (volatile float) (*((float *)vc + yindex) + SNAP_BIAS);
+  }
   /*
    **  Sort the vertices.
    **  Whenever the radial order is reversed (from counter-clockwise to
@@ -414,54 +440,65 @@ GR_DDFUNC(_trisetup, FxI32, ( const void *va, const void *vb, const void *vc ))
    **  that we know the first two elements are X & Y by looking at the
    **  grVertex structure.  
    */
-  ay = IARRAY(va, GR_VERTEX_Y_OFFSET*4);
-  by = IARRAY(vb, GR_VERTEX_Y_OFFSET*4);
+  ay = *(int *)&snap_ya;
+  by = *(int *)&snap_yb;
   if (ay < 0) ay ^= 0x7FFFFFFF;
-  cy = IARRAY(vc, GR_VERTEX_Y_OFFSET*4);
+  cy = *(int *)&snap_yc;
   if (by < 0) by ^= 0x7FFFFFFF;
   if (cy < 0) cy ^= 0x7FFFFFFF;
   if (ay < by) {
     if (by > cy) {              /* acb */
       if (ay < cy) {
-        fa = va;
-        fb = vc;
-        fc = vb;
+        fa = (const float *)va + xindex;
+        fb = (const float *)vc + xindex;
+        fc = (const float *)vb + xindex;
         culltest ^= 1;
       } else {                  /* cab */
-        fa = vc;
-        fb = va;
-        fc = vb;
+        fa = (const float *)vc + xindex;
+        fb = (const float *)va + xindex;
+        fc = (const float *)vb + xindex;
       }
       /* else it's already sorted */
     }
   } else {
     if (by < cy) {              /* bac */
       if (ay < cy) {
-        fa = vb;
-        fb = va;
-        fc = vc;
+        fa = (const float *)vb + xindex;
+        fb = (const float *)va + xindex;
+        fc = (const float *)vc + xindex;
         culltest ^= 1;
       } else {                  /* bca */
-        fa = vb;
-        fb = vc;
-        fc = va;
+        fa = (const float *)vb + xindex;
+        fb = (const float *)vc + xindex;
+        fc = (const float *)va + xindex;
       }
     } else {                    /* cba */
-      fa = vc;
-      fb = vb;
-      fc = va;
+      fa = (const float *)vc + xindex;
+      fb = (const float *)vb + xindex;
+      fc = (const float *)va + xindex;
       culltest ^= 1;
     }
   }
+  {
+    snap_xa = (volatile float) (*((float *)fa + xindex) + SNAP_BIAS);
+    snap_xb = (volatile float) (*((float *)fb + xindex) + SNAP_BIAS);
+    snap_xc = (volatile float) (*((float *)fc + xindex) + SNAP_BIAS);
+    snap_ya = (volatile float) (*((float *)fa + yindex) + SNAP_BIAS);
+    snap_yb = (volatile float) (*((float *)fb + yindex) + SNAP_BIAS);
+    snap_yc = (volatile float) (*((float *)fc + yindex) + SNAP_BIAS);
+  }
+
+#if 0
 #if (GLIDE_PLATFORM & GLIDE_HW_SST1) && defined(GLIDE_USE_ALT_REGMAP)
   hw = SST_WRAP(hw,128);                /* use alternate register mapping */
 #endif
+#endif
   /* Compute Area */
-  dxAB = fa[GR_VERTEX_X_OFFSET] - fb[GR_VERTEX_X_OFFSET];
-  dxBC = fb[GR_VERTEX_X_OFFSET] - fc[GR_VERTEX_X_OFFSET];
+  dxAB = snap_xa - snap_xb;
+  dxBC = snap_xb - snap_xc;
   
-  dyAB = fa[GR_VERTEX_Y_OFFSET] - fb[GR_VERTEX_Y_OFFSET];
-  dyBC = fb[GR_VERTEX_Y_OFFSET] - fc[GR_VERTEX_Y_OFFSET];
+  dyAB = snap_ya - snap_yb;
+  dyBC = snap_yb - snap_yc;
   
   /* this is where we store the area */
   _GlideRoot.pool.ftemp1 = dxAB * dyBC - dxBC * dyAB;
@@ -478,24 +515,26 @@ GR_DDFUNC(_trisetup, FxI32, ( const void *va, const void *vb, const void *vc ))
     }
   }
   
+  GR_FLUSH_STATE();
+
   GR_SET_EXPECTED_SIZE(_GlideRoot.curTriSize);
   
   ooa = _GlideRoot.pool.f1 / _GlideRoot.pool.ftemp1;
   /* GMT: note that we spread out our PCI writes */
   /* write out X & Y for vertex A */
-  GR_SETF( hw->FvA.x, fa[GR_VERTEX_X_OFFSET] );
-  GR_SETF( hw->FvA.y, fa[GR_VERTEX_Y_OFFSET] );
+  GR_SETF( hw->FvA.x, snap_xa );
+  GR_SETF( hw->FvA.y, snap_ya );
 
   dlp = gc->dataList;
   i = dlp->i;
   
   /* write out X & Y for vertex B */
-  GR_SETF( hw->FvB.x, fb[GR_VERTEX_X_OFFSET] );
-  GR_SETF( hw->FvB.y, fb[GR_VERTEX_Y_OFFSET] );
+  GR_SETF( hw->FvB.x, snap_xb );
+  GR_SETF( hw->FvB.y, snap_yb );
   
   /* write out X & Y for vertex C */
-  GR_SETF( hw->FvC.x, fc[GR_VERTEX_X_OFFSET] );
-  GR_SETF( hw->FvC.y, fc[GR_VERTEX_Y_OFFSET] );
+  GR_SETF( hw->FvC.x, snap_xc );
+  GR_SETF( hw->FvC.y, snap_yc );
 
   /*
   ** Divide the deltas by the area for gradient calculation.
@@ -504,9 +543,6 @@ GR_DDFUNC(_trisetup, FxI32, ( const void *va, const void *vb, const void *vc ))
   dyAB *= ooa;
   dxAB *= ooa;
   dyBC *= ooa;
-
-/* access a floating point array with a byte index */
-#define FARRAY(p,i) (*(float *)((i)+(int)(p)))
 
   /* 
   ** The src vector contains offsets from fa, fb, and fc to for which
@@ -521,44 +557,34 @@ GR_DDFUNC(_trisetup, FxI32, ( const void *va, const void *vb, const void *vc ))
       dlp++;
       i = dlp->i;
     }
-    else if (i >= 0) {
-      float dpAB, dpBC,dpdx, dpdy;
-
-      dpBC = FARRAY(fb,i);
-      dpdx = FARRAY(fa,i);
-      GR_SETF( fp[0], dpdx );
-
-      dpAB = dpdx - dpBC;
-      dpBC = dpBC - FARRAY(fc,i);
-      dpdx = dpAB * dyBC - dpBC * dyAB;
-
-GDBG_INFO((285,"p0,1x: %g %g dpdx: %g\n",dpAB * dyBC,dpBC * dyAB,dpdx));
-      GR_SETF( fp[DPDX_OFFSET>>2] , dpdx );
-      dpdy = dpBC * dxAB - dpAB * dxBC;
-
-GDBG_INFO((285,"p0,1y: %g %g dpdy: %g\n",dpBC * dxAB,dpAB * dxBC,dpdy));
-      dlp++;
-      i = dlp->i;
-      GR_SETF( fp[DPDY_OFFSET>>2] , dpdy );
-    }
     else {
       float dpAB, dpBC,dpdx, dpdy;
-      /* [dBorca] Packed Color Workaround (tm) */
-      i = (i & 0xffffff) + ((i >> 24) & 3);
-
-      dpBC = FbARRAY(fb,i);
-      dpdx = FbARRAY(fa,i);
-      GR_SETF( fp[0], dpdx );
-
-      dpAB = dpdx - dpBC;
-      dpBC = dpBC - FbARRAY(fc,i);
+      FxU32 bddr = dlp->bddr;
+      
+      if (bddr) {
+        /* packed data (color) */
+        dpBC = FbARRAY(fb,bddr);
+        dpdx = FbARRAY(fa,bddr);
+        GR_SETF( fp[0], dpdx );
+        
+        dpAB = dpdx - dpBC;
+        dpBC = dpBC - FbARRAY(fc,bddr);
+      }
+      else {
+        dpBC = FARRAY(fb,i);
+        dpdx = FARRAY(fa,i);
+        GR_SETF( fp[0], dpdx );
+        
+        dpAB = dpdx - dpBC;
+        dpBC = dpBC - FARRAY(fc,i);
+      }
       dpdx = dpAB * dyBC - dpBC * dyAB;
-
-GDBG_INFO((285,"p0,1x: %g %g dpdx: %g\n",dpAB * dyBC,dpBC * dyAB,dpdx));
+        
+      GDBG_INFO((285,"p0,1x: %g %g dpdx: %g\n",dpAB * dyBC,dpBC * dyAB,dpdx));
       GR_SETF( fp[DPDX_OFFSET>>2] , dpdx );
       dpdy = dpBC * dxAB - dpAB * dxBC;
-
-GDBG_INFO((285,"p0,1y: %g %g dpdy: %g\n",dpBC * dxAB,dpAB * dxBC,dpdy));
+      
+      GDBG_INFO((285,"p0,1y: %g %g dpdy: %g\n",dpBC * dxAB,dpAB * dxBC,dpdy));
       dlp++;
       i = dlp->i;
       GR_SETF( fp[DPDY_OFFSET>>2] , dpdy );
@@ -592,16 +618,24 @@ GR_DDFUNC(_trisetup_nogradients, FxI32, ( const void *va, const void *vb, const 
 {
   GR_DCL_GC;
   GR_DCL_HW;
-  const float *fa = va;
-  const float *fb = vb;
-  const float *fc = vc;
+  FxI32 xindex = (gc->state.vData.vertexInfo.offset >> 2);
+  FxI32 yindex = xindex + 1;
+  const float *fa = (const float *)va + xindex;
+  const float *fb = (const float *)vb + xindex;
+  const float *fc = (const float *)vc + xindex;
   float dxAB, dxBC, dyAB, dyBC;
   int i,j;
   int ay, by, cy;
   float *fp;
   struct dataList_s *dlp;
   volatile FxU32 *fifoPtr;
+  float snap_xa, snap_ya, snap_xb, snap_yb, snap_xc, snap_yc;
 
+  {
+    snap_ya = (volatile float) (*((float *)va + yindex) + SNAP_BIAS);
+    snap_yb = (volatile float) (*((float *)vb + yindex) + SNAP_BIAS);
+    snap_yc = (volatile float) (*((float *)vc + yindex) + SNAP_BIAS);
+  }
   /*
   **  Sort the vertices.
   **  Whenever the radial order is reversed (from counter-clockwise to
@@ -609,49 +643,57 @@ GR_DDFUNC(_trisetup_nogradients, FxI32, ( const void *va, const void *vb, const 
   **  that we know the first two elements are X & Y by looking at the
   **  grVertex structure.  
   */
-  ay = IARRAY(va, GR_VERTEX_Y_OFFSET*4);
-  by = IARRAY(vb, GR_VERTEX_Y_OFFSET*4);
+  ay = *(int *)&snap_ya;
+  by = *(int *)&snap_yb;
   if (ay < 0) ay ^= 0x7FFFFFFF;
-  cy = IARRAY(vc, GR_VERTEX_Y_OFFSET*4);
+  cy = *(int *)&snap_yc;
   if (by < 0) by ^= 0x7FFFFFFF;
   if (cy < 0) cy ^= 0x7FFFFFFF;
   if (ay < by) {
     if (by > cy) {              /* acb */
       if (ay < cy) {
-        fa = va;
-        fb = vc;
-        fc = vb;
+        fa = (const float *)va + xindex;
+        fb = (const float *)vc + xindex;
+        fc = (const float *)vb + xindex;
       } else {                  /* cab */
-        fa = vc;
-        fb = va;
-        fc = vb;
+        fa = (const float *)vc + xindex;
+        fb = (const float *)va + xindex;
+        fc = (const float *)vb + xindex;
       }
       /* else it's already sorted */
     }
   } else {
     if (by < cy) {              /* bac */
       if (ay < cy) {
-        fa = vb;
-        fb = va;
-        fc = vc;
+        fa = (const float *)vb + xindex;
+        fb = (const float *)va + xindex;
+        fc = (const float *)vc + xindex;
       } else {                  /* bca */
-        fa = vb;
-        fb = vc;
-        fc = va;
+        fa = (const float *)vb + xindex;
+        fb = (const float *)vc + xindex;
+        fc = (const float *)va + xindex;
       }
     } else {                    /* cba */
-      fa = vc;
-      fb = vb;
-      fc = va;
+      fa = (const float *)vc + xindex;
+      fb = (const float *)vb + xindex;
+      fc = (const float *)va + xindex;
     }
+  }
+  {
+    snap_xa = (volatile float) (*((float *)fa + xindex) + SNAP_BIAS);
+    snap_xb = (volatile float) (*((float *)fb + xindex) + SNAP_BIAS);
+    snap_xc = (volatile float) (*((float *)fc + xindex) + SNAP_BIAS);
+    snap_ya = (volatile float) (*((float *)fa + yindex) + SNAP_BIAS);
+    snap_yb = (volatile float) (*((float *)fb + yindex) + SNAP_BIAS);
+    snap_yc = (volatile float) (*((float *)fc + yindex) + SNAP_BIAS);
   }
 
   /* Compute Area */
-  dxAB = fa[GR_VERTEX_X_OFFSET] - fb[GR_VERTEX_X_OFFSET];
-  dxBC = fb[GR_VERTEX_X_OFFSET] - fc[GR_VERTEX_X_OFFSET];
-
-  dyAB = fa[GR_VERTEX_Y_OFFSET] - fb[GR_VERTEX_Y_OFFSET];
-  dyBC = fb[GR_VERTEX_Y_OFFSET] - fc[GR_VERTEX_Y_OFFSET];
+  dxAB = snap_xa - snap_xb;
+  dxBC = snap_xb - snap_xc;
+  
+  dyAB = snap_ya - snap_yb;
+  dyBC = snap_yb - snap_yc;
 
   /* this is where we store the area */
   _GlideRoot.pool.ftemp1 = dxAB * dyBC - dxBC * dyAB;
@@ -694,44 +736,38 @@ GR_DDFUNC(_trisetup_nogradients, FxI32, ( const void *va, const void *vb, const 
   SET_GW_CMD(    fifoPtr, 0, gc->hwDep.sst96Dep.gwCommand );
   SET_GW_HEADER( fifoPtr, 1, (gc->hwDep.sst96Dep.gwHeaders[0] & ~GWH_DXY_BITS) );
 
-  FSET_GW_ENTRY( fifoPtr, 2, fa[0] );
-  FSET_GW_ENTRY( fifoPtr, 3, fa[1] );
+  FSET_GW_ENTRY( fifoPtr, 2, snap_xa );
+  FSET_GW_ENTRY( fifoPtr, 3, snap_ya );
 
   dlp = gc->dataList;
   i = dlp->i;
   
   /* write out X & Y for vertex B */
-  FSET_GW_ENTRY( fifoPtr, 4, fb[0] );
-  FSET_GW_ENTRY( fifoPtr, 5, fb[1] );
+  FSET_GW_ENTRY( fifoPtr, 4, snap_xb );
+  FSET_GW_ENTRY( fifoPtr, 5, snap_yb );
 
   /* write out X & Y for vertex C */
-  FSET_GW_ENTRY( fifoPtr, 6, fc[0] );
-  FSET_GW_ENTRY( fifoPtr, 7, fc[1] );
+  FSET_GW_ENTRY( fifoPtr, 6, snap_xc );
+  FSET_GW_ENTRY( fifoPtr, 7, snap_yc );
   fifoPtr += 8;
 
   dlp = gc->dataList;
   i = dlp->i;
 
-/* access a floating point array with a byte index */
-#define FARRAY(p,i) (*(float *)((i)+(int)(p)))
-
   while (i) {
     fp = dlp->addr;
     if (i & 1) 
-        goto secondary_packet;
-    else if (i >= 0) {
-      float dpdx;
-      dpdx = FARRAY(fa,i);
-      FSET_GW_ENTRY( fifoPtr, 0, dpdx );
-      fifoPtr += 1;
-      dlp++;
-      i = dlp->i;
-    }
+      goto secondary_packet;
     else {
       float dpdx;
-      /* [dBorca] Packed Color Workaround (tm) */
-      i = (i & 0xffffff) + ((i >> 24) & 3);
-      dpdx = FbARRAY(fa,i);
+      if (dlp->bddr) {
+        /* packed data (color) */
+        dpdx = FbARRAY(fa,dlp->bddr);
+      }
+      else {
+        /* non-packed color */
+        dpdx = FARRAY(fa,i);
+      }
       FSET_GW_ENTRY( fifoPtr, 0, dpdx );
       fifoPtr += 1;
       dlp++;
@@ -770,25 +806,21 @@ secondary_packet:
   fifoPtr+=2;
   dlp++;
   i = dlp->i;
+  
   while( i ) {
-    if (i >= 0) {
-       float dpdx;
-       dpdx = FARRAY(fa,i);
-       FSET_GW_ENTRY( fifoPtr, 0, dpdx );
-       dlp++;
-       i = dlp->i;
-       fifoPtr += 1;
-    } else {
-       float dpdx;
-       /* [dBorca] Packed Color Workaround (tm) */
-       i = (i & 0xffffff) + ((i >> 24) & 3);
-       dpdx = FbARRAY(fa,i);
-       FSET_GW_ENTRY( fifoPtr, 0, dpdx );
-       dlp++;
-       i = dlp->i;
-       fifoPtr += 1;
+    if (dlp->bddr) {
+      /* packed data (color) */
+      FSET_GW_ENTRY( fifoPtr, 0, FbARRAY(fa,dlp->bddr));
     }
+    else {
+      /* non packed color */
+      FSET_GW_ENTRY( fifoPtr, 0, FARRAY(fa,i));
+    }
+    dlp++;
+    i = dlp->i;
+    fifoPtr += 1;
   }
+
   if (((FxU32)fifoPtr) & 0x7) {
     FSET_GW_ENTRY( fifoPtr, 0, 0.0f );
     fifoPtr += 1;
@@ -805,15 +837,23 @@ GR_DDFUNC(_trisetup_nogradients, FxI32, ( const void *va, const void *vb, const 
 {
   GR_DCL_GC;
   GR_DCL_HW;
-  const float *fa = va;
-  const float *fb = vb;
-  const float *fc = vc;
+  FxI32 xindex = (gc->state.vData.vertexInfo.offset >> 2);
+  FxI32 yindex = xindex + 1;
+  const float *fa = (const float *)va + xindex;
+  const float *fb = (const float *)vb + xindex;
+  const float *fc = (const float *)vc + xindex;
   float dxAB, dxBC, dyAB, dyBC;
   int i,j;
   int ay, by, cy;
   float *fp;
   struct dataList_s *dlp;
+  float snap_xa, snap_ya, snap_xb, snap_yb, snap_xc, snap_yc;
 
+  {
+    snap_ya = (volatile float) (*((float *)va + yindex) + SNAP_BIAS);
+    snap_yb = (volatile float) (*((float *)vb + yindex) + SNAP_BIAS);
+    snap_yc = (volatile float) (*((float *)vc + yindex) + SNAP_BIAS);
+  }
   /*
   **  Sort the vertices.
   **  Whenever the radial order is reversed (from counter-clockwise to
@@ -821,42 +861,51 @@ GR_DDFUNC(_trisetup_nogradients, FxI32, ( const void *va, const void *vb, const 
   **  that we know the first two elements are X & Y by looking at the
   **  grVertex structure.  
   */
-  ay = IARRAY(va, GR_VERTEX_Y_OFFSET*4);
-  by = IARRAY(vb, GR_VERTEX_Y_OFFSET*4);
+  ay = *(int *)&snap_ya;
+  by = *(int *)&snap_yb;
   if (ay < 0) ay ^= 0x7FFFFFFF;
-  cy = IARRAY(vc, GR_VERTEX_Y_OFFSET*4);
+  cy = *(int *)&snap_yc;
   if (by < 0) by ^= 0x7FFFFFFF;
   if (cy < 0) cy ^= 0x7FFFFFFF;
   if (ay < by) {
     if (by > cy) {              /* acb */
       if (ay < cy) {
-        fa = va;
-        fb = vc;
-        fc = vb;
+        fa = (const float *)va + xindex;
+        fb = (const float *)vc + xindex;
+        fc = (const float *)vb + xindex;
       } else {                  /* cab */
-        fa = vc;
-        fb = va;
-        fc = vb;
+        fa = (const float *)vc + xindex;
+        fb = (const float *)va + xindex;
+        fc = (const float *)vb + xindex;
       }
       /* else it's already sorted */
     }
   } else {
     if (by < cy) {              /* bac */
       if (ay < cy) {
-        fa = vb;
-        fb = va;
-        fc = vc;
+        fa = (const float *)vb + xindex;
+        fb = (const float *)va + xindex;
+        fc = (const float *)vc + xindex;
       } else {                  /* bca */
-        fa = vb;
-        fb = vc;
-        fc = va;
+        fa = (const float *)vb + xindex;
+        fb = (const float *)vc + xindex;
+        fc = (const float *)va + xindex;
       }
     } else {                    /* cba */
-      fa = vc;
-      fb = vb;
-      fc = va;
+      fa = (const float *)vc + xindex;
+      fb = (const float *)vb + xindex;
+      fc = (const float *)va + xindex;
     }
   }
+  {
+    snap_xa = (volatile float) (*((float *)fa + xindex) + SNAP_BIAS);
+    snap_xb = (volatile float) (*((float *)fb + xindex) + SNAP_BIAS);
+    snap_xc = (volatile float) (*((float *)fc + xindex) + SNAP_BIAS);
+    snap_ya = (volatile float) (*((float *)fa + yindex) + SNAP_BIAS);
+    snap_yb = (volatile float) (*((float *)fb + yindex) + SNAP_BIAS);
+    snap_yc = (volatile float) (*((float *)fc + yindex) + SNAP_BIAS);
+  }
+
 #if (GLIDE_PLATFORM & GLIDE_HW_SST1) && defined(GLIDE_USE_ALT_REGMAP)
   hw = SST_WRAP(hw,128);                /* use alternate register mapping */
 #endif
@@ -865,19 +914,19 @@ GR_DDFUNC(_trisetup_nogradients, FxI32, ( const void *va, const void *vb, const 
 
    /* GMT: note that we spread out our PCI writes */
    /* write out X & Y for vertex A */
-   GR_SETF( hw->FvA.x, fa[GR_VERTEX_X_OFFSET] );
-   GR_SETF( hw->FvA.y, fa[GR_VERTEX_Y_OFFSET] );
+   GR_SETF( hw->FvA.x, snap_xa );
+   GR_SETF( hw->FvA.y, snap_ya );
 
-  /* Compute Area */
-  dxAB = fa[GR_VERTEX_X_OFFSET] - fb[GR_VERTEX_X_OFFSET];
-  dxBC = fb[GR_VERTEX_X_OFFSET] - fc[GR_VERTEX_X_OFFSET];
-
-  dyAB = fa[GR_VERTEX_Y_OFFSET] - fb[GR_VERTEX_Y_OFFSET];
-  dyBC = fb[GR_VERTEX_Y_OFFSET] - fc[GR_VERTEX_Y_OFFSET];
+   /* Compute Area */
+   dxAB = snap_xa - snap_xb;
+   dxBC = snap_xb - snap_xc;
+   
+   dyAB = snap_ya - snap_yb;
+   dyBC = snap_yb - snap_yc;
 
    /* write out X & Y for vertex B */
-   GR_SETF( hw->FvB.x, fb[GR_VERTEX_X_OFFSET] );
-   GR_SETF( hw->FvB.y, fb[GR_VERTEX_Y_OFFSET] );
+   GR_SETF( hw->FvB.x, snap_xb );
+   GR_SETF( hw->FvB.y, snap_yb );
 
   /* this is where we store the area */
   _GlideRoot.pool.ftemp1 = dxAB * dyBC - dxBC * dyAB;
@@ -891,14 +940,11 @@ GR_DDFUNC(_trisetup_nogradients, FxI32, ( const void *va, const void *vb, const 
   }
   
   /* write out X & Y for vertex C */
-  GR_SETF( hw->FvC.x, fc[GR_VERTEX_X_OFFSET] );
-  GR_SETF( hw->FvC.y, fc[GR_VERTEX_Y_OFFSET] );
+  GR_SETF( hw->FvC.x, snap_xc );
+  GR_SETF( hw->FvC.y, snap_yc );
 
    dlp = gc->dataList;
    i = dlp->i;
-
-/* access a floating point array with a byte index */
-#define FARRAY(p,i) (*(float *)((i)+(int)(p)))
 
   /* 
   ** The src vector contains offsets from fa, fb, and fc to for which
@@ -913,15 +959,15 @@ GR_DDFUNC(_trisetup_nogradients, FxI32, ( const void *va, const void *vb, const 
       dlp++;
       i = dlp->i;
     }
-    else if (i >= 0) {
-      GR_SETF( fp[0], FARRAY(fa,i) );
-      dlp++;
-      i = dlp->i;
-    }
     else {
-      /* [dBorca] Packed Color Workaround (tm) */
-      i = (i & 0xffffff) + ((i >> 24) & 3);
-      GR_SETF( fp[0], FbARRAY(fa,i) );
+      if (dlp->bddr) {
+        /* packed color */
+        GR_SETF( fp[0], FbARRAY(fa,dlp->bddr) );
+      }
+      else {
+        /* non packed data */
+        GR_SETF( fp[0], FARRAY(fa,i) );
+      }
       dlp++;
       i = dlp->i;
     }
@@ -937,3 +983,4 @@ GR_DDFUNC(_trisetup_nogradients, FxI32, ( const void *va, const void *vb, const 
 #else
 #error  "Need Triangle Setup code for this hardware"
 #endif
+

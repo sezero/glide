@@ -155,6 +155,14 @@
 
 #include "fxglide.h"
 
+#if (GLIDE_PLATFORM & GLIDE_SST_SIM)
+#if HAL_CSIM
+#include <csim.h>
+#else
+#include <gsim.h>
+#endif 
+#endif
+
 /*-------------------------------------------------------------------
   Function: grVertexLayout
   Date: 17-Sep-97
@@ -215,17 +223,6 @@ GR_DIENTRY(grVertexLayout, void , (FxU32 param, FxI32 offset, FxU32 mode) )
 
     break;
 
-  case GR_PARAM_FOG_EXT:
-    /*
-    ** Fog coordinate is an extension in Glide3. It is supported in V2 and VB.
-    ** If z-buffering, we use w iterator for fog coordinate.
-    ** If w-buffering, we move the w iterator to floating point z and use w iterator for fog.
-    */
-    gc->state.vData.fogInfo.offset = offset;
-    gc->state.vData.fogInfo.mode = mode;
-
-    break;
-
   case GR_PARAM_A:
 
     gc->state.vData.aInfo.offset = offset;
@@ -236,7 +233,7 @@ GR_DIENTRY(grVertexLayout, void , (FxU32 param, FxI32 offset, FxU32 mode) )
     break;
   case GR_PARAM_RGB:
 
-    gc->state.vData.rgbInfo.offset = offset; 
+    gc->state.vData.rgbInfo.offset = offset;
     if (mode == GR_PARAM_ENABLE)
       gc->state.vData.colorType = GR_FLOAT;
     gc->state.vData.rgbInfo.mode = mode;
@@ -282,12 +279,7 @@ GR_DIENTRY(grVertexLayout, void , (FxU32 param, FxI32 offset, FxU32 mode) )
     break;
   }
 
-#if 0
-  /* [dBorca] Should use delayed validation */
   gc->state.invalid |= vtxlayoutBIT;
-#else
-  _grUpdateParamIndex();
-#endif
 
   GR_END();
 #undef FN_NAME
@@ -338,12 +330,7 @@ GR_DIENTRY(grGlideSetVertexLayout, void , (const void *layout) )
   GR_ASSERT(layout != NULL);
 
   gc->state.vData = *((GrVertexLayout *)layout);
-#if 0
-  /* [dBorca] Should use delayed validation */
   gc->state.invalid |= vtxlayoutBIT;
-#else
-  _grUpdateParamIndex();
-#endif
 
   GR_END();
 #undef FN_NAME
@@ -365,9 +352,6 @@ GR_DIENTRY(grGlideSetVertexLayout, void , (const void *layout) )
 GR_DIENTRY(grDrawVertexArray, void , (FxU32 mode, FxU32 Count, void *pointers) )
 {
 #define FN_NAME "grDrawVertexArray"
-  FxU32 i;
-  float **vPtr = pointers;
-
   GR_BEGIN_NOFIFOCHECK(FN_NAME, 90);
 
   GDBG_INFO_MORE((gc->myLevel, "(0x%x, 0x%x, 0x%x)\n",
@@ -384,66 +368,59 @@ GR_DIENTRY(grDrawVertexArray, void , (FxU32 mode, FxU32 Count, void *pointers) )
 
   switch (mode) {
   case GR_POINTS:
-    /* [dBorca] "AA" is checked inside grDrawPoint */
-    for (i = 0; i < Count; i++) {
-        grDrawPoint(vPtr[i]);
-    }
+    if (gc->state.grEnableArgs.primitive_smooth_mode & GR_AA_ORDERED_POINTS_MASK)
+      _grAADrawPoints(GR_VTX_PTR_ARRAY, Count, pointers);
+    else
+      _grDrawPoints(GR_VTX_PTR_ARRAY, Count, pointers);
     break;
   case GR_LINE_STRIP:
-    /* [dBorca] "AA" is checked inside grDrawLine */
-    for (i = 1; i < Count; i++) {
-        grDrawLine(vPtr[i-1], vPtr[i]);
-    }
+    if (gc->state.grEnableArgs.primitive_smooth_mode & GR_AA_ORDERED_LINES_MASK)
+      _grAADrawLineStrip(GR_VTX_PTR_ARRAY, GR_LINE_STRIP, Count, pointers);
+    else
+      _grDrawLineStrip(GR_VTX_PTR_ARRAY, GR_LINE_STRIP, Count, pointers);
     break;
   case GR_LINES:
-    /* [dBorca] "AA" is checked inside grDrawLine */
-    for (i = 1; i < Count; i += 2) {
-        grDrawLine(vPtr[i-1], vPtr[i]);
-    }
+    if (gc->state.grEnableArgs.primitive_smooth_mode & GR_AA_ORDERED_LINES_MASK)
+      _grAADrawLineStrip(GR_VTX_PTR_ARRAY, GR_LINES, Count, pointers);
+    else
+      _grDrawLineStrip(GR_VTX_PTR_ARRAY, GR_LINES, Count, pointers);
     break;
     
     /*
     ** anti-alias does not apply to strip and fan
     */
   case GR_TRIANGLE_STRIP:
-    /* [dBorca] we need to cache the last TWO vertices */
-    for (i = 2; i < Count; i++) {
-        /* CullFlip */
-        if (i & 1) {
-           grDrawTriangle(vPtr[i-2], vPtr[i], vPtr[i-1]);
-        } else {
-           grDrawTriangle(vPtr[i-2], vPtr[i-1], vPtr[i]);
-        }
-    }
+      _grDrawVertexList(kSetupStrip, GR_VTX_PTR_ARRAY, Count, pointers);
     break;
 
   case GR_POLYGON:
   case GR_TRIANGLE_FAN:
-    /* [dBorca] we need to cache the first & last vertices */
-    for (i = 2; i < Count; i++) {
-        grDrawTriangle(vPtr[0], vPtr[i-1], vPtr[i]);
-    }
+      _grDrawVertexList(kSetupFan, GR_VTX_PTR_ARRAY, Count, pointers);
     break;
-
-/* [dBorca] not implemented yet!!!
+      
   case GR_TRIANGLE_STRIP_CONTINUE:
+
+      _grDrawVertexListContinue(kSetupStrip, GR_VTX_PTR_ARRAY, Count, pointers);
     break;
 
   case GR_TRIANGLE_FAN_CONTINUE:
+      _grDrawVertexListContinue(kSetupFan, GR_VTX_PTR_ARRAY, Count, pointers);
     break;
-*/
       
   case GR_TRIANGLES:
-    /* [dBorca] jump to anti-aliased function if GR_AA_ORDERED */
-    if (gc->state.grEnableArgs.primitive_smooth_mode & GR_AA_ORDERED_TRIANGLES_MASK) {
-       for (i = 2; i < Count; i += 3) {
-           grAADrawTriangle(vPtr[i-2], vPtr[i-1], vPtr[i], FXTRUE, FXTRUE, FXTRUE);
-       }
-    } else {
-       for (i = 2; i < Count; i += 3) {
-           grDrawTriangle(vPtr[i-2], vPtr[i-1], vPtr[i]);
-       }
-    }
+    if (gc->state.grEnableArgs.primitive_smooth_mode & GR_AA_ORDERED_TRIANGLES_MASK)
+      if (gc->state.grCoordinateSpaceArgs.coordinate_space_mode == GR_WINDOW_COORDS)
+        _grAADrawTriangles(GR_VTX_PTR_ARRAY, GR_TRIANGLES, Count, pointers);
+      else {
+        FxU32 i;
+        for (i = 0; i < Count; i+=3, (float *)pointers +=3) 
+          _grAAVpDrawTriangle(*((float **)pointers), 
+                              *((float **)pointers+1),
+                              *((float **)pointers+2),
+                               FXTRUE, FXTRUE, FXTRUE);
+      }
+    else 
+      _grDrawTriangles(GR_VTX_PTR_ARRAY, Count, pointers);
     break;
 
   }
@@ -467,9 +444,6 @@ GR_DIENTRY(grDrawVertexArray, void , (FxU32 mode, FxU32 Count, void *pointers) )
 GR_DIENTRY(grDrawVertexArrayContiguous, void , (FxU32 mode, FxU32 Count, void *pointers, FxU32 stride) )
 {
 #define FN_NAME "grDrawVertexArrayContiguous"
-  FxU32 i;
-  char *vPtr = pointers;
-
   GR_BEGIN_NOFIFOCHECK(FN_NAME, 90);
 
   GDBG_INFO_MORE((gc->myLevel, "(0x%x, 0x%x, 0x%x)\n",
@@ -487,69 +461,55 @@ GR_DIENTRY(grDrawVertexArrayContiguous, void , (FxU32 mode, FxU32 Count, void *p
   gc->state.vData.vStride = stride >> 2;
   switch (mode) {
   case GR_POINTS:
-    /* [dBorca] "AA" is checked inside grDrawPoint */
-    for (i = 0; i < Count; i++) {
-        grDrawPoint(vPtr);
-        vPtr += stride;
-    }
+    if (gc->state.grEnableArgs.primitive_smooth_mode & GR_AA_ORDERED_POINTS_MASK)
+      _grAADrawPoints(GR_VTX_PTR, Count, pointers);
+    else
+      _grDrawPoints(GR_VTX_PTR, Count, pointers);
     break;
   case GR_LINE_STRIP:
-    /* [dBorca] "AA" is checked inside grDrawLine */
-    for (i = 1; i < Count; i++) {
-        grDrawLine(vPtr, vPtr + stride);
-        vPtr += stride;
-    }
+    if (gc->state.grEnableArgs.primitive_smooth_mode & GR_AA_ORDERED_LINES_MASK)
+      _grAADrawLineStrip(GR_VTX_PTR, GR_LINE_STRIP, Count, pointers);
+    else
+      _grDrawLineStrip(GR_VTX_PTR, GR_LINE_STRIP, Count, pointers);
     break;
   case GR_LINES:
-    /* [dBorca] "AA" is checked inside grDrawLine */
-    for (i = 1; i < Count; i += 2) {
-        grDrawLine(vPtr, vPtr + stride);
-        vPtr += stride * 2;
-    }
+    if (gc->state.grEnableArgs.primitive_smooth_mode & GR_AA_ORDERED_LINES_MASK)
+      _grAADrawLineStrip(GR_VTX_PTR, GR_LINES, Count, pointers);
+    else
+      _grDrawLineStrip(GR_VTX_PTR, GR_LINES, Count, pointers);
     break;
-    
+
   case GR_TRIANGLE_STRIP:
-    /* [dBorca] we need to cache the last TWO vertices */
-    for (i = 2; i < Count; i++) {
-        /* CullFlip */
-        if (i & 1) {
-           grDrawTriangle(vPtr, vPtr + stride * 2, vPtr + stride);
-        } else {
-           grDrawTriangle(vPtr, vPtr + stride, vPtr + stride * 2);
-        }
-        vPtr += stride;
-    }
+    _grDrawVertexList(kSetupStrip, GR_VTX_PTR, Count, pointers);
     break;
 
   case GR_POLYGON:
   case GR_TRIANGLE_FAN:
-    /* [dBorca] we need to cache the first & last vertices */
-    for (i = 2; i < Count; i++) {
-        grDrawTriangle(vPtr, vPtr + (i - 1) * stride, vPtr + i * stride);
-    }
+    _grDrawVertexList(kSetupFan, GR_VTX_PTR, Count, pointers);
     break;
-      
-/* [dBorca] not implemented yet!!!
+
   case GR_TRIANGLE_STRIP_CONTINUE:
+    _grDrawVertexListContinue(kSetupStrip, GR_VTX_PTR, Count, pointers);
     break;
 
   case GR_TRIANGLE_FAN_CONTINUE:
+    _grDrawVertexList(kSetupFan, GR_VTX_PTR, Count, pointers);
     break;
-*/
       
   case GR_TRIANGLES:
-    /* [dBorca] jump to anti-aliased function if GR_AA_ORDERED */
-    if (gc->state.grEnableArgs.primitive_smooth_mode & GR_AA_ORDERED_TRIANGLES_MASK) {
-       for (i = 2; i < Count; i += 3) {
-           grAADrawTriangle(vPtr, vPtr + stride, vPtr + stride * 2, FXTRUE, FXTRUE, FXTRUE);
-           vPtr += stride * 3;
-       }
-    } else {
-       for (i = 2; i < Count; i += 3) {
-           grDrawTriangle(vPtr, vPtr + stride, vPtr + stride * 2);
-           vPtr += stride * 3;
-       }
-    }
+    if (gc->state.grEnableArgs.primitive_smooth_mode & GR_AA_ORDERED_TRIANGLES_MASK)
+      if (gc->state.grCoordinateSpaceArgs.coordinate_space_mode == GR_WINDOW_COORDS)
+        _grAADrawTriangles(GR_VTX_PTR, GR_TRIANGLES, Count, pointers);
+      else {
+        FxU32 i;
+        for (i = 0; i < Count; i+=3, (float *)pointers +=gc->state.vData.vStride) 
+          _grAAVpDrawTriangle((float *)pointers, 
+                              (float *)((int)pointers+stride),
+                              (float *)((int)pointers+(stride<<1)),
+                               FXTRUE, FXTRUE, FXTRUE);
+      }
+    else 
+      _grDrawTriangles(GR_VTX_PTR, Count, pointers);
     break;
 
   }

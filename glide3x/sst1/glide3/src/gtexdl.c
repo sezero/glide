@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.1  2004/03/02 07:55:30  dborca
+** Bastardised Glide3x for SST1
+**
 ** Revision 1.1.1.1  1999/12/07 21:48:53  joseph
 ** Initial checkin into SourceForge.
 **
@@ -91,18 +94,18 @@ extern FxU32 _gr_evenOdd_xlate_table[];
 extern const int _grMipMapHostWH[G3_ASPECT_TRANSLATE(GR_ASPECT_LOG2_1x8)+1][G3_LOD_TRANSLATE(GR_LOD_LOG2_1)+1][2];
 
 /*---------------------------------------------------------------------------
-** _grTexDownloadNccTableExt
+** _grTexDownloadNccTable
 **
 ** Downloads an ncctable to the specified _physical_ TMU(s).  This
 ** function is called internally by Glide and should not be executed
 ** by an application.
 */
-GR_DDFUNC(_grTexDownloadNccTableExt, void, ( GrChipID_t tmu, FxU32 which, const GuNccTable *table, int start, int end ))
+GR_DDFUNC(_grTexDownloadNccTable, void, ( GrChipID_t tmu, FxU32 which, const GuNccTable *table, int start, int end ))
 {
   int i;
   FxU32 *hwNCC;
   
-  GR_BEGIN_NOFIFOCHECK("_grTexDownloadNccTableExt",89);
+  GR_BEGIN_NOFIFOCHECK("_grTexDownloadNccTable",89);
   GDBG_INFO_MORE((gc->myLevel,"(%d,%d, 0x%x, %d,%d)\n",tmu,which,table,start,end));
   GR_ASSERT( start==0 );
   GR_ASSERT( end==11 );
@@ -113,7 +116,7 @@ GR_DDFUNC(_grTexDownloadNccTableExt, void, ( GrChipID_t tmu, FxU32 which, const 
   _GlideRoot.stats.palDownloads++;
   _GlideRoot.stats.palBytes += (end-start+1)<<2;
 
-  /*if (gc->tmu_state[tmu].ncc_table[which] != table )*/ {
+  if (1/*gc->tmu_state[tmu].ncc_table[which] != table*/) {
     GR_SET_EXPECTED_SIZE(48+2*PACKER_WORKAROUND_SIZE);
     PACKER_WORKAROUND;
     hw = SST_TMU(hw,tmu);
@@ -128,23 +131,6 @@ GR_DDFUNC(_grTexDownloadNccTableExt, void, ( GrChipID_t tmu, FxU32 which, const 
     GR_CHECK_SIZE();
   }
   GR_END();
-} /* _grTexDownloadNccTableExt */
-
-/*---------------------------------------------------------------------------
-** _grTexDownloadNccTable
-**
-** Downloads an ncctable to the specified _physical_ TMU(s).  This
-** function is called internally by Glide and should not be executed
-** by an application.
-*/
-GR_DDFUNC(_grTexDownloadNccTable, void, ( FxU32 which, const GuNccTable *table, int start, int end ))
-{
-  /* [dBorca] broadcast: there must be a better way */
-  GR_DCL_GC;
-  if (gc->num_tmu > 1) {
-     _grTexDownloadNccTableExt(GR_TMU1, which, table, start, end);
-  }
-  _grTexDownloadNccTableExt(GR_TMU0, which, table, start, end);
 } /* _grTexDownloadNccTable */
 
 /*-------------------------------------------------------------------
@@ -165,11 +151,13 @@ GR_DDFUNC(_grTexDownloadNccTable, void, ( FxU32 which, const GuNccTable *table, 
   Return:
     none
   -------------------------------------------------------------------*/
+
 GR_ENTRY(grTexDownloadTable, void,
          ( GrTexTable_t type,  void *data ))
 {
   GR_BEGIN_NOFIFOCHECK("grTexDownloadTable",89);
   GDBG_INFO_MORE((gc->myLevel,"(%d,0x%x)\n",type,data));
+  /* GR_CHECK_TMU(myName,tmu); */
   GR_CHECK_F(myName, type > 0x2, "invalid table specified");
   GR_CHECK_F(myName, !data, "invalid data pointer");
 #if ( GLIDE_PLATFORM & GLIDE_HW_SST1 )
@@ -178,14 +166,54 @@ GR_ENTRY(grTexDownloadTable, void,
 #endif
 
   if ( type == GR_TEXTABLE_PALETTE )     /* Need Palette Download Code */
-    _grTexDownloadPalette( (GuTexPalette *)data, 0, 255 );
+    _grTexDownloadPalette( GR_TMU0, (GuTexPalette *)data, 0, 255 );
   else {                                 /* Type is an ncc table */
-    _grTexDownloadNccTable( type, (GuNccTable*)data, 0, 11 );
-    /*    _grTexDownloadNccTable( type, (GuNccTable*)data, 0, 11 ); */
+    _grTexDownloadNccTable( GR_TMU0, type, (GuNccTable*)data, 0, 11 );
+    /*    _grTexDownloadNccTable( tmu, type, (GuNccTable*)data, 0, 11 ); */
   }
   GR_END();
 } /* grTexDownloadTable */
 
+/*-------------------------------------------------------------------
+  Function: grTexDownloadTableExt
+  Date: 6/3
+  Implementor(s): jdt, GaryMcT
+  Library: glide
+  Description:
+    download look up table data to a tmu
+  Arguments:
+    tmu - which tmu
+    type - what type of table to download
+        One of:
+            GR_TEXTABLE_NCC0
+            GR_TEXTABLE_NCC1
+            GR_TEXTABLE_PALETTE
+    void *data - pointer to table data
+  Return:
+    none
+  -------------------------------------------------------------------*/
+
+GR_ENTRY(grTexDownloadTableExt, void,
+         ( GrChipID_t tmu,  GrTexTable_t type,  void *data ))
+{
+  GR_BEGIN_NOFIFOCHECK("grTexDownloadTableExt",89);
+  GDBG_INFO_MORE((gc->myLevel,"(%d,0x%x)\n",type,data));
+  GR_CHECK_TMU(myName,tmu);
+  GR_CHECK_F(myName, type > 0x2, "invalid table specified");
+  GR_CHECK_F(myName, !data, "invalid data pointer");
+#if ( GLIDE_PLATFORM & GLIDE_HW_SST1 )
+  GR_CHECK_F(myName, _GlideRoot.hwConfig.SSTs[_GlideRoot.current_sst].sstBoard.VoodooConfig.tmuConfig[0].tmuRev < 1,
+               "Texelfx rev 0 does not support paletted textures");
+#endif
+
+  if ( type == GR_TEXTABLE_PALETTE )     /* Need Palette Download Code */
+    _grTexDownloadPalette( tmu, (GuTexPalette *)data, 0, 255 );
+  else {                                 /* Type is an ncc table */
+    _grTexDownloadNccTable( tmu, type, (GuNccTable*)data, 0, 11 );
+    /*    _grTexDownloadNccTable( tmu, type, (GuNccTable*)data, 0, 11 ); */
+  }
+  GR_END();
+} /* grTexDownloadTableExt */
 
 /*-------------------------------------------------------------------
   Function: grTexDownloadMipMapLevelPartial
@@ -215,7 +243,7 @@ GR_ENTRY(grTexDownloadTable, void,
                       GR_MIPMAPLEVELMASK_BOTH
     data          - pointer to mipmap data
   Return:
-    FXTRUE
+    none
   -------------------------------------------------------------------*/
 
 GR_ENTRY(grTexDownloadMipMapLevelPartial, FxBool, ( GrChipID_t tmu, FxU32 startAddress, GrLOD_t thisLod, GrLOD_t largeLod, GrAspectRatio_t   aspectRatio, GrTextureFormat_t format, FxU32 evenOdd, void *data, int t, int max_t ))
@@ -227,14 +255,12 @@ GR_ENTRY(grTexDownloadMipMapLevelPartial, FxBool, ( GrChipID_t tmu, FxU32 startA
   FxU32 tLod, texMode, baseAddress,size;
 
   GR_BEGIN_NOFIFOCHECK("grTexDownloadMipMapLevelPartial",89);
-  GDBG_INFO_MORE((gc->myLevel,"(%d,0x%x, %d,%d,%d, %d,%d 0x%x, %d,%d)\n",
-                  tmu,startAddress,thisLod,largeLod,aspectRatio,
-                  format,evenOdd,data,t,max_t));
-
   thisLod = G3_LOD_TRANSLATE(thisLod);
   largeLod = G3_LOD_TRANSLATE(largeLod);
   aspectRatio = G3_ASPECT_TRANSLATE(aspectRatio);
-
+  GDBG_INFO_MORE((gc->myLevel,"(%d,0x%x, %d,%d,%d, %d,%d 0x%x, %d,%d)\n",
+                  tmu,startAddress,thisLod,largeLod,aspectRatio,
+                  format,evenOdd,data,t,max_t));
   size = _grTexTextureMemRequired(thisLod, thisLod, aspectRatio, format, evenOdd);
   GR_CHECK_TMU(myName, tmu);
   GR_CHECK_F(myName, startAddress + size > gc->tmu_state[tmu].total_mem,
@@ -243,7 +269,8 @@ GR_ENTRY(grTexDownloadMipMapLevelPartial, FxBool, ( GrChipID_t tmu, FxU32 startA
   GR_CHECK_F(myName, thisLod > G3_LOD_TRANSLATE(GR_LOD_LOG2_1), "thisLod invalid");
   GR_CHECK_F(myName, largeLod > G3_LOD_TRANSLATE(GR_LOD_LOG2_1), "largeLod invalid");
   GR_CHECK_F(myName, thisLod < largeLod, "thisLod may not be larger than largeLod");
-  GR_CHECK_F(myName, aspectRatio > G3_ASPECT_TRANSLATE(GR_ASPECT_LOG2_1x8) || aspectRatio < G3_ASPECT_TRANSLATE(GR_ASPECT_LOG2_8x1), "aspectRatio invalid");
+  GR_CHECK_F(myName, aspectRatio > G3_ASPECT_TRANSLATE(GR_ASPECT_LOG2_1x8) || 
+             aspectRatio < G3_ASPECT_TRANSLATE(GR_ASPECT_LOG2_8x1), "aspectRatio invalid");
   GR_CHECK_F(myName, evenOdd > 0x3 || evenOdd == 0, "evenOdd mask invalid");
   GR_CHECK_F(myName, !data, "invalid data pointer");
   GR_CHECK_F(myName, max_t >= _grMipMapHostWH[aspectRatio][thisLod][1], "invalid end row");
@@ -295,7 +322,7 @@ GR_ENTRY(grTexDownloadMipMapLevelPartial, FxBool, ( GrChipID_t tmu, FxU32 startA
   /*------------------------------------------------------------
     Compute pertinant contents of tLOD and texMode registers 
     ------------------------------------------------------------*/
-  tLod = SST_TLOD_MINMAX_INT(largeLod,GR_LOD_LOG2_1);
+  tLod = SST_TLOD_MINMAX_INT(largeLod,G3_LOD_TRANSLATE(GR_LOD_LOG2_1));
   tLod |= _gr_evenOdd_xlate_table[evenOdd];
   tLod |= _gr_aspect_xlate_table[aspectRatio];
   texMode = format << SST_TFORMAT_SHIFT;
@@ -543,11 +570,12 @@ GR_ENTRY(grTexDownloadMipMapLevelPartial, FxBool, ( GrChipID_t tmu, FxU32 startA
 all_done:
   _GlideRoot.stats.texDownloads++;
   GR_END_SLOPPY();
+  return FXTRUE;
 } /* grTexDownloadMipmapLevelPartial */
 
 
 /*-------------------------------------------------------------------
-  Function: _grTexDownloadPaletteExt
+  Function: _grTexDownloadPalette
   Date: 6/9
   Implementor(s): jdt
   Library: Glide
@@ -561,9 +589,9 @@ all_done:
   Return:
     none
   -------------------------------------------------------------------*/
-GR_DDFUNC(_grTexDownloadPaletteExt, void, ( GrChipID_t tmu, GuTexPalette *pal, int start, int end ))
+GR_DDFUNC(_grTexDownloadPalette, void, ( GrChipID_t tmu, GuTexPalette *pal, int start, int end ))
 {
-  GR_BEGIN("_grTexDownloadPaletteExt",89, 4*(end-start+1) + 2*PACKER_WORKAROUND_SIZE);
+  GR_BEGIN("_grTexDownloadPalette",89, 4*(end-start+1) + 2*PACKER_WORKAROUND_SIZE);
   GDBG_INFO_MORE((gc->myLevel,"(%d,0x%x, %d,%d)\n",tmu,pal,start,end));
   GR_CHECK_F( myName, !pal, "pal invalid" );
   GR_CHECK_F( myName, start<0, "invalid start index" );
@@ -584,70 +612,4 @@ GR_DDFUNC(_grTexDownloadPaletteExt, void, ( GrChipID_t tmu, GuTexPalette *pal, i
   PACKER_WORKAROUND;
   P6FENCE;
   GR_END();
-} /* _grTexDownloadPaletteExt */
-
-
-/*-------------------------------------------------------------------
-  Function: _grTexDownloadPalette
-  Date: 6/9
-  Implementor(s): jdt
-  Library: Glide
-  Description:
-    Private function to download a palette to the specified tmu
-  Arguments:
-    tmu - which tmu to download the palette to
-    pal - the pallete data
-    start - beginning index to download
-    end   - ending index to download
-  Return:
-    none
-  -------------------------------------------------------------------*/
-GR_DDFUNC(_grTexDownloadPalette, void, ( GuTexPalette *pal, int start, int end ))
-{
-  /* [dBorca] broadcast: there must be a better way */
-  GR_DCL_GC;
-  if (gc->num_tmu > 1) {
-     _grTexDownloadPaletteExt(GR_TMU1, pal, start, end);
-  }
-  _grTexDownloadPaletteExt(GR_TMU0, pal, start, end);
 } /* _grTexDownloadPalette */ 
-
-/*-------------------------------------------------------------------
-  Function: grTexDownloadTableExt
-  Date: 6/3
-  Implementor(s): jdt, GaryMcT
-  Library: glide
-  Description:
-    download look up table data to a tmu
-  Arguments:
-    tmu - which tmu
-    type - what type of table to download
-        One of:
-            GR_TEXTABLE_NCC0
-            GR_TEXTABLE_NCC1
-            GR_TEXTABLE_PALETTE
-    void *data - pointer to table data
-  Return:
-    none
-  -------------------------------------------------------------------*/
-GR_ENTRY(grTexDownloadTableExt, void,
-         ( GrChipID_t tmu, GrTexTable_t type,  void *data ))
-{
-  GR_BEGIN_NOFIFOCHECK("grTexDownloadTableExt",89);
-  GDBG_INFO_MORE((gc->myLevel,"(%d,%d,0x%x)\n",tmu,type,data));
-  GR_CHECK_TMU(myName,tmu);
-  GR_CHECK_F(myName, type > 0x2, "invalid table specified");
-  GR_CHECK_F(myName, !data, "invalid data pointer");
-#if ( GLIDE_PLATFORM & GLIDE_HW_SST1 )
-  GR_CHECK_F(myName, _GlideRoot.hwConfig.SSTs[_GlideRoot.current_sst].sstBoard.VoodooConfig.tmuConfig[0].tmuRev < 1,
-               "Texelfx rev 0 does not support paletted textures");
-#endif
-
-  if ( type == GR_TEXTABLE_PALETTE )     /* Need Palette Download Code */
-    _grTexDownloadPaletteExt( tmu, (GuTexPalette *)data, 0, 255 );
-  else {                                 /* Type is an ncc table */
-    _grTexDownloadNccTableExt( tmu, type, (GuNccTable*)data, 0, 11 );
-    /*    _grTexDownloadNccTableExt( tmu, type, (GuNccTable*)data, 0, 11 ); */
-  }
-  GR_END();
-} /* grTexDownloadTableExt */

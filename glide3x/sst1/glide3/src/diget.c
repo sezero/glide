@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.2  2004/03/08 07:42:21  dborca
+** Voodoo Rush fixes
+**
 ** Revision 1.1.2.1  2004/03/02 07:55:29  dborca
 ** Bastardised Glide3x for SST1
 **
@@ -149,7 +152,6 @@
  * 1     12/14/97 1:41p Pgj
 **
 */
-
 #include <string.h>
 #include <3dfx.h>
 #include <glidesys.h>
@@ -160,26 +162,34 @@
 #include "fxglide.h"
 #include "rcver.h"
 
+#if (GLIDE_PLATFORM & GLIDE_SST_SIM)
+#if HAL_CSIM
+#include <csim.h>
+#else
+#include <gsim.h>
+#endif 
+#endif
+
 #include "fxinline.h"
 
 const FxU32 _grMemOffset[16] = 
 {
-  35,                           /* 320x200 */
-  40,                           /* 320x240 */
-  0,                            /* 400x256 */
+  65536,                        /* 320x200 */
+  65536,                        /* 320x240 */
+  65536,                        /* 400x256 */
   96,                           /* 512x384 */
   65536,                        /* 640x200 */
   65536,                        /* 640x350 */
-  130,                          /* 640x400 */
+  150,                          /* 640x400 */
   150,                          /* 640x480 */
   247,                          /* 800x600 */
-  345,                          /* 960x720 */
+  338,                          /* 960x720 */
   210,                          /* 856x480 */
   64,                           /* 512x256 */
-  384,                          /* 1024x768 */
+  65536,                        /* 1024x768 */
   65536,                        /* 1280x1024 */
   65536,                        /* 1600x1200 */
-  70                            /* 400x300 */
+  65536                         /* 400x300 */
 };
 
 const FxU32 _grResolutionRefresh[16][9] = 
@@ -218,7 +228,7 @@ const FxU32 _grResolutionRefresh[16][9] =
     0,                          /* 120 Hz */
   },
   {                             /* 512x384 */
-    0,                          /* 60 Hz */
+    196608,                     /* 60 Hz */
     0,                          /* 70 Hz */
     196608,                     /* 72 Hz */
     196608,                     /* 75 Hz */
@@ -412,7 +422,7 @@ GR_DIENTRY(grGet, FxU32, (FxU32 pname, FxU32 plength, FxI32 *params))
   case GR_FIFO_FULLNESS:
     if (plength == 8) {
       FxU32 status;
-      status = _grSstStatus();
+      status = GR_GET(((Sstregs *)gc->reg_ptr)->status);
       status = 0xffff - ((status >> SST_MEMFIFOLEVEL_SHIFT) & 0xffff);
       *params = (status << 8)+(status >> 8);
       *(params+1) = status;
@@ -451,16 +461,21 @@ GR_DIENTRY(grGet, FxU32, (FxU32 pname, FxU32 plength, FxI32 *params))
     break;
   case GR_IS_BUSY:
     if (plength == 4) {
-      *params = _grSstIsBusy();
+      FxU32 status;
+      status = GR_GET(((Sstregs *)gc->reg_ptr)->status);
+      if (status & SST_BUSY)
+        *params = FXTRUE;
+      else
+        *params = FXFALSE;
       retVal = plength;
     }
     break;
   case GR_LFB_PIXEL_PIPE:
     if (plength == 4) {
-      if (_GlideRoot.hwConfig.SSTs[_GlideRoot.current_sst].type == GR_SSTTYPE_SST96)
-        *params = FXFALSE;
-      else
+      if (_GlideRoot.hwConfig.SSTs[_GlideRoot.current_sst].type == GR_SSTTYPE_VOODOO)
         *params = FXTRUE;
+      else
+        *params = FXFALSE;
       retVal = plength;
     }
     break;
@@ -480,6 +495,7 @@ GR_DIENTRY(grGet, FxU32, (FxU32 pname, FxU32 plength, FxI32 *params))
     if ((hwc) && (plength == 4)) {
       switch(hwc->SSTs[_GlideRoot.current_sst].type) {
       case GR_SSTTYPE_VOODOO:
+      case GR_SSTTYPE_Voodoo2:
         *params = hwc->SSTs[_GlideRoot.current_sst].sstBoard.VoodooConfig.fbRam << 20;
         break;
       case GR_SSTTYPE_SST96:
@@ -496,6 +512,7 @@ GR_DIENTRY(grGet, FxU32, (FxU32 pname, FxU32 plength, FxI32 *params))
     if ((hwc) && (plength == 4)) {
       switch(hwc->SSTs[_GlideRoot.current_sst].type) {
       case GR_SSTTYPE_VOODOO:
+      case GR_SSTTYPE_Voodoo2:
         *params = hwc->SSTs[_GlideRoot.current_sst].sstBoard.VoodooConfig.tmuConfig[0].tmuRam << 20;
         break;
       case GR_SSTTYPE_SST96:
@@ -512,6 +529,7 @@ GR_DIENTRY(grGet, FxU32, (FxU32 pname, FxU32 plength, FxI32 *params))
     if ((hwc) && (plength == 4)) {
       switch(hwc->SSTs[_GlideRoot.current_sst].type) {
       case GR_SSTTYPE_VOODOO:
+      case GR_SSTTYPE_Voodoo2:
       case GR_SSTTYPE_SST96:
         *params = 0;    /* XXX non-UMA architecture */
         break;
@@ -541,7 +559,6 @@ GR_DIENTRY(grGet, FxU32, (FxU32 pname, FxU32 plength, FxI32 *params))
     break;
   case GR_NUM_FB:
     if (plength == 4) {
-      /* [dBorca] we can use sliDetect for GR_SSTTYPE_VOODOO only */
       *params = initNumBoardsInSystem();
       retVal = plength;
     }
@@ -563,15 +580,13 @@ GR_DIENTRY(grGet, FxU32, (FxU32 pname, FxU32 plength, FxI32 *params))
       switch(hwc->SSTs[_GlideRoot.current_sst].type) {
       case GR_SSTTYPE_VOODOO:
         *params = hwc->SSTs[_GlideRoot.current_sst].sstBoard.VoodooConfig.fbiRev;
+        retVal = 4;
         break;
       case GR_SSTTYPE_SST96:
         *params = hwc->SSTs[_GlideRoot.current_sst].sstBoard.SST96Config.vg96Rev;
-        break;
-      default:
-        retVal = FXFALSE;
+        retVal = 4;
         break;
       }
-      retVal = plength;
     }
     break;
   case GR_REVISION_TMU:
@@ -579,15 +594,13 @@ GR_DIENTRY(grGet, FxU32, (FxU32 pname, FxU32 plength, FxI32 *params))
       switch(hwc->SSTs[_GlideRoot.current_sst].type) {
       case GR_SSTTYPE_VOODOO:
         *params = hwc->SSTs[_GlideRoot.current_sst].sstBoard.VoodooConfig.tmuConfig[_GlideRoot.current_sst].tmuRev;
+        retVal = 4;
         break;
       case GR_SSTTYPE_SST96:
         *params = hwc->SSTs[_GlideRoot.current_sst].sstBoard.SST96Config.tmuConfig.tmuRev;
-        break;
-      default:
-        retVal = FXFALSE;
+        retVal = 4;
         break;
       }
-      retVal = plength;
     }
     break;
   case GR_STATS_LINES:
@@ -597,43 +610,33 @@ GR_DIENTRY(grGet, FxU32, (FxU32 pname, FxU32 plength, FxI32 *params))
     }
     break;
   case GR_STATS_PIXELS_AFUNC_FAIL:
-    {
-     GrSstPerfStats_t s;
-     _grSstPerfStats(&s);
-     *params = s.aFuncFail;
-     retVal = plength;
+    if ((((Sstregs *)gc->reg_ptr)) && (plength == 4)) {
+      *params = GR_GET(((Sstregs *)gc->reg_ptr)->stats.fbiAfuncFail);
+      retVal = plength;
     }
     break;
   case GR_STATS_PIXELS_CHROMA_FAIL:
-    {
-     GrSstPerfStats_t s;
-     _grSstPerfStats(&s);
-     *params = s.chromaFail;
-     retVal = plength;
+    if ((((Sstregs *)gc->reg_ptr)) && (plength == 4)) {
+      *params = GR_GET(((Sstregs *)gc->reg_ptr)->stats.fbiChromaFail);
+      retVal = plength;
     }
     break;
   case GR_STATS_PIXELS_DEPTHFUNC_FAIL:
-    {
-     GrSstPerfStats_t s;
-     _grSstPerfStats(&s);
-     *params = s.zFuncFail;
-     retVal = plength;
+    if ((((Sstregs *)gc->reg_ptr)) && (plength == 4)) {
+      *params = GR_GET(((Sstregs *)gc->reg_ptr)->stats.fbiZfuncFail);
+      retVal = plength;
     }
     break;
   case GR_STATS_PIXELS_IN:
-    {
-     GrSstPerfStats_t s;
-     _grSstPerfStats(&s);
-     *params = s.pixelsIn;
-     retVal = plength;
+    if ((((Sstregs *)gc->reg_ptr)) && (plength == 4)) {
+      *params = GR_GET(((Sstregs *)gc->reg_ptr)->stats.fbiPixelsIn);
+      retVal = plength;
     }
     break;
   case GR_STATS_PIXELS_OUT:
-    {
-     GrSstPerfStats_t s;
-     _grSstPerfStats(&s);
-     *params = s.pixelsOut;
-     retVal = plength;
+    if ((((Sstregs *)gc->reg_ptr)) && (plength == 4)) {
+      *params = GR_GET(((Sstregs *)gc->reg_ptr)->stats.fbiPixelsOut);
+      retVal = plength;
     }
     break;
   case GR_STATS_POINTS:
@@ -656,7 +659,7 @@ GR_DIENTRY(grGet, FxU32, (FxU32 pname, FxU32 plength, FxI32 *params))
     break;
   case GR_NUM_SWAP_HISTORY_BUFFER:
     if (plength == 4) {
-      *params = 0;       /* [dBorca] not available */
+      *params = 0;       /* in VG and VR, the swap history is not supported */
       retVal = plength;
     }
     break;
@@ -669,7 +672,7 @@ GR_DIENTRY(grGet, FxU32, (FxU32 pname, FxU32 plength, FxI32 *params))
     if (plength == 4) {
 #if ( GLIDE_PLATFORM & GLIDE_HW_SST1 )
       *params = FXTRUE;
-#else ( GLIDE_PLATFORM & GLIDE_HW_SST96 )
+#elif ( GLIDE_PLATFORM & GLIDE_HW_SST96 )
       *params = FXFALSE;
 #endif
       retVal = plength;
@@ -686,16 +689,15 @@ GR_DIENTRY(grGet, FxU32, (FxU32 pname, FxU32 plength, FxI32 *params))
     break;
   case GR_VIDEO_POSITION:
     if (plength == 8) {
-      switch(hwc->SSTs[_GlideRoot.current_sst].type) {
-      case GR_SSTTYPE_VOODOO:
-        *params = _grSstVideoLine();
-        *(params+1) = 0; /* [dBorca] bogus value */
-        break;
-      case GR_SSTTYPE_SST96:
-        *params = 0;
-        *(params+1) = 0;
-        break;
-      }
+#if ( GLIDE_PLATFORM & GLIDE_HW_SST1 )
+      FxI32 hvRetrace;
+      hvRetrace = GR_GET(((Sstregs *)gc->reg_ptr)->vRetrace);
+      *params = hvRetrace & VRETRACEMASK;
+      *(params+1) = (hvRetrace >> HRETRACEPOS ) & VRETRACEMASK;
+#elif ( GLIDE_PLATFORM & GLIDE_HW_SST96 )
+      *params = 0;
+      *(params+1) = 0;
+#endif
       retVal = plength;
     }
   break;
@@ -750,26 +752,29 @@ GR_DIENTRY(grGetString, const char *, (FxU32 pname))
 
   switch(pname) {
   case GR_EXTENSION:
-    switch(_GlideRoot.hwConfig.SSTs[_GlideRoot.current_sst].type) {
-    case GR_SSTTYPE_SST96:
-      return "CHROMARANGE";
-    case GR_SSTTYPE_VOODOO:
-    default:
-      return "";
-    }
+    return "FOGALPHA ";
+    break;
   case GR_HARDWARE:
-    if (_GlideRoot.hwConfig.SSTs[_GlideRoot.current_sst].type == GR_SSTTYPE_VOODOO)
-      return "Voodoo Graphics";
-    else /* _GlideRoot.hwConfig.SSTs[_GlideRoot.current_sst].type == GR_SSTTYPE_SST96 */
-      return "Voodoo Rush";
+#if   ( GLIDE_PLATFORM & GLIDE_HW_SST1 ) 
+    return "Voodoo Graphics";
+#elif ( GLIDE_PLATFORM & GLIDE_HW_SST96 )
+    return "Voodoo Rush";
+#endif
+    break;
   case GR_RENDERER:
     return "Glide";
+    break;
   case GR_VENDOR:
     return "3Dfx Interactive";
+    break;
   case GR_VERSION:
-    return VERSIONSTR;
+    {
+      return VERSIONSTR;
+      break;
+    }
   default:
     return "ERROR";
+    break;
   } /* end switch */
   
 #undef FN_NAME
@@ -858,9 +863,7 @@ GR_DIENTRY(grReset, FxBool, (FxU32 what))
       gc->state.vData.q0Info.mode = GR_MODE_DISABLE;
       gc->state.vData.q1Info.offset = 0;
       gc->state.vData.q1Info.mode = GR_MODE_DISABLE;
-#if 0 /* [dBorca] Should use delayed validation */
       gc->state.invalid &= ~vtxlayoutBIT;
-#endif
       gc->state.vData.colorType = GR_FLOAT;
     }
     retVal = FXTRUE;
@@ -882,6 +885,7 @@ GR_DIENTRY(grReset, FxBool, (FxU32 what))
   
   Return:
   -------------------------------------------------------------------*/
+
 typedef struct {
     const char *name;
     GrProc      proc;
@@ -892,12 +896,12 @@ FX_ENTRY void FX_CALL txImgQuantize (char *dst, char *src, int w, int h, FxU32 f
 FX_ENTRY void FX_CALL txMipQuantize (void *pxMip, void *txMip, int fmt, FxU32 d, FxU32 comp);
 FX_ENTRY void FX_CALL txPalToNcc (GuNccTable *ncc_table, const FxU32 *pal);
 #endif
+GR_DIENTRY(grSetNumPendingBuffers, void, (FxI32 NumPendingBuffers));
+GR_ENTRY(grTexDownloadTableExt, void,
+         ( GrChipID_t tmu,  GrTexTable_t type,  void *data ));
 
 static GrExtensionTuple _extensionTable[] = {
-#if (GLIDE_PLATFORM & GLIDE_HW_SST96)
-    { "grChromaRangeModeExt", (GrProc)grChromaRangeMode },
-    { "grChromaRangeExt", (GrProc)grChromaRange },
-#endif
+    { "guQueryResolutionXYExt", (GrProc)guQueryResolutionXY },
     { "grGetRegistryOrEnvironmentStringExt", (GrProc)grGetRegistryOrEnvironmentString },
     { "grTexDownloadTableExt", (GrProc)grTexDownloadTableExt },
 #if HAVE_TEXUS2
@@ -912,20 +916,23 @@ static GrExtensionTuple _extensionTable[] = {
 GR_DIENTRY(grGetProcAddress, GrProc, (char *procName))
 {
 #define FN_NAME "grGetProcAddress"
+
   GrExtensionTuple *tuple;
 
   tuple = &_extensionTable[0];
 
-  while (tuple->name) {
-    if (!strcmp(procName, tuple->name)) {
-      return tuple->proc;
-    }
-    tuple++;
+  while( tuple->name ) {
+      if ( !strcmp( procName, tuple->name ) ) {
+          return tuple->proc;
+      }
+      tuple++;
   }
 
   return NULL;
+
 #undef FN_NAME
 } /* grGetProcAddress */
+
 
 /*-------------------------------------------------------------------
   Function: grQueryResolution

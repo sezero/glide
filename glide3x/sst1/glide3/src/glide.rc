@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.1  2004/03/02 07:55:30  dborca
+** Bastardised Glide3x for SST1
+**
 ** Revision 1.1.1.1  1999/12/07 21:48:52  joseph
 ** Initial checkin into SourceForge.
 **
@@ -29,7 +32,8 @@
 
 #include <fxver.h>
 #include "rcver.h"
-#include "fxbldno.h"
+/*#include "fxbldno.h"*/
+#define BUILD_NUMBER 0001
 
 /////////////////////////////////////////////////////////////////////////////
 //

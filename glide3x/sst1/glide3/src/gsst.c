@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.2  2004/03/08 07:42:21  dborca
+** Voodoo Rush fixes
+**
 ** Revision 1.1.2.1  2004/03/02 07:55:30  dborca
 ** Bastardised Glide3x for SST1
 **
@@ -232,6 +235,10 @@
 #include <glidesys.h>
 #include <sst1vid.h>
 
+#if ( GLIDE_PLATFORM & GLIDE_SST_SIM)
+#include <gsim.h>
+#endif
+
 #if ( GLIDE_PLATFORM & GLIDE_HW_SST96 ) 
 #include <init.h>
 #endif
@@ -353,15 +360,13 @@ static void initState(void) {
 void setAutoflip(int enable) {
   GrVertex lineLeft, lineRight;
   GrState state;
-  int scrWidth;
+  int scrWidth = grSstScreenWidth();
   int line;
   MSG msg;
   GrColorFormat_t format;
   static firstupdate = 1;
   extern void initAT3DSetTiles(FxU32 PageFlipping, FxU32 nBuffers);
   GR_DCL_GC;
-
-  scrWidth = gc->state.screen_width;
 
   // wait for the window messages to flush
   while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
@@ -379,7 +384,7 @@ void setAutoflip(int enable) {
     firstupdate = 0;
   } /* TODO:: setup regs for non-pageflipping seems to fix fb alignment... */
   if (enable) {
-    grFinish();
+    grSstIdle();
     initAT3DSetTiles(1,gc->state.num_buffers);
   } /* setup regs for pageflipping */
 #endif
@@ -399,12 +404,12 @@ void setAutoflip(int enable) {
 #if   ( GLIDE_PLATFORM & GLIDE_HW_SST1 ) 
   lineLeft.y = lineRight.y = 2.f;
 #elif ( GLIDE_PLATFORM & GLIDE_HW_SST96 )
-  lineLeft.y = lineRight.y = gc->state.screen_height - H3DHEIGHT_FROM_REZ(gc->grSstRez) + 2.f;
+  lineLeft.y = lineRight.y = grSstScreenHeight() - H3DHEIGHT_FROM_REZ(gc->grSstRez) + 2.f;
 #endif
   
   grColorMask(FXTRUE,0);
   grDepthBufferFunction( GR_CMP_ALWAYS );
-  grClipWindow(0,0,gc->state.screen_width,gc->state.screen_height);
+  grClipWindow(0,0,grSstScreenWidth(),grSstScreenHeight());
   grRenderBuffer(GR_BUFFER_FRONTBUFFER);
   grBufferClear( 0x00, 0, GR_ZDEPTHVALUE_FARTHEST );
 
@@ -447,13 +452,13 @@ void setAutoflip(int enable) {
 
 #if ( GLIDE_PLATFORM & GLIDE_HW_SST96 )
   if (!enable) {
-    // grFinish();
+    // grSstIdle();
     initAT3DSetTiles(0,gc->state.num_buffers);
   } // setup regs for non-pageflipping
 #endif
 
   line = 50000;
-  while ((_grBufferNumPending() > 2) && (--line));
+  while ((grBufferNumPending() > 2) && (--line));
 
   grGlideSetState(&state);  // restore app. state
 
@@ -477,7 +482,7 @@ void setAutoflip(int enable) {
         gc->state.screen_height = 600;
       }
     }
-    grClipWindow(0,0,gc->state.screen_width,gc->state.screen_height);
+    grClipWindow(0,0,grSstScreenWidth(),grSstScreenHeight());
   }
 #endif
 }
@@ -549,19 +554,22 @@ void setAutoflip(int enable) {
             hardware - any calls to glide rendering routines will result
             in undefined behavior.
   -------------------------------------------------------------------*/
-GR_ENTRY(grSstWinOpen, GrContext_t, (
-    FxU32                   hWnd,
-    GrScreenResolution_t    resolution, 
-    GrScreenRefresh_t       refresh, 
-    GrColorFormat_t         format, 
-    GrOriginLocation_t      origin, 
-    int                     nColBuffers,
-    int                     nAuxBuffers))
+GR_ENTRY(grSstWinOpen, GrContext_t, (FxU32                   hWnd,
+                                     GrScreenResolution_t    resolution, 
+                                     GrScreenRefresh_t       refresh, 
+                                     GrColorFormat_t         format, 
+                                     GrOriginLocation_t      origin, 
+                                     int                     nColBuffers,
+                                     int                     nAuxBuffers))
 {
-  FxBool rv = FXTRUE;
-  int tmu;
-  InitFIFOData fifoInfo;
-  int xres, yres, fbStride;
+  GrContext_t 
+    rv = 0x00UL;
+  int 
+    tmu,
+    xres, yres, 
+    fbStride;
+  InitFIFOData 
+    fifoInfo;
 #if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
   FARPROC 
     oemInitMapBoard = NULL, 
@@ -581,18 +589,11 @@ GR_ENTRY(grSstWinOpen, GrContext_t, (
                   nColBuffers, nAuxBuffers));
   GR_CHECK_F("grSstWinOpen", !gc, "no SST selected as current (gc==NULL)");
 
-#if (GLIDE_PLATFORM & GLIDE_HW_SST1)
-  /* The current init code does not do triple buffering, and we would
-   * have the same bug as v2 for lfb reads when triple buffering if 
-   * we added this back.
-   */
-  rv = (nColBuffers < 3);
-  if (!rv) {
-    GDBG_INFO(( gc->myLevel, 
-                "grSstWinOpen failed because sst1 cannot really triple buffer\n"));
-    goto BAILOUT;  
-  }
-#endif /* (GLIDE_PLATFORM & GLIDE_HW_SST1) */
+#if !defined(__linux__) && !defined(__DJGPP__)
+  if (!hWnd)
+    GrErrorCallback("grSstWinOpen: need to use a valid window handle",
+                    FXTRUE);
+#endif
 
   if (!_GlideRoot.environment.ignoreReopen) {
     GR_CHECK_F("grSstWinOpen", gc->open, "gc opened twice!" );
@@ -603,9 +604,9 @@ GR_ENTRY(grSstWinOpen, GrContext_t, (
    * in our future.
    */
   if (gc->closedP) {
-    gc->closedP = FXFALSE;
     if (!(pciOpen() &&
           (initMapBoard(_GlideRoot.current_sst) != NULL))) return FXFALSE;
+    gc->closedP = FXFALSE;
   }
   
 #if (GLIDE_PLATFORM & GLIDE_OS_WIN32) && (!defined(GLIDE_DEBUG) || (GLIDE_DEBUG == 0))
@@ -627,7 +628,7 @@ GR_ENTRY(grSstWinOpen, GrContext_t, (
 #if defined(FX_OEM_BUILD) && !defined(FX_STATIC_BUILD)
   else {
     GrErrorCallback("Missing fxoem2x.dll", FXTRUE);
-    grSstWinClose((GrContext_t)(_GlideRoot.GCs + _GlideRoot.current_sst));
+    grSstWinClose();
     exit(0);
   }
 #endif /* FX_STATIC_BUILD */
@@ -658,9 +659,15 @@ GR_ENTRY(grSstWinOpen, GrContext_t, (
       GDBG_INFO(( gc->myLevel, "grSstWinOpen failed "
                   "for illegal screen resolution or "
                   "insufficient memory\n" ));
-      rv = FXFALSE;
       goto BAILOUT;
     }
+
+#if (GLIDE_PLATFORM & GLIDE_HW_SST96)
+  if (resolution == GR_RESOLUTION_NONE) {
+    goto BAILOUT;
+  }
+          
+#endif
 
 #ifdef H3D
   if (!GR_RESOLUTION_IS_AUTOFLIPPED(resolution)) {
@@ -670,7 +677,6 @@ GR_ENTRY(grSstWinOpen, GrContext_t, (
        (resolution != GR_RESOLUTION_NONE )) ) {
       GDBG_INFO(( gc->myLevel, "grSstWinOpen failed "
                   "for illegal screen resolution\n" ));
-      rv = FXFALSE;
       goto BAILOUT;
     }
 #ifdef H3D
@@ -679,13 +685,12 @@ GR_ENTRY(grSstWinOpen, GrContext_t, (
       (resolution > GR_RESOLUTION_AUTOFLIPPED_MAX) ) {
       GDBG_INFO(( gc->myLevel, "grSstWinOpen failed "
                   "for illegal autoflipped screen resolution\n" ));
-      rv = FXFALSE;
       goto BAILOUT;
     }
   }
 #endif
   
-#if ( 1 ) 
+#if ( !( GLIDE_PLATFORM & GLIDE_SST_SIM ) )
   /*------------------------------------------------------
     Video Init
     ------------------------------------------------------*/
@@ -697,43 +702,48 @@ GR_ENTRY(grSstWinOpen, GrContext_t, (
   ** sst1InitVideoBuffers()
   */
   {
-    if((sstVideoRez = sst1InitFindVideoTimingStruct(resolution,refresh))) {
-      tvVidtiming = *sstVideoRez;
-      oemi.vid.res = resolution;
-      oemi.vid.refresh = refresh;
-      oemi.vid.depth = 16;
-      oemi.vid.hSyncOn = tvVidtiming.hSyncOn;
-      oemi.vid.hSyncOff = tvVidtiming.hSyncOff;
-      oemi.vid.vSyncOn = tvVidtiming.vSyncOn;
-      oemi.vid.vSyncOff = tvVidtiming.vSyncOff;
-      oemi.vid.hBackPorch = tvVidtiming.hBackPorch;
-      oemi.vid.vBackPorch = tvVidtiming.vBackPorch;
-      oemi.vid.xDimension = tvVidtiming.xDimension;
-      oemi.vid.yDimension = tvVidtiming.yDimension;
-      oemi.vid.clkFreq16bpp = tvVidtiming.clkFreq16bpp;
-      oemi.vid.clkFreq24bpp = tvVidtiming.clkFreq24bpp;
-      
-      if (gc->oemInit) {
-        if ((oemInitVideoTiming = GetProcAddress(gc->oemInit, "_fxoemInitVideoTiming@4")) && 
-            (oemInitMapBoard))
-          oemvidtiming = oemInitVideoTiming(&oemi);
-        /*
-        ** video timing is updated by oem dll
-        */
-        if (oemvidtiming) {
-          tvVidtiming.hSyncOn = oemi.vid.hSyncOn;
-          tvVidtiming.hSyncOff = oemi.vid.hSyncOff;
-          tvVidtiming.vSyncOn = oemi.vid.vSyncOn;
-          tvVidtiming.vSyncOff = oemi.vid.vSyncOff;
-          tvVidtiming.hBackPorch = oemi.vid.hBackPorch;
-          tvVidtiming.vBackPorch = oemi.vid.vBackPorch;
-          tvVidtiming.xDimension = oemi.vid.xDimension;
-          tvVidtiming.yDimension = oemi.vid.yDimension;
-          tvVidtiming.clkFreq16bpp = oemi.vid.clkFreq16bpp;
-          tvVidtiming.clkFreq24bpp = oemi.vid.clkFreq24bpp;
-        }
+#if (GLIDE_PLATFORM & GLIDE_HW_SST1)
+    if(!(sstVideoRez = sst1InitFindVideoTimingStruct(resolution,refresh)))
+      goto BAILOUT;
+    tvVidtiming = *sstVideoRez;
+    oemi.vid.res = resolution;
+    oemi.vid.refresh = refresh;
+    oemi.vid.depth = 16;
+    oemi.vid.hSyncOn = tvVidtiming.hSyncOn;
+    oemi.vid.hSyncOff = tvVidtiming.hSyncOff;
+    oemi.vid.vSyncOn = tvVidtiming.vSyncOn;
+    oemi.vid.vSyncOff = tvVidtiming.vSyncOff;
+    oemi.vid.hBackPorch = tvVidtiming.hBackPorch;
+    oemi.vid.vBackPorch = tvVidtiming.vBackPorch;
+    oemi.vid.xDimension = tvVidtiming.xDimension;
+    oemi.vid.yDimension = tvVidtiming.yDimension;
+    oemi.vid.clkFreq16bpp = tvVidtiming.clkFreq16bpp;
+    oemi.vid.clkFreq24bpp = tvVidtiming.clkFreq24bpp;
+
+    if (gc->oemInit) {
+      if ((oemInitVideoTiming = GetProcAddress(gc->oemInit, "_fxoemInitVideoTiming@4")) && 
+          (oemInitMapBoard))
+        oemvidtiming = oemInitVideoTiming(&oemi);
+      /*
+      ** video timing is updated by oem dll
+      */
+      if (oemvidtiming) {
+        tvVidtiming.hSyncOn = oemi.vid.hSyncOn;
+        tvVidtiming.hSyncOff = oemi.vid.hSyncOff;
+        tvVidtiming.vSyncOn = oemi.vid.vSyncOn;
+        tvVidtiming.vSyncOff = oemi.vid.vSyncOff;
+        tvVidtiming.hBackPorch = oemi.vid.hBackPorch;
+        tvVidtiming.vBackPorch = oemi.vid.vBackPorch;
+        tvVidtiming.xDimension = oemi.vid.xDimension;
+        tvVidtiming.yDimension = oemi.vid.yDimension;
+        tvVidtiming.clkFreq16bpp = oemi.vid.clkFreq16bpp;
+        tvVidtiming.clkFreq24bpp = oemi.vid.clkFreq24bpp;
       }
     }
+#else
+    oemvidtiming = 0;
+    oemi.vid.refresh = 0;
+#endif
   }
 #endif
   GDBG_INFO((gc->myLevel, "  Video Init\n" ));
@@ -778,7 +788,7 @@ GR_ENTRY(grSstWinOpen, GrContext_t, (
   gc->nopCMD = FXFALSE;
 
 #  if   ( GLIDE_PLATFORM & GLIDE_HW_SST1 ) 
-  grHints( GR_HINT_FIFOCHECKHINT, 
+  _grHints( GR_HINT_FIFOCHECKHINT, 
            fifoInfo.hwDep.vgFIFOData.memFifoStatusLwm + 0x100 );
   _grReCacheFifo( 0 );
 #  elif ( GLIDE_PLATFORM & GLIDE_HW_SST96 )
@@ -813,7 +823,16 @@ GR_ENTRY(grSstWinOpen, GrContext_t, (
 #    error "Need to write command transport init for glide for this hw"
 #  endif
 
+#else
+  gsim_setFBsize(gc->state.screen_width, 
+                 gc->state.screen_height );
 #endif
+
+  /* We're all inited now. No more failures from this ppoint on. */
+  gc->open = FXTRUE;
+  _GlideRoot.windowsInit = FXTRUE; /* to avoid race with grSstControl() */
+
+  rv = (GrContext_t)gc;
 
   /*------------------------------------------------------
     GC Init
@@ -863,6 +882,8 @@ GR_ENTRY(grSstWinOpen, GrContext_t, (
       gc->state.tmu_config[tmu].texBaseAddr_2   = 0x00000000;
       gc->state.tmu_config[tmu].texBaseAddr_3_8 = 0x00000000;
       gc->state.tmu_config[tmu].mmMode          = GR_MIPMAP_NEAREST;
+      gc->state.tmu_config[tmu].st_scale[0]     = 256.f;
+      gc->state.tmu_config[tmu].st_scale[1]     = 256.f;
       gc->state.tmu_config[tmu].smallLod        = G3_LOD_TRANSLATE(GR_LOD_LOG2_1);
       gc->state.tmu_config[tmu].largeLod        = G3_LOD_TRANSLATE(GR_LOD_LOG2_1);
       gc->state.tmu_config[tmu].evenOdd         = GR_MIPMAPLEVELMASK_BOTH;
@@ -909,14 +930,13 @@ GR_ENTRY(grSstWinOpen, GrContext_t, (
   grDitherMode( GR_DITHER_4x4 );
   grFogMode( GR_FOG_DISABLE );
   grFogColorValue( 0x00000000 );
-  grGammaCorrectionValue( 1.7f );
+  guGammaCorrectionRGB(1.7f, 1.7f, 1.7f);
   /*
   ** initialize default state for viewport and grVertexLayout
   */
   grCoordinateSpace(GR_WINDOW_COORDS);
   grViewport(0, 0, xres, yres);
   grRenderBuffer( GR_BUFFER_BACKBUFFER );
-  grCullMode(GR_CULL_DISABLE);
   switch (gc->num_tmu) {
   case 3:
     grTexClampMode( GR_TMU2, GR_TEXTURECLAMP_CLAMP, GR_TEXTURECLAMP_CLAMP );
@@ -952,9 +972,6 @@ GR_ENTRY(grSstWinOpen, GrContext_t, (
   grLfbConstantAlpha( 0xFF );
   grLfbConstantDepth( 0 );
 
-  gc->open = FXTRUE;
-  _GlideRoot.windowsInit = FXTRUE; /* to avoid race with grSstControl() */
-
 #ifdef H3D
   if (GR_RESOLUTION_IS_AUTOFLIPPED(resolution)) {
     setAutoflip(1);
@@ -974,7 +991,7 @@ GR_ENTRY(grSstWinOpen, GrContext_t, (
     if (!_GlideRoot.environment.noSplash) {
       HMODULE newSplash;
 
-      if (newSplash = LoadLibrary("3dfxsplash2.dll")) {
+      if (newSplash = LoadLibrary("3dfxspl3.dll")) {
         FARPROC fxSplash;
 
         if (fxSplash = GetProcAddress(newSplash, "_fxSplash@16")) {
@@ -1035,12 +1052,12 @@ GR_ENTRY(grSstWinOpen, GrContext_t, (
 GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
 {
 #define FN_NAME "grSstWinClose"
-  FxBool retVal;
   GR_BEGIN_NOFIFOCHECK("grSstWinClose",80);
   GDBG_INFO_MORE((gc->myLevel,"()\n"));
 
-  retVal = ((gc != NULL) && gc->open);
-  if (retVal) {
+  GR_ASSERT((GrContext_t)gc == context);
+
+  if ( (gc != NULL) && gc->open ) {
 #if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
     FARPROC oemRestoreVideo = NULL;
 #endif
@@ -1083,7 +1100,7 @@ GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
   }
     
   GR_END();
-  return retVal;
+  return FXTRUE;
 #undef FN_NAME
 } /* grSstWinClose */
 
@@ -1121,15 +1138,12 @@ GR_DIENTRY(grSelectContext, FxBool , (GrContext_t context) )
 #define FN_NAME "grSelectContext"
   GR_BEGIN_NOFIFOCHECK(FN_NAME, 80);
   
-  /*
-  ** FIXME!! Not implemented in glide3 alpha
-  */
   return(FXTRUE);
 #undef FN_NAME
 } /* grSelectConetext */
 
 FxBool FX_CSTYLE
-_grSstControl ( GrControl_t code )
+_grSstControl(GrControl_t code)
 {
 #define FN_NAME "grSstControl"  
 
@@ -1191,7 +1205,7 @@ _grSstControl ( GrControl_t code )
       if (nTries++ > 999) {
         GDBG_INFO((80, "%s:  returning FALSE after %d checks for idle\n", 
                    FN_NAME, nTries));
-        return FXFALSE;
+        return FXTRUE;
       }
 
       status = GET(hw->status);
@@ -1225,6 +1239,7 @@ _grSstControl ( GrControl_t code )
   }
   GDBG_INFO((41, "%s:  Returning TRUE\n", FN_NAME));
   return FXTRUE;
+  
 #undef FN_NAME
 } /* grSstControl */
 
@@ -1232,8 +1247,7 @@ _grSstControl ( GrControl_t code )
 **  grSstPerfStats
 */ 
 
-void FX_CSTYLE
-_grSstPerfStats (GrSstPerfStats_t *pStats)
+GR_ENTRY(grSstPerfStats, void, (GrSstPerfStats_t *pStats))
 {
 #if ( GLIDE_PLATFORM & GLIDE_HW_SST96 )
   FxU32 jr;
@@ -1290,7 +1304,7 @@ _grSstPerfStats (GrSstPerfStats_t *pStats)
 */
 
 void FX_CSTYLE
-_grSstResetPerfStats (void)
+_grSstResetPerfStats(void)
 {
   GR_BEGIN("grSstResetPerfStats",83,4);
   GDBG_INFO_MORE((gc->myLevel,"()\n"));
@@ -1304,7 +1318,7 @@ _grSstResetPerfStats (void)
 */
 
 FxU32 FX_CSTYLE
-_grSstStatus (void)
+_grSstStatus(void)
 {
   FxU32 stat;
 
@@ -1325,8 +1339,7 @@ _grSstStatus (void)
 **  grSstVideoLine - return current video line number
 */
 
-FxU32 FX_CSTYLE
-_grSstVideoLine (void)
+GR_ENTRY(grSstVideoLine, FxU32, (void))
 {
   FxU32 vline = 1;
 #if ( GLIDE_PLATFORM & GLIDE_HW_SST1 )
@@ -1341,11 +1354,22 @@ _grSstVideoLine (void)
 }/* grSstVideoLine */
 
 /*---------------------------------------------------------------------------
+**  grSstVRetrace - return contents of SST_VRETRACE bit of status register;
+*/
+
+GR_ENTRY(grSstVRetraceOn, FxBool, (void))
+{
+  if (_grSstStatus() & SST_VRETRACE)
+    return FXFALSE;
+  else
+    return FXTRUE;
+}/* grSstVRetrace */
+
+/*---------------------------------------------------------------------------
 **  grSstIsBusy - find out if the SST is busy or not
 */
 
-FxBool FX_CSTYLE
-_grSstIsBusy (void)
+GR_ENTRY(grSstIsBusy, FxBool, (void))
 {
   FxBool busy;
   GR_BEGIN_NOFIFOCHECK( "grSstIsBusy", 85 );
@@ -1365,70 +1389,29 @@ _grSstIsBusy (void)
 }/* grSstIsBusy */
 
 /*---------------------------------------------------------------------------
-**  grGammaCorrectionValue - set the gamma correction value
-*/
-
-GR_ENTRY(grGammaCorrectionValue, void, (float gam))
-{
-  GR_BEGIN_NOFIFOCHECK("grGammaCorrectionValue",80);
-  GDBG_INFO_MORE((gc->myLevel,"(%g)\n",gam));
-  initGamma( gam );
-  GR_END();
-} /* grGammaCorrectionValue */
-
-
-/*---------------------------------------------------------------------------
-** grFinish
-*/
-
-GR_ENTRY(grFinish, void, (void))
-{
-  GR_BEGIN_NOFIFOCHECK("grFinish",83);
-  GDBG_INFO_MORE((gc->myLevel,"()\n"));
-
-#if (GLIDE_PLATFORM & GLIDE_HW_SST96)
-  P6_NUDGE_OF_LOVE;
-#endif
-
-  initIdle();
-
-  GR_END_SLOPPY();
-} /* grFinish */
-
-
-/*-------------------------------------------------------------------
-  Function: grFlush
-  Date: 09-Jan-98
-  Implementor(s): atai
-  Description:
-
-  Arguments:
-  
-  Return:
-  -------------------------------------------------------------------*/
-GR_ENTRY(grFlush, void, (void))
-{
-#define FN_NAME "grFlush"
-  GR_BEGIN("grFlush", 83, 4);
-  GDBG_INFO_MORE((gc->myLevel,"()\n"));
-
-  GR_SET(hw->nopCMD,0);
-
-  GR_END();
-#undef FN_NAME
-} /* grFlush */
-
-/*---------------------------------------------------------------------------
 **  guGammaCorrectionRGB - set the gamma correction value
 */
 
 GR_ENTRY(guGammaCorrectionRGB, void, (float r, float g, float b))
 {
+  /*
+  ** FIXME!!!
+  */
+#if 1
+  GR_BEGIN_NOFIFOCHECK("guGammaCorrectionRGB",80);
+  GDBG_INFO_MORE((gc->myLevel,"(%g,%g,%g)\n",r, g, b));
+  if (_GlideRoot.hwConfig.SSTs[_GlideRoot.current_sst].type == GR_SSTTYPE_VOODOO)
+    initGammaRGB((double)r, (double)g, (double)b);
+  else
+    initGamma(r);
+  GR_END();
+#else
   GR_BEGIN_NOFIFOCHECK("guGammaCorrectionValue",80);
-  GDBG_INFO_MORE((gc->myLevel,"(%g %g %g)\n",r, g, b));
+  GDBG_INFO_MORE(gc->myLevel,"(%g %g %g)\n",r, g, b);
 
   GR_CHECK_F(myName,
-             (_GlideRoot.hwConfig.SSTs[_GlideRoot.current_sst].type != GR_SSTTYPE_VOODOO),
+             (_GlideRoot.hwConfig.SSTs[_GlideRoot.current_sst].type != GR_SSTTYPE_Voodoo2)
+             ||  (_GlideRoot.hwConfig.SSTs[_GlideRoot.current_sst].type != GR_SSTTYPE_Voodoo2), 
              "grGammaCorrectionRGB not supported.");
 
 #if GLIDE_INIT_HAL
@@ -1439,10 +1422,11 @@ GR_ENTRY(guGammaCorrectionRGB, void, (float r, float g, float b))
    *
    * initGamma(gam);
    */
-  initGammaRGB(/*gc->reg_ptr, */r, g, b);
+  sst1InitGammaRGB(gc->reg_ptr, r, g, b);
 #endif /* !GLIDE_INIT_HAL */
 
   GR_END();
+#endif
 } /* guGammaCorrectionRGB */
 
 /*-------------------------------------------------------------------
@@ -1458,6 +1442,16 @@ GR_ENTRY(guGammaCorrectionRGB, void, (float r, float g, float b))
 GR_DIENTRY(grLoadGammaTable, void, (FxU32 nentries, FxU32 *red, FxU32 *green, FxU32 *blue))
 {
 #define FN_NAME "grLoadGammaTable"
+  /*
+  ** FIXME!!
+  */
+#if 1
+  GR_BEGIN_NOFIFOCHECK("guGammaCorrectionRGB",80);
+  GDBG_INFO_MORE((gc->myLevel,"(%g,%g,%g)\n",red, green, blue));
+  if (_GlideRoot.hwConfig.SSTs[_GlideRoot.current_sst].type == GR_SSTTYPE_VOODOO)
+    initGammaTable(nentries, red, green, blue);
+  GR_END();
+#else
   FxU32 max;
 
   GR_BEGIN_NOFIFOCHECK("grLoadGammaTable",80);
@@ -1465,11 +1459,59 @@ GR_DIENTRY(grLoadGammaTable, void, (FxU32 nentries, FxU32 *red, FxU32 *green, Fx
   grGet(GR_GAMMA_TABLE_ENTRIES, 4, &max);
   if (nentries > max)
     nentries = max;
-  initGammaTable(/*gc->reg_ptr, */nentries, red, green, blue);
+  sst1InitGammaTable(gc->reg_ptr, nentries, red, green, blue);
+
+  GR_END();
+#endif
+#undef FN_NAME
+}
+
+/*---------------------------------------------------------------------------
+** grSstIdle/grFinish
+*/
+
+GR_ENTRY(grFinish, void, (void))
+{
+  GR_BEGIN_NOFIFOCHECK("grSstIdle",83);
+  GDBG_INFO_MORE((gc->myLevel,"()\n"));
+
+#if (GLIDE_PLATFORM & GLIDE_SST_SIM)
+  GR_SET(hw->nopCMD,0);         /* need to issue NOP command to clear busy flag */
+  while (GET(hw->status) & SST_BUSY)
+    ;
+#else
+
+#if (GLIDE_PLATFORM & GLIDE_HW_SST96)
+  P6_NUDGE_OF_LOVE;
+#endif
+
+  initIdle();
+#endif
+
+  GR_END_SLOPPY();
+} /* grSstIdle */
+
+/*-------------------------------------------------------------------
+  Function: grFlush
+  Date: 09-Jan-98
+  Implementor(s): atai
+  Description:
+
+  Arguments:
+  
+  Return:
+  -------------------------------------------------------------------*/
+GR_ENTRY(grFlush, void, (void))
+{
+#define FN_NAME "grFlush"
+  GR_BEGIN_NOFIFOCHECK("grFlush", 83);
+  GDBG_INFO_MORE((gc->myLevel,"()\n"));
+
+  P6FENCE_CMD( GR_SET(hw->nopCMD,0) );
 
   GR_END();
 #undef FN_NAME
-}
+} /* grSstIdle */
 
 /*---------------------------------------------------------------------------
 **  grSstOrigin - Set the orgin orientation of the screen.
@@ -1480,7 +1522,7 @@ GR_DIENTRY(grLoadGammaTable, void, (FxU32 nentries, FxU32 *red, FxU32 *green, Fx
 **
 */
 
-GR_ENTRY(grSstOrigin, void, (GrOriginLocation_t origin ))
+GR_STATE_ENTRY(grSstOrigin, void, (GrOriginLocation_t origin ))
 {
   FxU32 fbzMode;
 
@@ -1496,14 +1538,7 @@ GR_ENTRY(grSstOrigin, void, (GrOriginLocation_t origin ))
 
   initOrigin( origin );
 
-  GR_SET_EXPECTED_SIZE(sizeof(FxU32));
-  {
-    GR_SET( hw->fbzMode, fbzMode );
-  }
-  GR_CHECK_SIZE();
-
   gc->state.fbi_config.fbzMode = fbzMode;
-  GR_END();
 } /* grSstOrigin */
 
 /* GMT: do we really have users for this???
@@ -1522,7 +1557,7 @@ GR_ENTRY(grSstOrigin, void, (GrOriginLocation_t origin ))
 
 GR_ENTRY(grSstConfigPipeline, void, (GrChipID_t chip, GrSstRegister reg, FxU32 value))
 {
-  GR_BEGIN("grSstConfigPipeline",83,4+2*PACKER_WORKAROUND_SIZE);
+  GR_BEGIN("grSstConfigPipeline",83,4);
   GDBG_INFO_MORE((gc->myLevel,"(%d,0x%x,0x%x)\n",chip,reg,value));
   PACKER_WORKAROUND;
 

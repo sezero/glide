@@ -143,7 +143,7 @@ main (int argc, char **argv)
 
     if (argc > 1) {
       if (strcmp("-inline", argv[1]) == 0) {
-        Sstregs dummyRegs;
+        Sstregs dummyRegs = { 0x00UL };
 
         printf("#ifndef __FX_INLINE_H__\n");
         printf("#define __FX_INLINE_H__\n");
@@ -198,6 +198,9 @@ main (int argc, char **argv)
     OFFSET (gc,lfb_ptr,"lfb_ptr\t\t");
     OFFSET (gc,state.cull_mode,"cull_mode\t");
     OFFSET (gc,dataList,"dataList\t");
+    OFFSET (gc,state.invalid,"invalid\t");
+    OFFSET (gc,state.grCoordinateSpaceArgs.coordinate_space_mode,"coord_space\t");
+    OFFSET (gc,state.vData.colorType,"color_type\t");
 #if (GLIDE_PLATFORM & GLIDE_HW_SST1)
     OFFSET (gc,state.fifoFree, "fifoFree\t");
 #endif
@@ -228,6 +231,7 @@ main (int argc, char **argv)
     HEADER ("dataList");
     OFFSET (dl,i,"dl_i\t\t");
     OFFSET (dl,addr,"dl_addr\t\t");
+    OFFSET (dl,bddr,"dl_bddr\t\t");
     SIZEOF (dl,"dataList\t");
     NEWLINE;
 

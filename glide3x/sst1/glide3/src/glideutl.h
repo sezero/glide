@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.1  2004/03/02 07:55:30  dborca
+** Bastardised Glide3x for SST1
+**
 ** Revision 1.1.1.1  1999/12/07 21:48:52  joseph
 ** Initial checkin into SourceForge.
 **
@@ -98,6 +101,9 @@ typedef struct
 } Gu3dfInfo;
 
 #ifndef FX_GLIDE_NO_FUNC_PROTO
+/*
+** Gamma functions
+*/
 
 FX_ENTRY void FX_CALL 
 guGammaCorrectionRGB( FxFloat red, FxFloat green, FxFloat blue );
@@ -109,13 +115,13 @@ FX_ENTRY float FX_CALL
 guFogTableIndexToW( int i );
 
 FX_ENTRY void FX_CALL
-guFogGenerateExp( GrFog_t fogtable[], float density );
+guFogGenerateExp( GrFog_t *fogtable, float density );
 
 FX_ENTRY void FX_CALL
-guFogGenerateExp2( GrFog_t fogtable[], float density );
+guFogGenerateExp2( GrFog_t *fogtable, float density );
 
 FX_ENTRY void FX_CALL
-guFogGenerateLinear(GrFog_t fogtable[],
+guFogGenerateLinear(GrFog_t *fogtable,
                     float nearZ, float farZ );
 
 /*

@@ -211,11 +211,11 @@ static char glideIdent[] = "@#%" VERSIONSTR ;
 **          blending wont work!
 */
 
-GR_ENTRY(grAlphaBlendFunction, void, ( GrAlphaBlendFnc_t rgb_sf,   GrAlphaBlendFnc_t rgb_df, GrAlphaBlendFnc_t alpha_sf, GrAlphaBlendFnc_t alpha_df ))
+GR_STATE_ENTRY(grAlphaBlendFunction, void, ( GrAlphaBlendFnc_t rgb_sf,   GrAlphaBlendFnc_t rgb_df, GrAlphaBlendFnc_t alpha_sf, GrAlphaBlendFnc_t alpha_df ))
 {
   FxU32 alphamode;
 
-  GR_BEGIN("grAlphaBlendFunction",85,4);
+  GR_BEGIN_NOFIFOCHECK("grAlphaBlendFunction",85);
   GDBG_INFO_MORE((gc->myLevel,"(%d,%d,%d,%d)\n",rgb_sf,rgb_df,alpha_sf,alpha_df));
 
   /* Watcom warning suppressor */
@@ -243,20 +243,18 @@ GR_ENTRY(grAlphaBlendFunction, void, ( GrAlphaBlendFnc_t rgb_sf,   GrAlphaBlendF
       ( ( ( FxU32 ) alpha_sf ) << SST_ASRCFACT_SHIFT ) |
         ( ( ( FxU32 ) alpha_df ) << SST_ADSTFACT_SHIFT );
   
-  GR_SET( hw->alphaMode, alphamode );
   gc->state.fbi_config.alphaMode = alphamode;
-  GR_END();
 } /* grAlphaBlendFunction */
 
 /*---------------------------------------------------------------------------
 ** grAlphaCombine
 */
-GR_ENTRY(grAlphaCombine, void, (GrCombineFunction_t function, GrCombineFactor_t factor, GrCombineLocal_t local, GrCombineOther_t other, FxBool invert ))
+GR_STATE_ENTRY(grAlphaCombine, void, (GrCombineFunction_t function, GrCombineFactor_t factor, GrCombineLocal_t local, GrCombineOther_t other, FxBool invert ))
 {
   FxU32 fbzColorPath;
   FxU32 oldTextureEnabled;
 
-  GR_BEGIN("grAlphaCombine",85,8);
+  GR_BEGIN_NOFIFOCHECK("grAlphaCombine",85);
   GDBG_INFO_MORE((gc->myLevel,"(%d,%d,%d,%d,%d)\n",function,factor,local,other,invert));
   GR_CHECK_W(myName,
               function < GR_COMBINE_FUNCTION_ZERO ||
@@ -350,18 +348,17 @@ GR_ENTRY(grAlphaCombine, void, (GrCombineFunction_t function, GrCombineFactor_t 
   /* if either color or alpha combine requires texture then enable it */
   if ( gc->state.cc_requires_texture || gc->state.ac_requires_texture )
     fbzColorPath |= SST_ENTEXTUREMAP;
-  
+
   /* transition into/out of texturing ... add nopCMD */
+
   if(oldTextureEnabled != (fbzColorPath & SST_ENTEXTUREMAP)) {
+    GR_SET_EXPECTED_SIZE(sizeof(FxU32));
     P6FENCE_CMD( GR_SET(hw->nopCMD,0) );
+    GR_CHECK_SIZE();
   }
 
-   GR_SET( hw->fbzColorPath, fbzColorPath );
   gc->state.fbi_config.fbzColorPath = fbzColorPath;
-  
-  /* setup paramIndex bits */
-  _grUpdateParamIndex();
-  GR_END_SLOPPY();  
+
 } /* grAlphaCombine */
 
 /*---------------------------------------------------------------------------
@@ -373,11 +370,11 @@ GR_ENTRY(grAlphaCombine, void, (GrCombineFunction_t function, GrCombineFactor_t 
 **
 */  
 
-GR_ENTRY(grAlphaControlsITRGBLighting, void, (FxBool enable))
+GR_STATE_ENTRY(grAlphaControlsITRGBLighting, void, (FxBool enable))
 {
   FxU32 fbzColorPath;
 
-  GR_BEGIN("grAlphaControlsITRGBLighting",85,4);
+  GR_BEGIN_NOFIFOCHECK("grAlphaControlsITRGBLighting",85);
   GDBG_INFO_MORE((gc->myLevel,"(%d)\n",enable));
 
   fbzColorPath = gc->state.fbi_config.fbzColorPath;
@@ -387,20 +384,18 @@ GR_ENTRY(grAlphaControlsITRGBLighting, void, (FxBool enable))
     fbzColorPath &= ~SST_LOCALSELECT_OVERRIDE_WITH_ATEX;
   }
 
-  GR_SET( hw->fbzColorPath, fbzColorPath );
   gc->state.fbi_config.fbzColorPath = fbzColorPath;
-  GR_END();
 } /* grAlphaControlsITRGBLighting() */
 
 /*---------------------------------------------------------------------------
 ** grAlphaTestFunction
 */
 
-GR_ENTRY(grAlphaTestFunction, void, ( GrCmpFnc_t fnc ))
+GR_STATE_ENTRY(grAlphaTestFunction, void, ( GrCmpFnc_t fnc ))
 {
   FxU32 alphamode;
 
-  GR_BEGIN("grAlphaTestFunction",85,4);
+  GR_BEGIN_NOFIFOCHECK("grAlphaTestFunction",85);
   GDBG_INFO_MORE((gc->myLevel,"(%d)\n",fnc));
 
   alphamode = gc->state.fbi_config.alphaMode;
@@ -408,28 +403,25 @@ GR_ENTRY(grAlphaTestFunction, void, ( GrCmpFnc_t fnc ))
   if ( fnc != GR_CMP_ALWAYS )
     alphamode |= ( ( fnc << SST_ALPHAFUNC_SHIFT ) | SST_ENALPHAFUNC );
 
-  GR_SET( hw->alphaMode, alphamode );
   gc->state.fbi_config.alphaMode = alphamode;
-  GR_END();
 } /* grAlphaTestFunction */
 
 /*---------------------------------------------------------------------------
 ** grAlphaTestReferenceValue
 */
 
-GR_ENTRY(grAlphaTestReferenceValue, void, ( GrAlpha_t value ))
+GR_STATE_ENTRY(grAlphaTestReferenceValue, void, ( GrAlpha_t value ))
 {
   FxU32 alphamode;
 
-  GR_BEGIN("grAlphaTestReferenceValue",85,4);
+  GR_BEGIN_NOFIFOCHECK("grAlphaTestReferenceValue",85);
   GDBG_INFO_MORE((gc->myLevel,"(%d)\n",value));
 
   alphamode = gc->state.fbi_config.alphaMode;
   alphamode &= ~SST_ALPHAREF;
   alphamode |= ( ( ( FxU32 ) value ) << SST_ALPHAREF_SHIFT );
-  GR_SET( hw->alphaMode, alphamode );
+
   gc->state.fbi_config.alphaMode = alphamode;
-  GR_END();
 } /* grAlphaTestReferenceValue */
 
 /*---------------------------------------------------------------------------
@@ -440,12 +432,18 @@ GR_ENTRY(grBufferClear, void, ( GrColor_t color, GrAlpha_t alpha, FxU32 depth ))
 {
   GrColor_t oldc1;
   FxU32 oldzacolor, zacolor;
+
+  GR_DCL_GC;
+  GR_DCL_HW;
+
+  if (gc->state.invalid)
+    _grValidateState();
+
 #if (GLIDE_PLATFORM & GLIDE_HW_SST96)
-  GR_BEGIN("grBufferClear",86,44);
+  GR_SET_EXPECTED_SIZE(44);
 #else
-  GR_BEGIN("grBufferClear",86,24);
+  GR_SET_EXPECTED_SIZE(24);
 #endif
-  GDBG_INFO_MORE((gc->myLevel,"(0x%x,0x%x,0x%x)\n",color,alpha,depth));
 
   oldc1   = gc->state.fbi_config.color1;
   zacolor = oldzacolor = gc->state.fbi_config.zaColor;
@@ -466,7 +464,7 @@ GR_ENTRY(grBufferClear, void, ( GrColor_t color, GrAlpha_t alpha, FxU32 depth ))
   }
   if ( ( gc->state.fbi_config.fbzMode & ( SST_ENDEPTHBUFFER | SST_ZAWRMASK ) ) == ( SST_ENDEPTHBUFFER | SST_ZAWRMASK ) )  {
     zacolor &= ~SST_ZACOLOR_DEPTH;
-    zacolor |= ( depth << SST_ZACOLOR_DEPTH_SHIFT );
+    zacolor |= ( ( ( FxU32 ) depth ) << SST_ZACOLOR_DEPTH_SHIFT );
     GR_SET( hw->zaColor, zacolor );
   }
 #if (GLIDE_PLATFORM & GLIDE_HW_SST96)
@@ -505,7 +503,7 @@ GR_ENTRY(grBufferClear, void, ( GrColor_t color, GrAlpha_t alpha, FxU32 depth ))
   */
   GR_SET( hw->c1, oldc1 );
   GR_SET( hw->zaColor, oldzacolor );
-  GR_END_SLOPPY();
+  GR_CHECK_SIZE_SLOPPY();  
 } /* grBufferClear */
 
 
@@ -542,7 +540,7 @@ GR_ENTRY(grBufferSwap, void, ( FxU32 swapInterval ))
 #endif
 
   /*
-   * For improved speed we take the following steps
+   * To speed up glquake, we take the following steps
    * 1. remove the status checking
    * 2. modify grBufferNumPending so it does not need to do P6 nudge code
    * 3. add one p6 nudge code
@@ -587,7 +585,7 @@ GR_ENTRY(grBufferSwap, void, ( FxU32 swapInterval ))
   if (GR_RESOLUTION_IS_AUTOFLIPPED(gc->grSstRez)) {
     extern void pageflippingSwapWait(void);
     do {
-      pending = _grBufferNumPending();
+      pending = grBufferNumPending();
     } while (pending > 0);
     pageflippingSwapWait();
   }
@@ -672,12 +670,12 @@ GR_ENTRY(grBufferSwap, void, ( FxU32 swapInterval ))
 */
 
 int FX_CSTYLE
-_grBufferNumPending (void)
+_grBufferNumPending(void)
 {
   int
     pend;                       /* Num Swaps pending */ 
   /*
-   * For improved speed we take the following steps
+   * To speed up glquake, we take the following steps
    * 1. remove the status checking
    * 2. modify grBufferNumPending so it does not need to do P6 nudge code
    * 3. add one p6 nudge code
@@ -706,11 +704,11 @@ _grBufferNumPending (void)
 ** grChromakeyMode
 */
 
-GR_ENTRY(grChromakeyMode, void, ( GrChromakeyMode_t mode ))
+GR_STATE_ENTRY(grChromakeyMode, void, ( GrChromakeyMode_t mode ))
 {
   FxU32 fbzMode;
 
-  GR_BEGIN("grChromakeyMode",85,4);
+  GR_BEGIN_NOFIFOCHECK("grChromakeyMode",85);
   GDBG_INFO_MORE((gc->myLevel,"(%d)\n",mode));
 
   fbzMode = gc->state.fbi_config.fbzMode;
@@ -719,103 +717,32 @@ GR_ENTRY(grChromakeyMode, void, ( GrChromakeyMode_t mode ))
   else
     fbzMode &= ~SST_ENCHROMAKEY;
 
-  GR_SET( hw->fbzMode, fbzMode );
   gc->state.fbi_config.fbzMode = fbzMode;
-  GR_END();
 } /* grChromaKeyMode */
-
-/*-------------------------------------------------------------------
-  Function: grChromaModeExt
-  Date: 05-Jan-98
-  Implementor(s): atai
-  Description:
-  
-  Arguments:
-  
-  Return:
-  -------------------------------------------------------------------*/
-GR_DIENTRY(grChromaRangeMode, void , (GrChromakeyMode_t mode) )
-{
-#define FN_NAME "grChromaRangeMode"
-  GR_BEGIN("grChromaRangeMode\n",85,8);
-
-  FxU32 fbzMode = gc->state.fbi_config.fbzMode;
-  FxU32 chromaRange = gc->state.fbi_config.chromaRange;
-
-  /* [dBorca] inclusive intersection (ganked from sst.h) */
-#define SST_CHROMARANGE_BLUE_EX         BIT(24) // Blue value in exclusive mode
-#define SST_CHROMARANGE_GREEN_EX        BIT(25) // Green value in exclusive mode
-#define SST_CHROMARANGE_RED_EX          BIT(26) // Red  value in exclusive mode
-#define SST_CHROMARANGE_BLOCK_OR        BIT(27) // Union of all colors.
-#define SST_ENCHROMARANGE               BIT(28)
-
-  chromaRange &= ~(SST_CHROMARANGE_BLUE_EX |
-                   SST_CHROMARANGE_GREEN_EX |
-                   SST_CHROMARANGE_RED_EX |
-                   SST_CHROMARANGE_BLOCK_OR);
-
-  if (mode == GR_CHROMARANGE_ENABLE_EXT) {
-    chromaRange |= SST_ENCHROMARANGE;
-    /*
-    ** We need to enable both fbzMode chromakeymode and chrmarange mdoe
-    */
-    fbzMode |= SST_ENCHROMAKEY;
-  } else {
-    chromaRange &= ~SST_ENCHROMARANGE;
-    /*
-    ** [dBorca] We need to disable chromakey only if it wasn't enabled (see above)
-    ** if (gc->state.stateArgs.grChromakeyModeArgs.mode == GR_CHROMAKEY_DISABLE)
-    */
-    fbzMode &= ~SST_ENCHROMAKEY;
-  }
-
-  GR_SET( hw->chromaRange, chromaRange );
-  gc->state.fbi_config.chromaRange = chromaRange;
-  GR_SET( hw->fbzMode, fbzMode );
-  gc->state.fbi_config.fbzMode = fbzMode;
-  GR_END();
-
-#undef FN_NAME
-} /* grChromaRangeMode */
 
 /*---------------------------------------------------------------------------
 ** grChromaRange
 */
 
-GR_ENTRY(grChromaRange, void, (GrColor_t min, GrColor_t max, GrChromaRangeMode_t mode))
+GR_STATE_ENTRY(grChromaRange, void, (GrColor_t min, GrColor_t max, GrChromaRangeMode_t mode))
 {
-  GR_BEGIN("grChromaRange", 85, 8);
+  GR_BEGIN_NOFIFOCHECK("grChromakeyValue", 85);
   GDBG_INFO_MORE((gc->myLevel, "(0x%x)\n", min));
   GDBG_INFO_MORE((gc->myLevel, "(0x%x)\n", max));
   GDBG_INFO_MORE((gc->myLevel, "(0x%x)\n", mode));
 
-  FxU32 chromaRange = gc->state.fbi_config.chromaRange & SST_ENCHROMARANGE;
-
   _grSwizzleColor(&min);
   _grSwizzleColor(&max);
-
-  chromaRange |= (max & 0x00ffffff) | (mode << 24);
-  GR_SET( hw->chromaKey, min );
+  max = max & 0x00ffffff;
+#if (GLIDE_PLATFORM & GLIDE_HW_CVG)
+  if (gc->state.stateArgs.grChromakeyModeArgs.mode == GR_CHROMAKEY_ENABLE)
+    max |= SST_ENCHROMARANGE;
+#endif
+  mode = mode << 24;
   gc->state.fbi_config.chromaKey = min;
-  GR_SET( hw->chromaRange, chromaRange );
-  gc->state.fbi_config.chromaRange = chromaRange;
-  GR_END();
+  gc->state.fbi_config.chromaRange = max | mode;
+
 } /* grChromaRange */
-
-/*---------------------------------------------------------------------------
-** grChromakeyValue
-*/
-
-GR_ENTRY(grChromakeyValue, void, ( GrColor_t color ))
-{
-  GR_BEGIN("grChromakeyValue",85,4);
-  GDBG_INFO_MORE((gc->myLevel,"(0x%x)\n",color));
-
-  _grSwizzleColor( &color );
-  GR_SET( hw->chromaKey, color );
-  gc->state.fbi_config.chromaKey = color;
-  GR_END();
-} /* grChromaKeyValue */
 
 /*---------------------------------------------------------------------------
 ** _grClipNormalizeAndGenerateRegValues
@@ -865,21 +792,18 @@ _grClipNormalizeAndGenerateRegValues(FxU32 minx, FxU32 miny, FxU32 maxx,
 /*---------------------------------------------------------------------------
 ** grClipWindow
 */
-GR_ENTRY(grClipWindow, void, ( FxU32 minx, FxU32 miny, FxU32 maxx,
+GR_STATE_ENTRY(grClipWindow, void, ( FxU32 minx, FxU32 miny, FxU32 maxx,
                               FxU32 maxy )) 
 {
   FxU32
     clipLeftRight,              /* SST Clipping Registers */
     clipBottomTop;
 
-  GR_BEGIN("grClipWindow",41,8);
+  GR_BEGIN_NOFIFOCHECK("grClipWindow",41);
   GDBG_INFO_MORE((gc->myLevel,"(%d,%d %d,%d)\n",minx,miny,maxx,maxy));
 
   _grClipNormalizeAndGenerateRegValues(minx, miny, maxx, maxy,
                                        &clipLeftRight, &clipBottomTop);
-
-  GR_SET( hw->clipLeftRight, clipLeftRight);
-  GR_SET( hw->clipBottomTop, clipBottomTop);
 
   gc->state.fbi_config.clipLeftRight = clipLeftRight;
   gc->state.fbi_config.clipBottomTop = clipBottomTop;
@@ -888,19 +812,19 @@ GR_ENTRY(grClipWindow, void, ( FxU32 minx, FxU32 miny, FxU32 maxx,
   gc->state.clipwindowf_xmax = ( float ) maxx;
   gc->state.clipwindowf_ymin = ( float ) miny;
   gc->state.clipwindowf_ymax = ( float ) maxy;
-  GR_END();
+
 } /* grClipWindow */
 
 /*---------------------------------------------------------------------------
 ** grColorCombine
 */
 
-GR_ENTRY(grColorCombine, void, ( GrCombineFunction_t function, GrCombineFactor_t factor, GrCombineLocal_t local, GrCombineOther_t other, FxBool invert ))
+GR_STATE_ENTRY(grColorCombine, void, ( GrCombineFunction_t function, GrCombineFactor_t factor, GrCombineLocal_t local, GrCombineOther_t other, FxBool invert ))
 {
   FxU32 fbzColorPath;
   FxU32 oldTextureEnabled;
 
-  GR_BEGIN("grColorCombine",85,8);
+  GR_BEGIN_NOFIFOCHECK("grColorCombine",85);
   GDBG_INFO_MORE((gc->myLevel,"(%d,%d,%d,%d,%d)\n",function,factor,local,other,invert));
 
   GR_CHECK_W( myName,
@@ -1013,28 +937,23 @@ GR_ENTRY(grColorCombine, void, ( GrCombineFunction_t function, GrCombineFactor_t
 
   /* if we transition into/out of texturing ... add nopCMD */
   if(oldTextureEnabled != (fbzColorPath & SST_ENTEXTUREMAP)) {
+    GR_SET_EXPECTED_SIZE(sizeof(FxU32));
     P6FENCE_CMD( GR_SET(hw->nopCMD,0) );
+    GR_CHECK_SIZE();
   }
 
-  /* update register */
-  GR_SET( hw->fbzColorPath, fbzColorPath );
   gc->state.fbi_config.fbzColorPath = fbzColorPath;
-
-  /* setup paramIndex bits */
-  _grUpdateParamIndex();
-
-  GR_END_SLOPPY();
 } /* grColorCombine */
 
 /*---------------------------------------------------------------------------
 ** grColorMask
 */
 
-GR_ENTRY(grColorMask, void, ( FxBool rgb, FxBool alpha ))
+GR_STATE_ENTRY(grColorMask, void, ( FxBool rgb, FxBool alpha ))
 {
   FxU32 fbzMode;
 
-  GR_BEGIN("grColorMask",85,4);
+  GR_BEGIN_NOFIFOCHECK("grColorMask",85);
   GDBG_INFO_MORE((gc->myLevel,"(0x%x,0x%x)\n",rgb,alpha));
 
   fbzMode = gc->state.fbi_config.fbzMode;
@@ -1061,26 +980,22 @@ GR_ENTRY(grColorMask, void, ( FxBool rgb, FxBool alpha ))
       fbzMode &= ~(SST_ENALPHABUFFER | SST_ZAWRMASK);
   }
 
-  GR_SET( hw->fbzMode, fbzMode );
   gc->state.fbi_config.fbzMode = fbzMode;
-  GR_END();
 } /* grColorMask */
 
 /*---------------------------------------------------------------------------
 ** grConstantColorValue
 */
 
-GR_ENTRY(grConstantColorValue, void, ( GrColor_t color ))
+GR_STATE_ENTRY(grConstantColorValue, void, ( GrColor_t color ))
 {
-  GR_BEGIN("grConstantColorValue",85,8);
+  GR_BEGIN_NOFIFOCHECK("grConstantColorValue",85);
   GDBG_INFO_MORE((gc->myLevel,"(0x%x)\n",color));
 
   _grSwizzleColor( &color );
-  GR_SET( hw->c0, color );
-  GR_SET( hw->c1, color );
+
   gc->state.fbi_config.color0 = color;
   gc->state.fbi_config.color1 = color;
-  GR_END();
 } /* grConstanColorValue */
 
 /*---------------------------------------------------------------------------
@@ -1089,7 +1004,7 @@ GR_ENTRY(grConstantColorValue, void, ( GrColor_t color ))
 **           GMT: send values to hardware immediately
 */
 
-GR_ENTRY(grConstantColorValue4, void, ( float a, float r, float g, float b ))
+GR_STATE_ENTRY(grConstantColorValue4, void, ( float a, float r, float g, float b ))
 {
   GR_BEGIN("grConstantColorValue4",85,12);
   GDBG_INFO_MORE((gc->myLevel,"(%d,%d,%d,%d)\n",a,r,g,b));
@@ -1125,48 +1040,46 @@ GR_ENTRY(grCullMode, void, ( GrCullMode_t mode ))
 ** Sets the depth bias level.
 */
 
-GR_ENTRY(grDepthBiasLevel, void, ( FxI32 level ))
+GR_STATE_ENTRY(grDepthBiasLevel, void, ( FxI32 level ))
 {
   FxU32 zacolor;
 
-  GR_BEGIN("grDepthBiasLevel",85,4);
+  GR_BEGIN_NOFIFOCHECK("grDepthBiasLevel",85);
   GDBG_INFO_MORE((gc->myLevel,"(%d)\n",level));
 
   zacolor = gc->state.fbi_config.zaColor;
   zacolor = ( zacolor & ~SST_ZACOLOR_DEPTH ) | ((FxI16)level & SST_ZACOLOR_DEPTH);
-  GR_SET( hw->zaColor, zacolor );
+
   gc->state.fbi_config.zaColor = zacolor;
-  GR_END();
 } /* grDepthBiasLevel */
 
 /*---------------------------------------------------------------------------
 ** grDepthBufferFunction
 */
 
-GR_ENTRY(grDepthBufferFunction, void, ( GrCmpFnc_t fnc ))
+GR_STATE_ENTRY(grDepthBufferFunction, void, ( GrCmpFnc_t fnc ))
 {
   FxU32 fbzMode;
 
-  GR_BEGIN("grDepthBufferFunction",85,4);
+  GR_BEGIN_NOFIFOCHECK("grDepthBufferFunction",85);
   GDBG_INFO_MORE((gc->myLevel,"(%d)\n",fnc));
 
   fbzMode = gc->state.fbi_config.fbzMode;
   fbzMode &= ~SST_ZFUNC;
   fbzMode |= ( fnc << SST_ZFUNC_SHIFT );
-  GR_SET( hw->fbzMode, fbzMode );
+
   gc->state.fbi_config.fbzMode = fbzMode;
-  GR_END();
 } /* grDepthBufferFunction */
 
 /*---------------------------------------------------------------------------
 ** grDepthBufferMode
 */
 
-GR_ENTRY(grDepthBufferMode, void, ( GrDepthBufferMode_t mode ))
+GR_STATE_ENTRY(grDepthBufferMode, void, ( GrDepthBufferMode_t mode ))
 {
   FxU32 fbzMode;
 
-  GR_BEGIN("grDepthBufferMode",85,4);
+  GR_BEGIN_NOFIFOCHECK("grDepthBufferMode",85);
   GDBG_INFO_MORE((gc->myLevel,"(%d)\n",mode));
 
    /*
@@ -1214,21 +1127,17 @@ GR_ENTRY(grDepthBufferMode, void, ( GrDepthBufferMode_t mode ))
   /*
   ** Update hardware and Glide state
   */
-  GR_SET( hw->fbzMode, fbzMode);
   gc->state.fbi_config.fbzMode = fbzMode;
-
-  _grUpdateParamIndex();
-  GR_END();
 } /* grDepthBufferMode */
 
 /*---------------------------------------------------------------------------
 ** grDepthMask
 */
-GR_ENTRY(grDepthMask, void, ( FxBool enable ))
+GR_STATE_ENTRY(grDepthMask, void, ( FxBool enable ))
 {
   FxU32 fbzMode;
 
-  GR_BEGIN("grDepthMask",85,4);
+  GR_BEGIN_NOFIFOCHECK("grDepthMask",85);
   GDBG_INFO_MORE((gc->myLevel,"(%d)\n",enable));
 
   fbzMode = gc->state.fbi_config.fbzMode;
@@ -1241,9 +1150,7 @@ GR_ENTRY(grDepthMask, void, ( FxBool enable ))
   else
     fbzMode &= ~SST_ZAWRMASK;
 
-  GR_SET( hw->fbzMode, fbzMode );
   gc->state.fbi_config.fbzMode = fbzMode;
-  GR_END();
 } /* grDepthMask */
 
 /*---------------------------------------------------------------------------
@@ -1265,11 +1172,11 @@ GR_ENTRY(grDisableAllEffects, void, ( void ))
 ** grDitherMode
 */
 
-GR_ENTRY(grDitherMode, void, ( GrDitherMode_t mode ))
+GR_STATE_ENTRY(grDitherMode, void, ( GrDitherMode_t mode ))
 {
   FxU32 fbzMode;
 
-  GR_BEGIN("grDitherMode",85,4);
+  GR_BEGIN_NOFIFOCHECK("grDitherMode",85);
   GDBG_INFO_MORE((gc->myLevel,"(%d)\n",mode));
 
   fbzMode = gc->state.fbi_config.fbzMode &
@@ -1291,20 +1198,18 @@ GR_ENTRY(grDitherMode, void, ( GrDitherMode_t mode ))
         break;
   }
 
-  GR_SET( hw->fbzMode, fbzMode );
   gc->state.fbi_config.fbzMode = fbzMode;
-  GR_END();
 } /* grDitherMode */
 
 /*---------------------------------------------------------------------------
 ** grFogMode
 */
 
-GR_ENTRY(grFogMode, void, ( GrFogMode_t mode ))
+GR_STATE_ENTRY(grFogMode, void, ( GrFogMode_t mode ))
 {
   FxU32 fogmode;
 
-  GR_BEGIN("grFogMode",85,4);
+  GR_BEGIN_NOFIFOCHECK("grFogMode",85);
   GDBG_INFO_MORE((gc->myLevel,"(%d)\n",mode));
 
   fogmode = gc->state.fbi_config.fogMode;
@@ -1328,26 +1233,21 @@ GR_ENTRY(grFogMode, void, ( GrFogMode_t mode ))
   /*
   ** Update the hardware and Glide state
   */
-  GR_SET( hw->fogMode, fogmode );
   gc->state.fbi_config.fogMode = fogmode;
-
-  _grUpdateParamIndex();
-  GR_END();
 } /* grFogMode */
 
 /*---------------------------------------------------------------------------
 ** grFogColorValue
 */
 
-GR_ENTRY(grFogColorValue, void, ( GrColor_t color ))
+GR_STATE_ENTRY(grFogColorValue, void, ( GrColor_t color ))
 {
-  GR_BEGIN("grFogColorValue",85,4);
+  GR_BEGIN_NOFIFOCHECK("grFogColorValue",85);
   GDBG_INFO_MORE((gc->myLevel,"(0x%x)\n",color));
 
   _grSwizzleColor( &color );
-  GR_SET( hw->fogColor, color );
+
   gc->state.fbi_config.fogColor = color;
-  GR_END();
 } /* grFogColorValue */
 
 /*---------------------------------------------------------------------------
@@ -1409,6 +1309,13 @@ GR_ENTRY(grGlideShutdown, void, ( void ))
       int i;    
       GR_BEGIN_NOFIFOCHECK("grGlideShutdown",80);
       GDBG_INFO_MORE((gc->myLevel,"()\n"));
+      
+#if ( GLIDE_PLATFORM & GLIDE_SST_SIM )
+      {
+        extern void gsim_winclose( void );
+        gsim_winclose();
+      }
+#endif
       
       for( i = 0; i < _GlideRoot.hwConfig.num_sst; i++ ) {
         grSstSelect( i );
@@ -1504,7 +1411,7 @@ GR_ENTRY(grGlideSetState, void, ( const void *state ))
 **  (back) and 1 (front)
 */
 
-GR_ENTRY(grRenderBuffer, void, ( GrBuffer_t buffer ))
+GR_STATE_ENTRY(grRenderBuffer, void, ( GrBuffer_t buffer ))
 {
 
   GR_BEGIN_NOFIFOCHECK("grRenderBuffer",85);
@@ -1514,13 +1421,11 @@ GR_ENTRY(grRenderBuffer, void, ( GrBuffer_t buffer ))
 #if ( GLIDE_PLATFORM & GLIDE_HW_SST1 )
   {
       FxU32 fbzMode;
-      GR_SET_EXPECTED_SIZE( 4 );
       
       fbzMode = gc->state.fbi_config.fbzMode;
       fbzMode &= ~( SST_DRAWBUFFER );
       fbzMode |= buffer == GR_BUFFER_FRONTBUFFER ? SST_DRAWBUFFER_FRONT : SST_DRAWBUFFER_BACK;
       
-      GR_SET( hw->fbzMode, fbzMode );
       gc->state.fbi_config.fbzMode = fbzMode;
   }
 #elif ( GLIDE_PLATFORM & GLIDE_HW_SST96 )
@@ -1529,7 +1434,6 @@ GR_ENTRY(grRenderBuffer, void, ( GrBuffer_t buffer ))
 #  error "No renderbuffer implementation"
 #endif
 
-  GR_END();
 } /* grRenderBuffer */
 
 GR_ENTRY(grCheckForRoom, void, (FxI32 n))
@@ -1658,35 +1562,15 @@ GR_DDFUNC(_grUpdateParamIndex, void, ( void ))
   /* Turn off W for TMU0 if we don't have a hint */
   if (paramIndex & STATE_REQUIRES_W_TMU0) {
     GR_ASSERT(paramIndex & STATE_REQUIRES_OOW_FBI);
-    if (gc->state.vData.fogInfo.mode == GR_PARAM_DISABLE) {
-      if (gc->state.grCoordinateSpaceArgs.coordinate_space_mode == GR_WINDOW_COORDS) {
-	if (gc->state.vData.q0Info.mode == GR_PARAM_DISABLE)
-	  paramIndex &= ~STATE_REQUIRES_W_TMU0;
-      }
-      else {
-	if ((gc->state.vData.q0Info.mode == GR_PARAM_DISABLE) ||
-	    (gc->state.vData.qInfo.mode == GR_PARAM_DISABLE))
-	  paramIndex &= ~STATE_REQUIRES_W_TMU0;
-      }
+    if (gc->state.grCoordinateSpaceArgs.coordinate_space_mode == GR_WINDOW_COORDS) {
+      if (gc->state.vData.q0Info.mode == GR_PARAM_DISABLE)
+        paramIndex &= ~STATE_REQUIRES_W_TMU0;
     }
     else {
-      /*
-      ** win coords and no texturing
-      */
-      if (gc->state.grCoordinateSpaceArgs.coordinate_space_mode == GR_WINDOW_COORDS) {
-        if ((gc->state.vData.q0Info.mode == GR_PARAM_DISABLE) && 
-            (gc->state.vData.qInfo.mode == GR_PARAM_DISABLE))
-          paramIndex &= ~STATE_REQUIRES_W_TMU0;
-      }
-      /*
-      ** clip coords and no texturing
-      */
-      else {
-        if ((gc->state.vData.q0Info.mode == GR_PARAM_DISABLE) && 
-            (gc->state.vData.wInfo.mode == GR_PARAM_DISABLE))
-          paramIndex &= ~STATE_REQUIRES_W_TMU0;
-      }
-    }     
+      if ((gc->state.vData.q0Info.mode == GR_PARAM_DISABLE) &&
+          (gc->state.vData.qInfo.mode == GR_PARAM_DISABLE))
+        paramIndex &= ~STATE_REQUIRES_W_TMU0;
+    }
   }
   
   /* Turn off ST for TMU1 if TMU0 is active and TMU1 is not different */
@@ -1697,35 +1581,15 @@ GR_DDFUNC(_grUpdateParamIndex, void, ( void ))
   
   /* Turn off W for TMU1 if we have a previous W, and don't have a hint */ 
   if (paramIndex & STATE_REQUIRES_W_TMU1) {
-    if (gc->state.vData.fogInfo.mode == GR_PARAM_DISABLE) {
-      if (gc->state.grCoordinateSpaceArgs.coordinate_space_mode == GR_WINDOW_COORDS) {
-	if (gc->state.vData.q1Info.mode == GR_PARAM_DISABLE)
-	  paramIndex &= ~STATE_REQUIRES_W_TMU1;
-      }
-      else {
-	if ((gc->state.vData.q1Info.mode == GR_PARAM_DISABLE) || 
-	    (gc->state.vData.qInfo.mode == GR_PARAM_DISABLE))
-	  paramIndex &= ~STATE_REQUIRES_W_TMU1;
-      }
+    if (gc->state.grCoordinateSpaceArgs.coordinate_space_mode == GR_WINDOW_COORDS) {
+      if (gc->state.vData.q1Info.mode == GR_PARAM_DISABLE)
+        paramIndex &= ~STATE_REQUIRES_W_TMU0;
     }
     else {
-      /*
-      ** win coords and no texturing
-      */
-      if (gc->state.grCoordinateSpaceArgs.coordinate_space_mode == GR_WINDOW_COORDS) {
-        if ((gc->state.vData.q1Info.mode == GR_PARAM_DISABLE) && 
-            (gc->state.vData.qInfo.mode == GR_PARAM_DISABLE))
-          paramIndex &= ~STATE_REQUIRES_W_TMU1;
-      }
-      /*
-      ** clip coords and no texturing
-      */
-      else {
-        if ((gc->state.vData.q1Info.mode == GR_PARAM_DISABLE) && 
-            (gc->state.vData.wInfo.mode == GR_PARAM_DISABLE))
-          paramIndex &= ~STATE_REQUIRES_W_TMU1;
-      }
-    }     
+      if ((gc->state.vData.q1Info.mode == GR_PARAM_DISABLE) &&
+          (gc->state.vData.qInfo.mode == GR_PARAM_DISABLE))
+        paramIndex &= ~STATE_REQUIRES_W_TMU0;
+    }
   }
 
 #if (GLIDE_NUM_TMU > 2)
@@ -1757,41 +1621,23 @@ GR_DDFUNC(_grUpdateParamIndex, void, ( void ))
       paramIndex &= ~STATE_REQUIRES_IT_DRGB;
     }
   }
-  if (gc->state.vData.fogInfo.mode == GR_PARAM_DISABLE) {
-    if (gc->state.vData.zInfo.mode == GR_PARAM_DISABLE)
-      paramIndex &= ~STATE_REQUIRES_OOZ;
-    if (gc->state.grCoordinateSpaceArgs.coordinate_space_mode == GR_WINDOW_COORDS) {
-      if (gc->state.vData.qInfo.mode == GR_PARAM_DISABLE)
-        paramIndex &= ~STATE_REQUIRES_OOW_FBI;
-    }
-    else {
-      if (gc->state.vData.wInfo.mode == GR_PARAM_DISABLE)
-        paramIndex &= ~STATE_REQUIRES_OOW_FBI;
-    }
-  }
-  else {
-    if (gc->state.vData.zInfo.mode == GR_PARAM_DISABLE)
-      paramIndex &= ~STATE_REQUIRES_OOZ;
-    if (gc->state.grCoordinateSpaceArgs.coordinate_space_mode == GR_WINDOW_COORDS) {
-      if (gc->state.vData.qInfo.mode == GR_PARAM_DISABLE)
-        paramIndex &= ~STATE_REQUIRES_OOZ;
-    }
-    else {
-      if (gc->state.vData.wInfo.mode == GR_PARAM_DISABLE)
-        paramIndex &= ~STATE_REQUIRES_OOZ;
-    }
+  if (gc->state.vData.zInfo.mode == GR_PARAM_DISABLE)
+    paramIndex &= ~STATE_REQUIRES_OOZ;
+  if (gc->state.vData.qInfo.mode == GR_PARAM_DISABLE)
+    paramIndex &= ~STATE_REQUIRES_OOW_FBI;
+  if (gc->state.grCoordinateSpaceArgs.coordinate_space_mode == GR_CLIP_COORDS) {
+    if (gc->state.vData.wInfo.mode == GR_PARAM_DISABLE)
+      paramIndex &= ~STATE_REQUIRES_OOW_FBI;
   }
   if (gc->state.vData.st0Info.mode == GR_PARAM_DISABLE)
       paramIndex &= ~STATE_REQUIRES_ST_TMU0;
   if (gc->state.vData.st1Info.mode == GR_PARAM_DISABLE)
       paramIndex &= ~STATE_REQUIRES_ST_TMU1;
-  if (gc->state.vData.fogInfo.mode == GR_PARAM_DISABLE) {
-    if (gc->state.vData.q0Info.mode == GR_PARAM_DISABLE)
+  if (gc->state.vData.q0Info.mode == GR_PARAM_DISABLE)
       paramIndex &= ~STATE_REQUIRES_W_TMU0;
-    if (gc->state.vData.q1Info.mode == GR_PARAM_DISABLE)
+  if (gc->state.vData.q1Info.mode == GR_PARAM_DISABLE)
       paramIndex &= ~STATE_REQUIRES_W_TMU1;
-  }
-  
+
   gc->state.paramIndex = paramIndex;
 
   _grRebuildDataList();
@@ -1867,13 +1713,12 @@ GR_DDFUNC(_grRebuildDataList, void, ( void ))
   Sstregs *tmu0;
   Sstregs *tmu1;
     
-#ifdef GDBG_INFO_ON
+#ifdef GLIDE_DEBUG
   static char *p_str[] = {"x","y","z","r","g","b","ooz","a","oow",
                             "s0","t0","w0","s1","t1","w1","s2","t2","w2"};
 #endif
   
-  GDBG_INFO((80,"_grRebuildDataList() paramIndex=0x%x\n",
-             gc->state.paramIndex));
+  GDBG_INFO((80,"_grRebuildDataList() paramIndex=0x%x\n", gc->state.paramIndex));
   
   curTriSize = params = 0;
   i = gc->state.paramIndex;
@@ -1899,42 +1744,47 @@ GR_DDFUNC(_grRebuildDataList, void, ( void ))
   
   if (i & STATE_REQUIRES_IT_DRGB) {
     if (gc->state.vData.colorType == GR_FLOAT) {
-       /* add 9 to size array for r,drdx,drdy,g,dgdx,dgdy,b,dbdx,dbdy */
-       gc->dataList[curTriSize + 0].i    = gc->state.vData.rgbInfo.offset;
-       gc->dataList[curTriSize + 0].addr = (float *)&hw->RED;
-       gc->dataList[curTriSize + 1].i    = gc->state.vData.rgbInfo.offset + GR_COLOR_OFFSET_GREEN;
-       gc->dataList[curTriSize + 1].addr = (float *)&hw->GRN;
-       gc->dataList[curTriSize + 2].i    = gc->state.vData.rgbInfo.offset + GR_COLOR_OFFSET_BLUE;
-       gc->dataList[curTriSize + 2].addr = (float *)&hw->BLU;
-    } else {
-       /* [dBorca] here beginneth the Packed Color Workaround (tm)
-        * X & Y coords have fixed offsets (X = 0, Y = 4). All other offsets
-        * should be multiple of 4, too. This should leave the two LSBs
-        * available for special commands when setting up the triangle.
-        * But, unfortunately, those bits are used for PACKER and FENCE,
-        * respectively. Thus, we will flag PARGB with the MSB (as it is
-        * highly unlikely GrVertex will be >= 2GB). All triangle setup
-        * routines must account for these "special" offsets and convert
-        * the word8 value into a float!
-        */
-       gc->dataList[curTriSize + 0].i    = gc->state.vData.pargbInfo.offset | 0x82000000;
-       gc->dataList[curTriSize + 0].addr = (float *)&hw->RED;
-       gc->dataList[curTriSize + 1].i    = gc->state.vData.pargbInfo.offset | 0x81000000;
-       gc->dataList[curTriSize + 1].addr = (float *)&hw->GRN;
-       gc->dataList[curTriSize + 2].i    = gc->state.vData.pargbInfo.offset | 0x80000000;
-       gc->dataList[curTriSize + 2].addr = (float *)&hw->BLU;
-       /* here endeth the Packed Color Workaround (tm) */
+      /* non packed color */
+      /* add 9 to size array for r,drdx,drdy,g,dgdx,dgdy,b,dbdx,dbdy */
+      gc->dataList[curTriSize + 0].i     = gc->state.vData.rgbInfo.offset;
+      gc->dataList[curTriSize + 0].addr  = (float *)&hw->RED;
+      gc->dataList[curTriSize + 0].bddr  = 0;
+      gc->dataList[curTriSize + 1].i     = gc->state.vData.rgbInfo.offset+GR_COLOR_OFFSET_GREEN;
+      gc->dataList[curTriSize + 1].addr  = (float *)&hw->GRN;
+      gc->dataList[curTriSize + 1].bddr  = 0;
+      gc->dataList[curTriSize + 2].i     = gc->state.vData.rgbInfo.offset+GR_COLOR_OFFSET_BLUE;
+      gc->dataList[curTriSize + 2].addr  = (float *)&hw->BLU;
+      gc->dataList[curTriSize + 2].bddr  = 0;
+      curTriSize += 3;
+      params += 3;
+      
+      gc->hwDep.sst96Dep.gwHeaders[gwHeaderNum] |= GWH_RGB_BITS;
+      gwpSize += 9;
     }
-    curTriSize += 3;
-    params += 3;
-
-    gc->hwDep.sst96Dep.gwHeaders[gwHeaderNum] |= GWH_RGB_BITS;
-    gwpSize += 9;
+    else {
+      /* packed color, argb */
+      /* add 9 to size array for r,drdx,drdy,g,dgdx,dgdy,b,dbdx,dbdy */
+      gc->dataList[curTriSize + 0].i     = gc->state.vData.pargbInfo.offset;
+      gc->dataList[curTriSize + 0].addr  = (float *)&hw->RED;
+      gc->dataList[curTriSize + 0].bddr  = gc->state.vData.pargbInfo.offset + GR_PARGB_R;
+      gc->dataList[curTriSize + 1].i     = gc->state.vData.pargbInfo.offset;
+      gc->dataList[curTriSize + 1].addr  = (float *)&hw->GRN;
+      gc->dataList[curTriSize + 1].bddr  = gc->state.vData.pargbInfo.offset + GR_PARGB_G;
+      gc->dataList[curTriSize + 2].i     = gc->state.vData.pargbInfo.offset;
+      gc->dataList[curTriSize + 2].addr  = (float *)&hw->BLU;
+      gc->dataList[curTriSize + 2].bddr  = gc->state.vData.pargbInfo.offset + GR_PARGB_B;
+      curTriSize += 3;
+      params += 3;
+      
+      gc->hwDep.sst96Dep.gwHeaders[gwHeaderNum] |= GWH_RGB_BITS;
+      gwpSize += 9;
+    }
   }
   
   if (i & STATE_REQUIRES_OOZ) {
-    gc->dataList[curTriSize + 0].i    = gc->state.vData.zInfo.offset;
-    gc->dataList[curTriSize + 0].addr = (float *)&hw->Z;
+    gc->dataList[curTriSize + 0].i     = gc->state.vData.zInfo.offset;
+    gc->dataList[curTriSize + 0].addr  = (float *)&hw->Z;
+    gc->dataList[curTriSize + 0].bddr  = 0;
     curTriSize += 1;
     params += 1;
 
@@ -1944,27 +1794,37 @@ GR_DDFUNC(_grRebuildDataList, void, ( void ))
   
   if (i & STATE_REQUIRES_IT_ALPHA) {
     if (gc->state.vData.colorType == GR_FLOAT) {
-       gc->dataList[curTriSize + 0].i    = gc->state.vData.aInfo.offset;
-       gc->dataList[curTriSize + 0].addr = (float *)&hw->ALF;
-    } else {
-       /* [dBorca] Packed Color Workaround (tm) */
-       gc->dataList[curTriSize + 0].i    = gc->state.vData.pargbInfo.offset | 0x83000000;
-       gc->dataList[curTriSize + 0].addr = (float *)&hw->ALF;
+      gc->dataList[curTriSize + 0].i     = gc->state.vData.aInfo.offset;
+      gc->dataList[curTriSize + 0].addr  = (float *)&hw->ALF;
+      gc->dataList[curTriSize + 0].bddr  = 0;
+      curTriSize += 1;
+      params += 1;
+      
+      gc->hwDep.sst96Dep.gwHeaders[gwHeaderNum] |= GWH_A_BITS;
+      gwpSize += 3;
     }
-    curTriSize += 1;
-    params += 1;
-
-    gc->hwDep.sst96Dep.gwHeaders[gwHeaderNum] |= GWH_A_BITS;
-    gwpSize += 3;
+    else {
+      /* packed color, argb */
+      gc->dataList[curTriSize + 0].i     = gc->state.vData.pargbInfo.offset;
+      gc->dataList[curTriSize + 0].addr  = (float *)&hw->ALF;
+      gc->dataList[curTriSize + 0].bddr  = gc->state.vData.pargbInfo.offset + GR_PARGB_A;
+      curTriSize += 1;
+      params += 1;
+      
+      gc->hwDep.sst96Dep.gwHeaders[gwHeaderNum] |= GWH_A_BITS;
+      gwpSize += 3;
+    }
   }
   
   /* TMU1 --------------------------------- */
   /* always output to ALL chips, saves from having to change CHIP field */
   if (i & STATE_REQUIRES_ST_TMU0) {
-    gc->dataList[curTriSize + 0].i    = gc->state.vData.st0Info.offset;
-    gc->dataList[curTriSize + 0].addr = (float *)&hw->S;
-    gc->dataList[curTriSize + 1].i    = gc->state.vData.st0Info.offset + GR_TEXTURE_OFFSET_T;
-    gc->dataList[curTriSize + 1].addr = (float *)&hw->T;
+    gc->dataList[curTriSize + 0].i     = gc->state.vData.st0Info.offset;
+    gc->dataList[curTriSize + 0].addr  = (float *)&hw->S;
+    gc->dataList[curTriSize + 0].bddr  = 0;
+    gc->dataList[curTriSize + 1].i     = gc->state.vData.st0Info.offset + GR_TEXTURE_OFFSET_T;
+    gc->dataList[curTriSize + 1].addr  = (float *)&hw->T;
+    gc->dataList[curTriSize + 1].bddr  = 0;
     curTriSize += 2;
     params += 2;
 
@@ -1974,8 +1834,9 @@ GR_DDFUNC(_grRebuildDataList, void, ( void ))
   
   /* we squeeze FBI.OOW in here for sequential writes in the simple case */
   if (i & STATE_REQUIRES_OOW_FBI) {
-    gc->dataList[curTriSize + 0].i    = gc->state.vData.qInfo.offset;
-    gc->dataList[curTriSize + 0].addr = (float *)&hw->W;
+    gc->dataList[curTriSize + 0].i     = gc->state.vData.qInfo.offset;
+    gc->dataList[curTriSize + 0].addr  = (float *)&hw->W;
+    gc->dataList[curTriSize + 0].bddr  = 0;
     curTriSize += 1;
     params += 1;
 
@@ -1986,11 +1847,20 @@ GR_DDFUNC(_grRebuildDataList, void, ( void ))
   /* NOTE: this is the first */
   if (i & STATE_REQUIRES_W_TMU0) {
     /* We do this a bit differently for grouped writes */
-    gc->dataList[curTriSize + 0].i    = packMask;
-    gc->dataList[curTriSize + 0].addr =
+    gc->dataList[curTriSize + 0].i     = packMask;
+    gc->dataList[curTriSize + 0].addr  =
       (float *) GWH_GEN_ADDRESS(&tmu0->FvA.x);
-    gc->dataList[curTriSize + 1].i    = gc->state.vData.q0Info.offset;
-    gc->dataList[curTriSize + 1].addr = 0L;
+    gc->dataList[curTriSize + 0].bddr  = 0;
+    if (gc->state.vData.q0Info.mode == GR_PARAM_ENABLE)    
+      gc->dataList[curTriSize + 1].i     = gc->state.vData.q0Info.offset;
+    else {
+      if (gc->state.grCoordinateSpaceArgs.coordinate_space_mode == GR_WINDOW_COORDS)
+        gc->dataList[curTriSize + 1].i     = gc->state.vData.qInfo.offset;
+      else
+        gc->dataList[curTriSize + 1].i     = gc->state.vData.wInfo.offset;
+    }
+    gc->dataList[curTriSize + 1].addr  = 0L;
+    gc->dataList[curTriSize + 1].bddr  = 0;
     
     if (gwpSize & 1)
       ++gwpSize;              /* Justify your love */
@@ -2032,11 +1902,9 @@ GR_DDFUNC(_grRebuildDataList, void, ( void ))
 #ifdef GDBG_INFO_ON
   GDBG_INFO((282, "DataList\n"));
   for (i = 0; gc->dataList[i].i; i++) {
-    GDBG_INFO((282,"    dataList[%d] = %2d 0x%x%s\n",
-               i,
-               gc->dataList[i].i>>2,
-               gc->dataList[i].addr,
-               ((gc->dataList[i].i > 0) && (gc->dataList[i].i & 1)) ? " [packer]" : ""));
+    GDBG_INFO((282,"    dataList[%d] = %2d 0x%x [%s]\n",
+               i,gc->dataList[i].i>>2,gc->dataList[i].addr,
+               (gc->dataList[i].i & 1) ? "packer" : p_str[gc->dataList[i].i>>2]));
   }
 #endif
 
@@ -2077,93 +1945,116 @@ GR_DDFUNC(_grRebuildDataList, void, ( void ))
   
   if (i & STATE_REQUIRES_IT_DRGB) {
     if (gc->state.vData.colorType == GR_FLOAT) {
-       /* add 9 to size array for r,drdx,drdy,g,dgdx,dgdy,b,dbdx,dbdy */
-       gc->dataList[curTriSize + 0].i    = gc->state.vData.rgbInfo.offset;
-       gc->dataList[curTriSize + 0].addr = (float *)&hw->RED;
-       gc->dataList[curTriSize + 1].i    = gc->state.vData.rgbInfo.offset + GR_COLOR_OFFSET_GREEN;
-       gc->dataList[curTriSize + 1].addr = (float *)&hw->GRN;
-       gc->dataList[curTriSize + 2].i    = gc->state.vData.rgbInfo.offset + GR_COLOR_OFFSET_BLUE;
-       gc->dataList[curTriSize + 2].addr = (float *)&hw->BLU;
-    } else {
-       /* [dBorca] here beginneth the Packed Color Workaround (tm)
-        * X & Y coords have fixed offsets (X = 0, Y = 4). All other offsets
-        * should be multiple of 4, too. This should leave the two LSBs
-        * available for special commands when setting up the triangle.
-        * But, unfortunately, those bits are used for PACKER and FENCE,
-        * respectively. Thus, we will flag PARGB with the MSB (as it is
-        * highly unlikely GrVertex will be >= 2GB). All triangle setup
-        * routines must account for these "special" offsets and convert
-        * the word8 value into a float!
-        */
-       gc->dataList[curTriSize + 0].i    = gc->state.vData.pargbInfo.offset | 0x82000000;
-       gc->dataList[curTriSize + 0].addr = (float *)&hw->RED;
-       gc->dataList[curTriSize + 1].i    = gc->state.vData.pargbInfo.offset | 0x81000000;
-       gc->dataList[curTriSize + 1].addr = (float *)&hw->GRN;
-       gc->dataList[curTriSize + 2].i    = gc->state.vData.pargbInfo.offset | 0x80000000;
-       gc->dataList[curTriSize + 2].addr = (float *)&hw->BLU;
-       /* here endeth the Packed Color Workaround (tm) */
+      /* non packed color */
+      /* add 9 to size array for r,drdx,drdy,g,dgdx,dgdy,b,dbdx,dbdy */
+      gc->dataList[curTriSize + 0].i     = gc->state.vData.rgbInfo.offset;
+      gc->dataList[curTriSize + 0].addr  = (float *)&hw->RED;
+      gc->dataList[curTriSize + 0].bddr  = 0;
+      gc->dataList[curTriSize + 1].i     = gc->state.vData.rgbInfo.offset+GR_COLOR_OFFSET_GREEN;
+      gc->dataList[curTriSize + 1].addr  = (float *)&hw->GRN;
+      gc->dataList[curTriSize + 1].bddr  = 0;
+      gc->dataList[curTriSize + 2].i     = gc->state.vData.rgbInfo.offset+GR_COLOR_OFFSET_BLUE;
+      gc->dataList[curTriSize + 2].addr  = (float *)&hw->BLU;
+      gc->dataList[curTriSize + 2].bddr  = 0;
+      curTriSize += 3;
+      params += 3;
     }
-    curTriSize += 3;
-    params += 3;
+    else {
+      /* packed color, argb */
+      /* add 9 to size array for r,drdx,drdy,g,dgdx,dgdy,b,dbdx,dbdy */
+      gc->dataList[curTriSize + 0].i     = gc->state.vData.pargbInfo.offset;
+      gc->dataList[curTriSize + 0].addr  = (float *)&hw->RED;
+      gc->dataList[curTriSize + 0].bddr  = gc->state.vData.pargbInfo.offset + GR_PARGB_R;
+      gc->dataList[curTriSize + 1].i     = gc->state.vData.pargbInfo.offset;
+      gc->dataList[curTriSize + 1].addr  = (float *)&hw->GRN;
+      gc->dataList[curTriSize + 1].bddr  = gc->state.vData.pargbInfo.offset + GR_PARGB_G;
+      gc->dataList[curTriSize + 2].i     = gc->state.vData.pargbInfo.offset;
+      gc->dataList[curTriSize + 2].addr  = (float *)&hw->BLU;
+      gc->dataList[curTriSize + 2].bddr  = gc->state.vData.pargbInfo.offset + GR_PARGB_B;
+      curTriSize += 3;
+      params += 3;
+    }
   }
   
   if (i & STATE_REQUIRES_OOZ) {
-    gc->dataList[curTriSize + 0].i    = gc->state.vData.zInfo.offset;
-    gc->dataList[curTriSize + 0].addr = (float *)&hw->Z;
+    gc->dataList[curTriSize + 0].i     = gc->state.vData.zInfo.offset;
+    gc->dataList[curTriSize + 0].addr  = (float *)&hw->Z;
+    gc->dataList[curTriSize + 0].bddr  = 0;
     curTriSize += 1;
     params += 1;
   }
   
   if (i & STATE_REQUIRES_IT_ALPHA) {
     if (gc->state.vData.colorType == GR_FLOAT) {
-       gc->dataList[curTriSize + 0].i    = gc->state.vData.aInfo.offset;
-       gc->dataList[curTriSize + 0].addr = (float *)&hw->ALF;
-    } else {
-       /* [dBorca] Packed Color Workaround (tm) */
-       gc->dataList[curTriSize + 0].i    = gc->state.vData.pargbInfo.offset | 0x83000000;
-       gc->dataList[curTriSize + 0].addr = (float *)&hw->ALF;
+      gc->dataList[curTriSize + 0].i     = gc->state.vData.aInfo.offset;
+      gc->dataList[curTriSize + 0].addr  = (float *)&hw->ALF;
+      gc->dataList[curTriSize + 0].bddr  = 0;
+      curTriSize += 1;
+      params += 1;
     }
-    curTriSize += 1;
-    params += 1;
+    else {
+      /* packed color, argb */
+      gc->dataList[curTriSize + 0].i     = gc->state.vData.pargbInfo.offset;
+      gc->dataList[curTriSize + 0].addr  = (float *)&hw->ALF;
+      gc->dataList[curTriSize + 0].bddr  = gc->state.vData.pargbInfo.offset + GR_PARGB_A;
+      curTriSize += 1;
+      params += 1;
+    }
   }
   
   /* TMU1 --------------------------------- */
   /* always output to ALL chips, saves from having to change CHIP field */
   if (i & STATE_REQUIRES_ST_TMU0) {
-    gc->dataList[curTriSize + 0].i    = gc->state.vData.st0Info.offset;
-    gc->dataList[curTriSize + 0].addr = (float *)&hw->S;
-    gc->dataList[curTriSize + 1].i    = gc->state.vData.st0Info.offset + GR_TEXTURE_OFFSET_T;
-    gc->dataList[curTriSize + 1].addr = (float *)&hw->T;
+    gc->dataList[curTriSize + 0].i     = gc->state.vData.st0Info.offset;
+    gc->dataList[curTriSize + 0].addr  = (float *)&hw->S;
+    gc->dataList[curTriSize + 0].bddr  = 0;
+    gc->dataList[curTriSize + 1].i     = gc->state.vData.st0Info.offset 
+      + GR_TEXTURE_OFFSET_T;
+    gc->dataList[curTriSize + 1].addr  = (float *)&hw->T;
+    gc->dataList[curTriSize + 1].bddr  = 0;
     curTriSize += 2;
     params += 2;
   }
   
   /* we squeeze FBI.OOW in here for sequential writes in the simple case */
   if (i & STATE_REQUIRES_OOW_FBI) {
-    gc->dataList[curTriSize + 0].i    = gc->state.vData.qInfo.offset;
-    gc->dataList[curTriSize + 0].addr = (float *)&hw->W;
+    gc->dataList[curTriSize + 0].i     = gc->state.vData.qInfo.offset;
+    gc->dataList[curTriSize + 0].addr  = (float *)&hw->W;
+    gc->dataList[curTriSize + 0].bddr  = 0;
     curTriSize += 1;
     params += 1;
   }
   /* NOTE: this is the first */
   if (i & STATE_REQUIRES_W_TMU0) {
-    gc->dataList[curTriSize + 0].i    =  packMask;
-    gc->dataList[curTriSize + 0].addr = (float *)_GlideRoot.packerFixAddress;
-    gc->dataList[curTriSize + 1].i    = gc->state.vData.q0Info.offset;
-    gc->dataList[curTriSize + 1].addr = (float *)&tmu0->W;
+    gc->dataList[curTriSize + 0].i     =  packMask;
+    gc->dataList[curTriSize + 0].addr  = (float *)_GlideRoot.packerFixAddress;
+    gc->dataList[curTriSize + 0].bddr  = 0;
+    if (gc->state.vData.q0Info.mode == GR_PARAM_ENABLE)    
+      gc->dataList[curTriSize + 1].i     = gc->state.vData.q0Info.offset;
+    else {
+      if (gc->state.grCoordinateSpaceArgs.coordinate_space_mode == GR_WINDOW_COORDS)
+        gc->dataList[curTriSize + 1].i     = gc->state.vData.qInfo.offset;
+      else
+        gc->dataList[curTriSize + 1].i     = gc->state.vData.wInfo.offset;
+    }
+    gc->dataList[curTriSize + 1].addr  = (float *)&tmu0->W;
+    gc->dataList[curTriSize + 1].bddr  = 0;
     curTriSize += 2;
     params += 1;
   }
   
   /* TMU1 --------------------------------- */
   if (i & STATE_REQUIRES_ST_TMU1) {
-    gc->dataList[curTriSize + 0].i    = packMask;
-    gc->dataList[curTriSize + 0].addr = (float *)_GlideRoot.packerFixAddress;
+    gc->dataList[curTriSize + 0].i     = packMask;
+    gc->dataList[curTriSize + 0].addr  = (float *)_GlideRoot.packerFixAddress;
     packerFlag = 0;
-    gc->dataList[curTriSize + 1].i    = gc->state.vData.st1Info.offset;
-    gc->dataList[curTriSize + 1].addr = (float *)&tmu1->S;
-    gc->dataList[curTriSize + 2].i    = gc->state.vData.st1Info.offset + GR_TEXTURE_OFFSET_T;
-    gc->dataList[curTriSize + 2].addr = (float *)&tmu1->T;
+    gc->dataList[curTriSize + 0].bddr  = 0;
+    gc->dataList[curTriSize + 1].i     = gc->state.vData.st1Info.offset;
+    gc->dataList[curTriSize + 1].addr  = (float *)&tmu1->S;
+    gc->dataList[curTriSize + 1].bddr  = 0;
+    gc->dataList[curTriSize + 2].i     = gc->state.vData.st1Info.offset + GR_TEXTURE_OFFSET_T;
+    gc->dataList[curTriSize + 2].addr  = (float *)&tmu1->T;
+    gc->dataList[curTriSize + 2].bddr  = 0;
     curTriSize += 3;
     params += 2;
   }
@@ -2171,12 +2062,21 @@ GR_DDFUNC(_grRebuildDataList, void, ( void ))
   
   if (i & STATE_REQUIRES_W_TMU1) {
     if (packerFlag) {
-      gc->dataList[curTriSize + 0].i    = packMask;
-      gc->dataList[curTriSize + 0].addr = (float *)_GlideRoot.packerFixAddress;
+      gc->dataList[curTriSize + 0].i     = packMask;
+      gc->dataList[curTriSize + 0].addr  = (float *)_GlideRoot.packerFixAddress;
+      gc->dataList[curTriSize + 0].bddr  = 0;
       curTriSize += 1;
     }
-    gc->dataList[curTriSize + 0].i    = gc->state.vData.q1Info.offset;
-    gc->dataList[curTriSize + 0].addr = (float *)&tmu1->W;
+    if (gc->state.vData.q1Info.mode == GR_PARAM_ENABLE)    
+      gc->dataList[curTriSize + 0].i     = gc->state.vData.q1Info.offset;
+    else {
+      if (gc->state.grCoordinateSpaceArgs.coordinate_space_mode == GR_WINDOW_COORDS)
+        gc->dataList[curTriSize + 0].i     = gc->state.vData.qInfo.offset;
+      else
+        gc->dataList[curTriSize + 0].i     = gc->state.vData.wInfo.offset;
+    }
+    gc->dataList[curTriSize + 0].addr  = (float *)&tmu1->W;
+    gc->dataList[curTriSize + 0].bddr  = 0;
     curTriSize += 1;
     params += 1;
   }
@@ -2187,8 +2087,9 @@ GR_DDFUNC(_grRebuildDataList, void, ( void ))
   /* if last write was not to chip 0 */
   if ( SST_CHIP_MASK & (FxU32)gc->dataList[curTriSize-1].addr ) {
     /* flag write as a packer bug fix  */
-    gc->dataList[curTriSize].i = packMask; 
-    gc->dataList[curTriSize].addr = (float *)_GlideRoot.packerFixAddress;
+    gc->dataList[curTriSize].i     = packMask; 
+    gc->dataList[curTriSize].addr  = (float *)_GlideRoot.packerFixAddress;
+    gc->dataList[curTriSize].bddr  = 0;
     curTriSize++;
   }
 
@@ -2204,14 +2105,13 @@ GR_DDFUNC(_grRebuildDataList, void, ( void ))
   /* Need to know tri size without gradients for planar polygons */
   _GlideRoot.curTriSizeNoGradient = _GlideRoot.curTriSize - (params<<3);
   
-#ifdef GLIDE_DEBUG
+#ifdef GDBG_INFO_ON
   GDBG_INFO((282, "DataList\n"));
   for (i = 0; gc->dataList[i].i; i++) {
-    GDBG_INFO((282,"    dataList[%d] = %2d 0x%x%s\n",
-               i,
-               gc->dataList[i].i>>2,
-               gc->dataList[i].addr,
-               ((gc->dataList[i].i > 0) && (gc->dataList[i].i & 1)) ? " [packer]" : ""));
+    GDBG_INFO((282,"    dataList[%d] = %2d 0x%x [%s]\n",
+               i,gc->dataList[i].i>>2,gc->dataList[i].addr,
+               (gc->dataList[i].i & 1) ? "packer" :
+               p_str[gc->dataList[i].i>>2])); 
   }
 #endif
 

@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.1  2004/03/02 07:55:30  dborca
+** Bastardised Glide3x for SST1
+**
 ** Revision 1.1.1.1.8.2  2004/01/20 14:04:10  dborca
 ** compilation and some other minor fixes to aid in debugging
 **
@@ -76,9 +79,7 @@
 */
 #include <stdio.h>
 #include <string.h>
-#ifdef __GNUC__
 #include <ctype.h>
-#endif
 #include <3dfx.h>
 
 #define FX_DLL_DEFINITION

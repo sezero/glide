@@ -19,6 +19,9 @@
 ;; $Header$
 ;; $Revision$
 ;; $Log$
+;; Revision 1.1.2.2  2004/03/08 07:42:22  dborca
+;; Voodoo Rush fixes
+;;
 ;; Revision 1.1.2.1  2004/03/02 07:55:30  dborca
 ;; Bastardised Glide3x for SST1
 ;;
@@ -38,10 +41,14 @@
 extrn   _GlideRoot
 extrn   _grSpinFifo
 extrn   _grSst96FifoMakeRoom
+extrn   _grValidateState
+extrn   _grVpDrawTriangle, 12
+extrn   _trisetup, 12
 
         
 ; some useful floating load and store macros <ala gmt>
 %define flds    fld  DWORD
+%define fadds   fadd DWORD
 %define fsubs   fsub DWORD
 %define fmuls   fmul DWORD
 
@@ -53,7 +60,16 @@ segment		DATA
     dyAB        DD  0
     dyBC        DD  0
     culltest    DD  0
-    P6FenceVar  DD  0  
+    P6FenceVar  DD  0
+    snap_xa     DD  0
+    snap_ya     DD  0
+    snap_xb     DD  0
+    snap_yb     DD  0
+    snap_xc     DD  0
+    snap_yc     DD  0
+
+segment		CONST
+    SNAP_BIAS   DD  786432.0
 
 ; Ugly, but seems to workaround the problem with locally defined
 ; data segment globals not getting relocated properly when using
@@ -65,6 +81,12 @@ segment		DATA
 %define zdyAB   One+10h
 %define zdyBC   One+14h
 %define zculltest One+18h
+%define zsnap_xa  One+20h
+%define zsnap_ya  One+24h
+%define zsnap_xb  One+28h
+%define zsnap_yb  One+2ch
+%define zsnap_xc  One+30h
+%define zsnap_yc  One+34h
 
 ;;; Some useful SST-1 offsets
 %include "fxgasm.h"
@@ -158,10 +180,6 @@ extrn   _GR_SET_GW_ENTRY
 ;--------------------------------------------------------------------------        
 ; Arguments (STKOFF = 16 from 4 pushes)
 STKOFF  equ 16
-
-	
-	
-
 _va$    equ  4 + STKOFF
 _vb$    equ  8 + STKOFF
 _vc$    equ 12 + STKOFF
@@ -185,9 +203,12 @@ Y       equ 4
 segment		TEXT
 
 ;--------------------------------------------------------------------------        
+
+%if XOS != XOS_WIN32
             align 4
 proc grDrawTriangle, 12
 endp
+%endif
 
 ; FALL THRU to _trisetup
 
@@ -240,6 +261,43 @@ proc _trisetup_asm, 12
 ;
 ;;;;;;;;;;;;;;
 
+    GET_GC
+    mov     tmpy, [gc + coord_space]     ; load gc->state.invalid
+    test    tmpy, tmpy
+    je      packed_color
+    mov     fc, [esp + _vc$]
+    mov     fb, [esp + _vb$]
+    mov     fa, [esp + _va$]    ; 1
+    invoke  _grVpDrawTriangle, fa, fb, fc
+    pop     ebp
+    pop     edi
+    pop     esi
+    pop     ebx
+    ret
+
+packed_color:   
+    mov     tmpy, [gc + color_type]     ; load gc->state.invalid
+    test    tmpy, tmpy
+    je      validate_state
+    mov     fc, [esp + _vc$]
+    mov     fb, [esp + _vb$]
+    mov     fa, [esp + _va$]    ; 1
+    invoke  _trisetup, fa, fb, fc
+    pop     ebp
+    pop     edi
+    pop     esi
+    pop     ebx
+    ret
+        
+validate_state: 
+    GET_GC
+    mov     tmpy, [gc + invalid]     ; load gc->state.invalid
+    test   tmpy, tmpy
+    je      cull_test
+    call    _grValidateState
+
+    align 4
+cull_test:      
 
 ;--------------------------------------------------------------------------        
 
@@ -250,8 +308,20 @@ proc _trisetup_asm, 12
      mov     tmpy, [_GlideRoot + trisProcessed]    ; _GlideRoot.stats.trisProcessed++;
 ; 36-3
 vertex_y_load:
-    mov     fa, [fa + Y]        ; 2
-     mov     fb, [fb + Y]
+
+;;; snap y coordinate to sort vertices
+    flds    [fa + Y]            ;
+    fadds   [SNAP_BIAS]         ;
+    fstp    dword [zsnap_ya]    ;
+    flds    [fb + Y]            ;
+    fadds   [SNAP_BIAS]         ;
+    fstp    dword [zsnap_yb]    ;
+    flds    [fc + Y]            ;
+    fadds   [SNAP_BIAS]         ;
+    fstp    dword [zsnap_yc]    ;
+        
+    mov     fa, [zsnap_ya]      ; 2
+     mov     fb, [zsnap_yb]
     cmp     fa, 0               ; 3
      jge     a_positive
     xor     fa, 7fffffffh 
@@ -262,8 +332,8 @@ a_positive:
     xor     fb, 7fffffffh 
             align 4
 b_positive:
-    mov     fc, [fc + Y]        ; 5
-     mov     gc, [_GlideRoot + curGC]
+    mov     fc, [zsnap_yc]      ; 5
+     GET_GC
     cmp     fc, 0               ; 6
      jge     c_positive
     xor     fc, 7fffffffh
@@ -339,16 +409,36 @@ vertex_y_sort:
 ;--------------------------------------------------------------------------        
             align 4
 Area_Computation:
+;;; snap x, y
+    flds    [fa + X]            ;
+    fadds   [SNAP_BIAS]         ;
+    fstp    dword [zsnap_xa]    ;
+    flds    [fa + Y]            ;
+    fadds   [SNAP_BIAS]         ;
+    fstp    dword [zsnap_ya]    ;
+    flds    [fb + X]            ;
+    fadds   [SNAP_BIAS]         ;
+    fstp    dword [zsnap_xb]    ;
+    flds    [fb + Y]            ;
+    fadds   [SNAP_BIAS]         ;
+    fstp    dword [zsnap_yb]    ;
+    flds    [fc + X]            ;
+    fadds   [SNAP_BIAS]         ;
+    fstp    dword [zsnap_xc]    ;
+    flds    [fc + Y]            ;
+    fadds   [SNAP_BIAS]         ;
+    fstp    dword [zsnap_yc]    ;
+        
 ; 47-3
 ; jmp ret_pop0f
-    flds    [fa + X]            ;  xa
-    fsubs   [fb + X]            ;  dxAB
-    flds    [fb + X]            ;  |    xb
-    fsubs   [fc + X]            ;  |    dxBC
-    flds    [fb + Y]            ;  |    |    yb
-    fsubs   [fc + Y]            ;  |    |    dyBC
-    flds    [fa + Y]            ;  |    |    |    ya
-    fsubs   [fb + Y]            ;  |    |    |    dyAB
+    flds    [zsnap_xa]          ;  xa
+    fsubs   [zsnap_xb]          ;  dxAB
+    flds    [zsnap_xb]          ;  |    xb
+    fsubs   [zsnap_xc]          ;  |    dxBC
+    flds    [zsnap_yb]          ;  |    |    yb
+    fsubs   [zsnap_yc]          ;  |    |    dyBC
+    flds    [zsnap_ya]          ;  |    |    |    ya
+    fsubs   [zsnap_yb]          ;  |    |    |    dyAB
     fld     st3                 ;  |    |    |    |    dxAB
     fmul    st0, st2            ;  |    |    |    |    t0         t0=dxAB*dyBC
     fld     st3                 ;  |    |    |    |    |    dxBC
@@ -410,20 +500,20 @@ wrapDone:
     GR_SET_GW_HEADER fifo, 4, tmpy
 
     ; Download X, Y * 3
-    mov     tmpx, [fa + X]
-    mov     tmpy, [fa + Y]
+    mov     tmpx, [zsnap_xa]
+    mov     tmpy, [zsnap_ya]
 
     GR_SET_GW_ENTRY fifo, 8,  tmpx
     GR_SET_GW_ENTRY fifo, 12, tmpy
 
-    mov     tmpx, [fb + X]
-    mov     tmpy, [fb + Y]
+    mov     tmpx, [zsnap_xb]
+    mov     tmpy, [zsnap_yb]
 
     GR_SET_GW_ENTRY fifo, 16, tmpx
     GR_SET_GW_ENTRY fifo, 20, tmpy
 
-    mov     tmpx, [fc + X]
-    mov     tmpy, [fc + Y]
+    mov     tmpx, [zsnap_xc]
+    mov     tmpy, [zsnap_yc]
 
     GR_SET_GW_ENTRY fifo, 24, tmpx
     GR_SET_GW_ENTRY fifo, 28, tmpy
@@ -455,28 +545,21 @@ next_parm:
     test    i,1
     jnz     secondary_packet
 
-%if 1 ; [dBorca] Packed Color Workaround (tm)
-    test    i, i
-    js      packed_color_workaround_tm
-%endif
-
     mov     tmpy, [fa + i]              ; tmpy = fa[i]
     flds    [fa + i]                    ;   pa
     fsubs   [fb + i]                    ;   dpAB
     flds    [fb + i]                    ;   |    pb
     fsubs   [fc + i]                    ;   dpAB dpBC 
 
-parameters_loaded:
     fld     st1                         ;   |    |    dpAB
-    fmuls   dword [zdyBC]               ;   |    |    p0x
+    fmuls   [zdyBC]                     ;   |    |    p0x
     fld     st1                         ;   |    |    |    dpBC
-    fmuls   dword [zdyAB]               ;   |    |    |    p1x
+    fmuls   [zdyAB]                     ;   |    |    |    p1x
      fxch    st3                        ;   p1x  |    |    dpAB
-
     GR_SET_GW_ENTRY fifo, 0, tmpy       ;   |    |    |    |
-    fmuls   dword [zdxBC]               ;   |    |    |    p1y
+    fmuls   [zdxBC]                     ;   |    |    |    p1y
      fxch    st2                        ;   |    p1y  |    dpBC
-    fmuls   dword [zdxAB]               ;   |    |    |    p0y
+    fmuls   [zdxAB]                     ;   |    |    |    p0y
      fxch    st3                        ;   p0y  |    |    p1x
     fsubp   st1,st0                     ;   |    |    dpdx
      fxch    st2                        ;   dpdx |    p0y
@@ -484,9 +567,7 @@ parameters_loaded:
      fxch    st1                        ;   dpdy dpdx
     mov     i, [dlp + SIZEOF_dataList + dl_i] ; i = dlp[1]->i
      add     dlp, SIZEOF_dataList       ; dlp++;
- 
     GR_FSET_GW_ENTRY fifo, 4            ;   |
-
     GR_FSET_GW_ENTRY fifo, 8            ;   empty
     add     fifo, 12
     test    i,i                         ; while (i)
@@ -508,7 +589,7 @@ no_padding0:
      pop     ebx
     mov     eax, 1h                     ; return 1 (triangle drawn)
      ret
-
+    
 
         align 4
 zero_area:
@@ -557,59 +638,6 @@ dofence:
     xchg    eax, [P6FenceVar]
     pop     eax
     jmp     fenceDone
-    
-%if 1 ; [dBorca] Packed Color Workaround (tm)
-        align 4
-packed_color_workaround_tm:
-    mov     tmpy, i
-    and     i, 0ffffffh
-    shr     tmpy, 24
-    and     tmpy, 3
-    add     i, tmpy
-    mov     tmpy, [fa + i]
-    and     tmpy, 0ffh
-    push    tmpy ;fa[i]
-    mov     tmpy, [fb + i]
-    fild    dword [esp]                ;   pa
-    and     tmpy, 0ffh
-    fst     dword [esp]                ;   pa
-    push    tmpy ;fb[i]
-    mov     tmpy, [fc + i]
-    fild    dword [esp]                ;   |    pb
-    and     tmpy, 0ffh
-    fsub TO st1                        ;   dpAB pb
-    push    tmpy ;fc[i]
-    fild    dword [esp]                ;   dpAB pb   pc
-    add     esp, 8
-    fsubp   st1                        ;   dpAB dpBC
-    pop     tmpy                       ; tmpy = fa[i]
-    jmp     parameters_loaded
-        align 4
-packed_color_workaround_tm_1:
-    mov     tmpy, i
-    and     i, 0ffffffh
-    shr     tmpy, 24
-    and     tmpy, 3
-    add     i, tmpy
-    mov     tmpy, [fa + i]
-    and     tmpy, 0ffh
-    push    tmpy ;fa[i]
-    mov     tmpy, [fb + i]
-    fild    dword [esp]                ;   pa
-    and     tmpy, 0ffh
-    fst     dword [esp]                ;   pa
-    push    tmpy ;fb[i]
-    mov     tmpy, [fc + i]
-    fild    dword [esp]                ;   |    pb
-    and     tmpy, 0ffh
-    fsub TO st1                        ;   dpAB pb
-    push    tmpy ;fc[i]
-    fild    dword [esp]                ;   dpAB pb   pc
-    add     esp, 8
-    fsubp   st1                        ;   dpAB dpBC
-    pop     tmpy                       ; tmpy = fa[i]
-    jmp     parameters_loaded_1
-%endif
 
         align 4
 secondary_packet:
@@ -623,7 +651,7 @@ no_padding1:
     push    gc
     
     mov     tmpx, [dlp + dl_addr]
-    mov     gc,   [_GlideRoot + curGC]
+    GET_GC
 
     GR_SET_GW_CMD  fifo, 0, tmpx
     mov     tmpy, [gc + gwHeaders + 4]  
@@ -638,29 +666,21 @@ no_padding1:
      add    dlp, SIZEOF_dataList
         align 4
 next_parm_1:
-
-%if 1 ; [dBorca] Packed Color Workaround (tm)
-    test    i, i
-    js      packed_color_workaround_tm_1
-%endif
-
     mov     tmpy, [fa + i]              ; tmpy = fa[i]
     flds    [fa + i]                    ;   pa
     fsubs   [fb + i]                    ;   dpAB
     flds    [fb + i]                    ;   |    pb
     fsubs   [fc + i]                    ;   dpAB dpBC 
 
-parameters_loaded_1:
     fld     st1                         ;   |    |    dpAB
-    fmuls   dword [zdyBC]               ;   |    |    p0x
+    fmuls   [zdyBC]                     ;   |    |    p0x
     fld     st1                         ;   |    |    |    dpBC
-    fmuls   dword [zdyAB]               ;   |    |    |    p1x
+    fmuls   [zdyAB]                     ;   |    |    |    p1x
      fxch    st3                        ;   p1x  |    |    dpAB
-
     GR_SET_GW_ENTRY fifo, 0, tmpy       ;   |    |    |    |
-    fmuls   dword [zdxBC]               ;   |    |    |    p1y
+    fmuls   [zdxBC]                     ;   |    |    |    p1y
      fxch    st2                        ;   |    p1y  |    dpBC
-    fmuls   dword [zdxAB]               ;   |    |    |    p0y
+    fmuls   [zdxAB]                     ;   |    |    |    p0y
      fxch    st3                        ;   p0y  |    |    p1x
     fsubp   st1,st0                     ;   |    |    dpdx
      fxch    st2                        ;   dpdx |    p0y
@@ -668,9 +688,7 @@ parameters_loaded_1:
      fxch    st1                        ;   dpdy dpdx
     mov     i, [dlp + SIZEOF_dataList + dl_i] ; i = dlp[1]->i
      add     dlp, SIZEOF_dataList       ; dlp++;
-
     GR_FSET_GW_ENTRY fifo, 4            ;   |
-
     GR_FSET_GW_ENTRY fifo, 8            ;   empty
     add     fifo, 12
     test    i,i                         ; while (i)
@@ -682,7 +700,7 @@ parameters_loaded_1:
     add     fifo, 4
         align 4
 triangle_command_packet:
-    mov     gc, [_GlideRoot + curGC]
+    GET_GC
     mov     tmpy, 40000000h
 
     mov     tmpx, [gc + gwCommand]

@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.1  2004/03/02 07:55:30  dborca
+** Bastardised Glide3x for SST1
+**
 ** Revision 1.1.1.1  1999/12/07 21:48:52  joseph
 ** Initial checkin into SourceForge.
 **
@@ -88,7 +91,11 @@ _grShamelessPlug( void )
   grDepthBufferFunction(GR_CMP_ALWAYS);
   grDepthBufferMode( GR_DEPTHBUFFER_DISABLE );
   
+#if 0
+  _grChromaRangeExt(0x0000, 0x0000, GR_CHROMARANGE_RGB_ALL_EXT);
+#else
   grChromakeyValue( 0x0000 );
+#endif
   grChromakeyMode( GR_CHROMAKEY_ENABLE );
   grLfbConstantAlpha( (FxU8) 90);
   grLfbWriteColorFormat(GR_COLORFORMAT_ARGB);

@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.1  2004/03/02 07:55:30  dborca
+** Bastardised Glide3x for SST1
+**
 ** Revision 1.1.1.1  1999/12/07 21:48:52  joseph
 ** Initial checkin into SourceForge.
 **
@@ -46,7 +49,9 @@ n** -----------------------------------------------------------------------
 #define GLIDE_OS_OS2            0x10
 #define GLIDE_OS_OTHER          0x20 /* For Proprietary Arcade HW */
 
+/* Sim vs. Hardware is stored in bits [7:8] */
 #define GLIDE_SST_SHIFT         7
+#define GLIDE_SST_SIM           (0x1 << GLIDE_SST_SHIFT)
 #define GLIDE_SST_HW            (0x2 << GLIDE_SST_SHIFT )
 
 /* Hardware Type is stored in bits [9:12] */
@@ -54,6 +59,7 @@ n** -----------------------------------------------------------------------
 #define GLIDE_HW_SST1           (0x1 << GLIDE_HW_SHIFT)
 #define GLIDE_HW_SST96          (0x2 << GLIDE_HW_SHIFT)
 #define GLIDE_HW_SSTH3          (0x4 << GLIDE_HW_SHIFT)
+#define GLIDE_HW_SST2           (0x8 << GLIDE_HW_SHIFT)
 
 /*
 ** Make sure we handle all instances of WIN32
@@ -79,18 +85,22 @@ n** -----------------------------------------------------------------------
 #  define GLIDE_OS        GLIDE_OS_DOS32
 #elif defined(__WIN32__)
 #  define GLIDE_OS        GLIDE_OS_WIN32
-#else
-#error "Unknown OS"
 #endif
 
-#define GLIDE_SST     GLIDE_SST_HW
-
+/* Check for Simulator vs. Hardware */
+#ifdef GLIDE_SIMULATOR
+#  define GLIDE_SST       GLIDE_SST_SIM
+#else
+#  define GLIDE_SST     GLIDE_SST_HW
+#endif
 
 /* Check for type of hardware */
 #ifdef SST96
 #  define GLIDE_HW        GLIDE_HW_SST96
 #elif defined(SSTH3)
 #  define GLIDE_HW        GLIDE_HW_SSTH3
+#elif defined(SST2)
+#  define GLIDE_HW        GLIDE_HW_SST2
 #else /* Default to SST1 */
 #  define GLIDE_HW        GLIDE_HW_SST1
 #endif
@@ -106,7 +116,7 @@ n** -----------------------------------------------------------------------
 #endif
 
 
-#if ( ( GLIDE_NUM_TMU < 0 ) || ( GLIDE_NUM_TMU > 3 ) )
+#if ( ( GLIDE_NUM_TMU < 0 ) && ( GLIDE_NUM_TMU > 3 ) )
 #  error "GLIDE_NUM_TMU set to an invalid value"
 #endif
 

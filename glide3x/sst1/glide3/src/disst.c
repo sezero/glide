@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.1  2004/03/02 07:55:29  dborca
+** Bastardised Glide3x for SST1
+**
 ** Revision 1.1.1.1  1999/12/07 21:48:51  joseph
 ** Initial checkin into SourceForge.
 **
@@ -66,6 +69,37 @@
 
 
 /*---------------------------------------------------------------------------
+** grSstQueryBoards
+**
+** NOTE:  it is OK to call this routine before grGlideInit
+*/
+GR_DIENTRY(grSstQueryBoards, FxBool, ( GrHwConfiguration *hwc ))
+{
+  GDBG_INFO((80,"grSstQueryBoards(0x%x)\n",hwc));
+
+  hwc->num_sst = initNumBoardsInSystem();
+  return FXTRUE;
+} /* grSstQueryBoards */
+
+/*---------------------------------------------------------------------------
+** grSstQueryHardware
+**
+*/
+GR_DIENTRY(grSstQueryHardware, FxBool, ( GrHwConfiguration *hwc ))
+{
+  FxBool retVal;
+
+  GDBG_INFO((80, "grSstQueryHardware\n"));
+  GDBG_INFO_MORE((80,"(0x%x)\n",hwc));
+
+  /* init and copy the data back to the user's structure */
+  retVal = _GlideRoot.hwConfig.num_sst > 0;
+  *hwc = _GlideRoot.hwConfig;
+
+  return(retVal);
+} /* grSstQueryHardware */
+
+/*---------------------------------------------------------------------------
 ** grSstSelect
 */
 GR_DIENTRY(grSstSelect, void, ( int which ))
@@ -83,6 +117,7 @@ GR_DIENTRY(grSstSelect, void, ( int which ))
     GR_BEGIN_NOFIFOCHECK("grSstSelect",80);
     GDBG_INFO_MORE((gc->myLevel,"(%d)\n",which));
 
+    /* GMT: C-simulator recognizes this special address!!! (don't change it)*/
     _GlideRoot.packerFixAddress  = ( FxU32 ) gc->tex_ptr;
     _GlideRoot.packerFixAddress += ( ( ( FxU32 ) 3 ) << 21 );
     _GlideRoot.packerFixAddress += ( ( ( FxU32 ) 1 ) << 17 );
@@ -98,9 +133,29 @@ GR_DIENTRY(grSstSelect, void, ( int which ))
 } /* grSstSelect */
 
 /*---------------------------------------------------------------------------
+** grSstScreenWidth
+*/
+GR_DIENTRY(grSstScreenWidth, FxU32, (void))
+{
+  GR_DCL_GC;
+  GR_ASSERT(gc != NULL);
+  return gc->state.screen_width;
+} /* grSstScreenWidth */
+
+/*---------------------------------------------------------------------------
+** grSstScreenHeight
+*/
+GR_DIENTRY(grSstScreenHeight, FxU32,  (void))
+{
+  GR_DCL_GC;
+  GR_ASSERT(gc != NULL);
+  return gc->state.screen_height;
+}
+
+/*---------------------------------------------------------------------------
 **  grSstVidMode - override args to grSstOpen()
 */
-GR_DIENTRY(grSstVidMode, void,
+GR_ENTRY(grSstVidMode, void,
            (FxU32 whichSst, sst1VideoTimingStruct *vidTimings))
 {
   GDBG_INFO((80,"grSstVidMode(%d,0x%x)\n",whichSst,vidTimings));
@@ -116,3 +171,4 @@ GR_DIENTRY(grSstVidMode, void,
 
   _GlideRoot.GCs[whichSst].vidTimings = vidTimings;    
 } /* grSstVidMode */
+
