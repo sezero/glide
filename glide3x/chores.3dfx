@@ -118,7 +118,7 @@ while [ ! -z "$1" ] && [ "$DONE" != YES ] ; do
         shift
         ;;
     --arch*=*)
-        CONFIGURE_OPTIONS="$CONFIGURE_OPTIONS --enable-build-architecture=`echo $1 | sed s/--arch[^=]*=//`"
+        CONFIGURE_OPTIONS="$CONFIGURE_OPTIONS --enable-build-architecture=`echo $1 | sed 's/--arch[^=]*=//'`"
         shift
         ;;
     --configure)
@@ -127,7 +127,7 @@ while [ ! -z "$1" ] && [ "$DONE" != YES ] ; do
         ;;
     --configure=*)
         DO_CONFIGURE=YES
-        CONFIGURE_OPTIONS="$CONFIGURE_OPTIONS `echo $1 | sed s/--configure=//`"
+        CONFIGURE_OPTIONS="$CONFIGURE_OPTIONS `echo $1 | sed 's/--configure=//'`"
         shift
         ;;
     --build-dir*=*)
@@ -136,7 +136,7 @@ while [ ! -z "$1" ] && [ "$DONE" != YES ] ; do
         ;;
     --build=*)
         DO_BUILD=YES
-        BUILD_DIRECTORY=`echo $1 | sed s/--build=//`
+        BUILD_DIRECTORY=`echo $1 | sed 's/--build=//'`
         shift
         ;;
     --build)
@@ -148,7 +148,7 @@ while [ ! -z "$1" ] && [ "$DONE" != YES ] ; do
         shift
         ;;
     --make-hst=*)
-        MAKE_HISTORY_FILE=`echo "$1" | sed s/--make-hst=//'`
+        MAKE_HISTORY_FILE=`echo "$1" | sed 's/--make-hst=//'`
         shift
         ;;
     *)
