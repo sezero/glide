@@ -36,13 +36,13 @@ CDEBUG         = -Z7
 CNODEBUG       = /Ox -DNDEBUG
 LDEBUG         = $(CDEBUG)
 LNODEBUG       = $(CNODEBUG)
-LINK           = $(CC)
+LINK           = link
 GCOPTS         = /nologo /G6 /W3 /c /WX
 GCDEFS         = -D__MSC__=1 -D_X86_=1 -DNULL=0 -D_MBCS -D_LIBS -D_WIN32 -DWIN32=1 -D__WIN32__=1
 !ifdef DEBUG
-GLDOPTS        = -link -map -debugtype:both
+GLDOPTS        = -link -debugtype:both
 !else
-GLDOPTS        = -link -map -incremental:no -release
+GLDOPTS        = -link -incremental:no -release
 !if "$(FX_TARGET_MINOR)" == "WIN95"
 GLDOPTS        = $(GLDOPTS) -pdb:none
 !endif
@@ -79,7 +79,7 @@ baselibs   = $(optlibs) advapi32.lib #kernel32.lib
 uilibs     = shell32.lib comdlg32.lib comctl32.lib ctl3d32.lib 
 winlibs    = $(baselibs) $(uilibs) user32.lib gdi32.lib winspool.lib winmm.lib
 
-libcdll    = /MT
+libcdll    =
 
 guilibsdll = $(libcdll) $(winlibs)
 
@@ -161,7 +161,7 @@ DLLS = $(LIBRARIES:.lib=.dll)
 EXPS = $(LIBRARIES:.lib=.exp)
 
 $(LIBRARIES) : $(LIBPARTS)
-    $(LINK) /o $* /LD $(LIBPARTS) $(LDLIBS) $(LDFLAGS)
+    $(LINK) /DLL /OUT:$*.dll /OPT:WIN98 $(LIBPARTS) $(LDLIBS)
 
 $(DLLS) : $(LIBRARIES)
 
