@@ -4234,10 +4234,11 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
   float
     scale;
 
-#ifdef HWC_EXT_INIT 
-    hwcExtRequest_t ctxReq;
-    hwcExtResult_t  ctxRes;
-	FxI32 OS = hwcGetOS();
+#ifdef HWC_EXT_INIT
+  hwcExtRequest_t ctxReq;
+  hwcExtResult_t  ctxRes;
+  FxI32 OS = hwcGetOS();
+  FxI32 useV56KdacFix = 2;
 #endif
   
    {
@@ -4531,54 +4532,77 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
   ** Adding user support for switching the video filter from 2x2 to 4x1
   */
 
-   if (NULL == GETENV("SSTH3_OVERLAYMODE", bInfo->RegPath))
-   {
-      /* We are in optimal mode by default */
-      if(bpp == 32 && !(IS_NAPALM(bInfo->pciInfo.deviceID) && (bInfo->pciInfo.numChips == 4) && (bInfo->h3pixelSample >= 4))) { /* 32bpp and not 4x,8xfsaa on v56k */
+  if (GETENV("FX_GLIDE_V56K_DAC_FIX", bInfo->RegPath)) {
+    useV56KdacFix = atoi(GETENV("FX_GLIDE_V56K_DAC_FIX", bInfo->RegPath));
+    if (useV56KdacFix > 2) {
+      useV56KdacFix = 2;
+    } else if (useV56KdacFix < 0) {
+      useV56KdacFix = 0;
+    }
+  }
+
+#ifdef FX_GLIDE_NAPALM
+  /* always use analog SLI for 4-way boards */
+  if(bInfo->pciInfo.numChips >= 4) {
+    bInfo->h3analogSli = FXTRUE;
+  }
+#endif
+
+  if (NULL == GETENV("SSTH3_OVERLAYMODE", bInfo->RegPath)) {
+    /* We are in optimal mode by default */
+    if(bpp == 32 &&
+       !((useV56KdacFix != 0) && IS_NAPALM(bInfo->pciInfo.deviceID) && (bInfo->pciInfo.numChips == 4) && (bInfo->h3pixelSample >= 4))) { /* 32bpp and not 4x,8xfsaa on v56k */
+      vidProcCfg |= SST_OVERLAY_FILTER_POINT;
+    } else {
+      if((bInfo->vidInfo.xRes >= 1024) ||
+         (vidProcCfg & SST_VIDEO_2X_MODE_EN) ||
+         (IS_NAPALM(bInfo->pciInfo.deviceID) && (bInfo->h3sliBandHeight <= 1)) ||
+         (IS_NAPALM(bInfo->pciInfo.deviceID) && bInfo->h3analogSli)) {
+        vidProcCfg |= SST_OVERLAY_FILTER_4X4;
+      } else {
+        vidProcCfg |= SST_OVERLAY_FILTER_2X2;
+      }
+    }
+  } else {
+    switch(atoi(GETENV("SSTH3_OVERLAYMODE", bInfo->RegPath))) {
+    default:
+    case 1: /* Optimal */
+      if(bpp == 32 &&
+         !((useV56KdacFix != 0) && IS_NAPALM(bInfo->pciInfo.deviceID) && (bInfo->pciInfo.numChips == 4) && (bInfo->h3pixelSample >= 4))) { /* 32bpp and not 4x,8xfsaa on v56k */
         vidProcCfg |= SST_OVERLAY_FILTER_POINT;
       } else {
-        if((bInfo->vidInfo.xRes >= 1024) || (vidProcCfg & SST_VIDEO_2X_MODE_EN) || (IS_NAPALM(bInfo->pciInfo.deviceID) && (bInfo->h3sliBandHeight <= 1))) {
-           vidProcCfg |= SST_OVERLAY_FILTER_4X4;
+        if((bInfo->vidInfo.xRes >= 1024) ||
+           (vidProcCfg & SST_VIDEO_2X_MODE_EN) ||
+           (IS_NAPALM(bInfo->pciInfo.deviceID) && (bInfo->h3sliBandHeight <= 1)) ||
+           (IS_NAPALM(bInfo->pciInfo.deviceID) && bInfo->h3analogSli)) {
+          vidProcCfg |= SST_OVERLAY_FILTER_4X4;
         } else {
-           vidProcCfg |= SST_OVERLAY_FILTER_2X2;
+          vidProcCfg |= SST_OVERLAY_FILTER_2X2;
         }
       }
-   }
-   else
-   {
-      switch(atoi(GETENV("SSTH3_OVERLAYMODE", bInfo->RegPath)))
-      {
-         default:
-         case 1: /* Optimal */
-            if(bpp == 32 && !(IS_NAPALM(bInfo->pciInfo.deviceID) && (bInfo->pciInfo.numChips == 4) && (bInfo->h3pixelSample >= 4))) { /* 32bpp and not 4x,8xfsaa on v56k */
-              vidProcCfg |= SST_OVERLAY_FILTER_POINT;
-            } else {
-               if((bInfo->vidInfo.xRes >= 1024) || (vidProcCfg & SST_VIDEO_2X_MODE_EN) || (IS_NAPALM(bInfo->pciInfo.deviceID) && (bInfo->h3sliBandHeight <= 1))) {
-                   vidProcCfg |= SST_OVERLAY_FILTER_4X4;
-               } else {
-                   vidProcCfg |= SST_OVERLAY_FILTER_2X2;
-               }
-            }
-            break;
-         case 2: /* Normal */
-            vidProcCfg |= SST_OVERLAY_FILTER_4X4;
-            break;
-         case 3: /* High */
-            /* make sure that if 2x video mode is enabled, we use the 4x1 filter. */
-            if((vidProcCfg & SST_VIDEO_2X_MODE_EN) || (IS_NAPALM(bInfo->pciInfo.deviceID) && (bInfo->h3sliBandHeight <= 1)))
-               vidProcCfg |= SST_OVERLAY_FILTER_4X4;
-            else
-               vidProcCfg |= SST_OVERLAY_FILTER_2X2;
-            break;
-         case 4: /* Very High */
-            vidProcCfg |= SST_OVERLAY_FILTER_BILINEAR;
-            break;
-         case -1: /* Disabled */
-            /* use this just in case */
-            vidProcCfg |= SST_OVERLAY_FILTER_POINT;
-            break;
+      break;
+    case 2: /* Normal */
+      vidProcCfg |= SST_OVERLAY_FILTER_4X4;
+      break;
+    case 3: /* High */
+      /* make sure that if 2x video mode is enabled, we use the 4x1 filter. */
+      if((vidProcCfg & SST_VIDEO_2X_MODE_EN) ||
+         (IS_NAPALM(bInfo->pciInfo.deviceID) && (bInfo->h3sliBandHeight <= 1)) ||
+         (IS_NAPALM(bInfo->pciInfo.deviceID) && bInfo->h3analogSli)) {
+        vidProcCfg |= SST_OVERLAY_FILTER_4X4;
+      } else {
+        vidProcCfg |= SST_OVERLAY_FILTER_2X2;
       }
-   }      
+      break;
+    case 4: /* Very High */
+      vidProcCfg |= SST_OVERLAY_FILTER_BILINEAR;
+      break;
+    case -1: /* Disabled */
+      /* use this just in case */
+      vidProcCfg |= SST_OVERLAY_FILTER_POINT;
+      break;
+    }
+  }
   
   if (bInfo->h3pixelSample < 2)
   {
@@ -4729,7 +4753,7 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
 
   /* initialize pci registers */
 #ifdef FX_GLIDE_NAPALM
-#if 0
+#if 0 /* moved above */
   /* Force certain things on 4-way baords */
   if(bInfo->pciInfo.numChips == 4) {
     /* For 4-way SLI we must use analog SLI */
@@ -4740,11 +4764,6 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
       bInfo->h3analogSli = FXFALSE;        
     }    
   }  
-#else
-  /* always use analog SLI for 4-way boards */
-  if(bInfo->pciInfo.numChips >= 4) {
-    bInfo->h3analogSli = FXTRUE;
-  }
 #endif
 #ifdef HWC_EXT_INIT
 
