@@ -1109,7 +1109,7 @@ _txImgQuantizeDXAlpha4(FxU16* dst, const FxU32* src,
     free((void *)localSrc);
 }
 
-void
+void FX_CSTYLE
 txImgQuantize(char *dst, char *src, 
                int w, int h, 
                FxU32 format, FxU32 dither)
@@ -1286,7 +1286,7 @@ txImgQuantize(char *dst, char *src,
  * For the special cases of YIQ image, you also get the choice of 2 different
  * quality levels in each of the compression cases.
  */
-void    
+void FX_CSTYLE
 txMipQuantize(TxMip *pxMip, TxMip *txMip, int format, FxU32 dither, FxU32 compression)
 {
     int         i, w, h;

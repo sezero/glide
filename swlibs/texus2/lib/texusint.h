@@ -56,7 +56,7 @@ void    txMipResample(TxMip *destMip, TxMip *srcMip);
 void    txMipClamp( TxMip *dstMip, TxMip *srcMip );
 void    txMipMipmap(TxMip *txMip);
 
-void    txMipQuantize(TxMip *pxMip, TxMip *txMip, int fmt, FxU32 d, FxU32 comp);
+FX_ENTRY void FX_CALL txMipQuantize(TxMip *pxMip, TxMip *txMip, int fmt, FxU32 d, FxU32 comp);
 void    txMipNcc(TxMip *pxMip, TxMip *txMip, int fmt, FxU32 dither, FxU32 comp);
 void    txMipNccNNet(TxMip *pxMip, TxMip *txMip, int fmt, FxU32 dither, FxU32 comp);
 int     txMipPal256(TxMip *pxMip, TxMip *txMip, int fmt, FxU32 dither, FxU32 comp);
@@ -115,7 +115,7 @@ FxBool _txRead3DFData( FILE *stream, TxMip *info);
 
 int _txReadHeader( FILE *stream, TxMip *info );
 
-void txPalToNcc( GuNccTable *ncc_table, const FxU32 *pal );
+FX_ENTRY void FX_CALL txPalToNcc( GuNccTable *ncc_table, const FxU32 *pal );
 void txNccToPal( FxU32 *pal, const GuNccTable *ncc_table );
 
 #define MAX_TEXWIDTH    2048

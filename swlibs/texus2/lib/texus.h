@@ -28,6 +28,8 @@ extern "C" {
 #include <stdlib.h>
 #include <stdio.h>
 #include <3dfx.h>
+#define FX_DLL_DEFINITION
+#include <fxdll.h> 
 
 #ifndef __3DFX_H__
 /*
@@ -274,7 +276,7 @@ FxBool txWrite( Gu3dfInfo *info, FILE *fp, FxU32 flags );
 /*
  * Conversion of a single mip level
  */
-extern void txImgQuantize( char *dst, char *src, 
+FX_ENTRY void FX_CALL txImgQuantize( char *dst, char *src, 
                            int w, int h, 
                            FxU32 format, FxU32 dither);
 

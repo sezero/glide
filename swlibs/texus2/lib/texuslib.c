@@ -187,7 +187,7 @@ void txNccToPal( FxU32 *pal, const GuNccTable *ncc_table )
     }
 }
 
-void txPalToNcc( GuNccTable *ncc_table, const FxU32 *pal ) {
+void FX_CSTYLE txPalToNcc( GuNccTable *ncc_table, const FxU32 *pal ) {
   int i, j;
 
   for( i = 0; i < 16; i++ )
