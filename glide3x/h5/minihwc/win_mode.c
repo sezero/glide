@@ -175,7 +175,7 @@ msgModeSetFailure(HRESULT hResult)
 } /* msgModeSetFailure */
 
 static void
-msgEnumDisplayModes(hResult)
+msgEnumDisplayModes(HRESULT hResult)
 {
   if (hResult & DDERR_INVALIDOBJECT)
     GDBG_INFO(80, "DDERR_INVALIDOBJECT\n");
@@ -186,7 +186,7 @@ msgEnumDisplayModes(hResult)
 } /* msgEnumDisplayModes */
 
 FxBool 
-setVideoMode( HWND hwnd, int xRes, int yRes, int h3pixelSize, int refresh, void *hmon, char *regpath , char *devicename )
+setVideoMode( void *hwnd, int xRes, int yRes, int h3pixelSize, int refresh, void *hmon, char *regpath , char *devicename )
 {
   LPGUID          ddGuid = NULL;
   HMODULE         ddraw = NULL;
@@ -209,8 +209,8 @@ setVideoMode( HWND hwnd, int xRes, int yRes, int h3pixelSize, int refresh, void 
              refresh);
 #endif
   
-  GDBG_INFO( 80, "setVideoMode sees hwnd 0x%x\n", hwnd);
-  hwndApp = ( hwnd == NULL ) ? GetActiveWindow() : hwnd;
+  GDBG_INFO( 80, "setVideoMode sees hwnd 0x%x\n", (HWND)hwnd);
+  hwndApp = ( hwnd == NULL ) ? GetActiveWindow() : ((HWND)hwnd);
   
   if ( hwndApp == NULL ) {
     GDBG_INFO( 80, "Couldn't get a valid window handle\n" );

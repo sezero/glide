@@ -847,14 +847,6 @@ static FxU32 lostcontext_csim;
 static void _grSstSetColumnsOfNWidth(FxU32 width);
 #endif /* FX_GLIDE_NAPALM */
 
-#if !defined(__DJGPP__) && !(GLIDE_PLATFORM & GLIDE_OS_UNIX)
-WINUSERAPI
-BOOL
-WINAPI
-LockSetForegroundWindow(
-    UINT uLockCode);
-#endif
-
 /* Init hw */
 
 ResEntry
@@ -4102,4 +4094,3 @@ _grRenderMode(FxU32 pixelformat)
 } /* _grRenderMode */
 
 #endif /* FX_GLIDE_NAPALM */
-

@@ -1374,7 +1374,7 @@ void FX_CSTYLE _grDrawVertexList_SSE_Window(FxU32 pktype, FxU32 type, FxI32 mode
 void FX_CSTYLE _grDrawVertexList_SSE_Clip(FxU32 pktype, FxU32 type, FxI32 mode, FxI32 count, void *pointers);
 #endif /* GL_SSE */
 
-#if (GLIDE_PLATFORM & GLIDE_OS_UNIX) || defined(__DJGPP__)
+#ifdef __GNUC__
 /* Define this structure otherwise it assumes the structure only exists
    within the function */
 struct GrGC_s;
@@ -2689,6 +2689,21 @@ _grSstVRetraceOn(void);
 #define WNT_TEB_TLS_OFFSET              0xE10
 #define WNT_TLS_INDEX_TO_OFFSET(i)      ((i)*sizeof(DWORD)+WNT_TEB_TLS_OFFSET)
 
+#ifdef __GNUC__
+
+extern __inline FxU32 getThreadValueFast (void)
+{
+ FxU32 t;
+ __asm __volatile (" \
+       mov %%fs:(%0), %%eax; \
+       add %1, %%eax; \
+       mov (%%eax), %%eax; \
+ ":"=a"(t):"i"(WNT_TEB_PTR), "g"(_GlideRoot.tlsOffset));
+ return t;
+}
+
+#else  /* __GNUC__ */
+
 #define __GR_GET_TLSC_VALUE() \
 __asm { \
    __asm mov eax, DWORD PTR fs:[WNT_TEB_PTR] \
@@ -2706,6 +2721,8 @@ getThreadValueFast() {
   }
 }
 #pragma warning (3:4035)
+
+#endif /* __GNUC__ */
 #endif
 
 #if (GLIDE_PLATFORM & GLIDE_OS_MACOS)
@@ -3248,4 +3265,3 @@ static GrLOD_t g3LodXlat_base[2] = { GR_LOD_LOG2_256, GR_LOD_LOG2_2048 };
 #endif
 
 #endif /* __FXGLIDE_H__ */
-

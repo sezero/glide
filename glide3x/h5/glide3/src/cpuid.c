@@ -3,6 +3,12 @@
  *
  * $Header$
  * $Log$
+ * Revision 1.1.2.8  2003/07/29 10:04:32  dborca
+ * Shamelessness.
+ * Safeguard in CPUID.
+ * Changed contact address!
+ * Koolsmoky's texture download fixes.
+ *
  * Revision 1.1.2.7  2003/07/25 07:14:58  dborca
  * ... in the name of the Linux, DRI and the sacred Glide...
  *
@@ -67,7 +73,7 @@ typedef unsigned long word32;
 #endif
 
 
-#ifndef __WIN32__
+#ifndef __MSC__
 static jmp_buf j;
 
 
@@ -129,7 +135,7 @@ static int check_feature (int feature)
  */
 static int has_feature (int feature)
 {
-#ifndef __WIN32__
+#ifndef __MSC__
  int rv;
 
  /* register signal handlers */
@@ -145,7 +151,9 @@ static int has_feature (int feature)
  return rv;
 #else
  /* Use the non-standard __try/__except mechanism because win95 fails to catch
-  * sigillegal for SSE using standard signal mechanism. 
+  * sigillegal for SSE using standard signal mechanism.
+  * HACK ALERT! HACK ALERT! HACK ALERT!
+  * This means the MinGW version cannot be safely run under Win95!
   */
 #define _TRY() __try {
 #define _EXCEPTION() } __except(1) { return 0; } /* EXCEPTION_EXECUTE_HANDLER=1 */

@@ -234,7 +234,7 @@ GR_ENTRY(grDrawPoint, void, (const void *p))
   GR_BEGIN_NOFIFOCHECK(FN_NAME, 90);
   GDBG_INFO_MORE(gc->myLevel, "(p = 0x%x)\n", p);
 
-#if (GLIDE_PLATFORM & GLIDE_OS_UNIX) || defined(__DJGPP__)
+#ifdef __GNUC__
   if (gc->state.grEnableArgs.primitive_smooth_mode & GR_AA_ORDERED_POINTS_MASK)
 	  _grAADrawPoints(GR_VTX_PTR_ARRAY, 1, (void *)&p);
   else
@@ -290,7 +290,7 @@ GR_ENTRY(grDrawLine, void, (const void *a, const void *b))
             _grDrawLineStrip(GR_VTX_PTR_ARRAY, GR_LINES, 2, verts);
   }
 #else
-#if (GLIDE_PLATFORM & GLIDE_OS_UNIX) || defined(__DJGPP__)
+#ifdef __GNUC__
   if (gc->state.grEnableArgs.primitive_smooth_mode & GR_AA_ORDERED_LINES_MASK)
     _grAADrawLineStrip(GR_VTX_PTR_ARRAY, GR_LINES, 2, (void *)&a);
   else
@@ -1182,4 +1182,3 @@ _grDrawTriangles_Default(FxI32 mode, FxI32 count, void *pointers)
 #endif
 #undef FN_NAME
 } /* _grDrawTriangles */
-

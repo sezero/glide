@@ -197,7 +197,7 @@ _pciCreateConfigSpaceMapping( FxU32 device_number, FxU32
 
 
 
-static FX_ENTRY FxU32 FX_CALL
+static FxU32 FX_CALL
 _pciFetchRegister( FxU32 offset, FxU32 size_in_bytes, 
                    FxU32 device_number, FxU32 config_mechanism  )
 { 
@@ -235,7 +235,7 @@ _pciFetchRegister( FxU32 offset, FxU32 size_in_bytes,
 
 
 
-static FX_ENTRY void FX_CALL
+static void FX_CALL
 _pciUpdateRegister( FxU32 offset, FxU32 data, FxU32 size_in_bytes,  
                     FxU32 device_number, FxU32 config_mechanism  ) 
 {
@@ -833,4 +833,3 @@ pciLinearRangeSetPermission(const FxU32 addrBase, const FxU32 addrLen, const FxB
 {
   return pciLinearRangeSetPermissionDD(addrBase, addrLen, writeableP);
 }
-

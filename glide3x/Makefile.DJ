@@ -249,13 +249,13 @@ all: glid3
 glid3: $(GLIDE_LIBDIR)/$(GLIDE_LIB) $(GLIDE_LIBDIR)/$(GLIDE_DXE) $(GLIDE_LIBDIR)/$(GLIDE_IMP)
 
 $(GLIDE_LIBDIR)/$(GLIDE_LIB): $(GLIDE_OBJECTS)
-	$(AR) $(ARFLAGS) $@ $(GLIDE_OBJECTS)
+	$(AR) $(ARFLAGS) $@ $^
 
 $(GLIDE_LIBDIR)/$(GLIDE_DXE) $(GLIDE_LIBDIR)/$(GLIDE_IMP): $(GLIDE_OBJECTS)
 ifeq ($(HAVEDXE3),)
 	$(warning Missing DXE3 package... Skipping $(GLIDE_DXE))
 else
-	-dxe3gen -o $(GLIDE_LIBDIR)/$(GLIDE_DXE) -Y $(GLIDE_LIBDIR)/$(GLIDE_IMP) -D "Glide3/$(FX_GLIDE_HW) DJGPP" -E _gr -E _gu -U $(GLIDE_OBJECTS)
+	-dxe3gen -o $(GLIDE_LIBDIR)/$(GLIDE_DXE) -Y $(GLIDE_LIBDIR)/$(GLIDE_IMP) -D "Glide3/$(FX_GLIDE_HW) DJGPP" -E _gr -E _gu -U $^
 endif
 
 ###############################################################################

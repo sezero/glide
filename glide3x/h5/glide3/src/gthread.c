@@ -72,6 +72,17 @@ void setThreadValue( FxU32 value ) {
     TlsSetValue( _GlideRoot.tlsIndex, (void*)value );
 }
 
+#ifdef __GNUC__
+
+FxU32 getThreadValueSLOW (void)
+{
+ GR_CHECK_F( "getThreadValue", !threadInit, "Thread storage not initialized\n" );
+
+ return getThreadValueFast();
+}
+
+#else
+
 #pragma warning (4:4035)        /* No return value */
 FxU32 getThreadValueSLOW( void ) {
     GR_CHECK_F( "getThreadValue", !threadInit, "Thread storage not initialized\n" );
@@ -91,6 +102,8 @@ FxU32 getThreadValueSLOW( void ) {
 #endif
 
 }
+
+#endif
 
 void freeThreadStorage( void )
 {

@@ -513,22 +513,13 @@ GR_DIENTRY(gu3dfGetInfo, FxBool,
   /*
   ** determine the color format of the input image
   */
-#ifdef __GNUC__
-#ifdef __DJGPP__
-    strupr(color_format);
-#else
-  /* This function is not found in libgcc.a */
   {
-    char* tempStr = (char*)color_format;
-    while(*tempStr != '\0') *tempStr++ = toupper(*tempStr);
+    char *tempStr = (char*)color_format;
+    while (*tempStr != '\0') {
+          *tempStr = toupper(*tempStr);
+          tempStr++;
+    }
   }
-#endif
-#else
-  {
-    extern char* _strupr(char*);
-    _strupr(color_format);
-  }
-#endif /* __GNUC__ */
 
   i = 0;
   format_found = FXFALSE;
