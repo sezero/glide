@@ -42,5 +42,5 @@ LIBRARIES = libtexus.a
 SHARED_LIBRARY = libtexus.so.1.1
 SUBLIBRARIES = $(BUILD_ROOT_SWLIBS)/lib/libfxmisc.a
 
-include $(BUILD_ROOT_SWLIBS)/include/make/3dfx.linux.mak
+include $(BUILD_ROOT_SWLIBS)/include/make/3dfx.mak
 
