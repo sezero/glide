@@ -22,6 +22,9 @@
 /*  $Header$ */
 /*  $Revision$ */
 /*  $Log$
+/*  Revision 1.2  2000/02/15 22:35:59  joseph
+/*  Changes to support FreeBSD (patch submitted by Doug Rabson)
+/*
 /*  Revision 1.1.1.1  1999/11/24 21:44:58  joseph
 /*  Initial checkin for SourceForge
 /* */
@@ -99,7 +102,7 @@
 	push %esi	/*  save caller's register variable */
 	push %ebx	/*  save caller's register variable  */
 
-	mov _gc(%esp), gc
+	mov _gc-4(%esp) , gc
 	mov _vb-4(%esp) , fb	/*  get base address of vertex B */
 	push %ebp	/*  save frame pointer */
 

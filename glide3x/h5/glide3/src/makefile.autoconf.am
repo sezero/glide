@@ -193,12 +193,12 @@ cpudtect.o cpudtct.lo: cpudtect.s
 # Library definitions.
 #
 if FX_GLIDE_CTRISETUP
-FX_GLIDE_CTRISETUP_SRC = gxdraw.c xtexdl_def.c
+FX_GLIDE_CTRISETUP_SRC = gxdraw.c
 else
 if GL_AMD3D
-FX_GLIDE_CTRISETUP_SRC = xtexdl_3dnow.s xdraw2_3dnow.s xdraw3_3dnow.s
+FX_GLIDE_CTRISETUP_SRC = xdraw2_3dnow.s xdraw3_3dnow.s
 else
-FX_GLIDE_CTRISETUP_SRC = xtexdl_def.s xdraw2_def.s xdraw3_def.s
+FX_GLIDE_CTRISETUP_SRC = xdraw2_def.s xdraw3_def.s
 endif
 endif
 
@@ -231,7 +231,7 @@ libglide3_la_SOURCES   = fxinline.h fxgasm.h \
                          gbanner.c gerror.c gaa.c gdraw.c \
                          gglide.c distate.c gstrip.c distrip.c \
                          diget.c glfb.c gsst.c gtex.c gtexdl.c \
-                         fifo.c cpudtect.s $(VGLIDE_SRC)
+                         fifo.c cpudtect.s  xtexdl_def.c $(VGLIDE_SRC)
 libglide3_la_LDFLAGS   = -version-info 13:0:10
 libglide3_la_LIBADD    = $(WHOLE_LIBS) $(LINK_LIBS)
 
