@@ -1141,7 +1141,7 @@ _grBufferClear2D(/*const*/ FxU32 buffOffset,
 #define REFERENCE_TRI_FILL 0
 #ifdef FX_GLIDE_NAPALM
 /* KoolSmoky - testing 2-tri fill with napalm */
-#define TWO_TRI_FILL       1
+#define TWO_TRI_FILL       0
 #else
 #define TWO_TRI_FILL       0
 #endif
