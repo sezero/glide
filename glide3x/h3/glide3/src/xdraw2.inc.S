@@ -22,6 +22,12 @@
 /*  $Header$ */
 /*  $Revision$ */
 /*  $Log$
+/*  Revision 1.3  2000/10/20 19:07:00  billwhite
+/*  1.) Added changes for AMD 3DNow instructions in h5/glide3 and
+/*      h3/glide3.
+/*  2.) Fixed a typographical error in configure.in.  The default
+/*      texture utility library is texus2, not texus.
+/*
 /*  Revision 1.2  2000/02/15 22:35:59  joseph
 /*  Changes to support FreeBSD (patch submitted by Doug Rabson)
 /*
@@ -240,7 +246,7 @@ LOCAL(nocull):
 	push %edi	/*  save caller's register variable */
 	push %esi	/*  save caller's register variable  */
 
-	mov %edx , gc	/*  gc in edx from caller */
+	mov _gc-8(%esp) , gc	/*  gc on stack (NOT!!! in edx) from caller */
 	push %ebx	/*  save caller's register variable */
 
 	push %ebp	/*  save frame pointer */

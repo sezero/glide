@@ -23,6 +23,10 @@
 /*  $Header$ *
 /*  $Revision$ *
 /*  $Log$
+/*  Revision 1.5  2000/11/17 21:31:06  joseph
+/*  Restored changes that were lost when I imported new sources from 3dfx's
+/*  internal source repository.
+/*
 /*  Revision 1.4  2000/11/15 23:32:54  joseph
 /*  Syncing up with 3dfx internal source repository.  These changes contain a
 /*  number of bug fixes.
@@ -291,7 +295,7 @@ LOCAL(nocull):
 	push %edi	/*  save caller's register variable */
 	push %esi	/*  save caller's register variable  */
 
-	mov %edx , gc	/*  gc in edx from caller */
+	mov _gc-8(%esp) , gc	/*  gc on stack (NOT!!! in edx) from caller */
 	push %ebx	/*  save caller's register variable */
 
 	push %ebp	/*  save frame pointer */
