@@ -1374,18 +1374,16 @@ _grTriFill(GrColor_t color, FxU32 depth, GrStencil_t stencil)
     /* Here I have assumed that bufferMode will be 0 when there is no */
     /* depth buffering and odd when z buffering. */
     if (bufferMode)
-    {       
+    {
+	  vertex[0].depth = (float)depth ;
 #if TWO_TRI_FILL
-      vertex[0].depth = (float)depth ;
       vertex[3].depth = (float)depth ;
 
-      GR_SET_EXPECTED_SIZE(sizeof(float) * 3 * 3, 2) ;
+      GR_SET_EXPECTED_SIZE(sizeof(float) * 3 * 3 * 2, 1) ;
       TRI_PACKET_BEGIN(kSetupStrip,
                       SST_SETUP_Z << SSTCP_PKT3_PMASK_SHIFT, 
-                      3, sizeof(float) * 3, SSTCP_PKT3_BDDBDD);
+                      6, sizeof(float) * 3, SSTCP_PKT3_BDDBDD);
 #else
-      vertex[0].depth = (float)depth ;
-      
       GR_SET_EXPECTED_SIZE(sizeof(float) * 3 * 3, 1) ;
       TRI_PACKET_BEGIN(kSetupStrip,
                       SST_SETUP_Z << SSTCP_PKT3_PMASK_SHIFT, 
@@ -1403,14 +1401,9 @@ _grTriFill(GrColor_t color, FxU32 depth, GrStencil_t stencil)
         TRI_SETF(vertex[2].x);
         TRI_SETF(vertex[2].y);
         TRI_SETF(vertex[0].depth);
-      }
-      TRI_END ;
+
 #if TWO_TRI_FILL
-      TRI_PACKET_BEGIN(kSetupStrip,
-                      SST_SETUP_Z << SSTCP_PKT3_PMASK_SHIFT, 
-                      3, sizeof(float) * 3, SSTCP_PKT3_BDDBDD);
-      {
-        TRI_SETF(vertex[3].x);
+		TRI_SETF(vertex[3].x);
         TRI_SETF(vertex[3].y);
         TRI_SETF(vertex[3].depth);
 
@@ -1421,9 +1414,9 @@ _grTriFill(GrColor_t color, FxU32 depth, GrStencil_t stencil)
         TRI_SETF(vertex[5].x);
         TRI_SETF(vertex[5].y);
         TRI_SETF(vertex[3].depth);
+#endif
       }
       TRI_END ;
-#endif
         
       GR_CHECK_SIZE() ;
     } 
@@ -1431,10 +1424,10 @@ _grTriFill(GrColor_t color, FxU32 depth, GrStencil_t stencil)
     {
       /* When depth buffering is disabled, don't send a depth component */
 #if TWO_TRI_FILL
-      GR_SET_EXPECTED_SIZE(sizeof(float) * 2 * 3, 1) ;
+      GR_SET_EXPECTED_SIZE(sizeof(float) * 2 * 3 * 2, 1) ;
       TRI_PACKET_BEGIN(kSetupStrip,
                       0, 
-                      3, sizeof(float) * 2, SSTCP_PKT3_BDDBDD) ;
+                      6, sizeof(float) * 2, SSTCP_PKT3_BDDBDD) ;
 #else
       GR_SET_EXPECTED_SIZE(sizeof(float) * 2 * 3, 1) ;
       TRI_PACKET_BEGIN(kSetupStrip,
@@ -1450,13 +1443,8 @@ _grTriFill(GrColor_t color, FxU32 depth, GrStencil_t stencil)
 
         TRI_SETF(vertex[2].x);
         TRI_SETF(vertex[2].y);
-      }
-      TRI_END ;
+
 #if TWO_TRI_FILL
-      TRI_PACKET_BEGIN(kSetupStrip,
-                      0, 
-                      3, sizeof(float) * 2, SSTCP_PKT3_BDDBDD) ;
-      {
         TRI_SETF(vertex[3].x);
         TRI_SETF(vertex[3].y);
 
@@ -1465,9 +1453,9 @@ _grTriFill(GrColor_t color, FxU32 depth, GrStencil_t stencil)
 
         TRI_SETF(vertex[5].x);
         TRI_SETF(vertex[5].y);
+#endif
       }
       TRI_END ;
-#endif
         
       GR_CHECK_SIZE() ;
     }
