@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.2  2000/10/27 07:54:51  alanh
+** fix readPtr0/1 -> depth0/1 check
+**
 ** Revision 1.1.1.1  1999/11/24 21:45:01  joseph
 ** Initial checkin for SourceForge
 **
@@ -2265,7 +2268,7 @@ GR_ENTRY(grGlideSetState, void, (const void *state))
 **  and the only drawbuffer modes supported by the fbzMode register are 0
 **  (back) and 1 (front)
 */
-
+#ifndef __linux__
 GR_STATE_ENTRY(grRenderBuffer, void, (GrBuffer_t buffer))
 {
 #define FN_NAME "_grRenderBuffer"
@@ -2281,17 +2284,9 @@ GR_STATE_ENTRY(grRenderBuffer, void, (GrBuffer_t buffer))
                      ? gc->frontBuffer
                      : gc->backBuffer);
     if (oldBuffer != gc->curBuffer) {
-#ifdef __linux__
-      REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 2, 0x3); 
-      REG_GROUP_SET(hw, colBufferAddr, gc->buffers[gc->curBuffer]);
-      REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride :
-		    gc->state.shadow.colBufferStride);
-      REG_GROUP_END();
-#else
       REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 1, 0x1); 
       REG_GROUP_SET(hw, colBufferAddr, gc->buffers[gc->curBuffer]);
       REG_GROUP_END();
-#endif
 
       gc->state.shadow.colBufferAddr = gc->buffers[gc->curBuffer];
     }
@@ -2300,6 +2295,32 @@ GR_STATE_ENTRY(grRenderBuffer, void, (GrBuffer_t buffer))
   GR_END();
 #undef FN_NAME
 } /* grRenderBuffer */
+#else /* __linux__ */
+GR_STATE_ENTRY(grRenderBuffer, void, (GrBuffer_t buffer))
+{
+#define FN_NAME "_grRenderBuffer"
+  GR_BEGIN_NOFIFOCHECK(FN_NAME, 85);
+  GDBG_INFO_MORE(gc->myLevel,"(%d)\n",buffer);
+  GR_CHECK_F(myName, buffer >= GR_BUFFER_AUXBUFFER, "invalid buffer");
+
+  {
+    gc->curBuffer = ((buffer == GR_BUFFER_FRONTBUFFER)
+                     ? gc->frontBuffer
+                     : gc->backBuffer);
+    REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 2, 0x3); 
+    REG_GROUP_SET(hw, colBufferAddr, gc->buffers[gc->curBuffer]);
+    REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride :
+		    gc->state.shadow.colBufferStride);
+    REG_GROUP_END();
+
+    gc->state.shadow.colBufferAddr = gc->buffers[gc->curBuffer];
+  }
+
+  GR_END();
+#undef FN_NAME
+} /* grRenderBuffer */
+#else /* __linux__ */
+#endif
 
 GR_ENTRY(grCheckForRoom, void, (FxI32 n))
 {
