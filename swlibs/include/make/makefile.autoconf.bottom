@@ -51,7 +51,7 @@ ifeq ("@GLIDE_DEBUG@","true")
 GLIDE_DEBUG_GCFLAGS = -g -O
 GLIDE_DEBUG_GDEFS = -DGDBG_INFO_ON -DGLIDE_DEBUG
 else
-GLIDE_DEBUG_GCFLAGS = -O6 -m486
+GLIDE_DEBUG_GCFLAGS = -O6 -mcpu=pentium
 GLIDE_DEBUG_GDEFS = -fomit-frame-pointer -funroll-loops \
 	                -fexpensive-optimizations -ffast-math -DBIG_OPT
 endif
