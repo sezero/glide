@@ -19,6 +19,11 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.3  2004/10/04 09:36:00  dborca
+** second cut at Glide3x for Voodoo1/Rush (massive update):
+** delayed validation, vertex snapping, clip coordinates, strip/fan_continue, bugfixes.
+** and probably a bunch of other crap that I forgot
+**
 ** Revision 1.1.2.2  2004/03/08 07:42:21  dborca
 ** Voodoo Rush fixes
 **
@@ -589,7 +594,7 @@ GR_ENTRY(grSstWinOpen, GrContext_t, (FxU32                   hWnd,
                   nColBuffers, nAuxBuffers));
   GR_CHECK_F("grSstWinOpen", !gc, "no SST selected as current (gc==NULL)");
 
-#if !defined(__linux__) && !defined(__DJGPP__)
+#if !defined(__linux__) && !(GLIDE_PLATFORM & GLIDE_OS_DOS32)
   if (!hWnd)
     GrErrorCallback("grSstWinOpen: need to use a valid window handle",
                     FXTRUE);

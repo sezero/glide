@@ -805,7 +805,7 @@ _grCommandTransportMakeRoom(const FxI32 blockSize, const char* fName, const int 
   GR_BEGIN_NOFIFOCHECK(FN_NAME"()\n", 400);
 
   if ( gc->windowed ) {
-#if defined(GLIDE_INIT_HWC) && !(GLIDE_PLATFORM & GLIDE_OS_UNIX) && !defined(__DJGPP__)
+#if defined(GLIDE_INIT_HWC) && !(GLIDE_PLATFORM & GLIDE_OS_UNIX) && !(GLIDE_PLATFORM & GLIDE_OS_DOS32)
     struct cmdTransportInfo*
       gcFifo = &gc->cmdTransportInfo;
     HwcWinFifo 
@@ -931,7 +931,7 @@ _grCommandTransportMakeRoom(const FxI32 blockSize, const char* fName, const int 
     }
     
     GR_SET_FIFO_PTR( 0, 0 );
-#endif /* defined(GLIDE_INIT_HWC) && !(GLIDE_PLATFORM & GLIDE_OS_UNIX) && !defined(__DJGPP__) */
+#endif /* defined(GLIDE_INIT_HWC) && !(GLIDE_PLATFORM & GLIDE_OS_UNIX) && !defined(GLIDE_PLATFORM & GLIDE_OS_DOS32) */
   } else {
     /* Check here to see if we have a valid context since the last time
      * we checked. This is to protect us from loosing our context before

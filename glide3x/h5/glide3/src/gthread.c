@@ -202,9 +202,9 @@ void endCriticalSection(void)
 {
 }
 
-#elif defined(__DJGPP__)
+#elif (GLIDE_PLATFORM & GLIDE_OS_DOS32)
 
-FxU32 threadValueDJGPP;
+FxU32 GR_CDECL threadValueDJGPP;
 
 void initThreadStorage(void)
 {
@@ -236,6 +236,6 @@ void endCriticalSection(void)
 {
 }
 
-#else	/* defined(__DJGPP__) */
+#else
 #  error "No thread synchronization/storage functions defined for this OS"
 #endif

@@ -185,8 +185,7 @@ void endCriticalSection(void)
 {
 }
 
-/* [dBorca] */
-#elif defined(__DJGPP__) || defined(__WATCOMC__)
+#elif (GLIDE_PLATFORM & GLIDE_OS_DOS32)
 
 
 #include <3dfx.h>

@@ -19,6 +19,9 @@
  **
  ** $Header$
  ** $Log$
+ ** Revision 1.1.1.1.6.3  2004/10/04 09:26:30  dborca
+ ** DOS/OpenWatcom support
+ **
  ** Revision 1.1.1.1.6.2  2003/11/07 13:38:38  dborca
  ** unite the clans
  **
@@ -700,7 +703,7 @@ _grCommandTransportMakeRoom(const FxI32 blockSize, const char* fName, const int 
   GR_BEGIN_NOFIFOCHECK(FN_NAME, 400);
 
   if ( gc->windowed ) {
-#if defined( GLIDE_INIT_HWC ) && !defined(__linux__) && !defined(__DJGPP__) && !defined(__WATCOMC__) /* [dBorca] */
+#if defined( GLIDE_INIT_HWC ) && !defined(__linux__) && !(GLIDE_PLATFORM & GLIDE_OS_DOS32)
     struct cmdTransportInfo*
       gcFifo = &gc->cmdTransportInfo;
     HwcWinFifo 

@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.6.6  2004/10/04 09:22:44  dborca
+** OpenWatcom support
+**
 ** Revision 1.1.1.1.6.5  2004/09/27 09:05:22  dborca
 ** aligned aux buffer correctly (maybe)
 **
@@ -598,7 +601,6 @@ modify [eax];
 #define P6FENCE { __asm xchg eax, fenceVar }
 #elif defined(__POWERPC__) && defined(__MWERKS__)
 #define P6FENCE __eieio()
-/* [dBorca] */
 #elif defined(__DJGPP__)
 #define P6FENCE __asm __volatile ("xchg %%eax, _fenceVar":::"%eax");
 #elif defined(__linux__)
@@ -3460,7 +3462,7 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
                 ( bInfo->buffInfo.bufStrideInTiles << 16 ) |
                   bInfo->buffInfo.bufStrideInTiles );
 
-#if defined(__DJGPP__) || defined(__linux__) || defined(__WATCOMC__)
+#if defined(__linux__) || (GLIDE_PLATFORM & GLIDE_OS_DOS32)
   HWC_IO_STORE(bInfo->regInfo, vidProcCfg, vidProcCfg | SST_VIDEO_PROCESSOR_EN);
 #endif
 
@@ -4296,14 +4298,13 @@ hwcShareContextData(hwcBoardInfo *bInfo, FxU32 **data)
             ctxRes.optData.shareContextDWORDRes.contextDWORD); 
 
 /* [dBorca] that must be initialized to something... */
-#elif defined(__DJGPP__) || defined(__linux__) || defined(__WATCOMC__)
+#elif defined(__linux__) || (GLIDE_PLATFORM & GLIDE_OS_DOS32)
  *data = &dummyContextDWORD;
 #endif
   return retVal;
 #undef FN_NAME
 } /* hwcShareContextData */
 
-/* [dBorca] */
 #ifdef HWC_EXT_INIT
 void
 hwcUnmapMemory9x(hwcBoardInfo *bInfo) 

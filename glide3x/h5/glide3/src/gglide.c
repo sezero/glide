@@ -2648,7 +2648,7 @@ GR_ENTRY(grBufferClear, void, (GrColor_t color, GrAlpha_t alpha, FxU32 depth))
 #define KBHIT(key) ((GetAsyncKeyState(key) & 0x8001) == 0x8001)
 #elif (GLIDE_PLATFORM & GLIDE_OS_UNIX)
 #define KBHIT(key) (0)
-#elif defined(__DJGPP__)
+#elif (GLIDE_PLATFORM & GLIDE_OS_DOS32)
 #define KBHIT(key) (0)
 #else
 #define KBHIT(key) (0)
@@ -2672,7 +2672,7 @@ GR_ENTRY(grBufferSwap, void, (FxU32 swapInterval))
   GDBG_INFO_MORE(gc->myLevel,"(%d)\n",swapInterval);
 
 #ifdef FX_GLIDE_NAPALM
-#if !(GLIDE_PLATFORM & GLIDE_OS_UNIX) && !defined(__DJGPP__)
+#if !(GLIDE_PLATFORM & GLIDE_OS_UNIX) && !(GLIDE_PLATFORM & GLIDE_OS_DOS32)
   /* Window hacky stuff */
   if (gc->windowed)
   {

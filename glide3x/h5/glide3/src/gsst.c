@@ -1475,7 +1475,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
   GrContext_t retVal = 0;
   FxU32 tramShift, tmu1Offset;
 
-#if !(GLIDE_PLATFORM & GLIDE_OS_UNIX) && !defined(__DJGPP__)
+#if !(GLIDE_PLATFORM & GLIDE_OS_UNIX) && !(GLIDE_PLATFORM & GLIDE_OS_DOS32)
   if (!hWnd) hWnd = (FxU32) GetActiveWindow();
   if (!hWnd)
     GrErrorCallback("grSstWinOpen: need to use a valid window handle",
@@ -1496,7 +1496,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
     
     return _grCreateWindowSurface(hWnd, format, origin, pixelformat, nAuxBuffers);
   }
-#endif	/* (GLIDE_PLATFORM & GLIDE_OS_UNIX) || defined(__DJGPP__) */
+#endif	/* (GLIDE_PLATFORM & GLIDE_OS_UNIX) || (GLIDE_PLATFORM & GLIDE_OS_DOS32) */
   
   /* NB: TLS must be setup before the 'declaration' which grabs the
    * current gc. This gc is valid for all threads in the fullscreen
@@ -3151,7 +3151,7 @@ GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
   if (!gc)
     return 0;
 
-#if !(GLIDE_PLATFORM & GLIDE_OS_UNIX) && !defined(__DJGPP__)
+#if !(GLIDE_PLATFORM & GLIDE_OS_UNIX) && !(GLIDE_PLATFORM & GLIDE_OS_DOS32)
   /* We are in Windowed Mode */
   if (gc->windowed)
   {
@@ -3556,14 +3556,14 @@ GR_ENTRY(grFinish, void, (void))
 
   grFlush();
   if ( gc->windowed ) {
-#if defined(GLIDE_INIT_HWC) && !(GLIDE_PLATFORM & GLIDE_OS_UNIX) && !defined(__DJGPP__)
+#if defined(GLIDE_INIT_HWC) && !(GLIDE_PLATFORM & GLIDE_OS_UNIX) && !(GLIDE_PLATFORM & GLIDE_OS_DOS32)
     struct cmdTransportInfo*
       gcFifo = &gc->cmdTransportInfo;
     
     hwcIdleWinFifo(gc->bInfo,
                    &gcFifo->hwcFifoInfo,
                    gcFifo->issuedSerialNumber);
-#endif	/* defined(GLIDE_INIT_HWC) && !(GLIDE_PLATFORM & GLIDE_OS_UNIX) && !defined(__DJGPP__) */
+#endif	/* defined(GLIDE_INIT_HWC) && !(GLIDE_PLATFORM & GLIDE_OS_UNIX) && !(GLIDE_PLATFORM & GLIDE_OS_DOS32) */
   } else {
     /*while((_grSstStatus() & SST_BUSY) != 0) */
       /* Do Nothing */; 

@@ -71,7 +71,7 @@ static char gdbg_debuglevel[GDBG_MAX_LEVELS];   // array of debuglevel controls
 
 static long gdbg_errors = 0;
 
-#if defined(HWC_EXT_INIT) || defined(__DJGPP__) || (GLIDE_PLATFORM & GLIDE_OS_UNIX)
+#if defined(HWC_EXT_INIT) || (GLIDE_PLATFORM & GLIDE_OS_DOS32) || (GLIDE_PLATFORM & GLIDE_OS_UNIX)
 char *hwcGetenv (const char *a);
 /*#ifdef GETENV
 #undef GETENV

@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.3  2004/10/04 09:26:31  dborca
+** DOS/OpenWatcom support
+**
 ** Revision 1.1.2.2  2004/02/16 07:42:16  dborca
 ** grSetNumPendingBuffers visible with grGetProcAddress
 **
@@ -945,7 +948,7 @@ GR_ENTRY(grSstWinOpen, GrContext_t, ( FxU32                   hWnd,
   struct cmdTransportInfo *gcFifo = 0;
   GrContext_t retVal = 0;
 
-#if !defined(__linux__) && !defined(__DJGPP__)
+#if !defined(__linux__) && !(GLIDE_PLATFORM & GLIDE_OS_DOS32)
   if (!hWnd)
     GrErrorCallback("grSstWinOpen: need to use a valid window handle",
                     FXTRUE);
@@ -1663,7 +1666,7 @@ GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
   }
   _GlideRoot.windowsInit--;
 
-#if !defined(__linux__) && !defined (__DJGPP__) && !defined (__WATCOMC__)
+#if !defined(__linux__) && !(GLIDE_PLATFORM & GLIDE_OS_DOS32)
   if ( gc->bInfo->osNT )
     hwcUnmapMemory();
   else
@@ -1905,7 +1908,7 @@ GR_ENTRY(grFinish, void, (void))
 
   grFlush();
   if ( gc->windowed ) {
-#if defined( GLIDE_INIT_HWC ) && !defined( __linux__ ) && !defined( __DJGPP__ ) && !defined( __WATCOMC__ )
+#if defined( GLIDE_INIT_HWC ) && !defined( __linux__ ) && !(GLIDE_PLATFORM & GLIDE_OS_DOS32)
     struct cmdTransportInfo*
       gcFifo = &gc->cmdTransportInfo;
     

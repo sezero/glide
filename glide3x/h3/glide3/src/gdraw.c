@@ -19,6 +19,9 @@
  **
  ** $Header$
  ** $Log$
+ ** Revision 1.2.6.3  2004/10/04 09:26:31  dborca
+ ** DOS/OpenWatcom support
+ **
  ** Revision 1.2.6.2  2004/09/27 08:58:15  dborca
  ** type-punning warning
  **
@@ -294,7 +297,7 @@ GR_ENTRY(grDrawTriangle, void, (const void *a, const void *b, const void *c))
     }
     lostContext: ; /* <-- my, that's odd, but MSVC was insistent  */
   }
-#elif defined( __linux__ ) || defined(__FreeBSD__) || defined(__DJGPP__) || defined(__WATCOMC__) /* [dBorca] */
+#elif defined( __linux__ ) || defined(__FreeBSD__) || (GLIDE_PLATFORM & GLIDE_OS_DOS32)
   {
     GR_BEGIN_NOFIFOCHECK("grDrawTriangle",92);
     TRISETUP(a, b, c);

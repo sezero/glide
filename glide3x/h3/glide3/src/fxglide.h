@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.2.4.6  2004/10/04 09:26:30  dborca
+** DOS/OpenWatcom support
+**
 ** Revision 1.2.4.5  2004/02/16 07:42:16  dborca
 ** grSetNumPendingBuffers visible with grGetProcAddress
 **
@@ -1637,7 +1640,7 @@ _trisetup_noclip_valid(TRISETUPARGS);
   __asm { mov edx, gc }; \
   (*gc->triSetupProc)
 
-#elif defined( __linux__ ) || defined(__DJGPP__) /* [dBorca] */
+#elif defined( __linux__ ) || defined(__DJGPP__)
 
 #define TRISETUP \
   __asm(""::"d"(gc)); \
@@ -1856,8 +1859,7 @@ extern FxU32 threadValueLinux;
 #define getThreadValueFast() threadValueLinux
 #endif
 
-/* [dBorca] */
-#if defined(__DJGPP__) || defined(__WATCOMC__)
+#if (GLIDE_PLATFORM & GLIDE_OS_DOS32)
 extern FxU32 GR_CDECL threadValueDJGPP;
 #define getThreadValueFast() threadValueDJGPP
 #endif
