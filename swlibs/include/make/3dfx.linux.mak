@@ -94,7 +94,7 @@ GLDOPTS	       = -L$(BUILD_ROOT_SWLIBS)/lib -L/usr/lib
 
 # if we are not debugging then replace debug flags with nodebug flags
 
-DEBUG = xx
+# DEBUG = xx
 
 ifndef DEBUG
 CDEBUG   = $(CNODEBUG)
