@@ -2660,15 +2660,51 @@ GR_ENTRY(grBufferSwap, void, (FxU32 swapInterval))
   GDBG_INFO_MORE(gc->myLevel,"(%d)\n",swapInterval);
 
 #ifdef FX_GLIDE_NAPALM
+  {
+    FxU32 chipIndex, aaCtrl;
+    static FxU32 swapno = 0;
+    swapno ^= 1;
+    
+    for (chipIndex = 0; chipIndex < 2; chipIndex++) {
+
+      _grChipMask( 1 << chipIndex );
+
+      if(swapno) {
+        aaCtrl = (((signed char)(atof(PRIBUFVTXOFFX_2SMPL_CORRECT_DEF)*16.0f)+8)&0x7f << SST_AA_CONTROL_PRIMARY_X_OFFSET_SHIFT) |
+                 (((signed char)(atof(PRIBUFVTXOFFY_2SMPL_CORRECT_DEF)*16.0f)+8)&0x7f << SST_AA_CONTROL_PRIMARY_Y_OFFSET_SHIFT)/* |
+                 (((signed char)(atof(SECBUFVTXOFFX_2SMPL_CORRECT_DEF)*16.0f)+8)&0x7f << SST_AA_CONTROL_SECONDARY_X_OFFSET_SHIFT) |
+                 (((signed char)(atof(SECBUFVTXOFFY_2SMPL_CORRECT_DEF)*16.0f)+8)&0x7f << SST_AA_CONTROL_SECONDARY_Y_OFFSET_SHIFT) |
+                 ((gc->enableSecondaryBuffer) ? SST_AA_CONTROL_AA_ENABLE : 0) |
+                 ((FXTRUE) ? 0 : SST_AA_CONTROL_AA_DISABLE_FIRST)*/;
+      } else {
+        aaCtrl = (((signed char)(atof(SECBUFVTXOFFX_2SMPL_CORRECT_DEF)*16.0f)+8)&0x7f << SST_AA_CONTROL_PRIMARY_X_OFFSET_SHIFT) |
+                 (((signed char)(atof(SECBUFVTXOFFY_2SMPL_CORRECT_DEF)*16.0f)+8)&0x7f << SST_AA_CONTROL_PRIMARY_Y_OFFSET_SHIFT)/* |
+                 (xOffset[(chipIndex * 2 + 1)%8] << SST_AA_CONTROL_SECONDARY_X_OFFSET_SHIFT) |
+                 (yOffset[(chipIndex * 2 + 1)%8] << SST_AA_CONTROL_SECONDARY_Y_OFFSET_SHIFT) |
+                 ((gc->enableSecondaryBuffer) ? SST_AA_CONTROL_AA_ENABLE : 0) |
+                 ((FXTRUE) ? 0 : SST_AA_CONTROL_AA_DISABLE_FIRST)*/;
+      }
+
+      REG_GROUP_BEGIN(BROADCAST_ID, aaCtrl, 1, 0x1);
+      REG_GROUP_SET(hw, aaCtrl, aaCtrl);
+      REG_GROUP_END();
+
+    }
+
+    _grChipMask( gc->chipmask );
+
+    /* Force fogMode to be updated */
+    INVALIDATE(fogMode);
+  }
 #if !(GLIDE_PLATFORM & GLIDE_OS_UNIX) && !defined(__DJGPP__)
   /* Window hacky stuff */
   if (gc->windowed)
   {
-	  extern void _grFlipWindowSurface();
-	  grFinish();
-	  _grFlipWindowSurface();
-	  gc->stats.bufferSwaps++;
-	  return;
+    extern void _grFlipWindowSurface();
+    grFinish();
+    _grFlipWindowSurface();
+    gc->stats.bufferSwaps++;
+    return;
   }
 #endif
 
@@ -5464,130 +5500,150 @@ GR_EXT_ENTRY(grTBufferWriteMaskExt, void , (FxU32 tmask) )
 #else /* Colourless */
   
   /* Sanity Check. Make sure we are attempting to actually enable something */
-	if( (tmask&((1 << gc->grPixelSample)-1)) == 0)
-		return;
+  if( (tmask&((1 << gc->grPixelSample)-1)) == 0) {
+    return;
+  }
 
-	//chipEnList = gc->chipmask;
-	chipEnList = 0;
+  chipEnList = 0;
 
-	/* 2 Samples Per Chip and not SLI */
-	if(gc->enableSecondaryBuffer && !gc->sliCount) {
-		/*
-		Chip 0 = Samples 0 & 1
-		Chip 1 = Samples 2 & 3
-		Chip 2 = Samples 4 & 5
-		Chip 3 = Samples 6 & 7
-		*/
-		chipaamode[0] = ((tmask>>0) & 1) | (((tmask>>1) & 1) << 1);
-		chipaamode[1] = ((tmask>>2) & 1) | (((tmask>>3) & 1) << 1);
-		chipaamode[2] = ((tmask>>4) & 1) | (((tmask>>5) & 1) << 1);
-		chipaamode[3] = ((tmask>>6) & 1) | (((tmask>>7) & 1) << 1);
-	}
-	/* 1 Sample per chip and not SLI */
-	else if(!gc->sliCount) {
-		/*
-		Chip 0 = Sample 0
-		Chip 1 = Sample 1
-		Chip 2 = Sample 2
-		Chip 3 = Sample 3
-		*/
-		chipaamode[0] = (tmask>>0) & 1;
-		chipaamode[1] = (tmask>>1) & 1;
-		chipaamode[2] = (tmask>>2) & 1;
-		chipaamode[3] = (tmask>>3) & 1;
-	}
-	/* 1 Sample per chip and SLI */
-	else if (gc->enableSecondaryBuffer) {
-		/*
-		Chip 0 = Sample 0
-		Chip 1 = Sample 1
-		Chip 2 = Sample 0
-		Chip 3 = Sample 1
-		*/
-		chipaamode[2] = chipaamode[0] = (tmask>>0) & 1;
-		chipaamode[3] = chipaamode[1] = (tmask>>1) & 1;
-	}
-	/* 2 Samples per chip and SLI */
-	else {
-		/*
-		Chip 0 = Samples 0 & 1
-		Chip 1 = Samples 0 & 1
-		Chip 2 = Samples 2 & 3
-		Chip 3 = Samples 2 & 3
-		*/
-		chipaamode[0] = ((tmask>>0) & 1) | (((tmask>>1) & 1) << 1);
-		chipaamode[1] = ((tmask>>0) & 1) | (((tmask>>1) & 1) << 1);
-		chipaamode[2] = ((tmask>>2) & 1) | (((tmask>>3) & 1) << 1);
-		chipaamode[3] = ((tmask>>2) & 1) | (((tmask>>3) & 1) << 1);
-	}
+  /* 2 Samples Per Chip and not SLI */
+  if(gc->enableSecondaryBuffer && !gc->sliCount) {
+    /*
+     Chip 0 = Samples 0 & 1
+     Chip 1 = Samples 2 & 3
+     Chip 2 = Samples 4 & 5
+     Chip 3 = Samples 6 & 7
+     */
+    chipaamode[0] = ((tmask>>0) & 1) | (((tmask>>1) & 1) << 1);
+    chipaamode[1] = ((tmask>>2) & 1) | (((tmask>>3) & 1) << 1);
+    chipaamode[2] = ((tmask>>4) & 1) | (((tmask>>5) & 1) << 1);
+    chipaamode[3] = ((tmask>>6) & 1) | (((tmask>>7) & 1) << 1);
+  }
+  /* 1 Sample per chip and not SLI */
+  else if(!gc->sliCount) {
+    /*
+     Chip 0 = Sample 0
+     Chip 1 = Sample 1
+     Chip 2 = Sample 2
+     Chip 3 = Sample 3
+     */
+    chipaamode[0] = (tmask>>0) & 1;
+    chipaamode[1] = (tmask>>1) & 1;
+    chipaamode[2] = (tmask>>2) & 1;
+    chipaamode[3] = (tmask>>3) & 1;
+  }
+  /* 1 Sample per chip and SLI */
+  else if (gc->enableSecondaryBuffer) {
+    /*
+     Chip 0 = Sample 0
+     Chip 1 = Sample 1
+     Chip 2 = Sample 0
+     Chip 3 = Sample 1
+     */
+    chipaamode[2] = chipaamode[0] = (tmask>>0) & 1;
+    chipaamode[3] = chipaamode[1] = (tmask>>1) & 1;
+  }
+  /* 2 Samples per chip and SLI */
+  else {
+    /*
+     Chip 0 = Samples 0 & 1
+     Chip 1 = Samples 0 & 1
+     Chip 2 = Samples 2 & 3
+     Chip 3 = Samples 2 & 3
+     */
+    chipaamode[0] = ((tmask>>0) & 1) | (((tmask>>1) & 1) << 1);
+    chipaamode[1] = ((tmask>>0) & 1) | (((tmask>>1) & 1) << 1);
+    chipaamode[2] = ((tmask>>2) & 1) | (((tmask>>3) & 1) << 1);
+    chipaamode[3] = ((tmask>>2) & 1) | (((tmask>>3) & 1) << 1);
+  }
 
-	for (chipIndex = 0; chipIndex < gc->chipCount; chipIndex++) {
+  for (chipIndex = 0; chipIndex < gc->chipCount; chipIndex++) {
 
-		/* Enable/Disable the chips */
-		if (chipaamode[chipIndex]) chipEnList |= (1 << chipIndex);
-		else chipEnList &= ~(1 << chipIndex);
+    /* Enable/Disable the chips */
+    if (chipaamode[chipIndex]) chipEnList |= (1 << chipIndex);
+    else chipEnList &= ~(1 << chipIndex);
 
-		/* Enable/Disable Primary and Secondary Buffers as required */
-		if (gc->enableSecondaryBuffer) switch (chipaamode[chipIndex]) {
-		case 1:
-			/* We are only rendering to the primary buffer so disable the secondary buffer. */
-			_grChipMask(1 << chipIndex);
+    /* Enable/Disable Primary and Secondary Buffers as required */
+    if (gc->enableSecondaryBuffer) switch (chipaamode[chipIndex]) {
+    case 1:
+      /* We are only rendering to the primary buffer so disable the secondary buffer. */
+      _grChipMask(1 << chipIndex);
 
-			/* setup color/aux buffer */
-			gc->state.shadow.colBufferAddr = gc->buffers0[gc->curBuffer];
-			gc->state.shadow.auxBufferAddr = gc->buffers0[gc->grColBuf];
-			REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 4, 0xf);
-			{
-				REG_GROUP_SET(hw, colBufferAddr, gc->state.shadow.colBufferAddr);
-				REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride );
-				REG_GROUP_SET(hw, auxBufferAddr, gc->state.shadow.auxBufferAddr);
-				REG_GROUP_SET(hw, auxBufferStride, gc->state.shadow.auxBufferStride); 
-			}
-			REG_GROUP_END();      
-			break;
-		case 2:
-			/* We are only rendering to the secondary buffer so point the primary color buffer
-			address at the secondary buffer, and disable the second buffer. */
-			_grChipMask(1 << chipIndex);
+      /* setup color/aux buffer */
+      gc->state.shadow.colBufferAddr = gc->buffers0[gc->curBuffer];
+      gc->state.shadow.auxBufferAddr = gc->buffers0[gc->grColBuf];
+      REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 4, 0xf);
+      {
+        REG_GROUP_SET(hw, colBufferAddr, gc->state.shadow.colBufferAddr);
+#ifdef DRI_BUILD
+	REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride :
+                      gc->state.shadow.colBufferStride );
+#else
+        REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride );
+#endif
+        REG_GROUP_SET(hw, auxBufferAddr, gc->state.shadow.auxBufferAddr);
+        REG_GROUP_SET(hw, auxBufferStride, gc->state.shadow.auxBufferStride);
+      }
+      REG_GROUP_END();
+      break;
+    case 2:
+      /* We are only rendering to the secondary buffer so point the primary color buffer
+         address at the secondary buffer, and disable the second buffer. */
+      _grChipMask(1 << chipIndex);
 
-			/* setup color/aux buffer */
-			gc->state.shadow.colBufferAddr = gc->buffers1[gc->curBuffer];
-			gc->state.shadow.auxBufferAddr = gc->buffers1[gc->grColBuf];
-			REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 4, 0xf);
-			{
-				REG_GROUP_SET(hw, colBufferAddr, gc->state.shadow.colBufferAddr);
-				REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride );
-				REG_GROUP_SET(hw, auxBufferAddr, gc->state.shadow.auxBufferAddr);
-				REG_GROUP_SET(hw, auxBufferStride, gc->state.shadow.auxBufferStride); 
-			}
-			REG_GROUP_END();      
-			break;
-		case 3:
-			/* This chip is using both buffer, so enable both. */
-			_grChipMask(1 << chipIndex);
+      /* setup color/aux buffer */
+      gc->state.shadow.colBufferAddr = gc->buffers1[gc->curBuffer];
+      gc->state.shadow.auxBufferAddr = gc->buffers1[gc->grColBuf];
+      REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 4, 0xf);
+      {
+        REG_GROUP_SET(hw, colBufferAddr, gc->state.shadow.colBufferAddr);
+        REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride );
+#ifdef DRI_BUILD
+	REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride :
+                      gc->state.shadow.colBufferStride );
+#else
+        REG_GROUP_SET(hw, auxBufferAddr, gc->state.shadow.auxBufferAddr);
+#endif
+        REG_GROUP_SET(hw, auxBufferStride, gc->state.shadow.auxBufferStride);
+      }
+      REG_GROUP_END();
+      break;
+    case 3:
+      /* This chip is using both buffer, so enable both. */
+      _grChipMask(1 << chipIndex);
 
-			/* setup color/aux buffer */
-			gc->state.shadow.colBufferAddr = gc->buffers0[gc->curBuffer];
-			gc->state.shadow.auxBufferAddr = gc->buffers0[gc->grColBuf];
-			REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 4, 0xf);
-			{
-				REG_GROUP_SET(hw, colBufferAddr, gc->state.shadow.colBufferAddr);
-				REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride );
-				REG_GROUP_SET(hw, auxBufferAddr, gc->state.shadow.auxBufferAddr);
-				REG_GROUP_SET(hw, auxBufferStride, gc->state.shadow.auxBufferStride); 
-			}
-			REG_GROUP_END();      
-			REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 4, 0xf);
-			{
-				REG_GROUP_SET(hw, colBufferAddr, gc->buffers1[gc->curBuffer] | SST_BUFFER_BASE_SELECT);
-				REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride );
-				REG_GROUP_SET(hw, auxBufferAddr, gc->buffers1[gc->grColBuf] | SST_BUFFER_BASE_SELECT);
-				REG_GROUP_SET(hw, auxBufferStride, gc->state.shadow.auxBufferStride); 
-			}
-			REG_GROUP_END();
-			break;
-		}
-	}
+      /* setup color/aux buffer */
+      gc->state.shadow.colBufferAddr = gc->buffers0[gc->curBuffer];
+      gc->state.shadow.auxBufferAddr = gc->buffers0[gc->grColBuf];
+      REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 4, 0xf);
+      {
+        REG_GROUP_SET(hw, colBufferAddr, gc->state.shadow.colBufferAddr);
+#ifdef DRI_BUILD
+	REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride :
+                      gc->state.shadow.colBufferStride );
+#else
+        REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride );
+#endif
+        REG_GROUP_SET(hw, auxBufferAddr, gc->state.shadow.auxBufferAddr);
+        REG_GROUP_SET(hw, auxBufferStride, gc->state.shadow.auxBufferStride);
+      }
+      REG_GROUP_END();
+      REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 4, 0xf);
+      {
+        REG_GROUP_SET(hw, colBufferAddr, gc->buffers1[gc->curBuffer] | SST_BUFFER_BASE_SELECT);
+#ifdef DRI_BUILD
+	REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride :
+                      gc->state.shadow.colBufferStride );
+#else
+        REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride );
+#endif
+        REG_GROUP_SET(hw, auxBufferAddr, gc->buffers1[gc->grColBuf] | SST_BUFFER_BASE_SELECT);
+        REG_GROUP_SET(hw, auxBufferStride, gc->state.shadow.auxBufferStride);
+      }
+      REG_GROUP_END();
+      break;
+    }
+  }
 #endif
 
   _grChipMask( chipEnList );
