@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.7.4.5  2003/06/27 10:40:52  dborca
+** added LFB read/write MMX specializations
+**
 **
 **  02/23/03 KoolSmoky - merged with Colourless's sources
 **  14   3dfx      1.7.1.2.1.2 10/11/00 Brent           Forced check in to enforce
@@ -449,7 +452,7 @@
  * Note: Aligns src (LFB) before copying. Clobbers eax, ecx, esi, edi
  */
 #define MMX_SRCLINE(src, dst, length) __asm {\
-		__asm mov	ecx, length	\
+		__asm mov   ecx, length \
 		__asm mov	esi, src	\
 		__asm mov	edi, dst	\
 		__asm cmp	ecx, 8		\
@@ -1988,17 +1991,18 @@ static FxBool grLfbReadRegionOrigin (GrBuffer_t src_buffer, GrOriginLocation_t o
                  &info))
    {
       FxU32 *src,*dst;
-      FxI32 length;
+      FxI32 length, tmplength;
       FxU32 src_adjust,dst_adjust,tmp;
 
       src=(FxU32 *) (((char*)info.lfbPtr)+
                      (src_y*info.strideInBytes) + (src_x * bpp));
       length = src_width * bpp;
+	  tmplength = length; /* koolsmoky - MSC inline asm woes */
 
       if (_GlideRoot.CPUType.os_support & _CPU_FEATURE_MMX) {
          if (!gc->state.forced32BPP) {
             do {
-                MMX_SRCLINE(src, dst_data, length);
+                MMX_SRCLINE(src, dst_data, tmplength);
                 /* adjust for next line */
                 ((FxU8 *)src) += info.strideInBytes;
                 ((FxU8 *)dst_data) += dst_stride;
