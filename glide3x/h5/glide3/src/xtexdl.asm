@@ -19,6 +19,9 @@
 ;; $Header$
 ;; $Revision$
 ;; $Log$
+;; Revision 1.1.8.7  2003/09/12 05:08:35  koolsmoky
+;; preparing for graphic context checks
+;;
 ;; Revision 1.1.8.6  2003/07/07 23:29:06  koolsmoky
 ;; cleaned logs
 ;;
@@ -97,7 +100,7 @@ _texData$   equ 24 + STACKOFFSET
 
 ;--------------------------------------------------------------------------
 
-%IFNDEF GL_SSE2
+%IFDEF GL_AMD3D GL_MMX
 
 ;--------------------------------------------------------------------------
 ;
@@ -111,8 +114,7 @@ segment		TEXT
 
 %IFDEF GL_AMD3D
 proc _grTexDownload_3DNow_MMX, 24
-%ENDIF
-%IFDEF GL_MMX
+%ELSE ;GL_MMX
 proc _grTexDownload_MMX, 24
 %ENDIF
 
@@ -149,8 +151,7 @@ proc _grTexDownload_MMX, 24
 
 %IFDEF GL_AMD3D
     femms                               ; we'll use MMX/3DNow!, make sure FPU register cleared
-%ENDIF
-%IFDEF GL_MMX
+%ELSE ;GL_MMX
     emms                                ; we'll use MMX
 %ENDIF
 
@@ -299,8 +300,7 @@ proc _grTexDownload_MMX, 24
 .dlDone:           
 %IFDEF GL_AMD3D
     femms                               ; exit 3DNow!(tm) state
-%ENDIF
-%IFDEF GL_MMX
+%ELSE ;GL_MMX
     emms                                ; exit MMX state
 %ENDIF
 
@@ -313,7 +313,7 @@ proc _grTexDownload_MMX, 24
     ret                                 ; pop 6 DWORD parameters and return
 endp
 
-%ELSE ; !GL_SSE2
+%ELSE ;GL_AMD3D GL_MMX
 
 ;--------------------------------------------------------------------------
 ;

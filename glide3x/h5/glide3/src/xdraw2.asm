@@ -19,6 +19,9 @@
 ;; $Header$
 ;; $Revision$
 ;; $Log$
+;; Revision 1.1.8.9  2003/11/07 13:38:39  dborca
+;; unite the clans
+;;
 ;; Revision 1.1.8.8  2003/09/12 05:11:45  koolsmoky
 ;; preparing for graphic context checks
 ;; fixed jmp errors
@@ -392,9 +395,15 @@ PROC_TYPE win_nocull_valid
 
 endp
 
-%IFDEF       GL_AMD3D
-            ALIGN   32
-proc _trisetup_clip_coor_thunk, 12
+%IFDEF GL_AMD3D GL_SSE
+
+  ALIGN   32
+
+%ifdef GL_AMD3D
+  proc _trisetup_clip_coor_thunk, 12
+%else ; GL_SSE
+  proc _trisetup_SSE_clip_coor_thunk, 12
+%endif
 
 %define procPtr eax
 %define vPtr    ecx
@@ -436,50 +445,4 @@ __clipSpace:
     ret                         ; pop 3 dwords (vertex addrs) and return
 endp
 
-%ENDIF ; GL_AMD3D
-
-%IFDEF GL_SSE
-            ALIGN   32
-proc _trisetup_SSE_clip_coor_thunk, 12
-
-%define procPtr eax
-%define vPtr    ecx
-%define gc      edx           ; Current graphics context passed implicitly through edx
-
-%IFDEF GLIDE_ALT_TAB
-    test    gc, gc
-    je      .__contextLost
-;    mov     eax, [gc + windowed]
-;    test    eax, 1
-;    jnz     .pastContextTest
-    mov     eax, DWORD [gc+lostContext]
-    mov     ecx, [eax]
-    test    ecx, 1
-    jnz     .__contextLost
-;.pastContextTest:
-%ENDIF
-    
-    ;; Call through to the gc->curArchProcs.drawTrianglesProc w/o
-    ;; adding extra stuff to the stack. I wish we could actually
-    ;; do a direct return here w/o too much work.
-    lea     vPtr, [esp + _va$ - STKOFF]         ; Get vertex pointer address
-    mov     procPtr, [gc + drawTrianglesProc]   ; Prefetch drawTriangles proc addr
-
-    ;; If debugging make sure that we're in clip coordinates
-%IFDEF GLIDE_DEBUG
-    test    dword [gc + CoordinateSpace], 1
-    jnz     __clipSpace
-    xor     eax, eax
-    mov     [eax], eax
-__clipSpace:    
-%ENDIF ; GLIDE_DEBUG
-
-    invoke  procPtr, 1, 3, vPtr ; (*gc->curArchProcs.drawTrianglesProc)(grDrawVertexArray, 3, vPtr)
-
-%IFDEF GLIDE_ALT_TAB
-.__contextLost:
-%ENDIF
-    ret                         ; pop 3 dwords (vertex addrs) and return
-endp
-
-%ENDIF ; GL_SSE
+%ENDIF ; GL_AMD3D GL_SSE

@@ -20,6 +20,9 @@
 ;; $Header$
 ;; $Revision$
 ;; $Log$
+;; Revision 1.1.8.8  2003/11/07 13:38:39  dborca
+;; unite the clans
+;;
 ;; Revision 1.1.8.7  2003/09/12 05:11:45  koolsmoky
 ;; preparing for graphic context checks
 ;; fixed jmp errors
@@ -52,19 +55,6 @@
     ;;
     ;;      YOU HAVE BEEN WARNED    
 
-; Ugly, but seems to workaround the problem with locally defined
-; data segment globals not getting relocated properly when using
-; djgpp.
-
-%define zArea   One+04h
-%define zdxAB   One+08h
-%define zdxBC   One+0ch
-%define zdyAB   One+10h
-%define zdyBC   One+14h
-%define zculltest One+18h
-
-%define gc      esi       ; points to graphics context ;; ZZZ double defined?
-
 %ifdef GL_AMD3D
 
 ;---------------------------------------------------------------------------
@@ -74,6 +64,7 @@
 %define gc      edi           ; points to graphics context
 %define fifo    ebp           ; points to fifo entries
 %define tempVal esi
+
 
 %IF GLIDE_CLIP_COORDS
     ;; NB:  Currently, the 3DNow!(tm) clip coordinate stuff
@@ -197,6 +188,12 @@
 
     movd      intArea, mm4          ; vectored !
 
+;; E3DN
+;    pswapd    mm2, mm2              ; dxBC | dyBC
+;    pfmul     mm0, mm2              ; dxBC*dyAB | dxAB*dyBC
+;    pfnacc    mm0, mm0              ; dxAB*dyBC - dxBC*dyAB | dxAB*dyBC - dxBC*dyAB
+;    movd      intArea, mm0          ; vectored !
+
     ; Zero Area Triangle Check
 
     test      intArea, 7fffffffh    ; if ((j & 0x7FFFFFFF) == 0)
@@ -313,9 +310,7 @@
     ALIGN 32                        
 
 .__triBegin:
-    mov       eax, [gc+triPacketHdr]; Packet 3 header
     lea       dlp,[gc + tsuDataList]; Reset the dataList
-
     mov       fifo, [gc + fifoPtr]  ; Fetch Fifo Ptr
     mov       vertex, [esp + _va$]  ; Current vertex = A
 
@@ -323,6 +318,7 @@
     test      fifo, 4               ; is fifo pointer qword aligned ?
 
     jz        .__fifo_aligned       ; yes, it is qword aligned
+    mov       eax, [gc+triPacketHdr]; Packet 3 header
     movq      mm1, [vertex+X]       ; y | x
 
     GR_FIFO_WRITE fifo, 0, eax      ; write header to fifo; now qword aligned
@@ -640,10 +636,7 @@
 ; end 3DNow! version
 ;---------------------------------------------------------------------------
 
-%endif ; GL_AMD3D
-
-
-%ifdef GL_SSE
+%elifdef GL_SSE
 
 ;---------------------------------------------------------------------------
 ; start SSE version - note: CSIM incomplete.
@@ -653,6 +646,7 @@
 %define gc      edi           ; points to graphics context
 %define fifo    ebp           ; points to fifo entries
 %define tempVal esi
+%define zArea   One+04h
 
 %IF GLIDE_CLIP_COORDS
     ;; NB:  Currently, the 3DNow!(tm) clip coordinate stuff
@@ -746,31 +740,24 @@
 
     jz        .nocull               ; nope, no culling
     mov       fa, [esp + _va$]      ; get base address of vertex A
-
-    movlps    xmm2,[fc + X]         ; 0 | 0 | yc | xc
     shl       cull, 31              ; culltest << 31
 
-    movlps    xmm1,[fb + X]         ; 0 | 0 | yb | xb
-    add       tempVal, 4            ; space required in fifo
+    movhps    xmm1,[fc + X]         ; yc | xc | * | *
+    movhps    xmm0,[fb + X]         ; yb | xb | * | *
+    movlps    xmm1,[fb + X]         ; yc | xc | yb | xb
+    movlps    xmm0,[fa + X]         ; yb | xb | ya | xa
 
-    movlps    xmm0,[fa + X]         ; 0 | 0 | ya | xa
+    add       tempVal, 4            ; space required in fifo
     mov       ebx, [gc + fifoRoom]  ; space available in fifo
 
     ;; Area_Computation
 
-    subps     xmm0,xmm1             ; 0 | 0 | dyAB | dxAB
-    subps     xmm1,xmm2             ; 0 | 0 | dyBC | dxBC
-
-    unpcklps  xmm0,xmm3             ;  0  | dyAB | 0  | dxAB
-    movhlps   xmm3,xmm0             ;  0  | 0    | 0  | dyAB
-    unpcklps  xmm1,xmm2             ;  yc | dyBC | xc | dxBC
-    movhlps   xmm2,xmm1             ;  0  | 0    | yc | dyBC
-
-    mulss     xmm0,xmm2             ; 0 | 0 | 0 | dxAB*dyBC
-    mulss     xmm1,xmm3             ; 0 | 0 | 0 | dyAB*dxBC
-
-    subss     xmm0,xmm1             ; 0 | 0 | 0 | dxAB*dyBC - dxBC*dyAB
-
+    subps     xmm0,xmm1             ; dyBC | dxBC | dyAB | dxAB
+    movaps    xmm1,xmm0             ; dyBC | dxBC | dyAB | dxAB
+    shufps    xmm0,xmm0,27          ; dxAB | dyAB | dxBC | dyBC
+    mulps     xmm0,xmm1             ; dxAB*dyBC | dxBC*dyAB | dxBC*dyAB | dxAB*dyBC
+    movhlps   xmm1,xmm0             ; dyBC | dxBC | dxAB*dyBC | dxBC*dyAB
+    subss     xmm0,xmm1             ; dxAB*dyBC | dxBC*dyAB | dxBC*dyAB | dxAB*dyBC - dxBC*dyAB
     movss     [zArea],xmm0          ; dxAB*dyBC - dxBC*dyAB
     mov       intArea,[zArea]       ; vectored !
 
@@ -895,9 +882,10 @@
     mov       vertex, [esp + _va$]  ; Current vertex = A
 
     mov       dlpstrt, dlp          ; save pointer to start of dataList
-    test      fifo, 4               ; is fifo pointer qword aligned ?
 
-    jz        .__fifo_aligned       ; yes, it is qword aligned
+;    test      fifo, 4               ; is fifo pointer qword aligned ?
+;    jz        .__fifo_aligned       ; yes, it is qword aligned
+
     movlps    xmm1,[vertex+X]       ; 0 | 0 | y | x
 
     GR_FIFO_WRITE fifo, 0, eax      ; write header to fifo; now qword aligned
@@ -934,40 +922,40 @@
 
     jmp       .__paramLoopDoneWBzero1; write buffer empty
 
-.__fifo_aligned:
-    movss     xmm2,[vertex+X]       ; 0 | 0 | 0 | x of vertex A
-
-    GR_FIFO_WRITE fifo, 0, eax      ; write header to fifo
-
-    add       fifo, 8               ; fifoPtr += 2*sizeof(FxU32)
-
-    movss     [fifo-4],xmm2         ; PCI write x - not CSIM compatible!!!!
-    movss     xmm1,[vertex+Y]       ; 0 | 0 | 0 | y of vertex A
-
-    mov       eax, [dlp]            ; get first offset from the data list
-    add       dlp, 4                ; dlp++
-
-    test      eax, eax              ; end of list ?
-    jz        .__paramLoopDoneWBone1; yes, "write buffer" has y data
-
-.__paramLoop1b:
-    movss     xmm2,[eax+vertex]     ; 0 | 0 | 0 | get next parameter
-    add       fifo, 8               ; fifoPtr += 2*sizeof(FxU32)
-
-    mov       eax, [dlp]            ; offset = *(dlp + 1)
-    add       dlp, 8                ; dlp += 2
-
-    unpcklps  xmm1,xmm2             ; 0 | 0 | current param | previous param
-    test      eax, eax              ; at end of offset list (offset == 0) ?
-  
-    WRITE_MM1_FIFO_ALIGNED -8       ; PCI write current param | previous param
-    jz        .__paramLoopDoneWBzero1; exit, "write buffer" empty
-
-    movss     xmm1,[eax+vertex]     ; 0 | 0 | 0 | get next parameter
-    mov       eax, [dlp-4]          ; offset = *(dlp + 1)
-
-    test      eax, eax              ; at end of offset list (offset == 0) ?
-    jnz       .__paramLoop1b        ; nope, copy next parameter
+;.__fifo_aligned:
+;    movss     xmm2,[vertex+X]       ; 0 | 0 | 0 | x of vertex A
+;
+;    GR_FIFO_WRITE fifo, 0, eax      ; write header to fifo
+;
+;    add       fifo, 8               ; fifoPtr += 2*sizeof(FxU32)
+;
+;    movss     [fifo-4],xmm2         ; PCI write x - not CSIM compatible!!!!
+;    movss     xmm1,[vertex+Y]       ; 0 | 0 | 0 | y of vertex A
+;
+;    mov       eax, [dlp]            ; get first offset from the data list
+;    add       dlp, 4                ; dlp++
+;
+;    test      eax, eax              ; end of list ?
+;    jz        .__paramLoopDoneWBone1; yes, "write buffer" has y data
+;
+;.__paramLoop1b:
+;    movss     xmm2,[eax+vertex]     ; 0 | 0 | 0 | get next parameter
+;    add       fifo, 8               ; fifoPtr += 2*sizeof(FxU32)
+;
+;    mov       eax, [dlp]            ; offset = *(dlp + 1)
+;    add       dlp, 8                ; dlp += 2
+;
+;    unpcklps  xmm1,xmm2             ; 0 | 0 | current param | previous param
+;    test      eax, eax              ; at end of offset list (offset == 0) ?
+;  
+;    WRITE_MM1_FIFO_ALIGNED -8       ; PCI write current param | previous param
+;    jz        .__paramLoopDoneWBzero1; exit, "write buffer" empty
+;
+;    movss     xmm1,[eax+vertex]     ; 0 | 0 | 0 | get next parameter
+;    mov       eax, [dlp-4]          ; offset = *(dlp + 1)
+;
+;    test      eax, eax              ; at end of offset list (offset == 0) ?
+;    jnz       .__paramLoop1b        ; nope, copy next parameter
 
 .__paramLoopDoneWBone1:
 
@@ -1211,15 +1199,24 @@
 ; end SSE version
 ;---------------------------------------------------------------------------
 
-%endif ; GL_SSE
-
-
-%ifndef GL_AMD3D
-%ifndef GL_SSE
+%else
 
 ;---------------------------------------------------------------------------
 ; original code
 ;---------------------------------------------------------------------------
+
+; Ugly, but seems to workaround the problem with locally defined
+; data segment globals not getting relocated properly when using
+; djgpp.
+
+%define zArea   One+04h
+%define zdxAB   One+08h
+%define zdxBC   One+0ch
+%define zdyAB   One+10h
+%define zdyBC   One+14h
+%define zculltest One+18h
+
+%define gc      esi       ; points to graphics context
         
 %IF GLIDE_CLIP_COORDS
     ;; NB:  We should never hit this because the proc is
@@ -1461,5 +1458,5 @@
     pop     esi
     ret
 %ENDIF ; !GLIDE_CLIP_COORD
-%ENDIF ; !GL_SSE
-%ENDIF ; !GL_AMD3D
+
+%endif
