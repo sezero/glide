@@ -699,8 +699,16 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t type, GrBuffer_t buffer,
             else {
             info->lfbPtr          = (void *)gc->lfb_ptr;
 #ifdef __linux__
-	    info->strideInBytes   = 0x1000;
-#endif /* defined(__linux__) */
+           /*
+            * For Linux, we just return the correct address and
+            * stride.
+            */
+	    info->strideInBytes   = gc->bInfo->buffInfo.bufLfbStride;
+            info->lfbPtr          = (void *)gc->lfbBuffers[colBufferIndex];
+#else	/* defined(__linux__) */
+            info->lfbPtr          = (void *)gc->lfb_ptr;
+#endif	/* defined(__linux__) */
+#ifndef	__linux__
             switch (writeMode) {
             case GR_LFBWRITEMODE_565_DEPTH:
             case GR_LFBWRITEMODE_555_DEPTH:
@@ -711,6 +719,7 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t type, GrBuffer_t buffer,
               info->strideInBytes <<= 1;
               break;
             }
+#endif	/* defined(__linux__) */
           }
           REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 2, 0x3);
           REG_GROUP_SET(hw, colBufferAddr, gc->textureBuffer.addr );
@@ -771,6 +780,7 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t type, GrBuffer_t buffer,
             
             info->lfbPtr          = (void *)gc->lfb_ptr;
 
+#ifndef	__linux__
             switch (writeMode) {
             case GR_LFBWRITEMODE_565_DEPTH:
             case GR_LFBWRITEMODE_555_DEPTH:
@@ -781,6 +791,7 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t type, GrBuffer_t buffer,
               info->strideInBytes <<= 1;
               break;
             }
+#endif	/* defined(__linux__) */
           }
         }
         

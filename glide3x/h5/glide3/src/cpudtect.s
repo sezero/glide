@@ -20,9 +20,16 @@
 
 /*  $Header$ *
 /*  $Log$
+/*  Revision 1.4  2000/11/17 21:31:05  joseph
+/*  Restored changes that were lost when I imported new sources from 3dfx's
+/*  internal source repository.
+/*
 /*  Revision 1.3  2000/11/15 23:32:52  joseph
 /*  Syncing up with 3dfx internal source repository.  These changes contain a
 /*  number of bug fixes.
+/*
+/*  Revision 1.2.2.3  2000/11/16 20:01:29  alanh
+/*  merge trunk into 64bit branch.
 /*
 /*  Revision 1.2.2.2  2000/11/16 19:32:33  alanh
 /*  merge trunk into 64bit branch.
