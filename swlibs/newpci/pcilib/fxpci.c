@@ -32,7 +32,7 @@
 #include <fxmemmap.h>
 #include "fxpci.h"
 #include "pcilib.h"
-#ifdef __linux__
+#if (GLIDE_PLATFORM & GLIDE_OS_UNIX)
 #include "fxlinux.h"
 #endif
 

@@ -26,7 +26,12 @@
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <sys/ioctl.h>
+#ifdef __linux__
 #include <sys/io.h>
+#endif
+#ifdef __FreeBSD__
+#include <machine/cpufunc.h>
+#endif
 #include <fcntl.h>
 #include "fxpci.h"
 #include "pcilib.h"
@@ -82,6 +87,9 @@ static const FxU32 SST1_PCI_BUS_SNOOP0_LINUX = 0x44;
 static const FxU32 SST1_PCI_BUS_SNOOP1_LINUX = 0x48;
 
 static int linuxDevFd=-1;
+#ifdef __FreeBSD__
+static int freebsdIoFd=-1;
+#endif
 
 struct pioData {
   short port;
@@ -181,9 +189,15 @@ pciOutputStringLinux(const char *msg)
 static FxBool 
 pciInitializeLinux(void)
 {
-  if (!getenv("SST_NO_DEV3DFX")) linuxDevFd=open("/dev/3dfx", O_RDWR, 0);
+  if (!getenv("SST_NO_DEV3DFX"))
+    linuxDevFd=open("/dev/3dfx", O_RDWR, 0);
   if (linuxDevFd==-1) {
+#ifdef __FreeBSD__
+    freebsdIoFd=open("/dev/io", O_RDWR, 0);
+    if (freebsdIoFd<0) {
+#else
     if (iopl(3)<0) {
+#endif
       pciErrorCode = PCI_ERR_NO_IO_PERM;
       return FXFALSE;
     }
@@ -197,7 +211,12 @@ pciShutdownLinux(void)
   if (linuxDevFd>=0) {
     close(linuxDevFd);
   } else {
+#ifdef __FreeBSD__
+    if (freebsdIoFd>=0)
+      close(freebsdIoFd);
+#else
     iopl(0);
+#endif
   }
   return FXTRUE;
 }
@@ -305,7 +324,11 @@ pciPortOutByteLinux(unsigned short port, FxU8 data)
   /* fprintf(stderr, "write byte=%d desc at %x data at %x\n", data,
       &desc, &data); */
   if (linuxDevFd==-1) {
+#ifdef __linux__
     outb(data, port);
+#else
+    outb(port, data);
+#endif
     return FXTRUE;
   }
   desc.port=port;
@@ -321,7 +344,11 @@ pciPortOutWordLinux(unsigned short port, FxU16 data)
   /* fprintf(stderr, "write word=%x to port=%x desc at %x data at %x\n", 
 	  data, port, &desc, &data); */
   if (linuxDevFd==-1) {
+#ifdef __linux__
     outw(data, port);
+#else
+    outw(port, data);
+#endif
     return FXTRUE;
   }
   desc.port=port;
@@ -337,7 +364,11 @@ pciPortOutLongLinux(unsigned short port, FxU32 data)
   /* fprintf(stderr, "write long=%x to port=%x desc at %x data at %x\n", 
 	  data, port, &desc, &data); */
   if (linuxDevFd==-1) {
+#ifdef __linux__
     outl(data, port);
+#else
+    outl(port, data);
+#endif
     return FXTRUE;
   }
   desc.port=port;
