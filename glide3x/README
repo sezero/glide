@@ -27,21 +27,24 @@ Here are a few notes about building Glide3x from CVS.
     swlibs branch.  In order to build any glide library the swlibs
     branch must be moved inside the glide3x directory.  The swlibs
     branch is not stored here within the glide3x cvs tree because it
-    is also shared with the glide2x branch.  NOTE: If you use the CVS
-    modules Glide2 or Glide3, swlibs will be in the right place.
+    is also shared with the glide2x branch.  N.B.: If you use the CVS
+    module Glide3, swlibs will be in the right place, and does not
+    need to be moved.
 
     See below for instructions on building.
     
 4.) Building Glide.
-    The makefiles for both Glide2 and Glide3 are all named
-    makefile.linux.  In particular, there is a makefile in the top
-    level directory.  To select a build for either cvg or h3 set
-    FX_GLIDE_HW to either cvg, h3, or h5.  The default is to build for
-    h3.  There is no Glide3x project for sst1 or sst96.
+    The makefiles for both Glide3 are all named makefile.linux.  In
+    particular, there is such a makefile in the top level directory.
+    You will need to use the "-f makefile.linux" option to make.
 
-    NOTE: The script file swlibs/include/make/napalmbuild.linux can
-    be used to build Glide2 and Glide3 both.  Running it with the
-    usual --help parameter gives instruction on how to use it.
+    To select a build for either cvg, h3 or h5 set FX_GLIDE_HW to
+    either cvg, h3, or h5 respectively.  The default is to build for
+    h3.  There is no glide3x project for sst1 or sst96.
+
+    N.B.: The script file swlibs/include/make/napalmbuild.linux can be
+    used to build Glide3.  Running it with the usual --help parameter
+    gives instruction on how to use it.
 
 5.) Environment Variables
     There are many other environment variables used to control the Glide
@@ -54,7 +57,7 @@ Here are a few notes about building Glide3x from CVS.
                                of triangle setup code.
         GL_AMD3D=1:            Enable AMD 3DNow! optimizations.  Note
                                this is broken on several platforms.
-    The build script napalmbuild.linux does not set these
+    N.B.: The build script napalmbuild.linux does not set these
     environment ariables.
 
 6.) A special note about H3:
