@@ -87,7 +87,7 @@ endif
 # assembly language in grDrawTriangle. Larger optimization removes
 # an extra push in the calling sequence.
 #
-CNODEBUG       = -O6 -m486 -fomit-frame-pointer -funroll-loops \
+CNODEBUG       = -O6 -mcpu=pentium -fomit-frame-pointer -funroll-loops \
 	-fexpensive-optimizations -ffast-math -DBIG_OPT
 
 CDEBUG	       = -g -O
