@@ -214,7 +214,7 @@ setVideoMode( void *hwnd, int xRes, int yRes, int h3pixelSize, int refresh, void
   ddraw = GetModuleHandle( "ddraw.dll" );      
   if ( ddraw != NULL ) {
     LPDIRECTDRAWENUMERATEEXA ddEnumEx;
-    ddEnumEx = (void*)GetProcAddress( ddraw, "DirectDrawEnumerateExA" );
+    ddEnumEx = (LPDIRECTDRAWENUMERATEEXA)GetProcAddress( ddraw, "DirectDrawEnumerateExA" );
     if ( ddEnumEx ) {
       EnumInfo enumInfo;
 
@@ -561,7 +561,7 @@ checkResolutions(FxBool *supportedByResolution, FxU32 stride, void *hmon)
   ddraw = GetModuleHandle( "ddraw.dll" );      
   if ( ddraw != NULL ) {
     LPDIRECTDRAWENUMERATEEXA ddEnumEx;
-    ddEnumEx = (void*)GetProcAddress( ddraw, "DirectDrawEnumerateExA" );
+    ddEnumEx = (LPDIRECTDRAWENUMERATEEXA)GetProcAddress( ddraw, "DirectDrawEnumerateExA" );
     if ( ddEnumEx ) {
       EnumInfo enumInfo;
 

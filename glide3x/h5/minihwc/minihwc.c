@@ -1617,8 +1617,8 @@ hwcInit(FxU32 vID, FxU32 dID)
            ctxRes.optData.deviceConfigRes.isMaster;
         hInfo.boardInfo[monitor].pciInfo.numChips =
            ctxRes.optData.deviceConfigRes.numChips;
-        if ((hInfo.boardInfo[monitor].pciInfo.numChips > 4) || 
-            (hInfo.boardInfo[monitor].pciInfo.numChips < 0))
+        if (!((hInfo.boardInfo[monitor].pciInfo.numChips <= 4) && 
+              (hInfo.boardInfo[monitor].pciInfo.numChips >= 0)))
           hInfo.boardInfo[monitor].pciInfo.numChips = 0;
           /* Napalm framebuffer is unified, where the framebuffer
           ** bound to each chip is effectively divided by SLI mode.
@@ -4529,13 +4529,14 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
    if (NULL == GETENV("SSTH3_OVERLAYMODE", bInfo->RegPath))
    {
       /* We are in optimal mode by default */
-      if(bpp == 32 && !((bInfo->pciInfo.numChips == 4) && (bInfo->h3pixelSample >= 4))) { /* 32bpp and not 4x,8xfsaa on v56k */
+      if(bpp == 32 && !(IS_NAPALM(bInfo->pciInfo.deviceID) && (bInfo->pciInfo.numChips == 4) && (bInfo->h3pixelSample >= 4))) { /* 32bpp and not 4x,8xfsaa on v56k */
 		 vidProcCfg |= SST_OVERLAY_FILTER_POINT;
 	  } else {
-         if(/*(bInfo->vidInfo.xRes < 1024) &&*/ !(vidProcCfg & SST_VIDEO_2X_MODE_EN) && (bInfo->h3sliBandHeight > 1))
-            vidProcCfg |= SST_OVERLAY_FILTER_2X2;
-         else
-            vidProcCfg |= SST_OVERLAY_FILTER_4X4;
+        if(/*(bInfo->vidInfo.xRes >= 1024) ||*/ (vidProcCfg & SST_VIDEO_2X_MODE_EN) || (IS_NAPALM(bInfo->pciInfo.deviceID) && (bInfo->h3sliBandHeight <= 1))) {
+           vidProcCfg |= SST_OVERLAY_FILTER_4X4;
+        } else {
+           vidProcCfg |= SST_OVERLAY_FILTER_2X2;
+        }
 	  }
    }
    else
@@ -4544,21 +4545,22 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
       {
          default:
          case 1: /* Optimal */
-            if(bpp == 32 && !((bInfo->pciInfo.numChips == 4) && (bInfo->h3pixelSample >= 4))) { /* 32bpp and not 4x,8xfsaa on v56k */
+            if(bpp == 32 && !(IS_NAPALM(bInfo->pciInfo.deviceID) && (bInfo->pciInfo.numChips == 4) && (bInfo->h3pixelSample >= 4))) { /* 32bpp and not 4x,8xfsaa on v56k */
 			   vidProcCfg |= SST_OVERLAY_FILTER_POINT;
 			} else {
-               if(/*(bInfo->vidInfo.xRes < 1024) &&*/ !(vidProcCfg & SST_VIDEO_2X_MODE_EN) && (bInfo->h3sliBandHeight > 1))
-                  vidProcCfg |= SST_OVERLAY_FILTER_2X2;
-               else
-                  vidProcCfg |= SST_OVERLAY_FILTER_4X4;
-			}
+               if(/*(bInfo->vidInfo.xRes >= 1024) ||*/ (vidProcCfg & SST_VIDEO_2X_MODE_EN) || (IS_NAPALM(bInfo->pciInfo.deviceID) && (bInfo->h3sliBandHeight <= 1))) {
+                   vidProcCfg |= SST_OVERLAY_FILTER_4X4;
+               } else {
+                   vidProcCfg |= SST_OVERLAY_FILTER_2X2;
+               }
+            }
             break;
          case 2: /* Normal */
             vidProcCfg |= SST_OVERLAY_FILTER_4X4;
             break;
          case 3: /* High */
             /* make sure that if 2x video mode is enabled, we use the 4x1 filter. */
-            if((vidProcCfg & SST_VIDEO_2X_MODE_EN) || (bInfo->h3sliBandHeight <= 1))
+            if((vidProcCfg & SST_VIDEO_2X_MODE_EN) || (IS_NAPALM(bInfo->pciInfo.deviceID) && (bInfo->h3sliBandHeight <= 1)))
                vidProcCfg |= SST_OVERLAY_FILTER_4X4;
             else
                vidProcCfg |= SST_OVERLAY_FILTER_2X2;
@@ -8215,7 +8217,7 @@ void hwcAAReadRegion(hwcBoardInfo *bInfo, FxU32 colBufNum,
 #define BLUE_SHIFT      0
 
 
-#define CLAMP(val, min, max) if (val > max) val = max; else if (val < min) val = min
+#define CLAMP(val, min, max) if (val > max) val = max/*; else if (val < min) val = min*//* point less comparison. val is unsigned int. */
 #define ADJUST(val, lowest, low, high, typ) if (high < lowest) val=(typ)(low); else val = (typ)(high)
 #define GETFLOATENV(s, r, v) if (GETENV(s, r)) v = (FxFloat)(atof(GETENV(s, r)))
 
@@ -8255,7 +8257,7 @@ static FxBool adjustBrightnessAndContrast_m(FxFloat contrast,
       /* R */
       r = (pR[i] * contrast) + brightness;
       ADJUST(pR[i], 0.0f, 0, r, FxU32);	
-      CLAMP(pR[i], 0, 255);
+      CLAMP(pR[i], 0, 255); /* NB: pointless comparison of unsigned int with 0. see CLAMP macro. */
       
       /* G */
       g = (pG[i] * contrast) + brightness;
@@ -8288,9 +8290,9 @@ hwcGammaTable(hwcBoardInfo *bInfo, FxU32 nEntries, FxU32 *r, FxU32 *g, FxU32 *b)
   FxU32 rDacData;
   char *psBrightness = "FX_GLIDE_BRIGHTNESS";
   char *psContrast = "FX_GLIDE_CONTRAST";
-  
   FxFloat brightness = 0.0f;
   FxFloat contrast = 1.0f;
+  FxI32 useV56KdacFix = 2;
 
   /* override */
   /* Adjust Gamma as user selected */
@@ -8322,18 +8324,29 @@ hwcGammaTable(hwcBoardInfo *bInfo, FxU32 nEntries, FxU32 *r, FxU32 *g, FxU32 *b)
     GDBG_INFO(69,": gRamp[%d] = %d\n", i, gRamp[i]);
   }
 
-  /* Colourless - Hack for V5 6000 4x and 8x FSAA */
-  /* KoolSmoky - Since the DAC is shared between 2 chips, the input to gamma look up 
-     table is divided by extra 2 and the MSB is lost. To correct this the table should 
-	 be only 7 bits. The resulting image will have only 7.5 bits per prime */
-  if (bInfo->pciInfo.numChips == 4 && bInfo->h3pixelSample >= 4) {
-    gRamp[0] = 0; /* KoolSmoky - if row 0 is not 0 on napalm, we get strange banding effects on exit to desktop */
-
-    /* Go through 1 to 127 */
-    for (i = 1; i < 128; i++) gRamp[i] = ((gRamp[(i<<1)+1] >> 1) & 0x007F7F7F); /* KoolSmoky - dac output is doubled in 4x, 8xfsaa */
+  /* Voodoo5 6000 DAC workaround for 4x, 8xFSAA.
+     Since the DAC is shared between 2 chips, the input to gamma look up table
+     is divided by extra 2 and the MSB is lost. To correct this the table should
+     be only 7 bits. The resulting image will have only 7.5 bits per prime */
+  if (GETENV("FX_GLIDE_V56K_DAC_FIX", bInfo->RegPath)) {
+    useV56KdacFix = atoi(GETENV("FX_GLIDE_V56K_DAC_FIX", bInfo->RegPath));
+    if (useV56KdacFix > 2) {
+      useV56KdacFix = 2;
+    } else if (useV56KdacFix < 0) {
+      useV56KdacFix = 0;
+    }
+  }
+  if ((useV56KdacFix != 0) && bInfo->pciInfo.numChips == 4 && bInfo->h3pixelSample >= 4) {
+    /* Go through 1 to 127. Row 0 uses special default. See adjustBrightnessAndContrast_m(). */
+    for (i = 1; i < 128; i++) {
+      /* DAC output is doubled in 4x, 8xFSAA. Divide by 2 */
+      gRamp[i] = ((gRamp[(i<<1)+1] >> 1) & 0x007F7F7F);
+    }
     
     /* Go through 128 to 255 */
-    for (; i < 256; i++) gRamp[i] = gRamp[127];
+    for (; i < 256; i++) {
+      gRamp[i] = gRamp[127];
+    }
   }
   
   /*
@@ -8448,6 +8461,7 @@ hwcGetGammaTable(hwcBoardInfo *bInfo, FxU32 nEntries, FxU32 *r, FxU32 *g, FxU32 
   FxU32 dacBase;
   FxU32 dacAddr ;
   FxU32 dacData ;
+  FxI32 useV56KdacFix = 2;
  
   /*
    * AJB- Don't believe the hype.  Although we can do this
@@ -8498,19 +8512,41 @@ hwcGetGammaTable(hwcBoardInfo *bInfo, FxU32 nEntries, FxU32 *r, FxU32 *g, FxU32 
     b[i] = (dacData >> BLUE_SHIFT) & 0xFF ;
   }
 
-  /* Colourless - Hack for V5 6000 4x and 8x FSAA*/
-  if (bInfo->pciInfo.numChips == 4 && bInfo->h3pixelSample >= 4) {
-    int i;
-    
-    /* Go through 255 to 0 */
-    for (i = 255; i > 0; i--) {
-      r[i] = r[i>>1]<<1;
-      g[i] = g[i>>1]<<1;
-      b[i] = b[i>>1]<<1;
+  /* Voodoo5 6000 DAC workaround for 4x, 8xFSAA. */
+  if (GETENV("FX_GLIDE_V56K_DAC_FIX", bInfo->RegPath)) {
+    useV56KdacFix = atoi(GETENV("FX_GLIDE_V56K_DAC_FIX", bInfo->RegPath));
+    if (useV56KdacFix > 2) {
+      useV56KdacFix = 2;
+    } else if (useV56KdacFix < 0) {
+      useV56KdacFix = 0;
     }
   }
-  
-  if (r == gss_red) for (i = 0; i < 256; i++) gss_red_shifted[i] = r[i] << 16; /* ? */
+  if ((useV56KdacFix != 0) && bInfo->pciInfo.numChips == 4 && bInfo->h3pixelSample >= 4) {
+    if (useV56KdacFix == 2) {
+      /* Use internal values. */
+      /* Go through 0 to 255 */
+      for (i = 0; i < 256; i++) {
+        r[i] = gss_red[i];
+        g[i] = gss_green[i];
+        b[i] = gss_blue[i];
+      }
+    } else {
+      /* Use real values from hardware */
+      /* Go through 255 to 0 */
+      for (i = 255; i > 0; i--) {
+        r[i] = r[i>>1]<<1;
+        g[i] = g[i>>1]<<1;
+        b[i] = b[i>>1]<<1;
+      }
+    }
+  }
+
+  for (i = 0; i < 256; i++) {
+    gss_red[i]         = r[i];
+    gss_green[i]       = g[i];
+    gss_blue[i]        = b[i];
+    gss_red_shifted[i] = gss_red[i] << 16;
+  }
 
   return FXTRUE;
   
@@ -8968,15 +9004,20 @@ hwcShareContextData(hwcBoardInfo *bInfo, FxU32 **data)
       GDBG_INFO(80, FN_NAME ":  ExtEscape retVal=%d, dwordOffset=%d, contextDWORD=%d\n", retVal, ctxRes.optData.contextDwordNTRes.dwordOffset, ctxRes.optData.shareContextDWORDRes.contextDWORD);
       {
 #ifdef WINXP_ALT_TAB_FIX
-        FxI32 useAltTabFix = 0;
+        FxI32 forceAltTabFix = 0;
         if(GETENV("FX_GLIDE_ALT_TAB_FIX", bInfo->RegPath)) {
-          useAltTabFix = atoi(GETENV("FX_GLIDE_ALT_TAB_FIX", bInfo->RegPath));
+          forceAltTabFix = atoi(GETENV("FX_GLIDE_ALT_TAB_FIX", bInfo->RegPath));
+          if(forceAltTabFix > 0) {
+            forceAltTabFix = 1;
+          } else {
+            forceAltTabFix = 0;
+          }
         }
 #endif
         if( (retVal <= 0) ||
             (ctxRes.optData.contextDwordNTRes.dwordOffset == 0) 
 #ifdef WINXP_ALT_TAB_FIX
-            || (useAltTabFix)
+            || forceAltTabFix
 #endif
             ) { /* XXX: make exceptions for winxp if we face problems! */
 #ifdef WINXP_ALT_TAB_FIX
@@ -9061,9 +9102,9 @@ hwcUnmapMemory()
 
   if ( curBI ) {
     if ((OS == OS_WIN32_NT4) ||
-		(OS == OS_WIN32_2K)  ||
-		(OS == OS_WIN32_XP))
-	{
+        (OS == OS_WIN32_2K)  ||
+        (OS == OS_WIN32_XP))
+      {
       hwcExtRequest_t
         ctxReq;
       hwcExtResult_t
