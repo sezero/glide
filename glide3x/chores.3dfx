@@ -3,6 +3,27 @@ function do_nothing() {
     return 0;
 }
 
+function device () {
+    df -k $1 | grep -v '^Filesystem' | awk '{print $1;}'
+}
+
+function inumber () {
+    ls -id "$1" | awk '{print $1;}'
+}
+
+function files_are_equal() {
+    local inode1 inode2 dev1 dev2
+    if [ -z "$1" ] || [ -z "$2" ] ; then
+        return 100;
+    fi
+    inode1=`inumber $1`
+    inode2=`inumber $2`
+    dev1=`device $1`
+    dev2=`device $2`
+    [ "$dev1" = "$dev2" ] && [ "$inode1" = "$inode2" ] && return 0
+    return 100
+}
+
 rm="/bin/rm -rf"
 DONE=NO
 DO_CONFIGURE=NO
@@ -12,6 +33,7 @@ DO_GENERATE=NO
 BUILD_DIRECTORY=build
 MAKE_HISTORY_FILE=make.hst
 CONFIGURE_OPTIONS=
+BUILD_IS_DOT=NO
 while [ ! -z "$1" ] && [ "$DONE" != YES ] ; do
     case "$1" in
     --help)
@@ -136,19 +158,31 @@ if [ "$DO_GENERATE" = YES ] ; then
     fi
     echo 'Done.'
 fi
+#
+# See if the build directory is the current directory.
+#
+if files_are_equal "${PWD}" "${BUILD_DIRECTORY}" ; then
+    BUILD_IS_DOT=YES
+fi
 if [ "$DO_CONFIGURE" = YES ] ; then
-    #
-    # Get rid of the build directory.
-    #
-    echo -n 'Getting rid of the old build directory...'
-    /bin/rm -rf $BUILD_DIRECTORY
-    echo 'Done.'
-    #
-    # Now, make a build directory, and configure in it.
-    #
-    echo -n "Making build directory $BUILD_DIRECTORY..."
-    mkdir $BUILD_DIRECTORY
-    echo 'Done'
+    if [ "$BUILD_IS_DOT" = NO ] ; then
+        #
+        # Get rid of the build directory.
+        #
+        echo -n 'Getting rid of the old build directory...'
+        /bin/rm -rf $BUILD_DIRECTORY
+        echo 'Done.'
+    else
+        echo 'Old build directory is current directory.'
+    fi
+    if [ ! -d "$BUILD_DIRECTORY" ] ; then
+        #
+        # Now, make a build directory, and configure in it.
+        #
+        echo -n "Making build directory $BUILD_DIRECTORY..."
+        mkdir $BUILD_DIRECTORY
+        echo 'Done'
+    fi
     #
     # Configure.
     #
