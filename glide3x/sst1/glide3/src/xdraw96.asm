@@ -19,6 +19,11 @@
 ;; $Header$
 ;; $Revision$
 ;; $Log$
+;; Revision 1.1.2.3  2004/10/04 09:36:00  dborca
+;; second cut at Glide3x for Voodoo1/Rush (massive update):
+;; delayed validation, vertex snapping, clip coordinates, strip/fan_continue, bugfixes.
+;; and probably a bunch of other crap that I forgot
+;;
 ;; Revision 1.1.2.2  2004/03/08 07:42:22  dborca
 ;; Voodoo Rush fixes
 ;;
@@ -204,10 +209,11 @@ segment		TEXT
 
 ;--------------------------------------------------------------------------        
 
-%if XOS != XOS_WIN32
             align 4
 proc grDrawTriangle, 12
 endp
+%if XOS == XOS_WIN32
+export _grDrawTriangle@12
 %endif
 
 ; FALL THRU to _trisetup
