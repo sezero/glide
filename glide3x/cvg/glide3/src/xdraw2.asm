@@ -19,6 +19,9 @@
 ;; $Header$
 ;; $Revision$
 ;; $Log$
+;; Revision 1.1.1.1.8.1  2003/11/03 13:34:29  dborca
+;; Voodoo2 happiness (DJGPP & Linux)
+;;
 ;; Revision 1.1.1.1  1999/12/07 21:42:35  joseph
 ;; Initial checkin into SourceForge.
 ;;
@@ -186,12 +189,8 @@ __clipSpace:
 %ENDIF ; GLIDE_DEBUG
 
     mov	    procPtr, [gc + drawTrianglesProc]; Prefetch drawTriangles proc addr
-    push    vPtr		; vertex array address
-    
-    push    3			; 3 vertices
-    push    1			; mode = grDrawVertexArray
 
-    call    procPtr		; (*gc->curArchProcs.drawTrianglesProc)(grDrawVertexArray, 3, vPtr)
+    invoke  procPtr, 1, 3, vPtr	; (*gc->curArchProcs.drawTrianglesProc)(grDrawVertexArray, 3, vPtr)
 
     ret				; pop 3 dwords (vertex addrs) and return
 endp
