@@ -155,6 +155,23 @@ void resetVideo (void)
 } /* resetVideo */
 
 
+FxBool checkResolutions (FxBool *supportedByResolution, FxU32 stride, void *hmon)
+{
+  /* [dBorca] this should be tied to cinit code (or at least DGA)
+   * FxU16 *h3InitFindVideoMode (FxU32 xRes, FxU32 yRes, FxU32 refresh)
+   */
+  int res, ref;
+
+  for (res = GR_MIN_RESOLUTION; res <= GR_MAX_RESOLUTION; res++) {
+    for (ref = GR_MIN_REFRESH; ref <= GR_MAX_REFRESH; ref++) {
+      supportedByResolution[res * stride + ref] = FXTRUE;
+    }
+  }
+
+  return FXTRUE;
+}
+
+
 static void loadEnvFile (void)
 {
  FILE *file;

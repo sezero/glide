@@ -692,6 +692,12 @@ FX_ENTRY void FX_CALL
 grDisableAllEffects( void );
 
 FX_ENTRY void FX_CALL 
+grStippleMode( GrStippleMode_t mode );
+
+FX_ENTRY void FX_CALL 
+grStipplePattern( GrStipplePattern_t mode );
+
+FX_ENTRY void FX_CALL 
 grDitherMode( GrDitherMode_t mode );
 
 FX_ENTRY void FX_CALL 

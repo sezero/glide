@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.6.3  2003/11/07 13:38:39  dborca
+** unite the clans
+**
 ** Revision 1.1.1.1.6.2  2003/06/21 12:43:04  dborca
 ** h3cinit cleanup
 **
@@ -988,6 +991,9 @@ hwcInit(FxU32 vID, FxU32 dID)
                          &hInfo.boardInfo[i].pciInfo.pciBaseAddr[2]);
         pciGetConfigData(PCI_ROM_BASE_ADDRESS, bn,
                          &hInfo.boardInfo[i].pciInfo.pciBaseAddr[3]);
+
+        checkResolutions(resolutionSupported[i],
+                         (void *) hInfo.boardInfo[i].hMon);
       }
     }
   

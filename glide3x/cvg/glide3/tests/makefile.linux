@@ -30,7 +30,7 @@ CPU ?= pentium
 
 CC = gcc
 CFLAGS = -Wall -O2 -ffast-math -mcpu=$(CPU)
-CFLAGS += -I$(TOP)/$(FX_GLIDE_HW)/glide3/src -I$(TOP)/$(FX_GLIDE_HW)/incsrc
+CFLAGS += -I$(TOP)/$(FX_GLIDE_HW)/glide3/src -I$(TOP)/$(FX_GLIDE_HW)/incsrc -I$(TOP)/$(FX_GLIDE_HW)/init
 CFLAGS += -I$(TOP)/swlibs/fxmisc
 CFLAGS += -DCVG
 
@@ -41,7 +41,7 @@ LDLIBS += -lm
 
 .c.o:
 	$(CC) -o $@ $(CFLAGS) -c $<
-%.exe: tlib.o %.o
+%.exe: $(TOP)/swlibs/fxmisc/linutil.o tlib.o %.o
 	$(CC) -o $@ $(LDFLAGS) $^ $(LDLIBS)
 
 all:

@@ -18,6 +18,7 @@
 %define XOS_WIN32 4
 
 %define STDCALL   0
+%define ELFTYPE   0
 
 ;---------------------------------------
 ; pick up the right OS
@@ -26,6 +27,7 @@
 %define XOS XOS_DJGPP
 %elifdef __linux__
 %define XOS XOS_LINUX
+%define ELFTYPE 1
 %elifdef __WIN32__
 %define XOS XOS_WIN32
 %define STDCALL 1
@@ -58,7 +60,11 @@
 	%else
 		%define	%$ret	RET
 	%endif
-	globl	%1, %2
+	%if ELFTYPE
+		globl	%1:function, %2
+	%else
+		globl	%1, %2
+	%endif
 %1:
 %endmacro
 

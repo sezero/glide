@@ -51,7 +51,7 @@ LDLIBS += -lm
 
 .c.o:
 	$(CC) -o $@ $(CFLAGS) -c $<
-%.exe: tlib.o %.o
+%.exe: $(TOP)/swlibs/fxmisc/linutil.o tlib.o %.o
 	$(CC) -o $@ $(LDFLAGS) $^ $(LDLIBS)
 
 all:

@@ -35,7 +35,7 @@ void main( int argc, char **argv) {
                 iFailures = 0, iStatusAt = 0,
                 viewport[4];
         GrContext_t context;
-#ifndef __linux__
+#ifndef __unix__
         extern unsigned long hWndMain;
 #else
 	unsigned long hWndMain = tlGethWnd();

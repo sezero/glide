@@ -873,14 +873,14 @@ typedef struct sli_aa_request {
 #undef GETENV
 #endif
 
+#define _aligned_malloc(a, b) malloc(a)
+#define _aligned_free free
 //#if defined(HWC_EXT_INIT)
 #if !defined(__DJGPP__) && !(GLIDE_PLATFORM & GLIDE_OS_UNIX)
 #define GETENV(a, b) hwcGetenvEx(a, b)
 #else
 #define GETENV(a, b) hwcGetenv(a)
 
-#define _aligned_malloc(a, b) malloc(a)
-#define _aligned_free free
 /* don't like macros, because of side-effects */
 static __inline int min (int x, int y)
 {
@@ -1870,9 +1870,12 @@ hwcInit(FxU32 vID, FxU32 dID)
             hInfo.boardInfo[i].pciInfo.numChips = numChips;
           }
         }      
+
+        checkResolutions((int *) resolutionSupported[i],
+                         (FxU32) sizeof(resolutionSupported[0][0]) / sizeof(FxBool),
+                         (void *) hInfo.boardInfo[i].hMon);
       }
     }
-  
   }
 #endif /* HWC_EXT_INIT */
 

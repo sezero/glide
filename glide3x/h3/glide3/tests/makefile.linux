@@ -1,78 +1,57 @@
+# Linux tests makefile for Glide3
 #
-# Insert new header here
+#  Copyright (c) 2002 - Borca Daniel
+#  Email : dborca@users.sourceforge.net
+#  Web   : http://www.geocities.com/dborca
+#
+# $Header$
 #
 
 
-LDIRT= $(wildcard *.exe *.map *.sys *.o *.a)
+#
+#  Available options:
+#
+#    Environment variables:
+#	DGA=1		Build DGA version (experimental).
+#			default = no
+#	XPATH		specify X libraries path; needed by DGA.
+#			default = /usr/X11/lib
+#	CPU		optimize for the given processor.
+#			default = pentium
+#
+#    Targets:
+#	<file.exe>	build a specific file
+#
 
-# Special case rush because its built off of the sst1 tree
-ifeq ($(FX_GLIDE_HW),SST96)
-GLIDE_ROOT      =       $(BUILD_ROOT)/sst1
-else
-GLIDE_ROOT      =       $(BUILD_ROOT)/$(FX_GLIDE_HW)
+
+.PHONY: all
+.SUFFIXES: .c .o .exe
+.SECONDARY: tlib.o
+
+FX_GLIDE_HW = h3
+TOP = ../../..
+CPU ?= pentium
+XPATH ?= /usr/X11/lib
+
+CC = gcc
+CFLAGS = -Wall -O2 -ffast-math -mcpu=$(CPU)
+CFLAGS += -I$(TOP)/$(FX_GLIDE_HW)/glide3/src -I$(TOP)/$(FX_GLIDE_HW)/incsrc
+CFLAGS += -I$(TOP)/swlibs/fxmisc
+CFLAGS += -DH3
+
+LDFLAGS = -s -L$(TOP)/$(FX_GLIDE_HW)/lib
+
+LDLIBS = -lglide3
+ifeq ($(DGA),1)
+LDFLAGS += -L$(XPATH)
+LDLIBS += -lX11 -lXext -lXxf86dga
 endif
+LDLIBS += -lm
 
+.c.o:
+	$(CC) -o $@ $(CFLAGS) -c $<
+%.exe: $(TOP)/swlibs/fxmisc/linutil.o tlib.o %.o
+	$(CC) -o $@ $(LDFLAGS) $^ $(LDLIBS)
 
-LCINCS  += -I$(BUILD_ROOT)/$(FX_GLIDE_HW)/include
-
-LIBOBJS = tlib.o
-
-GLIDELIB        =       -L$(GLIDE_ROOT)/lib -lglide3
-
-LLDLIBS = $(LIBOBJS) $(GLIDELIB)
-
-ifeq ($(HAL_CSIM),1)
-LLDLIBS += $(BUILD_ROOT)/$(FX_GLIDE_HW)/lib/lib$(FX_GLIDE_HW)hal.a
-endif
-
-PRIVATE_HEADERS = tlib.h tlib.c tldata.inc
-
-CFILES   = test00.c \
-           test01.c \
-           test02.c \
-           test03.c \
-           test04.c \
-           test05.c \
-           test06.c \
-           test07.c \
-           test08.c \
-           test09.c \
-           test10.c \
-           test11.c \
-           test12.c \
-           test13.c \
-           test14.c \
-           test15.c \
-           test16.c \
-           test17.c \
-           test18.c \
-           test19.c \
-           test20.c \
-           test21.c \
-           test22.c \
-           test23.c \
-           test24.c \
-           test25.c \
-           test26.c \
-           test27.c \
-           test28.c \
-           test29.c \
-           test30.c \
-           test31.c \
-           test32.c \
-           test33.c \
-           test34.c \
-           test35.c \
-           test36.c \
-           display.c \
-           sbench.c
-
-PROGRAMS = $(CFILES:.c=)
-
-DATAFILES = alpha.3df decal1.3df lava.3df light.3df matt1.3df miro.3df
-
-include $(BUILD_ROOT)/swlibs/include/make/3dfx.linux.mak
-
-$(PROGRAMS):  $(LIBOBJS)
-
-        
+all:
+	$(error Must specify <filename.exe> to build)

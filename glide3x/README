@@ -1,3 +1,23 @@
+sst1:	HW:		Voodoo Graphics, Voodoo Rush
+	OS:		DOS(DJGPP), Linux
+	Maintainers:	Daniel Borca
+cvg:	HW:		Voodoo^2
+	OS:		DOS(DJGPP), Linux
+	Maintainers:	Daniel Borca
+h3:	HW:		Voodoo Banshee, Voodoo3
+	OS:		DOS(DJGPP), Linux(DRI)
+	Maintainers:	Daniel Borca, Guillem Jover
+h3:	HW:		Voodoo Banshee, Velocity 100/200, Voodoo3/4/5
+	OS:		DOS(DJGPP), Linux(DRI), Win32
+	Maintainers:	Hiroshi Morii, Daniel Borca, Guillem Jover
+
+Notes:
+1) sst1 branch must be compiled separately for V1 and VR. Currently,
+   VR support is broken.
+2) h3 & h5 have experimental non-DRI versions; they don't work yet!
+
+---------------------------------------------------------------------
+
 Look at the INSTALL file for more information on installing Glide3.
 
 Here are a few notes about building Glide3x from CVS.

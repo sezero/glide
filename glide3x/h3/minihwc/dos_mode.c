@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.3  2003/07/15 10:28:23  dborca
+** small matters
+**
 ** Revision 1.1.1.1.8.2  2003/06/21 12:43:04  dborca
 ** h3cinit cleanup
 **
@@ -149,3 +152,17 @@ resetVideo( void )
   GDBG_INFO(80, "resetVideo(): Setting mode 0x%x, 0x%x\n", r.w.ax, r.w.bx);
   int386( 0x10, &r, &r );
 } /* resetVideo */
+
+FxBool checkResolutions (FxBool *reslist, void *hmon)
+{
+  /* [dBorca] this should be tied to cinit code (or at least VESA)
+   * FxU16 *h3InitFindVideoMode (FxU32 xRes, FxU32 yRes, FxU32 refresh)
+   */
+  int res;
+
+  for (res = GR_MIN_RESOLUTION; res <= GR_MAX_RESOLUTION; res++) {
+    reslist[res] = FXTRUE;
+  }
+
+  return FXTRUE;
+}
