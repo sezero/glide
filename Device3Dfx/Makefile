@@ -6,28 +6,27 @@ ARCH := $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/ar
 
 # Setup machine dependant compiler flags
 ifeq ($(ARCH), i386)
-CFLAGS ?= -O2 -mcpu=pentium -fomit-frame-pointer \
-                 -fno-strength-reduce \
-                 -falign-loops=2 -falign-jumps=2 -falign-functions=2
+CFLAGS ?= -O2 -mcpu=pentium -fomit-frame-pointer -fno-strength-reduce \
+          -falign-loops=2 -falign-jumps=2 -falign-functions=2
 endif
 
 ifeq ($(ARCH), alpha)
-CFLAGS ?= -O2 -mno-fp-regs -mcpu=ev4 \
-                 -ffixed-8 \
-                 -Wa,-mev6 \
-                 -fomit-frame-pointer -fno-strict-aliasing
+CFLAGS ?= -O2 -mno-fp-regs -mcpu=ev4 -ffixed-8 -Wa,-mev6 \
+          -fomit-frame-pointer -fno-strict-aliasing
 endif
 
 KHEADERS ?= /usr/include
 KVERS ?= $(shell ./kinfo --UTS)
 MODULES_DIR = $(DESTDIR)/lib/modules/$(KVERS)
 
-ALL_CFLAGS := -DMODULE -D__KERNEL__ -I$(KHEADERS) $(CFLAGS)
+ALL_CFLAGS := -DMODULE -D__KERNEL__ \
+              -I$(KHEADERS) -I$(KHEADERS)/asm/mach-default \
+              $(CFLAGS)
 
 ###############################################################################
 # You should never need to change anything below.
 
-all: sanity 3dfx.o
+all: sanity module
 
 # Sanity checks
 sanity:
@@ -48,30 +47,51 @@ sanity:
 	fi; \
 	)
 
+config: kinfo
+	@( \
+	KVER_MAJOR=`echo $(KVERS) | cut -d. -f1`; \
+	KVER_MINOR=`echo $(KVERS) | cut -d. -f2`; \
+	if [ "$$KVER_MAJOR" = 2 -a "$$KVER_MINOR" -ge 6 ]; then \
+	  echo MODULE_TDFX = 3dfx.ko; \
+	else \
+	  echo MODULE_TDFX = 3dfx.o; \
+	fi; \
+	) > config
+	@$(MAKE) $(MAKECMDGOALS) configured-target=1
+
 kinfo: kinfo.c
 	$(CC) -I$(KHEADERS) -o kinfo kinfo.c
 
 kinfo.h: kinfo
-	./kinfo
+	@echo Generating kernel information header.
+	@./kinfo
 
 ###############################################################################
 # kernel 2.1+
 
-3dfx.o: kinfo.h 3dfx_driver.c Makefile
+-include config
+
+ifeq ($(configured-target),0)
+module: config
+else
+module: $(MODULE_TDFX)
+endif
+
+3dfx.o 3dfx.ko: kinfo.h 3dfx_driver.c Makefile
 	$(CC) $(ALL_CFLAGS) -c -o $@ 3dfx_driver.c
 
 ###############################################################################
 
-install_modules: 3dfx.o
+install_modules: module
 	mkdir -p $(MODULES_DIR)/misc
-	cp 3dfx.o $(MODULES_DIR)/misc/3dfx.o
+	cp $(MODULE_TDFX) $(MODULES_DIR)/misc/
 
 install: install_modules
 	@( \
 	if [ -e $(MODULES_DIR)/modules.dep ]; then \
-		indep=`grep 'misc/3dfx.o:' $(MODULES_DIR)/modules.dep`; \
+		indep=`grep 'misc/$(MODULE_TDFX):' $(MODULES_DIR)/modules.dep`; \
 		if [ -z "$$indep" ]; then \
-			echo "$(MODULES_DIR)/misc/3dfx.o:" >> $(MODULES_DIR)/modules.dep; \
+			echo "$(MODULES_DIR)/misc/$(MODULE_TDFX):" >> $(MODULES_DIR)/modules.dep; \
 			echo "" >> $(MODULES_DIR)/modules.dep; \
 		fi; \
 	fi; \
@@ -80,7 +100,7 @@ install: install_modules
 		chmod go+w $(DESTDIR)/dev/3dfx; \
 	fi; \
 	if [ "$(RPM_INSTALL)" = "1" ]; then \
-		echo "$(MODULES_DIR)/misc/3dfx.o"; \
+		echo "$(MODULES_DIR)/misc/$(MODULE_TDFX)"; \
 	else \
 		inconf=`grep 'alias char-major-107 3dfx' $(DESTDIR)/etc/modules.conf`; \
 		if [ -z "$$inconf" ]; then \
@@ -93,7 +113,9 @@ install: install_modules
 # This is for debugging purposes by the developers:
 
 clean:
-	rm -f *.o *.s kinfo kinfo.h
+	rm -f *.o *.ko *.s
+	rm -f kinfo kinfo.h
+	rm -f config
 
 3dfx.s: 3dfx_driver.c Makefile
 	$(CC) $(ALL_CFLAGS) -S -c 3dfx_driver.c
@@ -102,5 +124,7 @@ tar:
 	tar czf ../../SOURCES/Dev3Dfx-2.5.tar.gz 3dfx_driver.c Makefile
 
 debug:
-	make CFLAGS="-g -Wall -Wstrict-prototypes -DDEBUG"
+	$(MAKE) CFLAGS="-g -Wall -Wstrict-prototypes -DDEBUG"
+
+.PHONY: all sanity module install_modules install clean tar debug
 
