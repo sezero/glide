@@ -17,6 +17,8 @@ endif
 
 KSRC ?= /usr/src/linux
 KHEADERS ?= $(KSRC)/include
+KVERS ?= $(shell ./kinfo --UTS)
+MODULES_DIR = $(DESTDIR)/lib/modules/$(KVERS)
 
 ALL_CFLAGS := -DMODULE -D__KERNEL__ \
               -I$(KHEADERS) -I$(KHEADERS)/asm/mach-default \
@@ -58,9 +60,6 @@ clean_type = clean_$(BUILD_TYPE)
 module_type = module_$(BUILD_TYPE)
 
 else
-
-KVERS ?= $(shell ./kinfo --UTS)
-MODULES_DIR = $(DESTDIR)/lib/modules/$(KVERS)
 
 config: sanity kinfo
 	@( \
