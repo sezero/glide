@@ -48,6 +48,9 @@ unsigned long hWndMain;
 #endif
 
 #ifdef __DJGPP__
+/* [dBorca] */
+#include <conio.h>
+#include <pc.h>
 #include <crt0.h>
 int crt0_startup_flags = _CRT0_FLAG_NONMOVE_SBRK;
 #endif
@@ -65,7 +68,7 @@ int crt0_startup_flags = _CRT0_FLAG_NONMOVE_SBRK;
 
 #ifndef GR_TEXFMT_P_8_6666
 #define GR_TEXFMT_P_8_6666 GR_TEXFMT_RSVD0
-#else   if GR_TEXFMT_P_8_6666 != GR_TEXFMT_RSVD0
+#elif GR_TEXFMT_P_8_6666 != GR_TEXFMT_RSVD0
 #       warning GR_TEXFMT_P_8_6666 is not defined as expected
 #endif
 
@@ -2180,7 +2183,7 @@ tlScreenDump
   return FXTRUE;
 }
 
-#ifdef __unix__
+#if defined(__unix__) && !defined(__DJGPP__) /* [dBorca] */
 
 /*-------------------------------------------------------------------
   Function: tlKbHit
@@ -2294,7 +2297,12 @@ tlErrorMessage( char *err)
 } /* tlErrorMessage */
 
 FxU32 tlGethWnd( void ) {
+/* [dBorca] */
+#ifdef __DJGPP__
+        return 1;
+#else
         return (FxU32)FrontWindow();
+#endif
 }
 
 #if macintosh

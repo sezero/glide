@@ -1636,6 +1636,13 @@ tlErrorMessage( char *err) {
   fprintf(stderr, err);
 } /* tlErrorMessage */
 
+/* [dBorca] */
+FxU32
+tlGethWnd(void)
+{
+  return 1;
+}
+
 #elif __WIN32__
 
 
