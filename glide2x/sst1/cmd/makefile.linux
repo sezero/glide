@@ -22,6 +22,6 @@
 #
 
 THISDIR = cmd
-SUBDIRS = mojo pass
+SUBDIRS = pass
 
 include $(BUILD_ROOT_SWLIBS)/include/make/3dfx.mak
