@@ -21,6 +21,10 @@
 
    ChangeLog
 
+   2004-05-05   Guillem Jover   <guillem@debian.org>
+
+   * Use designators in fops_3dfx instead of the obsolete colon syntax.
+
    2004-05-04   Guillem Jover   <guillem@debian.org>
 
    * Cleaned new kernel build system.
@@ -838,12 +842,12 @@ int resetmtrr_3dfx(void)
 
 static struct file_operations fops_3dfx = {
 #if KERNEL_MIN_VER(2, 4, 0)
-	owner:		THIS_MODULE,
+	.owner =	THIS_MODULE,
 #endif
-	ioctl:		ioctl_3dfx,
-	mmap:		mmap_3dfx,
-	open:		open_3dfx,
-	release:	release_3dfx,
+	.ioctl =	ioctl_3dfx,
+	.mmap = 	mmap_3dfx,
+	.open = 	open_3dfx,
+	.release =	release_3dfx,
 };
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
