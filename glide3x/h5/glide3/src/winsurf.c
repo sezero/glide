@@ -4,9 +4,11 @@
 ** For windowed rendering call grSstWinOpenExt with GR_RESOLUTION_NONE.
 */
 
-#include "3dfx.h"
-#include "fxdll.h"
-#include "glide.h"
+#include <3dfx.h>
+
+#define FX_DLL_DEFINITION
+#include <fxdll.h>
+#include <glide.h>
 #include "fxglide.h"
 #include "fxcmd.h"
 #include "gsfc.h"
