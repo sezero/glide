@@ -1,28 +1,28 @@
 ###############################################################################
 # Makefile by Carlo Wood (and others)
 
-ifeq ($(OPT_CFLAGS),)
-
 # Determine the machine type
 ARCH := $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/)
 
 # Setup machine dependant compiler flags
 ifeq ($(ARCH), i386)
-OPT_CFLAGS = -O2 -mcpu=pentium -fomit-frame-pointer \
+CFLAGS ?= -O2 -mcpu=pentium -fomit-frame-pointer \
                  -fno-strength-reduce \
                  -falign-loops=2 -falign-jumps=2 -falign-functions=2
 endif
 
 ifeq ($(ARCH), alpha)
-OPT_CFLAGS = -O2 -mno-fp-regs -mcpu=ev4 \
+CFLAGS ?= -O2 -mno-fp-regs -mcpu=ev4 \
                  -ffixed-8 \
                  -Wa,-mev6 \
                  -fomit-frame-pointer -fno-strict-aliasing
 endif
 
-endif	# ifeq ($OPT_CFLAGS),)
+KHEADERS ?= /usr/include
+KVERS ?= $(shell ./kinfo --UTS)
+MODULES_DIR = $(DESTDIR)/lib/modules/$(KVERS)
 
-CFLAGS := -DMODULE -D__KERNEL__ -I/usr/include/linux $(OPT_CFLAGS)
+ALL_CFLAGS := -DMODULE -D__KERNEL__ -I$(KHEADERS) $(CFLAGS)
 
 ###############################################################################
 # You should never need to change anything below.
@@ -32,12 +32,12 @@ all: sanity 3dfx.o
 # Sanity checks
 sanity:
 	@( \
-	if [ ! -r /usr/include/linux ]; then \
-		echo "Expect readable headers in /usr/include/linux"; \
+	if [ ! -r $(KHEADERS)/linux ]; then \
+		echo "Expect readable headers in $(KHEADERS)/linux"; \
 		exit -1; \
 	fi; \
-	if [ ! -r /usr/include/linux/version.h ]; then \
-		echo "Missing /usr/include/linux/version.h"; \
+	if [ ! -r $(KHEADERS)/linux/version.h ]; then \
+		echo "Missing $(KHEADERS)/linux/version.h"; \
 		echo "Configure and install the kernel first"; \
 		exit -1; \
 	fi; \
@@ -49,7 +49,7 @@ sanity:
 	)
 
 kinfo: kinfo.c
-	$(CC) -o kinfo kinfo.c
+	$(CC) -I$(KHEADERS) -o kinfo kinfo.c
 
 kinfo.h: kinfo
 	./kinfo
@@ -58,31 +58,33 @@ kinfo.h: kinfo
 # kernel 2.1+
 
 3dfx.o: kinfo.h 3dfx_driver.c Makefile
-	$(CC) $(CFLAGS) -c -o $@ 3dfx_driver.c
+	$(CC) $(ALL_CFLAGS) -c -o $@ 3dfx_driver.c
 
 ###############################################################################
 
-install:
-	mkdir -p /lib/modules/$(shell ./kinfo --UTS)/misc
-	cp 3dfx.o /lib/modules/$(shell ./kinfo --UTS)/misc/3dfx.o
+install_modules: 3dfx.o
+	mkdir -p $(MODULES_DIR)/misc
+	cp 3dfx.o $(MODULES_DIR)/misc/3dfx.o
+
+install: install_modules
 	@( \
-	if [ -e /lib/modules/$(shell ./kinfo --UTS)/modules.dep ]; then \
-		indep=`grep 'misc/3dfx.o:' /lib/modules/$(shell ./kinfo --UTS)/modules.dep`; \
+	if [ -e $(MODULES_DIR)/modules.dep ]; then \
+		indep=`grep 'misc/3dfx.o:' $(MODULES_DIR)/modules.dep`; \
 		if [ -z "$$indep" ]; then \
-			echo "/lib/modules/$(shell ./kinfo --UTS)/misc/3dfx.o:" >> /lib/modules/$(shell ./kinfo --UTS)/modules.dep; \
-			echo "" >> /lib/modules/$(shell ./kinfo --UTS)/modules.dep; \
+			echo "$(MODULES_DIR)/misc/3dfx.o:" >> $(MODULES_DIR)/modules.dep; \
+			echo "" >> $(MODULES_DIR)/modules.dep; \
 		fi; \
 	fi; \
-	if [ ! -e /dev/.devfsd -a ! -c /dev/3dfx ]; then \
-	        mknod /dev/3dfx c 107 0; \
-		chmod go+w /dev/3dfx; \
+	if [ ! -e $(DESTDIR)/dev/.devfsd -a ! -c $(DESTDIR)/dev/3dfx ]; then \
+		mknod $(DESTDIR)/dev/3dfx c 107 0; \
+		chmod go+w $(DESTDIR)/dev/3dfx; \
 	fi; \
 	if [ "$(RPM_INSTALL)" = "1" ]; then \
-		echo "/lib/modules/$(shell ./kinfo --UTS)/misc/3dfx.o"; \
+		echo "$(MODULES_DIR)/misc/3dfx.o"; \
 	else \
-		inconf=`grep 'alias char-major-107 3dfx' /etc/modules.conf`; \
+		inconf=`grep 'alias char-major-107 3dfx' $(DESTDIR)/etc/modules.conf`; \
 		if [ -z "$$inconf" ]; then \
-			echo "alias char-major-107 3dfx" >> /etc/modules.conf; \
+			echo "alias char-major-107 3dfx" >> $(DESTDIR)/etc/modules.conf; \
 		fi; \
 	fi; \
 	)
@@ -94,12 +96,11 @@ clean:
 	rm -f *.o *.s kinfo kinfo.h
 
 3dfx.s: 3dfx_driver.c Makefile
-	$(CC) $(CFLAGS) -S -c 3dfx_driver.c
+	$(CC) $(ALL_CFLAGS) -S -c 3dfx_driver.c
 
 tar:
 	tar czf ../../SOURCES/Dev3Dfx-2.5.tar.gz 3dfx_driver.c Makefile
 
-
 debug:
-	make OPT_CFLAGS="-g -Wall -Wstrict-prototypes -DDEBUG"
+	make CFLAGS="-g -Wall -Wstrict-prototypes -DDEBUG"
 
