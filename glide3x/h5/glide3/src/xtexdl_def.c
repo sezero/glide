@@ -603,6 +603,7 @@ _grTexDownload_Default_32_WideS(struct GrGC_s* gc, const FxU32 tmuBaseAddr,
     FxI32 
       s;
 
+    
     LINEAR_WRITE_BEGIN(maxS, PACKET5_MODE,
                        (FxU32)tex_address, 0x00UL, 0x00UL);
     for (s = 0; s < maxS; s += 2) {

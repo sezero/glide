@@ -604,7 +604,7 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t type, GrBuffer_t buffer,
     /* Get the current lfb buffer */
     {
       /* FixMe: Is this true if we're triple buffering? */
-      FxU32 colBufferIndex;
+      FxU32 colBufferIndex = 0;
       
       switch(buffer) {
       case GR_BUFFER_FRONTBUFFER:
@@ -644,15 +644,17 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t type, GrBuffer_t buffer,
 
       if (rv) {
 #ifdef	__linux__
-	if (!colBufferIndex)
-	  info->strideInBytes = driInfo.stride;
-	else
-	  info->strideInBytes     = 0x1000; /* This is the default for 3D LFBs,
-					     * which are always 2048
-					     pixels wide. */
+        if (!colBufferIndex) {
+          info->strideInBytes = driInfo.stride;
+        } else {
+          info->strideInBytes     = gc->bInfo->buffInfo.bufLfbStride;
+      }
 #else	/* defined(__linux__) */
-        info->strideInBytes     = 0x1000; /* This is the default for 3D LFBs,
-                                           * which are always 2048 pixels wide. */
+       /*
+        * This is the default for 3D LFBs,
+        * which are always 2048 pixels wide.
+        */
+        info->strideInBytes     = 0x1000;
 #endif	/* defined(__linux__) */
         info->origin            = origin;
 
@@ -695,9 +697,8 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t type, GrBuffer_t buffer,
             info->strideInBytes     = gc->textureBuffer.stride ;
             
           } 
-#endif
+#endif          
             else {
-            info->lfbPtr          = (void *)gc->lfb_ptr;
 #ifdef __linux__
            /*
             * For Linux, we just return the correct address and
@@ -728,7 +729,15 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t type, GrBuffer_t buffer,
         } else /* else !gc->textureBuffer.on  */        {
           if (type == GR_LFB_READ_ONLY) {
             info->lfbPtr        = (void *)gc->lfbBuffers[colBufferIndex];
+#if	defined(__linux__)
+            if (colBufferIndex == 0) {
+                info->strideInBytes = driInfo.stride;
+            } else {
+                info->strideInBytes     = gc->bInfo->buffInfo.bufLfbStride;
+            }
+#else	/* defined(__linux__) */
             info->strideInBytes     = gc->bInfo->buffInfo.bufLfbStride;
+#endif	/* defined(__linux__) */
 #if __POWERPC__
             if(IS_NAPALM(gc->bInfo->pciInfo.deviceID)) {
               if(gc->grPixelSize == 2) {
@@ -778,7 +787,16 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t type, GrBuffer_t buffer,
             /* Make sure dither rotation is disabled for 3D LFBs. */
             _3dlfb = FXTRUE;
             
+#if	defined(__linux__)
+           /*
+            * For Linux, we just return the correct address and
+            * stride.
+            */
+	    info->strideInBytes   = gc->bInfo->buffInfo.bufLfbStride;
+            info->lfbPtr          = (void *)gc->lfbBuffers[colBufferIndex];
+#else	/* defined(__linux__) */
             info->lfbPtr          = (void *)gc->lfb_ptr;
+#endif	/* defined(__linux__) */
 
 #ifndef	__linux__
             switch (writeMode) {

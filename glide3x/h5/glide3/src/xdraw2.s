@@ -21,23 +21,15 @@
 /*  $Header$ *
 /*  $Revision$ *
 /*  $Log$
-/*  Revision 1.4  2000/11/17 21:31:06  joseph
-/*  Restored changes that were lost when I imported new sources from 3dfx's
-/*  internal source repository.
-/*
 /*  Revision 1.3  2000/11/15 23:32:54  joseph
 /*  Syncing up with 3dfx internal source repository.  These changes contain a
 /*  number of bug fixes.
 /*
-/*  Revision 1.2.2.2  2000/11/16 20:01:31  alanh
-/*  merge trunk into 64bit branch.
+/*  Revision 1.1  2000/06/15 00:27:43  joseph
+/*  Initial checkin into SourceForge.
 /*
-/*  Revision 1.2.2.1  2000/11/16 19:32:35  alanh
-/*  merge trunk into 64bit branch.
-/*
-/*  Revision 1.2  2000/06/27 19:59:34  joseph
-/*  Previous checkin of asm files were already preprocessed.
-/*  Fixed build rules for 3DNow optimized assembly.
+/*  Revision 1.1.1.1  2000/04/26 20:35:33  poppa
+/*  Initial Napalm Glide from Precision Insight
 /*
 /*  Revision 1.2  2000/04/18 15:58:15  poppa
 /*  h5/glide3/src/glide.h: Define grSwapBuffers as grDRISwapBuffers.  This
@@ -51,13 +43,6 @@
 /*                         this file.
 /*  h5/minihwc/gdebug.c:   Apparently fclose(NULL) fails in Linux.  This
 /*                         is the POSIX behavior as I recall.
-/*
-/*  Revision 1.1  2000/06/15 00:27:43  joseph
-/*  Initial checkin into SourceForge.
-/*
-/*  Revision 1.1.1.1  2000/04/26 20:35:33  poppa
-/*  Initial Napalm Glide from Precision Insight
-/*
 /* */
 /*   */
 /*  4     4/06/99 3:54p Dow */
