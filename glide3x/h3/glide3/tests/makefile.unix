@@ -1,0 +1,70 @@
+#
+# Insert new header here
+#
+
+
+LDIRT= $(wildcard *.exe *.map *.sys *.o *.a)
+
+LCINCS  += -I$(BUILD_ROOT)/$(FX_GLIDE_HW)/include
+
+LIBOBJS = tlib.o
+
+GLIDELIB        =       libglide3x.so
+
+LLDLIBS = $(LIBOBJS) $(BUILD_ROOT)/$(FX_GLIDE_HW)/lib/$(GLIDELIB)
+
+ifeq ($(HAL_CSIM),1)
+LLDLIBS += $(BUILD_ROOT)/$(FX_GLIDE_HW)/lib/lib$(FX_GLIDE_HW)hal.a
+endif
+
+PRIVATE_HEADERS = tlib.h tlib.c tldata.inc
+
+CFILES   = test00.c \
+           test01.c \
+           test02.c \
+           test03.c \
+           test04.c \
+           test05.c \
+           test06.c \
+           test07.c \
+           test08.c \
+           test09.c \
+           test10.c \
+           test11.c \
+           test12.c \
+           test13.c \
+           test14.c \
+           test15.c \
+           test16.c \
+           test17.c \
+           test18.c \
+           test19.c \
+           test20.c \
+           test21.c \
+           test22.c \
+           test23.c \
+           test24.c \
+           test25.c \
+           test26.c \
+           test27.c \
+           test28.c \
+           test29.c \
+           test30.c \
+           test31.c \
+           test32.c \
+           test33.c \
+           test34.c \
+           test35.c \
+           test36.c \
+           display.c \
+           sbench.c
+
+PROGRAMS = $(CFILES:.c=)
+
+DATAFILES = alpha.3df decal1.3df lava.3df light.3df matt1.3df miro.3df
+
+include $(BUILD_ROOT)/swlibs/include/make/3dfx.mak
+
+$(PROGRAMS):  $(LLDLIBS)
+
+        
