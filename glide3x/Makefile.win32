@@ -304,7 +304,7 @@ LINK = link
 AR   = lib
 AS   = nasmw
 
-CFLAGS  = -G6 -W3 -WX -c -D__MSC__=1 -D_X86_=1 -DNULL=0 -D_WIN32=1 -DWIN32=1 -D__WIN32__=1 -DSTRICT -D_WINDOWS
+CFLAGS  = -GX -G6 -W3 -WX -c -D__MSC__=1 -D_X86_=1 -DNULL=0 -D_WIN32=1 -DWIN32=1 -D__WIN32__=1 -DSTRICT -D_WINDOWS
 LFLAGS  = -nologo /DLL /OPT:WIN98 /MACHINE:IX86 /NODEFAULTLIB
 ARFLAGS = -nologo
 ASFLAGS = -O6 -fwin32 -D__WIN32__ --prefix _
@@ -315,7 +315,7 @@ LFLAGS  = $(LFLAGS) -debugtype:both /DEBUG
 ARFLAGS = $(ARFLAGS) -debugtype:both
 ASFLAGS = $(ASFLAGS) -g -DDEBUG=1
 !else
-CFLAGS  = $(CFLAGS) -O2 -MT -D_USRDLL -DNDEBUG
+CFLAGS  = $(CFLAGS) -Ox -MT -D_USRDLL -DNDEBUG
 !endif
 
 # So that we can get reasonable stuff from SoftIce etc even
@@ -448,9 +448,9 @@ DX_LIB = ddraw.lib dxguid.lib
 DEP_LIB = user32.lib gdi32.lib advapi32.lib kernel32.lib
 
 !if "$(DEBUG)" == "1"
-STD_LIB = MSVCRTD.lib
+STD_LIB = LIBCMTD.lib
 !else
-STD_LIB = MSVCRT.lib
+STD_LIB = LIBCMT.lib
 !endif
 
 #################################
