@@ -78,7 +78,7 @@ install:
 			echo "" >> /lib/modules/$(shell ./kinfo --UTS)/modules.dep; \
 		fi; \
 	fi; \
-	if [ ! -c /dev/3dfx ]; then \
+	if [ ! -e /dev/.devfsd -a ! -c /dev/3dfx ]; then \
 	        mknod /dev/3dfx c 107 0; \
 		chmod go+w /dev/3dfx; \
 	fi; \

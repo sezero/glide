@@ -21,6 +21,18 @@
 
    ChangeLog
 
+   2002/05/05   Guillem Jover   <guillem@hadrons.org>
+
+   * Re-included VOODOO pci id, accidentally removed in last patch,
+     thanks to Jan Kuipers to point this out.
+
+   2002/01/29   Guillem Jover   <guillem@hadrons.org>
+
+   * Fixed bug when compiling for 2.4 kernels with modversions.
+   * Added devfs support.
+   * Added MODULE_* declarations.
+   * Cleaned detection code.
+
    2000/02/04   Joseph Kain     <joseph@3dfx.com>
    
    * Updated Carlo Woord's email address.
@@ -100,13 +112,13 @@
 #endif
 
 #ifdef MODULE
-#include <linux/module.h>
 #if defined(CONFIG_MODVERSIONS) && !defined(MODVERSIONS)
 #define MODVERSIONS
 #endif
 #ifdef MODVERSIONS
 #include <linux/modversions.h>
 #endif
+#include <linux/module.h>
 #else
 #define MOD_INC_USE_COUNT
 #define MOD_DEC_USE_COUNT
@@ -117,6 +129,9 @@
 #include <linux/mm.h>
 #include <linux/errno.h>
 #include <linux/pci.h>
+#if KERNEL_MIN_VER(2,3,46) || defined(DEVFS_SUPPORT)
+#include <linux/devfs_fs_kernel.h>
+#endif
 #include <asm/segment.h>
 #include <asm/ioctl.h>
 #include <asm/io.h>
@@ -172,6 +187,17 @@
 #define PCI_DEVICE_ID_3DFX_VOODOO3 5
 #endif
 
+static struct pci_card {
+	unsigned short	vendor;
+	unsigned short	device;
+} pci_card_list[] = {
+	{PCI_VENDOR_ID_3DFX, 		PCI_DEVICE_ID_3DFX_VOODOO},
+	{PCI_VENDOR_ID_3DFX, 		PCI_DEVICE_ID_3DFX_VOODOO2},
+	{PCI_VENDOR_ID_ALLIANCE, 	PCI_DEVICE_ID_ALLIANCE_AT3D},
+	{PCI_VENDOR_ID_3DFX, 		PCI_DEVICE_ID_3DFX_BANSHEE},
+	{PCI_VENDOR_ID_3DFX, 		PCI_DEVICE_ID_3DFX_VOODOO3}
+};
+
 #ifdef DEBUG
 #define DEBUGMSG(x) printk x
 #else
@@ -218,6 +244,9 @@ void cleanup_module(void);
 
 static cardInfo cards[MAXCARDS];
 static int numCards = 0;
+#if KERNEL_MIN_VER(2,3,46) || defined(DEVFS_SUPPORT)
+static devfs_handle_t devfs_handle;
+#endif
 
 static void findCardType(int vendor, int device)
 {
@@ -243,14 +272,12 @@ static void findCardType(int vendor, int device)
 
 static int findCards(void)
 {
+	int i;
 	if (!pci_present())
 		return 0;
 	numCards = 0;
-	findCardType(PCI_VENDOR_ID_3DFX, PCI_DEVICE_ID_3DFX_VOODOO);
-	findCardType(PCI_VENDOR_ID_3DFX, PCI_DEVICE_ID_3DFX_VOODOO2);
-	findCardType(PCI_VENDOR_ID_ALLIANCE, 0x643d);
-	findCardType(PCI_VENDOR_ID_3DFX, PCI_DEVICE_ID_3DFX_BANSHEE);
-	findCardType(PCI_VENDOR_ID_3DFX, PCI_DEVICE_ID_3DFX_VOODOO3);
+	for (i = 0; i < (sizeof(pci_card_list)/sizeof(struct pci_card)); i++)
+		findCardType(pci_card_list[i].vendor, pci_card_list[i].device);
 	return numCards;
 }
 
@@ -669,10 +696,22 @@ int init_module(void)
 	int ret;
 	DEBUGMSG(("3dfx: Entering init_module()\n"));
 
+#if KERNEL_MIN_VER(2,3,46) || defined(DEVFS_SUPPORT)
+	if ((ret = devfs_register_chrdev(MAJOR_3DFX, "3dfx", &fops_3dfx)) < 0) {
+		printk("3dfx: Unable to register character device with major %d\n", MAJOR_3DFX);
+		return ret;
+	}
+
+	devfs_handle = devfs_register(NULL, "3dfx", DEVFS_FL_NONE,
+		MAJOR_3DFX, DEVICE_VOODOO,
+		S_IFCHR | S_IROTH | S_IWOTH | S_IRGRP | S_IWGRP,
+		&fops_3dfx, NULL);
+#else
 	if ((ret = register_chrdev(MAJOR_3DFX, "3dfx", &fops_3dfx)) < 0) {
 		printk("3dfx: Unable to register character device with major %d\n", MAJOR_3DFX);
 		return ret;
 	}
+#endif
 	DEBUGMSG(("3dfx: Successfully registered device 3dfx\n"));
 	findCards();
 
@@ -698,11 +737,21 @@ void cleanup_module(void)
 #ifdef HAVE_MTRR
 	resetmtrr_3dfx();
 #endif
+#if KERNEL_MIN_VER(2,3,46) || defined(DEVFS_SUPPORT)
+	devfs_unregister(devfs_handle);
+
+	if (devfs_unregister_chrdev(MAJOR_3DFX, "3dfx"))
+	{
+	  DEBUGMSG(("3dfx: devfs_unregister_chrdev failed\n"));
+	  return;
+	}
+#else
 	if (unregister_chrdev(MAJOR_3DFX, "3dfx"))
 	{
 	  DEBUGMSG(("3dfx: unregister_chrdev failed\n"));
 	  return;
 	}
+#endif
 }
 #else /* !MODULE */
 
@@ -719,6 +768,11 @@ long init_3dfx(long mem_start, long mem_end)
 }
 #endif /* !MODULE */
 
+#if KERNEL_MIN_VER(2,1,21)
+MODULE_AUTHOR("Daryll Strauss et al.");
+MODULE_DESCRIPTION("3dfx glide kernel device driver");
+MODULE_LICENSE("GPL");
+#endif
 
 #if defined(DEBUG)
 /*
