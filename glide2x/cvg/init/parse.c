@@ -95,15 +95,15 @@ FX_ENTRY FxBool FX_CALL sst1InitVoodooFile()
 
 	  if(getenv("VOODOO2_FILE")) {
 	    /* Override voodoo2.ini name */
-	    strcpy(filename, getenv("VOODOO2_FILE"));
+	    strncpy(filename, getenv("VOODOO2_FILE"), 255);
 	    if(!(file = fopen(filename, "r"))) goto __errExit;
 	  } else {
 	    /* Override path setting */
 	    if(getenv("VOODOO2_PATH"))
-	      strcpy(path, getenv("VOODOO2_PATH"));
+	      strncpy(path, getenv("VOODOO2_PATH"), 511);
 	    else if(getenv("PATH")) {
 	      strcpy(path, ".;");
-	      strcat(path, getenv("PATH"));
+	      strncat(path, getenv("PATH"), 511 - strlen (path));
 	    } else
 	      strcpy(path, ".;");
 
@@ -292,13 +292,13 @@ FX_ENTRY FxBool FX_CALL sst1InitVoodooFile() {
 
   if (getenv("VOODOO2_FILE")) {
     /* Override voodoo2.ini name */
-    strcpy(filename, getenv("VOODOO2_FILE"));
+    strncpy(filename, getenv("VOODOO2_FILE"), 255);
     if (!(file = fopen(filename, "r"))) 
       goto __errExit;
   } else {
     /* Override path setting */
     if (getenv("VOODOO2_PATH")) {
-      strcpy(path, getenv("VOODOO2_PATH"));
+      strncpy(path, getenv("VOODOO2_PATH"), 511);
     } else {
       strcpy(path, "/etc/conf.3dfx");
     }
@@ -312,11 +312,11 @@ FX_ENTRY FxBool FX_CALL sst1InitVoodooFile() {
 	if ((tmpPtr = strtok(NULL, ":")) == NULL)
 	  break;
       }
-      strcpy(filename, tmpPtr);
+      strncpy(filename, tmpPtr, 255);
       if (filename[strlen(filename)-1] == '\\')
-	sprintf(filename, "%voodoo2", filename);
+	snprintf(filename, 255, "%voodoo2", filename);
       else
-	sprintf(filename, "%s/voodoo2", filename);
+	snprintf(filename, 255, "%s/voodoo2", filename);
       i++;
       if ((file = fopen(filename, "r")))
 	break;
