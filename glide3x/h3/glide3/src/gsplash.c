@@ -19,6 +19,9 @@
  **
  ** $Header$
  ** $Log$
+ ** Revision 1.1.1.1  1999/11/24 21:44:57  joseph
+ ** Initial checkin for SourceForge
+ **
 ** 
 ** 4     4/06/99 3:54p Dow
 ** Alt tab again.
@@ -182,8 +185,7 @@ GR_DIENTRY(grSplash,void,(float x, float y,
 {
 #define FN_NAME "grSplash"
   GR_BEGIN_NOFIFOCHECK("grSplash", 85);
-  GDBG_INFO_MORE(gc->myLevel,"(%f,%f,%f,%f,%d)\n",
-                 x, y, w, h, frameNumber);
+  GDBG_INFO_MORE(gc->myLevel,"(%f,%f,%f,%f,%d)\n", x, y, w, h, frameNumber);
 
 #if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
   {

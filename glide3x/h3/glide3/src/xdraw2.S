@@ -21,6 +21,11 @@
 /*  $Header$ */
 /*  $Revision$ */
 /*  $Log$
+/*  Revision 1.2.8.2  2003/06/19 08:38:16  dborca
+/*  fixes: DOS gamma, modetabl.h timings (avoid shimmering),
+/*  Napalm memory probing, more DJGPP MMX specializations,
+/*  new 32bit texture files, Linux build valid again, etc.
+/*
 /*  Revision 1.2.8.1  2003/05/05 07:12:47  dborca
 /*  no message
 /*
@@ -175,12 +180,14 @@ GLOBL(PROC_TYPE(clip_nocull_invalid))
 #define GLIDE_PACK_ALPHA 0
 #define GLIDE_GENERIC_SETUP 0
 #include "xdraw2.inc.S"
-#define GLIDE_GENERIC_SETUP 0
-#define GLIDE_PACK_ALPHA 0
-#define GLIDE_PACK_RGB 0
-#define GLIDE_CULLING 0
-#define GLIDE_CLIP_COORDS 0
-#define GLIDE_VALIDATE_STATE 0
+#undef GLIDE_GENERIC_SETUP
+#undef GLIDE_PACK_ALPHA
+#undef GLIDE_PACK_RGB
+#undef GLIDE_CULLING
+#undef GLIDE_CLIP_COORDS
+#undef GLIDE_VALIDATE_STATE
+
+#undef LOCAL
 
 END_PROC_TYPE(clip_nocull_invalid):
 .size PROC_TYPE(clip_nocull_invalid),END_PROC_TYPE(clip_nocull_invalid)-PROC_TYPE(clip_nocull_invalid)
@@ -197,12 +204,14 @@ GLOBL(PROC_TYPE(clip_cull_invalid))
 #define GLIDE_PACK_ALPHA 0
 #define GLIDE_GENERIC_SETUP 0
 #include "xdraw2.inc.S"
-#define GLIDE_GENERIC_SETUP 0
-#define GLIDE_PACK_ALPHA 0
-#define GLIDE_PACK_RGB 0
-#define GLIDE_CULLING 0
-#define GLIDE_CLIP_COORDS 0
-#define GLIDE_VALIDATE_STATE 0
+#undef GLIDE_GENERIC_SETUP
+#undef GLIDE_PACK_ALPHA
+#undef GLIDE_PACK_RGB
+#undef GLIDE_CULLING
+#undef GLIDE_CLIP_COORDS
+#undef GLIDE_VALIDATE_STATE
+
+#undef LOCAL
 
 END_PROC_TYPE(clip_cull_invalid):
 .size PROC_TYPE(clip_cull_invalid),END_PROC_TYPE(clip_cull_invalid)-PROC_TYPE(clip_cull_invalid)
@@ -219,12 +228,14 @@ GLOBL(PROC_TYPE(clip_cull_valid))
 #define GLIDE_PACK_ALPHA 0
 #define GLIDE_GENERIC_SETUP 0
 #include "xdraw2.inc.S"
-#define GLIDE_GENERIC_SETUP 0
-#define GLIDE_PACK_ALPHA 0
-#define GLIDE_PACK_RGB 0
-#define GLIDE_CULLING 0
-#define GLIDE_CLIP_COORDS 0
-#define GLIDE_VALIDATE_STATE 0
+#undef GLIDE_GENERIC_SETUP
+#undef GLIDE_PACK_ALPHA
+#undef GLIDE_PACK_RGB
+#undef GLIDE_CULLING
+#undef GLIDE_CLIP_COORDS
+#undef GLIDE_VALIDATE_STATE
+
+#undef LOCAL
 
 END_PROC_TYPE(clip_cull_valid):
 .size PROC_TYPE(clip_cull_valid),END_PROC_TYPE(clip_cull_valid)-PROC_TYPE(clip_cull_valid)
@@ -241,12 +252,14 @@ GLOBL(PROC_TYPE(clip_nocull_valid))
 #define GLIDE_PACK_ALPHA 0
 #define GLIDE_GENERIC_SETUP 0
 #include "xdraw2.inc.S"
-#define GLIDE_GENERIC_SETUP 0
-#define GLIDE_PACK_ALPHA 0
-#define GLIDE_PACK_RGB 0
-#define GLIDE_CULLING 0
-#define GLIDE_CLIP_COORDS 0
-#define GLIDE_VALIDATE_STATE 0
+#undef GLIDE_GENERIC_SETUP
+#undef GLIDE_PACK_ALPHA
+#undef GLIDE_PACK_RGB
+#undef GLIDE_CULLING
+#undef GLIDE_CLIP_COORDS
+#undef GLIDE_VALIDATE_STATE
+
+#undef LOCAL
 
 END_PROC_TYPE(clip_nocull_valid):
 .size PROC_TYPE(clip_nocull_valid),END_PROC_TYPE(clip_nocull_valid)-PROC_TYPE(clip_nocull_valid)
@@ -263,12 +276,14 @@ GLOBL(PROC_TYPE(win_nocull_invalid))
 #define GLIDE_PACK_ALPHA 0
 #define GLIDE_GENERIC_SETUP 0
 #include "xdraw2.inc.S"
-#define GLIDE_GENERIC_SETUP 0
-#define GLIDE_PACK_ALPHA 0
-#define GLIDE_PACK_RGB 0
-#define GLIDE_CULLING 0
-#define GLIDE_CLIP_COORDS 0
-#define GLIDE_VALIDATE_STATE 0
+#undef GLIDE_GENERIC_SETUP
+#undef GLIDE_PACK_ALPHA
+#undef GLIDE_PACK_RGB
+#undef GLIDE_CULLING
+#undef GLIDE_CLIP_COORDS
+#undef GLIDE_VALIDATE_STATE
+
+#undef LOCAL
 
 END_PROC_TYPE(win_nocull_invalid):
 .size PROC_TYPE(win_nocull_invalid),END_PROC_TYPE(win_nocull_invalid)-PROC_TYPE(win_nocull_invalid)
@@ -285,12 +300,14 @@ GLOBL(PROC_TYPE(win_cull_invalid))
 #define GLIDE_PACK_ALPHA 0
 #define GLIDE_GENERIC_SETUP 0
 #include "xdraw2.inc.S"
-#define GLIDE_GENERIC_SETUP 0
-#define GLIDE_PACK_ALPHA 0
-#define GLIDE_PACK_RGB 0
-#define GLIDE_CULLING 0
-#define GLIDE_CLIP_COORDS 0
-#define GLIDE_VALIDATE_STATE 0
+#undef GLIDE_GENERIC_SETUP
+#undef GLIDE_PACK_ALPHA
+#undef GLIDE_PACK_RGB
+#undef GLIDE_CULLING
+#undef GLIDE_CLIP_COORDS
+#undef GLIDE_VALIDATE_STATE
+
+#undef LOCAL
 
 END_PROC_TYPE(win_cull_invalid):
 .size PROC_TYPE(win_cull_invalid),END_PROC_TYPE(win_cull_invalid)-PROC_TYPE(win_cull_invalid)
@@ -307,12 +324,14 @@ GLOBL(PROC_TYPE(win_cull_valid))
 #define GLIDE_PACK_ALPHA 0
 #define GLIDE_GENERIC_SETUP 0
 #include "xdraw2.inc.S"
-#define GLIDE_GENERIC_SETUP 0
-#define GLIDE_PACK_ALPHA 0
-#define GLIDE_PACK_RGB 0
-#define GLIDE_CULLING 0
-#define GLIDE_CLIP_COORDS 0
-#define GLIDE_VALIDATE_STATE 0
+#undef GLIDE_GENERIC_SETUP
+#undef GLIDE_PACK_ALPHA
+#undef GLIDE_PACK_RGB
+#undef GLIDE_CULLING
+#undef GLIDE_CLIP_COORDS
+#undef GLIDE_VALIDATE_STATE
+
+#undef LOCAL
 
 END_PROC_TYPE(win_cull_valid):
 .size PROC_TYPE(win_cull_valid),END_PROC_TYPE(win_cull_valid)-PROC_TYPE(win_cull_valid)
@@ -329,12 +348,14 @@ GLOBL(PROC_TYPE(win_nocull_valid))
 #define GLIDE_PACK_ALPHA 0
 #define GLIDE_GENERIC_SETUP 0
 #include "xdraw2.inc.S"
-#define GLIDE_GENERIC_SETUP 0
-#define GLIDE_PACK_ALPHA 0
-#define GLIDE_PACK_RGB 0
-#define GLIDE_CULLING 0
-#define GLIDE_CLIP_COORDS 0
-#define GLIDE_VALIDATE_STATE 0
+#undef GLIDE_GENERIC_SETUP
+#undef GLIDE_PACK_ALPHA
+#undef GLIDE_PACK_RGB
+#undef GLIDE_CULLING
+#undef GLIDE_CLIP_COORDS
+#undef GLIDE_VALIDATE_STATE
+
+#undef LOCAL
 
 END_PROC_TYPE(win_nocull_valid):
 .size PROC_TYPE(win_nocull_valid),END_PROC_TYPE(win_nocull_valid)-PROC_TYPE(win_nocull_valid)

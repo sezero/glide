@@ -38,8 +38,8 @@
 /*
 **  I/O Macros
 */
-#define HWC_IO_LOAD(regInfo, reg, val)
-GDBG_INFO(120, "%s:  Storing 0x%x to IO Register %s\n", 
+#define HWC_IO_LOAD(regInfo, reg, val) \
+GDBG_INFO(120, "%s:  Storing 0x%x to IO Register %s\n", \
 ((SstIORegs *) regInfo.ioMemBase)->
 
 

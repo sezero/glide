@@ -1534,7 +1534,7 @@ do { \
 #define REG_GROUP_SETF_CLAMP(__regBase, __regAddr, __val) \
 do { \
   const FxU32 fpClampVal = FP_FLOAT_CLAMP(__val); \
-  REG_GROUP_ASSERT(__regAddr, fpClampVal, FXTRUE); \  
+  REG_GROUP_ASSERT(__regAddr, fpClampVal, FXTRUE); \
   SET(((FxU32*)(__regBase))[offsetof(SstRegs, __regAddr) >> 2], fpClampVal); \
   GR_INC_SIZE(sizeof(FxU32)); \
 } while(0)

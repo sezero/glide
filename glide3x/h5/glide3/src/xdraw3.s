@@ -2922,6 +2922,7 @@ ALIGN(4)
 
 #define gc esi	/*  points to graphics context */
 #define fifo ecx	/*  points to next entry in fifo */
+#undef vertexPtr
 #define vertexPtr edi	/*  Current vertex pointer */
 
 /*  NB:  All of the base triangle procs expect to have the gc */

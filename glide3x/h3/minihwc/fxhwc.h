@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/11/24 21:45:03  joseph
+** Initial checkin for SourceForge
+**
 ** 
 ** 3     4/06/99 3:36p Dow
 ** Alt tab stuff
@@ -35,8 +38,8 @@
 /*
 **  I/O Macros
 */
-#define HWC_IO_LOAD(regInfo, reg, val)
-GDBG_INFO(120, "%s:  Storing 0x%x to IO Register %s\n", 
+#define HWC_IO_LOAD(regInfo, reg, val) \
+GDBG_INFO(120, "%s:  Storing 0x%x to IO Register %s\n", \
 ((SstIORegs *) regInfo.ioMemBase)->
 
 
