@@ -696,6 +696,7 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t type, GrBuffer_t buffer,
 #else	/* defined(__linux__) */
             info->lfbPtr          = (void *)gc->lfb_ptr;
 #endif	/* defined(__linux__) */
+#ifndef	__linux__
             switch (writeMode) {
             case GR_LFBWRITEMODE_565_DEPTH:
             case GR_LFBWRITEMODE_555_DEPTH:
@@ -703,19 +704,10 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t type, GrBuffer_t buffer,
             case GR_LFBWRITEMODE_888:
             case GR_LFBWRITEMODE_8888:
             case GR_LFBWRITEMODE_Z32:
-#ifndef	__linux__
-               /*
-                * Unknown why this is needed for smaller strides,
-                * and not needed for larger strides.
-                */
-                if (info->strideInBytes < 0x2000) {
-                    info->strideInBytes <<= 1;
-                }
-#else	/* defined(__linux__) */
               info->strideInBytes <<= 1;
-#endif	/* defined(__linux__) */
               break;
             }
+#endif	/* defined(__linux__) */
           }
           REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 2, 0x3);
           REG_GROUP_SET(hw, colBufferAddr, gc->textureBuffer.addr );
@@ -793,6 +785,7 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t type, GrBuffer_t buffer,
             info->lfbPtr          = (void *)gc->lfb_ptr;
 #endif	/* defined(__linux__) */
 
+#ifndef	__linux__
             switch (writeMode) {
             case GR_LFBWRITEMODE_565_DEPTH:
             case GR_LFBWRITEMODE_555_DEPTH:
@@ -800,19 +793,10 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t type, GrBuffer_t buffer,
             case GR_LFBWRITEMODE_888:
             case GR_LFBWRITEMODE_8888:
             case GR_LFBWRITEMODE_Z32:
-#ifdef	__linux__
-               /*
-                * For some reason, when the stride is 0x2000,
-                * we don't need to shift by one.
-                */
-                if (info->strideInBytes < 0x2000) {
-                    info->strideInBytes <<= 1;
-                }
-#else	/* defined(__linux__) */
               info->strideInBytes <<= 1;
-#endif	/* defined(__linux__) */
               break;
             }
+#endif	/* defined(__linux__) */
           }
         }
         
