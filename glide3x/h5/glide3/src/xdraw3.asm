@@ -93,6 +93,20 @@ proc _grDrawTriangles_3DNow, 12
     mov       vertexPtr, [esp+_pointers-4]; get current vertex pointer (deref mode)
 
     push      ebp                        ; save frame pointer
+
+%IFDEF GLIDE_ALT_TAB
+    test      gc, gc
+    je        .tris_done
+;    mov       edx, [gc + windowed]
+;    test      edx, 1
+;    jnz       .pastContextTest
+    mov       edx, DWORD [gc+lostContext]
+    mov       ecx, [edx]
+    test      ecx, 1
+    jnz       .tris_done
+;.pastContextTest:
+%ENDIF
+
     mov       edx, [gc + invalid]        ; state needs validation ?
 
     test      vertexCount, vertexCount   ; number of vertices <= 0 ?
@@ -1115,6 +1129,19 @@ proc _grDrawVertexList_3DNow_Window, 20
 
     nop                                  ; filler
     jle       .strip_done                ; yup, the strip/fan is done
+
+%IFDEF GLIDE_ALT_TAB
+    test      gc, gc
+    je        .strip_done
+;    mov       edx, [gc + windowed]
+;    test      edx, 1
+;    jnz       .pastContextTest
+    mov       edx, DWORD [gc+lostContext]
+    mov       ecx, [edx]
+    test      ecx, 1
+    jnz       .strip_done
+;.pastContextTest:
+%ENDIF
   
 ;;;     vSize = gc->state.vData.vSize
 ;;;     if (stride == 0)
@@ -1691,6 +1718,19 @@ proc _grDrawVertexList_3DNow_Clip, 20
     test      vertexCount, vertexCount   ; number of vertices <= 0 ?
 
     jle       .strip_done                ; yup, the strip/fan is done
+
+%IFDEF GLIDE_ALT_TAB
+    test      gc, gc
+    je        .strip_done
+;    mov       edx, [gc + windowed]
+;    test      edx, 1
+;    jnz       .pastContextTest
+    mov       edx, DWORD [gc+lostContext]
+    mov       ecx, [edx]
+    test      ecx, 1
+    jnz       .strip_done
+;.pastContextTest:
+%ENDIF
   
 ;;;     vSize = gc->state.vData.vSize
 ;;;     if (stride == 0)
@@ -2214,6 +2254,20 @@ proc _grDrawTriangles_SSE, 12
     mov       vertexPtr, [esp+_pointers-4]; get current vertex pointer (deref mode)
 
     push      ebp                        ; save frame pointer
+
+%IFDEF GLIDE_ALT_TAB
+    test      gc, gc
+    je        .tris_done
+;    mov       edx, [gc + windowed]
+;    test      edx, 1
+;    jnz       .pastContextTest
+    mov       edx, DWORD [gc+lostContext]
+    mov       ecx, [edx]
+    test      ecx, 1
+    jnz       .tris_done
+;.pastContextTest:
+%ENDIF
+
     mov       edx, [gc + invalid]        ; state needs validation ?
 
     test      vertexCount, vertexCount   ; number of vertices <= 0 ?
@@ -2255,15 +2309,6 @@ proc _grDrawTriangles_SSE, 12
 
     mov       eax, [esp + _count]        ; count
     mov       ebp, 0AAAAAAABh            ; 1/3*2^32*2
-
-    xorps     xmm0,xmm0                  ; clear SIMD register
-    xorps     xmm1,xmm1
-    xorps     xmm2,xmm2
-    xorps     xmm3,xmm3
-    xorps     xmm4,xmm4
-    xorps     xmm5,xmm5
-    xorps     xmm6,xmm6
-    xorps     xmm7,xmm7
 
     mul       ebp                        ; edx:eax = 1/3*2*2^32*count; edx = 1/3*2*count
     nop                                  ; filler
@@ -2372,20 +2417,20 @@ proc _grDrawTriangles_SSE, 12
 
 .win_datalist_loop_ND_WB0:               ; nothing in "write buffer"
 
-    movss     xmm1,[vertex + eax]        ; get next parameter
+    movss     xmm1,[vertex + eax]        ; 0 | 0 | 0 | get next parameter
     mov       eax, [dlp]                 ; get next offset from offset list
 
     test      eax, eax                   ; at end of offset list (offset == 0) ?
     jz        .win_datalist_end_ND_WB1   ; exit, write buffer contains one DWORD
 
-    movss     xmm2,[vertex + eax]        ; get next parameter
+    movss     xmm2,[vertex + eax]        ; 0 | 0 | 0 | get next parameter
     add       dlp, 8                     ; dlp++
 
     mov       eax, [dlp-4]               ; get next offset from offset list
     add       fifo, 8                    ; fifoPtr += 2*sizeof(FxU32)
 
     test      eax, eax                   ; at end of offset list (offset == 0) ?
-    unpcklps  xmm1, xmm2                 ; current param | previous param
+    unpcklps  xmm1, xmm2                 ; 0 | 0 | current param | previous param
 
     movlps    [fifo-8],xmm1              ; PCI write current param | previous param
     jnz       .win_datalist_loop_ND_WB0  ; nope, copy next parameter
@@ -2429,7 +2474,7 @@ proc _grDrawTriangles_SSE, 12
 .fifo_aligned_ND:
 
     mov       [fifo], eax                ; PCI write packet header
-    movss     xmm2, [vertex]             ; 0 | x of vertex
+    movss     xmm2, [vertex]             ; 0 | 0 | 0 | x of vertex
     add       fifo, 8                    ; fifoPtr += 2*sizeof(FxU32)
 
     lea       dlp, [dlpStart + 4]        ; point to start of offset list
@@ -2438,7 +2483,7 @@ proc _grDrawTriangles_SSE, 12
     mov       eax, [dlp-4]               ; first offset in offset list
 
     movss     [fifo-4], xmm2             ; PCI write x of vertex
-    movss     xmm1,[vertex+4]            ; 0 | y of vertex
+    movss     xmm1,[vertex+4]            ; 0 | 0 | 0 | y of vertex
 
     cmp       eax, 0                     ; offset == 0 (list empty) ?
     jz        .win_datalist_end_ND_WB1   ; yup, no more vertex data, one DWORD in "write buffer"
@@ -2446,36 +2491,36 @@ proc _grDrawTriangles_SSE, 12
 
 .win_vertex_loop_ND_WB1:                 ; one DWORD in "write buffer"
 
-    movss     xmm2,[vertex]              ; 0 | x of vertex
+    movss     xmm2,[vertex]              ; 0 | 0 | 0 | x of vertex
     add       fifo, 8                    ; fifoPtr += 2*sizeof(FxU32)
 
     lea       dlp, [dlpStart + 4]        ; point to start of offset list
     nop                                  ; filler
 
-    unpcklps  xmm1, xmm2                 ; packet header | x of vertex ?reversed?
+    unpcklps  xmm1, xmm2                 ; 0 | 0 | x of current vertex | y of previous vertex
     mov       eax, [dlp-4]               ; first offset in offset list
 
-    movlps    [fifo-8], xmm1             ; PCI write packet header | x of vertex
-    movss     xmm1,[vertex+4]            ; 0 | y of vertex
+    movlps    [fifo-8], xmm1             ; PCI write x of current vertex | y of previous vertex
+    movss     xmm1,[vertex+4]            ; 0 | 0 | 0 | y of vertex
 
     cmp       eax, 0                     ; offset == 0 (list empty) ?
     jz        .win_datalist_end_ND_WB1   ; yup, no more vertex data, one DWORD in "write buffer"
 
 .win_datalist_loop_ND_WB1:               ; one DWORD in "write buffer" 
 
-    movss     xmm2,[vertex + eax]        ; get next parameter
+    movss     xmm2,[vertex + eax]        ; 0 | 0 | 0 | get next parameter
     add       fifo, 8                    ; fifoPtr += 2*sizeof(FxU32)
 
     mov       eax, [dlp]                 ; get next offset from offset list
     add       dlp, 8                     ; dlp += 2
 
-    unpcklps  xmm1,xmm2                  ; current param | previous param
+    unpcklps  xmm1,xmm2                  ; 0 | 0 | current param | previous param
     cmp       eax, 0                     ; at end of offset list (offset == 0) ?
 
     movlps    [fifo-8],xmm1              ; PCI write current param | previous param
     jz        .win_datalist_end_ND_WB0   ; yes, exit, "write buffer" empty
 
-    movss     xmm1,[vertex + eax]        ; get next parameter
+    movss     xmm1,[vertex + eax]        ; 0 | 0 | 0 | get next parameter
     mov       eax, [dlp-4]               ; get next offset from offset list
 
     cmp       eax, 0                     ; at end of offset list (offset == 0) ?
@@ -2573,12 +2618,12 @@ proc _grDrawTriangles_SSE, 12
     add       vertexPtr, 4               ; next pointer
 
     lea       dlp, [gc + tsuDataList]    ; get pointer to offset list
-    movlps    xmm1,[edx]                 ; get vertex x,y
+    movlps    xmm1,[edx]                 ; 0 | 0 | y of vertex | x of vertex
 
     mov       eax, [dlp]                 ; get first offset from offset list
     add       dlp, 4                     ; dlp++
 
-    movlps    [fifo],xmm1                ; PCI write x, y
+    movlps    [fifo],xmm1                ; PCI write y of vertex | x of vertex
     add       fifo, 8                    ; fifo += 2
 
     test      eax, eax                   ; if offset == 0, end of offset list
@@ -2586,19 +2631,19 @@ proc _grDrawTriangles_SSE, 12
 
 .win_datalist_loop_D_WB0:                ; nothing in "write buffer"
 
-    movss     xmm1,[edx + eax]           ; get next parameter
+    movss     xmm1,[edx + eax]           ; 0 | 0 | 0 | get next parameter
     mov       eax, [dlp]                 ; get next offset from offset list
 
     test      eax, eax                   ; at end of offset list (offset == 0) ?
     jz        .win_datalist_end_D_WB1    ; exit, write buffer contains one DWORD
 
-    movss     xmm2,[edx + eax]           ; get next parameter
+    movss     xmm2,[edx + eax]           ; 0 | 0 | 0 | get next parameter
     add       dlp, 8                     ; dlp++
 
     mov       eax, [dlp-4]               ; get next offset from offset list
     add       fifo, 8                    ; fifoPtr += 2*sizeof(FxU32)
 
-    unpcklps  xmm1,xmm2                  ; current param | previous param
+    unpcklps  xmm1,xmm2                  ; 0 | 0 | 0 | current param | previous param
     cmp       eax, 0                     ; at end of offset list (offset == 0) ?
 
     movlps    [fifo-8],xmm1              ; PCI write current param | previous param
@@ -2648,13 +2693,13 @@ proc _grDrawTriangles_SSE, 12
     add       fifo, 8                    ; fifoPtr += 2*sizeof(FxU32)
     lea       dlp, [gc + tsuDataList]    ; get pointer to start of offset list
 
-    movss     xmm2,[edx]                 ; 0 | x of vertex
+    movss     xmm2,[edx]                 ; 0 | 0 | 0 | x of vertex
     add       dlp, 4                     ; dlp++
  
     mov       eax, [dlp-4]               ; first offset in offset list
 
     movss     [fifo-4], xmm2             ; PCI write x of vertex
-    movss     xmm1,[edx + 4]             ; 0 | y of vertex
+    movss     xmm1,[edx + 4]             ; 0 | 0 | 0 | y of vertex
 
     cmp       eax, 0                     ; offset == 0 (list empty) ?
     je        .win_datalist_end_D_WB1    ; yup, no more vertex data, one DWORD in "write buffer"
@@ -2668,33 +2713,33 @@ proc _grDrawTriangles_SSE, 12
     add       fifo, 8                    ; fifoPtr += 2*sizeof(FxU32)
     lea       dlp, [gc + tsuDataList]    ; get pointer to start of offset list
 
-    movss     xmm2,[edx]                 ; 0 | x of vertex
+    movss     xmm2,[edx]                 ; 0 | 0 | 0 | x of vertex
     add       dlp, 4                     ; dlp++
  
     mov       eax, [dlp-4]               ; first offset in offset list
-    unpcklps  xmm1,xmm2                  ; packet header | x of vertex ?reversed?
+    unpcklps  xmm1,xmm2                  ; 0 | 0 | x of current vertex | y of previous vertex
 
-    movlps    [fifo-8],xmm1              ; PCI write packet header | x of vertex
-    movss     xmm1,[edx + 4]             ; 0 | y of vertex
+    movlps    [fifo-8],xmm1              ; PCI write x of current vertex | y of previous vertex
+    movss     xmm1,[edx + 4]             ; 0 | 0 | 0 | y of vertex
 
     cmp       eax, 0                     ; offset == 0 (list empty) ?
     je        .win_datalist_end_D_WB1    ; yup, no more vertex data, one DWORD in "write buffer"
 
 .win_datalist_loop_D_WB1:                ; one DWORD in "write buffer" = MM1
 
-    movss     xmm2,[edx + eax]           ; get next parameter
+    movss     xmm2,[edx + eax]           ; 0 | 0 | 0 | get next parameter
     add       fifo, 8                    ; fifoPtr += 2*sizeof(FxU32)
 
     mov       eax, [dlp]                 ; get next offset from offset list
     add       dlp, 8                     ; dlp += 2
 
-    unpcklps  xmm1,xmm2                  ; current param | previous param
+    unpcklps  xmm1,xmm2                  ; 0 | 0 | current param | previous param
     test      eax, eax                   ; at end of offset list (offset == 0) ?
 
     movlps    [fifo-8],xmm1              ; PCI write current param | previous param
     jz        .win_datalist_end_D_WB0    ; yes, exit, "write buffer" empty
 
-    movss     xmm1,[edx + eax]           ; get next parameter
+    movss     xmm1,[edx + eax]           ; 0 | 0 | 0 | get next parameter
     mov       eax, [dlp-4]               ; get next offset from offset list
 
     test      eax,  eax                  ; at end of offset list (offset == 0) ?
@@ -2830,31 +2875,32 @@ proc _grDrawTriangles_SSE, 12
 
 .clip_noderef:
 
-    movss     xmm1,[edx + eax]           ; 0 | W of current vertex
-    rcpss     xmm0,xmm1                  ; 0 | 1/W approx
+    movss     xmm1,[edx + eax]           ; 0 | 0 | 0 | W of current vertex
+    rcpss     xmm0,xmm1                  ; 0 | 0 | 0 | 1/W approx
 
     mov       ebp, [strideinbytes]       ; offset to next vertex/vertexPtr
-    movlps    xmm2,[edx]                 ; y | x of current vertex
+    movlps    xmm2,[edx]                 ; 0 | 0 | y | x of current vertex
 
-    movlps    xmm3,[gc + vp_hwidth]      ; gc->state.Viewport.hheight | gc->state.Viewport.hwidth
+    movlps    xmm3,[gc + vp_hwidth]      ; 0 | 0 | gc->state.Viewport.hheight | gc->state.Viewport.hwidth
 
-    movlps    xmm4,[gc + vp_ox]          ; gc->state.Viewport.oy | gc->state.Viewport.ox
+    movlps    xmm4,[gc + vp_ox]          ; 0 | 0 | gc->state.Viewport.oy | gc->state.Viewport.ox
     add       vertexPtr, ebp             ; point to next vertex/VertexPtr
 
-    mulss     xmm1,xmm0                  ; 0 | 1/W refine
-    mulss     xmm1,xmm0
-    addss     xmm0,xmm0
+    ; 1/W refine
+    mulss     xmm1,xmm0                  ; 0 | 0 | 0 | W*(1/W approx)
+    mulss     xmm1,xmm0                  ; 0 | 0 | 0 | W*(1/W approx)*(1/W approx)
+    addss     xmm0,xmm0                  ; 0 | 0 | 0 | 2*(1/W approx)
     subss     xmm0,xmm1                  ; oow = 1.0f / FARRAY(vPtr, gc->state.vData.wInfo.offset
     mov       esi, [gc + paramIndex]     ; gc->state.paramIndex
 
-    mulps     xmm2,xmm3                  ; TRI_SETF(FARRAY(vPtr,0)*state.Viewport.hheight | TRI_SETF(FARRAY(vPtr,4)*state.Viewport.hwidth
+    mulps     xmm2,xmm3                  ; 0 | 0 | TRI_SETF(FARRAY(vPtr,0)*state.Viewport.hheight | TRI_SETF(FARRAY(vPtr,4)*state.Viewport.hwidth
     xor       dataElem, dataElem         ; dataElem = 0
 
     add       fifo, 8                    ; fifoPtr += 2*sizeof(FxFloat)
-    unpcklps  xmm0,xmm0                  ; oow | oow
+    unpcklps  xmm0,xmm0                  ; 0 | 0 | oow | oow
 
-    mulps     xmm2,xmm0                  ; TRI_SETF(FARRAY(vPtr, 4)*oow*gc->state.Viewport.height | TRI_SETF(FARRAY(vPtr, 0)*oow*gc->state.Viewport.hwidth
-    addps     xmm2,xmm4                  ; TRI_SETF(FARRAY(vPtr, 4)*oow*gc->state.Viewport.hheight + gc->state.Viewport.oy) |
+    mulps     xmm2,xmm0                  ; 0 | 0 | TRI_SETF(FARRAY(vPtr, 4)*oow*gc->state.Viewport.height | TRI_SETF(FARRAY(vPtr, 0)*oow*gc->state.Viewport.hwidth
+    addps     xmm2,xmm4                  ; 0 | 0 | TRI_SETF(FARRAY(vPtr, 4)*oow*gc->state.Viewport.hheight + gc->state.Viewport.oy) | TRI_SETF(FARRAY(vPtr, 0)*oow*gc->state.Viewport.hwidth + gc->state.Viewport.ox)
 
 ;;;  FxI32 i, dataElem=0; \
 ;;;  i = gc->tsuDataList[dataElem]; \
@@ -2888,22 +2934,22 @@ proc _grDrawTriangles_SSE, 12
     test      esi, 1                     ; STATE_REQUIRES_IT_DRGB ?
     jz        .clip_setup_a              ; no, but definitely A
 
-    movss     xmm2,[edx + eax]           ; 0 | r
+    movss     xmm2,[edx + eax]           ; 0 | 0 | 0 | r
     mov       eax, [gc + tsuDataList+4]  ; offset of g part of vertex data
 
-    mulss     xmm2,xmm6                  ; 0 | r * 255.0f
-    movss     xmm3,[edx + eax]           ; 0 | g
+    mulss     xmm2,xmm6                  ; 0 | 0 | 0 | r * 255.0f
+    movss     xmm3,[edx + eax]           ; 0 | 0 | 0 | g
 
     mov       eax, [gc + tsuDataList + 8]; offset of b part of vertex data
     movss     [fifo],xmm2                ; PCI write r*255
 
-    mulss     xmm3,xmm6                  ; 0 | g * 255.0f
-    movss     xmm2,[edx + eax]           ; 0 | b
+    mulss     xmm3,xmm6                  ; 0 | 0 | 0 | g * 255.0f
+    movss     xmm2,[edx + eax]           ; 0 | 0 | 0 | b
 
     movss     [fifo+4],xmm3              ; PCI write g*255
     mov       dataElem, 12               ; dataElem = 3
 
-    mulss     xmm2,xmm6                  ; 0 | b * 255.0f
+    mulss     xmm2,xmm6                  ; 0 | 0 | 0 | b * 255.0f
     mov       eax, [gc + tsuDataList+12] ; offset of A part of vertex data
 
     test      esi, 2                     ; STATE_REQUIRES_IT_ALPHA ?
@@ -2913,13 +2959,13 @@ proc _grDrawTriangles_SSE, 12
     jz        .clip_setup_ooz            ; nope, no alpha, proceeed with ooz
 
 .clip_setup_a:
-    movss     xmm2,[eax+edx]             ; 0 | a
+    movss     xmm2,[eax+edx]             ; 0 | 0 | 0 | a
     add       fifo, 4                    ; fifoPtr += sizeof(FxFloat)
 
     mov       esp, esp                   ; filler
     add       dataElem, 4                ; dataElem++ 
 
-    mulss     xmm2,xmm6                  ; 0 | a * 255.0f
+    mulss     xmm2,xmm6                  ; 0 | 0 | 0 | a * 255.0f
     mov       eax, [gc+dataElem+tsuDataList]; offset of next part of vertex data
 
     movss     [fifo-4],xmm2              ; PCI write a*255
@@ -2965,10 +3011,10 @@ proc _grDrawTriangles_SSE, 12
     add       fifo, 4                    ; fifoPtr += sizeof(FxFloat)
 
     add       dataElem, 4                ; dataElem++
-    movss     xmm2,[edx + eax]           ; 0 | q of vertex
+    movss     xmm2,[edx + eax]           ; 0 | 0 | 0 | q of vertex
 
     mov       eax,[gc+dataElem+tsuDataList]; pointer to next vertex component
-    mulss     xmm2, xmm0                 ; 0 | q*oow
+    mulss     xmm2, xmm0                 ; 0 | 0 | 0 | q*oow
 
     movss     [fifo-4],xmm2              ; PCI write transformed Q
     jmp       .clip_setup_qow            ; check whether we need to write Q or W
@@ -2991,19 +3037,19 @@ proc _grDrawTriangles_SSE, 12
 
 .clip_setup_ooz_nofog:
 
-    movss     xmm2,[eax + edx]           ; 0 | z component of vertex
+    movss     xmm2,[eax + edx]           ; 0 | 0 | 0 | z component of vertex
     add       fifo, 4                    ; fifoPtr += sizeof(FxFloat)
 
     add       dataElem, 4                ; dataElem += 1
-    movss     xmm3,[gc + vp_hdepth]      ; 0 | gc->state.Viewport.hdepth
+    movss     xmm3,[gc + vp_hdepth]      ; 0 | 0 | 0 | gc->state.Viewport.hdepth
 
-    mulss     xmm2,xmm0                  ; TRI_SETF(FARRAY(_s, i)*_oow
-    movss     xmm4,[gc + vp_oz]          ; 0 | gc->state.Viewport.oz
+    mulss     xmm2,xmm0                  ; 0 | 0 | TRI_SETF(FARRAY(_s, i)*_oow
+    movss     xmm4,[gc + vp_oz]          ; 0 | 0 | 0 | gc->state.Viewport.oz
 
-    mulss     xmm2,xmm3                  ; 0 | TRI_SETF(FARRAY(_s, i)*_oow*gc->state.Viewport.hdepth
+    mulss     xmm2,xmm3                  ; 0 | 0 | 0 | TRI_SETF(FARRAY(_s, i)*_oow*gc->state.Viewport.hdepth
     mov       eax, [gc+dataElem+tsuDataList]; offset of next vertex component
 
-    addss     xmm2,xmm4                  ; 0 | TRI_SETF(FARRAY(_s, i)*_oow*gc->state.Viewport.hdepth+gc->state.Viewport.oz
+    addss     xmm2,xmm4                  ; 0 | 0 | 0 | TRI_SETF(FARRAY(_s, i)*_oow*gc->state.Viewport.hdepth+gc->state.Viewport.oz
     movss     [fifo-4],xmm2              ; PCI write transformed Z
 
 ;;;  if (gc->state.paramIndex & STATE_REQUIRES_OOW_FBI) { \
@@ -3030,10 +3076,10 @@ proc _grDrawTriangles_SSE, 12
     add       fifo, 4                    ; fifoPtr += sizeof(FxFloat)
 
     add       dataElem, 4                ; dataElem++
-    movss     xmm2,[edx + eax]           ; 0 | fogInfo of vertex
+    movss     xmm2,[edx + eax]           ; 0 | 0 | 0 | fogInfo of vertex
 
     mov       eax,[gc+dataElem+tsuDataList]; pointer to next vertex component
-    mulss     xmm2,xmm0                  ; fogInfo*oow
+    mulss     xmm2,xmm0                  ; 0 | 0 | 0 | fogInfo*oow
 
     movss     [fifo-4],xmm2              ; PCI write transformed Q
     jmp       .clip_setup_qow0           ; continue with q0
@@ -3047,10 +3093,10 @@ proc _grDrawTriangles_SSE, 12
     add       fifo, 4                    ; fifoPtr += sizeof(FxFloat)
 
     add       dataElem, 4                ; dataElem++
-    movss     xmm2,[edx + eax]           ; 0 | q of vertex
+    movss     xmm2,[edx + eax]           ; 0 | 0 | 0 | q of vertex
 
     mov       eax,[gc+dataElem+tsuDataList]; pointer to next vertex component
-    mulss     xmm2,xmm0                  ; q*oow
+    mulss     xmm2,xmm0                  ; 0 | 0 | 0 | q*oow
 
     movss     [fifo-4],xmm2              ; PCI write transformed Q
     jmp       .clip_setup_qow0           ; continue with q0
@@ -3084,10 +3130,10 @@ proc _grDrawTriangles_SSE, 12
     add       fifo, 4                    ; fifoPtr += sizeof(FxFloat)
 
     add       dataElem, 4                ; dataElem++
-    movss     xmm2,[edx+eax]             ; 0 | q0 of vertex
+    movss     xmm2,[edx+eax]             ; 0 | 0 | 0 | q0 of vertex
 
     mov       eax,[gc+dataElem+tsuDataList]; pointer to next vertex component
-    mulss     xmm2,xmm0                  ; q0*oow
+    mulss     xmm2,xmm0                  ; 0 | 0 | 0 | q0*oow
 
     movss     [fifo-4],xmm2              ; PCI write transformed q0
     jmp       .clip_setup_stow0          ; continue with stow0
@@ -3111,19 +3157,19 @@ proc _grDrawTriangles_SSE, 12
     test      esi, 32                    ; STATE_REQUIRES_ST_TMU0 ?
     jz        .clip_setup_qow1           ; nope
 
-    movlps    xmm7,[gc + tmu0_s_scale]   ; state.tmu_config[0].t_scale | state.tmu_config[0].s_scale
+    movlps    xmm7,[gc + tmu0_s_scale]   ; 0 | 0 | state.tmu_config[0].t_scale | state.tmu_config[0].s_scale
     add       fifo, 8                    ; fifoPtr += 2*sizeof(FxFloat)
 
-    movss     xmm2,[edx + eax]           ; param1
+    movss     xmm2,[edx + eax]           ; 0 | 0 | 0 | param1
     mov       eax,[gc+dataElem+tsuDataList+4];pointer to next vertex component
 
-    mulps     xmm7,xmm0                  ; oow*tmu0_t_scale | oow*tmu0_s_scale
+    mulps     xmm7,xmm0                  ; 0 | 0 | oow*tmu0_t_scale | oow*tmu0_s_scale
     add       dataElem, 8                ; dataElem += 2
 
-    movss     xmm3,[edx + eax]           ; param2
-    unpcklps  xmm2,xmm3                  ; param2 | param1
+    movss     xmm3,[edx + eax]           ; 0 | 0 | 0 | param2
+    unpcklps  xmm2,xmm3                  ; 0 | 0 | param2 | param1
 
-    mulps     xmm2,xmm7                  ; param2*oow*tmu0_t_scale | param1*oow*tmu0_s_scale
+    mulps     xmm2,xmm7                  ; 0 | 0 | param2*oow*tmu0_t_scale | param1*oow*tmu0_s_scale
     nop                                  ; filler
 
     movlps    [fifo-8],xmm2              ; PCI write param2*oow*tmu0_t_scale | param1*oow*tmu0_s_scale
@@ -3151,10 +3197,10 @@ proc _grDrawTriangles_SSE, 12
     add       fifo, 4                    ; fifoPtr += sizeof(FxFloat)
 
     add       dataElem, 4                ; dataElem++
-    movss     xmm2,[edx + eax]           ; 0 | q1 of vertex
+    movss     xmm2,[edx + eax]           ; 0 | 0 | 0 | q1 of vertex
 
     mov       eax,[gc+dataElem+tsuDataList]; pointer to next vertex component
-    mulss     xmm2,xmm0                  ; q1*oow
+    mulss     xmm2,xmm0                  ; 0 | 0 | 0 | q1*oow
 
     movss     [fifo-4],xmm2              ; PCI write transformed q1
     jmp       .clip_setup_stow1          ; continue with stow1
@@ -3176,19 +3222,19 @@ proc _grDrawTriangles_SSE, 12
     test      esi, 128                   ; STATE_REQUIRES_ST_TMU1 ?
     mov       vertexCount, [vertices]    ; get number of vertices
 
-    movlps    xmm7,[gc + tmu1_s_scale]   ; state.tmu_config[1].t_scale | state.tmu_config[1].s_scale
+    movlps    xmm7,[gc + tmu1_s_scale]   ; 0 | 0 | state.tmu_config[1].t_scale | state.tmu_config[1].s_scale
     jz        .clip_setup_end            ; nope
 
-    movss     xmm2,[edx + eax]           ; param1
+    movss     xmm2,[edx + eax]           ; 0 | 0 | 0 | param1
     add       fifo, 8                    ; fifoPtr += 2*sizeof(FxFloat)
 
     mov       eax,[gc+dataElem+tsuDataList+4]; pointer to next vertex component
-    mulps     xmm7,xmm0                  ; oow*state.tmu_config[1].t_scale | oow*state.tmu_config[1].s_scale
+    mulps     xmm7,xmm0                  ; 0 | 0 | oow*state.tmu_config[1].t_scale | oow*state.tmu_config[1].s_scale
 
-    movss     xmm3,[edx + eax]           ; param2
-    unpcklps  xmm2,xmm3                  ; param2 | param1
+    movss     xmm3,[edx + eax]           ; 0 | 0 | 0 | param2
+    unpcklps  xmm2,xmm3                  ; 0 | 0 | param2 | param1
 
-    mulps     xmm2,xmm7                  ; param2*oow*state.tmu_config[1].t_scale | param1*oow*state.tmu_config[1].s_scale
+    mulps     xmm2,xmm7                  ; 0 | 0 | param2*oow*state.tmu_config[1].t_scale | param1*oow*state.tmu_config[1].s_scale
     movlps    [fifo-8],xmm2              ; PCI write param2*oow*state.tmu_config[1].t_scale | param1*oow*state.tmu_config[1].s_scale
 
 .clip_setup_end:
@@ -3265,6 +3311,19 @@ proc _grDrawVertexList_SSE_Window, 20
 
     nop                                  ; filler
     jle       .strip_done                ; yup, the strip/fan is done
+
+%IFDEF GLIDE_ALT_TAB
+    test      gc, gc
+    je        .strip_done
+;    mov       edx, [gc + windowed]
+;    test      edx, 1
+;    jnz       .pastContextTest
+    mov       edx, DWORD [gc+lostContext]
+    mov       ecx, [edx]
+    test      ecx, 1
+    jnz       .strip_done
+;.pastContextTest:
+%ENDIF
   
 ;;;     vSize = gc->state.vData.vSize
 ;;;     if (stride == 0)
@@ -3289,15 +3348,6 @@ proc _grDrawVertexList_SSE_Window, 20
     mov       edx, [gc + vertexStride]   ; get stride in DWORDs
     
     jnz       .deref_mode                ; nope, it's mode 1 (array of pointers to vertices)
-
-    xorps     xmm0,xmm0                  ; clear SIMD register
-    xorps     xmm1,xmm1
-    xorps     xmm2,xmm2
-    xorps     xmm3,xmm3
-    xorps     xmm4,xmm4
-    xorps     xmm5,xmm5
-    xorps     xmm6,xmm6
-    xorps     xmm7,xmm7
 
     shl       edx, 2                     ; stride in bytes
     mov       [strideinbytes], edx       ; save off stride (in bytes)
@@ -3380,13 +3430,13 @@ proc _grDrawVertexList_SSE_Window, 20
     mov       eax, [dlpStart]            ; get first offset from offset list
     lea       dlp, [dlpStart+4]          ; point to start of offset list
 
-    movlps    xmm1,[vertex+X]            ; get vertex x,y
+    movlps    xmm1,[vertex+X]            ; 0 | 0 | y of vertex | x of vertex
     add       fifo, 8                    ; fifoPtr += 2*sizeof(FxU32)
 
     nop                                  ; filler
     test      eax, eax                   ; if offset == 0, end of list
 
-    movlps    [fifo-8],xmm1              ; PCI write x, y
+    movlps    [fifo-8],xmm1              ; PCI write y of vertex | x of vertex
     jz        .win_datalist_end_ND_WB0   ; no more vertex data, nothing in "write buffer"
 
 ;;;       while (i != GR_DLIST_END) {
@@ -3397,20 +3447,20 @@ proc _grDrawVertexList_SSE_Window, 20
 
 .win_datalist_loop_ND_WB0:               ; nothing in "write buffer"
 
-    movss     xmm1,[vertex + eax]        ; get next parameter
+    movss     xmm1,[vertex + eax]        ; 0 | 0 | 0 | get next parameter
     mov       eax, [dlp]                 ; get next offset from offset list
 
     test      eax, eax                   ; at end of offset list (offset == 0) ?
     jz        .win_datalist_end_ND_WB1   ; exit, write buffer contains one DWORD
 
-    movss     xmm2,[vertex + eax]        ; get next parameter
+    movss     xmm2,[vertex + eax]        ; 0 | 0 | 0 | get next parameter
     add       dlp, 8                     ; dlp++
 
     mov       eax, [dlp-4]               ; get next offset from offset list
     add       fifo, 8                    ; fifoPtr += 2*sizeof(FxU32)
 
     test      eax, eax                   ; at end of offset list (offset == 0) ?
-    unpcklps  xmm1,xmm2                  ; current param | previous param
+    unpcklps  xmm1,xmm2                  ; 0 | 0 | current param | previous param
 
     movlps    [fifo-8],xmm1              ; PCI write current param | previous param
     jnz       .win_datalist_loop_ND_WB0  ; nope, copy next parameter
@@ -3466,7 +3516,7 @@ proc _grDrawVertexList_SSE_Window, 20
 .fifo_aligned_ND:
 
     mov       [fifo], eax                ; PCI write packet header
-    movss     xmm2,[vertex + X]          ; 0 | x of vertex
+    movss     xmm2,[vertex + X]          ; 0 | 0 | 0 | x of vertex
     add       fifo, 8                    ; fifoPtr += 2*sizeof(FxU32)
 
     lea       dlp, [dlpStart + 4]        ; point to start of offset list
@@ -3475,7 +3525,7 @@ proc _grDrawVertexList_SSE_Window, 20
     mov       eax, [dlp-4]               ; first offset in offset list
 
     movss     [fifo-4], xmm2             ; PCI write x of vertex
-    movss     xmm1,[vertex + Y]          ; 0 | y of vertex
+    movss     xmm1,[vertex + Y]          ; 0 | 0 | 0 | y of vertex
 
     cmp       eax, 0                     ; offset == 0 (list empty) ?
     jz        .win_datalist_end_ND_WB1   ; yup, no more vertex data, one DWORD in "write buffer"
@@ -3483,17 +3533,17 @@ proc _grDrawVertexList_SSE_Window, 20
 
 .win_vertex_loop_ND_WB1:                  ; one DWORD in "write buffer"
 
-    movss     xmm2,[vertex + X]          ; 0 | x of vertex
+    movss     xmm2,[vertex + X]          ; 0 | 0 | 0 | x of vertex
     add       fifo, 8                    ; fifoPtr += 2*sizeof(FxU32)
 
     lea       dlp, [dlpStart + 4]        ; point to start of offset list
     nop                                  ; filler
 
-    unpcklps  xmm1,xmm2                  ; packet header | x of vertex ?reversed?
+    unpcklps  xmm1,xmm2                  ; 0 | 0 | x of current vertex | y of previous vertex
     mov       eax, [dlp-4]               ; first offset in offset list
 
-    movlps    [fifo-8],xmm1              ; PCI write packet header | x of vertex
-    movss     xmm1,[vertex + Y]          ; 0 | y of vertex
+    movlps    [fifo-8],xmm1              ; PCI write x of current vertex | y of previous vertex
+    movss     xmm1,[vertex + Y]          ; 0 | 0 | 0 | y of vertex
 
     cmp       eax, 0                     ; offset == 0 (list empty) ?
     jz        .win_datalist_end_ND_WB1   ; yup, no more vertex data, one DWORD in "write buffer"
@@ -3506,19 +3556,19 @@ proc _grDrawVertexList_SSE_Window, 20
 
 .win_datalist_loop_ND_WB1:               ; one DWORD in "write buffer"
 
-    movss     xmm2,[vertex + eax]        ; get next parameter
+    movss     xmm2,[vertex + eax]        ; 0 | 0 | 0 | get next parameter
     add       fifo, 8                    ; fifoPtr += 2*sizeof(FxU32)
 
     mov       eax, [dlp]                 ; get next offset from offset list
     add       dlp, 8                     ; dlp += 2
 
-    unpcklps  xmm1,xmm2                  ; current param | previous param
+    unpcklps  xmm1,xmm2                  ; 0 | 0 | current param | previous param
     cmp       eax, 0                     ; at end of offset list (offset == 0) ?
 
     movlps    [fifo-8],xmm1              ; PCI write current param | previous param
     jz        .win_datalist_end_ND_WB0   ; yes, exit, "write buffer" empty
 
-    movss     xmm1,[vertex+eax]          ; get next parameter
+    movss     xmm1,[vertex+eax]          ; 0 | 0 | 0 | get next parameter
     mov       eax, [dlp-4]               ; get next offset from offset list
 
     test      eax, eax                   ; at end of offset list (offset == 0) ?
@@ -3576,15 +3626,6 @@ proc _grDrawVertexList_SSE_Window, 20
     ALIGN 32
     
 .deref_mode:
-
-    xorps     xmm0,xmm0                  ; clear SIMD register
-    xorps     xmm1,xmm1
-    xorps     xmm2,xmm2
-    xorps     xmm3,xmm3
-    xorps     xmm4,xmm4
-    xorps     xmm5,xmm5
-    xorps     xmm6,xmm6
-    xorps     xmm7,xmm7
 
     prefetchnta [vertexPtr]               ; pre-load first group of pointers
 
@@ -3658,11 +3699,11 @@ proc _grDrawVertexList_SSE_Window, 20
     lea       dlp, [gc + tsuDataList]    ; get pointer to offset list; dlp ++
     add       dlp, 4                     ; dlp ++
 
-    movlps    xmm1,[edx + X]             ; get vertex x,y
+    movlps    xmm1,[edx + X]             ; 0 | 0 | y of vertex | x of vertex
     add       fifo, 8                    ; fifo += 2
 
     mov       eax, [dlp - 4]             ; get first offset from offset list
-    movlps    [fifo-8],xmm1              ; PCI write x, y
+    movlps    [fifo-8],xmm1              ; PCI write y of vertex | x of vertex
 
     test      eax, eax                   ; if offset == 0, end of offset list
     je        .win_datalist_end_D_WB0    ; no more vertex data, nothing in "write buffer"
@@ -3675,19 +3716,19 @@ proc _grDrawVertexList_SSE_Window, 20
 
 .win_datalist_loop_D_WB0:                ; nothing in "write buffer"
 
-    movss     xmm1,[edx + eax]           ; get next parameter
+    movss     xmm1,[edx + eax]           ; 0 | 0 | 0 | get next parameter
     mov       eax, [dlp]                 ; get next offset from offset list
 
     test      eax, eax                   ; at end of offset list (offset == 0) ?
     jz        .win_datalist_end_D_WB1    ; exit, write buffer contains one DWORD
 
     add       dlp, 8                     ; dlp++
-    movss     xmm2,[edx + eax]           ; get next parameter
+    movss     xmm2,[edx + eax]           ; 0 | 0 | 0 | get next parameter
 
     mov       eax, [dlp-4]               ; get next offset from offset list
     add       fifo, 8                    ; fifoPtr += 2*sizeof(FxU32)
 
-    unpcklps  xmm1,xmm2                  ; current param | previous param
+    unpcklps  xmm1,xmm2                  ; 0 | 0 | current param | previous param
     test      eax, eax                   ; at end of offset list (offset == 0) ?
 
     movlps    [fifo-8],xmm1              ; PCI write current param | previous param
@@ -3747,13 +3788,13 @@ proc _grDrawVertexList_SSE_Window, 20
     add       fifo, 8                    ; fifoPtr += 2*sizeof(FxU32)
     lea       dlp, [gc + tsuDataList]    ; get pointer to start of offset list
 
-    movss     xmm2,[edx + X]             ; 0 | x of vertex
+    movss     xmm2,[edx + X]             ; 0 | 0 | 0 | x of vertex
     add       dlp, 4                     ; dlp++
  
     mov       eax, [dlp-4]               ; first offset in offset list
 
     movss     [fifo-4], xmm2             ; PCI write x of vertex
-    movss     xmm1,[edx + Y]             ; 0 | y of vertex
+    movss     xmm1,[edx + Y]             ; 0 | 0 | 0 | y of vertex
 
     test      eax, eax                   ; offset == 0 (list empty) ?
     je        .win_datalist_end_D_WB1    ; yup, no more vertex data, one DWORD in "write buffer"
@@ -3767,14 +3808,14 @@ proc _grDrawVertexList_SSE_Window, 20
     add       fifo, 8                    ; fifoPtr += 2*sizeof(FxU32)
     lea       dlp, [gc + tsuDataList]    ; get pointer to start of offset list
 
-    movss     xmm2,[edx + X]             ; 0 | x of vertex
+    movss     xmm2,[edx + X]             ; 0 | 0 | 0 | x of vertex
     add       dlp, 4                     ; dlp++
  
     mov       eax, [dlp-4]               ; first offset in offset list
-    unpcklps  xmm1,xmm2                  ; packet header | x of vertex ?reversed?
+    unpcklps  xmm1,xmm2                  ; 0 | 0 | x of current vertex | y of previous vertex
 
-    movlps    [fifo-8],xmm1              ; PCI write packet header | x of vertex
-    movss     xmm1,[edx + Y]             ; 0 | y of vertex
+    movlps    [fifo-8],xmm1              ; PCI write x of current vertex | y of previous vertex
+    movss     xmm1,[edx + Y]             ; 0 | 0 | 0 | y of vertex
 
     test      eax, eax                   ; offset == 0 (list empty) ?
     je        .win_datalist_end_D_WB1    ; yup, no more vertex data, one DWORD in "write buffer"
@@ -3787,19 +3828,19 @@ proc _grDrawVertexList_SSE_Window, 20
 
 .win_datalist_loop_D_WB1:               ; one DWORD in "write buffer" = MM1
 
-    movss     xmm2,[edx + eax]          ; get next parameter
+    movss     xmm2,[edx + eax]          ; 0 | 0 | 0 | get next parameter
     add       fifo, 8                   ; fifoPtr += 2*sizeof(FxU32)
 
     mov       eax, [dlp]                ; get next offset from offset list
     add       dlp, 8                    ; dlp += 2
 
-    unpcklps  xmm1,xmm2                 ; current param | previous param
+    unpcklps  xmm1,xmm2                 ; 0 | 0 | current param | previous param
     cmp       eax, 0                    ; at end of offset list (offset == 0) ?
 
     movlps    [fifo-8],xmm1             ; PCI write current param | previous param
     jz        .win_datalist_end_D_WB0   ; yes, exit, "write buffer" empty
 
-    movss     xmm1,[edx + eax]          ; get next parameter
+    movss     xmm1,[edx + eax]          ; 0 | 0 | 0 | get next parameter
     mov       eax, [dlp-4]              ; get next offset from offset list
 
     cmp       eax, 0                    ; at end of offset list (offset == 0) ?
@@ -3878,6 +3919,19 @@ proc _grDrawVertexList_SSE_Clip, 20
     test      vertexCount, vertexCount   ; number of vertices <= 0 ?
 
     jle       .strip_done                ; yup, the strip/fan is done
+
+%IFDEF GLIDE_ALT_TAB
+    test      gc, gc
+    je        .strip_done
+;    mov       edx, [gc + windowed]
+;    test      edx, 1
+;    jnz       .pastContextTest
+    mov       edx, DWORD [gc+lostContext]
+    mov       ecx, [edx]
+    test      ecx, 1
+    jnz       .strip_done
+;.pastContextTest:
+%ENDIF
   
 ;;;     vSize = gc->state.vData.vSize
 ;;;     if (stride == 0)
@@ -3987,18 +4041,19 @@ proc _grDrawVertexList_SSE_Clip, 20
 
 ;;;       oow = 1.0f / FARRAY(vPtr, gc->state.vData.wInfo.offset)
 
-    movss     xmm1,[edx+eax]             ; 0 | W of current vertex
-    rcpss     xmm0,xmm1                  ; 0 | 1/W approx
+    movss     xmm1,[edx+eax]             ; 0 | 0 | 0 | W of current vertex
+    rcpss     xmm0,xmm1                  ; 0 | 0 | 0 | 1/W approx
 
     mov       ebp, [strideinbytes]       ; offset to next vertex/vertexPtr
-    movlps    xmm2,[edx]                 ; y | x of current vertex
+    movlps    xmm2,[edx]                 ; 0 | 0 | y | x of current vertex
 
-    movlps    xmm3,[gc+vp_hwidth]        ; gc->state.Viewport.hheight | gc->state.Viewport.hwidth
+    movlps    xmm3,[gc+vp_hwidth]        ; 0 | 0 | gc->state.Viewport.hheight | gc->state.Viewport.hwidth
 
-    movlps    xmm4,[gc+vp_ox]            ; gc->state.Viewport.oy | gc->state.Viewport.ox
+    movlps    xmm4,[gc+vp_ox]            ; 0 | 0 | gc->state.Viewport.oy | gc->state.Viewport.ox
     add       vertexPtr, ebp             ; point to next vertex/VertexPtr
 
-    mulss     xmm1,xmm0                  ; 0 | 1/W refine
+    ; 1/W refine
+    mulss     xmm1,xmm0
     mulss     xmm1,xmm0
     addss     xmm0,xmm0
     subss     xmm0,xmm1                  ; oow = 1.0f / FARRAY(vPtr, gc->state.vData.wInfo.offset
@@ -4010,14 +4065,14 @@ proc _grDrawVertexList_SSE_Clip, 20
 ;;;       TRI_SETF(FARRAY(vPtr, 4)
 ;;;         *oow*gc->state.Viewport.hheight + gc->state.Viewport.oy)
 
-    mulps     xmm2,xmm3                  ; TRI_SETF(FARRAY(vPtr,0)*state.Viewport.hheight | TRI_SETF(FARRAY(vPtr,4)*state.Viewport.hwidth
+    mulps     xmm2,xmm3                  ; 0 | 0 | TRI_SETF(FARRAY(vPtr,0)*state.Viewport.hheight | TRI_SETF(FARRAY(vPtr,4)*state.Viewport.hwidth
     xor       dataElem, dataElem         ; dataElem = 0
 
     add       fifo, 8                    ; fifoPtr += 2*sizeof(FxFloat)
-    unpcklps  xmm0,xmm0                  ; oow | oow
+    unpcklps  xmm0,xmm0                  ; 0 | 0 | oow | oow
 
-    mulps     xmm2,xmm0                  ; TRI_SETF(FARRAY(vPtr, 4)*oow*gc->state.Viewport.height | TRI_SETF(FARRAY(vPtr, 0)*oow*gc->state.Viewport.hwidth
-    addps     xmm2,xmm4                  ; TRI_SETF(FARRAY(vPtr, 4)*oow*gc->state.Viewport.hheight + gc->state.Viewport.oy) |
+    mulps     xmm2,xmm0                  ; 0 | 0 | TRI_SETF(FARRAY(vPtr, 4)*oow*gc->state.Viewport.height | TRI_SETF(FARRAY(vPtr, 0)*oow*gc->state.Viewport.hwidth
+    addps     xmm2,xmm4                  ; 0 | 0 | TRI_SETF(FARRAY(vPtr, 4)*oow*gc->state.Viewport.hheight + gc->state.Viewport.oy) | TRI_SETF(FARRAY(vPtr, 4)*oow*gc->state.Viewport.hwidth + gc->state.Viewport.ox)
 
     test      esi, 3                     ; STATE_REQUIRES_IT_DRGB | STATE_REQUIRES_IT_ALPHA ?
     mov       eax, [gc+tsuDataList]      ; first entry from offset list
@@ -4034,22 +4089,22 @@ proc _grDrawVertexList_SSE_Clip, 20
     test      esi, 1                     ; STATE_REQUIRES_IT_DRGB ?
     jz        .clip_setup_a              ; no, but definitely A
 
-    movss     xmm2,[edx + eax]           ; 0 | r
+    movss     xmm2,[edx + eax]           ; 0 | 0 | 0 | r
     mov       eax, [gc+tsuDataList+4]    ; offset of g part of vertex data
 
-    mulss     xmm2,xmm6                  ; 0 | r * 255.0f
-    movss     xmm3,[edx + eax]           ; 0 | g
+    mulss     xmm2,xmm6                  ; 0 | 0 | 0 | r * 255.0f
+    movss     xmm3,[edx + eax]           ; 0 | 0 | 0 | g
 
     mov       eax, [gc+tsuDataList+8]    ; offset of b part of vertex data
     movss     [fifo],xmm2                ; PCI write r*255
 
-    mulss     xmm3,xmm6                  ; 0 | g * 255.0f
-    movss     xmm2,[edx + eax]           ; 0 | b
+    mulss     xmm3,xmm6                  ; 0 | 0 | 0 | g * 255.0f
+    movss     xmm2,[edx + eax]           ; 0 | 0 | 0 | b
 
     movss     [fifo+4],xmm3              ; PCI write g*255
     mov       dataElem, 12               ; dataElem = 3
 
-    mulss     xmm2,xmm6                  ; 0 | b * 255.0f
+    mulss     xmm2,xmm6                  ; 0 | 0 | 0 | b * 255.0f
     mov       eax, [gc+tsuDataList+12]   ; offset of A part of vertex data
 
     test      esi, 2                     ; STATE_REQUIRES_IT_ALPHA ?
@@ -4059,13 +4114,13 @@ proc _grDrawVertexList_SSE_Clip, 20
     jz        .clip_setup_ooz            ; nope, no alpha, proceeed with ooz
 
 .clip_setup_a:
-    movss     xmm2,[eax+edx]             ; 0 | a
+    movss     xmm2,[eax+edx]             ; 0 | 0 | 0 | a
     add       fifo, 4                    ; fifoPtr += sizeof(FxFloat)
 
     mov       esp, esp                   ; filler
     add       dataElem, 4                ; dataElem++ 
 
-    mulss     xmm2,xmm6                  ; 0 | a * 255.0f
+    mulss     xmm2,xmm6                  ; 0 | 0 | 0 | a * 255.0f
     mov       eax, [gc+dataElem+tsuDataList]; offset of next part of vertex data
 
     movss     [fifo-4],xmm2              ; PCI write a*255
@@ -4096,10 +4151,10 @@ proc _grDrawVertexList_SSE_Clip, 20
     add       fifo, 4                    ; fifoPtr += sizeof(FxFloat)
 
     add       dataElem, 4                ; dataElem++
-    movss     xmm2,[edx + eax]           ; 0 | q of vertex
+    movss     xmm2,[edx + eax]           ; 0 | 0 | 0 | q of vertex
 
     mov       eax,[gc+dataElem+tsuDataList]; pointer to next vertex component
-    mulss     xmm2,xmm0                  ; 0 | q*oow
+    mulss     xmm2,xmm0                  ; 0 | 0 | 0 | q*oow
 
     movss     [fifo-4],xmm2              ; PCI write transformed Q
     jmp       .clip_setup_qow            ; check whether we need to write Q or W
@@ -4122,19 +4177,19 @@ proc _grDrawVertexList_SSE_Clip, 20
 
 .clip_setup_ooz_nofog:
 
-    movss     xmm2,[eax + edx]           ; 0 | z component of vertex
+    movss     xmm2,[eax + edx]           ; 0 | 0 | 0 | z component of vertex
     add       fifo, 4                    ; fifoPtr += sizeof(FxFloat)
 
     add       dataElem, 4                ; dataElem += 1
-    movss     xmm3,[gc + vp_hdepth]      ; 0 | gc->state.Viewport.hdepth
+    movss     xmm3,[gc + vp_hdepth]      ; 0 | 0 | 0 | gc->state.Viewport.hdepth
 
-    mulss     xmm2,xmm0                  ; TRI_SETF(FARRAY(_s, i)*_oow
-    movss     xmm4,[gc + vp_oz]          ; 0 | gc->state.Viewport.oz
+    mulss     xmm2,xmm0                  ; 0 | 0 | 0 | TRI_SETF(FARRAY(_s, i)*_oow
+    movss     xmm4,[gc + vp_oz]          ; 0 | 0 | 0 | gc->state.Viewport.oz
 
-    mulss     xmm2,xmm3                  ; 0 | TRI_SETF(FARRAY(_s, i)*_oow*gc->state.Viewport.hdepth
+    mulss     xmm2,xmm3                  ; 0 | 0 | 0 | TRI_SETF(FARRAY(_s, i)*_oow*gc->state.Viewport.hdepth
     mov       eax, [gc+dataElem+tsuDataList]; offset of next vertex component
 
-    addss     xmm2,xmm4                  ; 0 | TRI_SETF(FARRAY(_s, i)*_oow*gc->state.Viewport.hdepth+gc->state.Viewport.oz
+    addss     xmm2,xmm4                  ; 0 | 0 | 0 | TRI_SETF(FARRAY(_s, i)*_oow*gc->state.Viewport.hdepth+gc->state.Viewport.oz
     movss     [fifo-4],xmm2              ; PCI write transformed Z
 
 .clip_setup_qow:
@@ -4148,10 +4203,10 @@ proc _grDrawVertexList_SSE_Clip, 20
     add       fifo, 4                    ; fifoPtr += sizeof(FxFloat)
 
     add       dataElem, 4                ; dataElem++
-    movss     xmm2,[edx + eax]           ; 0 | fogInfo of vertex
+    movss     xmm2,[edx + eax]           ; 0 | 0 | 0 | fogInfo of vertex
 
     mov       eax,[gc+dataElem+tsuDataList]; pointer to next vertex component
-    mulss     xmm2,xmm0                  ; fogInfo*oow
+    mulss     xmm2,xmm0                  ; 0 | 0 | 0 | fogInfo*oow
 
     movss     [fifo-4],xmm2              ; PCI write transformed Q
     jmp       .clip_setup_qow0           ; continue with q0
@@ -4165,10 +4220,10 @@ proc _grDrawVertexList_SSE_Clip, 20
     mov       eax, [gc+qInfo_offset]     ; offset of Q component of vertex
 
     add       dataElem, 4                ; dataElem++
-    movss     xmm2,[edx+eax]             ; 0 | q of vertex
+    movss     xmm2,[edx+eax]             ; 0 | 0 | 0 | q of vertex
 
     mov       eax,[gc+dataElem+tsuDataList]; pointer to next vertex component
-    mulss     xmm2,xmm0                  ; q*oow
+    mulss     xmm2,xmm0                  ; 0 | 0 | 0 | q*oow
 
     movss     [fifo-4],xmm2              ; PCI write transformed Q
     jmp       .clip_setup_qow0           ; continue with q0
@@ -4193,10 +4248,10 @@ proc _grDrawVertexList_SSE_Clip, 20
     add       fifo, 4                    ; fifoPtr += sizeof(FxFloat)
 
     add       dataElem, 4                ; dataElem++
-    movss     xmm2,[edx+eax]             ; 0 | q0 of vertex
+    movss     xmm2,[edx+eax]             ; 0 | 0 | 0 | q0 of vertex
 
     mov       eax,[gc+dataElem+tsuDataList]; pointer to next vertex component
-    mulss     xmm2,xmm0                  ; q0*oow
+    mulss     xmm2,xmm0                  ; 0 | 0 | 0 | q0*oow
 
     movss     [fifo-4],xmm2              ; PCI write transformed q0
     jmp       .clip_setup_stow0          ; continue with stow0
@@ -4215,19 +4270,19 @@ proc _grDrawVertexList_SSE_Clip, 20
     test      esi, 32                    ; STATE_REQUIRES_ST_TMU0 ?
     jz        .clip_setup_qow1           ; nope
 
-    movlps    xmm7,[gc + tmu0_s_scale]   ; state.tmu_config[0].t_scale | state.tmu_config[0].s_scale
+    movlps    xmm7,[gc + tmu0_s_scale]   ; 0 | 0 | state.tmu_config[0].t_scale | state.tmu_config[0].s_scale
     add       fifo, 8                    ; fifoPtr += 2*sizeof(FxFloat)
 
-    movss     xmm2,[edx+eax]             ; param1
+    movss     xmm2,[edx+eax]             ; 0 | 0 | 0 | param1
     mov       eax,[gc+dataElem+tsuDataList+4];pointer to next vertex component
 
-    mulps     xmm7,xmm0                  ; oow*tmu0_t_scale | oow*tmu0_s_scale
+    mulps     xmm7,xmm0                  ; 0 | 0 | oow*tmu0_t_scale | oow*tmu0_s_scale
     add       dataElem, 8                ; dataElem += 2
 
-    movss     xmm3,[edx+eax]             ; param2
-    unpcklps  xmm2,xmm3                  ; param2 | param1
+    movss     xmm3,[edx+eax]             ; 0 | 0 | 0 | param2
+    unpcklps  xmm2,xmm3                  ; 0 | 0 | param2 | param1
 
-    mulps     xmm2,xmm7                  ; param2*oow*tmu0_t_scale | param1*oow*tmu0_s_scale
+    mulps     xmm2,xmm7                  ; 0 | 0 | param2*oow*tmu0_t_scale | param1*oow*tmu0_s_scale
 
     movlps    [fifo-8],xmm2              ; PCI write param2*oow*tmu0_t_scale | param1*oow*tmu0_s_scale 
     mov       eax, [gc+dataElem+tsuDataList]; pointer to next vertex component
@@ -4243,10 +4298,10 @@ proc _grDrawVertexList_SSE_Clip, 20
     add       fifo, 4                    ; fifoPtr += sizeof(FxFloat)
 
     add       dataElem, 4                ; dataElem++
-    movss     xmm2,[edx+eax]             ; 0 | q1 of vertex
+    movss     xmm2,[edx+eax]             ; 0 | 0 | 0 | q1 of vertex
 
     mov       eax,[gc+dataElem+tsuDataList]; pointer to next vertex component
-    mulss     xmm2,xmm0                  ; q1*oow
+    mulss     xmm2,xmm0                  ; 0 | 0 | 0 | q1*oow
 
     movss     [fifo-4],xmm2              ; PCI write transformed q1
     jmp       .clip_setup_stow1          ; continue with stow1
@@ -4265,19 +4320,19 @@ proc _grDrawVertexList_SSE_Clip, 20
     test      esi, 128                   ; STATE_REQUIRES_ST_TMU1 ?
     mov       vertexCount, [vertices]    ; get number of vertices
 
-    movlps    xmm7,[gc + tmu1_s_scale]   ; state.tmu_config[1].t_scale | state.tmu_config[1].s_scale
+    movlps    xmm7,[gc + tmu1_s_scale]   ; 0 | 0 | state.tmu_config[1].t_scale | state.tmu_config[1].s_scale
     jz        .clip_setup_end            ; nope
 
-    movss     xmm2,[edx+eax]             ; param1
+    movss     xmm2,[edx+eax]             ; 0 | 0 | 0 | param1
     add       fifo, 8                    ; fifoPtr += 2*sizeof(FxFloat)
 
     mov       eax,[gc+dataElem+tsuDataList+4]; pointer to next vertex component
-    mulps     xmm7,xmm0                  ; oow*state.tmu_config[1].t_scale | oow*state.tmu_config[1].s_scale
+    mulps     xmm7,xmm0                  ; 0 | 0 | oow*state.tmu_config[1].t_scale | oow*state.tmu_config[1].s_scale
 
-    movss     xmm3,[edx+eax]             ; param2
-    unpcklps  xmm2,xmm3                  ; param2 | param1
+    movss     xmm3,[edx+eax]             ; 0 | 0 | 0 | param2
+    unpcklps  xmm2,xmm3                  ; 0 | 0 | param2 | param1
 
-    mulps     xmm2,xmm7                  ; param2*oow*state.tmu_config[1].t_scale | param1*oow*state.tmu_config[1].s_scale
+    mulps     xmm2,xmm7                  ; 0 | 0 | param2*oow*state.tmu_config[1].t_scale | param1*oow*state.tmu_config[1].s_scale
     movlps    [fifo-8],xmm2              ; PCI write param2*oow*state.tmu_config[1].t_scale | param1*oow*state.tmu_config[1].s_scale
 
 .clip_setup_end:
@@ -4394,6 +4449,20 @@ proc _drawvertexlist, 20
 ;;;     if (stride == 0)
 ;;;       stride = gc->state.vData.vStride;
         push    ebp            
+
+%IFDEF GLIDE_ALT_TAB
+       test     gc, gc
+       je       .strip_done
+;       mov      edx, [gc + windowed]
+;       test     edx, 1
+;       jnz      .pastContextTest
+       mov      edx, DWORD [gc+lostContext]
+       mov      ecx, [edx]
+       test     ecx, 1
+       jnz      .strip_done
+;.pastContextTest:
+%ENDIF
+
         mov     ecx, DWORD [gc+vertexSize]
     
         mov     edx, DWORD [esp+_mode]
@@ -4587,6 +4656,20 @@ proc _vpdrawvertexlist, 20
         GET_GC  eax, esi
 
         push    ebp
+
+%IFDEF GLIDE_ALT_TAB
+        test    gc, gc
+        je      .strip_done
+;        mov     edx, [gc + windowed]
+;        test    edx, 1
+;        jnz     .pastContextTest
+        mov     edx, DWORD [gc+lostContext]
+        mov     ecx, [edx]
+        test    ecx, 1
+        jnz     .strip_done
+;.pastContextTest:
+%ENDIF
+
         mov     ecx, DWORD [esp+_mode]
         
         mov     edi, DWORD [esp+_pointers]
@@ -5040,6 +5123,19 @@ _vc equ 28
         push    edi
         mov     gc, edx
 
+%IFDEF GLIDE_ALT_TAB
+        test    gc, gc
+        je      .__contextLost
+;        mov     edx, [gc + windowed]
+;        test    edx, 1
+;        jnz     .pastContextTest
+        mov     edx, DWORD [gc+lostContext]
+        mov     ecx, [edx]
+        test    ecx, 1
+        jnz     .__contextLost
+;.pastContextTest:
+%ENDIF
+
         ;
         ; AJB: Clip Coord mode needs to call grValidateState
         ;
@@ -5419,6 +5515,14 @@ _vc equ 28
         pop     ebx
         
         ret                             ; 0000000cH
+
+%IFDEF GLIDE_ALT_TAB
+.__contextLost:
+        pop     edi
+        pop     esi
+        pop     ebx
+        ret
+%ENDIF
 endp
 
 %endif  ; !GL_SSE

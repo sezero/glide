@@ -19,6 +19,9 @@
 ;; $Header$
 ;; $Revision$
 ;; $Log$
+;; Revision 1.1.8.6  2003/07/07 23:29:06  koolsmoky
+;; cleaned logs
+;;
 ;;
 ;; Revision 1.1  2000/06/15 00:27:43  joseph
 ;; Initial checkin into SourceForge.
@@ -128,10 +131,14 @@ proc _grTexDownload_MMX, 24
 %IFDEF GLIDE_ALT_TAB
     test      gc, gc
     je        .dlDone
+;    mov       edx, [gc + windowed]
+;    test      edx, 1
+;    jnz       .pastContextTest
     mov       edx, DWORD [gc+lostContext]
     mov       ecx, [edx]
     test      ecx, 1
     jnz       .dlDone
+;.pastContextTest:
 %ENDIF
 
     sub       curT, eax                 ; curT = maxT - minT
@@ -335,10 +342,14 @@ proc _grTexDownload_SSE2_64, 24
 %IFDEF GLIDE_ALT_TAB
     test      gc, gc
     je        .dlDone
+;    mov       edx, [gc + windowed]
+;    test      edx, 1
+;    jnz       .pastContextTest
     mov       edx, DWORD [gc+lostContext]
     mov       ecx, [edx]
     test      ecx, 1
     jnz       .dlDone
+;.pastContextTest:
 %ENDIF
 
     sub       curT, eax                 ; curT = maxT - minT
@@ -347,39 +358,30 @@ proc _grTexDownload_SSE2_64, 24
     mov       curS, [esp + _maxS$]      ; curS = maxS 
     add       curT, 1                   ; curT = maxT - minT + 1
 
-    pxor      xmm0,xmm0                 ; clear SIMD2 register
-    pxor      xmm1,xmm1
-    pxor      xmm2,xmm2
-    pxor      xmm3,xmm3
-    pxor      xmm4,xmm4
-    pxor      xmm5,xmm5
-    pxor      xmm6,xmm6
-    pxor      xmm7,xmm7
-
     mov       edx, curS                 ; curS = maxS = scanline width in DWORDs
-    movd      xmm3,[esp + _baseAddr$]   ; 0 | address of texture to download
+    movd      xmm3,[esp + _baseAddr$]   ; 0 | 0 | 0 | address of texture to download
 
     shl       curS, 2                   ; scan line width (in bytes)
-    mov       eax, [esp + _minT$]       ; 0 | minT
+    mov       eax, [esp + _minT$]       ; 0 | 0 | 0 | minT
 
     mov       [esp + _maxS$], curS      ; save scan line width (in bytes)
     shl       edx, 3                    ; packetHdr<21:3> = maxS = scanline width in DWORDs
 
     imul      eax, curS                 ; TEX_ROW_ADDR_INCR(minT) = minT * TEX_ROW_ADDR_INCR(1)
 
-    movd      xmm2,curS                 ; 0 | TEX_ROW_ADDR_INCR(1)
+    movd      xmm2,curS                 ; 0 | 0 | TEX_ROW_ADDR_INCR(1)
     or        edx, 00000005h            ; packetHdr<31:30> = lfb port
                                         ; packetHdr<21:3>  = maxS
                                         ; packetHdr<2:0>   = packetType 5 
 
-    movd      xmm1,edx                  ; 0 | packetHdr
-    movd      xmm4,eax                  ; 0 | TEX_ROW_ADDR_INCR(minT)
+    movd      xmm1,edx                  ; 0 | 0 | packetHdr
+    movd      xmm4,eax                  ; 0 | 0 | TEX_ROW_ADDR_INCR(minT)
 
-    psllq     xmm2,32                   ; TEX_ROW_ADDR_INCR(1) | 0
-    paddd     xmm3,xmm4                 ; 0 | texAddr = texBaseAddr + TEX_ROW_ADDR_INCR(minT)
+    psllq     xmm2,32                   ; 0 | 0 | TEX_ROW_ADDR_INCR(1) | 0
+    paddd     xmm3,xmm4                 ; 0 | 0 | texAddr = texBaseAddr + TEX_ROW_ADDR_INCR(minT)
 
     mov       fRoom, [gc + fifoRoom]    ; get available fifoRoom (in bytes)
-    punpckldq xmm1,xmm3                 ; hdr2 = texAddr | hdr1 = packetHdr
+    punpckldq xmm1,xmm3                 ; 0 | 0 | hdr2 = texAddr | hdr1 = packetHdr
 
     ;; ebx = curT, edi = dataPtr, esi = gc, ebp = fifo, ecx = curS = maxS
     ;; edx = fifoRoom, xmm1 = texAddr|packetHdr, xmm2 = TEX_ROW_ADDR_INCR(1)|0
@@ -480,7 +482,7 @@ proc _grTexDownload_SSE2_64, 24
     ;; ebx = curT, edi = dataPtr, esi = gc, ebp = fifo
     ;; edx = fifoRoom, xmm1 = texAddr|packetHdr, xmm2 = TEX_ROW_ADDR_INCR(1)|0
 
-    paddd     xmm1,xmm2                 ; texAddr+=TEX_ROW_ADDR_INCR(1) | packetHdr
+    paddd     xmm1,xmm2                 ; 0 | 0 | texAddr+=TEX_ROW_ADDR_INCR(1) | packetHdr
     mov       esp, esp                  ; filler
 .startDownload:
     lea       eax, [curS+8]             ; fifo space needed = scan line width + header size
@@ -531,10 +533,14 @@ proc _grTexDownload_SSE2_128, 24
 %IFDEF GLIDE_ALT_TAB
     test      gc, gc
     je        .dlDone
+;    mov       edx, [gc + windowed]
+;    test      edx, 1
+;    jnz       .pastContextTest
     mov       edx, DWORD [gc+lostContext]
     mov       ecx, [edx]
     test      ecx, 1
     jnz       .dlDone
+;.pastContextTest:
 %ENDIF
 
     sub       curT, eax                 ; curT = maxT - minT
@@ -543,17 +549,8 @@ proc _grTexDownload_SSE2_128, 24
     mov       curS, [esp + _maxS$]      ; curS = maxS 
     add       curT, 1                   ; curT = maxT - minT + 1
 
-    pxor      xmm0,xmm0                 ; clear SIMD2 register
-    pxor      xmm1,xmm1
-    pxor      xmm2,xmm2
-    pxor      xmm3,xmm3
-    pxor      xmm4,xmm4
-    pxor      xmm5,xmm5
-    pxor      xmm6,xmm6
-    pxor      xmm7,xmm7
-
     mov       edx, curS                 ; curS = maxS = scanline width in DWORDs
-    movd      xmm3,[esp + _baseAddr$]   ; 0 | address of texture to download
+    movd      xmm3,[esp + _baseAddr$]   ; 0 | 0 | 0 | address of texture to download
 
     shl       curS, 2                   ; scan line width (in bytes)
     mov       eax, [esp + _minT$]       ; 0 | minT
@@ -563,19 +560,19 @@ proc _grTexDownload_SSE2_128, 24
 
     imul      eax, curS                 ; TEX_ROW_ADDR_INCR(minT) = minT * TEX_ROW_ADDR_INCR(1)
 
-    movd      xmm2,curS                 ; 0 | TEX_ROW_ADDR_INCR(1)
+    movd      xmm2,curS                 ; 0 | 0 | 0 | TEX_ROW_ADDR_INCR(1)
     or        edx, 00000005h            ; packetHdr<31:30> = lfb port
                                         ; packetHdr<21:3>  = maxS
                                         ; packetHdr<2:0>   = packetType 5 
 
-    movd      xmm1,edx                  ; 0 | packetHdr
-    movd      xmm4,eax                  ; 0 | TEX_ROW_ADDR_INCR(minT)
+    movd      xmm1,edx                  ; 0 | 0 | 0 | packetHdr
+    movd      xmm4,eax                  ; 0 | 0 | 0 | TEX_ROW_ADDR_INCR(minT)
 
-    psllq     xmm2,32                   ; TEX_ROW_ADDR_INCR(1) | 0
-    paddd     xmm3,xmm4                 ; 0 | texAddr = texBaseAddr + TEX_ROW_ADDR_INCR(minT)
+    psllq     xmm2,32                   ; 0 | 0 | TEX_ROW_ADDR_INCR(1) | 0
+    paddd     xmm3,xmm4                 ; 0 | 0 | 0 | texAddr = texBaseAddr + TEX_ROW_ADDR_INCR(minT)
 
     mov       fRoom, [gc + fifoRoom]    ; get available fifoRoom (in bytes)
-    punpckldq xmm1,xmm3                 ; hdr2 = texAddr | hdr1 = packetHdr
+    punpckldq xmm1,xmm3                 ; 0 | 0 | hdr2 = texAddr | hdr1 = packetHdr
 
     ;; ebx = curT, edi = dataPtr, esi = gc, ebp = fifo, ecx = curS = maxS
     ;; edx = fifoRoom, xmm1 = texAddr|packetHdr, xmm2 = TEX_ROW_ADDR_INCR(1)|0
@@ -676,7 +673,7 @@ proc _grTexDownload_SSE2_128, 24
     ;; ebx = curT, edi = dataPtr, esi = gc, ebp = fifo
     ;; edx = fifoRoom, xmm1 = texAddr|packetHdr, xmm2 = TEX_ROW_ADDR_INCR(1)|0
 
-    paddd     xmm1,xmm2                 ; texAddr+=TEX_ROW_ADDR_INCR(1) | packetHdr
+    paddd     xmm1,xmm2                 ; 0 | 0 | texAddr+=TEX_ROW_ADDR_INCR(1) | packetHdr
     mov       esp, esp                  ; filler
 .startDownload:
     lea       eax, [curS+8]             ; fifo space needed = scan line width + header size
