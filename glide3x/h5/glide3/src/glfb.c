@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.7.4.6  2003/06/27 15:11:07  koolsmoky
+** fixed win32 compile error for LFB read/write MMX specializations
+**
 ** Revision 1.7.4.5  2003/06/27 10:40:52  dborca
 ** added LFB read/write MMX specializations
 **
@@ -613,6 +616,303 @@
 	}
 
 #endif
+
+/*---------------------------------------------------------------------------
+** FPU specializations
+*/
+#ifdef __GNUC__
+
+#define FPU_SRCLINE(src, dst, length) __asm __volatile ("\n\
+		movl	%2, %%ecx	\n\
+		movl	%0, %%esi	\n\
+		movl	%1, %%edi	\n\
+		cmpl	$8, %%ecx	\n\
+		jb	4f		\n\
+		testl	$2, %%esi	\n\
+		jz	1f		\n\
+		movw	(%%esi), %%ax	\n\
+		addl	$2, %%esi	\n\
+		movw	%%ax, (%%edi)	\n\
+		addl	$2, %%edi	\n\
+		subl	$2, %%ecx	\n\
+		.p2align 3,,7		\n\
+	1:				\n\
+		testl	$4, %%esi	\n\
+		jz	2f		\n\
+		movl	(%%esi), %%eax	\n\
+		addl	$4, %%esi	\n\
+		movl	%%eax, (%%edi)	\n\
+		addl	$4, %%edi	\n\
+		subl	$4, %%ecx	\n\
+		.p2align 3,,7		\n\
+	2:				\n\
+		movl	%%ecx, %%eax	\n\
+		andl	$7, %%ecx	\n\
+		shrl	$3, %%eax	\n\
+		jz	4f		\n\
+		.p2align 3,,7		\n\
+	3:				\n\
+		fild	qword ptr (%%esi)	\n\
+		fistp	qword ptr (%%edi)	\n\
+		addl	$8, %%esi	\n\
+		addl	$8, %%edi	\n\
+		decl	%%eax		\n\
+		jnz	3b		\n\
+		.p2align 3,,7		\n\
+	4:				\n\
+		testl	$4, %%ecx	\n\
+		jz	5f		\n\
+		movl	(%%esi), %%eax	\n\
+		addl	$4, %%esi	\n\
+		movl	%%eax, (%%edi)	\n\
+		addl	$4, %%edi	\n\
+		.p2align 3,,7		\n\
+	5:				\n\
+		testl	$2, %%ecx	\n\
+		jz	6f		\n\
+		movw	(%%esi), %%ax	\n\
+		movw	%%ax, (%%edi)	\n\
+		.p2align 3,,7		\n\
+	6:"::"g"(src), "g"(dst), "g"(length):"%eax", "%ecx", "%esi", "%edi")
+
+#define FPU_DSTLINE2(src, dst, width) __asm __volatile ("\n\
+		movl	%2, %%ecx	\n\
+		movl	%0, %%esi	\n\
+		movl	%1, %%edi	\n\
+		cmpl	$4, %%ecx	\n\
+		jb	4f		\n\
+		testl	$2, %%edi	\n\
+		jz	1f		\n\
+		movw	(%%esi), %%ax	\n\
+		addl	$2, %%esi	\n\
+		movw	%%ax, (%%edi)	\n\
+		addl	$2, %%edi	\n\
+		decl	%%ecx		\n\
+		.p2align 3,,7		\n\
+	1:				\n\
+		testl	$4, %%edi	\n\
+		jz	2f		\n\
+		movl	(%%esi), %%eax	\n\
+		addl	$4, %%esi	\n\
+		movl	%%eax, (%%edi)	\n\
+		addl	$4, %%edi	\n\
+		subl	$2, %%ecx	\n\
+		.p2align 3,,7		\n\
+	2:				\n\
+		movl	%%ecx, %%eax	\n\
+		andl	$3, %%ecx	\n\
+		shrl	$2, %%eax	\n\
+		jz	4f		\n\
+		.p2align 3,,7		\n\
+	3:				\n\
+		fild	qword ptr (%%esi)	\n\
+		fistp	qword ptr (%%edi)	\n\
+		addl	$8, %%esi	\n\
+		addl	$8, %%edi	\n\
+		decl	%%eax		\n\
+		jnz	3b		\n\
+		.p2align 3,,7		\n\
+	4:				\n\
+		testl	$2, %%ecx	\n\
+		jz	5f		\n\
+		movl	(%%esi), %%eax	\n\
+		addl	$4, %%esi	\n\
+		movl	%%eax, (%%edi)	\n\
+		addl	$4, %%edi	\n\
+		.p2align 3,,7		\n\
+	5:				\n\
+		testl	$1, %%ecx	\n\
+		jz	6f		\n\
+		movw	(%%esi), %%ax	\n\
+		movw	%%ax, (%%edi)	\n\
+		.p2align 3,,7		\n\
+	6:"::"g"(src), "g"(dst), "g"(width):"%eax", "%ecx", "%esi", "%edi")
+
+#define FPU_DSTLINE4(src, dst, width) __asm __volatile ("\n\
+		movl	%2, %%ecx	\n\
+		movl	%0, %%esi	\n\
+		movl	%1, %%edi	\n\
+		cmpl	$2, %%ecx	\n\
+		jb	4f		\n\
+		testl	$1, %%edi	\n\
+		jz	2f		\n\
+		movl	(%%esi), %%eax	\n\
+		addl	$4, %%esi	\n\
+		movl	%%eax, (%%edi)	\n\
+		addl	$4, %%edi	\n\
+		decl	%%ecx		\n\
+		.p2align 3,,7		\n\
+	2:				\n\
+		movl	%%ecx, %%eax	\n\
+		andl	$1, %%ecx	\n\
+		shrl	%%eax		\n\
+		jz	4f		\n\
+		.p2align 3,,7		\n\
+	3:				\n\
+		fild	qword ptr (%%esi)	\n\
+		fistp	qword ptr (%%edi)	\n\
+		addl	$8, %%esi	\n\
+		addl	$8, %%edi	\n\
+		decl	%%eax		\n\
+		jnz	3b		\n\
+		.p2align 3,,7		\n\
+	4:				\n\
+		testl	$1, %%ecx	\n\
+		jz	5f		\n\
+		movl	(%%esi), %%eax	\n\
+		movl	%%eax, (%%edi)	\n\
+		.p2align 3,,7		\n\
+	5:"::"g"(src), "g"(dst), "g"(width):"%eax", "%ecx", "%esi", "%edi")
+
+#else
+
+#define FPU_SRCLINE(src, dst, length) __asm {\
+		__asm mov   ecx, length \
+		__asm mov	esi, src	\
+		__asm mov	edi, dst	\
+		__asm cmp	ecx, 8		\
+		__asm jb	small_move_fpu_srcline	\
+		__asm test	esi, 2		\
+		__asm jz	check4_fpu_srcline		\
+		__asm mov	ax, [esi]	\
+		__asm add	esi, 2		\
+		__asm mov	[edi], ax	\
+		__asm add	edi, 2		\
+		__asm sub	ecx, 2		\
+		__asm align	8		\
+	__asm check4_fpu_srcline:				\
+		__asm test	esi, 4		\
+		__asm jz	aligned8_fpu_srcline	\
+		__asm mov	eax, [esi]	\
+		__asm add	esi, 4		\
+		__asm mov	[edi], eax	\
+		__asm add	edi, 4		\
+		__asm sub	ecx, 4		\
+		__asm align	8		\
+	__asm aligned8_fpu_srcline:				\
+		__asm mov	eax, ecx	\
+		__asm and	ecx, 7		\
+		__asm shr	eax, 3		\
+		__asm jz	small_move_fpu_srcline	\
+		__asm align	8		\
+	__asm big_move_fpu_srcline:				\
+        __asm fild  qword ptr [esi] \
+		__asm fistp qword ptr [edi] \
+		__asm add	esi, 8		\
+		__asm add	edi, 8		\
+		__asm dec	eax		\
+		__asm jnz	big_move_fpu_srcline	\
+		__asm align	8		\
+	__asm small_move_fpu_srcline:			\
+		__asm test	ecx, 4		\
+		__asm jz	check2_fpu_srcline		\
+		__asm mov	eax, [esi]	\
+		__asm add	esi, 4		\
+		__asm mov	[edi], eax	\
+		__asm add	edi, 4		\
+		__asm align	8		\
+	__asm check2_fpu_srcline:				\
+		__asm test	ecx, 2		\
+		__asm jz	finish_fpu_srcline		\
+		__asm mov	ax, [esi]	\
+		__asm mov	[edi], ax	\
+		__asm align	8		\
+	__asm finish_fpu_srcline:				\
+	}
+
+#define FPU_DSTLINE2(src, dst, width) __asm {\
+		__asm mov	ecx, width	\
+		__asm mov	esi, src	\
+		__asm mov	edi, dst	\
+		__asm cmp	ecx, 4		\
+		__asm jb	small_move_fpu_dstline2	\
+		__asm test	edi, 2		\
+		__asm jz	check4_fpu_dstline2	\
+		__asm mov	ax, [esi]	\
+		__asm add	esi, 2		\
+		__asm mov	[edi], ax	\
+		__asm add	edi, 2		\
+		__asm dec	ecx		\
+		__asm align	8		\
+	__asm check4_fpu_dstline2:		\
+		__asm test	edi, 4		\
+		__asm jz	aligned8_fpu_dstline2	\
+		__asm mov	eax, [esi]	\
+		__asm add	esi, 4		\
+		__asm mov	[edi], eax	\
+		__asm add	edi, 4		\
+		__asm sub	ecx, 2		\
+		__asm align	8		\
+	__asm aligned8_fpu_dstline2:		\
+		__asm mov	eax, ecx	\
+		__asm and	ecx, 3		\
+		__asm shr	eax, 2		\
+		__asm jz	small_move_fpu_dstline2	\
+		__asm align	8		\
+	__asm big_move_fpu_dstline2:			\
+        __asm fild  qword ptr [esi] \
+		__asm fistp qword ptr [edi] \
+		__asm add	esi, 8		\
+		__asm add	edi, 8		\
+		__asm dec	eax		\
+		__asm jnz	big_move_fpu_dstline2	\
+		__asm align	8		\
+	__asm small_move_fpu_dstline2:		\
+		__asm test	ecx, 2		\
+		__asm jz	check2_fpu_dstline2	\
+		__asm mov	eax, [esi]	\
+		__asm add	esi, 4		\
+		__asm mov	[edi], eax	\
+		__asm add	edi, 4		\
+		__asm align	8		\
+	__asm check2_fpu_dstline2:		\
+		__asm test	ecx, 1		\
+		__asm jz	finish_fpu_dstline2	\
+		__asm mov	ax, [esi]	\
+		__asm mov	[edi], ax	\
+		__asm align	8		\
+	__asm finish_fpu_dstline2:		\
+	}
+
+#define FPU_DSTLINE4(src, dst, width) __asm {\
+		__asm mov	ecx, width	\
+		__asm mov	esi, src	\
+		__asm mov	edi, dst	\
+		__asm cmp	ecx, 2		\
+		__asm jb	small_move_fpu_dstline4	\
+		__asm test	edi, 4		\
+		__asm jz	aligned8_fpu_dstline4	\
+		__asm mov	eax, [esi]	\
+		__asm add	esi, 4		\
+		__asm mov	[edi], eax	\
+		__asm add	edi, 4		\
+		__asm dec	ecx		\
+		__asm align	8		\
+	__asm aligned8_fpu_dstline4:		\
+		__asm mov	eax, ecx	\
+		__asm and	ecx, 1		\
+		__asm shr	eax, 1		\
+		__asm jz	small_move_fpu_dstline4	\
+		__asm align	8		\
+	__asm big_move_fpu_dstline4:		\
+        __asm fild  qword ptr [esi] \
+		__asm fistp qword ptr [edi] \
+		__asm add	esi, 8		\
+		__asm add	edi, 8		\
+		__asm dec	eax		\
+		__asm jnz	big_move_fpu_dstline4	\
+		__asm align	8		\
+	__asm small_move_fpu_dstline4:		\
+		__asm test	ecx, 1		\
+		__asm jz	finish_fpu_dstline4	\
+		__asm mov	eax, [esi]	\
+		__asm mov	[edi], eax	\
+		__asm align	8		\
+	__asm finish_fpu_dstline4:		\
+	}
+
+#endif
+
 
 /*---------------------------------------------------------------------------
 ** grLfbConstantAlpha
@@ -1690,13 +1990,15 @@ _grLfbWriteRegion(FxBool pixPipelineP,
                  &info)) {
     FxU32 *srcData;             /* Tracking Source Pointer */
     FxU32 *dstData;             /* Tracking Destination Pointer */
+    FxU32 scanline;             /* scanline number */
+#if 0
     FxU32 *end;                 /* Demarks End of each Scanline */
     FxI32 srcJump;              /* bytes to next scanline */
     FxU32 dstJump;              /* bytes to next scanline */
     FxU32 length;               /* bytes to copy in scanline */
-    FxU32 scanline;             /* scanline number */
     int   aligned;              /* word aligned? */
-    
+#endif
+
     srcData = (FxU32 *) src_data;
     dstData = (FxU32 *) (((char*)info.lfbPtr)+ (dst_y*info.strideInBytes));
     scanline = src_height;
@@ -1718,8 +2020,16 @@ _grLfbWriteRegion(FxBool pixPipelineP,
          } while (--scanline);
          MMX_RESET();
          break;
-      }
-#endif
+	  } else {
+         do {
+             FPU_DSTLINE2(srcData, dstData, src_width);
+             /* adjust for next line */
+             ((FxU8 *)srcData) += src_stride;
+             ((FxU8 *)dstData) += info.strideInBytes;
+         } while (--scanline);
+         break;
+	  }
+#else
       length  = src_width * 2;
       aligned = !((int)dstData&0x2);
       srcJump = src_stride - length;
@@ -1769,6 +2079,7 @@ _grLfbWriteRegion(FxBool pixPipelineP,
           srcData = (FxU32*)(((char*)srcData)+srcJump);
         }
       }
+#endif
       break;
 
     /* 32-bit aligned */
@@ -1788,8 +2099,16 @@ _grLfbWriteRegion(FxBool pixPipelineP,
          } while (--scanline);
          MMX_RESET();
          break;
+	  } else {
+		 do {
+             FPU_DSTLINE4(srcData, dstData, src_width);
+             /* adjust for next line */
+             ((FxU8 *)srcData) += src_stride;
+             ((FxU8 *)dstData) += info.strideInBytes;
+         } while (--scanline);
+         break;
       }
-#endif
+#else
       length  = src_width * 4;
       srcJump = src_stride - length;
       dstJump = info.strideInBytes - length;
@@ -1803,6 +2122,7 @@ _grLfbWriteRegion(FxBool pixPipelineP,
         dstData = (FxU32*)(((char*)dstData)+dstJump);
         srcData = (FxU32*)(((char*)srcData)+srcJump);
       }
+#endif
       break;
 
     case GR_LFB_SRC_FMT_RLE16:
@@ -2009,6 +2329,16 @@ static FxBool grLfbReadRegionOrigin (GrBuffer_t src_buffer, GrOriginLocation_t o
             } while (--src_height);
             MMX_RESET();
             goto okay;
+		 }
+	  } else {
+		 if (!gc->state.forced32BPP) {
+            do {
+                FPU_SRCLINE(src, dst_data, tmplength);
+                /* adjust for next line */
+                ((FxU8 *)src) += info.strideInBytes;
+                ((FxU8 *)dst_data) += dst_stride;
+            } while (--src_height);
+            goto okay;
          }
       }
 
@@ -2023,6 +2353,7 @@ static FxBool grLfbReadRegionOrigin (GrBuffer_t src_buffer, GrOriginLocation_t o
       /* should be endian and pixel size safe */
       /* it would be nice to test if quad blocks were faster */
       /* like mmx loads and stores */
+#if 0
       if (!gc->state.forced32BPP) while(src_height--)
       {
          /* adjust starting alignment */
@@ -2048,9 +2379,10 @@ static FxBool grLfbReadRegionOrigin (GrBuffer_t src_buffer, GrOriginLocation_t o
          /* adjust for next line */
          ((FxU8 *)src)+=src_adjust;
          ((FxU8 *)dst)+=dst_adjust;
-      }
+      } else
+#endif
 	  /* Nice I've got to convert it from 32 bit to 16 bit */
-	  else if (gc->state.forced32BPP == 16) while(src_height--) {
+	  if (gc->state.forced32BPP == 16) while(src_height--) {
 
 		  /* read in dwords of pixels */
 		  if(length)
