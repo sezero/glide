@@ -946,7 +946,7 @@ GR_STATE_ENTRY(grAlphaTestReferenceValue, void, (GrAlpha_t value))
 /* */
 #ifndef HAL_CSIM
 static void
-_grBufferClear2D(const FxU32 buffOffset, 
+_grBufferClear2D(/*const*/ FxU32 buffOffset, 
                  const FxU32 clipLeft, const FxU32 clipTop,
                  const FxU32 clipRight, const FxU32 clipBottom, 
                  const FxU32 color, const FxU32 mask, const FxBool tiled,
