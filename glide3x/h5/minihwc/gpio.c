@@ -1,3 +1,10 @@
+/*
+ * GPIO code
+ *
+ * $Header$
+ */
+
+
 #include <unistd.h> /*usleep*/
 
 #include "minihwc.h"
