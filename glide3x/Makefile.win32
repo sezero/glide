@@ -514,6 +514,7 @@ clean::
 	$(RM) $(FX_GLIDE_HW)\incsrc\gendate.h
 	$(RM) $(FX_GLIDE_HW)\minihwc\*.obj
 	$(RM) $(FX_GLIDE_HW)\$(FX_HW_PROJECTS)\src\*.obj
+	$(RM) $(FX_GLIDE_HW)\$(FX_HW_PROJECTS)\src\*.res
 	$(RM) $(FX_GLIDE_HW)\$(FX_HW_PROJECTS)\src\fxgasm.exe
 	$(RM) $(FX_GLIDE_HW)\$(FX_HW_PROJECTS)\src\fxgasm.h
 	$(RM) $(FX_GLIDE_HW)\$(FX_HW_PROJECTS)\src\fxinline.h
