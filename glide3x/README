@@ -29,5 +29,5 @@ Here are a few notes about building Glide3x from CVS.
     branch is not stored here within the glide3x cvs tree because it
     is also shared with the glide2x branch.  N.B.: If you use the CVS
     module Glide3, swlibs will be in the right place, and does not
-    need to be moved
+    need to be moved.
     
