@@ -305,16 +305,15 @@ AS   = nasmw
 CFLAGS  = -G6 -W3 -WX -c -D__MSC__=1 -D_X86_=1 -DNULL=0 -D_WIN32=1 -DWIN32=1 -D__WIN32__=1 -DSTRICT
 LFLAGS  = -nologo /DLL /OPT:WIN98 /MACHINE:IX86 /NODEFAULTLIB
 ARFLAGS = -nologo
-ASFLAGS = -fwin32 -D__WIN32__ --prefix _
+ASFLAGS = -O2 -fwin32 -D__WIN32__ --prefix _
 
 !if "$(DEBUG)"== "1"
 CFLAGS  = $(CFLAGS) -Od -LDd -MLd -DDEBUG=1 -D_DEBUG
 LFLAGS  = $(LFLAGS) -debugtype:both /DEBUG
 ARFLAGS = $(ARFLAGS) -debugtype:both
-ASFLAGS = $(ASFLAGS) -Od -DDEBUG=1
+ASFLAGS = $(ASFLAGS) -g -DDEBUG=1
 !else
 CFLAGS  = $(CFLAGS) -Ox -LD -ML
-ASFLAGS = $(ASFLAGS) -O2
 !endif
 
 # So that we can get reasonable stuff from SoftIce etc even
