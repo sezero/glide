@@ -66,6 +66,9 @@ hwcCheckMemSize(hwcBoardInfo *bInfo, FxU32 xres, FxU32 yres, FxU32 nColBuffers,
 #include <X11/extensions/xf86vmode.h>
 #include "lindri.h"
 
+static FxU32
+hwcBufferLfbAddr(const hwcBoardInfo *bInfo, FxU32 physAddress);
+
 static FxU32 fenceVar;
 #define P6FENCE asm("xchg %%eax, %0" : : "m" (fenceVar) : "eax");
 
