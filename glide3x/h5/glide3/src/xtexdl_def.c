@@ -97,15 +97,18 @@ _grTexDownload_Default_4_4(struct GrGC_s* gc, const FxU32 tmuBaseAddr,
   FxI32 
     t = minT;
 
-  for (; t <= maxT; t+=2) {
-    FxU32 tex_address = tmuBaseAddr + (t << 1UL);
-    const FxU32 t0 = *src32;
-
-    LINEAR_WRITE_BEGIN(1, PACKET5_MODE, (FxU32)tex_address, 0x00UL, 0x00UL);
-    LINEAR_WRITE_SET(tex_address, t0);
+  for (; t <= maxT; t+=4) {
+    FxU32 tex_address = tmuBaseAddr + (t << 2UL);
+    FxI32 s;
+    
+    LINEAR_WRITE_BEGIN(2, PACKET5_MODE, (FxU32)tex_address, 0x00UL, 0x00UL);
+    for (s = 0; s < 2; s++) {
+      const FxU32 t0 = *src32;
+      LINEAR_WRITE_SET(tex_address, t0);
+      tex_address++;
+      src32++;
+    }
     LINEAR_WRITE_END();
-    tex_address++;
-    src32++;
   }
 #undef FN_NAME
 }

@@ -1133,12 +1133,16 @@ _grTexDownloadMipMapLevelPartialTiled(GrChipID_t tmu,
         case 4:
           {
             texOffset += (t * texStrideBytes);
-            for(; t <= maxT; t+=2) {
-              LINEAR_WRITE_BEGIN(1, SSTCP_PKT5_LFB, texOffset, 0x0UL, 0x0UL);
-              LINEAR_WRITE_SET(texOffset, *src32);
+            for(; t <= maxT; t+=4) {
+              FxI32 s;
+              
+              LINEAR_WRITE_BEGIN(2, SSTCP_PKT5_LFB, texOffset, 0x00UL, 0x00UL);
+              for (s = 0; s < 2; s++) {
+                LINEAR_WRITE_SET(texOffset, *src32);
+                src32++;
+                texOffset += texStrideBytes;
+              }
               LINEAR_WRITE_END();
-              src32++;
-              texOffset += texStrideBytes;
             }
           }
           break;
@@ -1506,12 +1510,10 @@ GR_ENTRY(grTexDownloadMipMapLevelPartial,
            * 16 bytes (4x4x1) which also matches the alignment
            * restriction.
            */
-          /* XXX: we can't skip this part for DXT1 because the smallest
-           * mipmap is 8 bytes (4x4x1/2).
+          /* Note: we skip this part for DXT1 and use the hack
+           * in _grTexTextureMemRequired to align the baseAddr.
            */
-          if(format != GR_TEXFMT_ARGB_CMP_FXT1 &&
-             format != GR_TEXFMT_ARGB_CMP_DXT2 && format != GR_TEXFMT_ARGB_CMP_DXT3 &&
-             format != GR_TEXFMT_ARGB_CMP_DXT4 && format != GR_TEXFMT_ARGB_CMP_DXT5 ) {
+          if(format != GR_TEXFMT_ARGB_CMP_FXT1 && format < GR_TEXFMT_ARGB_CMP_DXT1 ) {
             const FxU32
               aspectIndex = ((aspectRatio < GR_ASPECT_LOG2_1x1) 
                              ? -aspectRatio 
@@ -1520,9 +1522,7 @@ GR_ENTRY(grTexDownloadMipMapLevelPartial,
                           ? GR_LOD_LOG2_256 : thisLod + 1),
               formatMult = _grBitsPerTexel[format];
             FxU32
-              levelSize = ((format == GR_TEXFMT_ARGB_CMP_DXT1)
-                           ? (_grMipMapHostSizeDXT[aspectIndex][lodIndex] * formatMult) >> 3
-                           : (_grMipMapHostSize[aspectIndex][lodIndex] * formatMult) >> 3); /* bytes */
+              levelSize = (_grMipMapHostSize[aspectIndex][lodIndex] * formatMult) >> 3; /* bytes */
             
             GR_CHECK_F(FN_NAME, formatMult == 0, "invalid texture format");
             
@@ -1541,9 +1541,7 @@ GR_ENTRY(grTexDownloadMipMapLevelPartial,
                * colon.
                */
               while(maxLod < GR_LOD_LOG2_256) {
-                levelSize = ((format == GR_TEXFMT_ARGB_CMP_DXT1)
-                             ? (_grMipMapHostSizeDXT[aspectIndex][maxLod] * formatMult) >> 3
-                             : (_grMipMapHostSize[aspectIndex][maxLod] * formatMult) >> 3); /* bytes */
+                levelSize = (_grMipMapHostSize[aspectIndex][maxLod] * formatMult) >> 3; /* bytes */
                 if (levelSize >= SST_TEXTURE_ALIGN) break;
                 // check on the Even/Odd mask to see if the mip-map affects this TMU
                 if((maxLod & 1) ? (evenOdd & GR_MIPMAPLEVELMASK_ODD) : (evenOdd & GR_MIPMAPLEVELMASK_EVEN))
@@ -1588,7 +1586,7 @@ GR_ENTRY(grTexDownloadMipMapLevelPartial,
         FxU32
           width, formatSel, widthSel, max_s;
 
-		/*
+        /*
          * Interpretations:
          * formatSel: Chooses among 4, 8, 16, and 32-bit download procedures.
          *            We want formatSel == log2(bitsPerTexel >> 2).
@@ -1641,9 +1639,8 @@ GR_ENTRY(grTexDownloadMipMapLevelPartial,
           break;
         }
 
-        if (max_s <= 0) max_s = 1;
-        if (widthSel > 3) widthSel = 4;
-        else if (widthSel <= 0) widthSel = 0;
+        if (max_s < 1) max_s = 1;
+        if (widthSel > 4) widthSel = 4;
 
         gc->stats.texBytes += max_s * (max_t - t + 1) * 4;
 

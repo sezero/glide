@@ -1600,6 +1600,10 @@ _grTexTextureMemRequired( GrLOD_t small_lod, GrLOD_t large_lod,
 
   switch(format) {
   case GR_TEXFMT_ARGB_CMP_FXT1:
+  case GR_TEXFMT_ARGB_CMP_DXT1: /* HACK: align texture base address for
+                                 * the smallest mipmap.
+                                 * See grTexDownloadMipMapLevelPartial.
+                                 */
     /* In this case, do not mirror the aspect ratios, as the minimum
      * size of a mipmap level is 8x4, so the tables are not symmetric
      * w.r.t. sign of the aspect ratio, so keep the sign. */
@@ -1622,7 +1626,6 @@ _grTexTextureMemRequired( GrLOD_t small_lod, GrLOD_t large_lod,
     }
     break;
 
-  case GR_TEXFMT_ARGB_CMP_DXT1:
   case GR_TEXFMT_ARGB_CMP_DXT2:
   case GR_TEXFMT_ARGB_CMP_DXT3:
   case GR_TEXFMT_ARGB_CMP_DXT4:
@@ -1715,6 +1718,9 @@ _grTexCalcBaseAddress( FxU32 start, GrLOD_t large_lod,
 
   switch(format) {
   case GR_TEXFMT_ARGB_CMP_FXT1:
+  case GR_TEXFMT_ARGB_CMP_DXT1: /* HACK: compensate for the hack to align the
+                                 * base address in _grTexTextureMemRequired.
+                                 */
      /* FXT1 format: Don't mirror the aspect ratios, because of the 8x4 limit */
     if ( odd_even_mask == GR_MIPMAPLEVELMASK_BOTH ) {
       sum_of_lod_sizes = _grMipMapOffsetCmp4Bit[aspect]
@@ -1731,7 +1737,6 @@ _grTexCalcBaseAddress( FxU32 start, GrLOD_t large_lod,
     }
     break;
 
-  case GR_TEXFMT_ARGB_CMP_DXT1:
   case GR_TEXFMT_ARGB_CMP_DXT2:
   case GR_TEXFMT_ARGB_CMP_DXT3:
   case GR_TEXFMT_ARGB_CMP_DXT4:
