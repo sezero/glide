@@ -19,14 +19,14 @@
 */
 
 #define MANVERSION              3
-#define MANREVISION             01
+#define MANREVISION             03
 
-#define BUILD_NUMBER            0x666
+#define BUILD_NUMBER            40404
 
 #ifndef GLIDE3
 #define VERSIONSTR "2.44\0"
 #else
-#define VERSIONSTR "3.01\0"
+#define VERSIONSTR "3.03\0"
 #endif
 
 #ifdef SST1
