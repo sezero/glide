@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.7.4.14  2003/07/25 07:14:59  dborca
+** ... in the name of the Linux, DRI and the sacred Glide...
+**
 ** Revision 1.7.4.13  2003/07/24 03:51:08  anholt
 ** Convert h5/glide3/src/ for FreeBSD, mostly by changing #ifdef __linux__ to
 ** #ifdef DRI_BUILD, and removing a bit of dead code.
@@ -2092,6 +2095,7 @@ _grLfbWriteRegion(FxBool pixPipelineP,
     case GR_LFB_SRC_FMT_565_DEPTH:
     case GR_LFB_SRC_FMT_555_DEPTH:
     case GR_LFB_SRC_FMT_1555_DEPTH:
+    case GR_LFBWRITEMODE_Z32:
       dstData = ((FxU32*)dstData) + dst_x;
 #if SET_LFB_STRAIGHT
       if (_GlideRoot.CPUType.os_support & _CPU_FEATURE_MMX) {
