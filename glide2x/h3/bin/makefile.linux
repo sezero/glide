@@ -21,6 +21,6 @@
 # $Date$
 #
 
-LDIRT = $(patsubst makefile%,,$(wildcard *))
+LDIRT = $(patsubst CVS,,$(patsubst makefile%,,$(wildcard *)))
 
 include $(BUILD_ROOT_SWLIBS)/include/make/3dfx.mak
