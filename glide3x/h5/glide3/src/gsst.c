@@ -3119,9 +3119,9 @@ GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
   ** OpenGL fullscreen apps can run.  If not, we will cause a lot
   ** of problems.
   */
-  if (_GlideRoot.environment.is_opengl == FXTRUE) {
+  /*if(_GlideRoot.environment.is_opengl == FXTRUE) {
 	hwcRestoreVideo(gc->bInfo);
-  }
+  }*/
 
 #ifndef	__linux__
   if (gc->lostContext) {
