@@ -999,7 +999,7 @@ GR_EXT_ENTRY(grSurfaceCalcTextureWHD, FxBool , (GrTexInfo *tInfo, FxU32 *w,
     case GR_TEXFMT_ARGB_CMP_FXT1:
       fmtType = 1;
       break;
-    case GR_TEXFMT_ARGB_CMP_DXT1: /* XXX check this! */
+    case GR_TEXFMT_ARGB_CMP_DXT1:
     case GR_TEXFMT_ARGB_CMP_DXT2:
     case GR_TEXFMT_ARGB_CMP_DXT3:
     case GR_TEXFMT_ARGB_CMP_DXT4:

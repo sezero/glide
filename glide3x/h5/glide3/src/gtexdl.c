@@ -1130,25 +1130,17 @@ _grTexDownloadMipMapLevelPartialTiled(GrChipID_t tmu,
           *src32 = (const FxU32*)data;
 
         switch(maxS) {
-        case 4: /* XXX need to test! */
-#if 0
+        case 4:
           {
-            for(; t <= maxT; t+=4) {
-              FxU32
-                texAddress = texOffset + t * texStrideBytes,
-                s;
-              
-              LINEAR_WRITE_BEGIN(2, SSTCP_PKT5_LFB, texAddress, 0x00UL, 0x00UL);
-              for (s = 0; s < 2; s++)  {
-                LINEAR_WRITE_SET(texAddress, *src32);
-                texAddress++;
-                src32++;
-              }
+            texOffset += (t * texStrideBytes);
+            for(; t <= maxT; t+=2) {
+              LINEAR_WRITE_BEGIN(1, SSTCP_PKT5_LFB, texOffset, 0x0UL, 0x0UL);
+              LINEAR_WRITE_SET(texOffset, *src32);
               LINEAR_WRITE_END();
-              
+              src32++;
+              texOffset += texStrideBytes;
             }
           }
-#endif
           break;
         case 8:
           {
@@ -1510,7 +1502,7 @@ GR_ENTRY(grTexDownloadMipMapLevelPartial,
            * because the minimum level size is 16 bytes (8x4x1/2)
            * which matches the alignment restriction.
            */
-          /* Same for DXT2,3,4,5 were the minimum level size is
+          /* Same for DXT2,3,4,5 where the minimum level size is
            * 16 bytes (4x4x1) which also matches the alignment
            * restriction.
            */

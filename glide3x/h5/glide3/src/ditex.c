@@ -1622,7 +1622,7 @@ _grTexTextureMemRequired( GrLOD_t small_lod, GrLOD_t large_lod,
     }
     break;
 
-  case GR_TEXFMT_ARGB_CMP_DXT1: /* XXX check this! */
+  case GR_TEXFMT_ARGB_CMP_DXT1:
   case GR_TEXFMT_ARGB_CMP_DXT2:
   case GR_TEXFMT_ARGB_CMP_DXT3:
   case GR_TEXFMT_ARGB_CMP_DXT4:
@@ -1731,7 +1731,7 @@ _grTexCalcBaseAddress( FxU32 start, GrLOD_t large_lod,
     }
     break;
 
-  case GR_TEXFMT_ARGB_CMP_DXT1: /* XXX check this! */
+  case GR_TEXFMT_ARGB_CMP_DXT1:
   case GR_TEXFMT_ARGB_CMP_DXT2:
   case GR_TEXFMT_ARGB_CMP_DXT3:
   case GR_TEXFMT_ARGB_CMP_DXT4:
