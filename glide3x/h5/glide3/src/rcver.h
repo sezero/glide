@@ -21,14 +21,14 @@
 **
 */
 
+#include "fxbldno.h"
 
 #define MANVERSION              3
 #define MANREVISION             10
 #define MINVERSION              00
+//#define BUILD_NUMBER            3001 /* hmm, must be at least 674 for the 3dfx OpenGL ICD to work correctly */
 
-#define BUILD_NUMBER            3001 /* hmm, must be at least 674 for the 3dfx OpenGL ICD to work correctly */
-
-#define VERSIONSTR "3.10.00.3001"
+#define VERSIONSTR "3.10.00." BUILD_NUMBER_STR
 #define CONTACTSTR "The Glide Open Source Project http://glide.sourceforge.net/"
 
 #if defined(__WIN32__)
