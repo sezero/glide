@@ -27,3 +27,4 @@
 #
 SUBDIRS=make
 
+CLEANFILES=config.h stamp-h

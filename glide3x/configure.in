@@ -227,10 +227,12 @@ dnl
 AC_OUTPUT(build.3dfx
           makefile.autoconf:makefile.autoconf.in:swlibs/include/make/makefile.autoconf.bottom
           cvg/makefile.autoconf:cvg/makefile.autoconf.in:swlibs/include/make/makefile.autoconf.bottom
+          cvg/incsrc/makefile.autoconf:cvg/incsrc/makefile.autoconf.in:swlibs/include/make/makefile.autoconf.bottom
           cvg/init/makefile.autoconf:cvg/init/makefile.autoconf.in:swlibs/include/make/makefile.autoconf.bottom
           cvg/glide3/makefile.autoconf:cvg/glide3/makefile.autoconf.in:swlibs/include/make/makefile.autoconf.bottom
           cvg/glide3/src/makefile.autoconf:cvg/glide3/src/makefile.autoconf.in:swlibs/include/make/makefile.autoconf.bottom
           h3/makefile.autoconf:h3/makefile.autoconf.in:swlibs/include/make/makefile.autoconf.bottom
+          h3/incsrc/makefile.autoconf:h3/incsrc/makefile.autoconf.in:swlibs/include/make/makefile.autoconf.bottom
           h3/minihwc/makefile.autoconf:h3/minihwc/makefile.autoconf.in:swlibs/include/make/makefile.autoconf.bottom
           h3/glide3/makefile.autoconf:h3/glide3/makefile.autoconf.in:swlibs/include/make/makefile.autoconf.bottom
           h3/glide3/src/makefile.autoconf:h3/glide3/src/makefile.autoconf.in:swlibs/include/make/makefile.autoconf.bottom

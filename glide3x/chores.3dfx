@@ -141,7 +141,7 @@ if [ "$DO_CLEAN" = YES ] ; then
     # Remove detritus.
     #
     echo -n 'Removing detritus...'
-    find . '(' -name config.log -o -name aclocal.m4 -o -name configure -o -name '*~' -o -name '#*#' -o -name makefile.autoconf.in -o -name xx -o -name yy -o -name zz ')' -a -exec $rm {} \;
+    find . '(' -name config.cache -o -name config.status -o -name build.3dfx -o -name config.h -o -name stamp-h -name config.log -o -name aclocal.m4 -o -name configure -o -name '*~' -o -name '#*#' -o -name makefile.autoconf.in -o -name xx -o -name yy -o -name zz ')' -a -exec $rm {} \;
     echo 'Done'
 fi
 if [ "$DO_GENERATE" = YES ] ; then

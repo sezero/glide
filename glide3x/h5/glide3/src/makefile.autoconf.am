@@ -209,6 +209,8 @@ WHOLE_LIBS = $(top_builddir)/swlibs/fxmisc/libfxmisc.la \
              $(top_builddir)/@FX_GLIDE_HW@/minihwc/libminihwc.la
 LINK_LIBS  = -L/usr/X11R6/lib -lX11 -lXext -lXxf86dga -lXxf86vm -lm
 
+CLEANFILES = fxinline.h fxgasm.h
+
 noinst_PROGRAMS        = fxgasm
 include_HEADERS        = g3ext.h glide.h glideutl.h glidesys.h
 

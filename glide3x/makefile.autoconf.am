@@ -62,6 +62,7 @@
 #   directory.
 #
 SUBDIRS=swlibs @FX_GLIDE_HW@
+CLEANFILES="World.log"
 
 noinst_SCRIPTS       = chores.3dfx
 noinst_DATA          = glide_license.txt
