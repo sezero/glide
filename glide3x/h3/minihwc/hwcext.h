@@ -104,7 +104,14 @@ extern void D3notify(void);
 #define HWCEXT_MAX_COLORBUFFERS         0x3
 
 /* The HWC escape */
-#define EXT_HWC                         0xfd3
+#define EXT_HWC                         0x3df3
+#define EXT_HWC_OLD                     0xfd3
+/* KoolSmoky - Microsoft reserves the range 0 to 0x10000 for its escape codes.
+ * Third-party vendors are free to choose escape codes for their own use above
+ * this range. previous values were illegal and disabled glide from functioning
+ * under winxp.
+ */
+#define EXT_HWC_WXP                     0x13df3
 
 /********************************************************************
 **  Here's the protocol:

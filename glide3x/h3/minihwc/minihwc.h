@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/11/24 21:45:07  joseph
+** Initial checkin for SourceForge
+**
 ** 
 ** 7     6/24/99 12:45a Stb_mmcclure
 ** Modifications to fix PRS 6627. Added hwcUnmapMemory9x for revised 9x
@@ -374,6 +377,8 @@ typedef struct hwcBoardInfo_s {
     h3Mem,                      /* Megs of RAM on board */
     boardNum,                   /* Board ID for hwc */
     deviceNum;                  /* Device ID for PCILib */
+  FxU32
+    hwcEscape;
   hwcPCIInfo
     pciInfo;
   hwcLinearInfo

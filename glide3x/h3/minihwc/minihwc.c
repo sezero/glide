@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.6.7  2004/10/05 14:47:16  dborca
+** conditional compilation a bit more sane
+**
 ** Revision 1.1.1.1.6.6  2004/10/04 09:22:44  dborca
 ** OpenWatcom support
 **
@@ -661,6 +664,7 @@ EnumDisplayMonitors_func( HDC             hdc,
 typedef struct {
   HDC dc;
   HMONITOR mon;
+  DWORD escape;
 } DevEnumRec;
 static int num_monitor = 0;
 
@@ -670,6 +674,7 @@ extern FxI32 _cpu_detect_asm(void);
 static BOOL CALLBACK 
 monitorEnum( HMONITOR handle, HDC dc, LPRECT rect, LPARAM param ) 
 {
+  DWORD escape;
   BOOL rv = TRUE;
   hwcExtRequest_t
     ctxReq;
@@ -679,7 +684,14 @@ monitorEnum( HMONITOR handle, HDC dc, LPRECT rect, LPARAM param )
   ctxReq.which = HWCEXT_GETDEVICECONFIG;
 
   GDBG_INFO(80, "monitorEnum:  ExtEscape:HWCEXT_GETDEVICECONFIG\n");
-  if (  ExtEscape(dc, EXT_HWC, sizeof(ctxReq), (LPSTR) &ctxReq, sizeof(ctxRes), (LPSTR) &ctxRes) ) {
+  rv = ExtEscape(dc, escape = EXT_HWC, sizeof(ctxReq), (LPSTR) &ctxReq, sizeof(ctxRes), (LPSTR) &ctxRes);
+  if (!rv) {
+     rv = ExtEscape(dc, escape = EXT_HWC_OLD, sizeof(ctxReq), (LPSTR) &ctxReq, sizeof(ctxRes), (LPSTR) &ctxRes);
+     if (!rv) {
+        rv = ExtEscape(dc, escape = EXT_HWC_WXP, sizeof(ctxReq), (LPSTR) &ctxReq, sizeof(ctxRes), (LPSTR) &ctxRes);
+     }
+  }
+  if ( rv ) {
     if ( ctxRes.optData.deviceConfigRes.vendorID == 0x121a ) {
       DevEnumRec* 
         data = (DevEnumRec*)param;
@@ -735,6 +747,7 @@ monitorEnum( HMONITOR handle, HDC dc, LPRECT rect, LPARAM param )
 
       data[num_monitor].dc = dc;
       data[num_monitor].mon = handle;      
+      data[num_monitor].escape = escape;
 
       num_monitor++;
       rv = (num_monitor < HWC_MAX_BOARDS);
@@ -750,6 +763,7 @@ monitorEnum( HMONITOR handle, HDC dc, LPRECT rect, LPARAM param )
 static BOOL CALLBACK 
 displayMonitor( HMONITOR handle, HDC dc, LPRECT rect, LPARAM param ) 
 {
+  DWORD escape;
   BOOL rv = TRUE;
   hwcExtRequest_t
     ctxReq;
@@ -759,7 +773,14 @@ displayMonitor( HMONITOR handle, HDC dc, LPRECT rect, LPARAM param )
   ctxReq.which = HWCEXT_GETDEVICECONFIG;
 
   GDBG_INFO(80, "displayMonitor:  ExtEscape:HWCEXT_GETDEVICECONFIG\n");
-  if (  ExtEscape(dc, EXT_HWC, sizeof(ctxReq), (LPSTR) &ctxReq, sizeof(ctxRes), (LPSTR) &ctxRes) ) {
+  rv = ExtEscape(dc, escape = EXT_HWC, sizeof(ctxReq), (LPSTR) &ctxReq, sizeof(ctxRes), (LPSTR) &ctxRes);
+  if (!rv) {
+     rv = ExtEscape(dc, escape = EXT_HWC_OLD, sizeof(ctxReq), (LPSTR) &ctxReq, sizeof(ctxRes), (LPSTR) &ctxRes);
+     if (!rv) {
+        rv = ExtEscape(dc, escape = EXT_HWC_WXP, sizeof(ctxReq), (LPSTR) &ctxReq, sizeof(ctxRes), (LPSTR) &ctxRes);
+     }
+  }
+  if ( rv ) {
     if ( ctxRes.optData.deviceConfigRes.vendorID == 0x121a ) {
       DevEnumRec*
         data   = (DevEnumRec*) param;
@@ -773,9 +794,11 @@ displayMonitor( HMONITOR handle, HDC dc, LPRECT rect, LPARAM param )
         if ((data[i].dc == dc) && (data[i].mon == handle)) {
           data[i].dc = data[0].dc;
           data[i].mon = data[0].mon;
+          data[i].escape = data[0].escape;
 
           data[0].dc = dc;
           data[0].mon = handle;
+          data[0].escape = escape;
 
           break;
         }
@@ -854,6 +877,8 @@ hwcInit(FxU32 vID, FxU32 dID)
         hdc = data[monitor].dc;
       HMONITOR
         hmon = data[monitor].mon;
+      DWORD
+        escape = data[monitor].escape;
       int 
         status;
 
@@ -863,7 +888,7 @@ hwcInit(FxU32 vID, FxU32 dID)
       ctxReq.optData.allocContextReq.appType = HWCEXT_ABAPPTYPE_FSEM;
       
       GDBG_INFO(80, FN_NAME ":  ExtEscape:HWCEXT_ALLOCCONTEXT\n");
-      status = ExtEscape(hdc, EXT_HWC, 
+      status = ExtEscape(hdc, escape,
                          sizeof(ctxReq), (LPSTR) &ctxReq,
                          sizeof(ctxRes), (LPSTR) &ctxRes); 
       
@@ -872,11 +897,12 @@ hwcInit(FxU32 vID, FxU32 dID)
       hInfo.boardInfo[monitor].hdc          = hdc;
       hInfo.boardInfo[monitor].hMon         = hmon;
       hInfo.boardInfo[monitor].extContextID = ctxRes.optData.allocContextRes.contextID;
+      hInfo.boardInfo[monitor].hwcEscape    = escape;
       
       ctxReq.which = HWCEXT_GETDEVICECONFIG;
 
       GDBG_INFO(80, FN_NAME ":  ExtEscape:HWCEXT_GETDEVICECONFIG.\n");
-      status = ExtEscape(hdc, EXT_HWC, 
+      status = ExtEscape(hdc, escape,
                          sizeof(ctxReq), (void *) &ctxReq,
                          sizeof(ctxRes), (void *) &ctxRes); 
       
@@ -1051,11 +1077,11 @@ hwcMapBoard(hwcBoardInfo *bInfo, FxU32 bAddrMask)
     GDBG_INFO(80, FN_NAME ":  procHandle:  0x%x\n", bInfo->procHandle);
 
     req.which = HWCEXT_GETLINEARADDR;
-    req.optData.linearAddrReq.devNum = 0;
+    req.optData.linearAddrReq.devNum = bInfo->boardNum;
     req.optData.linearAddrReq.pHandle = bInfo->procHandle;
 
     GDBG_INFO(80, FN_NAME ":  ExtEscape:HWCEXT_GETLINEARADDR\n");
-    ExtEscape((HDC) bInfo->hdc, EXT_HWC, sizeof(req), (void *) &req,
+    ExtEscape((HDC) bInfo->hdc, bInfo->hwcEscape, sizeof(req), (void *) &req,
       sizeof(res), (void *) &res);
 
     if (res.resStatus != 1) {
@@ -1690,7 +1716,7 @@ _hwcLinear2HWAddr(const FxU32 linearAddr,
     /* query for tile watermark & compute tile characteristics */
     req.which = HWCEXT_GETDEVICECONFIG;
     GDBG_INFO(80, FN_NAME ":  ExtEscape:HWCEXT_GETDEVICECONFIG\n");
-    retVal = (ExtEscape(bInfo->hdc, EXT_HWC, 
+    retVal = (ExtEscape(bInfo->hdc, bInfo->hwcEscape,
                         sizeof(req), (LPSTR)&req, 
                         sizeof(res), (LPSTR)&res) > 0);
     if (!retVal) {
@@ -1850,7 +1876,7 @@ hwcGetSurfaceInfo(const hwcBoardInfo* bInfo,
       req.optData.mapInfoReq.remapAddr = lpSurface;
       
       GDBG_INFO(80, FN_NAME ":  ExtEscape:HWCEXT_LINEAR_MAP_OFFSET\n");
-      retVal = (ExtEscape(bInfo->hdc, EXT_HWC,
+      retVal = (ExtEscape(bInfo->hdc, bInfo->hwcEscape,
                           sizeof(req), (LPCSTR)&req,
                           sizeof(res), (LPSTR)&res) > 0);
       if (!retVal) {
@@ -1897,7 +1923,7 @@ hwcAllocWinContext(hwcBoardInfo* bInfo)
   ctxReq.optData.allocContextReq.appType = HWCEXT_ABAPPTYPE_WIND;
   
   GDBG_INFO(80, FN_NAME ":  ExtEscape:HWCEXT_ALLOCCONTEXT\n");
-  if (ExtEscape(bInfo->hdc, EXT_HWC, 
+  if (ExtEscape(bInfo->hdc, bInfo->hwcEscape,
                 sizeof(ctxReq), (LPSTR)&ctxReq,
                 sizeof(ctxRes), (LPSTR)&ctxRes) < 1) {
     strcpy(errorString, FN_NAME": HWCEXT_ALLOCCONTEXT failed");
@@ -1933,7 +1959,7 @@ hwcFreeWinContext(hwcBoardInfo* bInfo,
     req.optData.releaseContextReq.contextID = winContextId;
     
     GDBG_INFO(80, FN_NAME ":  ExtEscape:HWCEXT_RELEASECONTEXT\n");
-    return (ExtEscape(bInfo->hdc, EXT_HWC, 
+    return (ExtEscape(bInfo->hdc, bInfo->hwcEscape,
                       sizeof(req), (void*)&req,
                       sizeof(res), (void*)&res) > 0);
   }
@@ -2039,7 +2065,7 @@ hwcAllocWinFifo(hwcBoardInfo* bInfo,
     
     req.which = HWCEXT_FIFOINFO;
     GDBG_INFO(80, FN_NAME ":  ExtEscape:HWCEXT_FIFOINFO\n");
-    retVal = (ExtEscape((HDC)bInfo->hdc, EXT_HWC,
+    retVal = (ExtEscape((HDC)bInfo->hdc, bInfo->hwcEscape,
                         sizeof(req), (void*)&req,
                         sizeof(res), (void*)&res) > 0);
     if (!retVal) {
@@ -2392,7 +2418,7 @@ hwcLockWinFifo(hwcBoardInfo* bInfo,
       /* query for tile watermark & compute tile characteristics */
       req.which = HWCEXT_GETDEVICECONFIG;
       GDBG_INFO(80, FN_NAME ":  ExtEscape:HWCEXT_GETDEVICECONFIG\n");
-      retVal = (ExtEscape((HDC)bInfo->hdc, EXT_HWC, 
+      retVal = (ExtEscape((HDC)bInfo->hdc, bInfo->hwcEscape,
                           sizeof(req), (LPSTR)&req, 
                           sizeof(res), (LPSTR)&res) > 0);
       if (!retVal) {
@@ -2422,7 +2448,7 @@ hwcLockWinFifo(hwcBoardInfo* bInfo,
           req.optData.mapInfoReq.remapAddr = remapAddrList[i].remapAddr;
           
           GDBG_INFO(80, FN_NAME ":  ExtEscape:HWCEXT_LINEAR_MAP_OFFSET\n");
-          retVal = (ExtEscape((HDC)bInfo->hdc, EXT_HWC,
+          retVal = (ExtEscape((HDC)bInfo->hdc, bInfo->hwcEscape,
                               sizeof(req), (LPCSTR)&req,
                               sizeof(res), (LPSTR)&res) > 0);
           if (!retVal) {
@@ -2570,7 +2596,7 @@ hwcExecuteWinFifo(hwcBoardInfo*     bInfo,
   
   GDBG_INFO(80, FN_NAME ":  ExtEscape:HWCEXT_EXECUTEFIFO\n");
 
-  return ( ExtEscape( (HDC)bInfo->hdc, EXT_HWC, 
+  return ( ExtEscape( (HDC)bInfo->hdc, bInfo->hwcEscape,
                       sizeof( req ), (void*)&req, 
                       sizeof( res ), (void*)&res )  > 0 );
 
@@ -3163,7 +3189,7 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
   
   
   GDBG_INFO(80, FN_NAME ":  ExtEscape:HWCEXT_HWCSETEXCLUSIVE\n");
-  ExtEscape((HDC) bInfo->hdc, EXT_HWC, sizeof(ctxReq), (void *) &ctxReq,
+  ExtEscape((HDC) bInfo->hdc, bInfo->hwcEscape, sizeof(ctxReq), (void *) &ctxReq,
             sizeof(ctxRes), (void *) &ctxRes);
   
   if (ctxRes.resStatus != 1) {
@@ -3217,7 +3243,7 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
     req.optData.vidTimingReq.vidTiming = (void *) vidTiming;
     
     GDBG_INFO(80, FN_NAME ":  ExtEscape:HWCEXT_VIDTIMING\n");
-    ExtEscape((HDC) bInfo->hdc, EXT_HWC, sizeof(req), (void *) &req,
+    ExtEscape((HDC) bInfo->hdc, bInfo->hwcEscape, sizeof(req), (void *) &req,
       sizeof(res), (void *) &res);
 
     /* Ignore failure */
@@ -3492,7 +3518,7 @@ hwcRestoreVideo(hwcBoardInfo *bInfo)
     req.which = HWCEXT_HWCRLSEXCLUSIVE;
     req.optData.linearAddrReq.devNum = 0;
     GDBG_INFO(90, FN_NAME ":  ExtEscape:HWCEXT_HWCRLSEXCLUSIVE\n");
-    ExtEscape((HDC) bInfo->hdc, EXT_HWC, sizeof(req), (void *) &req,
+    ExtEscape((HDC) bInfo->hdc, bInfo->hwcEscape, sizeof(req), (void *) &req,
       sizeof(res), (void *) &res);
 
     GDBG_INFO(80, "%s:  sizeof(res) = %d\n", FN_NAME, sizeof(res));
@@ -3749,7 +3775,7 @@ hwcInitAGPFifo(hwcBoardInfo *bInfo, FxBool enableHoleCounting)
   req.which = HWCEXT_GETAGPINFO;
 
   GDBG_INFO(80, FN_NAME ":  ExtEscape:HWCEXT_GETAGPINFO\n");
-  ExtEscape((HDC) bInfo->hdc, EXT_HWC, sizeof(req), (void *) &req,
+  ExtEscape((HDC) bInfo->hdc, bInfo->hwcEscape, sizeof(req), (void *) &req,
     sizeof(res), (void *) &res);
 
   /* If we fail, bail and go to memory fifo */
@@ -4194,7 +4220,7 @@ hwcQueryContext(hwcBoardInfo *bInfo)
     GDBG_INFO(80, FN_NAME ":  ExtEscape:HWCEXT_QUERYCONTEXT\n");
     
     ctxReq.which = HWCEXT_QUERYCONTEXT;
-    ExtEscape((HDC)bInfo->hdc, EXT_HWC, 
+    ExtEscape((HDC)bInfo->hdc, bInfo->hwcEscape,
                         sizeof(ctxReq), (LPSTR) &ctxReq,
                         sizeof(ctxRes), (LPSTR) &ctxRes);
 
@@ -4254,7 +4280,7 @@ hwcShareContextData(hwcBoardInfo *bInfo, FxU32 **data)
     
     GDBG_INFO(80, FN_NAME ":  Calling ExtEscape(HWCEXT_CONTEXT_DWORD_NT)\n");  
 
-    ExtEscape((HDC) bInfo->hdc, EXT_HWC, sizeof(ctxReq), (void *) &ctxReq,
+    ExtEscape((HDC) bInfo->hdc, bInfo->hwcEscape, sizeof(ctxReq), (void *) &ctxReq,
               sizeof(ctxRes), (void *) &ctxRes);
     
     
@@ -4281,7 +4307,7 @@ hwcShareContextData(hwcBoardInfo *bInfo, FxU32 **data)
 	/*ctxReq.optData.shareContextDWORDReq.contextDWORD =
       (FxU32) &bInfo->lostContextDWORD;*/
     
-    retVal = ExtEscape((HDC)bInfo->hdc, EXT_HWC, 
+    retVal = ExtEscape((HDC)bInfo->hdc, bInfo->hwcEscape,
                        sizeof(ctxReq), (LPSTR) &ctxReq,
                        sizeof(ctxRes), (LPSTR) &ctxRes);
     
@@ -4321,7 +4347,7 @@ hwcUnmapMemory9x(hwcBoardInfo *bInfo)
   */
   ctxReq.optData.unmapMemoryReq.procHandle = bInfo->contextHandle;
         
-  ExtEscape((HDC)bInfo->hdc, EXT_HWC, 
+  ExtEscape((HDC)bInfo->hdc, bInfo->hwcEscape,
             sizeof(ctxReq), (LPSTR) &ctxReq,
             sizeof(ctxRes), (LPSTR) &ctxRes);
   
@@ -4344,7 +4370,7 @@ hwcUnmapMemory()
       */
       ctxReq.optData.unmapMemoryReq.procHandle = GetCurrentProcessId();
       
-	  ExtEscape((HDC)curBI->hdc, EXT_HWC, 
+	  ExtEscape((HDC)curBI->hdc, curBI->hwcEscape,
                      sizeof(ctxReq), (LPSTR) &ctxReq,
                             sizeof(ctxRes), (LPSTR) &ctxRes);
     }
