@@ -266,7 +266,7 @@ typedef FxU32 GrLock_t;
 #define GR_LFB_IDLE       0x00
 #define GR_LFB_NOIDLE     0x10
 
-#define GR_LFB_WRITE_ONLY_EXPLICIT_EXT	0x02 // explicitly not allow reading from the lfb pointer
+#define GR_LFB_WRITE_ONLY_EXPLICIT_EXT	0x02 /* explicitly not allow reading from the lfb pointer */
 
 typedef FxI32 GrLfbBypassMode_t;
 #define GR_LFBBYPASS_DISABLE    0x0

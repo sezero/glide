@@ -41,8 +41,9 @@
 #define DEFAULT_GRXCLK_SPEED H3_GRXCLK_SPEED
 #endif
 
-FxU32                           // return # of MB of memory
-h3InitGetMemSize(FxU32 regBase);// init register base
+FxU32                             // return # of MB of memory
+h3InitGetMemSize(FxU32 regBase,   // init register base
+                 FxBool isNapalm);// Napalm
 
 FxU32                           // return # of MB of memory
 h3InitSgram(FxU32 regBase,      // init iegister base

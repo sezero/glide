@@ -376,55 +376,60 @@ Information:
 
 Return:         FxU32   The size of memory in MBs.
 ----------------------------------------------------------------------*/
-FxU32
-h3InitGetMemSize(FxU32 regBase)	// init io-register base
+FxU32 h3InitGetMemSize (FxU32 regBase, FxBool isNapalm)
 {
-   FxU32
-	memType,		// SGRAM or SDRAM
-	partSize,		// size of SGRAM chips in Mbits
-	memSize,		// total size of memory in MBytes
-	nChips,			// # of chips of SDRAM/SGRAM
-	dramInit1_strap,
-	dramInit0_strap;
-	
-  // determine memory type: SDRAM or SGRAM
-  memType = MEM_TYPE_SGRAM;
-  dramInit1_strap = IGET32(dramInit1);
-  dramInit1_strap &= SST_MCTL_TYPE_SDRAM;
-  if ( dramInit1_strap & SST_MCTL_TYPE_SDRAM )
-    memType = MEM_TYPE_SDRAM;
+ FxU32 partSize,	// size of SGRAM chips in Mbits
+       nChips,		// # of chips of SDRAM/SGRAM
+       dramInit0_strap;
 
-  // determine memory size from strapping pins (dramInit0 and dramInit1)
-  dramInit0_strap = IGET32(dramInit0);
-  dramInit0_strap &= SST_SGRAM_TYPE | SST_SGRAM_NUM_CHIPSETS;
+ /* Determine memory size from strapping pins (dramInit0). */
 
-  if ( memType == MEM_TYPE_SDRAM ) {
-    nChips = 8;
-    partSize = 16;
-    memSize = 16;
-    
-    // avoid minor performance hit when using SDRAM
-    dramInit0_strap &= ~SST_SGRAM_NUM_CHIPSETS;
+ dramInit0_strap = IGET32(dramInit0);
 
-  } else {
+#ifdef FX_GLIDE_NAPALM
+ if (isNapalm) {
+    // Napalm memory sizing
+
+    dramInit0_strap &= SST_H5_SGRAM_TYPE | SST_SGRAM_NUM_CHIPSETS;
+
     nChips = ((dramInit0_strap & SST_SGRAM_NUM_CHIPSETS) == 0) ? 4 : 8;
-    
-    if ( (dramInit0_strap & SST_SGRAM_TYPE) == SST_SGRAM_TYPE_8MBIT )  {
-      partSize = 8;
-    } else if ( (dramInit0_strap & SST_SGRAM_TYPE) == SST_SGRAM_TYPE_16MBIT) {
-      partSize = 16;
-    } else {
-      MESSAGE("h3InitGetMemSize: invalid sgram type = 0x%x",
-              (dramInit0_strap & SST_SGRAM_TYPE) << SST_SGRAM_TYPE_SHIFT );
-      return 0;
+
+    switch (dramInit0_strap & SST_H5_SGRAM_TYPE) {
+           case SST_SGRAM_TYPE_8MBIT:   partSize = 8;    break;
+           case SST_SGRAM_TYPE_16MBIT:  partSize = 16;   break;
+           case SST_SGRAM_TYPE_32MBIT:  partSize = 32;   break;
+           case SST_SGRAM_TYPE_64MBIT:  partSize = 64;   break;
+           case SST_SGRAM_TYPE_128MBIT: partSize = 128;  break;
+           default: return 0;  // invalid sgram type!
     }
-  }
+ } else
+#endif /* FX_GLIDE_NAPALM */
 
-  memSize = (nChips * partSize) / 8;      // in MBytes
+ {
+    // Banshee and Avenger memory sizing
 
+    // determine memory type: SDRAM or SGRAM
+    FxU32 dramInit1_strap = IGET32(dramInit1);
 
-   return (memSize);
+    if (dramInit1_strap & SST_MCTL_TYPE_SDRAM) {
+       nChips = 8;
+       partSize = 16;
+    } else {
+       dramInit0_strap &= SST_H4_SGRAM_TYPE | SST_SGRAM_NUM_CHIPSETS;
 
+       nChips = ((dramInit0_strap & SST_SGRAM_NUM_CHIPSETS) == 0) ? 4 : 8;
+
+       switch (dramInit0_strap & SST_H4_SGRAM_TYPE) {
+              case SST_SGRAM_TYPE_8MBIT:   partSize = 8;    break;
+              case SST_SGRAM_TYPE_16MBIT:  partSize = 16;   break;
+              default: return 0;  // invalid sgram type!
+       }
+    }
+ }
+
+ /* Compute memory size in megabytes. */
+
+ return (nChips * partSize) / 8;
 }
 
 
@@ -792,26 +797,25 @@ Information:
 Return:         (FxU16 *)   Ptr to the entry in the mode table,
                             NULL if failure.
 ----------------------------------------------------------------------*/
-FxU16 *
-h3InitFindVideoMode(FxU32 xRes,
-                    FxU32 yRes,
-                    FxU32 refresh)
+FxU16 *h3InitFindVideoMode (FxU32 xRes, FxU32 yRes, FxU32 refresh)
 {
-    int i = 0;
+ int i = 0;
+ int best = -1;
+ FxU32 error = -1;
 
-    while (mode_table[i][0] != 0)
-    {
-        if ((mode_table[i][0] == xRes) &&
-            (mode_table[i][1] == yRes) &&
-            (mode_table[i][2] == refresh))
-        {
-            return &mode_table[i][3];
-        }
+ while (mode_table[i][0] != 0) {
+       if ((mode_table[i][0] == xRes) && (mode_table[i][1] == yRes)) {
+          FxU32 d = abs(mode_table[i][2] - refresh);
+          if (error > d) {
+             error = d;
+             best = i;
+          }
+       }
 
-        i += 1;
-    }
+       i++;
+ }
 
-    return NULL;
+ return (best == -1) ? NULL : (&mode_table[best][3]);
 }
 
 

@@ -21,6 +21,9 @@
 /*  $Header$ */
 /*  $Revision$ */
 /*  $Log$
+/*  Revision 1.2.8.1  2003/05/05 07:12:47  dborca
+/*  no message
+/*
 /*  Revision 1.2  2000/02/15 22:35:59  joseph
 /*  Changes to support FreeBSD (patch submitted by Doug Rabson)
 /*
@@ -355,8 +358,7 @@ GLOBL(_trisetup_clip_coor_thunk)
 
 /*  If debugging make sure that we're in clip coordinates */
 #ifdef GLIDE_DEBUG
-	mov CoordinateSpace(%gc) , %eax
-	test $1 , %eax
+	testl $1, CoordinateSpace(%gc)
 	jnz L_trisetup_clip_coor_thunk__clipSpace
 	xor %eax , %eax
 	mov %eax , (%eax)
@@ -365,6 +367,7 @@ L_trisetup_clip_coor_thunk__clipSpace:
 
 	pushl $1	/*  mode = grDrawVertexArray */
 	call %procPtr	/*  (*gc->curArchProcs.drawTrianglesProc)(grDrawVertexArray, 3, vPtr) */
+	add $12, %esp
 
 	ret	/*  pop 3 dwords (vertex addrs) and return     */
 L_END__trisetup_clip_coor_thunk:

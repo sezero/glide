@@ -2136,6 +2136,9 @@ hwcInit(FxU32 vID, FxU32 dID)
               hwcReadConfigRegister(&hInfo.boardInfo[i], chip, offsetof(SstPCIConfigRegs, ioBaseAddr));
           }
         }        
+
+        // Save realNumChips
+        hInfo.boardInfo[i].pciInfo.realNumChips = hInfo.boardInfo[i].pciInfo.numChips;
             
         if(GETENV("FX_GLIDE_NUM_CHIPS", hInfo.boardInfo[monitor].RegPath)) {
           FxU32 numChips;
@@ -2515,14 +2518,16 @@ hwcInitRegisters(hwcBoardInfo *bInfo)
     /* read back the memory size, since we 
      * don't know it under DOS  (see hwcInit) - dwj 
      */
-    bInfo->h3Mem = h3InitGetMemSize(bInfo->regInfo.ioPortBase);
+    bInfo->h3Mem = h3InitGetMemSize(bInfo->regInfo.ioPortBase, IS_NAPALM(bInfo->pciInfo.deviceID));
     /* Ugh, lame.  We can only report back 16MB to Glide since we can't
      * really map in all 64MB necessary for LFB accesses. */
+#if 0 /* [dBorca] who sez? */
     if(IS_NAPALM(bInfo->pciInfo.deviceID)) {
         if(bInfo->h3Mem > 16) {
             bInfo->h3Mem = 16;
         }
     }
+#endif
 
     h3InitVga(bInfo->regInfo.ioPortBase, FXTRUE); 
   }
@@ -4683,7 +4688,7 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
     0,                          /* Filter mode */
     FXTRUE,                     /* tiled */
     pixFmt,                     /* pixel format of OS */
-    FXTRUE,                    /* bypass clut for OS? */
+    FXFALSE,                    /* bypass clut for OS? */
     0,                          /* 0=lower 256 CLUT entries, 1=upper 256 */
     bInfo->buffInfo.colBuffStart0[0],/* board address of beginning of OS */
     stride);                    /* distance between scanlines of the OS, in
@@ -7179,10 +7184,61 @@ static void hwcCopyBuffer8888Flipped(hwcBoardInfo *bInfo, FxU16 *source, int w, 
   FxU8 *endline = dst+w*4;
   w*= 4;
   
-#ifndef __DJGPP__ /* [dBorca] should have this done, but it's 4:00am */
   if (bInfo->CPUInfo.os_support & _CPU_FEATURE_MMX)
     {
       /* MMX Optimized Loop */
+#ifdef __DJGPP__
+      __asm("\n\
+	emms /* mmx */					\n\
+							\n\
+	.p2align 3,,7					\n\
+      0:						\n\
+	/* Read Pixel, Reduce to 32 bits */		\n\
+	movq	(%%eax), %%mm0				\n\
+	packuswb %%mm0, %%mm0				\n\
+	movd	%%mm0, %%ebx				\n\
+							\n\
+	/* Gamma Correct Blue */			\n\
+	mov	%%ebx, %%ecx				\n\
+	and	$0xff, %%ecx				\n\
+	mov	_gss_blue(, %%ecx, 4), %%bl		\n\
+							\n\
+	/* Gamma Correct Green */			\n\
+	mov	%%ebx, %%ecx				\n\
+	shr	$8, %%ecx				\n\
+	and	$0xff, %%ecx				\n\
+	mov	_gss_green(, %%ecx, 4), %%bh		\n\
+							\n\
+	/* Gamma Correct Red */				\n\
+	mov	%%ebx, %%ecx				\n\
+	shr	$16, %%ecx				\n\
+	and	$0xff, %%ecx				\n\
+	mov	_gss_red_shifted(, %%ecx, 4), %%ecx	\n\
+	and	$0xFF00FFFF, %%ebx			\n\
+	or	%%ecx, %%ebx				\n\
+							\n\
+	/* Write */					\n\
+	mov	%%ebx, (%%edx)				\n\
+							\n\
+	/* Next Pixel */				\n\
+	add	$8, %%eax				\n\
+	add	$4, %%edx				\n\
+	cmp	%%edi, %%edx	/* if (dst!=endline) */	\n\
+	jne	0b		/* goto loop_begin; */	\n\
+							\n\
+	/* Next Scanline */				\n\
+	mov	%4, %%ebx				\n\
+	add	%%ebx, %%edi	/* endline += w; */	\n\
+	shl	$2, %%ebx				\n\
+	sub	%%ebx, %%eax	/* src -= w*2; */	\n\
+	cmp	%%esi, %%edx	/* if (dst!=end) */	\n\
+	jne	0b		/* goto loop_begin; */	\n\
+							\n\
+	emms"
+      :
+      :"a"(src), "d"(dst), "D"(endline), "S"(end), "m"(w)
+      :"%ebx", "%ecx");
+#else
       __asm
         {
 		  emms /* mmx */
@@ -7237,9 +7293,9 @@ static void hwcCopyBuffer8888Flipped(hwcBoardInfo *bInfo, FxU16 *source, int w, 
 	  emms /* mmx */
 			
         }
+#endif
     }
   else
-#endif
     {
       while (dst<end)
         {
@@ -7263,10 +7319,63 @@ static void hwcCopyBuffer8888FlippedShifted(hwcBoardInfo *bInfo, FxU16 *source, 
   FxU8 *endline = dst+w*4;
   w *= 4;
   
-#ifndef __DJGPP__ /* [dBorca] should have this done, but it's 4:00am */
   if (bInfo->CPUInfo.os_support & _CPU_FEATURE_MMX)
     {
       /* MMX Optimized Loop */
+#ifdef __DJGPP__
+      __asm("\n\
+	emms /* mmx */					\n\
+	movd	%5, %%mm6 /* mm6 = aaShift */		\n\
+							\n\
+	.p2align 3,,7					\n\
+      0:						\n\
+	/* Read Pixel, Reduce to 32 bits */		\n\
+	movq	(%%eax), %%mm0				\n\
+	psrlw	%%mm6, %%mm0				\n\
+	packuswb %%mm0, %%mm0				\n\
+	movd	%%mm0, %%ebx				\n\
+							\n\
+	/* Gamma Correct Blue */			\n\
+	mov	%%ebx, %%ecx				\n\
+	and	$0xff, %%ecx				\n\
+	mov	_gss_blue(, %%ecx, 4), %%bl		\n\
+							\n\
+	/* Gamma Correct Green */			\n\
+	mov	%%ebx, %%ecx				\n\
+	shr	$8, %%ecx				\n\
+	and	$0xff, %%ecx				\n\
+	mov	_gss_green(, %%ecx, 4), %%bh		\n\
+							\n\
+	/* Gamma Correct Red */				\n\
+	mov	%%ebx, %%ecx				\n\
+	shr	$16, %%ecx				\n\
+	and	$0xff, %%ecx				\n\
+	mov	_gss_red_shifted(, %%ecx, 4), %%ecx	\n\
+	and	$0xFF00FFFF, %%ebx			\n\
+	or	%%ecx, %%ebx				\n\
+							\n\
+	/* Write */					\n\
+	mov	%%ebx, (%%edx)				\n\
+							\n\
+	/* Next Pixel */				\n\
+	add	$8, %%eax				\n\
+	add	$4, %%edx				\n\
+	cmp	%%edi, %%edx	/* if (dst!=endline) */	\n\
+	jne	0b		/* goto loop_begin; */	\n\
+							\n\
+	/* Next Scanline */				\n\
+	mov	%4, %%ebx				\n\
+	add	%%ebx, %%edi	/* endline += w; */	\n\
+	shl	$2, %%ebx				\n\
+	sub	%%ebx, %%eax	/* src -= w*2; */	\n\
+	cmp	%%esi, %%edx	/* if (dst!=end) */	\n\
+	jne	0b		/* goto loop_begin; */	\n\
+							\n\
+	emms"
+      :
+      :"a"(src), "d"(dst), "D"(endline), "S"(end), "m"(w), "m"(aaShift)
+      :"%ebx", "%ecx");
+#else
       __asm
       {
 	    emms /* mmx */
@@ -7323,9 +7432,9 @@ static void hwcCopyBuffer8888FlippedShifted(hwcBoardInfo *bInfo, FxU16 *source, 
 	emms /* mmx */
 			
       }
+#endif
     }
   else
-#endif
     {
       while (dst<end)
         {
@@ -7358,12 +7467,180 @@ static void hwcCopyBuffer8888FlippedDithered(hwcBoardInfo *bInfo, FxU16 *source,
   val_max = (0xFF << aaShift);
   dither_mask = ~((~0) << aaShift);
   
-#ifndef __DJGPP__ /* [dBorca] should have this done, but it's 4:00am */
   if (bInfo->CPUInfo.os_support & _CPU_FEATURE_MMX)
     {
       FxU32 sse_mmxplus = bInfo->CPUInfo.os_support & (_CPU_FEATURE_MMXPLUS|_CPU_FEATURE_SSE);
 
       /* MMX Optimized Loop */
+#ifdef __DJGPP__
+      __asm("\n\
+	emms /* mmx */						\n\
+								\n\
+	/* mm7 = all ones */					\n\
+	pcmpeqd	%%mm7, %%mm7					\n\
+								\n\
+	/* mm6 = aaShift */					\n\
+	movd	%7, %%mm6					\n\
+								\n\
+	/* mm5 = accumulated error */				\n\
+	pxor	%%mm5, %%mm5					\n\
+								\n\
+	/* mm4 = error_mask */					\n\
+	movd	%5, %%mm4	/* error_mask -> Low word */	\n\
+	punpcklwd %%mm4, %%mm4	/* Rep Low Words -> High Words */\n\
+	punpckldq %%mm4, %%mm4	/* Rep Low Dword -> High Dword */\n\
+								\n\
+        /* mm3 = val_max */					\n\
+	movd	%6, %%mm3	/* val_max -> Low word */	\n\
+	punpcklwd %%mm3, %%mm3	/* Rep Low Words -> High Words */\n\
+	punpckldq %%mm3, %%mm3	/* Rep Low Dword -> High Dword */\n\
+								\n\
+	/* mm2 = min mask */					\n\
+								\n\
+	/* mm1 = masked maximum cols */				\n\
+								\n\
+	/* mm0 = colour */					\n\
+								\n\
+	/* Check to see if we support MMXPlus or SSE */		\n\
+	test	%%ecx, %%ecx					\n\
+	jz	1f						\n\
+								\n\
+	/* SSE/MMX+ Loop */					\n\
+	.p2align 3,,7						\n\
+      0:							\n\
+	/* Read Pixel and add error  */				\n\
+	/* c = *src + er - (*src>>8) */				\n\
+	movq	(%%eax), %%mm0					\n\
+	movq	%%mm0, %%mm1					\n\
+	psrlw	$8, %%mm1					\n\
+	psubsw	%%mm1, %%mm0					\n\
+	paddsw	%%mm5, %%mm0					\n\
+								\n\
+        /* Clamp to max */					\n\
+	/* c = min(c,val_max) */				\n\
+	pminsw	%%mm3, %%mm0					\n\
+								\n\
+	/* Find error */					\n\
+	/* er = c & dither_mask; */				\n\
+	movq	%%mm0, %%mm5	/* er = c */			\n\
+	pand	%%mm4, %%mm5	/* er &= dither_mask */		\n\
+								\n\
+	/* Reduce to 32 bits */					\n\
+	psrlw	%%mm6, %%mm0					\n\
+	packuswb %%mm0, %%mm0					\n\
+	movd	%%mm0, %%ebx					\n\
+								\n\
+	/* Gamma Correct Blue */				\n\
+	mov	%%ebx, %%ecx					\n\
+	and	$0xff, %%ecx					\n\
+	mov	_gss_blue(, %%ecx, 4), %%bl			\n\
+								\n\
+	/* Gamma Correct Green */				\n\
+	mov	%%ebx, %%ecx					\n\
+	shr	$8, %%ecx					\n\
+	and	$0xff, %%ecx					\n\
+	mov	_gss_green(, %%ecx, 4), %%bh			\n\
+								\n\
+	/* Gamma Correct Red */					\n\
+	mov	%%ebx, %%ecx					\n\
+	shr	$16, %%ecx					\n\
+	and	$0xff, %%ecx					\n\
+	mov	_gss_red_shifted(, %%ecx, 4), %%ecx		\n\
+	and	$0xFF00FFFF, %%ebx				\n\
+	or	%%ecx, %%ebx					\n\
+								\n\
+	/* Write */						\n\
+	mov	%%ebx, (%%edx)					\n\
+								\n\
+	/* Next Pixel */					\n\
+	add	$8, %%eax					\n\
+	add	$4, %%edx					\n\
+	cmp	%%edi, %%edx	/* if (dst!=endline) */		\n\
+	jne	0b		/* goto loop_begin; */		\n\
+								\n\
+	/* Next Scanline */					\n\
+	mov	%4, %%ebx					\n\
+	add	%%ebx, %%edi	/* endline += w; */		\n\
+	shl	$2, %%ebx					\n\
+	sub	%%ebx, %%eax	/* src -= w*2; */		\n\
+	cmp	%%esi, %%edx	/* if (dst!=end) */		\n\
+	jne	0b		/* goto loop_begin; */		\n\
+	jmp	2f						\n\
+								\n\
+	/* MMX Optimized Loop */				\n\
+	.p2align 3,,7						\n\
+      1:							\n\
+	/* Read Pixel and add error  */				\n\
+	/* c = *src + er - (*src>>8) */				\n\
+	movq	(%%eax), %%mm0					\n\
+	movq	%%mm0, %%mm1					\n\
+	psrlw	$8, %%mm1					\n\
+	psubsw	%%mm1, %%mm0					\n\
+	paddsw	%%mm5, %%mm0					\n\
+								\n\
+	/* Clamp to max */					\n\
+	/* c = min(c,val_max) */				\n\
+	movq	%%mm3, %%mm2					\n\
+	pcmpgtw	%%mm0, %%mm2	/* Compare col to max. Sets mm2 if clipping req */\n\
+	pand	%%mm2, %%mm0	/* mm0 = masked col vals */	\n\
+	pandn	%%mm7, %%mm2	/* mm2 = (~mm2) & ~0 */		\n\
+	movq	%%mm3, %%mm1	/* mm1 = max vals */		\n\
+	pand	%%mm2, %%mm1	/* mm1 = masked max vals */	\n\
+	por	%%mm1, %%mm0	/* Combine max and cols */	\n\
+								\n\
+	/* Find error */					\n\
+	/* er = c & dither_mask; */				\n\
+	movq	%%mm0, %%mm5	/* er = c */			\n\
+	pand	%%mm4, %%mm5	/* er &= dither_mask */		\n\
+								\n\
+	/* Reduce to 32 bits */					\n\
+	psrlw	%%mm6, %%mm0					\n\
+	packuswb %%mm0, %%mm0					\n\
+	movd	%%mm0, %%ebx					\n\
+								\n\
+	/* Gamma Correct Blue */				\n\
+	mov	%%ebx, %%ecx					\n\
+	and	$0xff, %%ecx					\n\
+	mov	_gss_blue(, %%ecx, 4), %%bl			\n\
+								\n\
+	/* Gamma Correct Green */				\n\
+	mov	%%ebx, %%ecx					\n\
+	shr	$8, %%ecx					\n\
+	and	$0xff, %%ecx					\n\
+	mov	_gss_green(, %%ecx, 4), %%bh			\n\
+								\n\
+	/* Gamma Correct Red */					\n\
+	mov	%%ebx, %%ecx					\n\
+	shr	$16, %%ecx					\n\
+	and	$0xff, %%ecx					\n\
+	mov	_gss_red_shifted(, %%ecx, 4), %%ecx		\n\
+	and	$0xFF00FFFF, %%ebx				\n\
+	or	%%ecx, %%ebx					\n\
+								\n\
+	/* Write */						\n\
+	mov	%%ebx, (%%edx)					\n\
+								\n\
+	/* Next Pixel */					\n\
+	add	$8, %%eax					\n\
+	add	$4, %%edx					\n\
+	cmp	%%edi, %%edx	/* if (dst!=endline) */		\n\
+	jne	1b		/* goto mmx_loop_begin; */	\n\
+								\n\
+	/* Next Scanline */					\n\
+	mov	%4, %%ebx					\n\
+	add	%%ebx, %%edi	/* endline += w; */		\n\
+	shl	$2, %%ebx					\n\
+	sub	%%ebx, %%eax	/* src -= w*2; */		\n\
+	cmp	%%esi, %%edx	/* if (dst!=end) */		\n\
+	jne	1b		/* goto mmx_loop_begin; */	\n\
+								\n\
+      2:							\n\
+								\n\
+	emms /* mmx */"
+      :
+      :"a"(src), "d"(dst), "D"(endline), "S"(end), "m"(w), "m"(dither_mask), "g"(val_max), "m"(aaShift), "c"(sse_mmxplus)
+      :"%ebx");
+#else
       __asm
       {
 	    emms /* mmx */
@@ -7543,9 +7820,9 @@ static void hwcCopyBuffer8888FlippedDithered(hwcBoardInfo *bInfo, FxU16 *source,
 
 	    emms /* mmx */
       }
+#endif
     }
   else
-#endif
     {
       while (dst<end)
         {
@@ -7792,10 +8069,60 @@ static void hwcCopyBuffer565Shifted(hwcBoardInfo *bInfo, FxU16 *src, int w, int 
   gshift = 3 - aaShift;
   rshift = 8 - aaShift;
 
-#ifndef __DJGPP__ /* [dBorca] fixme :D */
+
   if (bInfo->CPUInfo.os_support & _CPU_FEATURE_MMX)
   {
 	  /* MMX Optimized Loop */
+#ifdef __DJGPP__
+      __asm("\n\
+	emms /* mmx */					\n\
+							\n\
+	/* mm6 = aaShift */				\n\
+	movd	%6, %%mm6				\n\
+							\n\
+	/* mm5 = mask */				\n\
+	pushl	$0x0000F800;	/* a r */		\n\
+	pushl	$0xFC00F800;	/* g b */		\n\
+	movq	(%%esp), %%mm5				\n\
+	add	$8, %%esp				\n\
+							\n\
+	.p2align 3,,7					\n\
+      0:						\n\
+	/* Read Pixel, Reduce to 32 bits */		\n\
+	movq	(%%eax), %%mm0				\n\
+	psrlw	%%mm6, %%mm0	/* AA Shift to 32 bit */\n\
+	packuswb %%mm0,	%%mm0				\n\
+	movd	%%mm0, %%ebx				\n\
+							\n\
+	/* Convert to 565 */				\n\
+	mov	%%ebx, %%ecx				\n\
+	and	0x0000FCF8, %%ebx			\n\
+	and	0x00F80000, %%ecx			\n\
+	shr	$2, %%bh				\n\
+	shr	$8, %%ecx				\n\
+	shr	$3, %%ebx				\n\
+	or	%%ecx, %%ebx				\n\
+							\n\
+	/* Write */					\n\
+	mov	%%bx, (%%edx)				\n\
+							\n\
+	/* Next Pixel */				\n\
+	add	$8, %%eax				\n\
+	add	$2, %%edx				\n\
+	cmp	%%edi, %%edx	/* if (dst!=endline) */	\n\
+	jne	0b		/* goto loop_begin; */	\n\
+							\n\
+	/* Next Scanline */				\n\
+	add	%4, %%edi	/* endline += stride_dest; */\n\
+	add	%5, %%edx	/* dest += stride_diff; */\n\
+	cmp	%%esi, %%edx	/* if (dst!=end) */	\n\
+	jne	0b		/* goto loop_begin; */	\n\
+							\n\
+	emms"
+      :
+      : "a"(src), "d"(dst), "D"(endline), "S"(end), "m"(stride_dest), "m"(stride_diff), "m"(aaShift)
+      : "%ebx", "%ecx");
+#else
 	  __asm
 	  {
 		  emms /* mmx */
@@ -7848,9 +8175,11 @@ loop_begin:
 
 		  emms /* mmx */
 	  }
-  }
-  else
 #endif
+  }
+
+  else
+
   while (dst<end)
     {
       while (dst<endline)

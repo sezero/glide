@@ -1568,6 +1568,7 @@ static FxBool grLfbReadRegionOrigin (GrBuffer_t src_buffer, GrOriginLocation_t o
    }
    rv=FXFALSE;
 
+#ifndef __linux__ /* [dBorca] fixme :D */
    /* We want to read using HWC if we using FSAA with 4 chips or want dithering */
    /* or we are using forced 32 bit mode and want dithering */
    wantHwc = (_GlideRoot.environment.useHwcAAforLfbRead & 1) &&
@@ -1621,6 +1622,7 @@ static FxBool grLfbReadRegionOrigin (GrBuffer_t src_buffer, GrOriginLocation_t o
 	   rv=FXTRUE;
 	   goto done;
    }
+#endif
 
    if (_grLfbLock(GR_LFB_READ_ONLY,
                  src_buffer, 
