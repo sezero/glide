@@ -21,6 +21,9 @@
 ** $Revision$ 
 ** $Date$ 
 ** $Log$
+** Revision 1.1.1.1.2.1  2000/08/30 08:47:03  alanh
+** Changes for Voodoo3 for 64bit architectures
+**
 ** Revision 1.1.1.1  1999/11/24 21:44:55  joseph
 ** Initial checkin for SourceForge
 **
@@ -1318,7 +1321,7 @@ do { \
 #define REG_GROUP_SETF_CLAMP(__regBase, __regAddr, __val) \
 do { \
   const FxU32 fpClampVal = FP_FLOAT_CLAMP(__val); \
-  REG_GROUP_ASSERT(__regAddr, fpClampVal, FXTRUE); \  
+  REG_GROUP_ASSERT(__regAddr, fpClampVal, FXTRUE); \
   SET(((FxU32*)(__regBase))[offsetof(SstRegs, __regAddr) >> 2], fpClampVal); \
   GR_INC_SIZE(sizeof(FxU32)); \
 } while(0)
