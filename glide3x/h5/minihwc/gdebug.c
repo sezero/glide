@@ -45,6 +45,7 @@
 #include <fxdll.h>
 #include <fxpci.h>
 #include <gdebug.h>
+#include <glidesys.h>
 
 #if defined(__WIN32__) && !defined(KERNEL)
 #include <windows.h>
@@ -70,7 +71,7 @@ static char gdbg_debuglevel[GDBG_MAX_LEVELS];   // array of debuglevel controls
 
 static long gdbg_errors = 0;
 
-#if defined(HWC_EXT_INIT) || defined(__DJGPP__)
+#if defined(HWC_EXT_INIT) || defined(__DJGPP__) || (GLIDE_PLATFORM & GLIDE_OS_UNIX)
 char *hwcGetenv (const char *a);
 /*#ifdef GETENV
 #undef GETENV
@@ -88,7 +89,7 @@ char *hwcGetenv (const char *a);
  * and one for the dynamic dfn.  For linux they are different.
  * For Windows they are the same.
  */
-#ifdef	__linux__
+#if defined(__linux__) || defined(__FreeBSD__)
 #define	INITIAL_STATIC_GDBG_MSGFILE	NULL
 #define INITIAL_GDBG_MSGFILE            stderr
 #else
@@ -211,7 +212,7 @@ gdbg_init(void)
         SIOUXSettings.asktosaveonclose  = false;
 #endif      
     
-#ifdef __linux__
+#if defined(__linux__) || defined(__FreeBSD__)
     gdbg_msgfile = INITIAL_GDBG_MSGFILE;
 #endif
 
