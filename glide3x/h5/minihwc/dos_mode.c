@@ -1137,7 +1137,7 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
                          0x01 << sliBandHeightLog2);
           CFG_VIDEOCTRL2(0x00, 0xff);
         }    
-      } else if(numChips == 4 && sliEnable && aaEnable && aaSampleHigh == 1 && analogSLI) {
+      } else if(numChips == 4 && !sliEnable && aaEnable && aaSampleHigh == 1 && analogSLI) {
         /* Four chip, 4-sample AA. 1 subsample per chip analog SLI'ed */
         if(chipNum == 0) {
           /* First chip */
