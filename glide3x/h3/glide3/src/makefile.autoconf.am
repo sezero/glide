@@ -1,0 +1,237 @@
+##
+## THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONLY
+## PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGHT
+## TO USE THE GLIDE TRADEMARK WITHOUT PRIOR WRITTEN PERMISSION OF 3DFX
+## INTERACTIVE, INC. A COPY OF THIS LICENSE MAY BE OBTAINED FROM THE 
+## DISTRIBUTOR OR BY CONTACTING 3DFX INTERACTIVE INC(info@3dfx.com). 
+## THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER 
+## EXPRESSED OR IMPLIED. SEE THE 3DFX GLIDE GENERAL PUBLIC LICENSE FOR A
+## FULL TEXT OF THE NON-WARRANTY PROVISIONS.  
+##
+## USE, DUPLICATION OR DISCLOSURE BY THE GOVERNMENT IS SUBJECT TO
+## RESTRICTIONS AS SET FORTH IN SUBDIVISION (C)(1)(II) OF THE RIGHTS IN
+## TECHNICAL DATA AND COMPUTER SOFTWARE CLAUSE AT DFARS 252.227-7013,
+## AND/OR IN SIMILAR OR SUCCESSOR CLAUSES IN THE FAR, DOD OR NASA FAR
+## SUPPLEMENT. UNPUBLISHED RIGHTS RESERVED UNDER THE COPYRIGHT LAWS OF
+## THE UNITED STATES.  
+##
+## COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
+##
+## $Revision$
+## $Date$
+##
+#
+# First, we define the flags.  First, the variable flags,
+# and then the fixed local ones.
+#
+if FX_CHRIS_DENIS_ANTHONY_HACK
+FX_CHRIS_DENIS_ANTHONY_HACK_VDEFS = -DCHRIS_DENIS_ANTHONY_HACK=1
+endif
+
+if FX_GLIDE_ALT_TAB
+FX_GLIDE_ALT_TAB_VDEFS = -DGLIDE_ALT_TAB
+endif
+
+if FX_GLIDE_DIRECT_WRITE
+FX_GLIDE_DIRECT_WRITE_VDEFS = -DDIRECT_IO=1 \
+                              -DUSE_PACKET_FIFO=0 \
+                              -DGLIDE_HW_TRI_SETUP=1 \
+                              -DGLIDE_PACKET3_TRI_SETUP=0 \
+                              -DGLIDE_USE_DEBUG_FIFO=1 \
+                              -DFIFO_ASSERT_FULL=1 \
+                              -DASSERT_FAULT=0 \
+                              -DGLIDE_SANITY_SIZE=1
+else
+FX_GLIDE_DIRECT_WRITE_VDEFS = -DGLIDE_PACKET3_TRI_SETUP=1 \
+                              -DUSE_PACKET_FIFO=1 \
+                              -DGLIDE_HW_TRI_SETUP=1
+endif
+
+if GL_AMD3D
+GL_AMD3D_VDEFS =-DGL_AMD3D
+endif
+
+if FX_GLIDE_SW_SETUP
+FX_GLIDE_SW_SETUP_VDEFS = -DGLIDE_HW_TRI_SETUP=0 \
+                          -DGLIDE_TRI_CULLING=1 \
+                          -DGLIDE_USE_C_TRISETUP
+else
+if FX_GLIDE_HW_CULL
+else
+FX_GLIDE_SW_SETUP_VDEFS = -DGLIDE_TRI_CULLING=1
+endif
+endif
+
+if FX_GLIDE_CTRISETUP
+FX_GLIDE_CTRISETUP_VDEFS = -DGLIDE_USE_C_TRISETUP
+else
+FX_GLIDE_CTRISETUP_VDEFS = -DGLIDE_PACKED_RGB=0 \
+						   -DGLIDE_TRI_CULLING=1
+endif
+
+if FX_GLIDE_NO_PLUG
+FX_GLIDE_NO_PLUG_VDEFS =
+else
+FX_GLIDE_NO_PLUG_VDEFS = -DGLIDE_PLUG
+endif
+
+if FX_GLIDE_NO_SPLASH
+FX_GLIDE_NO_SPLASH_VDEFS =
+else
+FX_GLIDE_NO_SPLASH_VDEFS = -DGLIDE_SPLASH
+endif
+
+if GLIDE_DEBUG
+GLIDE_DEBUG_VDEFS = -DGLIDE_DEBUG \
+                    -DGDBG_INFO_ON \
+                    -DGLIDE_SANITY_ASSERT \
+                    -DGLIDE_SANITY_SIZE
+endif
+
+if FX_GLIDE_CTRISETUP
+FX_GLIDE_CTRISETUP_SRC = gxdraw.c
+ASMTRISETUP            =
+else
+FX_GLIDE_CTRISETUP_SRC =
+if GL_AMD3D
+ASMTRISETUP            =
+else
+ASMTRISETUP            = xdraw2.S xdraw3.S
+endif
+endif
+
+if GL_AMD3D
+GL_AMD3D_SRC = xtexdl_3dnow.S xdraw2_3dnow.S xdraw3_3dnow.S
+endif
+
+VDEFS = $(FX_CHRIS_DENIS_ANTHONY_HACK_VDEFS) \
+        $(FX_GLIDE_ALT_TAB_VDEFS) \
+        $(FX_GLIDE_DIRECT_WRITE_VDEFS) \
+        $(GL_AMD3D_VDEFS) \
+        $(FX_GLIDE_SW_SETUP_VDEFS) \
+        $(FX_GLIDE_SW_SETUP_VDEFS) \
+        $(FX_GLIDE_CTRISETUP_VDEFS) \
+        $(FX_GLIDE_NO_PLUG_VDEFS) \
+        $(FX_GLIDE_NO_SPLASH_VDEFS) \
+        $(GLIDE_DEBUG_VDEFS)
+
+LDEFS = -DGLIDE_INIT_HWC \
+        -DGLIDE_LIB      \
+        -DGLIDE3         \
+        -DGLIDE3_ALPHA   \
+        -DH3
+
+#
+# Now, we define the includes, first the variable ones,
+# and then the fixed ones.
+#
+if HAL_CSIM
+HAL_CSIM_INCLUDES = -I@top_srcdir@/@FX_GLIDE_HW@/csim
+endif
+
+VINCLUDES = $(HAL_CSIM_INCLUDES)
+
+#
+# Nothing for CPPFLAGS or OPTS here.
+#
+
+#
+# Special rules for assembly files.
+#
+xdraw2.o : xdraw2.S xdraw2.inc.S fxgasm.h
+	$(CC) $(AFLAGS) -c -o $@ xdraw2.S
+
+xdraw3.o : xdraw3.S fxgasm.h
+	$(CC) $(AFLAGS) -c -o $@ xdraw3.S
+
+# 3DNow!(tm) dependencies
+# XXX_def.obj targets are the default targets
+
+if GL_AMD3D
+else
+xdraw2_def.o: xdraw2.S xdraw2.inc.S fxgasm.h
+	$(CC) $(AFLAGS) -c -o $@ xdraw2.S
+
+xdraw2_3dnow.o: xdraw2.S xdraw2.inc.S fxgasm.h
+	$(CC) $(AFLAGS) -DGL_AMD3D -DUSE_PACKET_FIFO=1 -c -o $@ xdraw2.S
+
+xdraw3_def.o: xdraw3.S fxgasm.h
+	$(CC) $(AFLAGS) -c -o $@ xdraw3.S
+
+xdraw3_3dnow.o: xdraw3.S fxgasm.h
+	$(CC) $(AFLAGS) -DGL_AMD3D -DUSE_PACKET_FIFO=1 -c -o $@ xdraw3.S
+
+xtexdl_3dnow.o: xtexdl.S fxgasm.h 
+	$(CC) $(AFLAGS) -DGL_AMD3D -DUSE_PACKET_FIFO=1 -c -o $@ xtexdl.S
+
+endif
+
+if DRI_BUILD
+gglide.c: $(top_srcdir)/h3/glide3/src/gglide.c.dri
+	rm -f gglide.c
+	ln -sf $(top_srcdir)/h3/glide3/src/gglide.c.dri gglide.c
+
+gsst.c: $(top_srcdir)/h3/glide3/src/gsst.c.dri
+	rm -f gglide.c
+	ln -sf $(top_srcdir)/h3/glide3/src/gsst.c.dri gsst.c
+
+glfb.c: $(top_srcdir)/h3/glide3/src/glfb.c.dri
+	rm -f gglide.c
+	ln -sf $(top_srcdir)/h3/glide3/src/glfb.c.dri glfb.c
+else
+gglide.c: $(top_srcdir)/h3/glide3/src/gglide.c.save
+	rm -f gglide.c
+	ln -sf $(top_srcdir)/h3/glide3/src/gglide.c.save gglide.c
+
+gsst.c: $(top_srcdir)/h3/glide3/src/gsst.c.save
+	rm -f gglide.c
+	ln -sf $(top_srcdir)/h3/glide3/src/gsst.c.save gsst.c
+
+glfb.c: $(top_srcdir)/h3/glide3/src/glfb.c.save
+	rm -f gglide.c
+	ln -sf $(top_srcdir)/h3/glide3/src/glfb.c.save glfb.c
+endif
+#
+# Library definitions.
+#
+VGLIDE_SRC=$(FX_GLIDE_CTRISETUP_SRC)
+
+WHOLE_LIBS = $(top_builddir)/swlibs/fxmisc/libfxmisc.la \
+             $(top_builddir)/swlibs/newpci/pcilib/libfxpci.la \
+             $(top_builddir)/@FX_GLIDE_HW@/minihwc/libminihwc.la
+LINK_LIBS  = -L/usr/X11R6/lib -lX11 -lXext -lXxf86dga -lXxf86vm
+
+noinst_PROGRAMS        = fxgasm
+include_HEADERS        = g3ext.h glide.h glideutl.h glidesys.h
+noinst_HEADERS         = fxglide.h gsstdef.h gsfc.h \
+                         fxcmd.h fxsplash.h tv.h rcver.h qmodes.h \
+                         macglide3.h
+fxgasm_SOURCES         = fxgasm.c gthread.c
+
+lib_LTLIBRARIES        = libglide3.la
+libglide3_la_SOURCES   = fxinline.h fxgasm.h \
+                         gsplash.c g3df.c  gu.c gthread.c \
+                         gpci.c diglide.c disst.c ditex.c \
+                         gbanner.c gerror.c gaa.c gdraw.c \
+                         gglide.c distate.c gstrip.c distrip.c \
+                         diget.c glfb.c gsst.c gtex.c gtexdl.c \
+                         fifo.c xtexdl_def.c cpudtect.S \
+                         $(VGLIDE_SRC) $(ASMTRISETUP) $(GL_AMD3D_SRC)
+
+libglide3_la_LDFLAGS    = -version-info 13:0:10
+libglide3_la_LIBADD     = $(WHOLE_LIBS) $(LINK_LIBS)
+
+#--------------------------------------------------------------------------#
+# special rules for making fxgasm.h, fxinclude.h
+#
+fxgasm.h: fxgasm
+	./fxgasm -hex > fxgasm.h
+fxinline.h: fxgasm
+	./fxgasm -inline > fxinline.h
+
+#--------------------------------------------------------------------------#
+# special rules for using fxgasm.h, fxinclude.h
+#
+diget.o diget.lo gdraw.o gdraw.lo gu.o gu.lo: fxinline.h
+xdraw2.o xdraw2_3dnow.o xdraw3_3dnow.o:       fxgasm.h
+xdraw2.lo xdraw2_3dnow.lo xdraw3_3dnow.lo:    fxgasm.h

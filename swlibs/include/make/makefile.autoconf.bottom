@@ -1,0 +1,97 @@
+##
+## THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONLY
+## PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGHT
+## TO USE THE GLIDE TRADEMARK WITHOUT PRIOR WRITTEN PERMISSION OF 3DFX
+## INTERACTIVE, INC. A COPY OF THIS LICENSE MAY BE OBTAINED FROM THE 
+## DISTRIBUTOR OR BY CONTACTING 3DFX INTERACTIVE INC(info@3dfx.com). 
+## THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER 
+## EXPRESSED OR IMPLIED. SEE THE 3DFX GLIDE GENERAL PUBLIC LICENSE FOR A
+## FULL TEXT OF THE NON-WARRANTY PROVISIONS.  
+##
+## USE, DUPLICATION OR DISCLOSURE BY THE GOVERNMENT IS SUBJECT TO
+## RESTRICTIONS AS SET FORTH IN SUBDIVISION (C)(1)(II) OF THE RIGHTS IN
+## TECHNICAL DATA AND COMPUTER SOFTWARE CLAUSE AT DFARS 252.227-7013,
+## AND/OR IN SIMILAR OR SUCCESSOR CLAUSES IN THE FAR, DOD OR NASA FAR
+## SUPPLEMENT. UNPUBLISHED RIGHTS RESERVED UNDER THE COPYRIGHT LAWS OF
+## THE UNITED STATES.  
+##
+## COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
+##
+## $Revision$
+## $Date$
+##
+#
+# Always set make, so that we get the right makefile.
+MAKE=@MAKE@
+#
+# Here we have global definitions.
+#
+#
+# Then we have compiler flag definitions.
+#
+CPPFLAGS  = $(GCPPFLAGS)  $(LCPPFLAGS)  $(VCPPFLAGS)
+DEFS      = $(GDEFS)      $(LDEFS)      $(VDEFS)
+INCLUDES  = $(GINCLUDES)  $(LINCLUDES)  $(VINCLUDES)
+CFLAGS    = $(GCFLAGS)    $(LCFLAGS)    $(VCFLAGS)
+
+AFLAGS    = $(GAFLAGS)    $(LAFLAGS)    $(VAFLAGS)
+ADEFS     = $(GADEFS)     $(LADEFS)     $(VADEFS)
+AINCLUDES = $(GAINCLUDES) $(LAINCLUDES) $(VAINCLUDES)
+AOPTS     = $(GAOPTS)     $(LAOPTS)     $(VAOPTS)
+
+########################################################################
+#
+# Compilation flags, options and includes
+#
+########################################################################
+#
+# Global CFLAGS
+#
+ifeq ("@GLIDE_DEBUG@","true")
+GLIDE_DEBUG_GCFLAGS = -g -O
+GLIDE_DEBUG_GDEFS = -DGDBG_INFO_ON -DGLIDE_DEBUG
+else
+GLIDE_DEBUG_GCFLAGS = -O6 -m486
+GLIDE_DEBUG_GDEFS = -fomit-frame-pointer -funroll-loops \
+	                -fexpensive-optimizations -ffast-math -DBIG_OPT
+endif
+GCFLAGS = $(GLIDE_DEBUG_GCFLAGS)
+#
+# Global DEFS
+#
+GDEFS=-DENDB -DX11 $(GLIDE_DEBUG_GDEFS) -Wall
+#
+# Global INCLUDES
+#
+ifeq ("@FX_GLIDE_HW@","cvg")
+CVG_VINCLUDES= -I$(top_srcdir)/init \
+               -I$(top_srcdir)/cvg/glide3/src \
+               -I$(top_srcdir)/cvg/incsrc
+endif
+
+ifeq ("@FX_GLIDE_HW@","h3")
+H3_VINCLUDES = -I$(top_srcdir)/cinit \
+               -I$(top_srcdir)/h3/glide3/src \
+               -I$(top_srcdir)/h3/incsrc \
+               -I$(top_srcdir)/h3/minihwc
+endif
+
+ifeq ("@FX_GLIDE_HW@","h5")
+H5_VINCLUDES = -I$(top_srcdir)/h5/glide3/src \
+               -I$(top_builddir)/h5/incsrc \
+               -I$(top_srcdir)/h5/incsrc \
+               -I$(top_srcdir)/h5/minihwc
+endif
+
+GINCLUDES = $(CVG_VINCLUDES) $(H3_VINCLUDES) $(H5_VINCLUDES) \
+			-I. \
+            -I$(top_srcdir)/swlibs/fxmemmap \
+            -I$(top_srcdir)/swlibs/fxmisc \
+            -I$(top_srcdir)/swlibs/newpci/pcilib \
+            -I$(top_srcdir)/swlibs/texus/lib
+
+########################################################################
+#
+# Linker definitions
+#
+########################################################################

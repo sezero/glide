@@ -1,0 +1,166 @@
+#!/bin/sh -f
+function do_nothing() {
+    return 0;
+}
+
+rm="/bin/rm -rf"
+DONE=NO
+DO_CONFIGURE=NO
+DO_BUILD=NO
+DO_CLEAN=NO
+DO_GENERATE=NO
+BUILD_DIRECTORY=build
+MAKE_HISTORY_FILE=make.hst
+CONFIGURE_OPTIONS=
+while [ ! -z "$1" ] && [ "$DONE" != YES ] ; do
+    case "$1" in
+    --help)
+        echo 'usage: chores.3dfx [options]'
+        echo '    Handle some 3dfx specific configuration chores'
+        echo 'Options:'
+        echo '    --help               This note.'
+        echo '    --clean              Delete some files in the source'
+        echo '                         directory.  Since we do not generally'
+        echo '                         run make in the source directory,'
+        echo '                         the "make clean" rules are not so'
+        echo '                         useful there.  The files deleted'
+        echo '                         are:'
+        echo '                             configure,'
+        echo '                             makefile.autoconf.{in},'
+        echo '                             aclocal.m4'
+        echo '                             *~, #*#, xx, yy, zz'
+        echo '                         Note that you need to put local macros'
+        echo '                         in acinclude.m4, not aclocal.m4.  The'
+        echo '                         former is included in the latter.'
+        echo '    --generate:          Generate configure script and'
+        echo '                         makefile.autoconf.in files.'
+        echo '                         This is essentially just:'
+        echo '                           aclocal; automake; autoconf'
+        echo '    --build-directory=dir'
+        echo '                         Set the build directory to dir.'
+        echo '    --configure="configure options"'
+        echo '                         Configure in the build directory'
+        echo '                         with the given options.'
+        echo '                         NOTE: this will delete and recreate'
+        echo '                               your build directory if it'
+        echo '                               exists.'
+        echo '    --build[=dirname]    Build in the given build directory.'
+        echo '                           o The default directory name is'
+        echo '                             named "build".'
+        echo '                           o The directory does not need to'
+        echo '                             be a subdirectory of the source'
+        echo '                             directory.'
+        echo '                         This option is equivalent to specifying'
+        echo '                         --build-directory=dirname --build'
+        echo ''
+        echo 'Note that the operations are done in logical order, not'
+        echo 'in the order that the operations are specified on the'
+        echo 'command line.'
+        echo ''
+        exit 100
+        ;;
+    --generate)
+        DO_GENERATE=YES
+        shift
+        ;;
+    --configure)
+        DO_CONFIGURE=YES
+        CONFIGURE_OPTIONS=""
+        shift
+        ;;
+    --configure=*)
+        DO_CONFIGURE=YES
+        CONFIGURE_OPTIONS=`echo $1 | sed s/--configure=//`
+        shift
+        ;;
+    --build-directory=*)
+        BUILD_DIRECTORY=`echo $1 | sed 's/--build-directory=//'`
+        shift
+        ;;
+    --build=*)
+        DO_BUILD=YES
+        BUILD_DIRECTORY=`echo $1 | sed s/--build=//`
+        shift
+        ;;
+    --build)
+        DO_BUILD=YES
+        shift
+        ;;
+    --clean)
+        DO_CLEAN=YES
+        shift
+        ;;
+    --make-hst=*)
+        MAKE_HISTORY_FILE=`echo "$1" | sed s/--make-hst=//'`
+        shift
+        ;;
+    *)
+        echo "chores.3dfx: Unknown command line parameter $1"
+        exit 100
+        ;;
+    esac
+done
+if [ "$DO_CLEAN" = YES ] ; then
+    #
+    # Remove detritus.
+    #
+    echo -n 'Removing detritus...'
+    find . '(' -name config.log -o -name aclocal.m4 -o -name configure -o -name '*~' -o -name '#*#' -o -name makefile.autoconf.in -o -name xx -o -name yy -o -name zz ')' -a -exec $rm {} \;
+    echo 'Done'
+fi
+if [ "$DO_GENERATE" = YES ] ; then
+    #
+    # Regenerate everything.
+    #
+    echo -n 'Regenerating everything...'
+    echo -n 'Aclocal...'
+    if aclocal ; then
+        do_nothing
+    else
+        echo 'Failed!!'
+        exit 100
+    fi
+    echo -n 'Automake...'
+    if automake ; then
+        do_nothing
+    else
+        echo 'Failed!!'
+        exit 100
+    fi
+    echo -n 'Autoconf...'
+    if autoconf ; then
+        do_nothing
+    else
+        echo 'Failed!!'
+        exit 100
+    fi
+    echo 'Done.'
+fi
+if [ "$DO_CONFIGURE" = YES ] ; then
+    #
+    # Get rid of the build directory.
+    #
+    echo -n 'Getting rid of the old build directory...'
+    /bin/rm -rf $BUILD_DIRECTORY
+    echo 'Done.'
+    #
+    # Now, make a build directory, and configure in it.
+    #
+    echo -n "Making build directory $BUILD_DIRECTORY..."
+    mkdir $BUILD_DIRECTORY
+    echo 'Done'
+    #
+    # Configure.
+    #
+    echo -n "Configuring..."
+    SRCDIR="${PWD}"
+    (cd $BUILD_DIRECTORY; ${SRCDIR}/configure --quiet $CONFIGURE_OPTIONS)
+    echo 'Done.'
+fi
+if [ "$DO_BUILD" = YES ] ; then
+    #
+    # Build in it.
+    #
+    cd $BUILD_DIRECTORY
+    ./build.3dfx all | tee $MAKE_HISTORY_FILE
+fi
