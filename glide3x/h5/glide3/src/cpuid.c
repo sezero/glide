@@ -1,11 +1,3 @@
-/*
- * CPU detection code
- *
- * $Header$
- * $Log$
- */
-
-
 #include <signal.h>
 #include <setjmp.h>
 #include <string.h>
@@ -28,30 +20,23 @@ typedef unsigned long word32;
 #define _3DNOWPLUS_FEATURE_BIT	0x40000000
 #define _MMXPLUS_FEATURE_BIT	0x00400000
 
-/* Testing code:
- * TEST_SSE       = xorps xmm0, xmm0
- * TEST_SSE2      = xorpd xmm0, xmm0
- * TEST_3DNOW     = femms
- * TEST_MMX       = emms
- * TEST_3DNOWPLUS = femms | pswapd mm0, mm0 | femms
- * TEST_MMXPLUS   = emms | pminsw mm0, mm0 | emms
- */
+/* Testing code */
 #ifdef __GNUC__
 #define TEST_CPUID(f)    __asm __volatile ("cpuid"::"a"(f):"%ebx", "%ecx", "%edx")
-#define TEST_SSE()       __asm __volatile (".byte 0x0f, 0x57, 0xc0")
-#define TEST_SSE2()      __asm __volatile (".byte 0x66, 0x0f, 0x57, 0xc0")
-#define TEST_3DNOW()     __asm __volatile (".byte 0x0f, 0x0e")
-#define TEST_MMX()       __asm __volatile (".byte 0x0f, 0x77")
-#define TEST_3DNOWPLUS() __asm __volatile (".byte 0x0f, 0x0e, 0x0f, 0x0f, 0xc0, 0xbb, 0x0f, 0x0e")
-#define TEST_MMXPLUS()   __asm __volatile (".byte 0x0f, 0x77, 0x0f, 0xea, 0xc0, 0x0f, 0x77")
+#define TEST_SSE()       __asm __volatile ("xorps %xmm0, %xmm0")
+#define TEST_SSE2()      __asm __volatile ("xorpd %xmm0, %xmm0")
+#define TEST_3DNOW()     __asm __volatile ("femms")
+#define TEST_MMX()       __asm __volatile ("emms")
+#define TEST_3DNOWPLUS() __asm __volatile ("femms; pswapd %mm0, %mm0; femms")
+#define TEST_MMXPLUS()   __asm __volatile ("emms; pminsw %mm0, %mm0; emms")
 #else
 #define TEST_CPUID(f)    __asm { _asm mov eax, f _asm cpuid }
 #define TEST_SSE()       __asm { _asm _emit 0x0f _asm _emit 0x57 _asm _emit 0xc0 }
 #define TEST_SSE2()      __asm { _asm _emit 0x66 _asm _emit 0x0f _asm _emit 0x57 _asm _emit 0xc0 }
 #define TEST_3DNOW()     __asm { _asm _emit 0x0f _asm _emit 0x0e }
-#define TEST_MMX()       __asm { _asm _emit 0x0f _asm _emit 0x77 }
+#define TEST_MMX()       __asm { _asm emms }
 #define TEST_3DNOWPLUS() __asm { _asm _emit 0x0f _asm _emit 0x0e _asm _emit 0x0f _asm _emit 0x0f _asm _emit 0xc0 _asm _emit 0xbb _asm _emit 0x0f _asm _emit 0x0e }
-#define TEST_MMXPLUS()   __asm { _asm _emit 0x0f _asm _emit 0x77 _asm _emit 0x0f _asm _emit 0xea _asm _emit 0xc0 _asm _emit 0x0f _asm _emit 0x77 }
+#define TEST_MMXPLUS()   __asm { _asm emms _asm _emit 0x0f _asm _emit 0xea _asm _emit 0xc0 _asm emms }
 #endif
 
 
@@ -131,14 +116,12 @@ static int has_feature (int feature)
 
 
 
-/* Desc: maps family and model to processor name
- *
- * In  : family, model, vendor, ptr to store name
- * Out : -
- *
- * Note: incomplete
- */
-static void map_mname (int family, int model, const char *v_name, char *m_name)
+/***
+*
+* void map_mname(int, int, const char *, char *) maps family and model to processor name
+*
+****************************************************/
+static void map_mname (int family, int model, const char * v_name, char *m_name)
 {
  if (!strncmp("AuthenticAMD", v_name, 12)) {
     switch (family) { /* extract family code */
@@ -155,6 +138,7 @@ static void map_mname (int family, int model, const char *v_name, char *m_name)
                             break;
                        case 4:
                        case 5:
+						    strcpy (m_name, "Unknown");
                             break;  /* Not really used */
                        case 6:
                        case 7:
@@ -178,11 +162,44 @@ static void map_mname (int family, int model, const char *v_name, char *m_name)
                 break;
            case 6: /* Athlon */
                 switch (model) { /* extract model code */
+                       case 0:
+                       case 1:
+                       case 2:
+						    strcpy (m_name,"AMD ATHLON");
+						    break;
                        case 3:
-                            strcpy (m_name,"AMD Duron");
-                            break;
+						    strcpy (m_name,"AMD DURON");
+						    break;
+                       case 4:
+						    strcpy (m_name,"AMD ATHLON");
+						    break;
+                       case 5:
+						    strcpy (m_name, "Unknown");
+                            break;  /* Not really used */
+                       case 6:
+						    strcpy (m_name,"AMD ATHLON");
+						    break;
+                       case 7:
+						    strcpy (m_name,"AMD DURON");
+						    break;
+                       case 8:
+						    strcpy (m_name,"AMD ATHLON");
+						    break;
+                       case 9:
+						    strcpy (m_name,"Unknown");
+						    break;  /* Not really used */
+                       case 10:
+						    strcpy (m_name,"AMD ATHLON");
+						    break;
                        default:
-                            strcpy (m_name,"AMD Athlon");
+                            strcpy (m_name,"Unknown");
+                }
+                break;
+           case 15: /* Opteron or Athlon64 */
+                switch (model) { /* extract model code */
+                       case 0:
+                       default:
+                            strcpy (m_name,"Opteron or Athlon64");
                 }
                 break;
     }
@@ -218,6 +235,7 @@ static void map_mname (int family, int model, const char *v_name, char *m_name)
                 break;
            case 5:
                 switch (model) { /* extract model code */
+                       case 0:
                        case 1:
                        case 2:
                        case 3:
@@ -232,12 +250,16 @@ static void map_mname (int family, int model, const char *v_name, char *m_name)
                 break;
            case 6:
                 switch (model) { /* extract model code */
+                       case 0:
                        case 1:
                             strcpy (m_name,"INTEL Pentium-Pro");
                             break;
                        case 3:
                             strcpy (m_name,"INTEL Pentium-II");
                             break;
+                       case 4:
+                            strcpy (m_name,"Unknown");
+                            break; /* P55CT */
                        case 5:
                             strcpy (m_name,"INTEL Pentium-II");
                             break;  /* actual differentiation depends on cache settings */
@@ -245,16 +267,48 @@ static void map_mname (int family, int model, const char *v_name, char *m_name)
                             strcpy (m_name,"INTEL Celeron");
                             break;
                        case 7:
+					   case 8:
                             strcpy (m_name,"INTEL Pentium-III");
                             break;  /* actual differentiation depends on cache settings */
+                       case 9:
+                            strcpy (m_name,"INTEL Pentium M");
+                            break;
+                       case 10:
+					   case 11:
+                            strcpy (m_name,"INTEL Pentium-III");
+                            break;
                        default:
                             strcpy (m_name, "Unknown");
+                }
+                break;
+           case 7:
+                switch (model) { /* extract model code */
+                       case 0:
+                       default:
+                            strcpy (m_name, "INTEL Itanium");
+                }
+                break;
+           case 15:
+                switch (model) { /* extract model code */
+                       case 0:
+                       default:
+                            strcpy (m_name,"INTEL Pentium 4");
                 }
                 break;
     }
  } else if (!strncmp("CyrixInstead", v_name,12)) {
     strcpy (m_name, "Unknown");
  } else if (!strncmp("CentaurHauls", v_name,12)) {
+    strcpy (m_name, "Unknown");
+ } else if (!strncmp("TransmetaCPU", v_name,12)) {
+    strcpy (m_name, "Unknown");
+ } else if (!strncmp("GenuineTMx86", v_name,12)) {
+    strcpy (m_name, "Unknown");
+ } else if (!strncmp("NexGenDriven", v_name,12)) {
+    strcpy (m_name, "Unknown");
+ } else if (!strncmp("RISERISERISE", v_name,12)) {
+    strcpy (m_name, "Unknown");
+ } else if (!strncmp("UMC UMC UMC ", v_name,12)) {
     strcpy (m_name, "Unknown");
  } else {
     strcpy (m_name, "Unknown");
@@ -263,13 +317,19 @@ static void map_mname (int family, int model, const char *v_name, char *m_name)
 
 
 
-/* Desc: get CPU info
- *
- * In  : pointer to _p_info
- * Out : features
- *
- * Note: -
- */
+/***
+*
+* int _cpuid (_p_info *pinfo)
+* 
+* Entry:
+*
+*   pinfo: pointer to _p_info.
+*
+* Exit:
+*
+*   Returns int with capablity bit set even if pinfo = NULL
+*
+****************************************************/
 int _cpuid (_p_info *pinfo)
 {
  word32 dwStandard = 0;
