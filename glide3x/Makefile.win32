@@ -308,7 +308,7 @@ ARFLAGS = -nologo
 ASFLAGS = -O2 -fwin32 -D__WIN32__ --prefix _
 
 !if "$(DEBUG)"== "1"
-CFLAGS  = $(CFLAGS) -Od -LDd -MLd -DDEBUG=1 -D_DEBUG
+CFLAGS  = $(CFLAGS) -Od -LDd -MLd -DDEBUG=1 -D_DEBUG -Zi
 LFLAGS  = $(LFLAGS) -debugtype:both /DEBUG
 ARFLAGS = $(ARFLAGS) -debugtype:both
 ASFLAGS = $(ASFLAGS) -g -DDEBUG=1
