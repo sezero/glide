@@ -28,7 +28,7 @@
 /* This should be exported, but isn't yet */
 #define SST1INIT_MAX_BOARDS 16
 
-int main (int argc[], char* argv[])
+int main (int argc, char* argv[])
 {
   FxU32* sst[SST1INIT_MAX_BOARDS];
   int num_sst;

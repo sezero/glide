@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/12/07 21:49:11  joseph
+** Initial checkin into SourceForge.
+**
 ** 
 ** 61    5/18/98 12:11p Peter
 ** removed unnecesasry fencing
@@ -271,7 +274,7 @@ GR_DDFUNC(_grTexDownloadPalette,
                       slopCount, (0xFF >> (8 - slopCount)));
       while(i < start + slopCount) {
         REG_GROUP_SET(hw, nccTable0[4 + (i & 0x07)],
-                      (0x80000000 | ((i & 0xFE) << 23) | pal->data[i] & 0xFFFFFF));
+                      (0x80000000 | ((i & 0xFE) << 23) | (pal->data[i] & 0xFFFFFF)));
         i++;
       }
       REG_GROUP_END();
@@ -284,7 +287,7 @@ GR_DDFUNC(_grTexDownloadPalette,
       REG_GROUP_BEGIN(chipId, nccTable0[4], 8, 0xFF);
       while(i < endIndex) {
         REG_GROUP_SET(hw, nccTable0[4 + (i & 0x07)],
-                      (0x80000000 | ((i & 0xFE) << 23) | pal->data[i] & 0xFFFFFF));
+                      (0x80000000 | ((i & 0xFE) << 23) | (pal->data[i] & 0xFFFFFF)));
         i++;
       }
       REG_GROUP_END();
@@ -298,7 +301,7 @@ GR_DDFUNC(_grTexDownloadPalette,
                       slopCount, (0xFF >> (8 - slopCount)));
       while(i <= end) {
         REG_GROUP_SET(hw, nccTable0[4 + (i & 0x07)],
-                      (0x80000000 | ((i & 0xFE) << 23) | pal->data[i] & 0xFFFFFF));
+                      (0x80000000 | ((i & 0xFE) << 23) | (pal->data[i] & 0xFFFFFF)));
         i++;
       }
       REG_GROUP_END();

@@ -20,6 +20,7 @@
 */
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #ifndef __linux__
 #include <windows.h>
@@ -106,10 +107,11 @@ MyDebugPrintf(FILE* outputFile, const char* fmtString, ...)
     
     va_start(args, fmtString);
     {
-      char msgBuf[256];
+      //char msgBuf[256];
       
-      vsprintf(msgBuf, fmtString, args);
-      OutputDebugString(msgBuf);
+      vfprintf(stderr, fmtString, args);
+      //vsprintf(msgBuf, fmtString, args);
+      //OutputDebugString(msgBuf);
     }
     va_end(args);
   }

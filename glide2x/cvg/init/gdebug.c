@@ -252,8 +252,10 @@ gdbg_vprintf (const char *format,va_list args)
 
 #if __DOS32__
       pciOutputDebugString(msgBuf);
-#else
+#elif __WIN32
       OutputDebugString(msgBuf);
+#else
+      fprintf(stderr, msgBuf);
 #endif /* !__DOS32__ */
     } else
 #endif /* USE_DEBUG_STRING */

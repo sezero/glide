@@ -97,7 +97,9 @@
 
 #else /* DIRECTX */
 #include "ddglobal.h"
+#ifdef _WIN32
 #pragma optimize ("",off)   /* ddglobal.h tuns this on for retail builds */
+#endif
 #undef INIT_PRINTF
 #undef INIT_INFO
 #undef GETENV

@@ -26,7 +26,9 @@
 **
 */
 
+#ifdef _WIN32
 #pragma optimize ("",off)
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>

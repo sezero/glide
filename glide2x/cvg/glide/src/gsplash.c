@@ -19,6 +19,9 @@
  **
  ** $Header$
  ** $Log$
+ ** Revision 1.1.1.1  1999/12/07 21:49:11  joseph
+ ** Initial checkin into SourceForge.
+ **
 ** 
 ** 26    2/20/98 11:00a Peter
 ** removed glide3 from glid2 tree
@@ -767,8 +770,7 @@ GR_DIENTRY(grSplash,void,(float x,float y,float w,float h,FxU32 _frame))
   int fadeInFrames, fadeOutFrames;
 
   GR_BEGIN_NOFIFOCHECK("grSplash", 85);
-  GDBG_INFO_MORE(gc->myLevel,"(%f,%f,%f,%f,%d)\n",
-                  x, y, w, h, _frame);
+  GDBG_INFO_MORE(gc->myLevel,"(%f,%f,%f,%f,%d)\n", x, y, w, h, _frame);
 
   /* Check Screen Dimensions and Check Avail of Depth Buffer */
   if ((x > gc->state.screen_width) || 

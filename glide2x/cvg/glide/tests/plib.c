@@ -44,6 +44,19 @@ static GrChipID_t currTMU = GR_TMU0;
 static FxBool bMultiRevOrder;
 static FxBool bMultiOffsetFix;
 
+/* static helper prototypes */
+static FxU32 prGetLodSize( GrTexInfo *const disTexInfo, GrLOD_t disLOD );
+static FxU32 prTexMultiMemRequired( FxU32 deMipMask, GrTexBaseRange_t deRange,
+			    	    GrTexInfo* deTexInfo );
+static void prGetLod( GrTexInfo *lpTexInfo, GrLOD_t deLod, void *data );
+static void prPopLod( GrTexInfo *lpDeTexInfo, mipMapEnd_t deMipMapEnd );
+static void prPushLod( GrTexInfo *lpDeTexInfo, mipMapEnd_t deMipMapEnd );
+static FxU32 prGetTxMnAdd( hTexId_t deTexId, GrLOD_t deLod );
+static int prGetLodWidth( GrLOD_t lod, GrAspectRatio_t aspect );
+static int prGetLodHeight( GrLOD_t lod, GrAspectRatio_t aspect );
+static FxU32 prGetMultiMemBump( const GrTexInfo *const deTexInfo, 
+                                  GrTexBaseRange_t deTexBase,
+                                  FxU32 deMipMask );
 
 
 /*-------------------------------------------------------------------

@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/12/07 21:49:11  joseph
+** Initial checkin into SourceForge.
+**
 ** 
 ** 168   6/30/98 6:08p Jeske
 ** fixed bug where we tried to setup MTRRs on old (<p6) systems which
@@ -411,7 +414,7 @@ GR_ENTRY(grSstWinOpen, FxBool, (
 #define FN_NAME "grSstWinOpen"
   FxBool rv = FXTRUE;
   int tmu;
-  int xres, yres, fbStride;
+  int xres = 0, yres = 0, fbStride;
   FxDeviceInfo devInfo;
 #if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
   sst1VideoTimingStruct *sstVideoRez = NULL, tvVidtiming;
@@ -1803,7 +1806,7 @@ GR_ENTRY(grSstControl, FxBool, (GrControl_t code))
 #elif (GLIDE_PLATFORM & GLIDE_HW_CVG) && !GLIDE_INIT_HAL
     {
       FxBool isValidP = FXTRUE;
-      FxBool passFlag;
+      FxBool passFlag = 0;
 
       switch ( code ) {
       case GR_CONTROL_DEACTIVATE:

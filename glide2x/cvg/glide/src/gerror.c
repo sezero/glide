@@ -20,6 +20,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/12/07 21:49:10  joseph
+** Initial checkin into SourceForge.
+**
 ** 
 ** 28    3/14/98 1:07p Peter
 ** mac port happiness
@@ -240,6 +243,7 @@ _grAssert(char *exp, char *fileName, int lineNo)
 #if !GLIDE_INIT_HAL
     if (gc->scanline_interleaved) {
       SstRegs* slaveHw = (SstRegs*)gc->slave_ptr;
+      slaveHw = slaveHw;	// FIXME: Below might not exist. *sigh*
       
       GDBG_INFO_MORE(gc->myLevel, "\tsli: 0x%X : (0x%X : 0x%X : 0x%X)\n",
                      HW_FIFO_PTR(FXFALSE), 

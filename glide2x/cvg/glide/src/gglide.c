@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/12/07 21:49:10  joseph
+** Initial checkin into SourceForge.
+**
 ** 
 ** 168   7/02/98 6:59p Peter
 ** Fixed merge problem from previous checkin
@@ -510,7 +513,7 @@ GR_ENTRY(grBufferClear, void, (GrColor_t color, GrAlpha_t alpha, FxU16 depth))
       {
         GR_SET_EXPECTED_SIZE(sizeof(FxU32), 1);
         GR_SET(BROADCAST_ID, hw, bltSize,  
-               (((((tileHi - tileLow) * gc->hwDep.cvgDep.xTilePages) - 1) << 16) | (0x1000 >> 3) - 1));
+               ((((((tileHi - tileLow) * gc->hwDep.cvgDep.xTilePages) - 1) << 16) | (0x1000 >> 3)) - 1));
         GR_CHECK_SIZE();
       }
 

@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/12/07 21:49:13  joseph
+** Initial checkin into SourceForge.
+**
 ** 
 ** 7     2/20/98 11:00a Peter
 ** removed glide3 from glid2 tree
@@ -10655,7 +10658,7 @@ static Gu3dfInfo hilite_3dfinfo = {
     GR_ASPECT_1x1,        /* aspect_ratio */
     GR_TEXFMT_INTENSITY_8 /* format */
   },
-  { 0x0000000 },          /* table */
+  { {{0x0000000}} },          /* table */
   NULL,                   /* data */
   0x00000ab0              /* mem_required */
 };
@@ -12040,7 +12043,7 @@ static Gu3dfInfo shadow_3dfinfo = {
     GR_ASPECT_2x1,        /* aspect_ratio */
     GR_TEXFMT_INTENSITY_8 /* format */
   },
-  { 0x00000000 },         /* table */
+  { {{0x00000000}} },         /* table */
   NULL,                   /* data */
   0x00000ab0              /* mem_required */
 };

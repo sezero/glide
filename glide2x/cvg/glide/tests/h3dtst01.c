@@ -90,10 +90,9 @@ void drawBoxes(int w, int h, unsigned long c1, unsigned long c2) {
   grDrawLine(&p2,&p3);  
 }
 
-void main( int argc, char **argv) {
+int main( int argc, char **argv) {
   int     keepworking = 1;
   GrScreenResolution_t resolution;
-  int			frames		= -1;
   int     redraw = 1;
   int     redrawPattern = 0;
   int     patternon = 1;
@@ -193,6 +192,6 @@ void main( int argc, char **argv) {
     }
   }  
   grGlideShutdown();
-  return;
+  exit(0);
 }
 
