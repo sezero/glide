@@ -340,22 +340,7 @@ GR_DIENTRY(grHints, void, (GrHint_t hintType, FxU32 hints))
 /*---------------------------------------------------------------------------
 ** grGlideInit
 */
-#if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
-GR_DIENTRY(grGlideInit, void, (void)) {
-  /* [koolsmoky] Do nothing here. Glide will be initialized
-   * when the DLL entry point recieves a DLL_PROCESS_ATTACH.
-   */
-}
-
-/* [koolsmoky] According to Microsoft, the TLS index must be allocated
- * only once when the DLL entry point is called with a DLL_PROCESS_ATTACH.
- * Since grGlideInit only needs to be run once, we effectively call this
- * function from the DLL entry point.
- */
-void _grGlideInit()
-#else
 GR_DIENTRY(grGlideInit, void, (void))
-#endif
 {
   GDBG_INIT();
 
@@ -369,6 +354,10 @@ GR_DIENTRY(grGlideInit, void, (void))
 
   if (_GlideRoot.initialized) {
     /* allocate the TLS index */
+    /* [koolsmoky] According to Microsoft, the TLS index must be allocated
+     * only once when the DLL entry point is called with a DLL_PROCESS_ATTACH.
+     * However, doing so provoke problems so it is done here instead.
+     */
     initThreadStorage();
     initCriticalSection();
     

@@ -1967,17 +1967,6 @@ DllMain(HANDLE hInst, ULONG  ul_reason_for_call, LPVOID lpReserved)
     deleteCriticalSection();
     break;
   case DLL_PROCESS_ATTACH:
-    /* [koolsmoky] Take advantage of the fact that this DLL will be
-     * "load-time" linked. Inorder to attach the current gc to all
-     * threads' TLS slot, _GlideRoot must be initialized. This also
-     * fulfills Microsoft's instruction that initThreadStorage should
-     * go here in DLL_PROCESS_ATTACH. Since this dll's design doesn't
-     * allow creating child processes this should be ok.
-     */
-    {
-      void _grGlideInit();
-      _grGlideInit();
-    }
     GDBG_INFO(80, "DllMain: DLL_PROCESS_ATTACH\n");
     break;
   case DLL_THREAD_ATTACH:
