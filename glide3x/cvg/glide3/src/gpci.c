@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.4  2004/12/27 20:47:11  koolsmoky
+** added dll entry point to call grGlideShutdown when a process is detached
+**
 ** Revision 1.1.1.1.8.3  2004/12/12 15:00:09  koolsmoky
 ** revert swapPendingCount default value to 4.
 **
@@ -315,8 +318,17 @@ DllMain(HANDLE hInst, ULONG  ul_reason_for_call, LPVOID lpReserved)
   case DLL_PROCESS_DETACH:
     GDBG_INFO(80, "DllMain: DLL_PROCESS_DETACH\n");
     grGlideShutdown();
+#if DIRECTX
+    pciClose();
+#endif
     break;
   case DLL_PROCESS_ATTACH:
+#if DIRECTX
+    if (!pciOpen()) {
+      GDBG_INFO(80, "pci bus could not be opened\n");
+      GR_RETURN(FXFALSE);
+    }
+#endif
     GDBG_INFO(80, "DllMain: DLL_PROCESS_ATTACH\n");
     break;
   case DLL_THREAD_ATTACH:
@@ -765,7 +777,7 @@ _GlideInitEnvironment(void)
       const char* errStr = s;
       
       if (pciGetErrorCode() == PCI_ERR_NOERR) {
-        sprintf(s, "%s: glide2x.dll expected %s, none detected\n",
+        sprintf(s, "%s: glide3x.dll expected %s, none detected\n",
                 FN_NAME, GLIDE_DRIVER_NAME);
       } else {
         errStr = pciGetErrorString();
