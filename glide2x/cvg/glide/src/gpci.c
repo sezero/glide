@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.2.4  2005/01/02 04:15:53  koolsmoky
+** disabled mtrr's on sli slave devices
+**
 ** Revision 1.1.1.1.2.3  2004/12/27 20:46:37  koolsmoky
 ** added dll entry point to call grGlideShutdown when a process is detached
 **
@@ -328,8 +331,13 @@ DllMain(HANDLE hInst, ULONG  ul_reason_for_call, LPVOID lpReserved)
   case DLL_PROCESS_DETACH:
     GDBG_INFO(80, "DllMain: DLL_PROCESS_DETACH\n");
     grGlideShutdown();
+    pciClose();
     break;
   case DLL_PROCESS_ATTACH:
+    if (!pciOpen()) {
+      GDBG_INFO(80, "pci bus could not be opened\n");
+      GR_RETURN(FXFALSE);
+    }
     GDBG_INFO(80, "DllMain: DLL_PROCESS_ATTACH\n");
     break;
   case DLL_THREAD_ATTACH:

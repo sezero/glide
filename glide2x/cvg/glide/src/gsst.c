@@ -19,6 +19,10 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.2.2.2  2004/12/23 20:45:56  koolsmoky
+** converted to nasm syntax
+** added x86 asm, 3dnow! triangle and mmx, 3dnow! texture download optimizations
+**
 ** Revision 1.2.2.1  2004/12/12 15:26:04  koolsmoky
 ** changes to support new cpuid
 **
@@ -475,12 +479,14 @@ __tryReOpen:
    */
   if (!gc->hwInitP) {
     FxU32* sstRegs = NULL;
-    
+
+#if !DIRECTX
     rv = pciOpen();
     if (!rv) {
       GDBG_INFO(gc->myLevel, "%s: pci bus could not be opened\n", FN_NAME);
       goto BAILOUT;
     }
+#endif
     
     sstRegs = sst1InitMapBoard(_GlideRoot.current_sst);  
     rv = (sstRegs != NULL);
@@ -908,12 +914,14 @@ __tryReOpen:
             gc->hwInitP = FXFALSE;
           }
 
+#if !DIRECTX
           /* dpc - 14 feb 1997 - HackAlert!!!!
            * The sst1InitShutdown above will close the pci library which
            * then prevents other pci library calls which we need to init
            * video next.
            */
           pciOpen();
+#endif
           
           /* Re-init the new master */
           {
