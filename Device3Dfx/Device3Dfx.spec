@@ -1,7 +1,7 @@
 Summary: Device driver for 3Dfx boards for 2.x kernels
 Name: Device3Dfx
 Version: 2.3
-Release: 4
+Release: 5
 Icon: 3dfx.gif
 Source: Device3Dfx.tar.gz
 License: GPL
@@ -9,10 +9,9 @@ Group: Drivers
 
 %changelog
 
-* Fri Feb 04 2000 Joseph Kain <joseph@3dfx.com>
-  No release yet
-
-- Updated Carlo Wood's email address in this changelog.
+* Sat Apr 08 2000 Joseph Kain <joseph@3dfx.com>
+  Release 2.3-5
+- Check both the kernel and the processor for MTRR support before enabling.
 
 * Wed Jan 04 2000 Joseph Kain <joseph@3dfx.com>
   Release 2.3-4
@@ -73,7 +72,7 @@ Group: Drivers
 
 - Fixed for 2.2.3 kernels because of an mmap() update
 
-* Fri Oct 30 1998 Carlo Wood <carlo@alinoe.com>
+* Fri Oct 30 1998 Carlo Wood <carlo@runaway.xs4all.nl>
 
   Release 2.5-1:
 
@@ -82,7 +81,7 @@ Group: Drivers
   Moved everything to the Makefile, so Dev3Dfx-2.5.tar.gz is
   self containing and will work without rpm too.
   
-* Wed Oct 21 1998 Carlo Wood <carlo@alinoe.com>
+* Wed Oct 21 1998 Carlo Wood <carlo@runaway.xs4all.nl>
 
   Release 1.2-5:
 
@@ -92,13 +91,13 @@ Group: Drivers
   version in /usr/src/linux and not be bothered by the running
   kernel version.
 
-* Wed Oct 21 1998 Carlo Wood <carlo@alinoe.com>
+* Wed Oct 21 1998 Carlo Wood <carlo@runaway.xs4all.nl>
 
   Release 1.2-4:
 
 - Upped source to Dev3Dfx-2.3.tar.gz
 
-* Mon Oct 19 1998 Carlo Wood <carlo@alinoe.com>
+* Mon Oct 19 1998 Carlo Wood <carlo@runaway.xs4all.nl>
  
   Release 1.2-3:
 
@@ -107,13 +106,13 @@ Group: Drivers
 - Removed script lines that write an `option' line to /etc/conf.modules.
 - Upped source to Dev3Dfx-2.2.tar.gz
 
-* Sun Oct 18 1998 Carlo Wood <carlo@alinoe.com>
+* Sun Oct 18 1998 Carlo Wood <carlo@runaway.xs4all.nl>
 
   Release 1.2-2:
 
 - Added OPT_CFLAGS stuff.
   
-* Sun Oct 18 1998 Carlo Wood <carlo@alinoe.com>
+* Sun Oct 18 1998 Carlo Wood <carlo@runaway.xs4all.nl>
 
   Release 1.2-1:
 
