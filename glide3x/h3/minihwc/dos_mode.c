@@ -19,6 +19,13 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.4  2004/03/02 07:30:57  dborca
+** changed the build process to make the branches independent
+** made glide.h consistent across all branches
+** grQueryResolution now works in DOS
+** more tests in CVG branch
+** some other fixes
+**
 ** Revision 1.1.1.1.8.3  2003/07/15 10:28:23  dborca
 ** small matters
 **
@@ -50,6 +57,8 @@
 #include <string.h>
 
 #include <3dfx.h>
+#define FX_DLL_DEFINITION
+#include <fxdll.h>
 /* [dBorca] */
 #ifdef __DJGPP__
 #include <dos.h>
