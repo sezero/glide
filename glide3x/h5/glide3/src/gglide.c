@@ -2663,7 +2663,7 @@ GR_ENTRY(grBufferSwap, void, (FxU32 swapInterval))
   if (_GlideRoot.environment.lockCounter > -10) _GlideRoot.environment.lockCounter--;
 
 #ifdef FX_GLIDE_NAPALM
-#if !defined(__linux__) && !defined(__DJGPP__)
+#if !(GLIDE_PLATFORM & GLIDE_OS_UNIX) && !defined(__DJGPP__)
   /* Window hacky stuff */
   if (gc->windowed)
   {
