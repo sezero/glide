@@ -9394,7 +9394,7 @@ hwcShareContextData(hwcBoardInfo *bInfo, FxU32 **data)
        * check the retVal and the pointer. This also screws with ALT-TAB.
        */
       GDBG_INFO(80, FN_NAME ":  ExtEscape retVal=%d, dwordOffset=%d, contextDWORD=%d\n", retVal, ctxRes.optData.contextDwordNTRes.dwordOffset, ctxRes.optData.shareContextDWORDRes.contextDWORD);
-      if( (retVal <= 0) || (ctxRes.optData.contextDwordNTRes.dwordOffset == 0)) { /* make exceptions for winxp escapecalls */
+      if( (retVal <= 0) || (ctxRes.optData.contextDwordNTRes.dwordOffset == 0) || (bInfo->osNT51)) { /* make exceptions for winxp escapecalls */
 #if (WINXP_ALT_TAB_FIX || WINXP_FASTER_ALT_TAB_FIX)
         cLostPointer =
 #endif
