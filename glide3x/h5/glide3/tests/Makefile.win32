@@ -1,12 +1,12 @@
 # Win32 Makefile for 3dfx Glide3x test files
 # 
 # Copyright (c) 2003 - Hiroshi Morii
-# Email: koolsmoky@3dfxzone.it
+# Email: koolsmoky@users.sourceforge.net
 # URL  : http://www.3dfxzone.it/koolsmoky
 #
 # Build test files           : nmake -f Makefile.win32
 # Remove objects             : nmake -f Makefile.win32 clean
-# Remove files in bin, lib   : nmake -f Makefile.win32 clobber
+# Remove excutables          : nmake -f Makefile.win32 clobber
 # Remove all generated files : nmake -f Makefile.win32 realclean
 #
 
@@ -33,7 +33,7 @@ FLAGS  = $(FLAGS) -DFX_GLIDE_NAPALM=1 -DH4=1 -DFX_GLIDE_H5_CSIM=1
 CC   = cl
 LINK = link
 
-CFLAGS  = -Ox -G6 -W3 -WX -c -D__WIN32__ -DSTRICT
+CFLAGS  = -Ox -G6 -W3 -WX -c -D__MSC__=1 -D_X86_=1 -DNULL=0 -D_WIN32=1 -DWIN32=1 -D__WIN32__=1 -DSTRICT
 LFLAGS  = -nologo /SUBSYSTEM:CONSOLE /OPT:WIN98 /MACHINE:IX86
 
 #################################
@@ -45,60 +45,61 @@ MV = mv
 #################################
 # objects, path, dependency
 #################################
-TESTFILE_OBJ =\
-	test00.obj\
-	test01.obj\
-	test02.obj\
-	test03.obj\
-	test04.obj\
-	test05.obj\
-	test06.obj\
-	test07.obj\
-	test08.obj\
-	test09.obj\
-	test10.obj\
-	test11.obj\
-	test12.obj\
-	test13.obj\
-	test14.obj\
-	test15.obj\
-	test16.obj\
-	test17.obj\
-	test18.obj\
-	test19.obj\
-	test20.obj\
-	test21.obj\
-	test22.obj\
-	test23.obj\
-	test24.obj\
-	test25.obj\
-	test26.obj\
-	test27.obj\
-	test28.obj\
-	test29.obj\
-	test30.obj\
-	test31.obj\
-	test32.obj\
-	test33.obj\
-	test34.obj\
-	test35.obj\
-	test36.obj\
-	test37.obj\
-	test38.obj\
-	test39.obj\
-	test40.obj\
-	test41.obj\
-	test42.obj\
-	test43.obj\
-	test44.obj\
-	test45.obj\
-	test46.obj\
-	test47.obj\
-	test48.obj\
-	test49.obj\
-	display.obj
+TESTFILE_SRC =\
+	test00.c\
+	test01.c\
+	test02.c\
+	test03.c\
+	test04.c\
+	test05.c\
+	test06.c\
+	test07.c\
+	test08.c\
+	test09.c\
+	test10.c\
+	test11.c\
+	test12.c\
+	test13.c\
+	test14.c\
+	test15.c\
+	test16.c\
+	test17.c\
+	test18.c\
+	test19.c\
+	test20.c\
+	test21.c\
+	test22.c\
+	test23.c\
+	test24.c\
+	test25.c\
+	test26.c\
+	test27.c\
+	test28.c\
+	test29.c\
+	test30.c\
+	test31.c\
+	test32.c\
+	test33.c\
+	test34.c\
+	test35.c\
+	test36.c\
+	test37.c\
+	test38.c\
+	test39.c\
+	test40.c\
+	test41.c\
+	test42.c\
+	test43.c\
+	test44.c\
+	test45.c\
+	test46.c\
+	test47.c\
+	test48.c\
+	test49.c\
+	sbench.c\
+	display.c
 
-SUB_OBJ = tlib.obj
+TESTFILE_OBJ = $(TESTFILE_SRC:.c=.obj)
 
 INCS =\
 	-I$(GLIDE_ROOT)\$(FX_GLIDE_HW)\$(FX_HW_PROJECTS)\src\
@@ -114,13 +115,19 @@ DEP_LIB = user32.lib gdi32.lib
 #################################
 default:: all
 
-all: $(SUB_OBJ) $(TESTFILE_OBJ) $(TESTFILE_OBJ:.obj=.exe)
+all: tlib.obj fxos.obj $(TESTFILE_OBJ) $(TESTFILE_OBJ:.obj=.exe)
+
+tlib.obj: tlib.c
+	$(CC) -o $@ $(INCS) $(FLAGS) $(CFLAGS) tlib.c
+
+fxos.obj: $(GLIDE_ROOT)\$(FX_GLIDE_SWLIBS)\fxmisc\fxos.c
+	$(CC) -o $@ $(INCS) $(FLAGS) $(CFLAGS) $(GLIDE_ROOT)\$(FX_GLIDE_SWLIBS)\fxmisc\fxos.c
 
 .c.obj:
 	$(CC) -o $@ $(INCS) $(FLAGS) $(CFLAGS) $<
 
 .obj.exe:
-	$(LINK) -out:$@ $(LFLAGS) $< $(SUB_OBJ) $(DEP_LIB) $(GLIDE_LIB)
+	$(LINK) -out:$@ $(LFLAGS) $< tlib.obj fxos.obj $(DEP_LIB) $(GLIDE_LIB)
 
 #################################
 # cleanup rules
