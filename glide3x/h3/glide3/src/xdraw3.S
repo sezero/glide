@@ -611,9 +611,9 @@ ALIGN(32)
 
 /*  989  :   } */
 /*  990  :   else { */
-/*  991  :     /* */
+/*  991  :      * */
 /*  992  :      * first cut of clip space coordinate code, no optimization. */
-/*  993  :      /* */
+/*  993  :      * */
 /*  994  :     float oow */
 /*  995  :      */
 /*  996  :     while (count > 0) { */
@@ -628,7 +628,7 @@ ALIGN(32)
 /*  1005 :           vPtr = *(float **)pointers */
 /*  1006 :         oow = 1.0f / FARRAY(vPtr, gc->state.vData.wInfo.offset) */
 /*  1007 :          */
-/*  1008 :         /* x, y /* */
+/*  1008 :         * x, y * */
 /*  1009 :         TRI_SETF(FARRAY(vPtr, 0) */
 /*  1010 :                  *oow*gc->state.Viewport.hwidth + gc->state.Viewport.ox) */
 /*  1011 :         TRI_SETF(FARRAY(vPtr, 4) */
@@ -1850,7 +1850,7 @@ ALIGN(32)
 	pfrcpit2 %mm1 , %mm0	/*  oow = 1.0f / FARRAY(vPtr, gc->state.vData.wInfo.offset */
 	mov paramIndex(%gc) , %esi	/*  gc->state.paramIndex */
 
-/*        /* x, y /* */
+/*        * x, y * */
 /*        TRI_SETF(FARRAY(vPtr, 0) */
 /*          *oow*gc->state.Viewport.hwidth + gc->state.Viewport.ox) */
 /*        TRI_SETF(FARRAY(vPtr, 4) */
@@ -2158,7 +2158,7 @@ ALIGN(32)
 .L_grDrawVertexList_3DNow_Clip_strip_done:
 /*     } */
 /*   #undef FN_NAME */
-/*   } /* _grDrawVertexList /* */
+/*   } * _grDrawVertexList * */
 
 	pop %ebx	/*  restore caller's register variable */
 	pop %ebp	/*  restore frame pointer  */

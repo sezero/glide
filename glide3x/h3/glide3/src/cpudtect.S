@@ -2,51 +2,57 @@
 ** THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONLY
 ** PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGHT
 ** TO USE THE GLIDE TRADEMARK WITHOUT PRIOR WRITTEN PERMISSION OF 3DFX
-** INTERACTIVE, INC. A COPY OF THIS LICENSE MAY BE OBTAINED FROM THE 
-** DISTRIBUTOR OR BY CONTACTING 3DFX INTERACTIVE INC(info@3dfx.com). 
-** THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER 
+** INTERACTIVE, INC. A COPY OF THIS LICENSE MAY BE OBTAINED FROM THE
+** DISTRIBUTOR OR BY CONTACTING 3DFX INTERACTIVE INC(info@3dfx.com).
+** THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER
 ** EXPRESSED OR IMPLIED. SEE THE 3DFX GLIDE GENERAL PUBLIC LICENSE FOR A
-** FULL TEXT OF THE NON-WARRANTY PROVISIONS.  
-** 
+** FULL TEXT OF THE NON-WARRANTY PROVISIONS.
+**
 ** USE, DUPLICATION OR DISCLOSURE BY THE GOVERNMENT IS SUBJECT TO
 ** RESTRICTIONS AS SET FORTH IN SUBDIVISION (C)(1)(II) OF THE RIGHTS IN
 ** TECHNICAL DATA AND COMPUTER SOFTWARE CLAUSE AT DFARS 252.227-7013,
 ** AND/OR IN SIMILAR OR SUCCESSOR CLAUSES IN THE FAR, DOD OR NASA FAR
 ** SUPPLEMENT. UNPUBLISHED RIGHTS RESERVED UNDER THE COPYRIGHT LAWS OF
-** THE UNITED STATES.  
-** 
+** THE UNITED STATES.
+**
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
 */
 
-/*  $Header$ */
-/*  $Log$
-/*  Revision 1.1.1.1  1999/11/24 21:44:53  joseph
-/*  Initial checkin for SourceForge
-/* */
-/*   */
-/*  4     4/06/99 3:54p Dow */
-/*  Alt tab again. */
-/*   */
-/*  9     3/10/99 10:40a Peter */
-/*  detect katmai-ness */
-/*   */
-/*  8     1/20/99 5:50p Peter */
-/*  norbert's code for k6 and k7 (?) wc */
-/*   */
-/*  7     12/09/98 1:11p Peter */
-/*  cpu detection from Norbert for teh rest of the 3DNow!(tm) partners */
-/*   */
-/*  6     10/03/98 3:35p Peter */
-/*  First pass at dynamic detection of 3DNow!(tm) */
-/*   */
-/*  5     7/24/98 1:40p Hohn */
-/*   */
-/*  4     5/28/97 8:23a Peter */
-/*  Merge w/ original glide source */
-/*   */
-/*  2     3/04/97 9:10p Dow */
-/*  Neutered mutiplatform multiheaded monster. */
+/*
+ *  $Header$
+ *  $Log$
+ *  Revision 1.1.1.1.6.1  2003/05/05 07:12:46  dborca
+ *  no message
+ *
+ *  Revision 1.1.1.1  1999/11/24 21:44:53  joseph
+ *  Initial checkin for SourceForge
+ *
+ *
+ *  4     4/06/99 3:54p Dow
+ *  Alt tab again.
+ *
+ *  9     3/10/99 10:40a Peter
+ *  detect katmai-ness
+ *
+ *  8     1/20/99 5:50p Peter
+ *  norbert's code for k6 and k7 (?) wc
+ *
+ *  7     12/09/98 1:11p Peter
+ *  cpu detection from Norbert for teh rest of the 3DNow!(tm) partners
+ *
+ *  6     10/03/98 3:35p Peter
+ *  First pass at dynamic detection of 3DNow!(tm)
+ *
+ *  5     7/24/98 1:40p Hohn
+ *
+ *  4     5/28/97 8:23a Peter
+ *  Merge w/ original glide source
+ *
+ *  2     3/04/97 9:10p Dow
+ *  Neutered mutiplatform multiheaded monster.
+ *
+ */
 
 
 
