@@ -121,8 +121,7 @@ endif
 ARFLAGS = rus
 
 # assembler
-ASFLAGS = -O2 -felf -D__linux__
-ASFLAGS += -I.
+ASFLAGS = -O6 -felf -D__linux__
 ASFLAGS += $(CDEFS)
 
 # compiler

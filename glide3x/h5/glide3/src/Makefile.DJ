@@ -115,8 +115,7 @@ endif
 ARFLAGS = rus
 
 # assembler
-ASFLAGS = -O2 -fcoff -D__DJGPP__ --prefix _
-ASFLAGS += -I.
+ASFLAGS = -O6 -fcoff -D__DJGPP__ --prefix _
 ASFLAGS += $(CDEFS)
 
 # compiler

@@ -307,7 +307,7 @@ AS   = nasmw
 CFLAGS  = -G6 -W3 -WX -c -D__MSC__=1 -D_X86_=1 -DNULL=0 -D_WIN32=1 -DWIN32=1 -D__WIN32__=1 -DSTRICT
 LFLAGS  = -nologo /DLL /OPT:WIN98 /MACHINE:IX86 /NODEFAULTLIB
 ARFLAGS = -nologo
-ASFLAGS = -O2 -fwin32 -D__WIN32__ --prefix _
+ASFLAGS = -O6 -fwin32 -D__WIN32__ --prefix _
 
 !if "$(DEBUG)"== "1"
 CFLAGS  = $(CFLAGS) -Od -MDd -DDEBUG=1 -D_DEBUG -D_MT -D_DLL -Zi
