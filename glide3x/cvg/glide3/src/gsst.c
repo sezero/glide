@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.3  2004/10/08 06:28:35  dborca
+** small matters concerning "ActiveWindow" on non-Windows
+**
 ** Revision 1.1.1.1.8.2  2004/02/16 07:42:15  dborca
 ** grSetNumPendingBuffers visible with grGetProcAddress
 **
@@ -1505,12 +1508,52 @@ __errSliExit:
     HMODULE newSplash;
 
     if (newSplash = LoadLibrary("3dfxspl3.dll")) {
+      FxBool didLoad;
       FARPROC fxSplash;
+      FARPROC fxSplashInit;
+      FARPROC fxSplashPlug;
+      FARPROC fxSplashShutdown;
 
-      if (fxSplash = GetProcAddress(newSplash, "_fxSplash@16")) {
-        fxSplash(hWnd, gc->state.screen_width, gc->state.screen_height, nAuxBuffers);
-        _GlideRoot.environment.noSplash = 1;        
-      } 
+      fxSplash         = GetProcAddress(newSplash, "_fxSplash@20");
+      fxSplashInit     = GetProcAddress(newSplash, "_fxSplashInit@24");
+      fxSplashPlug     = GetProcAddress(newSplash, "_fxSplashPlug@16");
+      fxSplashShutdown = GetProcAddress(newSplash, "_fxSplashShutdown@0");
+
+      didLoad = ((fxSplash != NULL) &&
+                 (fxSplashInit != NULL) &&
+                 (fxSplashPlug != NULL) &&
+                 (fxSplashShutdown != NULL));
+
+      if (0 & didLoad) {
+        GrState glideState;
+
+        grGlideGetState(&glideState);
+        {
+          didLoad = fxSplashInit(hWnd,
+                                 gc->state.screen_width, gc->state.screen_height,
+                                 nColBuffers, nAuxBuffers,
+                                 format);
+          if (didLoad) {
+            fxSplash(0.0f, 0.0f, 
+                     (float)gc->state.screen_width,
+                     (float)gc->state.screen_height,
+                     0);
+            _GlideRoot.environment.noSplash = 1;
+          } else {
+            fxSplashShutdown();
+          }
+        }
+        grGlideSetState((const void*)&glideState);
+      }
+
+      if (!_GlideRoot.environment.noSplash) {
+        if (fxSplash = GetProcAddress(newSplash, "_fxSplash@16")) {
+          fxSplash(hWnd, gc->state.screen_width, gc->state.screen_height, nAuxBuffers);
+          _GlideRoot.environment.noSplash = 1;        
+        }
+      }
+      
+      FreeLibrary(newSplash);
     }
   }
 #endif /* (GLIDE_PLATFORM & GLIDE_OS_WIN32) */
