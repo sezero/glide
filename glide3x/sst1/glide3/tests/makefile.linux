@@ -32,6 +32,8 @@ HWDEF = -DSST1
 else
 ifeq ($(FX_GLIDE_HW),sst96)
 HWDEF = -DSST96
+XPATH = -L/usr/X11R6/lib
+XLIBS = -lXxf86dga -lXxf86rush -lXxf86vm
 endif
 endif
 
@@ -45,10 +47,10 @@ CFLAGS += -I$(TOP)/$(FX_GLIDE_HW)/glide3/src -I$(TOP)/$(FX_GLIDE_HW)/incsrc -I$(
 CFLAGS += -I$(TOP)/swlibs/fxmisc
 CFLAGS += $(HWDEF)
 
-LDFLAGS = -s -L$(TOP)/$(FX_GLIDE_HW)/lib
+LDFLAGS = -s -L$(TOP)/$(FX_GLIDE_HW)/lib $(XPATH)
 
 LDLIBS = -lglide3
-LDLIBS += -lm
+LDLIBS += $(XLIBS) -lm
 
 .c.o:
 	$(CC) -o $@ $(CFLAGS) -c $<

@@ -117,6 +117,7 @@ main(int argc, char **argv) {
   char                 filename[256];
   FxVideoTimingInfo*   vidTiming  = NULL;
   FxVideoTimingInfo    curVidTiming = gDefaultTimingVal;
+  GrContext_t ctx;
 
   /* Initialize Glide */
   grGlideInit();
@@ -166,16 +167,16 @@ main(int argc, char **argv) {
   printf("%s\n", version);
     
   grSstSelect(0);
-  assert(grSstWinOpen(tlGethWnd(),
+  assert((ctx = grSstWinOpen(tlGethWnd(),
                       GR_RESOLUTION_640x480,
                       GR_REFRESH_60Hz,
                       GR_COLORFORMAT_ABGR,
                       GR_ORIGIN_UPPER_LEFT,
-                      2, 1));
+                      2, 1)));
 
   tlConSet(0.0f, 0.0f, 1.0f, 1.0f, 
            60, 30, 0xffffff);
-  grSstWinClose(0);
+  grSstWinClose(ctx);
     
   {
     GrScreenRefresh_t curRefresh = GR_REFRESH_60Hz;
@@ -184,10 +185,10 @@ main(int argc, char **argv) {
     
     while((frames != 0) && tlOkToRender()) {
       /* Try to open at the current user selection */
-      if (!grSstWinOpen(tlGethWnd(),
+      if (!(ctx = grSstWinOpen(tlGethWnd(),
                         curRes, curRefresh,
                         GR_COLORFORMAT_ABGR, GR_ORIGIN_UPPER_LEFT,
-                        numColorBuf, numAuxBuf)) {          
+                        numColorBuf, numAuxBuf))) {
 
         /* If we cannot use the user selection the set to one that
          * should work so that we have reasonable error output.
@@ -196,9 +197,9 @@ main(int argc, char **argv) {
          * any failures due to bad data.
          */
         grSstVidMode(0, NULL);
-        if (!grSstWinOpen(tlGethWnd(), GR_RESOLUTION_640x480, GR_REFRESH_60Hz,
+        if (!(ctx = grSstWinOpen(tlGethWnd(), GR_RESOLUTION_640x480, GR_REFRESH_60Hz,
                           GR_COLORFORMAT_ABGR, GR_ORIGIN_UPPER_LEFT,
-                          2, 0)) {
+                          2, 0))) {
           fprintf(stderr, "Could not set error resolution.\n");
           exit(-1);
         }
@@ -218,7 +219,7 @@ main(int argc, char **argv) {
           /* Do Nothing */;
         
         /* Cleanup the error reporting and try again. */
-        grSstWinClose(0);
+        grSstWinClose(ctx);
         continue;
       }
       
@@ -391,7 +392,7 @@ main(int argc, char **argv) {
       }
       
       /* Start new refresh settings */
-      grSstWinClose(0);
+      grSstWinClose(ctx);
     }
   }
     
