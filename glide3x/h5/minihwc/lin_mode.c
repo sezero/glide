@@ -71,7 +71,6 @@ FxBool setVideoMode(void *hwnd,
                     int  h3pixelSize,
                     int  refresh,
                     void *hmon,
-                    char *regpath,
                     char *devicename)
 {
  GR_DCL_GC;

@@ -68,6 +68,7 @@
 #include <h3regs.h>
 #include <minihwc.h>
 #include "hwcio.h"
+#include "setmode.h"
 
 #if 1
 #define LOG(x)
@@ -108,14 +109,18 @@ static unsigned long _tableSize = sizeof( _table ) / sizeof( ResTableEntry );
 #include "glide.h"
 #include "fxglide.h"
 
-FxBool 
-setVideoMode( unsigned long dummy, int xres, int yres, int pixelSize, int refresh, void *hmon ) 
+FxBool
+setVideoMode( void *hwnd,
+              int  xres,
+              int  yres,
+              int  pixelSize,
+              int  refresh,
+              void *hmon,
+              char *devicename)
 {
   union REGS r, rOut;
   int i;
   int mode;
-
-  dummy = dummy;
 
   r.w.ax = 0x4f03;
   int386(0x10, &r, &rOut);

@@ -506,7 +506,7 @@ typedef struct hwcBoardInfo_s {
     contextHandle;  
   FxI32 hwcProtocol;
   FxU32 devNode ;   /* AJB- DevNode from display driver for minivdd ioctls */
-  FxI16/*FxI32*/ hwcEscape ; /* AJB- sucky: H5 TOT uses a diff't escape code than H3 */ /* KoolSmoky - new escape code for winxp *//* revert back to previous for now */
+  FxI16/*FxI32*/ hwcEscape ; /* AJB- sucky: H5 TOT uses a diff't escape code than H3 */
   char RegPath[256];    /* KoolSmoky - Device registry path */
   char DeviceName[32];  /* KoolSmoky - Device Name */
 } hwcBoardInfo;

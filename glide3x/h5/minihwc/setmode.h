@@ -24,7 +24,6 @@ FxBool setVideoMode( void *hwnd,
                      int  h3pixelSize, 
                      int  refresh, 
                      void *hmon,
-                     char *regpath,
                      char *devicename);
 
 void resetVideo( void );

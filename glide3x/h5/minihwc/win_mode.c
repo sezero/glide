@@ -57,9 +57,6 @@ static HWND	hwndApp = 0;
 LPDIRECTDRAW            lpDD1 = NULL;
 LPDIRECTDRAW2           lpDD  = NULL;
 
-static char dummy_regpath[] = "\0";
-char *opengl_regpath = dummy_regpath; /* KoolSmoky - registry path passed from grEnable */
-
 /*
  * parseFilename
  *
@@ -182,7 +179,7 @@ msgEnumDisplayModes(HRESULT hResult)
 } /* msgEnumDisplayModes */
 
 FxBool 
-setVideoMode( void *hwnd, int xRes, int yRes, int h3pixelSize, int refresh, void *hmon, char *regpath , char *devicename )
+setVideoMode( void *hwnd, int xRes, int yRes, int h3pixelSize, int refresh, void *hmon, char *devicename )
 {
   LPGUID          ddGuid = NULL;
   HMODULE         ddraw = NULL;
@@ -602,16 +599,8 @@ checkResolutions(FxBool *supportedByResolution, FxU32 stride, void *hmon)
 } /* checkResolutions */
 
 
-void EnableOpenGL( char *regpath )
+void EnableOpenGL(void)
 {
   GDBG_INFO(80, "EnableOpenGL: called!\n");
-  
-  if(regpath[0] != '\0') {
-	opengl_regpath = regpath;
-  } else {
-    opengl_regpath = dummy_regpath;
-  }
-  
-  GDBG_INFO(80, "opengl regpath: %s\n", opengl_regpath);
   
 } /* EnableOpenGL */

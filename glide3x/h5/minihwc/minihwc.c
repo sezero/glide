@@ -869,18 +869,9 @@ typedef struct sli_aa_request {
 } SLI_AA_REQUEST, * PSLI_AA_REQUEST;
 #endif
 
-#ifdef GETENV
-#undef GETENV
-#endif
-
+#if defined(__DJGPP__) || (GLIDE_PLATFORM & GLIDE_OS_UNIX)
 #define _aligned_malloc(a, b) malloc(a)
 #define _aligned_free free
-//#if defined(HWC_EXT_INIT)
-#if !defined(__DJGPP__) && !(GLIDE_PLATFORM & GLIDE_OS_UNIX)
-#define GETENV(a, b) hwcGetenvEx(a, b)
-#else
-#define GETENV(a, b) hwcGetenv(a)
-
 /* don't like macros, because of side-effects */
 static __inline int min (int x, int y)
 {
@@ -978,8 +969,8 @@ static __inline int min (int x, int y)
 #define HWC_LFB_STRIDE     0x2000UL
 #define HWC_RAW_LFB_STRIDE SST_RAW_LFB_ADDR_STRIDE_8K
 
-hwcInfo hInfo;
-_p_info *CPUInfo = NULL;
+static hwcInfo hInfo;
+static _p_info *CPUInfo = NULL;
 
 #define MAX_ERROR_SIZE 1024
 static char errorString[MAX_ERROR_SIZE];
@@ -1517,7 +1508,7 @@ hwcInit(FxU32 vID, FxU32 dID)
   /* KoolSmoky - temporary hack to enable secondary and beyond sst devices
   ** FX_GLIDE_FORCE_SST0=1 to force device as sst0
   */
-  for (monitor = 0; monitor < num_monitor; monitor++) {
+  /*for (monitor = 0; monitor < num_monitor; monitor++) {
     if (GETENV("FX_GLIDE_FORCE_SST0", data[monitor].RegPath)) {
       if(atoi(GETENV("FX_GLIDE_FORCE_SST0", data[monitor].RegPath)) == 1) {
         char tmpRegPath[256];
@@ -1537,7 +1528,7 @@ hwcInit(FxU32 vID, FxU32 dID)
         strcpy(data[monitor].RegPath, tmpRegPath);
       }
     }
-  }
+  }*/
   
   hInfo.nBoards = 0;
   for (monitor = 0; monitor < num_monitor; monitor++) {
@@ -1593,8 +1584,8 @@ hwcInit(FxU32 vID, FxU32 dID)
               hInfo.boardInfo[monitor].h3Mem);
     
 #ifdef FX_GLIDE_NAPALM
-    if (GETENV("FX_GLIDE_DEVICEID", hInfo.boardInfo[monitor].RegPath)) {
-      FxU32 deviceid = atoi(GETENV("FX_GLIDE_DEVICEID", hInfo.boardInfo[monitor].RegPath));
+    if (GETENV("FX_GLIDE_DEVICEID")) {
+      FxU32 deviceid = atoi(GETENV("FX_GLIDE_DEVICEID"));
       hInfo.boardInfo[monitor].pciInfo.deviceID = deviceid;
     }
     
@@ -1632,8 +1623,8 @@ hwcInit(FxU32 vID, FxU32 dID)
       ((hInfo.boardInfo[monitor].h3Mem == 4 ) ||
        (hInfo.boardInfo[monitor].pciInfo.deviceID == SST_DEVICE_ID_H3)) ? 0x200000 : 0x400000;
     
-    if (GETENV("FX_GLIDE_TMU_MEMSIZE", hInfo.boardInfo[monitor].RegPath)) {
-      FxU32 tmu_mem = atoi(GETENV("FX_GLIDE_TMU_MEMSIZE", hInfo.boardInfo[monitor].RegPath));
+    if (GETENV("FX_GLIDE_TMU_MEMSIZE")) {
+      FxU32 tmu_mem = atoi(GETENV("FX_GLIDE_TMU_MEMSIZE"));
       if (tmu_mem == 1) {
         hInfo.boardInfo[monitor].min_tramSize = 0x200000;
       }
@@ -1642,9 +1633,9 @@ hwcInit(FxU32 vID, FxU32 dID)
     // Save realNumChips
     hInfo.boardInfo[monitor].pciInfo.realNumChips = hInfo.boardInfo[monitor].pciInfo.numChips;
     
-    if(GETENV("FX_GLIDE_NUM_CHIPS", hInfo.boardInfo[monitor].RegPath)) {
+    if(GETENV("FX_GLIDE_NUM_CHIPS")) {
       FxU32 numChips;
-      numChips = atoi(GETENV("FX_GLIDE_NUM_CHIPS", hInfo.boardInfo[monitor].RegPath));
+      numChips = atoi(GETENV("FX_GLIDE_NUM_CHIPS"));
       /* Don't do anything stupid... */
       if(numChips < 1)
         numChips = 1;
@@ -1653,8 +1644,8 @@ hwcInit(FxU32 vID, FxU32 dID)
       }
     }
     
-    if (GETENV("FX_GLIDE_FBRAM", hInfo.boardInfo[monitor].RegPath)) {
-      hInfo.boardInfo[monitor].h3Mem = atoi(GETENV("FX_GLIDE_FBRAM", hInfo.boardInfo[monitor].RegPath));      
+    if (GETENV("FX_GLIDE_FBRAM")) {
+      hInfo.boardInfo[monitor].h3Mem = atoi(GETENV("FX_GLIDE_FBRAM"));      
     }
     
     checkResolutions((int *) resolutionSupported[monitor], 
@@ -1746,20 +1737,20 @@ hwcInit(FxU32 vID, FxU32 dID)
          hInfo.boardInfo[j].pciInfo.swizzleOffset[2] = boardInfo.swizzleOffset[2];                   
          hInfo.boardInfo[j].pciInfo.swizzleOffset[3] = boardInfo.swizzleOffset[3];                   
 
-         if (GETENV("FX_GLIDE_FBRAM", hInfo.boardInfo[monitor].RegPath)) {
-            hInfo.boardInfo[j].h3Mem = atoi(GETENV("FX_GLIDE_FBRAM", hInfo.boardInfo[monitor].RegPath));      
+         if (GETENV("FX_GLIDE_FBRAM")) {
+            hInfo.boardInfo[j].h3Mem = atoi(GETENV("FX_GLIDE_FBRAM"));      
          }
 
 #ifdef FX_GLIDE_NAPALM
-         if (GETENV("FX_GLIDE_DEVICEID", hInfo.boardInfo[monitor].RegPath))
+         if (GETENV("FX_GLIDE_DEVICEID"))
          {
-            FxU32 deviceid = atoi(GETENV("FX_GLIDE_DEVICEID", hInfo.boardInfo[monitor].RegPath));
+            FxU32 deviceid = atoi(GETENV("FX_GLIDE_DEVICEID"));
             hInfo.boardInfo[j].pciInfo.deviceID = deviceid;
          }
-         if(GETENV("FX_GLIDE_NUM_CHIPS", hInfo.boardInfo[monitor].RegPath))
+         if(GETENV("FX_GLIDE_NUM_CHIPS"))
          {
             FxU32 numChips;
-            numChips = atoi(GETENV("FX_GLIDE_NUM_CHIPS", hInfo.boardInfo[monitor].RegPath));
+            numChips = atoi(GETENV("FX_GLIDE_NUM_CHIPS"));
             /* Don't do something stupid... */
             if(numChips <= hInfo.boardInfo[j].pciInfo.numChips)
             {
@@ -1820,8 +1811,8 @@ hwcInit(FxU32 vID, FxU32 dID)
         pciGetConfigData(PCI_ROM_BASE_ADDRESS, bn,
                          &hInfo.boardInfo[i].pciInfo.pciBaseAddr[3]);
       
-        if (GETENV("FX_GLIDE_DEVICEID", hInfo.boardInfo[monitor].RegPath)) {
-          FxU32 deviceid = atoi(GETENV("FX_GLIDE_DEVICEID", hInfo.boardInfo[monitor].RegPath));
+        if (GETENV("FX_GLIDE_DEVICEID")) {
+          FxU32 deviceid = atoi(GETENV("FX_GLIDE_DEVICEID"));
           hInfo.boardInfo[i].pciInfo.deviceID = deviceid;
         }
 
@@ -1862,9 +1853,9 @@ hwcInit(FxU32 vID, FxU32 dID)
         // Save realNumChips
         hInfo.boardInfo[i].pciInfo.realNumChips = hInfo.boardInfo[i].pciInfo.numChips;
             
-        if(GETENV("FX_GLIDE_NUM_CHIPS", hInfo.boardInfo[monitor].RegPath)) {
+        if(GETENV("FX_GLIDE_NUM_CHIPS")) {
           FxU32 numChips;
-          numChips = atoi(GETENV("FX_GLIDE_NUM_CHIPS", hInfo.boardInfo[monitor].RegPath));
+          numChips = atoi(GETENV("FX_GLIDE_NUM_CHIPS"));
           /* Don't do something stupid... */
           if(numChips <= hInfo.boardInfo[i].pciInfo.numChips) {
             hInfo.boardInfo[i].pciInfo.numChips = numChips;
@@ -2169,7 +2160,7 @@ hwcInitRegisters(hwcBoardInfo *bInfo)
     HWC_IO_LOAD(bInfo->regInfo, dramInit1, dramInit1);
     bInfo->sdRAM = ((dramInit1 & SST_MCTL_TYPE_SDRAM) != 0x00UL);
 
-    if (GETENV("SSTH3_SDRAM", bInfo->RegPath))
+    if (GETENV("SSTH3_SDRAM"))
       bInfo->sdRAM = FXTRUE;
   }
 
@@ -2190,36 +2181,36 @@ hwcInitRegisters(hwcBoardInfo *bInfo)
   }
 #endif
 
-  if (GETENV("SSTH3_SGRAM_MODE", bInfo->RegPath))
-    sgramMode = atoi(GETENV("SSTH3_SGRAM_MODE", bInfo->RegPath));
-  else if (GETENV("SSTH3_SGRAM_222", bInfo->RegPath) &&
-    (atoi(GETENV("SSTH3_SGRAM_222", bInfo->RegPath)) != 0))
+  if (GETENV("SSTH3_SGRAM_MODE"))
+    sgramMode = atoi(GETENV("SSTH3_SGRAM_MODE"));
+  else if (GETENV("SSTH3_SGRAM_222") &&
+    (atoi(GETENV("SSTH3_SGRAM_222")) != 0))
     sgramMode = 0x27;
   else
     sgramMode = 0x37;
 
-  if (GETENV("SSTH3_SGRAM_MASK", bInfo->RegPath))
-    sgramMask = atoi(GETENV("SSTH3_SGRAM_MASK", bInfo->RegPath));
+  if (GETENV("SSTH3_SGRAM_MASK"))
+    sgramMask = atoi(GETENV("SSTH3_SGRAM_MASK"));
   else
     sgramMask = 0xFFFFFFFF;
 
-  if (GETENV("SSTH3_SGRAM_COLOR", bInfo->RegPath))
-    sgramColor = atoi(GETENV("SSTH3_SGRAM_COLOR", bInfo->RegPath));
+  if (GETENV("SSTH3_SGRAM_COLOR"))
+    sgramColor = atoi(GETENV("SSTH3_SGRAM_COLOR"));
   else
     sgramColor = 0;
 
-  if (GETENV("SSTH3_GRXCLOCK", bInfo->RegPath))
-    grxSpeedInMHz = atoi(GETENV("SSTH3_GRXCLOCK", bInfo->RegPath));
+  if (GETENV("SSTH3_GRXCLOCK"))
+    grxSpeedInMHz = atoi(GETENV("SSTH3_GRXCLOCK"));
   else
     grxSpeedInMHz = 100;
 
-  if (GETENV("SSTH3_MEMCLOCK", bInfo->RegPath))
-    memSpeedInMHz = atoi(GETENV("SSTH3_MEMCLOCK", bInfo->RegPath));
+  if (GETENV("SSTH3_MEMCLOCK"))
+    memSpeedInMHz = atoi(GETENV("SSTH3_MEMCLOCK"));
   else
     memSpeedInMHz = 100;
 
 #if !defined(HWC_ACCESS_DDRAW) && !defined(HWC_GDX_INIT)
-  if (GETENV("HAL_NOINIT", NULL) == NULL || atoi(GETENV("HAL_NOINIT", NULL)) == 0) {
+  if (GETENV("HAL_NOINIT") == NULL || atoi(GETENV("HAL_NOINIT")) == 0) {
 
     /* 
      * final DOS initialiation
@@ -2227,7 +2218,7 @@ hwcInitRegisters(hwcBoardInfo *bInfo)
 
     /* don't set the clocks unless they used the environment variables */
 
-    if (GETENV("SSTH3_GRXCLOCK", NULL) || GETENV("SSTH3_MEMCLOCK", NULL)) {
+    if (GETENV("SSTH3_GRXCLOCK") || GETENV("SSTH3_MEMCLOCK")) {
      switch (bInfo->pciInfo.deviceID) {
         case SST_DEVICE_ID_H3: /* banshee */
 #ifndef H4 /* [dBorca] we don't have this with H4 */
@@ -2414,14 +2405,14 @@ hwcAllocBuffers(hwcBoardInfo *bInfo, FxU32 nColBuffers, FxU32 nAuxBuffers)
     napalmfifo = FXTRUE;
   }
 
-  if (GETENV("FX_GLIDE_V3FIFO", bInfo->RegPath)) {
+  if (GETENV("FX_GLIDE_V3FIFO")) {
     napalmfifo = FXFALSE;
   }
   if ((IS_NAPALM(bInfo->pciInfo.deviceID)) && (napalmfifo)) {
     FxU32 pad = 96*1024; /* Get out of the way of VGA */
 
-    if(GETENV("FX_GLIDE_FIFOEXTRA", bInfo->RegPath)) 
-      pad = atoi(GETENV("FX_GLIDE_FIFOEXTRA", bInfo->RegPath));
+    if(GETENV("FX_GLIDE_FIFOEXTRA")) 
+      pad = atoi(GETENV("FX_GLIDE_FIFOEXTRA"));
 
     bInfo->tramOffset = fifoSize = MAXFIFOSIZE_16MB + pad;
 
@@ -2665,7 +2656,7 @@ hwcInitFifo(hwcBoardInfo *bInfo, FxBool enableHoleCounting)
   }
 
   /* Keep writes from actually going to the HW. */
-  if(GETENV("FX_GLIDE_NO_HW", bInfo->RegPath)) {
+  if(GETENV("FX_GLIDE_NO_HW")) {
     return FXTRUE;
   }
 
@@ -3368,7 +3359,7 @@ hwcAllocWinFifo(hwcBoardInfo* bInfo,
         allocState = MAX(fifo->stateBuf.allocUnit, 0x1000UL),
         allocUnit  = pow2Round(allocFifo + allocState + 0xFFFUL, 0x1000UL);
       const char*
-        numAllocStr = GETENV("FX_WINFIFO_INIT_ALLOC", bInfo->RegPath);
+        numAllocStr = GETENV("FX_WINFIFO_INIT_ALLOC");
       FxU32
         numAlloc   = ((numAllocStr == NULL)
                       ? 0x8UL
@@ -3921,7 +3912,7 @@ hwcAllocWinFifo(hwcBoardInfo* bInfo,
         allocState = MAX(fifo->stateBuf.allocUnit, 0x1000UL),
         allocUnit  = pow2Round(allocFifo + allocState + 0xFFFUL, 0x1000UL);
       const char*
-        numAllocStr = GETENV("FX_WINFIFO_INIT_ALLOC", bInfo->RegPath);
+        numAllocStr = GETENV("FX_WINFIFO_INIT_ALLOC");
       FxU32
         numAlloc   = ((numAllocStr == NULL)
                       ? 0x8UL
@@ -4258,8 +4249,8 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
       refresh = refConstToRefreshHz[bInfo->vidInfo.vRefresh]; 
     }
     
-    if (GETENV("FX_GLIDE_REFRESH", bInfo->RegPath))
-      refresh = atoi(GETENV("FX_GLIDE_REFRESH", bInfo->RegPath));
+    if (GETENV("FX_GLIDE_REFRESH"))
+      refresh = atoi(GETENV("FX_GLIDE_REFRESH"));
     
     GDBG_INFO( 80, "selected refresh rate: %iHz\n", refresh );
 
@@ -4288,7 +4279,6 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
                         bInfo->h3pixelSize,
                         refresh,
                         bInfo->hMon,
-                        (char *)bInfo->RegPath,
                         (char *)bInfo->DeviceName) )
       {
         GDBG_INFO(80, "%s:  setVideoMode() failed!\n", FN_NAME);
@@ -4366,8 +4356,8 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
       FxU32 vidPixelBufThold;
       FxU32 thold = 32;
 
-      if (GETENV("SSTVB_PIXTHOLD", bInfo->RegPath))
-         thold = atoi(GETENV("SSTVB_PIXTHOLD", bInfo->RegPath));
+      if (GETENV("SSTVB_PIXTHOLD"))
+         thold = atoi(GETENV("SSTVB_PIXTHOLD"));
 
       thold &= 0x3f;
 
@@ -4516,8 +4506,8 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
   ** Adding user support for switching the video filter from 2x2 to 4x1
   */
 
-  if (GETENV("FX_GLIDE_V56K_DAC_FIX", bInfo->RegPath)) {
-    useV56KdacFix = atoi(GETENV("FX_GLIDE_V56K_DAC_FIX", bInfo->RegPath));
+  if (GETENV("FX_GLIDE_V56K_DAC_FIX")) {
+    useV56KdacFix = atoi(GETENV("FX_GLIDE_V56K_DAC_FIX"));
     if (useV56KdacFix > 2) {
       useV56KdacFix = 2;
     } else if (useV56KdacFix < 0) {
@@ -4532,33 +4522,33 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
   }
 #endif
 
-  if (NULL == GETENV("SSTH3_OVERLAYMODE", bInfo->RegPath)) {
+  /* NOTE: This may over 'blur' the output, but we enable filtering if in fsaa even for 32bit color. */
+  if (NULL == GETENV("SSTH3_OVERLAYMODE")) {
     /* We are in optimal mode by default */
     if(bpp == 32 &&
-       !((useV56KdacFix != 0) && IS_NAPALM(bInfo->pciInfo.deviceID) && (bInfo->pciInfo.numChips == 4) && (bInfo->h3pixelSample >= 4))) { /* 32bpp and not 4x,8xfsaa on v56k */
+       !((useV56KdacFix != 0) && IS_NAPALM(bInfo->pciInfo.deviceID) && (bInfo->h3pixelSample > 1))) { /* 32bpp and not fsaa */
       vidProcCfg |= SST_OVERLAY_FILTER_POINT;
     } else {
-      if((bInfo->vidInfo.xRes >= 1024) ||
+      /* make sure that if 2x video mode or SLI mode is enabled, we use the 4x1 filter. */
+      if((bInfo->vidInfo.xRes >= 1024) || /* can't tell the difference for resolutions larger than 1024*768 */
          (vidProcCfg & SST_VIDEO_2X_MODE_EN) ||
-         (IS_NAPALM(bInfo->pciInfo.deviceID) && (bInfo->h3sliBandHeight <= 1)) ||
-         (IS_NAPALM(bInfo->pciInfo.deviceID) && bInfo->h3analogSli)) {
+         (IS_NAPALM(bInfo->pciInfo.deviceID) && (bInfo->h3nwaySli > 1))) {
         vidProcCfg |= SST_OVERLAY_FILTER_4X4;
       } else {
         vidProcCfg |= SST_OVERLAY_FILTER_2X2;
       }
     }
   } else {
-    switch(atoi(GETENV("SSTH3_OVERLAYMODE", bInfo->RegPath))) {
+    switch(atoi(GETENV("SSTH3_OVERLAYMODE"))) {
     default:
     case 1: /* Optimal */
       if(bpp == 32 &&
-         !((useV56KdacFix != 0) && IS_NAPALM(bInfo->pciInfo.deviceID) && (bInfo->pciInfo.numChips == 4) && (bInfo->h3pixelSample >= 4))) { /* 32bpp and not 4x,8xfsaa on v56k */
+         !((useV56KdacFix != 0) && IS_NAPALM(bInfo->pciInfo.deviceID) && (bInfo->h3pixelSample > 1))) {
         vidProcCfg |= SST_OVERLAY_FILTER_POINT;
       } else {
         if((bInfo->vidInfo.xRes >= 1024) ||
            (vidProcCfg & SST_VIDEO_2X_MODE_EN) ||
-           (IS_NAPALM(bInfo->pciInfo.deviceID) && (bInfo->h3sliBandHeight <= 1)) ||
-           (IS_NAPALM(bInfo->pciInfo.deviceID) && bInfo->h3analogSli)) {
+           (IS_NAPALM(bInfo->pciInfo.deviceID) && (bInfo->h3nwaySli > 1))) {
           vidProcCfg |= SST_OVERLAY_FILTER_4X4;
         } else {
           vidProcCfg |= SST_OVERLAY_FILTER_2X2;
@@ -4566,20 +4556,29 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
       }
       break;
     case 2: /* Normal */
-      vidProcCfg |= SST_OVERLAY_FILTER_4X4;
+      if(bpp == 32) {
+        vidProcCfg |= SST_OVERLAY_FILTER_POINT;
+      } else {
+        vidProcCfg |= SST_OVERLAY_FILTER_4X4;
+      }
       break;
     case 3: /* High */
-      /* make sure that if 2x video mode is enabled, we use the 4x1 filter. */
+      if(bpp == 32) {
+        vidProcCfg |= SST_OVERLAY_FILTER_POINT;
+      } else
       if((vidProcCfg & SST_VIDEO_2X_MODE_EN) ||
-         (IS_NAPALM(bInfo->pciInfo.deviceID) && (bInfo->h3sliBandHeight <= 1)) ||
-         (IS_NAPALM(bInfo->pciInfo.deviceID) && bInfo->h3analogSli)) {
+         (IS_NAPALM(bInfo->pciInfo.deviceID) && (bInfo->h3nwaySli > 1))) {
         vidProcCfg |= SST_OVERLAY_FILTER_4X4;
       } else {
         vidProcCfg |= SST_OVERLAY_FILTER_2X2;
       }
       break;
     case 4: /* Very High */
-      vidProcCfg |= SST_OVERLAY_FILTER_BILINEAR;
+      if(bpp == 32) {
+        vidProcCfg |= SST_OVERLAY_FILTER_POINT;
+      } else {
+        vidProcCfg |= SST_OVERLAY_FILTER_BILINEAR;
+      }
       break;
     case -1: /* Disabled */
       /* use this just in case */
@@ -4683,10 +4682,10 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
   
 
   /* Filthy memclock hack *//* XXX [koolsmoky] do we really need this? */
-  if (GETENV("H3_MEM_CLOCK", bInfo->RegPath)) {
+  if (GETENV("H3_MEM_CLOCK")) {
     int mHz;
     FxU32 pllVal;
-    mHz = atoi(GETENV("H3_MEM_CLOCK", bInfo->RegPath));
+    mHz = atoi(GETENV("H3_MEM_CLOCK"));
 
     switch (mHz) {
     case 50:
@@ -5133,8 +5132,8 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
     chipInfo.aaEnable = (bInfo->h3pixelSample > 1);
     chipInfo.sliEnable = (bInfo->h3nwaySli > 1);
     
-    chipInfo.sliAaAnalog = (GETENV("FX_GLIDE_ANALOG_SLI", bInfo->RegPath) ?
-                            atol(GETENV("FX_GLIDE_ANALOG_SLI", bInfo->RegPath)) : 0);
+    chipInfo.sliAaAnalog = (GETENV("FX_GLIDE_ANALOG_SLI") ?
+                            atol(GETENV("FX_GLIDE_ANALOG_SLI")) : 0);
     chipInfo.sli_nlines  = bInfo->h3sliBandHeight;
     chipInfo.swapAlgorithm = 1;
     chipInfo.numChips = bInfo->pciInfo.numChips;
@@ -5406,9 +5405,9 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
 #endif /* FX_GLIDE_NAPALM */
 
   /* Temp hack */
-  if(GETENV("SST_PCI_LOWTHRESH", bInfo->RegPath)) {
+  if(GETENV("SST_PCI_LOWTHRESH")) {
   FxU32 pciInit0, thresh;
-    thresh = atoi(GETENV("SST_PCI_LOWTHRESH", bInfo->RegPath));
+    thresh = atoi(GETENV("SST_PCI_LOWTHRESH"));
     if(thresh > 15) thresh = 15;
     HWC_IO_LOAD(bInfo->regInfo, pciInit0, pciInit0);
     pciInit0 &= ~SST_PCI_LOWTHRESH;        
@@ -5869,7 +5868,7 @@ void hwcSLIReadEnable(hwcBoardInfo *bInfo)
   FxU32 cfgAALfbCtrl;
   FxU32 chipNumber;
 
-  if(GETENV("FX_GLIDE_A0_READ_ABORT", bInfo->RegPath)) {
+  if(GETENV("FX_GLIDE_A0_READ_ABORT")) {
     if(bInfo->h3nwaySli > 1) {
       for(chipNumber = 0; chipNumber < bInfo->pciInfo.numChips; chipNumber++) {
         /* Turn on SLI Read */
@@ -5894,7 +5893,7 @@ void hwcSLIReadDisable(hwcBoardInfo *bInfo)
   FxU32 cfgAALfbCtrl;
   FxU32 chipNumber;
   
-  if(GETENV("FX_GLIDE_A0_READ_ABORT", bInfo->RegPath)) {
+  if(GETENV("FX_GLIDE_A0_READ_ABORT")) {
     if(bInfo->h3nwaySli > 1) {
         for(chipNumber = 0; chipNumber < bInfo->pciInfo.numChips; chipNumber++) {
         /* Turn off SLI Read */
@@ -8233,7 +8232,7 @@ void hwcAAReadRegion(hwcBoardInfo *bInfo, FxU32 colBufNum,
 
 #define CLAMP(val, min, max) if (val > max) val = max/*; else if (val < min) val = min*//* point less comparison. val is unsigned int. */
 #define ADJUST(val, lowest, low, high, typ) if (high < lowest) val=(typ)(low); else val = (typ)(high)
-#define GETFLOATENV(s, r, v) if (GETENV(s, r)) v = (FxFloat)(atof(GETENV(s, r)))
+#define GETFLOATENV(s, v) if (GETENV(s)) v = (FxFloat)(atof(GETENV(s)))
 
 /*---------------------------------------------------------------------------
  * Function    : adjustBrightnessAndContrast_m    
@@ -8310,10 +8309,10 @@ hwcGammaTable(hwcBoardInfo *bInfo, FxU32 nEntries, FxU32 *r, FxU32 *g, FxU32 *b)
 
   /* override */
   /* Adjust Gamma as user selected */
-  if( GETENV(psBrightness, bInfo->RegPath) )
-    GETFLOATENV(psBrightness, bInfo->RegPath, brightness);
-  if( GETENV(psContrast, bInfo->RegPath) )
-    GETFLOATENV(psContrast, bInfo->RegPath, contrast);
+  if( GETENV(psBrightness) )
+    GETFLOATENV(psBrightness, brightness);
+  if( GETENV(psContrast) )
+    GETFLOATENV(psContrast, contrast);
   
   /* clamp contrast to > 0.0 */
   if (contrast <= 0.0f) {
@@ -8342,8 +8341,8 @@ hwcGammaTable(hwcBoardInfo *bInfo, FxU32 nEntries, FxU32 *r, FxU32 *g, FxU32 *b)
      Since the DAC is shared between 2 chips, the input to gamma look up table
      is divided by extra 2 and the MSB is lost. To correct this the table should
      be only 7 bits. The resulting image will have only 7.5 bits per prime */
-  if (GETENV("FX_GLIDE_V56K_DAC_FIX", bInfo->RegPath)) {
-    useV56KdacFix = atoi(GETENV("FX_GLIDE_V56K_DAC_FIX", bInfo->RegPath));
+  if (GETENV("FX_GLIDE_V56K_DAC_FIX")) {
+    useV56KdacFix = atoi(GETENV("FX_GLIDE_V56K_DAC_FIX"));
     if (useV56KdacFix > 2) {
       useV56KdacFix = 2;
     } else if (useV56KdacFix < 0) {
@@ -8426,10 +8425,10 @@ hwcGammaTable(hwcBoardInfo *bInfo, FxU32 nEntries, FxU32 *r, FxU32 *g, FxU32 *b)
 
   /* override */
   /* Adjust Gamma as user selected */
-  if( GETENV(psBrightness, bInfo->RegPath) )
-    GETFLOATENV(psBrightness, bInfo->RegPath, brightness);
-  if( GETENV(psContrast, bInfo->RegPath) )
-    GETFLOATENV(psContrast, bInfo->RegPath, contrast);
+  if( GETENV(psBrightness) )
+    GETFLOATENV(psBrightness, brightness);
+  if( GETENV(psContrast) )
+    GETFLOATENV(psContrast, contrast);
   
   /* clamp contrast to > 0.0 */
   if (contrast <= 0.0f) {
@@ -8527,8 +8526,8 @@ hwcGetGammaTable(hwcBoardInfo *bInfo, FxU32 nEntries, FxU32 *r, FxU32 *g, FxU32 
   }
 
   /* Voodoo5 6000 DAC workaround for 4x, 8xFSAA. */
-  if (GETENV("FX_GLIDE_V56K_DAC_FIX", bInfo->RegPath)) {
-    useV56KdacFix = atoi(GETENV("FX_GLIDE_V56K_DAC_FIX", bInfo->RegPath));
+  if (GETENV("FX_GLIDE_V56K_DAC_FIX")) {
+    useV56KdacFix = atoi(GETENV("FX_GLIDE_V56K_DAC_FIX"));
     if (useV56KdacFix > 2) {
       useV56KdacFix = 2;
     } else if (useV56KdacFix < 0) {
@@ -8816,11 +8815,13 @@ hwcGetenvEx(const char *a, char *b)
 #endif
 
 #if __WIN32__
-extern char *opengl_regpath; /* KoolSmoky - registry path passed from grEnable */
 char *
 hwcGetenv(const char *a) 
 {
-  return hwcGetenvEx(a, opengl_regpath);
+  /* XXX: User environment tweaks are always read from the
+   * registry path of the first SST device.
+   */
+  return hwcGetenvEx(a, hInfo.boardInfo[0].RegPath);
 #elif (GLIDE_PLATFORM & GLIDE_OS_UNIX)
 extern char *file_getenv (const char *a);
 char *
@@ -9025,8 +9026,8 @@ hwcShareContextData(hwcBoardInfo *bInfo, FxU32 **data)
       {
 #ifdef WINXP_ALT_TAB_FIX
         FxI32 forceAltTabFix = 0;
-        if(GETENV("FX_GLIDE_ALT_TAB_FIX", bInfo->RegPath)) {
-          forceAltTabFix = atoi(GETENV("FX_GLIDE_ALT_TAB_FIX", bInfo->RegPath));
+        if(GETENV("FX_GLIDE_ALT_TAB_FIX")) {
+          forceAltTabFix = atoi(GETENV("FX_GLIDE_ALT_TAB_FIX"));
           if(forceAltTabFix > 0) {
             forceAltTabFix = 1;
           } else {
