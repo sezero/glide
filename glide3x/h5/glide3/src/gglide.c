@@ -3136,6 +3136,11 @@ GR_ENTRY(grDRIBufferSwap, void, (FxU32 swapInterval))
   GR_END();
 #undef FN_NAME  
 } /* grBufferSwap */
+
+void grBufferSwap(FxU32 i) {
+  grDRIBufferSwap(i);
+}
+
 #endif	/* defined(DRI_BUILD) */
 
 /*---------------------------------------------------------------------------
