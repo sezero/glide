@@ -1,0 +1,518 @@
+# Win32 Makefile for 3dfx Glide3x
+# 
+# Copyright (c) 2003 - Hiroshi Morii
+# Email: koolsmoky@3dfxzone.it
+# URL  : http://www.3dfxzone.it/koolsmoky
+#
+# Debug build                : nmake -f Makefile.win32 DEBUG=1
+# Optimized build            : nmake -f Makefile.win32
+# Remove objects             : nmake -f Makefile.win32 clean
+# Remove files in bin, lib   : nmake -f Makefile.win32 clobber
+# Remove all generated files : nmake -f Makefile.win32 realclean
+#
+# Source tree layout:
+#
+# BUILD_ROOT-+---h5---+-bin
+#            |        |
+#            |        +-glide3---src
+#            |        |
+#            |        +-incsrc
+#            |        |
+#            |        +-lib
+#            |        |
+#            |        +-minihwc
+#            |
+#            +-swlibs-+-fxmisc
+#                     |
+#                     +-newpci---pcilib
+#
+
+##################################
+# general flags
+##################################
+FX_GLIDE_HW     = h5
+FX_GLIDE_SWLIBS = swlibs
+FX_HW_PROJECTS  = glide3
+
+# beta release
+BETA = 1
+
+# enable debuging
+# DEBUG = 1
+
+# Use output to nt kernel debugger
+# KERNEL_NT=1
+
+# use dxdrvr.c instead of win_mode.c for minihwc.lib
+# HWC_DXDRVR = 1
+
+# use the minivdd to setup SLI/AA mode for hwcRestoreVideo().
+HWC_MINIVDD_HACK = 1
+
+# if 1, HWC_EXT_INIT is not used
+# HWC_INIT_VXD = 1
+
+# vmm.h stuff: use this option for win95 DDK compatiblity.
+HWC_WIN40COMPAT = 1
+
+# Enables us to get stuff from SoftIce etc even when building 
+# an optimized version. 
+# FX_GLIDE_SYMBOLICS=1
+
+# Use Intel VTune
+# FX_GLIDE_VTUNE=1
+
+# Use CPU optimizations.
+# HAL_CSIM must be NULL for this to work.
+FX_GLIDE_CPUOPTS=1
+
+# disable 3dfx watermark
+FX_GLIDE_NO_PLUG=0
+
+# disable 3dfx splashscreen
+FX_GLIDE_NO_SPLASH=0
+
+# it's now faster to cull backfaced/zero area triangles in sw before the fifo
+# forced to sw when using amd asm optimization.
+# FX_GLIDE_HW_CULL=1
+
+# use C trisetup instead of asm setup.
+# FX_GLIDE_CTRISETUP=1
+
+# setting this to 1 will disable hw TSU for triangle rendering.
+# FX_GLIDE_SW_SETUP=1
+
+# use direct i/o writes
+# FX_GLIDE_DIRECT_WRITE=1
+
+# no fifo
+# FX_GLIDE_NO_FIFO=1
+
+# debug fifo
+# FX_GLIDE_DEBUG_FIFO=1
+
+# HAL_CSIM has to be 1 or NULL (Simulator=1, Hardware=NULL) Only Hardware allowed!
+HAL_CSIM=
+
+# Stick one more slot in the dataList so that the clamping loop does 
+# not go one more iteration.
+# GLIDE_FP_CLAMP=1
+
+# if we're going to stick one more 0 in the texture datalist we need to
+# have GLIDE_FP_CLAMP=1 ofcourse
+# GLIDE_FP_CLAMP_TEX=1
+
+##################################
+# build flags
+##################################
+FLAGS =
+
+!if "$(HWC_MINIVDD_HACK)"=="1"
+FLAGS = $(FLAGS) -DHWC_MINIVDD_HACK=1
+!endif
+
+!if "$(HWC_DXDRVR)"=="1"
+FLAGS = $(FLAGS) -DHWC_DXDRVR=1
+!endif
+
+!if "$(BETA)"=="1"
+FLAGS = $(FLAGS) -DBETA=1
+!endif
+
+FLAGS  = $(FLAGS) -DH3=1
+
+!if "$(FX_GLIDE_HW)"=="h5"
+FLAGS  = $(FLAGS) -DFX_GLIDE_NAPALM=1 -DH4=1 -DFX_GLIDE_H5_CSIM=1
+!endif
+
+!if "$(FX_GLIDE_DEBUG_FIFO)"=="1"
+FLAGS = $(FLAGS) -D_FIFODUMP=1
+!endif
+
+!if "$(DEBUG)"== "1"
+FLAGS = $(FLAGS) -DGDBG_INFO_ON=1 -DGLIDE_DEBUG=1
+!endif
+
+!if "$(KERNEL_NT)"=="1"
+FLAGS = $(FLAGS) -DKERNEL_NT=1
+!endif
+
+!if "$(HWC_WIN40COMPAT)"=="1"
+FLAGS = $(FLAGS) -DWIN40COMPAT=1
+!endif
+
+# This is a bit of a red herring
+!if "$(FX_GLIDE_DIRECT_WRITE)"=="1"
+FX_GLIDE_DIRECT_WRITE = 1
+FX_GLIDE_PACKET_FIFO = 0
+FLAGS = $(FLAGS) -DDIRECT_IO=1
+!else
+FX_GLIDE_PACKET_FIFO = 1
+!endif
+
+!if "$(FX_GLIDE_PACKET_FIFO)"=="1"
+!if "$(FX_GLIDE_SW_SETUP)"=="1"
+FLAGS = $(FLAGS) -DGLIDE_PACKET3_TRI_SETUP=1 -DUSE_PACKET_FIFO=1
+!else
+FLAGS = $(FLAGS) -DGLIDE_PACKET3_TRI_SETUP=1 -DUSE_PACKET_FIFO=1 -DGLIDE_HW_TRI_SETUP=1
+!endif
+!else 
+FLAGS = $(FLAGS) -DGLIDE_HW_TRI_SETUP=1 -DGLIDE_PACKET3_TRI_SETUP=0
+FX_GLIDE_DEBUG_FIFO=1
+!endif
+
+# Use CPU optimized primatives rendering and texture downloads
+!if (("$(FX_GLIDE_CPUOPTS)" == "1") && ("$(FX_GLIDE_SW_SETUP)" != "1"))
+GL_AMD3D = 1
+GL_MMX   = 1
+GL_SSE   = 1
+GL_SSE2  = 1
+!if "$(GL_AMD3D)"=="1"
+FLAGS = $(FLAGS) -DGL_AMD3D=1
+!endif
+!if "$(GL_MMX)"=="1"
+FLAGS = $(FLAGS) -DGL_MMX=1
+!endif
+!if "$(GL_SSE)"=="1"
+FLAGS = $(FLAGS) -DGL_SSE=1
+!endif
+!if "$(GL_SSE2)"=="1"
+FLAGS = $(FLAGS) -DGL_SSE2=1
+!endif
+!else
+GL_AMD3D =
+GL_MMX   =
+GL_SSE   =
+GL_SSE2  =
+!endif
+
+# GLIDE_HW_TRI_SETUP:   Use the hw TSU for triangle rendering. 
+# GLIDE_TRI_CULLING:    Cull backfaced/zero area triangles in sw before the fifo.
+#                       NB: This must be set if GLIDE_HW_TRI_SETUP=0
+!if "$(FX_GLIDE_SW_SETUP)" == "1"
+FLAGS = $(FLAGS) -DGLIDE_HW_TRI_SETUP=0 -DGLIDE_TRI_CULLING=1
+FX_GLIDE_CTRISETUP = 1
+!else # HW Tri Setup
+#
+# Stick one more slot in the dataList so that the clamping loop does 
+# not go one more iteration.
+!if "$(GLIDE_FP_CLAMP)" == "1"
+FLAGS = $(FLAGS) -DGLIDE_FP_CLAMP=1
+!if "$(GLIDE_FP_CLAMP_TEX)" == "1"
+FLAGS = $(FLAGS) -DGLIDE_FP_CLAMP_TEX=1
+!endif
+!endif
+#
+# Do culling test in sw for independent triangles
+!if "$(FX_GLIDE_HW_CULL)" != "1"
+FLAGS = $(FLAGS) -DGLIDE_TRI_CULLING=1
+!endif
+!endif # HW Tri Setup
+
+!if "$(FX_GLIDE_NO_FIFO)" != "1"
+FLAGS = $(FLAGS) -DUSE_PACKET_FIFO=1
+!if "$(FX_GLIDE_DEBUG_FIFO)" == "1"
+# GLIDE_USE_DEBUG_FIFO:   Run w/ the small fifo to cause me/glide more stress
+# FIFO_ASSERT_FULL:       Check hw depth/fifo a lot (slow)
+FLAGS = $(FLAGS) -DGLIDE_USE_DEBUG_FIFO=1 -DFIFO_ASSERT_FULL=1 -DASSERT_FAULT=0 -DGLIDE_SANITY_SIZE=1
+!endif
+!endif
+
+# Turn on/off assembly language specializations for rendering primatives.
+!if "$(FX_GLIDE_CTRISETUP)" == "1"
+FLAGS = $(FLAGS) -DGLIDE_USE_C_TRISETUP=1
+!else
+FLAGS = $(FLAGS) -DGLIDE_PACKED_RGB=0 -DGLIDE_TRI_CULLING=1
+!endif
+
+# Turn Off/On compilation of shameless plug
+!if "$(FX_GLIDE_NO_PLUG)" != "1"
+FLAGS = $(FLAGS) -DGLIDE_PLUG=1
+!endif
+
+# Turn Off/On splash screen
+!if "$(FX_GLIDE_NO_SPLASH)" != "1"
+FLAGS = $(FLAGS) -DGLIDE_SPLASH=1
+!endif
+
+!if "$(FX_PCI_TARGET)" == "NT"
+FLAGS = $(FLAGS) -DNT_BUILD=1
+!endif
+
+!if "$(FX_HW_PROJECTS)" == "glide3"
+FLAGS = $(FLAGS) -DGLIDE3=1 -DGLIDE3_ALPHA=1
+!endif
+
+!if (("$(GLIDE_SANITY_ALL)" != "") || ("$(GLIDE_SANITY_SIZE)" != ""))
+FLAGS = $(FLAGS) -DGLIDE_SANITY_SIZE=1
+!endif
+
+!if (("$(GLIDE_SANITY_ALL)" != "") || ("$(GLIDE_SANITY_ASSERT)" != ""))
+FLAGS = $(FLAGS) -DGLIDE_SANITY_ASSERT=1
+!endif
+
+# win32 exclusives
+FLAGS = $(FLAGS) -DHWC_ACCESS_DDRAW=1 -DHWC_EXT_INIT=1 -DGLIDE_INIT_HWC=1
+
+# Obsolete. We now use WINXP_ALT_TAB_FIX
+# FLAGS = $(FLAGS) -DIS_ALT_TAB=1 -DGLIDE_ALT_TAB=1
+#
+# Remove this line to disable the WinXP Alt Tab fix. There will be a speed up
+# Shouldn't use this anymore. Faster generally works better, in particular for SDL
+# app. Doing it this way doesn't always detect vid mode switches
+# FLAGS = $(FLAGS) -DWINXP_ALT_TAB_FIX=1
+#
+# Faster WinXP Alt Tab fix.
+FLAGS = $(FLAGS) -DWINXP_FASTER_ALT_TAB_FIX=1 -DWINXP_SAFER_FASTER_ALT_TAB_FIX=1 -DGLIDE_ALT_TAB=1
+
+# Sandro's fast C clipping routine. GLIDE_USE_C_TRISETUP=1 must be set.
+# FLAGS = $(FLAGS) -DFAST_C_CLIP=1
+
+# Check for trilinearness
+# FLAGS = $(FLAGS) -DGLIDE_CHECK_TRILINEAR=1
+
+# Protected hacks for Glide/Win. Working 1-window command fifo.
+# enables 1 window glide in window. removed! we'll never use it.
+# FLAGS = $(FLAGS) -DTACO_MEMORY_FIFO_HACK=1
+
+# Called once when we start using the command fifo in order to tell
+# NT / W2K to hold off on unmapping that view of the frame buffer and
+# then called again once Glide knows it's lost its context so that
+# the driver knows that it's now ok to unmap the memory.
+# need WINNT=1 to work.
+# FLAGS = $(FLAGS) -DENABLE_V3_W2K_GLIDE_CHANGES=1 -DSLI_AA=1
+
+# misc
+# FLAGS = $(FLAGS) -DGLIDE3_VERTEX_LAYOUT=1
+# FLAGS = $(FLAGS) -DGLIDE_VERTEX_TABLE=1
+# FLAGS = $(FLAGS) -DGLIDE3_SCALER=1
+# FLAGS = $(FLAGS) -DGLIDE_TEST_TEXTURE_ALIGNMENT=1
+# FLAGS = $(FLAGS) -DLFB_DISABLE_SLAVE_FIFO=1
+# FLAGS = $(FLAGS) -DGLIDE_MULTIPLATFORM=1
+# FLAGS = $(FLAGS) -DPCI_BUMP_N_GRIND=1 machintosh?
+# FLAGS = $(FLAGS) -DGLIDE_USE_ALT_REGMAP=1
+FLAGS = $(FLAGS) -DGLIDE_LIB=1
+FLAGS = $(FLAGS) -DFX_DLL_ENABLE=1
+
+##################################
+# compiler setup
+##################################
+CC   = cl
+LINK = link
+AR   = lib
+AS   = nasmw
+
+CFLAGS  = -Ox -G6 -W3 -WX -c -D__MSC__=1 -D_X86_=1 -DNULL=0 -D_MBCS -D_LIBS -D_WIN32 -DWIN32=1 -D__WIN32__=1 -DSTRICT
+LFLAGS  = -nologo /DLL /SUBSYSTEM:WINDOWS,4.00 /OPT:WIN98 /MACHINE:IX86
+ARFLAGS = -nologo
+ASFLAGS = -O2 -fwin32 -D__WIN32__ --prefix _
+
+!if "$(DEBUG)"== "1"
+CFLAGS  = $(CFLAGS) -DDEBUG=1
+LFLAGS  = $(LFLAGS) -debugtype:both /DEBUG
+ARFLAGS = $(ARFLAGS) -debugtype:both
+ASFLAGS = $(ASFLAGS) -DDEBUG=1
+!endif
+
+# So that we can get reasonable stuff from SoftIce etc even
+# if we're building an optimized version. This should only
+# add symbolics so it is really only a codesize issue.
+!if "$(FX_GLIDE_SYMBOLICS)"=="1"
+LFLAGS = $(LFLAGS) /MAP:glide3x.map /DEBUG
+!endif
+
+#################################
+# OS commands
+#################################
+RM = @del /f
+MV = mv
+
+#################################
+# objects, path, dependency
+#################################
+MINIHWC_OBJ =\
+	$(FX_GLIDE_HW)\minihwc\hwcio.obj\
+	$(FX_GLIDE_HW)\minihwc\gdebug.obj\
+	$(FX_GLIDE_HW)\minihwc\minihwc.obj
+
+!if "$(HWC_DXDRVR)"=="1"
+MINIHWC_OBJ = $(MINIHWC_OBJ) $(FX_GLIDE_HW)\minihwc\dxdrvr.obj
+!else
+MINIHWC_OBJ = $(MINIHWC_OBJ) $(FX_GLIDE_HW)\minihwc\win_mode.obj
+!endif
+
+GLIDE3_OBJ =\
+	$(FX_GLIDE_HW)\glide3\src\fifo.obj\
+	$(FX_GLIDE_HW)\glide3\src\distate.obj\
+	$(FX_GLIDE_HW)\glide3\src\gstrip.obj\
+	$(FX_GLIDE_HW)\glide3\src\distrip.obj\
+	$(FX_GLIDE_HW)\glide3\src\diget.obj\
+	$(FX_GLIDE_HW)\glide3\src\gsplash.obj\
+	$(FX_GLIDE_HW)\glide3\src\g3df.obj\
+	$(FX_GLIDE_HW)\glide3\src\gu.obj\
+	$(FX_GLIDE_HW)\glide3\src\gthread.obj\
+	$(FX_GLIDE_HW)\glide3\src\gpci.obj\
+	$(FX_GLIDE_HW)\glide3\src\diglide.obj\
+	$(FX_GLIDE_HW)\glide3\src\disst.obj\
+	$(FX_GLIDE_HW)\glide3\src\ditex.obj\
+	$(FX_GLIDE_HW)\glide3\src\gsfc.obj\
+	$(FX_GLIDE_HW)\glide3\src\gbanner.obj\
+	$(FX_GLIDE_HW)\glide3\src\gerror.obj\
+	$(FX_GLIDE_HW)\glide3\src\gaa.obj\
+	$(FX_GLIDE_HW)\glide3\src\gdraw.obj\
+	$(FX_GLIDE_HW)\glide3\src\gglide.obj\
+	$(FX_GLIDE_HW)\glide3\src\glfb.obj\
+	$(FX_GLIDE_HW)\glide3\src\gsst.obj\
+	$(FX_GLIDE_HW)\glide3\src\gtex.obj\
+	$(FX_GLIDE_HW)\glide3\src\gtexdl.obj\
+	$(FX_GLIDE_HW)\glide3\src\cpuid.obj\
+	$(FX_GLIDE_HW)\glide3\src\winsurf.obj\
+	$(FX_GLIDE_HW)\glide3\src\xtexdl_def.obj
+
+!if (("$(FX_GLIDE_CPUOPTS)" == "1") && ("$(FX_GLIDE_SW_SETUP)" != "1"))
+!if "$(GL_AMD3D)"=="1"
+GLIDE3_OBJ = $(GLIDE3_OBJ)\
+	$(FX_GLIDE_HW)\glide3\src\xtexdl_3dnow.obj\
+	$(FX_GLIDE_HW)\glide3\src\xdraw2_3dnow.obj\
+	$(FX_GLIDE_HW)\glide3\src\xdraw3_3dnow.obj
+!endif
+!if "$(GL_MMX)"=="1"
+GLIDE3_OBJ = $(GLIDE3_OBJ)\
+	$(FX_GLIDE_HW)\glide3\src\xtexdl_mmx.obj
+!endif
+!if "$(GL_SSE)"=="1"
+GLIDE3_OBJ = $(GLIDE3_OBJ)\
+	$(FX_GLIDE_HW)\glide3\src\xdraw2_sse.obj\
+	$(FX_GLIDE_HW)\glide3\src\xdraw3_sse.obj
+!endif
+!if "$(GL_SSE2)"=="1"
+GLIDE3_OBJ = $(GLIDE3_OBJ)\
+	$(FX_GLIDE_HW)\glide3\src\xtexdl_sse2.obj
+!endif
+!if "$(FX_GLIDE_CTRISETUP)" != "1"
+GLIDE3_OBJ = $(GLIDE3_OBJ)\
+	$(FX_GLIDE_HW)\glide3\src\xdraw2_def.obj\
+	$(FX_GLIDE_HW)\glide3\src\xdraw3_def.obj
+!endif
+!endif
+
+!if "$(FX_GLIDE_CTRISETUP)" == "1"
+GLIDE3_OBJ = $(GLIDE3_OBJ) $(FX_GLIDE_HW)\glide3\src\gxdraw.obj
+!endif
+
+GLIDE3_RES = $(FX_GLIDE_HW)\glide3\src\glide.res
+
+INCS =\
+	-I$(FX_GLIDE_HW)\minihwc\
+	-I$(FX_GLIDE_SWLIBS)\fxmisc\
+	-I$(FX_GLIDE_SWLIBS)\newpci\pcilib\
+	-I$(FX_GLIDE_HW)\incsrc\
+	-I$(FX_GLIDE_HW)\$(FX_HW_PROJECTS)\src\
+	
+DX_LIB = dxguid.lib ddraw.lib
+
+DEP_LIB = advapi32.lib shell32.lib comdlg32.lib comctl32.lib ctl3d32.lib user32.lib gdi32.lib winspool.lib winmm.lib
+
+#################################
+# build rules
+#################################
+default:: all
+
+all: minihwc glide3
+
+minihwc: gendate minihwc.lib
+
+gendate: gendate.exe gendate.h
+
+gendate.exe: $(FX_GLIDE_HW)\incsrc\gendate.obj
+	$(CC) -o $(FX_GLIDE_HW)\incsrc\$@ $(FX_GLIDE_HW)\incsrc\gendate.obj
+
+gendate.h: $(FX_GLIDE_HW)\incsrc\gendate.exe
+	$(FX_GLIDE_HW)\incsrc\gendate.exe > $(FX_GLIDE_HW)\incsrc\$@
+
+minihwc.lib: $(MINIHWC_OBJ)
+	$(AR) -out:$(FX_GLIDE_HW)\lib\$@ $(ARFLAGS) $(MINIHWC_OBJ) $(DX_LIB)
+
+glide3: fxgasm fxbldno glide3x.dll
+
+fxgasm: fxgasm.exe fxgasm.h fxinline.h
+
+fxgasm.exe: $(FX_GLIDE_HW)\glide3\src\fxgasm.obj
+	$(CC) -o $(FX_GLIDE_HW)\glide3\src\$@ $(FX_GLIDE_HW)\glide3\src\fxgasm.obj
+
+fxgasm.h: $(FX_GLIDE_HW)\glide3\src\fxgasm.exe
+	$(FX_GLIDE_HW)\glide3\src\fxgasm.exe -hex > $(FX_GLIDE_HW)\glide3\src\$@
+
+fxinline.h: $(FX_GLIDE_HW)\glide3\src\fxgasm.exe
+	$(FX_GLIDE_HW)\glide3\src\fxgasm.exe -inline > $(FX_GLIDE_HW)\glide3\src\$@
+
+fxbldno: fxbldno.exe fxbldno.h
+
+fxbldno.exe: $(FX_GLIDE_HW)\glide3\src\fxbldno.obj
+	$(CC) -o $(FX_GLIDE_HW)\glide3\src\$@ $(FX_GLIDE_HW)\glide3\src\fxbldno.obj
+
+fxbldno.h: $(FX_GLIDE_HW)\glide3\src\fxbldno.exe
+	$(FX_GLIDE_HW)\glide3\src\fxbldno.exe > $(FX_GLIDE_HW)\glide3\src\$@
+
+glide3x.dll: $(FX_GLIDE_HW)\lib\minihwc.lib $(GLIDE3_OBJ) $(GLIDE3_RES)
+	$(LINK) -out:$(FX_GLIDE_HW)\lib\$@ $(LFLAGS) $(FX_GLIDE_HW)\lib\minihwc.lib $(GLIDE3_OBJ) $(DEP_LIB) $(GLIDE3_RES)
+	$(MV) $(FX_GLIDE_HW)\lib\glide3x.dll $(FX_GLIDE_HW)\bin\glide3x.dll
+
+$(FX_GLIDE_HW)\glide3\src\xdraw2_def.obj: $(FX_GLIDE_HW)\glide3\src\xdraw2.asm
+	$(AS) $(ASFLAGS) $(INCS) -o $@ $(FX_GLIDE_HW)\glide3\src\xdraw2.asm
+
+$(FX_GLIDE_HW)\glide3\src\xdraw3_def.obj: $(FX_GLIDE_HW)\glide3\src\xdraw3.asm
+	$(AS) $(ASFLAGS) $(INCS) -o $@ $(FX_GLIDE_HW)\glide3\src\xdraw3.asm
+
+$(FX_GLIDE_HW)\glide3\src\xdraw2_3dnow.obj: $(FX_GLIDE_HW)\glide3\src\xdraw2.asm
+	$(AS) $(ASFLAGS) $(INCS) -DGL_AMD3D=1 -DUSE_PACKET_FIFO=1 -o $@ $(FX_GLIDE_HW)\glide3\src\xdraw2.asm
+
+$(FX_GLIDE_HW)\glide3\src\xdraw3_3dnow.obj: $(FX_GLIDE_HW)\glide3\src\xdraw3.asm
+	$(AS) $(ASFLAGS) $(INCS) -DGL_AMD3D=1 -DUSE_PACKET_FIFO=1 -o $@ $(FX_GLIDE_HW)\glide3\src\xdraw3.asm
+
+$(FX_GLIDE_HW)\glide3\src\xtexdl_3dnow.obj: $(FX_GLIDE_HW)\glide3\src\xtexdl.asm
+	$(AS) $(ASFLAGS) $(INCS) -DGL_AMD3D=1 -DUSE_PACKET_FIFO=1 -o $@ $(FX_GLIDE_HW)\glide3\src\xtexdl.asm
+
+$(FX_GLIDE_HW)\glide3\src\xtexdl_mmx.obj: $(FX_GLIDE_HW)\glide3\src\xtexdl.asm
+	$(AS) $(ASFLAGS) $(INCS) -DGL_MMX=1 -DUSE_PACKET_FIFO=1 -o $@ $(FX_GLIDE_HW)\glide3\src\xtexdl.asm
+
+$(FX_GLIDE_HW)\glide3\src\xdraw2_sse.obj: $(FX_GLIDE_HW)\glide3\src\xdraw2.asm
+	$(AS) $(ASFLAGS) $(INCS) -DGL_SSE=1 -DUSE_PACKET_FIFO=1 -o $@ $(FX_GLIDE_HW)\glide3\src\xdraw2.asm
+
+$(FX_GLIDE_HW)\glide3\src\xdraw3_sse.obj: $(FX_GLIDE_HW)\glide3\src\xdraw3.asm
+	$(AS) $(ASFLAGS) $(INCS) -DGL_SSE=1 -DUSE_PACKET_FIFO=1 -o $@ $(FX_GLIDE_HW)\glide3\src\xdraw3.asm
+
+$(FX_GLIDE_HW)\glide3\src\xtexdl_sse2.obj: $(FX_GLIDE_HW)\glide3\src\xtexdl.asm
+	$(AS) $(ASFLAGS) $(INCS) -DGL_SSE2=1 -DUSE_PACKET_FIFO=1 -o $@ $(FX_GLIDE_HW)\glide3\src\xtexdl.asm
+
+.c.obj:
+	$(CC) -Fo$@ $(INCS) $(FLAGS) $(CFLAGS) $<
+
+.cpp.obj:
+	$(CC) -Fo$@ $(INCS) $(FLAGS) $(CFLAGS) $<
+
+.rc.res:
+	$(RC) -Fo$@ $(INCS) $(FLAGS) -D__WIN32__ $<
+
+#################################
+# cleanup rules
+#################################
+realclean: clean clobber
+
+clean::
+	$(RM) $(FX_GLIDE_HW)\incsrc\gendate.obj
+	$(RM) $(FX_GLIDE_HW)\incsrc\gendate.exe
+	$(RM) $(FX_GLIDE_HW)\incsrc\gendate.h
+	$(RM) $(FX_GLIDE_HW)\minihwc\*.obj
+	$(RM) $(FX_GLIDE_HW)\$(FX_HW_PROJECTS)\src\*.obj
+	$(RM) $(FX_GLIDE_HW)\$(FX_HW_PROJECTS)\src\fxgasm.exe
+	$(RM) $(FX_GLIDE_HW)\$(FX_HW_PROJECTS)\src\fxgasm.h
+	$(RM) $(FX_GLIDE_HW)\$(FX_HW_PROJECTS)\src\fxinline.h
+	$(RM) $(FX_GLIDE_HW)\$(FX_HW_PROJECTS)\src\fxbldno.exe
+	$(RM) $(FX_GLIDE_HW)\$(FX_HW_PROJECTS)\src\fxbldno.h
+	
+clobber::
+	$(RM) $(FX_GLIDE_HW)\lib\*.lib
+	$(RM) $(FX_GLIDE_HW)\lib\*.exp
+	$(RM) $(FX_GLIDE_HW)\bin\*.dll
+	$(RM) $(FX_GLIDE_HW)\bin\*.exe
