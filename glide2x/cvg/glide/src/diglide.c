@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/12/07 21:49:08  joseph
+** Initial checkin into SourceForge.
+**
 ** 
 ** 40    6/23/98 5:38p Peter
 ** lfb hinting
@@ -124,6 +127,43 @@ static char glideIdent[] = "@#%" VERSIONSTR ;
 /* the root of all EVIL */
 struct _GlideRoot_s GR_CDECL _GlideRoot;
 /* This is global to speed up the function call wrappers */
+
+/*;------------------------------------------------------------------------------   
+; this routine sets the precision to single
+; which effects all adds, mults, and divs
+ */
+void single_precision_asm()
+{
+  __asm {
+    push  eax       ; make room
+    fnclex          ; clear pending exceptions    
+    fstcw WORD PTR [esp]
+    mov   eax, DWORD PTR [esp]
+    and   eax, 0000fcffh  ; clear bits 9:8
+    mov   DWORD PTR [esp], eax
+    fldcw WORD PTR [esp]
+    pop   eax
+    }
+}
+
+/*;------------------------------------------------------------------------------   
+; this routine sets the precision to double
+; which effects all adds, mults, and divs
+ */
+void double_precision_asm()
+{
+  __asm {
+    push  eax       ; make room
+    fnclex          ; clear pending exceptions    
+    fstcw WORD PTR [esp]
+    mov   eax, DWORD PTR [esp]
+    and   eax, 0000fcffh  ; clear bits 9:8
+    or    eax, 000002ffh  ; set 9:8 to 10
+    mov   DWORD PTR [esp], eax
+    fldcw WORD PTR [esp]
+    pop   eax
+    }
+}
 
 /*---------------------------------------------------------------------------
 **
