@@ -1048,8 +1048,12 @@ _txImgQuantizeDXT1(FxU16* dst, const FxU32* src,
    */
   if (avgAlpha != 0xFFUL) /* we have varying alpha. do the 3-color encoding. */
   {
-    /* use the average alpha as threshold */
-    const FxU32 alphaThresh = avgAlpha;
+    /* set the threshold */
+    const FxU32 alphaThresh = 0x7FUL; /* According to OpenGL spec, a texel with an alpha component
+                                       * smaller than 0x7FUL will end up with 0x00UL alpha (black) and
+                                       * one with an alpha component equal to or larger than 0x7FUL will
+                                       * end up with 0xFFUL alpha.
+                                       */
     
     for(t = 0; t < h; t += 4) {
       for(s = 0; s < w; s += 4) {
