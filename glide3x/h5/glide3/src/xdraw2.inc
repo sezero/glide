@@ -191,7 +191,11 @@ win_coordinates:
     cmp       ebx, tempVal          ; fifo space required >= space available ?
     jge       .__triBegin           ; yup, push out triangle data to Voodoo
 
+%IFDEF __WIN32__
+    invoke    _grCommandTransportMakeRoom@12, tempVal, 0, __LINE__; note: updates fifoPtr
+%ELSE
     invoke    _grCommandTransportMakeRoom, tempVal, 0, __LINE__; note: updates fifoPtr
+%ENDIF
     
     jmp       .__triBegin           ; merge back with short path
 
@@ -209,7 +213,11 @@ win_coordinates:
     cmp       ebx, tempVal          ; fifo spce available >= space needed ?
     jge       .__triBegin           ; yup, ready to draw triangle
 
+%IFDEF __WIN32__
+    invoke    _grCommandTransportMakeRoom@12, tempVal, 0, __LINE__; note: updates fifoPtr
+%ELSE
     invoke    _grCommandTransportMakeRoom, tempVal, 0, __LINE__; note: updates fifoPtr
+%ENDIF
 %ELSE   ; !GLIDE_CULLING
 
     ;; Prologue stuff
@@ -270,7 +278,11 @@ no_validation:
     cmp       ebx, tempVal          ; fifo spce available >= space needed ?
     jge       .__triBegin           ; yup, ready to draw triangle
 
+%IFDEF __WIN32__
+    invoke    _grCommandTransportMakeRoom@12, tempVal, 0, __LINE__; note: updates fifoPtr
+%ELSE
     invoke    _grCommandTransportMakeRoom, tempVal, 0, __LINE__; note: updates fifoPtr
+%ENDIF    
     
     jmp       .__triBegin           ; large distance due to alignment
 %endif ; GLIDE_CULLING
@@ -743,7 +755,11 @@ win_coordinates:
     cmp       ebx, tempVal          ; fifo space required >= space available ?
     jge       .__triBegin           ; yup, push out triangle data to Voodoo
 
+%IFDEF __WIN32__
+    invoke    _grCommandTransportMakeRoom@12, tempVal, 0, __LINE__; note: updates fifoPtr
+%ELSE
     invoke    _grCommandTransportMakeRoom, tempVal, 0, __LINE__; note: updates fifoPtr
+%ENDIF
     
     jmp       .__triBegin           ; merge back with short path
 
@@ -761,7 +777,11 @@ win_coordinates:
     cmp       ebx, tempVal          ; fifo spce available >= space needed ?
     jge       .__triBegin           ; yup, ready to draw triangle
 
+%IFDEF __WIN32__
+    invoke    _grCommandTransportMakeRoom@12, tempVal, 0, __LINE__; note: updates fifoPtr
+%ELSE
     invoke    _grCommandTransportMakeRoom, tempVal, 0, __LINE__; note: updates fifoPtr
+%ENDIF
 %ELSE   ; !GLIDE_CULLING
 
     ;; Prologue stuff
@@ -829,7 +849,11 @@ no_validation:
     cmp       ebx, tempVal          ; fifo spce available >= space needed ?
     jge       .__triBegin           ; yup, ready to draw triangle
 
+%IFDEF __WIN32__
+    invoke    _grCommandTransportMakeRoom@12, tempVal, 0, __LINE__; note: updates fifoPtr
+%ELSE
     invoke    _grCommandTransportMakeRoom, tempVal, 0, __LINE__; note: updates fifoPtr
+%ENDIF
     
     jmp       .__triBegin           ; large distance due to alignment
 %endif ; GLIDE_CULLING
@@ -1298,8 +1322,12 @@ no_validation:
     cmp     ebx, eax
 
     jge     .__triBegin
-    
+
+%IFDEF __WIN32__    
+    invoke  _grCommandTransportMakeRoom@12, eax, 0, __LINE__
+%ELSE
     invoke  _grCommandTransportMakeRoom, eax, 0, __LINE__
+%ENDIF
 
     ;; Send triangle parameters
     

@@ -89,10 +89,6 @@ HWSPEC          =       fifo.c
 LCDEFS          =       $(LCDEFS) -DH3=1 $(CMDXPORTDEFS)
 INITLIB         =       $(BUILD_ROOT)\$(FX_GLIDE_HW)\$(FX_GLIDE_HW)init.lib
 
-!if "$(FX_DLL_BUILD)" == "1"
-LLDOPTS         = /NODEFAULTLIB libcmt.lib kernel32.lib #$(LLDOPTS) /NODEFAULTLIB:LIBC.LIB /NODEFAULTLIB:MSVCRT.LIB libcmt.lib
-!endif
-
 !if "$(FX_GLIDE_VTUNE)"!=""
 OTSOPTS = /Zi
 LLDOPTS = $(LLDOPTS) /DEBUG
@@ -117,9 +113,12 @@ OTSOPTS          = /Zi
 LLDOPTS          = /MAP:glide3x.map /DEBUG
 !endif
 
+!if "$(FX_DLL_BUILD)" == "1"
+LLDOPTS         = $(LLDOPTS) /NODEFAULTLIB libcmt.lib kernel32.lib
+!endif
+
 !if "$(FX_COMPILER)" == "MICROSOFT"
-# KoolSmoky - testing
-DBGOPTS          =      $(DBGOPTS) /WX
+DBGOPTS          =      $(DBGOPTS)
 !endif
 
 # 3DNow stuff
@@ -313,8 +312,6 @@ LCDEFS          =       $(LCDEFS) -DGLIDE_SPLASH=1
 LCDEFS          =       $(LCDEFS) -DNT_BUILD=1
 !endif
 
-# KoolSmoky - need to check
-#LCDEFS          =       $(LCDEFS) -DGLIDE3 -DGLIDE3_ALPHA
 LCDEFS          =       $(LCDEFS) -DGLIDE3=1 -DGLIDE3_ALPHA=1
 GLIDE3FILES     =       distate.c gstrip.c distrip.c diget.c
 
@@ -327,13 +324,12 @@ LCDEFS          =       $(LCDEFS) -DGLIDE_SANITY_ASSERT=1
 
 # Local Defs, Includes, and Options (C)
 LCINCS          =       $(LCINCS) -I$(BUILD_ROOT)\$(FX_GLIDE_HW)\include 
-# KoolSmoky - testing
 LCOPTS          =       $(LCOPTS) $(DBGOPTS) $(DSPOPTS) $(OPTOPTS)
 
 # Local Defs, Includes, and Options (ASM)
 LADEFS          =       $(LADEFS) $(ASM_REGMAP_DEFS)
 LAINCS          =       -I$(BUILD_ROOT)\$(FX_GLIDE_HW)\include
-LAOPTS          =       $(DBGOPTS) $(DSPOPTS) $(OPTOPTS) /Fl /Sa
+LAOPTS          =       $(DBGOPTS) $(DSPOPTS) $(OPTOPTS)
 
 #AFILES          =       $(ASMTRISETUP) cpudtect.asm
 
@@ -426,7 +422,7 @@ glideapi.obj : glideapi.c
 fxgasm.exe: fxgasm.c $(HEADERS) gsstdef.h fxglide.h Makefile
 !if "$(FX_COMPILER)" == "MICROSOFT"
         $(CC) -o $@ fxgasm.c $(GCDEFS) $(LCDEFS) $(VCDEFS) $(LCOPTS) \
-        -I$(BUILD_ROOT)\$(FX_GLIDE_HW)\include -I$(BUILD_ROOT)\swlibs\include $(LDFLAGS)
+        -I$(BUILD_ROOT)\$(FX_GLIDE_HW)\include -I$(BUILD_ROOT)\swlibs\include
 !else if "$(FX_COMPILER)" == "WATCOM"
         set WCC386=$(CFLAGS)
         wcl386 fxgasm.c 
@@ -444,7 +440,7 @@ glide3x.nms:  glide3x.dll
 #
 fxbldno.exe: fxbldno.c $(HEADERS) $(PRIVATE_HEADERS)
 !if "$(FX_COMPILER)" == "MICROSOFT"
-        $(CC) -o $@ fxbldno.c $(GCDEFS) $(LCDEFS) $(VCDEFS) $(LCOPTS) $(LDFLAGS)
+        $(CC) -o $@ fxbldno.c $(GCDEFS) $(LCDEFS) $(VCDEFS) $(LCOPTS)
 !else if "$(FX_COMPILER)" == "WATCOM"
         set WCC386=$(CFLAGS)
         wcl386 fxbldno.c 
@@ -466,44 +462,44 @@ gdraw.obj: fxinline.h
 #
 !if "$(FX_GLIDE_CTRISETUP)" != "1"
 xdraw2_def.obj: xdraw2.asm xdraw2.inc fxgasm.h
-        $(AS) $(AFLAGS) -Fo $@ xdraw2.asm
+        $(AS) $(AFLAGS) -o $@ xdraw2.asm
 
 xdraw3_def.obj: xdraw3.asm fxgasm.h
-        $(AS) $(AFLAGS) -Fo $@ xdraw3.asm
+        $(AS) $(AFLAGS) -o $@ xdraw3.asm
 !endif
 
 !if "$(GL_AMD3D)"!=""
 #xdraw2_def.obj: xdraw2.asm xdraw2.inc fxgasm.h
-#        $(AS) $(AFLAGS) -Fo $@ xdraw2.asm
+#        $(AS) $(AFLAGS) -o $@ xdraw2.asm
 
 xdraw2_3dnow.obj: xdraw2.asm xdraw2.inc fxgasm.h
-        $(AS) $(AFLAGS) -DGL_AMD3D=1 -DUSE_PACKET_FIFO=1 -Fo $@ xdraw2.asm
+        $(AS) $(AFLAGS) -DGL_AMD3D=1 -DUSE_PACKET_FIFO=1 -o $@ xdraw2.asm
 
 #xdraw3_def.obj: xdraw3.asm fxgasm.h
-#        $(AS) $(AFLAGS) -Fo $@ xdraw3.asm
+#        $(AS) $(AFLAGS) -o $@ xdraw3.asm
 
 xdraw3_3dnow.obj: xdraw3.asm fxgasm.h
-        $(AS) $(AFLAGS) -DGL_AMD3D=1 -DUSE_PACKET_FIFO=1 -Fo $@ xdraw3.asm
+        $(AS) $(AFLAGS) -DGL_AMD3D=1 -DUSE_PACKET_FIFO=1 -o $@ xdraw3.asm
 
 xtexdl_3dnow.obj: xtexdl.asm fxgasm.h
-        $(AS) $(AFLAGS) -DGL_AMD3D=1 -DUSE_PACKET_FIFO=1 -Fo $@ xtexdl.asm
+        $(AS) $(AFLAGS) -DGL_AMD3D=1 -DUSE_PACKET_FIFO=1 -o $@ xtexdl.asm
 
 !endif # GL_AMD3D
 
 !if "$(GL_MMX)"!=""
 xtexdl_mmx.obj: xtexdl.asm fxgasm.h
-        $(AS) $(AFLAGS) -DGL_MMX=1 -DUSE_PACKET_FIFO=1 -Fo $@ xtexdl.asm
+        $(AS) $(AFLAGS) -DGL_MMX=1 -DUSE_PACKET_FIFO=1 -o $@ xtexdl.asm
 !endif # GL_MMX
 
 !if "$(GL_SSE)"!=""
 xdraw2_sse.obj: xdraw2.asm xdraw2.inc fxgasm.h
-        $(AS) $(AFLAGS) -DGL_SSE=1 -DUSE_PACKET_FIFO=1 -Fo $@ xdraw2.asm
+        $(AS) $(AFLAGS) -DGL_SSE=1 -DUSE_PACKET_FIFO=1 -o $@ xdraw2.asm
 
 xdraw3_sse.obj: xdraw3.asm fxgasm.h
-        $(AS) $(AFLAGS) -DGL_SSE=1 -DUSE_PACKET_FIFO=1 -Fo $@ xdraw3.asm
+        $(AS) $(AFLAGS) -DGL_SSE=1 -DUSE_PACKET_FIFO=1 -o $@ xdraw3.asm
 !endif # GL_SSE
 
 !if "$(GL_SSE2)"!=""
 xtexdl_sse2.obj: xtexdl.asm fxgasm.h
-        $(AS) $(AFLAGS) -DGL_SSE2=1 -DUSE_PACKET_FIFO=1 -Fo $@ xtexdl.asm
+        $(AS) $(AFLAGS) -DGL_SSE2=1 -DUSE_PACKET_FIFO=1 -o $@ xtexdl.asm
 !endif # GL_SSE2

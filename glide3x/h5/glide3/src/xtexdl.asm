@@ -70,7 +70,11 @@
 %include "xos.inc"
 
 %ifdef USE_PACKET_FIFO
+%IFDEF __WIN32__
+extern _grCommandTransportMakeRoom@12
+%ELSE
 extern _grCommandTransportMakeRoom
+%ENDIF
 %endif
 
 ;;; Definitions of cvg regs and glide root structures.
@@ -111,12 +115,22 @@ segment		TEXT
               ALIGN  32
 
 %IFDEF GL_AMD3D
+%IFDEF __WIN32__
+              global _grTexDownload_3DNow_MMX@24
+_grTexDownload_3DNow_MMX@24:
+%ELSE
               global _grTexDownload_3DNow_MMX
 _grTexDownload_3DNow_MMX:
 %ENDIF
+%ENDIF
 %IFDEF GL_MMX
+%IFDEF __WIN32__
+              global _grTexDownload_MMX@24
+_grTexDownload_MMX@24:
+%ELSE
               global _grTexDownload_MMX
 _grTexDownload_MMX:
+%ENDIF
 %ENDIF
 
     push      ebx                       ; save caller's register variable
@@ -188,7 +202,11 @@ _grTexDownload_MMX:
     jge       .mmxAlignFifo             ; yes, write NULL packet to align fifo
 
 %ifdef USE_PACKET_FIFO
+%IFDEF __WIN32__
+    invoke    _grCommandTransportMakeRoom@12, 4, 0, __LINE__; make fifo room
+%ELSE
     invoke    _grCommandTransportMakeRoom, 4, 0, __LINE__; make fifo room
+%ENDIF
 %endif
     
     mov       fifo, [gc + fifoPtr]      ; fifoPtr modified by _grCommandTransportMakeRoom, reload
@@ -286,7 +304,11 @@ _grTexDownload_MMX:
     jge       .loopT                    ; yup, write next scan line
 
 %ifdef USE_PACKET_FIFO
+%IFDEF __WIN32__
+    invoke    _grCommandTransportMakeRoom@12, eax, 0, __LINE__; make fifo room (if fifoPtr QWORD aligned before
+%ELSE
     invoke    _grCommandTransportMakeRoom, eax, 0, __LINE__; make fifo room (if fifoPtr QWORD aligned before
+%ENDIF
 %endif
     
     mov       fifo, [gc + fifoPtr]      ; fifoPtr was modified by _grCommandTransportMakeRoom, reload
@@ -323,8 +345,13 @@ segment		TEXT
 
               ALIGN  32
 
+%IFDEF __WIN32__
+              global _grTexDownload_SSE2_64@24
+_grTexDownload_SSE2_64@24:
+%ELSE
               global _grTexDownload_SSE2_64
 _grTexDownload_SSE2_64:
+%ENDIF
 
     push      ebx                       ; save caller's register variable
     mov       curT, [esp + _maxT$ - 12] ; curT = maxT
@@ -397,7 +424,11 @@ _grTexDownload_SSE2_64:
     jge       .xmmAlignFifo             ; yes, write NULL packet to align fifo
 
 %ifdef USE_PACKET_FIFO
+%IFDEF __WIN32__
+    invoke    _grCommandTransportMakeRoom@12, 4, 0, __LINE__; make fifo room
+%ELSE
     invoke    _grCommandTransportMakeRoom, 4, 0, __LINE__; make fifo room
+%ENDIF
 %endif
     
     mov       fifo, [gc + fifoPtr]      ; fifoPtr modified by _grCommandTransportMakeRoom, reload
@@ -495,7 +526,11 @@ _grTexDownload_SSE2_64:
     jge       .loopT                    ; yup, write next scan line
 
 %ifdef USE_PACKET_FIFO
+%IFDEF __WIN32__
+    invoke    _grCommandTransportMakeRoom@12, eax, 0, __LINE__; make fifo room (if fifoPtr QWORD aligned before
+%ELSE
     invoke    _grCommandTransportMakeRoom, eax, 0, __LINE__; make fifo room (if fifoPtr QWORD aligned before
+%ENDIF
 %endif
     
     mov       fifo, [gc + fifoPtr]      ; fifoPtr was modified by _grCommandTransportMakeRoom, reload
@@ -519,8 +554,13 @@ segment		TEXT
 
               ALIGN  32
 
+%IFDEF __WIN32__
+              global _grTexDownload_SSE2_128@24
+_grTexDownload_SSE2_128@24:
+%ELSE
               global _grTexDownload_SSE2_128
 _grTexDownload_SSE2_128:
+%ENDIF
 
     push      ebx                       ; save caller's register variable
     mov       curT, [esp + _maxT$ - 12] ; curT = maxT
@@ -593,7 +633,11 @@ _grTexDownload_SSE2_128:
     jge       .xmmAlignFifo             ; yes, write NULL packet to align fifo
 
 %ifdef USE_PACKET_FIFO
+%IFDEF __WIN32__
+    invoke    _grCommandTransportMakeRoom@12, 4, 0, __LINE__; make fifo room
+%ELSE
     invoke    _grCommandTransportMakeRoom, 4, 0, __LINE__; make fifo room
+%ENDIF
 %endif
     
     mov       fifo, [gc + fifoPtr]      ; fifoPtr modified by _grCommandTransportMakeRoom, reload
@@ -691,7 +735,11 @@ _grTexDownload_SSE2_128:
     jge       .loopT                    ; yup, write next scan line
 
 %ifdef USE_PACKET_FIFO
+%IFDEF __WIN32__
+    invoke    _grCommandTransportMakeRoom@12, eax, 0, __LINE__; make fifo room (if fifoPtr QWORD aligned before
+%ELSE
     invoke    _grCommandTransportMakeRoom, eax, 0, __LINE__; make fifo room (if fifoPtr QWORD aligned before
+%ENDIF
 %endif
     
     mov       fifo, [gc + fifoPtr]      ; fifoPtr was modified by _grCommandTransportMakeRoom, reload

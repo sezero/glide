@@ -37,15 +37,14 @@ CNODEBUG       = /Ox -DNDEBUG
 LDEBUG         = $(CDEBUG)
 LNODEBUG       = $(CNODEBUG)
 LINK           = $(CC)
-GCOPTS         = /nologo /G6 /W3 /c
+GCOPTS         = /nologo /G6 /W3 /c /WX
 GCDEFS         = -D__MSC__=1 -D_X86_=1 -DNULL=0 -D_MBCS -D_LIBS -D_WIN32 -DWIN32=1 -D__WIN32__=1
 !ifdef DEBUG
-GLDOPTS        = -link -debugtype:both
+GLDOPTS        = -link -map -debugtype:both
 !else
+GLDOPTS        = -link -map -incremental:no -release
 !if "$(FX_TARGET_MINOR)" == "WIN95"
-GLDOPTS        = -nologo /link /map -pdb:none -incremental:no -release
-!else
-GLDOPTS        = -link -incremental:no -release
+GLDOPTS        = $(GLDOPTS) -pdb:none
 !endif
 !endif
 GCINCS         = -I$(BUILD_ROOT_SWLIBS)\include 
@@ -54,12 +53,12 @@ GCINCS         = -I$(BUILD_ROOT_SWLIBS)\include
 # assembler flags:
 #
 !if "$(AS)"==""
-AS             = ml
+AS             = nasm
 !endif
 AR             = lib -nologo
-AOPTS          = /coff /I. /c /Cp
-ASM_LIST_FLAGS = /FAsc
-ADEBUG         = /Zi
+AOPTS          = -O2 -fwin32 -D__WIN32__ --prefix _
+ASM_LIST_FLAGS = 
+ADEBUG         = 
 ANODEBUG       = 
 
 # if we are not debugging then replace debug flags with nodebug flags

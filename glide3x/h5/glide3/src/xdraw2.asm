@@ -94,8 +94,12 @@
 %INCLUDE "fxgasm.h"
 
 extern _GlideRoot
-extern _grCommandTransportMakeRoom
 extern _grValidateState
+%IFDEF __WIN32__
+extern _grCommandTransportMakeRoom@12
+%ELSE
+extern _grCommandTransportMakeRoom
+%ENDIF
 
 %IFDEF HAL_CSIM
 extern halStore32
@@ -215,15 +219,30 @@ Y       equ 4
 
 %MACRO PROC_TYPE 1
     %IFDEF GL_AMD3D
-        global _trisetup_3DNow_%1
-        _trisetup_3DNow_%1:
+        %IFDEF __WIN32__
+            global _trisetup_3DNow_%1@12
+            _trisetup_3DNow_%1@12:
+        %ELSE
+            global _trisetup_3DNow_%1
+            _trisetup_3DNow_%1:
+        %ENDIF
     %ELSE
         %IFDEF GL_SSE
-            global _trisetup_SSE_%1
-            _trisetup_SSE_%1:
+            %IFDEF __WIN32__
+                global _trisetup_SSE_%1@12
+                _trisetup_SSE_%1@12:
+            %ELSE
+                global _trisetup_SSE_%1
+                _trisetup_SSE_%1:
+            %ENDIF
         %ELSE
-            global _trisetup_Default_%1
-            _trisetup_Default_%1:
+            %IFDEF __WIN32__
+                global _trisetup_Default_%1@12
+                _trisetup_Default_%1@12:
+            %ELSE
+                global _trisetup_Default_%1
+                _trisetup_Default_%1:
+            %ENDIF
         %ENDIF
     %ENDIF
 %ENDM
@@ -380,8 +399,13 @@ PROC_TYPE win_nocull_valid
 
 %IFDEF       GL_AMD3D
             ALIGN   32
+%IFDEF __WIN32__
+            global  _trisetup_clip_coor_thunk@12
+_trisetup_clip_coor_thunk@12:
+%ELSE
             global  _trisetup_clip_coor_thunk
 _trisetup_clip_coor_thunk:
+%ENDIF
 
 %define procPtr eax
 %define vPtr    ecx
@@ -410,8 +434,13 @@ __clipSpace:
 
 %IFDEF GL_SSE
             ALIGN   32
+%IFDEF __WIN32__
+            global  _trisetup_SSE_clip_coor_thunk@12
+_trisetup_SSE_clip_coor_thunk@12:
+%ELSE
             global  _trisetup_SSE_clip_coor_thunk
 _trisetup_SSE_clip_coor_thunk:
+%ENDIF
 
 %define procPtr eax
 %define vPtr    ecx
