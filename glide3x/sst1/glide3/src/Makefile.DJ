@@ -73,7 +73,7 @@ endif
 CDEFS = -D__DOS__ -D__DOS32__ -DINIT_DOS
 
 # general
-CDEFS += -DGLIDE_HARDWARE
+CDEFS += -DGLIDE3 -DGLIDE_HARDWARE
 
 # subsystem
 ifeq ($(FX_GLIDE_HW),sst1)
