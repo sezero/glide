@@ -1,0 +1,54 @@
+# DOS/DJGPP tests makefile for Glide3
+#
+#  Copyright (c) 2002 - Borca Daniel
+#  Email : dborca@users.sourceforge.net
+#  Web   : http://www.geocities.com/dborca
+#
+# $Header$
+#
+
+
+#
+#  Available options:
+#
+#    Environment variables:
+#	CPU		optimize for the given processor.
+#			default = pentium
+#	DXE=1		use DXE modules.
+#			default = no
+#
+#    Targets:
+#	<file.exe>	build a specific file
+#
+
+
+.PHONY: all
+.SUFFIXES: .c .o .exe
+.SECONDARY: tlib.o
+
+FX_GLIDE_HW = sst1
+TOP = ../../..
+CPU ?= pentium
+
+CC = gcc
+CFLAGS = -Wall -O2 -ffast-math -mcpu=$(CPU)
+CFLAGS += -I$(TOP)/$(FX_GLIDE_HW)/glide3/src -I$(TOP)/$(FX_GLIDE_HW)/incsrc -I$(TOP)/$(FX_GLIDE_HW)/init
+CFLAGS += -I$(TOP)/swlibs/fxmisc
+CFLAGS += -D__DOS__ -DSST1
+CFLAGS += -D__DOS32__
+
+LDFLAGS = -s -L$(TOP)/$(FX_GLIDE_HW)/lib
+
+ifdef DXE
+LDLIBS = -lgld3i
+else
+LDLIBS = -lgld3x
+endif
+
+.c.o:
+	$(CC) -o $@ $(CFLAGS) -c $<
+%.exe: tlib.o %.o
+	$(CC) -o $@ $(LDFLAGS) $^ $(LDLIBS)
+
+all:
+	$(error Must specify <filename.exe> to build)

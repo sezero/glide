@@ -1,0 +1,48 @@
+# Linux tests makefile for Glide3
+#
+#  Copyright (c) 2002 - Borca Daniel
+#  Email : dborca@users.sourceforge.net
+#  Web   : http://www.geocities.com/dborca
+#
+# $Header$
+#
+
+
+#
+#  Available options:
+#
+#    Environment variables:
+#	CPU		optimize for the given processor.
+#			default = pentium
+#
+#    Targets:
+#	<file.exe>	build a specific file
+#
+
+
+.PHONY: all
+.SUFFIXES: .c .o .exe
+.SECONDARY: tlib.o
+
+FX_GLIDE_HW = sst1
+TOP = ../../..
+CPU ?= pentium
+
+CC = gcc
+CFLAGS = -Wall -O2 -ffast-math -mcpu=$(CPU)
+CFLAGS += -I$(TOP)/$(FX_GLIDE_HW)/glide3/src -I$(TOP)/$(FX_GLIDE_HW)/incsrc -I$(TOP)/$(FX_GLIDE_HW)/init
+CFLAGS += -I$(TOP)/swlibs/fxmisc
+CFLAGS += -DSST1
+
+LDFLAGS = -s -L$(TOP)/$(FX_GLIDE_HW)/lib
+
+LDLIBS = -lglide3
+LDLIBS += -lm
+
+.c.o:
+	$(CC) -o $@ $(CFLAGS) -c $<
+%.exe: $(TOP)/swlibs/fxmisc/linutil.o tlib.o %.o
+	$(CC) -o $@ $(LDFLAGS) $^ $(LDLIBS)
+
+all:
+	$(error Must specify <filename.exe> to build)
