@@ -52,6 +52,18 @@ if GL_AMD3D
 GL_AMD3D_VDEFS = -DGL_AMD3D
 endif
 
+if GL_SSE
+GL_SSE_VDEFS = -DGL_SSE
+endif
+
+if GL_MMX
+GL_MMX_VDEFS = -DGL_MMX
+endif
+
+if GL_SSE2
+GL_SSE2_VDEFS = -DGL_SSE2
+endif
+
 if DRI_BUILD
 DRI_BUILD_VDEFS = -DDRI_BUILD
 endif
@@ -123,6 +135,9 @@ VDEFS = $(FX_CHRIS_DENIS_ANTHONY_HACK_VDEFS) \
         $(FX_GLIDE_DIRECT_WRITE_VDEFS) \
         $(FX_GLIDE_H5_VDEFS) \
         $(GL_AMD3D_VDEFS) \
+        $(GL_SSE_VDEFS) \
+        $(GL_MMX_VDEFS) \
+        $(GL_SSE2_VDEFS) \
         $(DRI_BUILD_VDEFS) \
         $(HAL_HW_CSIM_VDEFS) \
         $(FX_GLIDE_SW_SETUP_VDEFS) \
@@ -163,12 +178,12 @@ xdraw2_def.o xdraw2_def.lo: xdraw2.asm xdraw2.inc fxgasm.h
 	nasm -I@top_srcdir@/@FX_GLIDE_HW@/glide3/src -O2 -felf -D__linux__ -o $*.o $<
 	$(CP) $*.o $*.lo
 
-xdraw2_3dnow.o xdraw2_3dnow.lo: xdraw2.asm xdraw2.inc fxgasm.h
-	nasm -I@top_srcdir@/@FX_GLIDE_HW@/glide3/src -O2 -felf -D__linux__ -DGL_AMD3D -DUSE_PACKET_FIFO=1 -o $*.o $<
-	$(CP) $*.o $*.lo
-
 xdraw3_def.o xdraw3_def.lo: xdraw3.asm fxgasm.h
 	nasm -I@top_srcdir@/@FX_GLIDE_HW@/glide3/src -O2 -felf -D__linux__ -o $*.o $<
+	$(CP) $*.o $*.lo
+
+xdraw2_3dnow.o xdraw2_3dnow.lo: xdraw2.asm xdraw2.inc fxgasm.h
+	nasm -I@top_srcdir@/@FX_GLIDE_HW@/glide3/src -O2 -felf -D__linux__ -DGL_AMD3D -DUSE_PACKET_FIFO=1 -o $*.o $<
 	$(CP) $*.o $*.lo
 
 xdraw3_3dnow.o xdraw3_3dnow.lo: xdraw3.asm fxgasm.h
@@ -177,6 +192,22 @@ xdraw3_3dnow.o xdraw3_3dnow.lo: xdraw3.asm fxgasm.h
 
 xtexdl_3dnow.o xtexdl_3dnow.lo: xtexdl.asm fxgasm.h
 	nasm -I@top_srcdir@/@FX_GLIDE_HW@/glide3/src -O2 -felf -D__linux__ -DGL_AMD3D -DUSE_PACKET_FIFO=1 -o $*.o $<
+	$(CP) $*.o $*.lo
+
+xdraw2_sse.o xdraw2_sse.lo: xdraw2.asm xdraw2.inc fxgasm.h
+	nasm -I@top_srcdir@/@FX_GLIDE_HW@/glide3/src -O2 -felf -D__linux__ -DGL_SSE -DUSE_PACKET_FIFO=1 -o $*.o $<
+	$(CP) $*.o $*.lo
+
+xdraw3_sse.o xdraw3_sse.lo: xdraw3.asm fxgasm.h
+	nasm -I@top_srcdir@/@FX_GLIDE_HW@/glide3/src -O2 -felf -D__linux__ -DGL_SSE -DUSE_PACKET_FIFO=1 -o $*.o $<
+	$(CP) $*.o $*.lo
+
+xtexdl_mmx.o xtexdl_mmx.lo: xtexdl.asm fxgasm.h
+	nasm -I@top_srcdir@/@FX_GLIDE_HW@/glide3/src -O2 -felf -D__linux__ -DGL_MMX -DUSE_PACKET_FIFO=1 -o $*.o $<
+	$(CP) $*.o $*.lo
+
+xtexdl_sse2.o xtexdl_sse2.lo: xtexdl.asm fxgasm.h
+	nasm -I@top_srcdir@/@FX_GLIDE_HW@/glide3/src -O2 -felf -D__linux__ -DGL_SSE2 -DUSE_PACKET_FIFO=1 -o $*.o $<
 	$(CP) $*.o $*.lo
 
 #
@@ -189,6 +220,15 @@ FX_GLIDE_CTRISETUP_SRC = xdraw2_def.s xdraw3_def.s
 if GL_AMD3D
 FX_GLIDE_CTRISETUP_SRC += xdraw2_3dnow.s xdraw3_3dnow.s xtexdl_3dnow.s
 endif
+if GL_SSE
+FX_GLIDE_CTRISETUP_SRC += xdraw2_sse.s xdraw3_sse.s
+endif
+if GL_MMX
+FX_GLIDE_CTRISETUP_SRC += xtexdl_mmx.s
+endif
+if GL_SSE2
+FX_GLIDE_CTRISETUP_SRC += xtexdl_sse2.s
+endif
 endif
 
 VGLIDE_SRC=$(FX_GLIDE_CTRISETUP_SRC)
@@ -199,9 +239,9 @@ WHOLE_LIBS = $(top_builddir)/swlibs/fxmisc/libfxmisc.la \
              $(top_builddir)/@FX_GLIDE_HW@/minihwc/libminihwc.la
 LINK_LIBS  = -L/usr/X11R6/lib -lX11 -lXext -lXxf86dga -lXxf86vm -lm
 
-CLEANFILES = fxinline.h fxgasm.h
+CLEANFILES = fxinline.h fxgasm.h fxbldno.h
 
-noinst_PROGRAMS        = fxgasm
+noinst_PROGRAMS        = fxgasm fxbldno
 include_HEADERS        = g3ext.h glide.h glideutl.h glidesys.h
 
 noinst_HEADERS         = fxcmd.h     fxsplash.h  \
@@ -209,13 +249,15 @@ noinst_HEADERS         = fxcmd.h     fxsplash.h  \
                          rcver.h     fxglide.h   \
                          gsfc.h      gsstdef.h   \
                          qmodes.h    tv.h        \
-                         fxgasm.h    fxinline.h
+                         fxgasm.h    fxinline.h  fxbldno.h
 fxgasm_SOURCES         = fxgasm.c
 fxgasm_LDADD           = gthread.lo
 fxgasm_DEPENDENCIES    = gthread.lo
 
+fxbldno_SOURCES        = fxbldno.c
+
 lib_LTLIBRARIES        = libglide3.la
-libglide3_la_SOURCES   = fxinline.h fxgasm.h \
+libglide3_la_SOURCES   = fxinline.h fxgasm.h fxbldno.h \
                          gsplash.c g3df.c  gu.c gthread.c \
                          gpci.c diglide.c disst.c ditex.c \
                          gbanner.c gerror.c gaa.c gdraw.c \
@@ -226,17 +268,30 @@ libglide3_la_LDFLAGS   = -version-info 13:1:10
 libglide3_la_LIBADD    = $(WHOLE_LIBS) $(LINK_LIBS)
 
 #--------------------------------------------------------------------------#
-# special rules for making fxgasm.h, fxinclude.h
+# special rules for making fxgasm.h, fxinclude.h, fxbldno.h
 #
 fxgasm.h: fxgasm
 	./fxgasm -hex > fxgasm.h
 fxinline.h: fxgasm
 	./fxgasm -inline > fxinline.h
+fxbldno.h: fxbldno
+	./fxbldno > fxbldno.h
 
 #--------------------------------------------------------------------------#
 # special rules for using fxgasm.h, fxinclude.h
 #
 diget.o diget.lo gdraw.o gdraw.lo gglide.o gglide.lo gu.o gu.lo: fxinline.h
+xdraw2_def.o    xdraw3_def.o    xtexdl_def.o:    fxinline.h
+xdraw2_def.lo   xdraw3_def.lo   xtexdl_def.lo:   fxinline.h
+xdraw2_3dnow.o  xdraw3_3dnow.o  xtexdl_3dnow.o:  fxgasm.h
+xdraw2_3dnow.lo xdraw3_3dnow.lo xtexdl_3dnow.lo: fxgasm.h
+
+#--------------------------------------------------------------------------#
+# special rules for using fxbldno.h
+#
+rcver.h: fxbldno.h
+
+diget.o diget.lo diglide.o diglide.lo gglide.o gglide.lo: rcver.h
 xdraw2_def.o    xdraw3_def.o    xtexdl_def.o:    fxinline.h
 xdraw2_def.lo   xdraw3_def.lo   xtexdl_def.lo:   fxinline.h
 xdraw2_3dnow.o  xdraw3_3dnow.o  xtexdl_3dnow.o:  fxgasm.h

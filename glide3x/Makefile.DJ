@@ -12,24 +12,24 @@
 #  Available options:
 #
 #    Environment variables:
-#	H4=1			Avenger/Napalm.
-#				default = no
-#	CPU			optimize for the given processor.
-#				default = pentium
-#	DEBUG=1			disable optimizations and build for debug.
-#				default = no
-#	USE_X86=1		use assembler triangle specializations.
-#				default = no
-#	USE_3DNOW=1		allow 3DNow! specializations. However, the true
-#				CPU capabilities are still checked at run-time
-#				to avoid lockups.
-#				default = no
-#	USE_MMX=1		(see USE_3DNOW)
-#				default = no
-#	USE_SSE=1		(see USE_3DNOW)
-#				default = no
-#	USE_SSE2=1		(see USE_3DNOW)
-#				default = no
+#	H4=1		Avenger/Napalm.
+#			default = no
+#	CPU		optimize for the given processor.
+#			default = pentium
+#	DEBUG=1		disable optimizations and build for debug.
+#			default = no
+#	USE_X86=1	use assembler triangle specializations.
+#			default = no
+#	USE_3DNOW=1	allow 3DNow! specializations. However, the true CPU
+#			capabilities are still checked at run-time to avoid
+#			crashes.
+#			default = no
+#	USE_MMX=1	(see USE_3DNOW)
+#			default = no
+#	USE_SSE=1	(see USE_3DNOW)
+#			default = no
+#	USE_SSE2=1	(see USE_3DNOW)
+#			default = no
 #
 #    Targets:
 #	all:		build everything
@@ -40,7 +40,7 @@
 
 
 
-.PHONY: glide3x all clean realclean
+.PHONY: all glide3x clean realclean
 .INTERMEDIATE: fxgasm.exe gendate.exe fxbldno.exe
 
 ###############################################################################
