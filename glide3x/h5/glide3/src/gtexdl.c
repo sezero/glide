@@ -1524,7 +1524,7 @@ GR_ENTRY(grTexDownloadMipMapLevelPartial,
               aspectIndex = ((aspectRatio < GR_ASPECT_LOG2_1x1) 
                              ? -aspectRatio 
                              : aspectRatio),
-              lodIndex = ((thisLod == GR_LOD_LOG2_256)
+              lodIndex = ((thisLod >= GR_LOD_LOG2_256)
                           ? GR_LOD_LOG2_256 : thisLod + 1),
               formatMult = _grBitsPerTexel[format];
             FxU32
@@ -1651,7 +1651,8 @@ GR_ENTRY(grTexDownloadMipMapLevelPartial,
 
         if (max_s <= 0) max_s = 1;
         if (widthSel > 3) widthSel = 4;
-    
+        else if (widthSel <= 0) widthSel = 0;
+
         gc->stats.texBytes += max_s * (max_t - t + 1) * 4;
 
         (*((*gc->archDispatchProcs.texDownloadProcs)[formatSel][widthSel]))

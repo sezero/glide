@@ -98,7 +98,7 @@ _grTexDownload_Default_4_4(struct GrGC_s* gc, const FxU32 tmuBaseAddr,
     t = minT;
 
   for (; t <= maxT; t+=4) {
-    FxU32 tex_address = tmuBaseAddr + (t << 2UL);
+    FxU32 tex_address = tmuBaseAddr + (t << 1UL);
     int s;
 
     LINEAR_WRITE_BEGIN(2, PACKET5_MODE, (FxU32)tex_address, 0x00UL, 0x00UL);
