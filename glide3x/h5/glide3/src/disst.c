@@ -180,20 +180,37 @@ GR_DIENTRY(grSstSelect, void, ( int which ))
    */
   GDBG_INFO(80, "grSstSelect(0x%X)\n", which);
 
-  if (_GlideRoot.current_sst == which) {
-     return;
-  }
+  if (!_GlideRoot.initialized)
+    GrErrorCallback( "grSstSelect:  grGlideInit must be called first.", FXTRUE );
 
-  if ( which >= _GlideRoot.hwConfig.num_sst )
+  if ((which < 0) ||
+      (which >= _GlideRoot.hwConfig.num_sst))
     GrErrorCallback( "grSstSelect:  non-existent SST", FXTRUE );
 
+#if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
+  /* [koolsmoky] We are using GR_DCL_GC to determine whether we
+   * have already attached a windowed context to the TLS slot.
+   *
+   * XXX: Note that the glide dll does not attach a gc to a newly
+   * created thread's TLS slot when in windowed mode (see DllMain).
+   * The application must call grSelectContext from its new thread
+   * to attach one.
+   */
+  {
+    GR_DCL_GC;
+    if (gc) {
+      if (gc->windowed) return;
+    }
+  }
+#endif
+  
+  /* Attach a full screen context to the TLS slot */
   _GlideRoot.current_sst = which;
   setThreadValue( (FxU32)&_GlideRoot.GCs[_GlideRoot.current_sst] );
-
+  
 #ifdef GLIDE_MULTIPLATFORM
   _GlideRoot.curGCFuncs = _GlideRoot.curGC->gcFuncs;
 #endif
-
 } /* grSstSelect */
 
 /*---------------------------------------------------------------------------

@@ -340,10 +340,25 @@ GR_DIENTRY(grHints, void, (GrHint_t hintType, FxU32 hints))
 /*---------------------------------------------------------------------------
 ** grGlideInit
 */
+#if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
+GR_DIENTRY(grGlideInit, void, (void)) {
+  /* [koolsmoky] Do nothing here. Glide will be initialized
+   * when the DLL entry point recieves a DLL_PROCESS_ATTACH.
+   */
+}
+
+/* [koolsmoky] According to Microsoft, the TLS index must be allocated
+ * only once when the DLL entry point is called with a DLL_PROCESS_ATTACH.
+ * Since grGlideInit only needs to be run once, we effectively call this
+ * function from the DLL entry point.
+ */
+void _grGlideInit()
+#else
 GR_DIENTRY(grGlideInit, void, (void))
+#endif
 {
   GDBG_INIT();
-  
+
   GDBG_INFO(80,"grGlideInit()\n");
 
   /* dBorca - play safe */
@@ -364,8 +379,8 @@ GR_DIENTRY(grGlideInit, void, (void))
 #endif
   }
 
-  /* KoolSmoky - if we have multiple sst devices, they will all use the 
-   * same environment values. Win32 will use device 0's registry.
+  /* XXX [koolsmoky] if we have multiple sst devices, they will all
+   * use the same environment values. Win32 will use device0's registry.
    */
   _GlideInitEnvironment(0); /* the main init code */
   FXUNUSED(*glideIdent);
@@ -375,6 +390,7 @@ GR_DIENTRY(grGlideInit, void, (void))
 #endif
 
   if (_GlideRoot.initialized) {
+    /* allocate the TLS index */
     initThreadStorage();
     initCriticalSection();
     

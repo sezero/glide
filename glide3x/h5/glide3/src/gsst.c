@@ -1587,11 +1587,11 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
   /* Want Windowed Mode */
   if (resolution == GR_RESOLUTION_NONE)
   {
-    extern GrContext_t _grCreateWindowSurface(FxU32 hWnd,
-                                              GrColorFormat_t    format,
-                                              GrOriginLocation_t origin,
-                                              GrPixelFormat_t    pixelformat,
-                                              int                nAuxBuffer);
+    GrContext_t _grCreateWindowSurface(FxU32 hWnd,
+                                       GrColorFormat_t    format,
+                                       GrOriginLocation_t origin,
+                                       GrPixelFormat_t    pixelformat,
+                                       int                nAuxBuffer);
     
     return _grCreateWindowSurface(hWnd, format, origin, pixelformat, nAuxBuffers);
   }
@@ -3118,9 +3118,10 @@ GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
   /* We are in Windowed Mode */
   if (gc->windowed)
   {
-	 extern void _grReleaseWindowSurface(GrContext_t ctx);
-	 _grReleaseWindowSurface(context);
-	 return FXTRUE;
+    void _grReleaseWindowSurface(GrContext_t ctx);
+    _grReleaseWindowSurface(context);
+    gc->windowed = FXFALSE; /* init the windowed flag */
+    return FXTRUE;
   }
 #endif
 
@@ -3251,8 +3252,9 @@ GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
     gc->grSstRez = GR_RESOLUTION_NONE;
     gc->grSstRefresh = GR_REFRESH_NONE;
   }
+
   _GlideRoot.windowsInit--;
-    
+  
 #if (GLIDE_OS & GLIDE_OS_WIN32)
   if (_GlideRoot.environment.is_opengl != FXTRUE) {
     if ((_GlideRoot.OS == OS_WIN32_95) ||

@@ -45,7 +45,7 @@ ddEnumCbEx( GUID FAR *guid, LPSTR desc, LPSTR name, LPVOID ctx, HMONITOR hmon )
 }
 
 /* This will release the context, and release the surfaces, and destroy the DDRAW objects */
-extern void _grReleaseWindowSurface(GrContext_t ctx)
+void _grReleaseWindowSurface(GrContext_t ctx)
 {
   GDBG_INFO(80, "_grReleaseWindowSurface\n");
   
@@ -152,11 +152,11 @@ extern void _grReleaseWindowSurface(GrContext_t ctx)
         }
 
 /* This will create our DirectDraw surfaces and create the context */
-extern GrContext_t _grCreateWindowSurface(FxU32                 hWnd,
-                                          GrColorFormat_t	format, 
-                                          GrOriginLocation_t	origin, 
-                                          GrPixelFormat_t	pixelformat,
-                                          int			nAuxBuffer)
+GrContext_t _grCreateWindowSurface(FxU32                 hWnd,
+                                   GrColorFormat_t	format, 
+                                   GrOriginLocation_t	origin, 
+                                   GrPixelFormat_t	pixelformat,
+                                   int			nAuxBuffer)
 {
   GrContext_t ctx;
   GrGC *gc;
@@ -406,7 +406,7 @@ extern GrContext_t _grCreateWindowSurface(FxU32                 hWnd,
 }
 
 /* This will blit/flip our surfaces */
-extern void _grFlipWindowSurface()
+void _grFlipWindowSurface()
 {
   GDBG_INFO(80, "_grFlipWindowSurface\n");
   

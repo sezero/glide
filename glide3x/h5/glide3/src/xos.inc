@@ -3,6 +3,9 @@
 ;
 ; $Header$
 ; $Log$
+; Revision 1.1.2.2  2003/06/13 07:22:59  dborca
+; more fixes to NASM sources
+;
 ; Revision 1.1.2.1  2003/06/07 09:53:25  dborca
 ; initial checkin for NASM sources
 ;
@@ -26,6 +29,7 @@
 %elifdef __WIN32__
 %define XOS XOS_WIN32
 %define STDCALL 1
+%define USE_STANDARD_TLS_FUNC 0
 %else
 %error Unknown OS
 %endif
@@ -95,6 +99,23 @@
 %define DATA  .data   align=32
 %define CONST .rdata  align=32
 
+%if USE_STANDARD_TLS_FUNC == 1
+
+extrn getThreadValue
+
+%macro SET_TLSBASE 1
+%endmacro
+
+%macro SET_TLSOFFSET 1
+%endmacro
+
+%macro GET_GC 2
+	call	getThreadValue
+	mov	gc, eax
+%endmacro
+
+%else
+
 %macro SET_TLSBASE 1
 	mov	%1, dword [fs:18h] ; get thread local storage base pointer
 %endmacro
@@ -106,6 +127,8 @@
 %macro GET_GC 2
 	mov	gc, [%1 + %2]
 %endmacro
+
+%endif
 
 %endif
 

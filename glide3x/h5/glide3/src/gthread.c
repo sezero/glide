@@ -56,14 +56,23 @@ initThreadStorage( void )
   if ( !threadInit ) {
     threadInit = 1;
     _GlideRoot.tlsIndex = TlsAlloc();
-  }
 
-  if ((_GlideRoot.OS == OS_WIN32_95) ||
-      (_GlideRoot.OS == OS_WIN32_98) ||
-	  (_GlideRoot.OS == OS_WIN32_ME)) {
-    _GlideRoot.tlsOffset = W95_TLS_INDEX_TO_OFFSET(_GlideRoot.tlsIndex);
-  } else {
-    _GlideRoot.tlsOffset = WNT_TLS_INDEX_TO_OFFSET(_GlideRoot.tlsIndex);
+    if (_GlideRoot.tlsIndex == TLS_OUT_OF_INDEXES)
+      GrErrorCallback( "initThreadStorage:  Failed to allocate TLS index.", FXTRUE );
+
+    /* pray the index is lower than 64 */
+    if ((_GlideRoot.tlsIndex < 0) ||
+        (_GlideRoot.tlsIndex > 63)) /* TLS_MINIMUM_AVAILABLE = 64 */
+      GrErrorCallback( "initThreadStorage:  TLS index higher than 64.", FXTRUE );
+#if !USE_STANDARD_TLS_FUNC
+    if ((_GlideRoot.OS == OS_WIN32_95) ||
+        (_GlideRoot.OS == OS_WIN32_98) ||
+        (_GlideRoot.OS == OS_WIN32_ME)) {
+      _GlideRoot.tlsOffset = W95_TLS_INDEX_TO_OFFSET(_GlideRoot.tlsIndex);
+    } else {
+      _GlideRoot.tlsOffset = WNT_TLS_INDEX_TO_OFFSET(_GlideRoot.tlsIndex);
+    }
+#endif
   }
 } /* initThreadStorage */
 
@@ -72,37 +81,19 @@ void setThreadValue( FxU32 value ) {
     TlsSetValue( _GlideRoot.tlsIndex, (void*)value );
 }
 
-#ifdef __GNUC__
-
-FxU32 getThreadValueSLOW (void)
+FxU32 getThreadValueSLOW(void)
 {
- GR_CHECK_F( "getThreadValue", !threadInit, "Thread storage not initialized\n" );
+  GR_CHECK_F( "getThreadValue", !threadInit, "Thread storage not initialized\n" );
 
- return getThreadValueFast();
+  return getThreadValueFast();
 }
 
-#else
-
-#pragma warning (4:4035)        /* No return value */
-FxU32 getThreadValueSLOW( void ) {
-    GR_CHECK_F( "getThreadValue", !threadInit, "Thread storage not initialized\n" );
-
-#if 0
-    return (FxU32)TlsGetValue( _GlideRoot.tlsIndex );
-#elif 1
-    __GR_GET_TLSC_VALUE();
-#else
-
-  __asm {
-    mov esi, DWORD PTR fs:[WNT_TEB_PTR]
-    add esi, DWORD PTR _GlideRoot.tlsOffset
-    mov eax, DWORD PTR [esi]
-  }
-
-#endif
-
+#if USE_STANDARD_TLS_FUNC
+/* used in gdraw.c (grDrawTriangle) and xos.inc */
+FxU32 getThreadValue(void)
+{
+  return (FxU32)TlsGetValue(_GlideRoot.tlsIndex);
 }
-
 #endif
 
 void freeThreadStorage( void )
@@ -118,6 +109,13 @@ void initCriticalSection( void ) {
         criticalSectionInit = 1;
         InitializeCriticalSection( &criticalSectionObject );
     }
+}
+
+void deleteCriticalSection( void ) {
+  if ( criticalSectionInit ) {
+    DeleteCriticalSection( &criticalSectionObject );
+    criticalSectionInit = 0;
+  }
 }
 
 void beginCriticalSection( void ) {
@@ -156,6 +154,10 @@ void initCriticalSection(void)
 {
 }
 
+void deleteCriticalSection( void )
+{
+}
+
 void beginCriticalSection(void)
 {
 }
@@ -188,6 +190,10 @@ void initCriticalSection(void)
 {
 }
 
+void deleteCriticalSection( void )
+{
+}
+
 void beginCriticalSection(void)
 {
 }
@@ -215,6 +221,10 @@ FxU32 getThreadValueSLOW( void )
 }
  
 void initCriticalSection(void)
+{
+}
+
+void deleteCriticalSection( void )
 {
 }
 

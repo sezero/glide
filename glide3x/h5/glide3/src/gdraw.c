@@ -347,6 +347,23 @@ GR_ENTRY(grDrawTriangle, void, (const void *a, const void *b, const void *c))
   }
 #elif defined(__MSC__)
   {
+#if USE_STANDARD_TLS_FUNC
+    extern FxU32 getThreadValue(void);
+    __asm {
+      call getThreadValue;
+      mov edx, eax;
+      test edx, edx;
+      je   lostContext;
+      mov eax, [edx + kLostContextOffset];
+      test eax, eax
+      je   lostContext;
+      mov eax, [eax];
+      test eax, 1;
+      jnz  lostContext;
+      mov eax, [edx + kTriProcOffset];
+      jmp eax;
+    }
+#else
     __asm {
       mov eax, DWORD PTR fs:[WNT_TEB_PTR] ;
       add eax, DWORD PTR _GlideRoot.tlsOffset;
@@ -362,6 +379,7 @@ GR_ENTRY(grDrawTriangle, void, (const void *a, const void *b, const void *c))
       mov eax, [edx + kTriProcOffset];
       jmp eax;
     }
+#endif
     lostContext: ; /* <-- my, that's odd, but MSVC was insistent  */
   }
 #elif (GLIDE_PLATFORM & GLIDE_OS_UNIX) || defined(__DJGPP__)

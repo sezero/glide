@@ -2038,13 +2038,26 @@ DllMain(HANDLE hInst, ULONG  ul_reason_for_call, LPVOID lpReserved)
      * (several games that like to do wacky crap with threads).
      */
     freeThreadStorage();
+
+    /* clean up */
+    deleteCriticalSection();
     break;
   case DLL_PROCESS_ATTACH:
+    /* [koolsmoky] Take advantage of the fact that this DLL will be
+     * "load-time" linked. Inorder to attach the current gc to all
+     * threads' TLS slot, _GlideRoot must be initialized. This also
+     * fulfills Microsoft's instruction that initThreadStorage should
+     * go here in DLL_PROCESS_ATTACH. Since this dll's design doesn't
+     * allow creating child processes this should be ok.
+     */
+    {
+      void _grGlideInit();
+      _grGlideInit();
+    }
     GDBG_INFO(80, "DllMain: DLL_PROCESS_ATTACH\n");
     break;
   case DLL_THREAD_ATTACH:
     GDBG_INFO(80, "DllMain: DLL_THREAD_ATTACH\n");
-    
     /* If we're in the fullscreen case it is legal to call into glide
      * from multiple threads, but the application is required to do
      * their own thread syncronization w/ glide as a single resource.
@@ -2052,6 +2065,11 @@ DllMain(HANDLE hInst, ULONG  ul_reason_for_call, LPVOID lpReserved)
      * grSstWinOpen at least once to open a fullscreen context then we
      * need to attach the current context (eg. the gc) to the current tls.
      */
+    /* [koolsmoky] As long as the application attaches a valid gc with
+     * grSelectContext from its created thread, it's legal to call glide
+     * from multipule threads in windowed mode as well. (See grSstSelect)
+     */
+    /* attach a fullscreen gc to the TLS slot if in fullscreen mode. */
     if(_GlideRoot.initialized &&       /* scanned for hw? */
         (_GlideRoot.windowsInit > 0)) { /* outstanding fullscreen contexts? */
       GR_DCL_GC;

@@ -2680,6 +2680,64 @@ _grSstVRetraceOn(void);
 */
 
 #if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
+/* [koolsmoky] According to MSJ, in WinNT, the pointer to the TLS slots for
+ * the thread contains a null pointer until the first time a TLS slot is used
+ * in the thread, then the system allocates memory for the TLS slots out of
+ * the default process heap. In Win95, it points to the TLS slots that are
+ * always kept as part of the Ring 3 thread database.
+ *
+ * The value of TLS index X can be read as follows on all Win32 systems;
+ * get pointer to the TLS slots for the thread, add (X * sizeof(DWORD)) to it,
+ * and read from that address.
+ *
+ * NOTE: This is valid for TLS slots 0 through 63 (64 slots).
+ *
+ * Win2k/XP
+ * From Win2k/XP DDK's ntddk.h;
+ * FS:[0x3C]  - contains a pointer to the TLS slots for the thread.
+ *
+ * Win9x/Me/NT4
+ * FS:[0x2C] - contains a pointer to the TLS slots for the thread.
+ *
+ *
+ * According to MSDN, the TLS slots are always kept as part of the Ring 3
+ * thread database on all Win32 systems; they are kept at the following
+ * offsets of the Thread Environment Block (TEB) structure.
+ *
+ * Win95
+ * offsets 0x88 - 0x188 (64 slots)
+ *
+ * WinNT4
+ * offsets 0xE10 - 0xF0F (64 slots)
+ *
+ * Win98/Me
+ * offsets 0x88 - 0x188, 0x???? - 0x???? (80 slots)
+ *
+ * Win2k/XP
+ * offsets 0xE10 - 0xF0F, 0x268C - 0x368C (1088 slots)
+ *
+ * FS:[0x18] contains the base address of the TEB structure.
+ *
+ * NOTE: The minimum slots is guaranteed to be at least 64 on all systems.
+ *       TLS_MINIMUM_AVAILABLE = 64
+ */
+
+#define USE_STANDARD_TLS_FUNC 0
+
+#if USE_STANDARD_TLS_FUNC
+
+__inline FxU32
+getThreadValueFast() {
+  /* According to Microsoft, TlsGetValue is implemented with speed as the
+   * primary goal. The function performs minimal parameter validation and
+   * error checking. This function succeeds only when the TLS index is in
+   * the range 0 through (TLS_MINIMUM_AVAILABLE - 1).
+   */
+  return (FxU32)TlsGetValue(_GlideRoot.tlsIndex);
+}
+
+#else
+
 #define W95_TEB_PTR                     0x18
 #define W95_TEB_TLS_OFFSET              0x88
 #define W95_TLS_INDEX_TO_OFFSET(i)      ((i)*sizeof(DWORD)+W95_TEB_TLS_OFFSET)
@@ -2703,13 +2761,6 @@ extern __inline FxU32 getThreadValueFast (void)
 
 #else  /* __GNUC__ */
 
-#define __GR_GET_TLSC_VALUE() \
-__asm { \
-   __asm mov eax, DWORD PTR fs:[WNT_TEB_PTR] \
-   __asm add eax, DWORD PTR _GlideRoot.tlsOffset \
-   __asm mov eax, DWORD PTR [eax] \
-}
-
 #pragma warning (4:4035)        /* No return value */
 __inline FxU32
 getThreadValueFast() {
@@ -2719,9 +2770,10 @@ getThreadValueFast() {
     __asm mov eax, DWORD PTR [eax] 
   }
 }
-#pragma warning (3:4035)
 
 #endif /* __GNUC__ */
+#endif
+
 #endif
 
 #if (GLIDE_PLATFORM & GLIDE_OS_MACOS)
@@ -2768,6 +2820,9 @@ getThreadValueSLOW( void );
 
 void 
 initCriticalSection( void );
+
+void
+deleteCriticalSection( void );
 
 void 
 beginCriticalSection( void );
