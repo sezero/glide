@@ -96,7 +96,7 @@ HWC_WIN40COMPAT = 1
 HWC_MINIVDD_HACK = 1
 
 # Obsolete. We now use Colourless's Alt Tab fix for winnt5.1
-# LCDEFS          =       $(LCDEFS) -DIS_ALT_TAB=1
+# LCDEFS          =       $(LCDEFS) -DIS_ALT_TAB=1 -DGLIDE_ALT_TAB=1
 
 # Colourless
 # Remove this line to disable the WinXP Alt Tab fix. There will be a speed up
@@ -106,7 +106,7 @@ HWC_MINIVDD_HACK = 1
 
 # Colourless
 # Remove this line to disable the faster WinXP Alt Tab fix. There will be a minor speed up
-LCDEFS = $(LCDEFS) -DWINXP_FASTER_ALT_TAB_FIX=1
+LCDEFS = $(LCDEFS) -DWINXP_FASTER_ALT_TAB_FIX=1 -DWINXP_SAFER_FASTER_ALT_TAB_FIX=1 -DGLIDE_ALT_TAB=1
 
 # profiling
 # LLDOPTS = /PROFILE

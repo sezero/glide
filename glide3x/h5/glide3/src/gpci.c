@@ -1851,15 +1851,15 @@ _GlideInitEnvironment(int which)
   GDBG_INFO(80,"   texSubLodDither: %d\n",_GlideRoot.environment.texSubLodDither );
   
   /* Allows us to use the OpenGL LFBLock hack to get around the double lock */
-  _GlideRoot.environment.oglLfbLockHack = GLIDE_GETENV("GXP_GL_LFBLOCK_HACK", GC.bInfo->RegPath, 1L) ;
+  _GlideRoot.environment.oglLfbLockHack = GLIDE_GETENV("FX_GL_LFBLOCK_HACK", GC.bInfo->RegPath, 1L) ;
   GDBG_INFO(80,"     oglLfbLockHack: %d\n",_GlideRoot.environment.oglLfbLockHack );
   
   /* 0 = None, 1 = grLfbReadRegion(), 2 = grLfbLock(), 3 = Both (default) */
-  _GlideRoot.environment.useHwcAAforLfbRead = GLIDE_GETENV("GXP_GLIDE_USE_HWC_AA_FOR_LFB_READ", GC.bInfo->RegPath, 3L) ;
+  _GlideRoot.environment.useHwcAAforLfbRead = GLIDE_GETENV("FX_GLIDE_USE_HWC_AA_FOR_LFB_READ", GC.bInfo->RegPath, 3L) ;
   GDBG_INFO(80," useHwcAAforLfbRead: %d\n",_GlideRoot.environment.useHwcAAforLfbRead );
 	
   /* 0 = No dithering when doing HWC AA dumps, 1 = error diffusion dithering enabled (default) */
-  _GlideRoot.environment.ditherHwcAA = GLIDE_GETENV("GXP_GLIDE_DITHER_HWC_AA", GC.bInfo->RegPath, 1L) ;
+  _GlideRoot.environment.ditherHwcAA = GLIDE_GETENV("FX_GLIDE_DITHER_HWC_AA", GC.bInfo->RegPath, 1L) ;
   GDBG_INFO(80,"        ditherHwcAA: %d\n",_GlideRoot.environment.ditherHwcAA );
   
   _GlideRoot.environment.nColorBuffer      = GLIDE_GETENV("FX_GLIDE_ALLOC_COLOR", GC.bInfo->RegPath, -1L);
@@ -2062,7 +2062,7 @@ _GlideInitEnvironment(int which)
     GDBG_INFO(80,"3DNow+ Support: %c\n", _GlideRoot.CPUType.os_support&_CPU_FEATURE_3DNOWPLUS ? 'Y' : 'N');
     
     /* No CPU Extensions Allowed */
-    if (GLIDE_GETENV("GXP_GLIDE_NO_CPU_EXTENSIONS", GC.bInfo->RegPath, 0L))
+    if (GLIDE_GETENV("FX_GLIDE_NO_CPU_EXTENSIONS", GC.bInfo->RegPath, 0L))
     {
       _GlideRoot.CPUType.feature = _GlideRoot.CPUType.os_support = 0;
       GDBG_INFO(0,"CPU Extensions disabled\n");
