@@ -1,6 +1,7 @@
 #!/bin/bash
 
-function timereport() {
+timereport()
+{
     STARTTIME=$1
     ENDTIME=$2
     SECONDSPERMIN=60
@@ -19,7 +20,8 @@ function timereport() {
     echo "Time Elapsed: $YEARS Years, $DAYS Days, $HOURS Hours, $MINUTES Minutes, $ELAPSEDTIME Seconds"
 }
 
-function diskreport() {
+diskreport()
+{
     SIGN=""
     DISKUSAGE=`expr $2 - $1`
     if [ $DISKUSAGE -lt 0 ]
@@ -32,7 +34,8 @@ function diskreport() {
     echo "Disk usage: $SIGN$DISKUSAGE_INT.$DISKUSAGE_FRAC Mb"
 }
 
-function instrument_command() {
+instrument_command()
+{
     STARTDISK=`df -k . | grep --invert-match '^Filesystem' | awk '{print $3;}'`
     df -k .
     STARTTIME=`date +%s`
@@ -44,7 +47,8 @@ function instrument_command() {
     diskreport $STARTDISK $ENDDISK
 }
 
-function xterm_title () {
+xterm_title()
+{
     local working_directory
     if [ -z "$PWD" ]
     then
@@ -98,3 +102,4 @@ then
     xterm_title --title "build.3dfx $@ ($RETVAL) @ `hostname --fqdn`:$PWD"
 fi
 exit $retstat
+
