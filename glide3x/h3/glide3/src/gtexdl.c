@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.6.1  2003/11/07 13:38:39  dborca
+** unite the clans
+**
 ** Revision 1.1.1.1  1999/11/24 21:44:57  joseph
 ** Initial checkin for SourceForge
 **
@@ -419,7 +422,7 @@ GR_DDFUNC(_grTexDownloadPaletteExt,
         while(i < start + slopCount) {
           FxU32 entry;
           
-          entry = (0x80000000 | ((i & 0xFE) << 23) | pal->data[i] & 0xFFFFFF);
+          entry = 0x80000000 | ((i & 0xFE) << 23) | (pal->data[i] & 0xFFFFFF);
           
           gc->state.shadow.paletteRow[i>>3].data[i&7] = entry;
           REG_GROUP_SET(hw, nccTable0[4 + (i & 0x07)], entry );
@@ -437,7 +440,7 @@ GR_DDFUNC(_grTexDownloadPaletteExt,
         while(i < endIndex) {
           FxU32 entry;
           
-          entry = (0x80000000 | ((i & 0xFE) << 23) | pal->data[i] & 0xFFFFFF);
+          entry = 0x80000000 | ((i & 0xFE) << 23) | (pal->data[i] & 0xFFFFFF);
           
           gc->state.shadow.paletteRow[i>>3].data[i&7] = entry;
           REG_GROUP_SET(hw, nccTable0[4 + (i & 0x07)], entry );
@@ -456,7 +459,7 @@ GR_DDFUNC(_grTexDownloadPaletteExt,
         while(i <= end) {
           FxU32 entry;
           
-          entry = (0x80000000 | ((i & 0xFE) << 23) | pal->data[i] & 0xFFFFFF);
+          entry = 0x80000000 | ((i & 0xFE) << 23) | (pal->data[i] & 0xFFFFFF);
           
           gc->state.shadow.paletteRow[i>>3].data[i&7] = entry;
           REG_GROUP_SET(hw, nccTable0[4 + (i & 0x07)], entry );
@@ -772,7 +775,7 @@ GR_DDFUNC(_grTexDownloadPalette,
         while(i < start + slopCount) {
           FxU32 entry;
           
-          entry = (0x80000000 | ((i & 0xFE) << 23) | pal->data[i] & 0xFFFFFF);
+          entry = 0x80000000 | ((i & 0xFE) << 23) | (pal->data[i] & 0xFFFFFF);
           
           gc->state.shadow.paletteRow[i>>3].data[i&7] = entry;
           REG_GROUP_SET(hw, nccTable0[4 + (i & 0x07)], entry );
@@ -790,7 +793,7 @@ GR_DDFUNC(_grTexDownloadPalette,
         while(i < endIndex) {
           FxU32 entry;
           
-          entry = (0x80000000 | ((i & 0xFE) << 23) | pal->data[i] & 0xFFFFFF);
+          entry = 0x80000000 | ((i & 0xFE) << 23) | (pal->data[i] & 0xFFFFFF);
           
           gc->state.shadow.paletteRow[i>>3].data[i&7] = entry;
           REG_GROUP_SET(hw, nccTable0[4 + (i & 0x07)], entry );
@@ -809,7 +812,7 @@ GR_DDFUNC(_grTexDownloadPalette,
         while(i <= end) {
           FxU32 entry;
           
-          entry = (0x80000000 | ((i & 0xFE) << 23) | pal->data[i] & 0xFFFFFF);
+          entry = 0x80000000 | ((i & 0xFE) << 23) | (pal->data[i] & 0xFFFFFF);
           
           gc->state.shadow.paletteRow[i>>3].data[i&7] = entry;
           REG_GROUP_SET(hw, nccTable0[4 + (i & 0x07)], entry );
@@ -1290,8 +1293,10 @@ GR_ENTRY(grTexDownloadMipMapLevelPartial,
               levelSize = (_grMipMapHostSize[aspectIndex][G3_LOD_TRANSLATE(maxLod)] << formatShift);
               
               if (levelSize >= SST_TEXTURE_ALIGN) break;
+              /* [dBorca] check on the Even/Odd mask to see if the mip-map affects this TMU */
+              if((maxLod & 1) ? (evenOdd & GR_MIPMAPLEVELMASK_ODD) : (evenOdd & GR_MIPMAPLEVELMASK_EVEN))
+                texOffset += levelSize;
               maxLod++;
-              texOffset += levelSize;
             }
             
             /* maxLod is the index of the smallest level of this aspect
