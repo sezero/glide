@@ -650,10 +650,10 @@ static GrTexDownloadProc _texDownloadProcs[][4][5] =
   /* Default Procs */
   { 
     {
+      _grTexDownload_Default_4_4, /* used only for DXT1 8x4 mipmaps (two 4x4 mipmaps side by side). download only 4x4. */
       _grTexDownload_Default_4_8,
-      _grTexDownload_Default_4_4,
-      _grTexDownload_Default_4_8,
-      _grTexDownload_Default_4_8,
+      _grTexDownload_Default_4_WideS,
+      _grTexDownload_Default_4_WideS,
       _grTexDownload_Default_4_WideS
     }, 
     {
@@ -671,20 +671,20 @@ static GrTexDownloadProc _texDownloadProcs[][4][5] =
       _grTexDownload_Default_16_WideS
     },
     {
+      _grTexDownload_Default_32_1, /* unused */
       _grTexDownload_Default_32_1,
       _grTexDownload_Default_32_WideS,
-      _grTexDownload_Default_32_WideS,
-      _grTexDownload_Default_32_WideS,
+      _grTexDownload_Default_32_WideS, /* unused */
       _grTexDownload_Default_32_WideS
     }
   },
 #if GL_AMD3D
   { 
     {
+      _grTexDownload_Default_4_4, /* used only for DXT1 8x4 mipmaps (two 4x4 mipmaps side by side). download only 4x4. */
       _grTexDownload_Default_4_8,
-      _grTexDownload_Default_4_4,
-      _grTexDownload_Default_4_8,
-      _grTexDownload_Default_4_8,
+      _grTexDownload_3DNow_MMX,
+      _grTexDownload_3DNow_MMX,
       _grTexDownload_3DNow_MMX
     }, 
     { 
@@ -702,10 +702,10 @@ static GrTexDownloadProc _texDownloadProcs[][4][5] =
       _grTexDownload_3DNow_MMX
       },
     {
+      _grTexDownload_Default_32_1, /* unused */
       _grTexDownload_Default_32_1,
       _grTexDownload_3DNow_MMX,
-      _grTexDownload_3DNow_MMX,
-      _grTexDownload_3DNow_MMX,
+      _grTexDownload_3DNow_MMX, /* unused */
       _grTexDownload_3DNow_MMX
     }
   },
@@ -713,10 +713,10 @@ static GrTexDownloadProc _texDownloadProcs[][4][5] =
 #if GL_MMX
   { 
     {
+      _grTexDownload_Default_4_4, /* used only for DXT1 8x4 mipmaps (two 4x4 mipmaps side by side). download only 4x4. */
       _grTexDownload_Default_4_8,
-      _grTexDownload_Default_4_4,
-      _grTexDownload_Default_4_8,
-      _grTexDownload_Default_4_8,
+      _grTexDownload_MMX,
+      _grTexDownload_MMX,
       _grTexDownload_MMX
     }, 
     { 
@@ -734,10 +734,10 @@ static GrTexDownloadProc _texDownloadProcs[][4][5] =
       _grTexDownload_MMX
     },
     {
+      _grTexDownload_Default_32_1, /* unused */
       _grTexDownload_Default_32_1,
       _grTexDownload_MMX,
-      _grTexDownload_MMX,
-      _grTexDownload_MMX,
+      _grTexDownload_MMX, /* unused */
       _grTexDownload_MMX
     }
   },
@@ -745,11 +745,11 @@ static GrTexDownloadProc _texDownloadProcs[][4][5] =
 #if GL_SSE2
   { 
     {
+      _grTexDownload_Default_4_4, /* used only for DXT1 8x4 mipmaps (two 4x4 mipmaps side by side). download only 4x4. */
       _grTexDownload_Default_4_8,
-      _grTexDownload_Default_4_4,
-      _grTexDownload_Default_4_8,
-      _grTexDownload_Default_4_8,
-      _grTexDownload_SSE2_64
+      _grTexDownload_SSE2_64,
+      _grTexDownload_SSE2_128,
+      _grTexDownload_SSE2_128
     }, 
     { 
       _grTexDownload_Default_8_1, 
@@ -766,10 +766,10 @@ static GrTexDownloadProc _texDownloadProcs[][4][5] =
       _grTexDownload_SSE2_128
     },
     {
+      _grTexDownload_Default_32_1, /* unused */
       _grTexDownload_Default_32_1,
       _grTexDownload_SSE2_64,
-      _grTexDownload_SSE2_128,
-      _grTexDownload_SSE2_128,
+      _grTexDownload_SSE2_128, /* unused */
       _grTexDownload_SSE2_128
     }
   },

@@ -1265,58 +1265,56 @@ GR_ENTRY(grTexDownloadMipMapLevelPartial,
         FxU32
           width, formatSel, widthSel, max_s;
 
+		/*
+         * Interpretations:
+         * formatSel: Chooses among 4, 8, 16, and 32-bit download procedures.
+         *            We want formatSel == log2(bitsPerTexel >> 2).
+         * max_s:     The width, measured in 32-bit units.
+         */
         switch(format) {
         case GR_TEXFMT_ARGB_CMP_FXT1:
           /* Minimum size for 4-bit compressed format mipmaps is 8x4. FXT1 */
+          formatSel = 0;
           width = _grMipMapHostWHCmp4Bit[G3_ASPECT_TRANSLATE(aspectRatio)][thisLod][0];
-          widthSel = (width >> 2);
+          max_s = widthSel = (width >> 3);
           break;
         case GR_TEXFMT_ARGB_CMP_DXT1:
-          width = _grMipMapHostWHDXT[G3_ASPECT_TRANSLATE(aspectRatio)][thisLod][0];
-          /* hack for DXT1 8x4 mipmaps. download only 4x4. */
-          widthSel = (_grMipMapHostWHDXT[G3_ASPECT_TRANSLATE(aspectRatio)][thisLod][0] >> 2);
+          /* Minimum size for DXT1 mipmaps is 8x4 (two 4x4 mipmaps side by side). */
+          formatSel = 0;
+          width  = _grMipMapHostWHDXT[G3_ASPECT_TRANSLATE(aspectRatio)][thisLod][0];
+          max_s = widthSel = (width >> 3);
           break;
         case GR_TEXFMT_ARGB_CMP_DXT2:
         case GR_TEXFMT_ARGB_CMP_DXT3:
         case GR_TEXFMT_ARGB_CMP_DXT4:
         case GR_TEXFMT_ARGB_CMP_DXT5:
           /* Minimum size for 8-bit compressed format mipmaps is 4x4. DXT2,3,4,5 */
-          width = _grMipMapHostWHDXT[G3_ASPECT_TRANSLATE(aspectRatio)][thisLod][0];
-          widthSel = (width >> 1); /* For 8-bit format */
+          formatSel = 1;
+          width     = _grMipMapHostWHDXT[G3_ASPECT_TRANSLATE(aspectRatio)][thisLod][0];
+          widthSel  = ((width == 8) ? 3 : (width >> 1));
+          max_s     = (width >> 2);
           break;
         default:
           width =_grMipMapHostWH[G3_ASPECT_TRANSLATE(aspectRatio)][thisLod][0];
-          widthSel = (width >> 1); /* For 8,16,32-bit formats */
-          break;
-        }
-
-        /*
-         * Interpretations:
-         * formatSel: Chooses among 4, 8, 16, and 32-bit download procedures.
-         *            We want formatSel == log2(bitsPerTexel >> 2).
-         * max_s:     The width, measured in 32-bit units.
-         */
-        switch(bitsPerTexel) {
-        case  4:
-          formatSel = 0;
-          max_s = width >> 3;
-          break;
-        case  8:
-          formatSel = 1;
-          max_s = width >> 2;
-          break;
-        case 16:
-          formatSel = 2;
-          max_s = width >> 1;
-          break;
-        case 32:
-          formatSel = 3;
-          max_s = width;
-          break;
-        default:
-          /* Undefined format, but let's try 16-bit dimensions just in case. */
-          formatSel = 2;
-          max_s = width >> 1;
+          /* For 8,16,32-bit formats */
+          switch(bitsPerTexel) {
+            case 32:
+              formatSel = 3;
+              max_s = widthSel = width;
+              break;
+            case  8:
+              formatSel = 1;
+              widthSel  = ((width == 8) ? 3 : (width >> 1));
+              max_s     = (width >> 2);
+              break;
+            /*case  4: GR_TEXFMT_ARGB_CMP_FXT1, GR_TEXFMT_ARGB_CMP_DXT1 are the only 4-bit format
+              break;*/
+            case 16:
+            default:
+              formatSel = 2;
+              max_s = widthSel = (width >> 1);
+              break;
+          }
           break;
         }
 

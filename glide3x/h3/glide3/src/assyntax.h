@@ -2,11 +2,10 @@
  * Select the syntax appropriate to the 386 assembler being used.
  *
  *  Copyright (c) 2002 - Borca Daniel
- *  Email : dborca@yahoo.com
+ *  Email : dborca@users.sourceforge.net
  *  Web   : http://www.geocities.com/dborca
  *
  * $Header$
- * $Log$
  */
 
 

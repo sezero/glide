@@ -2,7 +2,7 @@
  * The V3 PLL table for H4 OEM. (just a wrapper to h4pll.h)
  *
  *  Copyright (c) 2002 - Borca Daniel
- *  Email : dborca@yahoo.com
+ *  Email : dborca@users.sourceforge.net
  *  Web   : http://www.geocities.com/dborca
  */
 

@@ -270,7 +270,9 @@ FxBool fxSplashInit (FxU32 hWnd,
                    switch (bpp) {
                           case 2:
                                decoded = *(unsigned short *)&b1[0];
-                               decoded = ((decoded & 0x7fe0) << 1) | (decoded & 0x001f);
+                               decoded = ((decoded & 0x7fe0) << 1)
+                                       | ((decoded & 0x0200) >> 4)
+                                       |  (decoded & 0x001f);
                                break;
                           case 3:
                           case 4:
@@ -291,7 +293,9 @@ FxBool fxSplashInit (FxU32 hWnd,
                        switch (bpp) {
                               case 2:
                                    decoded = *(unsigned short *)&b1[0];
-                                   decoded = ((decoded & 0x7fe0) << 1) | (decoded & 0x001f);
+                                   decoded = ((decoded & 0x7fe0) << 1)
+                                           | ((decoded & 0x0200) >> 4)
+                                           |  (decoded & 0x001f);
                                    break;
                               case 3:
                               case 4:
@@ -328,7 +332,9 @@ FxBool fxSplashInit (FxU32 hWnd,
                   switch (bpp) {
                          case 2:
                               decoded = *(unsigned short *)&b1[0];
-                              decoded = ((decoded & 0x7fe0) << 1) | (decoded & 0x001f);
+                              decoded = ((decoded & 0x7fe0) << 1)
+                                      | ((decoded & 0x0200) >> 4)
+                                      |  (decoded & 0x001f);
                               break;
                          case 3:
                          case 4:

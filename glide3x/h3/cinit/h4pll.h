@@ -2,7 +2,7 @@
  * The V3 PLL table for H4.
  *
  *  Copyright (c) 2002 - Borca Daniel
- *  Email : dborca@yahoo.com
+ *  Email : dborca@users.sourceforge.net
  *  Web   : http://www.geocities.com/dborca
  */
 

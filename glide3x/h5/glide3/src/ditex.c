@@ -2179,7 +2179,6 @@ GR_DIENTRY(grTexDownloadMipMapLevel, void,
   */
   switch(format) {
   case GR_TEXFMT_ARGB_CMP_FXT1:
-  case GR_TEXFMT_ARGB_CMP_DXT1:
     grTexDownloadMipMapLevelPartial(tmu, startAddress,
                                     thisLod, largeLod, aspectRatio, 
                                     format,
@@ -2188,6 +2187,10 @@ GR_DIENTRY(grTexDownloadMipMapLevel, void,
                                     _grMipMapHostWHCmp4Bit[G3_ASPECT_TRANSLATE(aspectRatio)][thisLod][1] - 1);
     break;
 
+   /* Note: Unlike in other places, we put DXT1 here because it's min size
+    * according to the app is actually 4x4 like the other DXTC mode
+	*/
+  case GR_TEXFMT_ARGB_CMP_DXT1:
   case GR_TEXFMT_ARGB_CMP_DXT2:
   case GR_TEXFMT_ARGB_CMP_DXT3:
   case GR_TEXFMT_ARGB_CMP_DXT4:

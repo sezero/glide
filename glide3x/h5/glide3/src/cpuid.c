@@ -3,6 +3,9 @@
  *
  * $Header$
  * $Log$
+ * Revision 1.1.2.7  2003/07/25 07:14:58  dborca
+ * ... in the name of the Linux, DRI and the sacred Glide...
+ *
  * Revision 1.1.2.6  2003/07/24 13:13:03  koolsmoky
  * use __try/__except mechanism for win32 to catch SSE sigillegal in win95
  *
@@ -78,7 +81,7 @@ static jmp_buf j;
  */
 static void handler (int signal)
 {
- longjmp(j, signal); /* so we can tell... */
+ longjmp(j, signal + 1); /* so we can tell... also ensure we don't pass 0 */
 }
 
 
