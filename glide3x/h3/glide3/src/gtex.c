@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/11/24 21:44:57  joseph
+** Initial checkin for SourceForge
+**
 ** 
 ** 4     4/06/99 3:54p Dow
 ** Alt tab again.
@@ -991,14 +994,22 @@ GR_ENTRY(grTexLodBiasValue, void,
 {
 #define FN_NAME "grTexLodBiasValue"
   FxU32 tLod;
+  FxI32 lodBias;
   
   GR_BEGIN("grTexLodBiasValue",88,4, 1);
   GDBG_INFO_MORE(gc->myLevel,"(%d,%g)\n",tmu,fvalue);
   GR_CHECK_TMU(FN_NAME, tmu);
-  
+
+  lodBias = _grTexFloatLODToFixedLOD(fvalue);
+  /* Sign extend it. */
+  lodBias = ((lodBias << (32-6)) >> (32-6));
+  if(lodBias > 0x1f) lodBias = 0x1f;
+  else if(lodBias < -0x20) lodBias = -0x20;
+  /* Mask it back off. */
+  lodBias &= 0x3f;
   tLod = gc->state.shadow.tmuState[tmu].tLOD;
   tLod &= ~(SST_LODBIAS);
-  tLod |= _grTexFloatLODToFixedLOD(fvalue) << SST_LODBIAS_SHIFT;
+  tLod |= lodBias << SST_LODBIAS_SHIFT;
 
   GR_SET((0x02 << tmu), SST_TMU(hw, tmu), tLOD, tLod);
   gc->state.shadow.tmuState[tmu].tLOD = tLod;
