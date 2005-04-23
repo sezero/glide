@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.2.2.2  2005/01/22 14:52:02  koolsmoky
+** enabled packed argb for cmd packet type 3
+**
 ** Revision 1.2.2.1  2004/12/23 20:45:56  koolsmoky
 ** converted to nasm syntax
 ** added x86 asm, 3dnow! triangle and mmx, 3dnow! texture download optimizations
@@ -486,10 +489,7 @@ GR_ENTRY(grTexDownloadMipMapLevelPartial,
   REG_GROUP_END();
   }
 
-#if GLIDE_DISPATCH_DOWNLOAD /* cpu optimized texture downloads */
-  /* XXX [koolsmoky] need to implement work around for 8bit-wide downloads
-   * for old revision TMUs.
-   */
+#if GLIDE_DISPATCH_DOWNLOAD
   /* Do the download */
   {
     const FxU32 
@@ -508,11 +508,42 @@ GR_ENTRY(grTexDownloadMipMapLevelPartial,
     if (widthSel > 2) widthSel = 3;
     
     _GlideRoot.stats.texBytes += max_s * (max_t - t + 1) * 4;
-    
-    (*((*_GlideRoot.deviceArchProcs.curTexProcs)[formatSel][widthSel]))(gc, 
-                                                                        tmuBaseAddr,
-                                                                        max_s, t, max_t,
-                                                                        data);
+
+    if ((sh == 3) && !formatSel && (width > 4)) {
+      /* 8-bit >4xN texture with Old revision TMUs (GR_SSTTYPE_VOODOO) */
+      const FxU8* src8  = (const FxU8*)data;
+      /* Compute Physical Write Pointer */
+      const FxU32
+        tmu_baseaddress = (FxU32)gc->tex_ptr +
+                          (((FxU32)tmu) << 21) + (((FxU32)thisLod) << 17);
+
+      for (; t <= max_t; t++) {
+        FxU32
+          s,
+          tex_address = tmu_baseaddress + TEX_ROW_ADDR_INCR(t);
+
+        LINEAR_WRITE_BEGIN(max_s, kLinearWriteTex,
+                           (FxU32)tex_address - (FxU32)gc->tex_ptr,
+                           0x00UL, 0x00UL);
+        for (s = 0; s < max_s; s+=2) {
+          const FxU32 t0 = *(const FxU32*)(src8   );
+          const FxU32 t1 = *(const FxU32*)(src8 + sizeof(FxU32));
+
+          LINEAR_WRITE_SET_8(tex_address                , t0);
+          LINEAR_WRITE_SET_8(tex_address + sizeof(FxU32), t1);
+
+          tex_address += 16;
+          src8 += (sizeof(FxU32) << 1);
+        }
+        LINEAR_WRITE_END();
+      }
+    } else {
+      /* GR_SSTTYPE_Voodoo2 all go through here */
+      (*((*_GlideRoot.deviceArchProcs.curTexProcs)[formatSel][widthSel]))(gc, 
+                                                                          tmuBaseAddr,
+                                                                          max_s, t, max_t,
+                                                                          data);
+    }
   }
 #else
   /*------------------------------------------------------------
