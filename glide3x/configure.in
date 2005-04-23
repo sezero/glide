@@ -59,7 +59,7 @@ AC_SUBST(FX_GLIDE_HW)
 #
 AC_ARG_ENABLE([fx-dri-build],
               [dnl
-  --enable-fx-build-dri       Build for DRI. [default=yes]],
+  --enable-fx-dri-build       Build for DRI. [default=yes]],
               [case ${enableval} in
                true|yes)
                    DRI_BUILD=true
@@ -68,7 +68,7 @@ AC_ARG_ENABLE([fx-dri-build],
                    DRI_BUILD=false
                    ;;
                *)
-                   AC_MSG_ERROR([Illegal value (${enableval}) for --enable-fx-build-dri])
+                   AC_MSG_ERROR([Illegal value (${enableval}) for --enable-fx-dri-build])
                    ;;
                esac],[DRI_BUILD=true])
 AM_CONDITIONAL(DRI_BUILD,test x$DRI_BUILD = xtrue)
