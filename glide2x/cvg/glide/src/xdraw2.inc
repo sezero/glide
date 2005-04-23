@@ -20,6 +20,9 @@
 ;; $Header$
 ;; $Revision$
 ;; $Log$
+;; Revision 1.1.1.1.2.3  2005/01/22 14:52:02  koolsmoky
+;; enabled packed argb for cmd packet type 3
+;;
 ;; Revision 1.1.1.1.2.2  2005/01/13 16:11:39  koolsmoky
 ;; prepare for packed rgb
 ;;
@@ -61,15 +64,14 @@
 
     ;; Prologue stuff
     push      edi                   ; save caller's register variable
-    mov       gc, [_GlideRoot+curGC]; GR_DCL_GC
-
     push      esi                   ; save caller's register variable
+    push      ebx                   ; save caller's register variable
+    push      ebp                   ; save frame pointer
+
+    mov       gc, [_GlideRoot+curGC]; GR_DCL_GC
     mov       fa, [esp + _va$]      ; get base address of vertex A
 
-    push      ebx                   ; save caller's register variable        
     mov       fb, [esp + _vb$]      ; get base address of vertex B
-
-    push      ebp                   ; save frame pointer
     mov       cull, [gc + cull_mode]; get cull mode
 
     mov       fc, [esp + _vc$]      ; get base address of vertex C
@@ -79,13 +81,13 @@
 
     ;; Cull Check
 
-    movq      mm2, [fc + X]         ; yc | xc
+    movq      mm2, [fc + x]         ; yc | xc
     shl       cull, 31              ; culltest << 31
 
-    movq      mm1, [fb + X]         ; yb | xb
+    movq      mm1, [fb + x]         ; yb | xb
     add       tempVal, 4            ; space required in fifo
 
-    movq      mm0, [fa + X]         ; ya | xa
+    movq      mm0, [fa + x]         ; ya | xa
     mov       ebx, [gc + fifoRoom]  ; space available in fifo
 
     ;; Area_Computation
@@ -129,22 +131,23 @@
     push      tempVal               ; fifo space required
     call      _FifoMakeRoom         ; note: updates fifoPtr
 
-    add       esp, 12               ; remove 3 DWORD arguments from stack
-    nop                             ; filler
-
+    ;add       esp, 12               ; remove 3 DWORD arguments from stack
+    ;nop                             ; filler
 %ELSE   ; !GLIDE_CULLING
 
+    ;; Prologue stuff
     push      edi                   ; save caller's register variable
-    mov       gc, [_GlideRoot+curGC]; GR_DCL_GC
-
     push      esi                   ; save caller's register variable
+    push      ebx                   ; save caller's register variable
+    push      ebp                   ; save frame pointer
+
+    mov       gc, [_GlideRoot+curGC]; GR_DCL_GC
     mov       tempVal, [_GlideRoot+curTriSize] ; data for whole triangle in bytes
 
-    push      ebx                   ; save caller's register variable
     mov       ebx, [gc + fifoRoom]  ; fifo space available
-
-    push      ebp                   ; save frame pointer
     add       tempVal, 4            ; fifo space needed (include 4-byte header)
+
+    femms                           ; will use AMD3D, clear FPU/MMX registers
 
     cmp       ebx, tempVal          ; fifo spce available >= space needed ?
     jge       .__triBegin           ; yup, ready to draw triangle
@@ -155,8 +158,8 @@
     push      tempVal               ; fifo space needed
     call      _FifoMakeRoom         ; note: updates fifoPtr
 
-    add       esp, 12               ; remove 3 DWORD arguments from stack
-    nop                             ; filler
+    ;add       esp, 12               ; remove 3 DWORD arguments from stack
+    ;nop                             ; filler
 %ENDIF  ; GLIDE_CULLING
 
 
@@ -164,20 +167,20 @@
 %define dlpstrt ecx           ; points to begin of dataList structure
 %define vertex  edx           ; the current vertex
 
-   ALIGN 32
+    ALIGN 32
 
 .__triBegin:
-    mov       eax, [gc+triPacketHdr]; Packet 3 header
     lea       dlp,[gc + tsuDataList]; Reset the dataList
-
     mov       fifo, [gc + fifoPtr]  ; Fetch Fifo Ptr
+
     mov       vertex, [esp + _va$]  ; Current vertex = A
-
     mov       dlpstrt, dlp          ; save pointer to start of dataList
-    test      fifo, 4               ; is fifo pointer qword aligned ?
 
+    test      fifo, 4               ; is fifo pointer qword aligned ?
     jz        .__fifo_aligned       ; yes, it is qword aligned
-    movq      mm1, [vertex+X]       ; y | x
+
+    mov       eax, [gc+triPacketHdr]; Packet 3 header
+    movq      mm1, [vertex+x]       ; y | x
 
     GR_FIFO_WRITE fifo, 0, eax      ; write header to fifo; now qword aligned
     add       fifo, 4               ; advance fifo for hdr; now qword aligned
@@ -258,24 +261,22 @@
     ;; here: "write buffer" empty
 
     mov       eax,[dlp]             ; Get first offset from the data list
-    test      eax, eax              ; at end of list ?
+    add       dlp, 4                ; dlp++
 
-    lea       dlp, [dlp+4]          ; dlp++
+    test      eax, eax              ; at end of list ?
     jz        .__paramLoopDoneWBzero1; yes, "write buffer" empty
           
 .__paramLoop1a:
     movd      mm1, [eax+vertex]     ; get next parameter
     mov       eax, [dlp]            ; offset = *(dlp + 1)
 
-    add       dlp, 4                ; dlp++
     test      eax, eax              ; at end of offset list (offset == 0) ?
-
     jz        .__paramLoopDoneWBone1; exit, write buffer contains one DWORD
+
     movd      mm2, [eax+vertex]     ; get next parameter
+    add       dlp, 8                ; dlp += 2
 
-    mov       eax, [dlp]            ; offset = *(dlp + 1)
-    add       dlp, 4                ; dlp++
-
+    mov       eax, [dlp-4]          ; offset = *(dlp + 1)
     punpckldq mm1, mm2              ; current param | previous param
 
     WRITE_MM1_FIFO_ALIGNED          ; PCI write current param | previous param
@@ -284,20 +285,20 @@
     test      eax, eax              ; at end of offset list (offset == 0) ?
     jnz       .__paramLoop1a        ; nope, copy next parameter
 
-    nop                             ; filler
+    nop
     jmp       .__paramLoopDoneWBzero1; write buffer empty
     
 %ENDIF ; GLIDE_PACK_RGB
 
 .__fifo_aligned:
-    movd      mm2, [vertex+X]       ; y | x of vertex A
+    movd      mm2, [vertex+x]       ; y | x of vertex A
     movd      mm1, [gc+triPacketHdr]; Packet 3 header
 
     punpckldq mm1, mm2              ; x | header
     WRITE_MM1_FIFO_ALIGNED          ; PCI write x | header
 
     add       fifo, 8               ; fifoPtr += 2*sizeof(FxU32)
-    movd      mm1, [vertex+Y]       ; 0 | y of vertex A
+    movd      mm1, [vertex+y]       ; 0 | y of vertex A
 
 %IF GLIDE_PACK_RGB
 %IF GLIDE_PACK_ALPHA
@@ -314,10 +315,10 @@
     punpcklwd mm2, mm4              ; 00000000 | 00rr00bb
     psrlq     mm4, 24               ; 00000000 | 0000gg00
 
-    add       dlp, 8                ; skip data list entry "a"
     psllq     mm3, 24               ; 00000000 | aa000000
-
     por       mm4, mm2              ; 00000000 | 00rrggbb
+
+    add       dlp, 8                ; skip data list entry "a"
     por       mm4, mm3              ; 00000000 | aarrggbb
 %ELSE ; !GLIDE_PACK_ALPHA
     ;; assumes color values < 256.0
@@ -355,17 +356,15 @@
     jz        .__paramLoopDoneWBone1 ; exit, write buffer contains one DWORD
 
     movd      mm2, [eax+vertex]     ; get next parameter
-    add       dlp, 4                ; dlp++
+    add       dlp, 8                ; dlp += 8
 
-    mov       eax, [dlp]            ; offset = *(dlp + 1)
-    add       dlp, 4                ; dlp++
-
+    mov       eax, [dlp-4]          ; offset = *(dlp + 1)
     punpckldq mm1, mm2              ; current param | previous param
+
     test      eax, eax              ; at end of offset list (offset == 0) ?
-
     WRITE_MM1_FIFO_ALIGNED          ; PCI write current param | previous param
-    add       fifo, 8               ; fifoPtr += 2*sizeof(FxU32)
 
+    add       fifo, 8               ; fifoPtr += 2*sizeof(FxU32)
     jnz       .__paramLoop1b         ; nope, copy next parameter
 
     nop                             ; filler
@@ -380,13 +379,10 @@
 
 .__paramLoop1b:
     movd      mm2, [eax+vertex]     ; get next parameter
-    add       fifo, 8               ; fifoPtr += 2*sizeof(FxU32)
-
     mov       eax, [dlp]            ; offset = *(dlp + 1)
-    add       dlp, 8                ; dlp += 2
 
+    add       dlp, 8                ; dlp += 2
     punpckldq mm1, mm2              ; current param | previous param
-    test      eax, eax              ; at end of offset list (offset == 0) ?
 
     WRITE_MM1_FIFO_ALIGNED          ; PCI write current param | previous param
     add       fifo, 8               ; fifoPtr += 2*sizeof(FxU32)
@@ -395,9 +391,7 @@
     jz        .__paramLoopDoneWBzero1; exit, "write buffer" empty
 
     movd      mm1, [eax+vertex]     ; get next parameter
-    mov       eax, [dlp]            ; offset = *(dlp + 1)
-
-    add       dlp, 4                ; dlp++
+    mov       eax, [dlp-4]          ; offset = *(dlp + 1)
 
     test      eax, eax              ; at end of offset list (offset == 0) ?
     jnz       .__paramLoop1b        ; nope, copy next parameter
@@ -410,13 +404,13 @@
     mov       dlp, dlpstrt          ; reset the dataList
     mov       vertex, [esp + _vb$]  ; Current vertex = B
 
-    movd      mm2, [vertex+X]       ; 0 | x if vertex B
+    movd      mm2, [vertex+x]       ; 0 | x if vertex B
     punpckldq mm1, mm2              ; x | old param
 
     WRITE_MM1_FIFO_ALIGNED          ; PCI write: x | old param
     add       fifo, 8               ; fifoPtr += 2*sizeof(FxU32)
 
-    movd      mm1, [vertex+Y]       ; 0 | y of vertex B
+    movd      mm1, [vertex+y]       ; 0 | y of vertex B
     nop                             ; filler
 
 %IF GLIDE_PACK_RGB
@@ -502,7 +496,7 @@
     movd      mm2, [eax+vertex]     ; get next parameter
     mov       eax, [dlp]            ; offset = *(dlp + 1)
 
-    add       dlp, 4                ; dlp++
+    add       dlp, 8                ; dlp += 2
     punpckldq mm1, mm2              ; current param | previous param
 
     WRITE_MM1_FIFO_ALIGNED          ; PCI write current param | previous param
@@ -512,9 +506,7 @@
     jz        .__paramLoopDoneWBzero2; exit, "write buffer" empty
 
     movd      mm1, [eax+vertex]     ; get next parameter
-    mov       eax, [dlp]            ; offset = *(dlp + 1)
-
-    add       dlp, 4                ; dlp++
+    mov       eax, [dlp-4]            ; offset = *(dlp + 1)
 
     test      eax, eax              ; at end of offset list (offset == 0) ?
     jnz       .__paramLoop2b        ; nope, copy next parameter
@@ -522,16 +514,16 @@
     jmp       .__paramLoopDoneWBone2; write buffer contains one DWORD
 %ENDIF
 
-
 .__paramLoopDoneWBzero1:
 
     mov       vertex, [esp + _vb$]  ; Current vertex = B
     mov       dlp, dlpstrt          ; Reset the dataList
 
-    movq      mm1, [vertex+X]       ; y | x of vertex B
+    movq      mm1, [vertex+x]       ; y | x of vertex B
     WRITE_MM1_FIFO_ALIGNED          ; PCI write y | x of vertex B
 
     add       fifo, 8               ; fifoPtr += 2*sizeof(FxU32)
+    nop
 
 %IF GLIDE_PACK_RGB
 %IF GLIDE_PACK_ALPHA
@@ -571,7 +563,7 @@
 
     ;; here: one DWORD in "write buffer", RGB(A)
 
-    mov       eax, dword [dlp]  ; get first offset from the data list
+    mov       eax, [dlp]            ; get first offset from the data list
     add       dlp, 4                ; dlp++
 
     test      eax, eax              ; end of list ?
@@ -615,15 +607,13 @@
     movd      mm1, [eax+vertex]     ; get next parameter
     mov       eax, [dlp]            ; offset = *(dlp + 1)
 
-    add       dlp, 4                ; dlp++
     test      eax, eax              ; at end of offset list (offset == 0) ?
+    jz        .__paramLoopDoneWBone2; exit, write buffer contains one DWORD
 
-    jz        .__paramLoopDoneWBone2 ; exit, write buffer contains one DWORD
     movd      mm2, [eax+vertex]     ; get next parameter
+    add       dlp, 8                ; dlp++
 
-    mov       eax, [dlp]            ; offset = *(dlp + 1)
-    add       dlp, 4                ; dlp++
-
+    mov       eax, [dlp-4]          ; offset = *(dlp + 1)
     punpckldq mm1, mm2              ; current param | previous param
 
     WRITE_MM1_FIFO_ALIGNED          ; PCI write current param | previous param
@@ -634,16 +624,16 @@
 
 %ENDIF ; GLIDE_PACK_RGB
 
-
 .__paramLoopDoneWBzero2:
 
     mov       vertex, [esp + _vc$]  ; Current vertex = C
     mov       dlp, dlpstrt          ; Reset the dataList
 
-    movq      mm1, [vertex+X]       ; y | x of vertex C
+    movq      mm1, [vertex+x]       ; y | x of vertex C
     WRITE_MM1_FIFO_ALIGNED          ; PCI write y | x of vertex C
 
     add       fifo, 8               ; fifoPtr += 2*sizeof(FxU32)
+    nop
 
 %IF GLIDE_PACK_RGB
 %IF GLIDE_PACK_ALPHA
@@ -727,15 +717,13 @@
     movd      mm1, [eax+vertex]     ; get next parameter
     mov       eax, [dlp]            ; offset = *(dlp + 1)
 
-    add       dlp, 4                ; dlp++
     test      eax, eax              ; at end of offset list (offset == 0) ?
-
     jz        .__paramLoopDoneWBone3; exit, write buffer contains one DWORD
+
     movd      mm2, [eax+vertex]     ; get next parameter
+    add       dlp, 8                ; dlp += 2
 
-    mov       eax, [dlp]            ; offset = *(dlp + 1)
-    add       dlp, 4                ; dlp++
-
+    mov       eax, [dlp-4]          ; offset = *(dlp + 1)
     punpckldq mm1, mm2              ; current param | previous param
 
     WRITE_MM1_FIFO_ALIGNED          ; PCI write current param | previous param
@@ -748,7 +736,6 @@
 
 %ENDIF ; GLIDE_PACK_RGB
 
-
 .__paramLoopDoneWBone2:
 
     ;; here: "write buffer" has one DWORD left over from vertex B
@@ -756,13 +743,14 @@
     mov       vertex, [esp + _vc$]  ; Current vertex = C
     mov       dlp, dlpstrt          ; reset the dataList
 
-    movd      mm2, [vertex+X]       ; 0 | x if vertex C
+    movd      mm2, [vertex+x]       ; 0 | x if vertex C
     punpckldq mm1, mm2              ; x | old param
 
     WRITE_MM1_FIFO_ALIGNED          ; PCI write: x | old param
     add       fifo, 8               ; fifoPtr += 2*sizeof(FxU32)
 
-    movd      mm1, [vertex+Y]       ; 0 | y of vertex C
+    movd      mm1, [vertex+y]       ; 0 | y of vertex C
+    nop
 
 %IF GLIDE_PACK_RGB
 %IF GLIDE_PACK_ALPHA
@@ -849,7 +837,7 @@
     mov       eax, [dlp]            ; offset = *(dlp + 1)
 
     punpckldq mm1, mm2              ; current param | previous param
-    add       dlp, 4                ; dlp++
+    add       dlp, 8                ; dlp += 2
 
     WRITE_MM1_FIFO_ALIGNED          ; PCI write current param | previous param
     add       fifo, 8               ; fifoPtr += 2*sizeof(FxU32)
@@ -858,9 +846,7 @@
     jz        .__paramLoopDoneWBzero3; exit, "write buffer" empty
 
     movd      mm1, [eax+vertex]     ; get next parameter
-    mov       eax, [dlp]            ; offset = *(dlp + 1)
-
-    add       dlp, 4                ; dlp++
+    mov       eax, [dlp-4]          ; offset = *(dlp + 1)
 
     test      eax, eax              ; at end of offset list (offset == 0) ?
     jnz       .__paramLoop3b        ; nope, copy next parameter
@@ -884,7 +870,7 @@
     mov       [gc + fifoPtr], fifo              ; save new fifo pointer
 
     mov       edx, [gc + fifoRoom]              ; old fifo space available
-    inc       ecx                               ; _GlideRoot.stats.trisDrawn++
+    add       ecx, 1                            ; _GlideRoot.stats.trisDrawn++
 
     mov       ebp, [_GlideRoot + trisProcessed]; _GlideRoot.stats.trisProcessed
     sub       eax, ebx                          ; new fifo ptr - old fifo ptr = additional fifo space used
@@ -895,45 +881,43 @@
     mov       eax, 1h                           ; return value = triangle drawn
     mov       [gc + fifoRoom], edx              ; new fifo space available
 
-    ;; Restore trashed registers    
-
-    inc       ebp				; _GlideRoot.stats.trisProcessed++
-    pop       esi				; restore caller's register variable
-
+    add       ebp, 1				; _GlideRoot.stats.trisProcessed++
     mov       [_GlideRoot + trisProcessed], ebp	;
-    pop       ebx				; restore caller's register variable
-
-    pop       ebp				; restore frame pointer
-    pop       edi				; restore caller's register variable
 
     femms					; no more AMD3D code, clear FPU/MMX regs
 
-    ret						; return to caller
+    ;; Restore trashed registers
+    pop       ebp				; restore frame pointer
+    pop       ebx                               ; restore caller's register variable
+    pop       esi                               ; restore caller's register variable
+    pop       edi                               ; restore caller's register variable
 
+    ret						; return to caller
 
 %IF GLIDE_CULLING
 .__cullFail:
     mov       ebp, [_GlideRoot + trisProcessed]	; triangles processed so far
     xor       eax, eax				; return value = triangle not drawn
 
+    add       ebp, 1				; _GlideRoot.stats.trisProcessed++;    
+    mov       [_GlideRoot + trisProcessed], ebp
+
     femms					; no more AMD3D code, clear FPU/MMX regs
 
-    ;; Restore trashed registers    
-    inc       ebp				; _GlideRoot.stats.trisProcessed++;    
-    pop       esi
-
-    mov       [_GlideRoot + trisProcessed], ebp
-    pop       ebx
-    
+    ;; Restore trashed registers
     pop       ebp				; restore frame pointer
-    pop       edi
+    pop       ebx                               ; restore caller's register variable
+    pop       esi                               ; restore caller's register variable
+    pop       edi                               ; restore caller's register variable
 
     ret
 %ENDIF ; GLIDE_CULLING
 ;;--------------------------------------------------------------------------
 ;; end AMD3D version
 ;;--------------------------------------------------------------------------
+
 %else
+
 ;;--------------------------------------------------------------------------
 ;; start original code
 ;;--------------------------------------------------------------------------
@@ -950,7 +934,7 @@
     push    ebp
     nop
 
-    	    align 4
+	ALIGN 32
 %IF GLIDE_CULLING
 %define fa      eax       ; vtx a from caller
 %define fb      ebx       ; vtx b from caller
@@ -1014,7 +998,7 @@
 
 %ENDIF ; GLIDE_CULLING    
 
-	    align 4
+	ALIGN 32
     ;; Check to make sure that we have enough room for
     ;; the complete triangle packet.
     mov	    eax, [_GlideRoot + curTriSize]
@@ -1031,7 +1015,7 @@
     push    eax
     call    _FifoMakeRoom
 
-    add	    esp, 12
+    ;add	    esp, 12
 
     ;; Send triangle parameters
     
@@ -1043,7 +1027,7 @@
 %define packCol edi
 %define tempVal edi
 
-            align 4    
+	ALIGN 32
 .__triBegin:
     mov     fifo, [gc + fifoPtr]	; Fetch Fifo Ptr
     mov	    vOffset, 4			; Starting vertex
@@ -1054,7 +1038,7 @@
     GR_FIFO_WRITE fifo, 0, eax		; Write packet header to fifo    
     add	    fifo, 4			; Advance fifo for hdr & x/y coordinate
 
-	    align 4    
+	ALIGN 32
 .__vertexStart:
     mov	    vertex, [esp + STKOFF + vOffset]	; Current vertex
     add	    fifo, 8    
@@ -1062,11 +1046,11 @@
     nop						; Avoid p5 agi w/ load of vertex ptr
     nop
     
-    mov	    eax, [vertex + X]		        ; X
+    mov	    eax, [vertex + x]		        ; X
     lea	    dlp, [gc + tsuDataList]		; Reset the dataList
 
     GR_FIFO_WRITE fifo, -8, eax			; PCI write X
-    mov	    eax, [vertex + Y]			; Y 
+    mov	    eax, [vertex + y]			; Y 
 
     xor	    packCol, packCol			; Clear packed color
     GR_FIFO_WRITE fifo, -4, eax			; PCI write Y
@@ -1159,7 +1143,7 @@
     
     jne     .__paramLoop
 
-		align 4        
+	ALIGN 32
 .__nextVertex:	
     ;; On to the next vertex
     add	    vOffset, 4

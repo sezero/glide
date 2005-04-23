@@ -29,6 +29,8 @@
 #			capabilities are still checked at run-time to avoid
 #			crashes.
 #			default = no
+#       USE_MMX=1       allow MMX specializations.
+#                       default = no
 #	TEXUS2=1	embed Texus2 functions into Glide2.
 #			default = no
 #       FXOEM2X=1       build fxoem2x.dll
@@ -103,18 +105,7 @@ CDEFS += -DGDBG_INFO_ON -DGLIDE_DEBUG -DGLIDE_SANITY_ASSERT -DGLIDE_SANITY_SIZE
 endif
 
 override USE_FIFO = 1
-override USE_X86 = 1
-
-# cpu optimized triangle
-ifeq ($(USE_MMX),1)
-CFLAGS += -DGL_MMX
-override USE_X86 = 1
-endif
-
-ifeq ($(USE_3DNOW),1)
-CFLAGS += -DGL_AMD3D
-override USE_X86 = 1
-endif
+#override USE_X86 = 1
 
 ifeq ($(USE_X86),1)
 CDEFS += -DGLIDE_DISPATCH_SETUP=1 -DGLIDE_DISPATCH_DOWNLOAD=1
@@ -164,6 +155,17 @@ CFLAGS += -I. -I../../incsrc -I../../init
 CFLAGS += -I$(FX_GLIDE_SW)/fxmisc -I$(FX_GLIDE_SW)/newpci/pcilib -I$(FX_GLIDE_SW)/fxmemmap
 CFLAGS += -I$(FX_GLIDE_SW)/texus2/lib
 CFLAGS += $(CDEFS)
+
+# cpu optimized triangle
+ifeq ($(USE_MMX),1)
+CFLAGS += -DGL_MMX
+override USE_X86 = 1
+endif
+
+ifeq ($(USE_3DNOW),1)
+CFLAGS += -DGL_AMD3D
+override USE_X86 = 1
+endif
 
 ###############################################################################
 #	objects

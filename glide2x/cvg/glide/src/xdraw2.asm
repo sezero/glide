@@ -19,6 +19,9 @@
 ;; $Header$
 ;; $Revision$
 ;; $Log$
+;; Revision 1.1.1.1.2.3  2005/01/22 14:52:02  koolsmoky
+;; enabled packed argb for cmd packet type 3
+;;
 ;; Revision 1.1.1.1.2.2  2005/01/13 16:11:39  koolsmoky
 ;; prepare for packed rgb
 ;;
@@ -59,32 +62,31 @@
 
 %include "xos.inc"
 
+;;; Definitions of cvg regs and glide root structures.
+%include "fxgasm.h"
+
 extrn   _GlideRoot
-extrn   _FifoMakeRoom
+extrn   _FifoMakeRoom, 12
 
 %MACRO GR_FIFO_WRITE 3
     mov     [%1 + %2], %3
 %ENDMACRO ; GR_FIFO_WRITE
 
-%ifdef GL_AMD3D
-;; 3dnow!
 %MACRO WRITE_MM1_FIFO_ALIGNED 0
+  %ifdef GL_AMD3D
     movq      [fifo], mm1           ; store current param | previous param
+  %else
+    ;;
+  %endif
 %ENDMACRO ; WRITE_MM1_FIFO_ALIGNED
 
 %MACRO WRITE_MM1LOW_FIFO 0
+  %ifdef GL_AMD3D
     movd      [fifo], mm1           ; store current param | previous param
+  %else
+    ;;
+  %endif
 %ENDMACRO ; WRITE_MM1LOW_FIFO
-
-%MACRO PROC_TYPE 1
-    proc %1_3DNow, 12
-%ENDM
-%else
-;; original code
-%MACRO PROC_TYPE 1
-    proc %1, 12
-%ENDM
-%endif
 
 segment		DATA
     One         DD  1.0
@@ -94,11 +96,10 @@ segment		DATA
     bias1       DD  0
 %ENDIF
 
-;;; Definitions of cvg regs and glide root structures.
-%INCLUDE "fxgasm.h"
-
-;; enables/disables trisProcessed and trisDrawn counters
-%define STATS 1
+segment		CONST
+$T2003  DD  12288.0
+$T2005  DD  1.0
+$T2006  DD  256.0
 
 ;;; Arguments (STKOFF = 16 from 4 pushes)
 STKOFF  equ 16
@@ -113,15 +114,20 @@ _vc$    equ 12 + STKOFF
 X       equ 0
 Y       equ 4
 
-segment		CONST
-T2003  DD  12288.0      ; 12288
-T2005  DD  1.0          ; 1
-T2006  DD  256.0        ; 256
+%MACRO PROC_TYPE 1
+  %ifdef GL_AMD3D
+    proc %1_3DNow, 12
+  %else
+    proc %1, 12
+  %endif
+%ENDMACRO ; PROC_TYPE
+
+;; enables/disables trisProcessed and trisDrawn counters
+%define STATS 1
 
 segment		TEXT
 
             ALIGN 32
-
 PROC_TYPE _trisetup_cull
 
 %define GLIDE_CULLING	    1
@@ -139,8 +145,7 @@ endp
 %IF GLIDE_PACKED_RGB
 
             ALIGN 32
-
-PROC_TYPE  _trisetup_cull_rgb
+PROC_TYPE _trisetup_cull_rgb
 
 %define GLIDE_CULLING	    1
 %define GLIDE_PACK_RGB	    1
@@ -155,8 +160,7 @@ PROC_TYPE  _trisetup_cull_rgb
 endp
 
             ALIGN 32
-
-PROC_TYPE  _trisetup_cull_argb
+PROC_TYPE _trisetup_cull_argb
 
 %define GLIDE_CULLING	    1
 %define GLIDE_PACK_RGB	    1
@@ -170,10 +174,9 @@ PROC_TYPE  _trisetup_cull_argb
 
 endp
 %ENDIF ; GLIDE_PACKED_RGB
-    
-            ALIGN 32
 
-PROC_TYPE  _trisetup
+            ALIGN 32
+PROC_TYPE _trisetup
 
 %define GLIDE_CULLING	    0
 %define GLIDE_PACK_RGB	    0
@@ -187,11 +190,10 @@ PROC_TYPE  _trisetup
 
 endp
 
-%IF GLIDE_PACKED_RGB    
+%IF GLIDE_PACKED_RGB
 
             ALIGN 32
-
-PROC_TYPE  _trisetup_rgb
+PROC_TYPE _trisetup_rgb
 
 %define GLIDE_CULLING	    0
 %define GLIDE_PACK_RGB	    1
@@ -206,8 +208,7 @@ PROC_TYPE  _trisetup_rgb
 endp
 
             ALIGN 32
-
-PROC_TYPE  _trisetup_argb
+PROC_TYPE _trisetup_argb
 
 %define GLIDE_CULLING	    0
 %define GLIDE_PACK_RGB	    1
