@@ -19,6 +19,9 @@
  **
  ** $Header$
  ** $Log$
+ ** Revision 1.4.2.2  2005/01/22 14:52:01  koolsmoky
+ ** enabled packed argb for cmd packet type 3
+ **
  ** Revision 1.4.2.1  2004/12/23 20:45:56  koolsmoky
  ** converted to nasm syntax
  ** added x86 asm, 3dnow! triangle and mmx, 3dnow! texture download optimizations
@@ -642,7 +645,9 @@ all_done:                       /* come here on degenerate lines */
 /*---------------------------------------------------------------------------
  ** grDrawTriangle
  */
-
+#if !defined(GLIDE_USE_C_TRISETUP) && !defined(__WATCOMC__) && !defined(GLIDE_DEBUG)
+__declspec(naked)
+#endif
 GR_ENTRY(grDrawTriangle, void, (const GrVertex *a, const GrVertex *b, const GrVertex *c))
 {
 #define FN_NAME grDrawTriangle
@@ -687,19 +692,11 @@ all_done:
 #else
 #if defined(__MSC__)
   {
-    /* XXX [koolsmoky] fix this. for now we just call TRISETUP
-    extern struct _GlideRoot_s _GlideRoot;
-
-    _asm {
-      mov eax, [_GlideRoot + kCurGCOffset];
-      mov eax, [eax + kTriProcOffset];
+    __asm {
+      mov edx, [_GlideRoot + kCurGCOffset];
+      mov eax, [edx + kTriProcOffset];
       jmp eax;
-    }*/
-    
-    GR_BEGIN_NOFIFOCHECK("grDrawTriangle",92);
-    GR_CHECK_F(myName, !a || !b || !c, "NULL pointer passed");
-    TRISETUP(a, b, c);
-    GR_END();
+    }
   }
 #endif
 #if defined( __linux__ )
@@ -785,8 +782,7 @@ GR_ENTRY(grDrawPlanarPolygon,
     /* now all the gradients are loaded into the chip, so we just have to */
     /* draw all the rest of the triangles */
     for (i = i+1; i < nVerts - 1; i++) {
-      //_trisetup_nogradients(firstv, &vList[iList[i]], &vList[iList[i+1]]);
-      TRISETUP(firstv, &vList[iList[i]], &vList[iList[i+1]]);
+      _trisetup_nogradients(firstv, &vList[iList[i]], &vList[iList[i+1]]);
     }
   }
 all_done:
@@ -824,8 +820,7 @@ GR_ENTRY(grDrawPlanarPolygonVertexList, void, (int nVerts, const GrVertex vList[
     /* now all the gradients are loaded into the chip, so we just have to */
     /* draw all the rest of the triangles */
     for (i = i+1; i < nVerts - 1; i++) {
-      //_trisetup_nogradients(firstv, &vList[i], &vList[i+1]);
-      TRISETUP(firstv, &vList[i], &vList[i+1]);
+      _trisetup_nogradients(firstv, &vList[i], &vList[i+1]);
     }
       
 all_done:

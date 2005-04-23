@@ -106,17 +106,17 @@ main (int argc, char **argv)
         printf("\n");
 
 #if GLIDE_DISPATCH_SETUP
-        printf("#define kCurGCOffset   0x%XUL\n",
+        printf("#define kCurGCOffset   0x%lXUL\n",
                offsetof(struct _GlideRoot_s, curGC));
 
-        printf("#define kTriProcOffset 0x%XUL\n",
+        printf("#define kTriProcOffset 0x%lXUL\n",
                offsetof(struct GrGC_s, curArchProcs.triSetupProc));
 	printf("#define kTriProcOffsetClean %d\n", 
 	       offsetof(struct GrGC_s, curArchProcs.triSetupProc));
 #endif /* GLIDE_DISPATCH_SETUP */
         
         printf("/* The # of 2-byte entries in the hw fog table */\n");
-        printf("#define kInternalFogTableEntryCount 0x%XUL\n",
+        printf("#define kInternalFogTableEntryCount 0x%lXUL\n",
                sizeof(dummyRegs.fogTable) >> 1);
 
         printf("\n");
