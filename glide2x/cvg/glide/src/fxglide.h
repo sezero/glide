@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.2.2.3  2005/01/22 14:52:01  koolsmoky
+** enabled packed argb for cmd packet type 3
+**
 ** Revision 1.2.2.2  2004/12/23 20:45:56  koolsmoky
 ** converted to nasm syntax
 ** added x86 asm, 3dnow! triangle and mmx, 3dnow! texture download optimizations
@@ -1257,7 +1260,7 @@ ASSERT_FAULT_IMMED((FxU32)gc->cmdTransportInfo.fifoRoom < gc->cmdTransportInfo.f
 ASSERT_FAULT_IMMED((FxU32)gc->cmdTransportInfo.fifoPtr < (FxU32)gc->cmdTransportInfo.fifoEnd)
 #endif /* !FIFO_ASSERT_FULL */
 
-void GR_CDECL
+extern void FX_CALL
 _FifoMakeRoom(const FxI32 blockSize, const char* fName, const int fLine);
 
 #define GR_CHECK_FOR_ROOM(__n, __p) \

@@ -19,6 +19,9 @@
  **
  ** $Header$
  ** $Log$
+ ** Revision 1.1.1.1  1999/12/07 21:49:08  joseph
+ ** Initial checkin into SourceForge.
+ **
 ** 
 ** 22    3/14/98 1:07p Peter
 ** mac port happiness
@@ -512,7 +515,7 @@ const FxU32 kFifoCheckMask = 0xFFFF;
 FxU32 gFifoCheckCount = 0;
 #endif
 
-void GR_CDECL
+void FX_CALL
 _FifoMakeRoom(const FxI32 blockSize, const char* fName, const int fLine)
 {
 #define FN_NAME "_FifoMakeRoom"
