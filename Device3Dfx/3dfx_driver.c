@@ -1,27 +1,18 @@
 /*
-
-   /dev/3dfx device for 2.x kernels with MTRR settings enabled.
-
-   Compile with :
-
-   gcc -O2 -DMODULE -D__KERNEL__ -I/usr/src/linux/include -pipe
-       -fno-strength-reduce -malign-loops=2 -malign-jumps=2
-       -malign-functions=2 -c -o 3dfx.o 3dfx_driver.c
-
-   Add -D__SMP__ if you're running of an multi-processor system.
-   Add -DHAVE_MTRR if you have and want MTRR settings.
-   Add -g -Wall -Wstrict-prototypes -DDEBUG, if you are debugging.
-
-   Original by Daryll Straus.
-   Port to 2.1 kernel by Jon Taylor.
-   setmtrr_3dfx() added by Jens Axboe.
-   Combining 2.0 and 2.1/2.2 kernels into one rpm,
-     resetmtrr_3df(), and using correct pci calls for
-     2.1/2.2 kernels by Carlo Wood.
-
+ * /dev/3dfx device for 2.x kernels with MTRR settings enabled.
+ *
+ * Original by Daryll Straus.
+ * Port to 2.1 kernel by Jon Taylor.
+ * setmtrr_3dfx() added by Jens Axboe.
+ * Combining 2.0 and 2.1/2.2 kernels into one rpm,
+ *   resetmtrr_3df(), and using correct pci calls for
+ *   2.1/2.2 kernels by Carlo Wood.
+ *
  */
 
-/* Include this first as it defines things that affect the kernel headers */
+/*
+ * Include this first as it defines things that affect the kernel headers.
+ */
 #include <linux/autoconf.h>
 #include <linux/version.h>
 
@@ -32,7 +23,9 @@
 #define KERNEL_MIN_VER(a,b,c) (LINUX_VERSION_CODE >= KERNEL_VERSION(a,b,c))
 
 #if !KERNEL_MIN_VER (2, 1, 115)
-/* It might work with smaller kernels, but I never tested that */
+/*
+ * It might work with smaller kernels, but I never tested that.
+ */
 #error "Upgrade your kernel"
 #endif
 
@@ -152,8 +145,10 @@ static struct pci_card {
 #define DEBUGMSG(x)
 #endif
 
-/* This macro is for accessing vma->vm_offset or vma->vm_pgoff depending
- * on kernel version */
+/*
+ * This macro is for accessing vma->vm_offset or vma->vm_pgoff depending
+ * on kernel version.
+ */
 #if !KERNEL_MIN_VER(2, 3, 14)
 #define VM_OFFSET(vma) (vma->vm_offset)
 #else
@@ -293,7 +288,9 @@ static int mmap_3dfx(struct file *file, struct vm_area_struct *vma)
 			 VM_OFFSET(vma)));
 		return -EPERM;
 	}
-	/* This one is a special case, the macro doesn't help */
+	/*
+	 * This one is a special case, the macro doesn't help.
+	 */
 #if !KERNEL_MIN_VER(2, 3, 14)
 	if ((vma->vm_offset) & ~PAGE_MASK) {
 		DEBUGMSG(("3dfx: Map request not page aligned\n"));
@@ -492,7 +489,7 @@ static int doPIORead(pioData *desc)
 	if ((retval = verify_area(VERIFY_WRITE, desc->value, desc->size)))
 		return retval;
 
-	/* full SSTIO aperture is defined by: 
+	/* full SSTIO aperture is defined by:
 	 * unsigned short port = desc->port;
 	 * unsigned short base = cards[i].addr2 & ~1;
 	 * (base <= port && port <= (base + 0x108 - desc->size))
@@ -536,7 +533,7 @@ static int doPIOWrite(pioData *desc)
 	if ((retval = verify_area(VERIFY_READ, desc->value, desc->size)))
 		return retval;
 
-	/* full SSTIO aperture is defined by: 
+	/* full SSTIO aperture is defined by:
 	 * unsigned short port = desc->port;
 	 * unsigned short base = cards[i].addr2 & ~1;
 	 * (base <= port && port <= (base + 0x108 - desc->size))
@@ -607,7 +604,9 @@ int setmtrr_3dfx(void)
 	int i = 0, retval = -2;
 	unsigned char dlc;
 
-	/* First do a bios fixup if this system has a 82441FX chipset */
+	/*
+	 * First do a bios fixup if this system has a 82441FX chipset.
+	 */
 	struct pci_dev *dev = NULL;
 	dev = pci_find_device(PCI_VENDOR_ID_INTEL,
 			      PCI_DEVICE_ID_INTEL_82371SB_0, dev);
@@ -620,20 +619,26 @@ int setmtrr_3dfx(void)
 		}
 	}
 
-	/* Set up the mtrr's */
+	/*
+	 * Set up the mtrr's.
+	 */
 	if (numCards == 0)
 		return -EIO;
 	for (i = 0; i < numCards; i++) {
 		if ((cards[i].vendor != PCI_VENDOR_ID_3DFX) ||
 		    (cards[i].type > PCI_DEVICE_ID_3DFX_VOODOO3)) {
-			/* Used as flag in resetmtrr_3dfx() */
+			/*
+			 * Used as flag in resetmtrr_3dfx().
+			 */
 			cards[i].mtrr_buf = -1;
 			continue;
 		}
 		switch (cards[i].type) {
 		case PCI_DEVICE_ID_3DFX_VOODOO:
 		case PCI_DEVICE_ID_3DFX_VOODOO2:
-			/* Frame buffer to write combining */
+			/*
+			 * Frame buffer to write combining.
+			 */
 			retval = cards[i].mtrr_buf = mtrr_add(cards[i].addr0, 0x400000, MTRR_TYPE_WRCOMB, 1);
 			if (retval >= 0) {
 				retval = cards[i].mtrr_ctl = mtrr_add(cards[i].addr0, 0x1000, MTRR_TYPE_UNCACHABLE, 1);
@@ -644,7 +649,9 @@ int setmtrr_3dfx(void)
 			}
 			if (retval < 0) {
 				printk("3dfx: Could not set MTRR for Voodoo card\n");
-				/* Can still run */
+				/*
+				 * Can still run.
+				 */
 				return 0;
 			}
 			break;
@@ -653,18 +660,25 @@ int setmtrr_3dfx(void)
 			retval = cards[i].mtrr_buf = mtrr_add(cards[i].addr1, 0x1000000, MTRR_TYPE_WRCOMB, 1);
 			if (retval < 0) {
 				printk("3dfx: Could not set MTRR for Voodoo card\n");
-				/* Can still run */
+				/*
+				 * Can still run
+				 */
 				return 0;
 			}
 			cards[i].mtrr_ctl = -1;
 			break;
 		default:
-			/* We should never hit this */
+			/*
+			 * We should never hit this
+			 */
 		}
 	}
 	if (retval == -2) {
 		DEBUGMSG(("3dfx: Could not set MTRR for this graphics card\n"));
-		retval = 0;	/* Can still run */
+		/*
+		 * Can still run
+		 */
+		retval = 0;
 	}
 #ifdef DEBUG
 	else if (retval >= 0)

@@ -1,5 +1,10 @@
 2005-04-23  Guillem Jover  <guillem@hadrons.org>
 
+	* 3dfx_device.c: Fix comment format. Remove obsolete compiler flags
+	  info.
+
+2005-04-23  Guillem Jover  <guillem@hadrons.org>
+
 	* 3dfx_device.c: Move ChangeLog entries to ...
 	* ChangeLog: ... here.
 
