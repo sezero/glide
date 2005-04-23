@@ -671,6 +671,7 @@ int setmtrr_3dfx(void)
 			/*
 			 * We should never hit this
 			 */
+			break;
 		}
 	}
 	if (retval == -2) {

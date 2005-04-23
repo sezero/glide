@@ -1,3 +1,7 @@
+2005-04-24  Ozkan Sezer  <sezeroz@gmail.com>
+
+	* 3dfx_device.c (setmtrr_3dfx): Add missing break on default case.
+
 2005-04-23  Guillem Jover  <guillem@hadrons.org>
 
 	* 3dfx_device.c: Fix comment format. Remove obsolete compiler flags
