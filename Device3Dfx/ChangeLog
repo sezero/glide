@@ -1,3 +1,7 @@
+2005-04-23  Guillem Jover  <guillem@hadrons.org>
+
+	* 3dfx_device.c: Add GPL notice.
+
 2005-04-24  Ozkan Sezer  <sezeroz@gmail.com>
 
 	* 3dfx_device.c: Add Macronix MX86251 Voodoo Rush support.
