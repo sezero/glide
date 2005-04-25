@@ -37,7 +37,6 @@
  * macros for creating assembler offset files
  *----------------------------------------------------------------------*/
 
-#ifndef __linux__
 #define NEWLINE printf("\n")
 #define COMMENT printf(";----------------------------------------------------------------------\n")
 
@@ -56,34 +55,6 @@
 #define SIZEOF(p,pname) if (hex) \
         printf("SIZEOF_%s\tequ %08lxh\n",pname,sizeof(p)); \
     else printf("SIZEOF_%s\tequ %10ld\n",pname,sizeof(p))
-
-#else
-
-#define NEWLINE printf("\n");
-#define COMMENT printf("#----------------------------------------------------------------------\n")
-  
-#define HEADER(str)     NEWLINE; COMMENT; \
-                        printf("# Assembler offsets for %s struct\n",str);\
-                        COMMENT; NEWLINE
-
-#define OFFSET(p,o,pname) if (hex) \
-        printf("%s\t .EQU %08x\n",pname,((int)&p.o)-(int)&p); \
-    else printf("%s\t .EQU %10d\n",pname,((int)&p.o)-(int)&p)
-
-#if (GLIDE_PLATFORM & GLIDE_HW_SST96)
-#define HWOFFSET(p, o, pname) if (hex) \
-        printf("%s\t .EQU %08x\n",pname,(((int) &p.o)-(int)&p)>>2);\
-    else printf("%s\t .EQU %10d\n",pname,(((int)&p.o)-(int)&p))
-#endif /* (GLIDE_PLATFORM & GLIDE_HW_SST96) */
-
-#define OFFSET2(p,o,pname) if (hex) \
-        printf("%s\t .EQU %08x\n",pname,((int)&o)-(int)&p); \
-    else printf("%s\t .EQU %10d\n",pname,((int)&o)-(int)&p)
-
-#define SIZEOF(p,pname) if (hex) \
-        printf("SIZEOF_%s\t .EQU %08x\n",pname,sizeof(p)); \
-    else printf("SIZEOF_%s\t .EQU %10d\n",pname,sizeof(p))
-#endif
 
 int
 main (int argc, char **argv)
