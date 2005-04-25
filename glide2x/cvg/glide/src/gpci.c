@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.2.6  2005/01/22 14:52:02  koolsmoky
+** enabled packed argb for cmd packet type 3
+**
 ** Revision 1.1.1.1.2.5  2005/01/13 16:09:05  koolsmoky
 ** Restict calls to pciOpen() pciClose() when compiled with DIRECTX option. this fixes problems with the win32 miniport opened in exclusive mode.
 **
@@ -261,16 +264,16 @@ static GrTriSetupProc _triSetupProcs[][1][2] =
    ,{_trisetup_rgb, _trisetup_cull_rgb},
     {_trisetup_argb, _trisetup_cull_argb}
 #endif /* GLIDE_PACKED_RGB */
-  }
+  },
 #if GL_AMD3D
   /* 3DNow!(tm) Procs */
- ,{
+ {
     {_trisetup_3DNow, _trisetup_cull_3DNow}
 #if GLIDE_PACKED_RGB
    ,{_trisetup_rgb_3DNow, _trisetup_cull_rgb_3DNow},
     {_trisetup_argb_3DNow, _trisetup_cull_argb_3DNow}
 #endif /* GLIDE_PACKED_RGB */
-  }
+  },
 #endif /* GL_AMD3D */
 };
 #endif /* GLIDE_DISPATCH_SETUP */
@@ -306,11 +309,11 @@ static GrTexDownloadProc _texDownloadProcs[][2][4] =
       _grTexDownload_Default_16_2,
       _grTexDownload_3DNow_MMX,
       _grTexDownload_3DNow_MMX,
-    },
-  }
+    }
+  },
 #endif /* GL_AMD3D */
 #if GL_MMX
-  ,{ 
+  { 
     { 
       _grTexDownload_Default_8_1, 
       _grTexDownload_Default_8_2, 
@@ -322,8 +325,8 @@ static GrTexDownloadProc _texDownloadProcs[][2][4] =
       _grTexDownload_Default_16_2,
       _grTexDownload_MMX,
       _grTexDownload_MMX,
-    },
-  }
+    }
+  },
 #endif /* GL_MMX */
 };
 #endif /* GLIDE_DISPATCH_DOWNLOAD */
