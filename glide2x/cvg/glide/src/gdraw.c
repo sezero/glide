@@ -19,6 +19,9 @@
  **
  ** $Header$
  ** $Log$
+ ** Revision 1.4.2.3  2005/04/23 18:27:26  koolsmoky
+ ** fixed grDrawTriangle triangle dispatch code
+ **
  ** Revision 1.4.2.2  2005/01/22 14:52:01  koolsmoky
  ** enabled packed argb for cmd packet type 3
  **
@@ -645,7 +648,7 @@ all_done:                       /* come here on degenerate lines */
 /*---------------------------------------------------------------------------
  ** grDrawTriangle
  */
-#if !defined(GLIDE_USE_C_TRISETUP) && !defined(__WATCOMC__) && !defined(GLIDE_DEBUG)
+#if (GLIDE_PLATFORM & GLIDE_OS_WIN32) && !GLIDE_USE_C_TRISETUP && !defined(GLIDE_DEBUG)
 __declspec(naked)
 #endif
 GR_ENTRY(grDrawTriangle, void, (const GrVertex *a, const GrVertex *b, const GrVertex *c))
@@ -956,7 +959,7 @@ __doPolyVertexSend:
   {
     int i;
     for (i = 1; i < nVerts - 1; i++) {
-      TRISETUP(&vList[iList[0]], &vList[iList[i]], &vList[iList[i+1]]);
+      grDrawTriangle(&vList[iList[0]], &vList[iList[i]], &vList[iList[i+1]]);
     }
   }
 #endif /* !(GLIDE_HW_TRI_SETUP && GLIDE_PACKET3_TRI_SETUP) */
@@ -1076,7 +1079,7 @@ __doPolyVertexSend:
     int i;
     
     for (i = 1; i < nVerts - 1; i++) {
-      TRISETUP(&vList[0], &vList[i], &vList[i+1]);
+      grDrawTriangle(&vList[0], &vList[i], &vList[i+1]);
     }
   }
 #endif /* !(GLIDE_HW_TRI_SETUP && GLIDE_PACKET3_TRI_SETUP) */
