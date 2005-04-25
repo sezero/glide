@@ -25,7 +25,9 @@
 ** Utility routines for SST-1 Initialization code
 **
 */
+#ifdef __WIN32__
 #pragma optimize ("",off)
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -490,7 +492,7 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitResetTmus(FxU32 *sstbase)
 */
 FX_EXPORT FxBool FX_CSTYLE sst1InitResetFbi(FxU32 *sstbase)
 {
-  volatile delay;
+  volatile int delay;
 //  int i;
   FxU32 fbiInit0;
   SstRegs *sst = (SstRegs *) sstbase;
@@ -977,7 +979,7 @@ FX_EXPORT FxU32 FX_CSTYLE sst1InitMeasureSiProcess(FxU32 *sstbase, FxU32 which)
         return(FXFALSE);
 
     if(GETENV(("SSTV2_SIPROCESS_CNTR"))) {
-        SSCANF(GETENV(("SSTV2_SIPROCESS_CNTR")), "%i", &pciCntrLoad);
+        SSCANF(GETENV(("SSTV2_SIPROCESS_CNTR")), "%ld", &pciCntrLoad);
         INIT_PRINTF(("sst1InitMeasureSiProcess(): Using PCI Counter preload value of 0x%x...\n", pciCntrLoad));
     }
 
@@ -1178,4 +1180,6 @@ void sst1InitDrawRectUsingTris(FxU32 *sstbase, FxU32 x, FxU32 y, FxU32 tSize)
    ISET(sst->triangleCMD, 0xFFFFFFFF);
 }
 
+#ifdef __WIN32__
 #pragma optimize ("",on)
+#endif

@@ -25,7 +25,9 @@
 ** Initialization code for loading SST-1 gamma tables
 **
 */
+#ifdef __WIN32__
 #pragma optimize ("",off)
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -249,4 +251,6 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitGammaTable(FxU32 *sstbase, FxU32 nentries, Fx
     return(FXTRUE);
 }
 
+#ifdef __WIN32__
 #pragma optimize ("",on)
+#endif

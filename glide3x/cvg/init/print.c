@@ -24,7 +24,9 @@
 **
 ** Print functions for SST-1 Initialization routines
 */
+#ifdef __WIN32__
 #pragma optimize ("",off)
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -81,4 +83,6 @@ FX_ENTRY void FX_CALL sst1InitVPrintf(const char *format, va_list args)
 
 #endif
 
+#ifdef __WIN32__
 #pragma optimize ("",on)
+#endif

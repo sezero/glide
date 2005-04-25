@@ -25,7 +25,9 @@
 ** Initialization code for initializing scanline interleaving
 **
 */
+#ifdef __WIN32__
 #pragma optimize ("",off)
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -240,11 +242,11 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitSli(FxU32 *sstbase0, FxU32 *sstbase1)
         slavePVOutClkDel = 0;
 
         if(GETENV(("SSTV2_SLIS_VOUT_CLKDEL")))
-            SSCANF(GETENV(("SSTV2_SLIS_VOUT_CLKDEL")), "%i", &slaveVOutClkDel);
+            SSCANF(GETENV(("SSTV2_SLIS_VOUT_CLKDEL")), "%ld", &slaveVOutClkDel);
         if(GETENV(("SSTV2_SLIS_PVOUT_CLKDEL")))
-            SSCANF(GETENV(("SSTV2_SLIS_PVOUT_CLKDEL")), "%i", &slavePVOutClkDel);
+            SSCANF(GETENV(("SSTV2_SLIS_PVOUT_CLKDEL")), "%ld", &slavePVOutClkDel);
         if(GETENV(("SSTV2_SLIS_VIN_CLKDEL")))
-            SSCANF(GETENV(("SSTV2_SLIS_VIN_CLKDEL")), "%i", &slaveVInClkDel);
+            SSCANF(GETENV(("SSTV2_SLIS_VIN_CLKDEL")), "%ld", &slaveVInClkDel);
         INIT_PRINTF(("sst1InitSli(): slaveVinClkdel=0x%x, slaveVOutClkDel=0x%x, slavePVOutClkDel=0x%x\n",
             slaveVInClkDel, slaveVOutClkDel, slavePVOutClkDel));
         if(sst1CurrentBoard->fbiVideo16BPP)
@@ -389,11 +391,11 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitSli(FxU32 *sstbase0, FxU32 *sstbase1)
     masterVOutClkDel = 2;
     masterPVOutClkDel = 0;
     if(GETENV(("SSTV2_SLIM_VOUT_CLKDEL")))
-        SSCANF(GETENV(("SSTV2_SLIM_VOUT_CLKDEL")), "%i", &masterVOutClkDel);
+        SSCANF(GETENV(("SSTV2_SLIM_VOUT_CLKDEL")), "%ld", &masterVOutClkDel);
     if(GETENV(("SSTV2_SLIM_PVOUT_CLKDEL")))
-        SSCANF(GETENV(("SSTV2_SLIM_PVOUT_CLKDEL")), "%i", &masterPVOutClkDel);
+        SSCANF(GETENV(("SSTV2_SLIM_PVOUT_CLKDEL")), "%ld", &masterPVOutClkDel);
     if(GETENV(("SSTV2_SLIM_VIN_CLKDEL")))
-        SSCANF(GETENV(("SSTV2_SLIM_VIN_CLKDEL")), "%i", &masterVInClkDel);
+        SSCANF(GETENV(("SSTV2_SLIM_VIN_CLKDEL")), "%ld", &masterVInClkDel);
     INIT_PRINTF(("sst1InitSli(): masterVinClkdel=0x%x, masterVOutClkDel=0x%x, masterPVOutClkDel=0x%x\n",
         masterVInClkDel, masterVOutClkDel, masterPVOutClkDel));
     if(sst1CurrentBoard->fbiVideo16BPP)
@@ -735,4 +737,6 @@ sst1InitSliPaired(FxU32 *sstbase)
     return sliPaired;
 }
 
+#ifdef __WIN32__
 #pragma optimize ("",on)
+#endif

@@ -25,7 +25,9 @@
 ** Parsing code for grabbing information from "voodoo2.ini" initialization file
 **
 */
+#ifdef __WIN32__
 #pragma optimize ("",off)
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -95,15 +97,15 @@ FX_ENTRY FxBool FX_CALL sst1InitVoodooFile()
 
 	  if(getenv("VOODOO2_FILE")) {
 	    /* Override voodoo2.ini name */
-	    strcpy(filename, getenv("VOODOO2_FILE"));
+	    strncpy(filename, getenv("VOODOO2_FILE"), 255);
 	    if(!(file = fopen(filename, "r"))) goto __errExit;
 	  } else {
 	    /* Override path setting */
 	    if(getenv("VOODOO2_PATH"))
-	      strcpy(path, getenv("VOODOO2_PATH"));
+	      strncpy(path, getenv("VOODOO2_PATH"), 511);
 	    else if(getenv("PATH")) {
 	      strcpy(path, ".;");
-	      strcat(path, getenv("PATH"));
+	      strncat(path, getenv("PATH"), 511 - strlen (path));
 	    } else
 	      strcpy(path, ".;");
 
@@ -292,13 +294,13 @@ FX_ENTRY FxBool FX_CALL sst1InitVoodooFile() {
 
   if (getenv("VOODOO2_FILE")) {
     /* Override voodoo2.ini name */
-    strcpy(filename, getenv("VOODOO2_FILE"));
+    strncpy(filename, getenv("VOODOO2_FILE"), 255);
     if (!(file = fopen(filename, "r"))) 
       goto __errExit;
   } else {
     /* Override path setting */
     if (getenv("VOODOO2_PATH")) {
-      strcpy(path, getenv("VOODOO2_PATH"));
+      strncpy(path, getenv("VOODOO2_PATH"), 511);
     } else {
       strcpy(path, "/etc/conf.3dfx");
     }
@@ -312,11 +314,11 @@ FX_ENTRY FxBool FX_CALL sst1InitVoodooFile() {
 	if ((tmpPtr = strtok(NULL, ":")) == NULL)
 	  break;
       }
-      strcpy(filename, tmpPtr);
+      strncpy(filename, tmpPtr, 255);
       if (filename[strlen(filename)-1] == '\\')
-	sprintf(filename, "%voodoo2", filename);
+	snprintf(filename, 255, "%s/voodoo2", filename);
       else
-	sprintf(filename, "%s/voodoo2", filename);
+	snprintf(filename, 255, "%s/voodoo2", filename);
       i++;
       if ((file = fopen(filename, "r")))
 	break;
@@ -1118,4 +1120,6 @@ FX_ENTRY char* FX_CALL sst1InitGetenv(char *string)
 }
 #endif  /* INIT_DOS */
 
+#ifdef __WIN32__
 #pragma optimize ("",on)
+#endif

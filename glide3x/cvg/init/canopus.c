@@ -26,7 +26,9 @@
 **
 */
 
+#ifdef __WIN32__
 #pragma optimize ("",off)
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -178,3 +180,6 @@ sst1SetGrxClk_Canopus(FxU32* sstbase, FFLOAT grxclk)
   return(RetVal);
 }
 
+#ifdef __WIN32__
+#pragma optimize ("",on)
+#endif
