@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.2.1  2005/01/22 14:52:02  koolsmoky
+** enabled packed argb for cmd packet type 3
+**
 ** Revision 1.1.1.1  1999/12/07 21:49:11  joseph
 ** Initial checkin into SourceForge.
 **
@@ -296,9 +299,9 @@ GR_DIENTRY(guDrawTriangleWithClip, void,
       )
   {
 #ifdef GLIDE3
-    TRISETUP( (void *)a, (void *)b, (void *)c );
+    grDrawTriangle( (void *)a, (void *)b, (void *)c );
 #else
-    TRISETUP( a, b, c );
+    grDrawTriangle( a, b, c );
 #endif
     return;
   }

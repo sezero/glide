@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.2.1  2005/01/22 14:52:01  koolsmoky
+** enabled packed argb for cmd packet type 3
+**
 ** Revision 1.1.1.1  1999/12/07 21:49:09  joseph
 ** Initial checkin into SourceForge.
 **
@@ -369,19 +372,19 @@ GR_ENTRY(grAADrawPoint, void, (const GrVertex *e))
     a.a =  
       b.a =  _GlideRoot.pool.f0;
       
-    TRISETUP(&a, &b, e);    /* A B E */
+    grDrawTriangle(&a, &b, e);    /* A B E */
       
     b.x -= 2.0F;                  /* compute point D */
     b.y += 2.0F;
-    TRISETUP(&a, e, &b);    /* A E D */
+    grDrawTriangle(&a, e, &b);    /* A E D */
       
     a.x += 2.0F;                  /* compute point C */
     a.y += 2.0F;
-    TRISETUP(&b, e, &a);    /* D E C */
+    grDrawTriangle(&b, e, &a);    /* D E C */
       
     b.x += 2.0F;
     b.y -= 2.0F;
-    TRISETUP(&a, e, &b);    /* C E B */
+    grDrawTriangle(&a, e, &b);    /* C E B */
   }
 #endif /* GLIDE_HW_TRI_SETUP && GLIDE_PACKET3_TRI_SETUP */
   
@@ -905,10 +908,10 @@ GR_ENTRY(grAADrawLine, void, (const GrVertex *v1, const GrVertex *v2))
     f.y += _GlideRoot.pool.f1;
     f.a = 0.F;
 
-    TRISETUP(&a, v2, &b);
-    TRISETUP(&a, v2, v1);
-    TRISETUP(v1, &f, &e);
-    TRISETUP(v1, v2, &f);
+    grDrawTriangle(&a, v2, &b);
+    grDrawTriangle(&a, v2, v1);
+    grDrawTriangle(v1, &f, &e);
+    grDrawTriangle(v1, v2, &f);
   } else {                      /* Y major line */
     a.x += _GlideRoot.pool.f1;
     a.a = 0.F;
@@ -919,10 +922,10 @@ GR_ENTRY(grAADrawLine, void, (const GrVertex *v1, const GrVertex *v2))
     f.x -= _GlideRoot.pool.f1;
     f.a = 0.F;
 
-    TRISETUP(&a, &b, v2);
-    TRISETUP(v1, &a, v2);
-    TRISETUP(v1, &f, &e);
-    TRISETUP(v1, v2, &f);
+    grDrawTriangle(&a, &b, v2);
+    grDrawTriangle(v1, &a, v2);
+    grDrawTriangle(v1, &f, &e);
+    grDrawTriangle(v1, v2, &f);
   }
 
   gc->state.cull_mode = cullSave;

@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.2.2.1  2005/01/22 14:52:01  koolsmoky
+** enabled packed argb for cmd packet type 3
+**
 ** Revision 1.2  2000/10/03 18:28:33  mercury
 ** 003-clean_up_cvg-000, cvg tree cleanup.
 **
@@ -299,7 +302,7 @@ GR_ENTRY(guMPDrawTriangle, void, (const GrVertex *a, const GrVertex *b, const Gr
       _gumpTexCombineFunction(0);
 
       /* render first pass */
-      TRISETUP(a, b, c);
+      grDrawTriangle(a, b, c);
 
       /* second pass */
 
@@ -365,7 +368,7 @@ GR_ENTRY(guMPDrawTriangle, void, (const GrVertex *a, const GrVertex *b, const Gr
         REG_GROUP_END();
 
         /* render other pass */
-        TRISETUP(a, b, c);
+        grDrawTriangle(a, b, c);
 
         /* restore */
         REG_GROUP_BEGIN(BROADCAST_ID, fbzColorPath, regCount, regMask);
@@ -454,7 +457,7 @@ GR_ENTRY(guMPDrawTriangle, void, (const GrVertex *a, const GrVertex *b, const Gr
         REG_GROUP_END();
         
         /* render first pass */
-        TRISETUP(a, b, c);
+        grDrawTriangle(a, b, c);
         
         /* second pass */
         /* xxx may sometimes need to copy texture coordinates */
@@ -521,7 +524,7 @@ GR_ENTRY(guMPDrawTriangle, void, (const GrVertex *a, const GrVertex *b, const Gr
         REG_GROUP_END();
 
         /* render second pass */
-        TRISETUP(a, b, c);
+        grDrawTriangle(a, b, c);
         
         /* if bias, third pass */
         if (fogP) {
@@ -545,7 +548,7 @@ GR_ENTRY(guMPDrawTriangle, void, (const GrVertex *a, const GrVertex *b, const Gr
           REG_GROUP_END();
           
           /* render third pass */
-          TRISETUP(a, b, c);
+          grDrawTriangle(a, b, c);
         }
 
         REG_GROUP_BEGIN(BROADCAST_ID, fbzColorPath, regCount, regMask);
