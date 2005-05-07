@@ -458,7 +458,7 @@ GR_DIENTRY(grDrawVertexArray, void , (FxU32 mode, FxU32 Count, void *pointers) )
     else {
       while ((int)Count >= 3) {
         grDrawTriangle(*(float **)pointers, *((float **)pointers+1), *((float **)pointers+2));
-        (float *)pointers += 3;
+        pointers = (float *)pointers + 3;
         Count -= 3;
       }
     }

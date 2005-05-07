@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.1  2004/10/04 09:17:16  dborca
+** killed some warnings / compilation errors
+**
 ** Revision 1.1.1.1  1999/12/07 21:42:32  joseph
 ** Initial checkin into SourceForge.
 **
@@ -572,7 +575,7 @@ _grAADrawPoints(FxI32 mode, FxI32 count, void *pointers)
       e = pointers;
       if (mode)
         e = *(float **)e;
-      (float *)pointers += stride;
+      pointers = (float *)pointers + stride;
       
       ptX = FARRAY(e, gc->state.vData.vertexInfo.offset);
       ptY = FARRAY(e, gc->state.vData.vertexInfo.offset+4);
@@ -673,7 +676,7 @@ _grAADrawPoints(FxI32 mode, FxI32 count, void *pointers)
       if (mode)
         e = *(float **)e;
       oow = 1.0f / FARRAY(e, gc->state.vData.wInfo.offset);        
-      (float *)pointers += stride;
+      pointers = (float *)pointers + stride;
       
       ptX = FARRAY(e, gc->state.vData.vertexInfo.offset)
         *oow*gc->state.Viewport.hwidth+gc->state.Viewport.ox;
@@ -790,9 +793,9 @@ _grAADrawLineStrip(FxI32 mode, FxI32 ltype, FxI32 count, void *pointers)
         v1 = *(float **)v1;
         v2 = *(float **)v2;
       }
-      (float *)pointers += stride;
+      pointers = (float *)pointers + stride;
       if (ltype == GR_LINES)
-        (float *)pointers += stride;
+        pointers = (float *)pointers + stride;
       
       /* draw from low Y to high Y */
       if (FARRAY(v2, gc->state.vData.vertexInfo.offset+4) < FARRAY(v1, gc->state.vData.vertexInfo.offset+4)) {
@@ -966,9 +969,9 @@ _grAADrawLineStrip(FxI32 mode, FxI32 ltype, FxI32 count, void *pointers)
           v1 = *(float **)v1;
           v2 = *(float **)v2;
         }
-        (float *)pointers += stride;
+        pointers = (float *)pointers + stride;
         if (ltype == GR_LINES)
-          (float *)pointers += stride;
+          pointers = (float *)pointers + stride;
         owa = oowa = 1.0f / FARRAY(v1, gc->state.vData.wInfo.offset);
         owb = oowb = 1.0f / FARRAY(v2, gc->state.vData.wInfo.offset);
       }
@@ -980,7 +983,7 @@ _grAADrawLineStrip(FxI32 mode, FxI32 ltype, FxI32 count, void *pointers)
           v1 = *(float **)v1;
           v2 = *(float **)v2;
         }
-        (float *)pointers += stride;
+        pointers = (float *)pointers + stride;
         owb = oowb = 1.0f / FARRAY(v2, gc->state.vData.wInfo.offset);
       }
       
@@ -1304,7 +1307,7 @@ _grAADrawTriangles(FxI32 mode, FxI32 ttype, FxI32 count, void *pointers)
       b = *(float **)b;
       c = *(float **)c;
     }
-    (float *)pointers += stride*3;
+    pointers = (float *)pointers + stride*3;
 
     /* move culling test to here */
     {
@@ -1612,7 +1615,7 @@ _grAAVpDrawTriangles(FxI32 mode, FxI32 ttype, FxI32 count, void *pointers)
       b = *(float **)b;
       c = *(float **)c;
     }
-    (float *)pointers += stride*3;
+    pointers = (float *)pointers + stride*3;
     oowa = 1.0f / FARRAY(a, gc->state.vData.wInfo.offset);        
     oowb = 1.0f / FARRAY(b, gc->state.vData.wInfo.offset);        
     oowc = 1.0f / FARRAY(c, gc->state.vData.wInfo.offset);        
@@ -1777,7 +1780,7 @@ _grAADrawVertexList(FxU32 type, FxI32 mode, FxI32 count, void *pointers)
   if (type == kSetupFan) {
     v[0] = (mode == 0) ? pointers : *(float **)pointers;
     while (sCount--) {
-      (float *)pointers += stride;
+      pointers = (float *)pointers + stride;
       if (mode) {
         v[1] = *(float **)pointers;
         v[2] = *((float **)pointers+1);
@@ -1819,7 +1822,7 @@ _grAADrawVertexList(FxU32 type, FxI32 mode, FxI32 count, void *pointers)
         _grAADrawTriangles(1, type, 3, v);
       else
         _grAAVpDrawTriangles(1, type, 3, v);    
-      (float *)pointers += stride;
+      pointers = (float *)pointers + stride;
       flip = ~flip;
     }
     flip = ~flip;

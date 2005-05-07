@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.7.4.19  2004/10/05 14:54:43  dborca
+** DOS/OpenWatcom woes
+**
 ** Revision 1.7.4.18  2004/04/28 17:40:51  koolsmoky
 ** Removed registry path from GETENV.
 ** Removed FX_GLIDE_AA_PIXELCENTER, FX_GLIDE_AA_JITTERDISP, FX_GLIDE_AA_GRIDROTATION, and FX_GLIDE_FORCE_SST0.
@@ -2266,8 +2269,8 @@ _grLfbWriteRegion(FxBool pixPipelineP,
          do {
              MMX_DSTLINE2(srcData, dstData, src_width);
              /* adjust for next line */
-             ((FxU8 *)srcData) += src_stride;
-             ((FxU8 *)dstData) += info.strideInBytes;
+             srcData = (FxU32 *)((FxU8 *)srcData + src_stride);
+             dstData = (FxU32 *)((FxU8 *)dstData + info.strideInBytes);
          } while (--scanline);
          MMX_RESET();
          break;
@@ -2275,8 +2278,8 @@ _grLfbWriteRegion(FxBool pixPipelineP,
          do {
              FPU_DSTLINE2(srcData, dstData, src_width);
              /* adjust for next line */
-             ((FxU8 *)srcData) += src_stride;
-             ((FxU8 *)dstData) += info.strideInBytes;
+             srcData = (FxU32 *)((FxU8 *)srcData + src_stride);
+             dstData = (FxU32 *)((FxU8 *)dstData + info.strideInBytes);
          } while (--scanline);
          break;
 	  }
@@ -2346,8 +2349,8 @@ _grLfbWriteRegion(FxBool pixPipelineP,
          do {
              MMX_DSTLINE4(srcData, dstData, src_width);
              /* adjust for next line */
-             ((FxU8 *)srcData) += src_stride;
-             ((FxU8 *)dstData) += info.strideInBytes;
+             srcData = (FxU32 *)((FxU8 *)srcData + src_stride);
+             dstData = (FxU32 *)((FxU8 *)dstData + info.strideInBytes);
          } while (--scanline);
          MMX_RESET();
          break;
@@ -2355,8 +2358,8 @@ _grLfbWriteRegion(FxBool pixPipelineP,
 		 do {
              FPU_DSTLINE4(srcData, dstData, src_width);
              /* adjust for next line */
-             ((FxU8 *)srcData) += src_stride;
-             ((FxU8 *)dstData) += info.strideInBytes;
+             srcData = (FxU32 *)((FxU8 *)srcData + src_stride);
+             dstData = (FxU32 *)((FxU8 *)dstData + info.strideInBytes);
          } while (--scanline);
          break;
       }
@@ -2522,16 +2525,16 @@ static FxBool grLfbReadRegionOrigin (GrBuffer_t src_buffer, GrOriginLocation_t o
          do {
            MMX_SRCLINE(src, dst_data, len);
            /* adjust for next line */
-           ((FxU8 *)src) += info.strideInBytes;
-           ((FxU8 *)dst_data) += dst_stride;
+           src = (FxU32 *)((FxU8 *)src + info.strideInBytes);
+           dst_data = (FxU32 *)((FxU8 *)dst_data + dst_stride);
          } while (--src_height);
          MMX_RESET();
        } else {
          do {
            FPU_SRCLINE(src, dst_data, len);
            /* adjust for next line */
-           ((FxU8 *)src) += info.strideInBytes;
-           ((FxU8 *)dst_data) += dst_stride;
+           src = (FxU32 *)((FxU8 *)src + info.strideInBytes);
+           dst_data = (FxU32 *)((FxU8 *)dst_data + dst_stride);
          } while (--src_height);
        }
        goto okay;
@@ -2553,7 +2556,11 @@ static FxBool grLfbReadRegionOrigin (GrBuffer_t src_buffer, GrOriginLocation_t o
        while(src_height--) {
          /* adjust starting alignment */
          if (((FxU32)src)&3) {
-           *((FxU16 *)dst)++=*((FxU16 *)src)++;
+           /* Old code: *((FxU16 *)dst)++ = *((FxU16 *)src)++; */
+           FxU16 *p = (FxU16 *)dst;
+           *p = *((FxU16 *)src);
+           dst = (FxU32 *)((FxU16 *)dst + 1);
+           src = (FxU32 *)((FxU16 *)src + 1);
          }
 
          /* read in dwords of pixels */
@@ -2572,8 +2579,8 @@ static FxBool grLfbReadRegionOrigin (GrBuffer_t src_buffer, GrOriginLocation_t o
            }
          }
          /* adjust for next line */
-         ((FxU8 *)src)+=src_adjust;
-         ((FxU8 *)dst)+=dst_adjust;
+         src = (FxU32 *)((FxU8 *)src + src_adjust);
+         dst = (FxU32 *)((FxU8 *)dst + dst_adjust);
        }
      }
 #endif
@@ -2598,8 +2605,8 @@ static FxBool grLfbReadRegionOrigin (GrBuffer_t src_buffer, GrOriginLocation_t o
          }
          
          /* adjust for next line */
-         ((FxU8 *)src)+=info.strideInBytes;
-         ((FxU8 *)dst_data) += dst_stride;
+         src = (FxU32 *)((FxU8 *)src + info.strideInBytes);
+         dst_data = (FxU32 *)((FxU8 *)dst_data + dst_stride);
        }
      } else if (gc->state.forced32BPP == 15) {
        while(src_height--) {
@@ -2620,8 +2627,8 @@ static FxBool grLfbReadRegionOrigin (GrBuffer_t src_buffer, GrOriginLocation_t o
          }
          
          /* adjust for next line */
-         ((FxU8 *)src)+=info.strideInBytes;
-         ((FxU8 *)dst_data) += dst_stride;
+         src = (FxU32 *)((FxU8 *)src + info.strideInBytes);
+         dst_data = (FxU32 *)((FxU8 *)dst_data + dst_stride);
        }
      }
 

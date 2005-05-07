@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/11/24 21:44:57  joseph
+** Initial checkin for SourceForge
+**
 ** 
 ** 4     4/06/99 3:54p Dow
 ** Alt tab again.
@@ -185,7 +188,7 @@ _grDrawVertexList(FxU32 pktype, FxU32 type, FxI32 mode, FxI32 count, void *point
         vPtr = pointers;
         if (mode)
           vPtr = *(float **)vPtr;
-        (float *)pointers += stride;
+        pointers = (float *)pointers + stride;
         
         TRI_SETF(FARRAY(vPtr, 0));
         dataElem = 0;
@@ -225,7 +228,7 @@ _grDrawVertexList(FxU32 pktype, FxU32 type, FxI32 mode, FxI32 count, void *point
                  *oow*gc->state.Viewport.hwidth + gc->state.Viewport.ox);
         TRI_SETF(FARRAY(vPtr, 4)
                  *oow*gc->state.Viewport.hheight + gc->state.Viewport.oy);
-        (float *)pointers += stride;
+        pointers = (float *)pointers + stride;
 
         TRI_VP_SETFS(vPtr, oow);
       }

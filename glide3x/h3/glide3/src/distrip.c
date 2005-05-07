@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/11/24 21:44:54  joseph
+** Initial checkin for SourceForge
+**
 ** 
 ** 4     4/06/99 3:54p Dow
 ** Alt tab again.
@@ -447,7 +450,7 @@ GR_DIENTRY(grDrawVertexArray, void , (FxU32 mode, FxU32 Count, void *pointers) )
     else {
       while ((int)Count >= 3) {
         grDrawTriangle(*(float **)pointers, *((float **)pointers+1), *((float **)pointers+2));
-        (float *)pointers += 3;
+        pointers = (float *)pointers + 3;
         Count -= 3;
       }
     }

@@ -19,6 +19,9 @@
  **
  ** $Header$
  ** $Log$
+ ** Revision 1.2.6.5  2004/10/07 07:16:38  dborca
+ ** corrected grDrawTriangle on MSVC
+ **
  ** Revision 1.2.6.4  2004/10/05 14:47:15  dborca
  ** conditional compilation a bit more sane
  **
@@ -415,7 +418,7 @@ _grDrawPoints(FxI32 mode, FxI32 count, void *pointers)
         vPtr = pointers;
         if (mode) vPtr = *(float **)vPtr;
         
-        (float *)pointers += stride;
+        pointers = (float *)pointers + stride;
         
         GDBG_INFO_MORE(gc->myLevel, "(%f %f)\n",  
                        FARRAY(vPtr,gc->state.vData.vertexInfo.offset), 
@@ -505,7 +508,7 @@ _grDrawPoints(FxI32 mode, FxI32 count, void *pointers)
         if (mode)
           vPtr = *(float **)vPtr;
         oow = 1.0f / FARRAY(vPtr, gc->state.vData.wInfo.offset);        
-        (float *)pointers += stride;
+        pointers = (float *)pointers + stride;
         
         {
           FxU32 x, y;
@@ -627,9 +630,9 @@ _grDrawLineStrip(FxI32 mode, FxI32 ltype, FxI32 count, void *pointers)
           a = *(float **)a;
           b = *(float **)b;
         }
-        (float *)pointers += stride;
+        pointers = (float *)pointers + stride;
         if (ltype == GR_LINES)
-          (float *)pointers += stride;
+          pointers = (float *)pointers + stride;
         
         /*
         ** compute absolute deltas and draw from low Y to high Y
@@ -789,10 +792,10 @@ _grDrawLineStrip(FxI32 mode, FxI32 ltype, FxI32 count, void *pointers)
             a = *(float **)a;
             b = *(float **)b;
           }
-          (float *)pointers += stride;
+          pointers = (float *)pointers + stride;
           owa = oowa = 1.0f / FARRAY(a, gc->state.vData.wInfo.offset);        
           owb = oowb = 1.0f / FARRAY(b, gc->state.vData.wInfo.offset);        
-          (float *)pointers += stride;
+          pointers = (float *)pointers + stride;
         }
         else {
           owa = oowa = oowb;
@@ -802,7 +805,7 @@ _grDrawLineStrip(FxI32 mode, FxI32 ltype, FxI32 count, void *pointers)
             a = *(float **)a;
             b = *(float **)b;
           }
-          (float *)pointers += stride;
+          pointers = (float *)pointers + stride;
           owb = oowb = 1.0f / FARRAY(b, gc->state.vData.wInfo.offset);
         }
         fay = tmp1 = FARRAY(a, gc->state.vData.vertexInfo.offset+4)
@@ -950,7 +953,7 @@ _grDrawTriangles_Default(FxI32 mode, FxI32 count, void *pointers)
         vPtr = pointers;
         if (mode)
           vPtr = *(float **)vPtr;
-        (float *)pointers += stride;
+        pointers = (float *)pointers + stride;
         
         i = gc->tsuDataList[dataElem];
         
@@ -990,7 +993,7 @@ _grDrawTriangles_Default(FxI32 mode, FxI32 count, void *pointers)
                  *oow*gc->state.Viewport.hwidth + gc->state.Viewport.ox);
         TRI_SETF(FARRAY(vPtr, 4)
                  *oow*gc->state.Viewport.hheight + gc->state.Viewport.oy);
-        (float *)pointers += stride;
+        pointers = (float *)pointers + stride;
         
         TRI_VP_SETFS(vPtr,oow);
       }
