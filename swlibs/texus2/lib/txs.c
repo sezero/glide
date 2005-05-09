@@ -64,7 +64,8 @@ FxBool readTXSHeader(FILE *stream, TXSInfo *info, FxBool output_info)
   
   if ( output_info )
     {
-      printf("cookie = %s\nversion = %f\nformat = %s (%d)\nwidth = %d\nheight = %d\nmipmap_levels = %d\ndata_offset = %#010x\n\n",
+      printf("cookie = %s\nversion = %f\nformat = %s (%d)\nwidth = %d\nheight = %d\n"
+             "mipmap_levels = %d\ndata_offset = %#010x\n\n",
              cookie, info->version, Format_Name[info->format], info->format,
              info->width, info->height, info->mipmap_levels, data_offset);
       
