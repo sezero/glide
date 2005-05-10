@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.3  2004/10/08 06:30:19  dborca
+** save a round-trip with grDrawTriangle in SST1
+**
 ** Revision 1.1.2.2  2004/10/04 09:35:59  dborca
 ** second cut at Glide3x for Voodoo1/Rush (massive update):
 ** delayed validation, vertex snapping, clip coordinates, strip/fan_continue, bugfixes.
@@ -1428,7 +1431,7 @@ _grDrawPoints(FxI32 mode, FxI32 count, void *pointers)
       else
         vPtr = pointers;
     
-      (float *)pointers += stride;
+      pointers = (float *)pointers + stride;
       
 #if 0 //def GLIDE_USE_ALT_REGMAP
       hw = SST_WRAP(hw,128);                /* use alternate register mapping */
@@ -1499,7 +1502,7 @@ _grDrawPoints(FxI32 mode, FxI32 count, void *pointers)
         vPtr = pointers;
 
       oow = 1.0f / FARRAY(vPtr, gc->state.vData.wInfo.offset);        
-      (float *)pointers += stride;
+      pointers = (float *)pointers + stride;
       
 #if 0 //def GLIDE_USE_ALT_REGMAP
       hw = SST_WRAP(hw,128);                /* use alternate register mapping */
@@ -1730,9 +1733,9 @@ _grDrawLineStrip(FxI32 mode, FxI32 ltype, FxI32 count, void *pointers)
       snap_ya = (volatile float) (*(a+1) + SNAP_BIAS);
       snap_yb = (volatile float) (*(b+1) + SNAP_BIAS);
 
-      (float *)pointers += stride;
+      pointers = (float *)pointers + stride;
       if (ltype == GR_LINES)
-        (float *)pointers += stride;
+        pointers = (float *)pointers + stride;
       
 #if 0 //def GLIDE_USE_ALT_REGMAP
       hw = SST_WRAP(hw,128);                /* use alternate register mapping */
@@ -1902,7 +1905,7 @@ _grDrawLineStrip(FxI32 mode, FxI32 ltype, FxI32 count, void *pointers)
           a = *(float **)a;
           b = *(float **)b;
         }
-        (float *)pointers += stride;
+        pointers = (float *)pointers + stride;
         owa = oowa = 1.0f / FARRAY(a, gc->state.vData.wInfo.offset);        
         owb = oowb = 1.0f / FARRAY(b, gc->state.vData.wInfo.offset);        
       }
@@ -1925,7 +1928,7 @@ _grDrawLineStrip(FxI32 mode, FxI32 ltype, FxI32 count, void *pointers)
       fbx = FARRAY(b, gc->state.vData.vertexInfo.offset)
         *owb*gc->state.Viewport.hwidth+gc->state.Viewport.ox + SNAP_BIAS;
 
-      (float *)pointers += stride;
+      pointers = (float *)pointers + stride;
 #if 0 //def GLIDE_USE_ALT_REGMAP
       hw = SST_WRAP(hw,128);                /* use alternate register mapping */
 #endif
@@ -2441,7 +2444,7 @@ _grDrawTriangles(FxI32 mode, FxI32 count, void *pointers)
       vc = (float *)pointers+(stride<<1);
     }
 
-    (float *)pointers += (stride+(stride<<1));
+    pointers = (float *)pointers + (stride+(stride<<1));
       
     if (gc->state.grCoordinateSpaceArgs.coordinate_space_mode == GR_WINDOW_COORDS)
       grDrawTriangle(va, vb, vc);

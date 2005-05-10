@@ -19,6 +19,11 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.1  2004/10/04 09:35:32  dborca
+** second cut at Glide3x for Voodoo1/Rush (massive update):
+** delayed validation, vertex snapping, clip coordinates, strip/fan_continue, bugfixes.
+** and probably a bunch of other crap that I forgot
+**
 ** 
 ** 10    8/21/98 1:26p Atai
 ** fixed GR_TRIANGLES in windows coords
@@ -213,7 +218,7 @@ _grDrawVertexList(FxU32 type, FxI32 mode, FxI32 count, void *pointers)
     float *va, *vb = NULL, *vc = NULL;
     v1 = va = (mode == 0) ? pointers : *(float **)pointers;
     while (sCount > 0) {
-      (float *)pointers += stride;
+      pointers = (float *)pointers + stride;
       if (mode) {
         vb = *(float **)pointers;
         vc = *((float **)pointers+1);
@@ -267,7 +272,7 @@ _grDrawVertexList(FxU32 type, FxI32 mode, FxI32 count, void *pointers)
         grDrawTriangle(va, vb, vc);
       else
         _grVpDrawTriangle(va, vb, vc);
-      (float *)pointers += stride;
+      pointers = (float *)pointers + stride;
       flip = ~flip;
       sCount--;
     }
@@ -329,7 +334,7 @@ _grDrawVertexListContinue(FxU32 type, FxI32 mode, FxI32 count, void *pointers)
       float *v = (mode == 0) ? pointers : *(float **)pointers;
       _grStoreVertex(v, &gc->vert2.x);
       gc->vert2_status = FXTRUE;
-      (float *)pointers += stride;
+      pointers = (float *)pointers + stride;
       count--;
     }
     if (count == 0) return;
@@ -350,7 +355,7 @@ _grDrawVertexListContinue(FxU32 type, FxI32 mode, FxI32 count, void *pointers)
         vc = (float *)pointers+stride;
       }
       triproc(va, vb, vc, FXTRUE, FXFALSE, FXFALSE);
-      (float *)pointers += stride;
+      pointers = (float *)pointers + stride;
     }
     _grStoreVertex(vc, &gc->vert2.x);
   }
@@ -364,7 +369,7 @@ _grDrawVertexListContinue(FxU32 type, FxI32 mode, FxI32 count, void *pointers)
     if (!gc->vert2_status) {
       float *v = (mode == 0) ? pointers : *(float **)pointers;
       _grStoreVertex(v, &gc->vert2.x);
-      (float *)pointers += stride;
+      pointers = (float *)pointers + stride;
       count--;
       gc->vert2_status = FXTRUE;
     }
@@ -470,7 +475,7 @@ _grDrawVertexListContinue(FxU32 type, FxI32 mode, FxI32 count, void *pointers)
         grDrawTriangle(va, vb, vc);
       else
         _grVpDrawTriangle(va, vb, vc);
-      (float *)pointers += stride;
+      pointers = (float *)pointers + stride;
       flip = ~flip;
     }
     _grStoreVertex(v1, &gc->vert1.x);
@@ -522,7 +527,7 @@ _grAADrawVertexList(FxU32 type, FxI32 mode, FxI32 count, void *pointers)
   if (type == kSetupFan) {
     v[0] = (mode == 0) ? pointers : *(float **)pointers;
     while (sCount--) {
-      (float *)pointers += stride;
+      pointers = (float *)pointers + stride;
       if (mode) {
         v[1] = *(float **)pointers;
         v[2] = *((float **)pointers+1);
@@ -564,7 +569,7 @@ _grAADrawVertexList(FxU32 type, FxI32 mode, FxI32 count, void *pointers)
         grAADrawTriangle((const float *)v[0], (const float *)v[1], (const float *)v[2], FXTRUE, FXTRUE, FXTRUE);
       else
         _grAAVpDrawTriangle((const float *)v[0], (const float *)v[1], (const float *)v[2], FXTRUE, FXTRUE, FXTRUE);
-      (float *)pointers += stride;
+      pointers = (float *)pointers + stride;
       flip = ~flip;
     }
     flip = ~flip;

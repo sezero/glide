@@ -58,8 +58,6 @@
 #include <fxpci.h>
 #include <gdebug.h>
 
-static const PciRegister PCI_VENDOR_ID       = { 0x0,  2, READ_ONLY };
-static const PciRegister PCI_DEVICE_ID       = { 0x2,  2, READ_ONLY };
 
 
 /*-------------------------------------------------------------------

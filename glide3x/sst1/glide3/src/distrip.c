@@ -19,6 +19,11 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.5  2004/10/04 09:35:59  dborca
+** second cut at Glide3x for Voodoo1/Rush (massive update):
+** delayed validation, vertex snapping, clip coordinates, strip/fan_continue, bugfixes.
+** and probably a bunch of other crap that I forgot
+**
 ** Revision 1.1.2.1  2004/03/02 07:55:29  dborca
 ** Bastardised Glide3x for SST1
 **
@@ -413,7 +418,7 @@ GR_DIENTRY(grDrawVertexArray, void , (FxU32 mode, FxU32 Count, void *pointers) )
         _grAADrawTriangles(GR_VTX_PTR_ARRAY, GR_TRIANGLES, Count, pointers);
       else {
         FxU32 i;
-        for (i = 0; i < Count; i+=3, (float *)pointers +=3) 
+        for (i = 0; i < Count; i+=3, pointers = (float *)pointers + 3) 
           _grAAVpDrawTriangle(*((float **)pointers), 
                               *((float **)pointers+1),
                               *((float **)pointers+2),
@@ -502,7 +507,7 @@ GR_DIENTRY(grDrawVertexArrayContiguous, void , (FxU32 mode, FxU32 Count, void *p
         _grAADrawTriangles(GR_VTX_PTR, GR_TRIANGLES, Count, pointers);
       else {
         FxU32 i;
-        for (i = 0; i < Count; i+=3, (float *)pointers +=gc->state.vData.vStride) 
+        for (i = 0; i < Count; i+=3, pointers = (float *)pointers + gc->state.vData.vStride) 
           _grAAVpDrawTriangle((float *)pointers, 
                               (float *)((int)pointers+stride),
                               (float *)((int)pointers+(stride<<1)),

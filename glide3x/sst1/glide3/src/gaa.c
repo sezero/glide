@@ -19,6 +19,11 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.2  2004/10/04 09:35:59  dborca
+** second cut at Glide3x for Voodoo1/Rush (massive update):
+** delayed validation, vertex snapping, clip coordinates, strip/fan_continue, bugfixes.
+** and probably a bunch of other crap that I forgot
+**
 ** Revision 1.1.2.1  2004/03/02 07:55:30  dborca
 ** Bastardised Glide3x for SST1
 **
@@ -656,7 +661,7 @@ _grAADrawPoints(FxI32 mode, FxI32 count, void *pointers)
       else
         e = pointers;
       
-      (float *)pointers += stride;
+      pointers = (float *)pointers + stride;
       
       PX = (volatile float) (VX(e)+SNAP_BIAS);
       PY = (volatile float) (VY(e)+SNAP_BIAS);
@@ -760,7 +765,7 @@ _grAADrawPoints(FxI32 mode, FxI32 count, void *pointers)
         e = pointers;
       
       oow = 1.0f / FARRAY(e, gc->state.vData.wInfo.offset);
-      (float *)pointers += stride;
+      pointers = (float *)pointers + stride;
       
       PX = (volatile float) (VX(e)*oow*gc->state.Viewport.hwidth+
                              gc->state.Viewport.ox + SNAP_BIAS);
@@ -1064,9 +1069,9 @@ _grAADrawLineStrip(FxI32 mode, FxI32 ltype, FxI32 count, void *pointers)
         v1 = pointers;
         v2 = (float *)pointers + stride;
       }
-      (float *)pointers += stride;
+      pointers = (float *)pointers + stride;
       if (ltype == GR_LINES)
-      (float *)pointers += stride;
+        pointers = (float *)pointers + stride;
       
       /* draw from low Y to high Y */
       if ( VY(v2) < VY(v1) ) {
@@ -1292,9 +1297,9 @@ _grAADrawLineStrip(FxI32 mode, FxI32 ltype, FxI32 count, void *pointers)
         v1 = pointers;
         v2 = (float *)pointers + stride;
       }
-      (float *)pointers += stride;
+      pointers = (float *)pointers + stride;
       if (ltype == GR_LINES)
-        (float *)pointers += stride;
+        pointers = (float *)pointers + stride;
       
       oowa = 1.0f / FARRAY(v1, gc->state.vData.wInfo.offset);
       oowb = 1.0f / FARRAY(v2, gc->state.vData.wInfo.offset);
@@ -1883,7 +1888,7 @@ _grAADrawTriangles(FxI32 mode, FxI32 ttype, FxI32 count, void *pointers)
       b = *(float **)b;
       c = *(float **)c;
     }
-    (float *)pointers += stride*3;
+    pointers = (float *)pointers + stride*3;
 
     /* move culling test to here */
     {
