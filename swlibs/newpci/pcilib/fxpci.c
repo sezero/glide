@@ -650,8 +650,8 @@ pciFindCardMulti(FxU32 vendorID, FxU32 deviceID,
       pciGetConfigData( PCI_VENDOR_ID, deviceNumber, &vID );
       pciGetConfigData( PCI_DEVICE_ID, deviceNumber, &dID );
 
-      // Quick optimization, if there is no device or vendor ID...
-      if ((!dID) && (!dID))
+      /* Quick optimization, if there is no device or vendor ID... */
+      if ((!dID) || (!vID))
 	  continue;
 
       if (deviceID == 0xFFFF)   /* if special value */
