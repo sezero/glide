@@ -145,7 +145,7 @@ static void loadEnvFile() {
   char data[128];
   char *env, *val;
   envitem *item;
-  int first=1;
+  int is_first=1;
 
   if (envinit) return;
   envinit=1;
@@ -157,9 +157,9 @@ static void loadEnvFile() {
     if (*data=='\n') continue;
     val=strchr(data, '=');
     if (!val) {
-      if (first) {
+      if (is_first) {
 	fprintf(stderr, "In config file /etc/conf.3dfx/voodoo3:\n");
-	first=0;
+	is_first=0;
       }
       fprintf(stderr, "Malformed line: %s\n", data);
       continue;
