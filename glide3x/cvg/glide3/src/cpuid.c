@@ -61,7 +61,7 @@ typedef unsigned long word32;
  * TEST_MMXPLUS   = emms | pminsw mm0, mm0 | emms
  */
 #ifdef __GNUC__
-#define TEST_CPUID(f)    __asm __volatile ("cpuid"::"a"(f):"%ebx", "%ecx", "%edx")
+#define TEST_CPUID(f)    __asm __volatile ("pushl %%ebx; cpuid; popl %%ebx"::"a"(f):"%ecx", "%edx")
 #define TEST_SSE()       __asm __volatile (".byte 0x0f, 0x57, 0xc0")
 #define TEST_SSE2()      __asm __volatile (".byte 0x66, 0x0f, 0x57, 0xc0")
 #define TEST_3DNOW()     __asm __volatile (".byte 0x0f, 0x0e")
@@ -200,31 +200,38 @@ int _cpuid (_p_info *pinfo)
 
 #ifdef __GNUC__
  __asm("\n\
-	pushl	%%ebx			\n\
 	/* get the vendor string */	\n\
+	pushl	%%ebx			\n\
 	xorl	%%eax, %%eax		\n\
 	cpuid				\n\
-	movl	%%ebx, %3		\n\
+	movl	%%ebx, %%eax		\n\
+	popl	%%ebx			\n\
+	movl	%%eax, %3		\n\
 	movl	%%edx, %4		\n\
 	movl	%%ecx, %5		\n\
 	/* get the Standard bits */	\n\
+	pushl	%%ebx			\n\
 	movl	$1, %%eax		\n\
 	cpuid				\n\
+	popl	%%ebx			\n\
 	movl	%%eax, %1		\n\
 	movl	%%edx, %2		\n\
 	/* get AMD-specials */		\n\
+	pushl	%%ebx			\n\
 	movl	$0x80000000, %%eax	\n\
 	cpuid				\n\
+	popl	%%ebx			\n\
 	cmpl	$0x80000000, %%eax	\n\
 	jc	0f			\n\
+	pushl	%%ebx			\n\
 	movl	$0x80000001, %%eax	\n\
 	cpuid				\n\
+	popl	%%ebx			\n\
 	movl	%%edx, %0		\n\
  0:					\n\
-	popl	%%ebx			\n\
  ":"=g"(dwExt), "=g"(dwId), "=g"(dwFeature),
    "=g"(((long *)Ident)[0]), "=g"(((long *)Ident)[1]), "=g"(((long *)Ident)[2])
- ::"%eax", "%ebx", "%ecx", "%edx");
+ ::"%eax", "%ecx", "%edx");
 #else
     _asm
     {
