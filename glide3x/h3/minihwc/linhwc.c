@@ -70,7 +70,15 @@ static FxU32
 hwcBufferLfbAddr(const hwcBoardInfo *bInfo, FxU32 physAddress);
 
 static FxU32 fenceVar;
-#define P6FENCE asm("xchg %%eax, %0" : : "m" (fenceVar) : "eax");
+#ifdef __ia64__
+# define P6FENCE asm volatile ("mf.a" ::: "memory");
+#elif defined(__alpha__)
+# define P6FENCE asm volatile("mb" ::: "memory");
+#elif defined(__i386__)
+# define P6FENCE asm("xchg %%eax, %0" : : "m" (fenceVar) : "eax");
+#else
+# error "No P6FENCE asm for this architecture"
+#endif
 
 #define MAXFIFOSIZE     0x40000
 #define FIFOPAD         0x0000

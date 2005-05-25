@@ -1038,8 +1038,12 @@ modify [eax];
 #define P6FENCE __sync()
 #elif defined(__DJGPP__) || defined (__MINGW32__)
 #define P6FENCE __asm __volatile ("xchg %%eax, _fenceVar":::"%eax")
-#elif (GLIDE_PLATFORM & GLIDE_OS_UNIX)
+#elif defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
 #define P6FENCE __asm __volatile ("xchg %%eax, fenceVar":::"%eax")
+#elif defined(__GNUC__) && defined(__ia64__)
+# define P6FENCE asm volatile ("mf.a" ::: "memory");
+#elif defined(__GNUC__) && defined(__alpha__)
+# define P6FENCE asm volatile("mb" ::: "memory");
 #else
 #error "P6 Fencing in-line assembler code needs to be added for this compiler"
 #endif /* Compiler specific fence commands */

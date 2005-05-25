@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.6.8  2004/10/07 07:17:55  dborca
+** use the right Escape sequence on win32
+**
 ** Revision 1.1.1.1.6.7  2004/10/05 14:47:16  dborca
 ** conditional compilation a bit more sane
 **
@@ -606,8 +609,12 @@ modify [eax];
 #define P6FENCE __eieio()
 #elif defined(__DJGPP__)
 #define P6FENCE __asm __volatile ("xchg %%eax, _fenceVar":::"%eax");
-#elif defined(__linux__)
+#elif defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
 #define P6FENCE __asm __volatile ("xchg %%eax, fenceVar":::"%eax")
+#elif defined(__GNUC__) && defined(__ia64__)
+# define P6FENCE asm volatile ("mf.a" ::: "memory");
+#elif defined(__GNUC__) && defined(__alpha__)
+# define P6FENCE asm volatile("mb" ::: "memory");
 #else
 #error "P6 Fencing in-line assembler code needs to be added for this compiler"
 #endif /* Compiler specific fence commands */

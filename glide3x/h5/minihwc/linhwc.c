@@ -67,7 +67,13 @@ hwcCheckMemSize(hwcBoardInfo *bInfo, FxU32 xres, FxU32 yres, FxU32 nColBuffers,
 #include "lindri.h"
 
 static FxU32 fenceVar;
-#define P6FENCE asm("xchg %%eax, %0" : : "m" (fenceVar) : "eax");
+#ifdef __ia64__
+# define P6FENCE asm volatile("mf.a" ::: "memory");
+#elif defined (__alpha__)
+# define P6FENCE asm volatile("mb" ::: "memory");
+#else
+# define P6FENCE asm("xchg %%eax, %0" : : "m" (fenceVar) : "eax");
+#endif
 
 #define MAXFIFOSIZE     0x40000
 #define FIFOPAD         0x0000

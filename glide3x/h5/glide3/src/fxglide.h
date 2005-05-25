@@ -2196,11 +2196,15 @@ extern GrGCFuncs _curGCFuncs;
 #  pragma warning(default : 4035)
 #elif defined(macintosh) && defined(__POWERPC__) && defined(__MWERKS__)
 #  define P6FENCE __sync()
-#elif defined(__GNUC__) && defined(__i386__)
+#elif defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
 /*
  * This is the __linux__ code.
  */
 #define P6FENCE asm("xchg %%eax, %0" : : "m" (_GlideRoot.p6Fencer) : "eax");
+#elif defined(__GNUC__) && defined(__ia64__)
+# define P6FENCE asm volatile ("mf.a" ::: "memory");
+#elif defined(__GNUC__) && defined(__alpha__)
+# define P6FENCE asm volatile("mb" ::: "memory");
 #elif defined(__WATCOMC__)
 void 
 p6Fence(void);

@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.9  2005/05/25 08:51:49  jwrdegoede
+** Add #ifdef GL_X86 around x86 specific code
+**
 ** Revision 1.1.1.1.8.8  2004/12/23 20:24:08  koolsmoky
 ** remove old cpuid
 **
@@ -437,6 +440,13 @@ p6Fence(void);
 #define P6FENCE p6Fence()
 #elif defined(__MSC__)
 #define P6FENCE {_asm xchg eax, p6FenceVar}
+#elif defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
+#  define P6FENCE asm("xchg %%eax,%0" : /*outputs*/ : "m" (p6FenceVar) : \
+					"eax");
+#elif defined(__GNUC__) && defined(__ia64__)
+# define P6FENCE asm volatile ("mf.a" ::: "memory");
+#elif defined(__GNUC__) && defined(__alpha__)
+# define P6FENCE asm volatile("mb" ::: "memory");
 #else
 #error "P6 Fencing in-line assembler code needs to be added for this compiler"
 #endif /* Compiler specific fence commands */

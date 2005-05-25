@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.2.4.10  2005/05/25 08:51:49  jwrdegoede
+** Add #ifdef GL_X86 around x86 specific code
+**
 ** Revision 1.2.4.9  2004/10/07 07:48:50  dborca
 ** comment the GR_CDECL hack to prevent accidents
 **
@@ -1520,8 +1523,12 @@ extern GrGCFuncs _curGCFuncs;
 #  pragma warning(default : 4035)
 #elif defined(macintosh) && defined(__POWERPC__) && defined(__MWERKS__)
 #  define P6FENCE __eieio()
-#elif defined(__GNUC__) && defined(__i386__)
+#elif defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
 #define P6FENCE asm("xchg %%eax, %0" : : "m" (_GlideRoot.p6Fencer) : "eax");
+#elif defined(__GNUC__) && defined(__ia64__)
+# define P6FENCE asm volatile ("mf.a" ::: "memory");
+#elif defined(__GNUC__) && defined(__alpha__)
+# define P6FENCE asm volatile("mb" ::: "memory");
 #elif defined(__WATCOMC__)
 void 
 p6Fence(void);
