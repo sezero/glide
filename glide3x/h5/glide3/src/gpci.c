@@ -1367,6 +1367,7 @@ _GlideInitEnvironment(void)
   }
 #endif
 
+#if GL_X86
   /* Get CPU Info before we detect glide devices */
   _cpuid (&_GlideRoot.CPUType);
 
@@ -1378,6 +1379,7 @@ _GlideInitEnvironment(void)
   GDBG_INFO(80," 3DNow Support: %c\n", _GlideRoot.CPUType.os_support&_CPU_FEATURE_3DNOW ? 'Y' : 'N');
   GDBG_INFO(80,"  MMX+ Support: %c\n", _GlideRoot.CPUType.os_support&_CPU_FEATURE_MMXPLUS ? 'Y' : 'N');
   GDBG_INFO(80,"3DNow+ Support: %c\n", _GlideRoot.CPUType.os_support&_CPU_FEATURE_3DNOWPLUS ? 'Y' : 'N');
+#endif
 
   /* Check for user environment tweaks */
 #define GLIDE_GETENV(__envVar, __defVal) \
@@ -1387,6 +1389,7 @@ _GlideInitEnvironment(void)
 #define GLIDE_34GETENV(__envVar, __defVal) \
   (((signed char)(atof(((envStr = GETENV(__envVar)) == NULL) ? (__defVal) : (envStr))*16.0f)+8)&0x7f)
 
+#if GL_X86
   /* No CPU Extensions Allowed */
   if (GLIDE_GETENV("FX_GLIDE_NO_CPU_EXTENSIONS", 0L))
   {
@@ -1397,6 +1400,7 @@ _GlideInitEnvironment(void)
 #if !DRI_BUILD
   /* Pass retrieved CPU Info into minihwc */
   hwcSetCPUInfo(&_GlideRoot.CPUType);
+#endif
 #endif
   
   /* KoolSmoky - detect glide devices before we check for user 

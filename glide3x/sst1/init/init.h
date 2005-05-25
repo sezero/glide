@@ -300,8 +300,10 @@ typedef FxU32 InitSwapType_t;
 #define INIT_SWAP_BLT  0x1
 
 typedef struct _InitFIFOData {
+#if GL_X86
   FxU32
     cpuType;                    /* 5 for Pentium, 6 for Pentium Pro */
+#endif
   union {
     struct {
       FxU32 fifoFree;

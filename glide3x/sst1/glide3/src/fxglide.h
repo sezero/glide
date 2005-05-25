@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.4  2004/10/07 07:49:08  dborca
+** comment the GR_CDECL hack to prevent accidents
+**
 ** Revision 1.1.2.3  2004/10/04 09:35:59  dborca
 ** second cut at Glide3x for Voodoo1/Rush (massive update):
 ** delayed validation, vertex snapping, clip coordinates, strip/fan_continue, bugfixes.
@@ -889,9 +892,13 @@ typedef struct GrGC_s
 **  stuff near the top is accessed a lot
 */
 struct _GlideRoot_s {
+#if GL_X86
   int p6Fencer;                 /* xchg to here to keep this in cache!!! */
+#endif
   int current_sst;
+#if GL_X86
   FxU32 CPUType;
+#endif
   GrGC *curGC;                  /* point to the current GC      */
   FxI32 curTriSize;             /* the size in bytes of the current triangle */
   FxI32 curTriSizeNoGradient;   /* special for _trisetup_nogradients */
@@ -1248,6 +1255,7 @@ GWH_INC_WSH;\
 #if (GLIDE_PLATFORM & GLIDE_HW_SST1)
   #define PACKER_WORKAROUND_SIZE 4
 
+#if GL_X86
   #define PACKER_WORKAROUND \
     if (_GlideRoot.CPUType == 6) {\
       GR_P6FENCE;\
@@ -1257,6 +1265,9 @@ GWH_INC_WSH;\
     else {\
       GR_SET( *(FxU32 *)_GlideRoot.packerFixAddress, 0 ); \
     }
+#else
+  #define PACKER_WORKAROUND GR_SET(*(FxU32 *)_GlideRoot.packerFixAddress, 0);
+#endif
 
   #define PACKER_BUGCHECK(a)\
     if ( (((FxU32) a) ^ lastAddress) & SST_CHIP_MASK ) {\
@@ -1283,7 +1294,7 @@ GWH_INC_WSH;\
 /* GMT: a very useful macro for making sure that SST commands are properly
    fenced on a P6, e.g. P6FENCH_CMD( GR_SET(hw->nopCMD,1) );
 */
-#if (GLIDE_PLATFORM & GLIDE_HW_SST1)
+#if (GLIDE_PLATFORM & GLIDE_HW_SST1) && GL_X86
 #define P6FENCE_CMD( cmd ) \
     if (_GlideRoot.CPUType == 6) {     /* if it's a p6 */ \
       GR_P6FENCE;                      /* then fence off the cmd */ \
@@ -1671,6 +1682,7 @@ _grFifoFWriteDebug((FxU32) a, (float) b, (FxU32) c)
 * size thing into here, and made usages of the macro not set the expected
 * size and do the sloppy check.
 */
+#if GL_X86
 #define P6_NUDGE_OF_LOVE \
 if (_GlideRoot.CPUType == 6) {\
   int i;\
@@ -1687,7 +1699,11 @@ if (_GlideRoot.CPUType == 6) {\
   for (i = 0; i < 23; i++) GR_SET(hw->nopCMD, 0); \
   GR_CHECK_SIZE(); \
 }
+#else
+#define P6_NUDGE_OF_LOVE
+#endif
 
+#if GL_X86
 #define P6FENCEFIFO \
 if (_GlideRoot.CPUType == 6) {\
   GR_ASSERT(gc->hwDep.sst96Dep.writesSinceFence <= FENCE_AMOUNT);\
@@ -1695,6 +1711,9 @@ if (_GlideRoot.CPUType == 6) {\
     GR_P6FENCE;\
   }\
 }
+#else
+#define P6FENCEFIFO
+#endif
 
 #define SST96_STORE_FIFO(addr,val){\
   GR_ASSERT(!(((FxU32)(gc->fifoData.hwDep.vg96FIFOData.fifoPtr) & 0x7)));\

@@ -1368,6 +1368,7 @@ INITVG96ENTRY(init96EnableTransport, FxBool, ( InitFIFOData *info, InitRegisterD
   info->hwDep.vg96FIFOData.regDesc = regDesc;
 #endif /* SST96_ALT_FIFO_WRAP */
 
+#if GL_X86
   if (info->cpuType == 6) {
     /*
      **  Now, write 128 DWORDS of NULL to the FIFO, so the FIFO read
@@ -1384,6 +1385,7 @@ INITVG96ENTRY(init96EnableTransport, FxBool, ( InitFIFOData *info, InitRegisterD
     GDBG_INFO((125, "%s:  No need for write pointer advance.\n",
                FN_NAME));
   }
+#endif
 
   /*
   **  NOTE TO ALL FOOLS WHO TREAD HERE     

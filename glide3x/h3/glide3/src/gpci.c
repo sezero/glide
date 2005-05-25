@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.2.2.2  2004/10/08 06:22:10  dborca
+** use whatever swap interval user decides
+**
 ** Revision 1.2.2.1  2004/02/16 07:42:16  dborca
 ** grSetNumPendingBuffers visible with grGetProcAddress
 **
@@ -906,8 +909,10 @@ _GlideInitEnvironment(void)
   _GlideRoot.environment.gammaG = GLIDE_FGETENV("SSTH3_GGAMMA", -1.f);
   _GlideRoot.environment.gammaB = GLIDE_FGETENV("SSTH3_BGAMMA", -1.f);
 
+#ifdef GL_X86
   _GlideRoot.CPUType                       = GLIDE_GETENV("FX_CPU", _cpu_detect_asm() );    
   GDBG_INFO(0,"               cpu: 0x%x\n",_GlideRoot.CPUType);
+#endif
 
   /* Setup the basic proc tables based on the cpu type. */
   {
@@ -927,12 +932,12 @@ _GlideInitEnvironment(void)
     _GlideRoot.deviceArchProcs.nullTexProcs        = _texDownloadProcs + ARRAY_LAST(_texDownloadProcs);
 #undef ARRAY_LAST
 
+#if GL_AMD3D
     /* Check for vendor specific optimization cases */
     switch((_GlideRoot.CPUType & 0xFFFF0000UL) >> 16UL) {
     case kCPUVendorIntel:
       break;
 
-#if GL_AMD3D
     case kCPUVendorAMD:
     case kCPUVendorCyrix:
     case kCPUVendorIDT:
@@ -944,12 +949,12 @@ _GlideInitEnvironment(void)
         _GlideRoot.deviceArchProcs.curTexProcs = _texDownloadProcs + 1;
       }
       break;
-#endif /* GL_AMD3D */
 
     case kCPUVendorUnknown:
     default:
       break;
     }
+#endif /* GL_AMD3D */
   }
 #if __POWERPC__ && PCI_BUMP_N_GRIND
   _GlideRoot.environment.autoBump = FXFALSE;

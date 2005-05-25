@@ -19,6 +19,11 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.4  2004/10/04 09:35:59  dborca
+** second cut at Glide3x for Voodoo1/Rush (massive update):
+** delayed validation, vertex snapping, clip coordinates, strip/fan_continue, bugfixes.
+** and probably a bunch of other crap that I forgot
+**
 ** Revision 1.1.2.2  2004/03/08 07:42:21  dborca
 ** Voodoo Rush fixes
 **
@@ -1722,7 +1727,10 @@ GR_DDFUNC(_grRebuildDataList, void, ( void ))
   
   curTriSize = params = 0;
   i = gc->state.paramIndex;
+
+#if GL_X86
   if (_GlideRoot.CPUType == 6) packMask |= 2;
+#endif
   
   tmu0 = SST_CHIP(hw,0xE); /* tmu 0,1,2 */
   tmu1 = SST_CHIP(hw,0xC); /* tmu 1,2 */
@@ -1934,7 +1942,9 @@ GR_DDFUNC(_grRebuildDataList, void, ( void ))
   
   curTriSize = params = 0;
   i = gc->state.paramIndex;
+#if GL_X86
   if (_GlideRoot.CPUType == 6) packMask |= 2;
+#endif
 #ifdef GLIDE_USE_ALT_REGMAP
   hw = SST_WRAP(hw,128);        /* wrap 128-257 are alternate
                                    register mappings */

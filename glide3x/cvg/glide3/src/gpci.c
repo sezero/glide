@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.5  2005/01/13 15:42:51  koolsmoky
+** fixed warning typo
+**
 ** Revision 1.1.1.1.8.4  2004/12/27 20:47:11  koolsmoky
 ** added dll entry point to call grGlideShutdown when a process is detached
 **
@@ -644,6 +647,7 @@ _GlideInitEnvironment(void)
 
   /* Setup the basic proc tables based on the cpu type. */
   {
+#if GL_X86
     /* Get CPU Info */
     _cpuid (&_GlideRoot.CPUType);
 
@@ -662,9 +666,9 @@ _GlideInitEnvironment(void)
       _GlideRoot.CPUType.feature = _GlideRoot.CPUType.os_support = 0;
       GDBG_INFO(0,"CPU Extensions disabled\n");
     }
+#endif
 
     /* Default case */
-#if GLIDE_DISPATCH_SETUP || GLIDE_DISPATCH_DOWNLOAD
 #if GLIDE_DISPATCH_SETUP
     _GlideRoot.deviceArchProcs.curTriProcs        = _triSetupProcs + 0;
     _GlideRoot.deviceArchProcs.curDrawTrisProc    = _grDrawTriangles_Default;
@@ -676,11 +680,9 @@ _GlideInitEnvironment(void)
 #endif /* GLIDE_DISPATCH_DOWNLOAD */
 
     /* Check for vendor specific optimization cases */
-#ifdef GL_MMX
+#if GL_MMX && GLIDE_DISPATCH_DOWNLOAD
     if (_GlideRoot.CPUType.os_support & _CPU_FEATURE_MMX) {
-#if GLIDE_DISPATCH_DOWNLOAD
       _GlideRoot.deviceArchProcs.curTexProcs = _texDownloadProcs + 2;
-#endif /* GLIDE_DISPATCH_DOWNLOAD */
     }
 #endif /* GL_MMX */
 #ifdef GL_AMD3D
@@ -696,7 +698,6 @@ _GlideInitEnvironment(void)
 #endif /* GLIDE_DISPATCH_DOWNLOAD */
     }
 #endif /* GL_AMD3D */
-#endif /* GLIDE_DISPATCH_SETUP || GLIDE_DISPATCH_DOWNLOAD */
   }
 
   /* Check for user environment tweaks */

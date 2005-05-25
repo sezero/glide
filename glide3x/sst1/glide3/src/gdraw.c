@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.4  2005/05/10 11:27:23  jwrdegoede
+** sst1 gcc4 compile fixes
+**
 ** Revision 1.1.2.3  2004/10/08 06:30:19  dborca
 ** save a round-trip with grDrawTriangle in SST1
 **
@@ -320,7 +323,7 @@ _grVpDrawTriangle( const void *va, const void *vb, const void *vc )
     }
   }
   
-  
+#if GL_X86  
   /* Fence On P6 If Necessary */
   if ( _GlideRoot.CPUType == 6 ) {
       /* In the macro there is a slop of 4 DWORDS that I have removed */
@@ -331,6 +334,7 @@ _grVpDrawTriangle( const void *va, const void *vb, const void *vc )
       gc->hwDep.sst96Dep.writesSinceFence      += 
           _GlideRoot.curTriSize>>2;
   }
+#endif
 
   /* Wrap Fifo now if triangle is going to incur a wrap */
   if (gc->fifoData.hwDep.vg96FIFOData.fifoSize < (FxU32) _GlideRoot.curTriSize ) {

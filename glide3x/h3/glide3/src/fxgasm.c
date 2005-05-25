@@ -188,9 +188,13 @@ main (int argc, char **argv)
 #endif
 
     HEADER ("GlideRoot");
+#if GL_X86
     OFFSET (gr,p6Fencer,"p6Fencer\t");
+#endif
     OFFSET (gr,current_sst,"current_sst\t");
+#if GL_X86
     OFFSET (gr,CPUType,"CPUType\t\t");
+#endif
     OFFSET (gr,tlsOffset,"tlsOffset\t\t");    
     OFFSET (gr, pool.f255,"pool_f255");
     SIZEOF (gr.GCs[0].state,"GrState\t");

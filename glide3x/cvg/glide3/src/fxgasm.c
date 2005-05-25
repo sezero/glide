@@ -186,9 +186,13 @@ main (int argc, char **argv)
     NEWLINE;
 
     HEADER ("GlideRoot");
+#if GL_X86
     OFFSET (gr,p6Fencer,"p6Fencer\t");
+#endif
     OFFSET (gr,current_sst,"current_sst\t");
+#if GL_X86
     OFFSET (gr,CPUType,"CPUType\t\t");
+#endif
     OFFSET (gr,curGC,"curGC\t\t");
     OFFSET (gr,curTriSize,"curTriSize\t");
 

@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.7.4.20  2005/05/07 08:40:30  jwrdegoede
+** lvalue cast fixes for gcc4
+**
 ** Revision 1.7.4.19  2004/10/05 14:54:43  dborca
 ** DOS/OpenWatcom woes
 **
@@ -2265,6 +2268,7 @@ _grLfbWriteRegion(FxBool pixPipelineP,
     case GR_LFB_SRC_FMT_ZA16:
       dstData = (FxU32*)(((FxU16*)dstData) + dst_x);
 #if SET_LFB_STRAIGHT
+#if GL_X86
       if (_GlideRoot.CPUType.os_support & _CPU_FEATURE_MMX) {
          do {
              MMX_DSTLINE2(srcData, dstData, src_width);
@@ -2274,7 +2278,10 @@ _grLfbWriteRegion(FxBool pixPipelineP,
          } while (--scanline);
          MMX_RESET();
          break;
-	  } else {
+      }
+      else
+#endif
+      {
          do {
              FPU_DSTLINE2(srcData, dstData, src_width);
              /* adjust for next line */
@@ -2345,6 +2352,7 @@ _grLfbWriteRegion(FxBool pixPipelineP,
     case GR_LFBWRITEMODE_Z32:
       dstData = ((FxU32*)dstData) + dst_x;
 #if SET_LFB_STRAIGHT
+#if GL_X86
       if (_GlideRoot.CPUType.os_support & _CPU_FEATURE_MMX) {
          do {
              MMX_DSTLINE4(srcData, dstData, src_width);
@@ -2354,7 +2362,10 @@ _grLfbWriteRegion(FxBool pixPipelineP,
          } while (--scanline);
          MMX_RESET();
          break;
-	  } else {
+      }
+      else
+#endif      
+      {
 		 do {
              FPU_DSTLINE4(srcData, dstData, src_width);
              /* adjust for next line */
@@ -2521,6 +2532,7 @@ static FxBool grLfbReadRegionOrigin (GrBuffer_t src_buffer, GrOriginLocation_t o
      len = src_width * bpp;
 
      if(!gc->state.forced32BPP) {
+#if GL_X86
        if(_GlideRoot.CPUType.os_support & _CPU_FEATURE_MMX) {
          do {
            MMX_SRCLINE(src, dst_data, len);
@@ -2529,7 +2541,10 @@ static FxBool grLfbReadRegionOrigin (GrBuffer_t src_buffer, GrOriginLocation_t o
            dst_data = (FxU32 *)((FxU8 *)dst_data + dst_stride);
          } while (--src_height);
          MMX_RESET();
-       } else {
+       }
+       else
+#endif
+       {
          do {
            FPU_SRCLINE(src, dst_data, len);
            /* adjust for next line */

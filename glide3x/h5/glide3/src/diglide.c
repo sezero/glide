@@ -320,9 +320,11 @@ GR_DIENTRY(grHints, void, (GrHint_t hintType, FxU32 hints))
     gc->state.checkFifo = hints;
     break;
 
+#if GL_X86
   case GR_HINT_FPUPRECISION:
     hints ? double_precision_asm() : single_precision_asm();
     break;
+#endif
 
   case GR_HINT_ALLOW_MIPMAP_DITHER:
     /* Regardless of the game hint, force the user selection */

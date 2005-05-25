@@ -19,6 +19,11 @@
  **
  ** $Header$
  ** $Log$
+ ** Revision 1.1.2.3  2004/10/04 09:36:00  dborca
+ ** second cut at Glide3x for Voodoo1/Rush (massive update):
+ ** delayed validation, vertex snapping, clip coordinates, strip/fan_continue, bugfixes.
+ ** and probably a bunch of other crap that I forgot
+ **
  ** Revision 1.1.2.2  2004/03/08 07:42:21  dborca
  ** Voodoo Rush fixes
  **
@@ -421,8 +426,10 @@ _GlideInitEnvironment( void )
   }
 #endif
 
+#if GL_X86
   _GlideRoot.CPUType = _cpu_detect_asm();
   if (getenv("FX_CPU")) _GlideRoot.CPUType = atoi(getenv("FX_CPU"));
+#endif
 
   _GlideRoot.environment.swapInterval = -1;
   _GlideRoot.environment.swFifoLWM    = -1;
@@ -456,7 +463,9 @@ _GlideInitEnvironment( void )
   GDBG_INFO((80,"          noSplash: %d\n",_GlideRoot.environment.noSplash));
   GDBG_INFO((80,"     shamelessPlug: %d\n",_GlideRoot.environment.shamelessPlug));
   GDBG_INFO((80,"         sst2Flags: %d\n",_GlideRoot.environment.sst2Flags));
+#if GL_X86
   GDBG_INFO((80,"               cpu: %d\n",_GlideRoot.CPUType));
+#endif  
   GDBG_INFO((80,"          snapshot: %d\n",_GlideRoot.environment.snapshot));
   GDBG_INFO((80,"  disableDitherSub: %d\n",_GlideRoot.environment.disableDitherSub));  
 

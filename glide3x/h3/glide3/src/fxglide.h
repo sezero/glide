@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.2.4.9  2004/10/07 07:48:50  dborca
+** comment the GR_CDECL hack to prevent accidents
+**
 ** Revision 1.2.4.8  2004/10/07 07:16:38  dborca
 ** corrected grDrawTriangle on MSVC
 **
@@ -1394,14 +1397,18 @@ typedef struct GrGC_s
 **  stuff near the top is accessed a lot
 */
 struct _GlideRoot_s {
+#if GL_X86
   int p6Fencer;                 /* xchg to here to keep this in cache!!! */
+#endif
   FxU32
     tlsIndex,
     tlsOffset;
 
   int current_sst;
+#if GL_X86
   FxU32
     CPUType;
+#endif
   FxBool
     OSWin95;
   FxI32
@@ -2270,6 +2277,7 @@ _grErrorCallback(const char* const procName,
                  va_list           args);
 #endif
 
+#if GL_X86
 /* Returns 16:16 pair indicating the cpu's manufacturer and its
  * capabilities. Non-Intel processors should have a vendor id w/ the
  * high bit set so that it appears to be a negative #. The value of
@@ -2317,7 +2325,7 @@ single_precision_asm(void);
 
 extern void GR_CDECL 
 double_precision_asm(void);
-
+#endif
 
 /* The translation macros convert from the reasonable log2 formats to
  * the somewhat whacked sst1 lod format. The api and internal

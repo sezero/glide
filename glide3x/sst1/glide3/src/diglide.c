@@ -19,6 +19,11 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.2  2004/10/04 09:35:59  dborca
+** second cut at Glide3x for Voodoo1/Rush (massive update):
+** delayed validation, vertex snapping, clip coordinates, strip/fan_continue, bugfixes.
+** and probably a bunch of other crap that I forgot
+**
 ** Revision 1.1.2.1  2004/03/02 07:55:29  dborca
 ** Bastardised Glide3x for SST1
 **
@@ -242,8 +247,10 @@ GR_DIENTRY(grGlideGetState, void, ( void *state ))
 */
 void _grHints(GrHint_t hintType, FxU32 hints)
 {
+#if GL_X86
   extern void GR_CDECL single_precision_asm(void);
   extern void GR_CDECL double_precision_asm(void);
+#endif
   GR_BEGIN_NOFIFOCHECK("grHints",85);
   GDBG_INFO_MORE((gc->myLevel,"(%d,0x%x)\n",hintType,hints));
 
@@ -264,9 +271,11 @@ void _grHints(GrHint_t hintType, FxU32 hints)
       } else
         gc->state.checkFifo = FXFALSE;
       break;
+#if GL_X86
     case GR_HINT_FPUPRECISION:
       hints ? double_precision_asm() : single_precision_asm();
       break;
+#endif
     case GR_HINT_ALLOW_MIPMAP_DITHER:
       gc->state.allowLODdither = hints;
       break;

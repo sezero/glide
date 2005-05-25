@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.4  2004/10/05 14:47:18  dborca
+** conditional compilation a bit more sane
+**
 ** Revision 1.1.2.3  2004/10/04 09:36:00  dborca
 ** second cut at Glide3x for Voodoo1/Rush (massive update):
 ** delayed validation, vertex snapping, clip coordinates, strip/fan_continue, bugfixes.
@@ -785,7 +788,9 @@ GR_ENTRY(grSstWinOpen, GrContext_t, (FxU32                   hWnd,
   /* Set up FifoInfo with CPU Type so that init code knows if it needs
      to advance the write pointer beyond the read pointer for P6 */
 
+#if GL_X86
   fifoInfo.cpuType = _GlideRoot.CPUType;
+#endif
 
   rv = initEnableTransport( &fifoInfo );
   if ( !rv ) goto BAILOUT;

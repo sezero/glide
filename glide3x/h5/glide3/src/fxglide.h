@@ -2025,14 +2025,18 @@ typedef struct GrGC_s
 **  stuff near the top is accessed a lot
 */
 struct _GlideRoot_s {
+#if GL_X86
   int   p6Fencer;           /* xchg to here to keep this in cache!!! */
+#endif
   FxU32 tlsIndex;
   FxU32 tlsOffset;
 
   int   current_sst;
   FxI32 windowsInit;        /* Is the fullscreen part of glide initialized? */
 
+#if GL_X86
   _p_info CPUType;          /* CPUID */
+#endif
 
 #if !GLIDE_HW_TRI_SETUP || !GLIDE_PACKET3_TRI_SETUP
   FxU32 paramCount;

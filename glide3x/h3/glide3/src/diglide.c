@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/11/24 21:44:54  joseph
+** Initial checkin for SourceForge
+**
 ** 
 ** 4     4/06/99 3:54p Dow
 ** Alt tab again.
@@ -313,9 +316,11 @@ GR_DIENTRY(grHints, void, (GrHint_t hintType, FxU32 hints))
     gc->state.checkFifo = hints;
     break;
 
+#if GL_X86
   case GR_HINT_FPUPRECISION:
     hints ? double_precision_asm() : single_precision_asm();
     break;
+#endif
 
   case GR_HINT_ALLOW_MIPMAP_DITHER:
     /* Regardless of the game hint, force the user selection */

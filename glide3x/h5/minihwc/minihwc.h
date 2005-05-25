@@ -755,7 +755,9 @@ extern void hwcAAReadRegion(hwcBoardInfo *bInfo, FxU32 colBufNum,
 
 void hwcCalcSipValue(hwcBoardInfo *bInfo, FxU32 chipNum, FxU32 *nandChain, FxU32 *norChain);
 
+#if GL_X86
 void hwcSetCPUInfo (_p_info *cpuInfo);
+#endif
 
 #if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
 /* values must be in sync with fxglide.h */

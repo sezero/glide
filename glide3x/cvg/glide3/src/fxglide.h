@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.8  2004/12/23 20:24:08  koolsmoky
+** remove old cpuid
+**
 ** Revision 1.1.1.1.8.7  2004/11/25 18:56:59  koolsmoky
 ** support new cpuid
 **
@@ -1315,9 +1318,13 @@ typedef struct GrGC_s
 **  stuff near the top is accessed a lot
 */
 struct _GlideRoot_s {
+#if GL_X86
   int p6Fencer;                 /* xchg to here to keep this in cache!!! */
+#endif
   int current_sst;
+#if GL_X86
   _p_info CPUType;              /* CPUID */
+#endif
   GrGC *curGC;                  /* point to the current GC      */
   FxU32 packerFixAddress;       /* address to write packer fix to */
   FxBool    windowsInit;        /* Is the Windows part of glide initialized? */
@@ -3120,6 +3127,7 @@ _grErrorCallback(const char* const procName,
                  va_list           args);
 #endif
 
+#if GL_X86
 /* Returns 16:16 pair indicating the cpu's manufacturer and its
  * capabilities. Non-Intel processors should have a vendor id w/ the
  * high bit set so that it appears to be a negative #. The value of
@@ -3152,6 +3160,7 @@ single_precision_asm(void);
 
 extern void GR_CDECL 
 double_precision_asm(void);
+#endif
 
 #ifdef GLIDE3
 /*

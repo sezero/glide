@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.2  2005/05/10 11:27:23  jwrdegoede
+** sst1 gcc4 compile fixes
+**
 ** Revision 1.1.2.1  2004/10/04 09:35:32  dborca
 ** second cut at Glide3x for Voodoo1/Rush (massive update):
 ** delayed validation, vertex snapping, clip coordinates, strip/fan_continue, bugfixes.
@@ -933,6 +936,7 @@ GR_DDFUNC(_trisetup_mixed_datalist, FxI32, ( const void *va, const void *vb, con
     }
   }
   
+#if GL_X86
   /* Fence On P6 If Necessary */
   if ( _GlideRoot.CPUType == 6 ) {
       /* In the macro there is a slop of 4 DWORDS that I have removed */
@@ -943,6 +947,7 @@ GR_DDFUNC(_trisetup_mixed_datalist, FxI32, ( const void *va, const void *vb, con
       gc->hwDep.sst96Dep.writesSinceFence      += 
           _GlideRoot.curTriSize>>2;
   }
+#endif
 
   /* Wrap Fifo now if triangle is going to incur a wrap */
   if (gc->fifoData.hwDep.vg96FIFOData.fifoSize < (FxU32) _GlideRoot.curTriSize ) {
@@ -1275,7 +1280,7 @@ _vp_trisetup_mixed_datalist( const void *va, const void *vb, const void *vc, FxB
     }
   }
   
-  
+#if GL_X86  
   /* Fence On P6 If Necessary */
   if ( _GlideRoot.CPUType == 6 ) {
       /* In the macro there is a slop of 4 DWORDS that I have removed */
@@ -1286,6 +1291,7 @@ _vp_trisetup_mixed_datalist( const void *va, const void *vb, const void *vc, FxB
       gc->hwDep.sst96Dep.writesSinceFence      += 
           _GlideRoot.curTriSize>>2;
   }
+#endif
 
   /* Wrap Fifo now if triangle is going to incur a wrap */
   if (gc->fifoData.hwDep.vg96FIFOData.fifoSize < (FxU32) _GlideRoot.curTriSize ) {

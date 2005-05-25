@@ -980,7 +980,9 @@ static __inline int min (int x, int y)
 #define HWC_RAW_LFB_STRIDE SST_RAW_LFB_ADDR_STRIDE_8K
 
 static hwcInfo hInfo;
+#if GL_X86
 static _p_info *CPUInfo = NULL;
+#endif
 
 #if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
 static FxI32 *OSInfo = NULL;
@@ -6289,7 +6291,8 @@ static void hwcReadRegion565(hwcBoardInfo *bInfo, FxU32 src, FxU32 src_x, FxU32 
   for (y = 0; y < src_y; y++) if((y & renderMask) == compareMask) s += strideInBytes;
 
   stride_diff = strideInBytes - (src_width*2);
-  
+
+#if GL_X86  
   if (CPUInfo && (CPUInfo->os_support & _CPU_FEATURE_MMX))
     {
       /* MMX Optimized Loop */
@@ -6404,6 +6407,7 @@ static void hwcReadRegion565(hwcBoardInfo *bInfo, FxU32 src, FxU32 src_x, FxU32 
 	MMX_RESET();
     }
   else
+#endif
     {
       /* Standard Unoptimized Loop */
       for(y = src_y; y < end_y; y++)
@@ -6447,7 +6451,8 @@ static void hwcReadRegion1555(hwcBoardInfo *bInfo, FxU32 src, FxU32 src_x, FxU32
   for (y = 0; y < src_y; y++) if((y & renderMask) == compareMask) s += strideInBytes;
 
   stride_diff = strideInBytes - (src_width*2);
-  
+
+#if GL_X86  
   if (CPUInfo && (CPUInfo->os_support & _CPU_FEATURE_MMX))
     {
       /* MMX Optimized Loop */
@@ -6561,6 +6566,7 @@ static void hwcReadRegion1555(hwcBoardInfo *bInfo, FxU32 src, FxU32 src_x, FxU32
 	  MMX_RESET();
     }
   else
+#endif
     {
       /* Standard Unoptimized Loop */
       for(y = src_y; y < end_y; y++)
@@ -6605,7 +6611,8 @@ static void hwcReadRegion8888(hwcBoardInfo *bInfo, FxU32 src, FxU32 src_x, FxU32
   for (y = 0; y < src_y; y++) if((y & renderMask) == compareMask) s += strideInBytes;
 
   stride_diff = strideInBytes - (src_width*4);
-  
+
+#if GL_X86  
   if (CPUInfo && (CPUInfo->os_support & _CPU_FEATURE_MMX))
     {
       /* MMX Optimized Loop */
@@ -6673,6 +6680,7 @@ static void hwcReadRegion8888(hwcBoardInfo *bInfo, FxU32 src, FxU32 src_x, FxU32
 	MMX_RESET();
     }
   else
+#endif
     {
       /* Standard Unoptimized Loop */
       for(y = src_y; y < end_y; y++)
@@ -6948,6 +6956,7 @@ static void hwcCopyBuffer8888Flipped(hwcBoardInfo *bInfo, FxU16 *source, int w, 
   FxU8 *endline = dst+w*4;
   w*= 4;
   
+#if GL_X86
   if (CPUInfo && (CPUInfo->os_support & _CPU_FEATURE_MMX))
     {
       /* MMX Optimized Loop */
@@ -7061,6 +7070,7 @@ static void hwcCopyBuffer8888Flipped(hwcBoardInfo *bInfo, FxU16 *source, int w, 
 #endif
     }
   else
+#endif
     {
       while (dst<end)
         {
@@ -7084,6 +7094,7 @@ static void hwcCopyBuffer8888FlippedShifted(hwcBoardInfo *bInfo, FxU16 *source, 
   FxU8 *endline = dst+w*4;
   w *= 4;
   
+#if GL_X86
   if (CPUInfo && (CPUInfo->os_support & _CPU_FEATURE_MMX))
     {
       /* MMX Optimized Loop */
@@ -7201,6 +7212,7 @@ static void hwcCopyBuffer8888FlippedShifted(hwcBoardInfo *bInfo, FxU16 *source, 
 #endif
     }
   else
+#endif
     {
       while (dst<end)
         {
@@ -7233,6 +7245,7 @@ static void hwcCopyBuffer8888FlippedDithered(hwcBoardInfo *bInfo, FxU16 *source,
   val_max = (0xFF << aaShift);
   dither_mask = ~((~0) << aaShift);
   
+#if GL_X86
   if (CPUInfo && (CPUInfo->os_support & _CPU_FEATURE_MMX))
     {
       FxU32 sse_mmxplus = CPUInfo->os_support & (_CPU_FEATURE_MMXPLUS|_CPU_FEATURE_SSE);
@@ -7590,6 +7603,7 @@ static void hwcCopyBuffer8888FlippedDithered(hwcBoardInfo *bInfo, FxU16 *source,
 #endif
     }
   else
+#endif
     {
       while (dst<end)
         {
@@ -7836,7 +7850,7 @@ static void hwcCopyBuffer565Shifted(hwcBoardInfo *bInfo, FxU16 *src, int w, int 
   gshift = 3 - aaShift;
   rshift = 8 - aaShift;
 
-
+#if GL_X86
   if (CPUInfo && (CPUInfo->os_support & _CPU_FEATURE_MMX))
   {
 	  /* MMX Optimized Loop */
@@ -7947,7 +7961,7 @@ loop_begin:
   }
 
   else
-
+#endif
   while (dst<end)
     {
       while (dst<endline)
@@ -9685,11 +9699,13 @@ static  FxI32 valarray[SST_SIPROCESS_OSC_CNTR + 1];    // is this how you do an 
 
 }
 
+#if GL_X86
 void
 hwcSetCPUInfo(_p_info *cpuInfo)
 {
   CPUInfo = cpuInfo;
 } /* hwcSetCPUInfo */
+#endif
 
 #if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
 void
