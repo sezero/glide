@@ -15,9 +15,9 @@
 #    Environment variables:
 #	FX_GLIDE_HW	build for the given ASIC (sst1, sst96).
 #			default = sst1
-#	CPU		optimize for the given processor.
-#			default = 5s (Pentium, stack)
-#	DEBUG=1		disable optimizations and build for debug.
+#	OPTFLAGS	pass given optimization flags to compiler
+#			default = -ox -5s (Pentium, stack)
+#	DEBUG=1		enable debugging checks and messages
 #			default = no
 #	USE_X86=1	use assembler triangle specializations!
 #			default = no
@@ -111,20 +111,15 @@ ASFLAGS += $(CDEFS)
 
 # compiler
 CFLAGS = -wx
-
-ifdef DEBUG
-CFLAGS += -od -d2
-else
-CPU ?= 5s
-CFLAGS += -ox -$(CPU)
-endif
-
 CFLAGS += -I. -I../../incsrc -I../../init -I../../init/initvg -I../../init/init96
 CFLAGS += -I$(FX_GLIDE_SW)/fxmisc -I$(FX_GLIDE_SW)/newpci/pcilib -I$(FX_GLIDE_SW)/fxmemmap
 CFLAGS += -I$(FX_GLIDE_SW)/texus2/lib
-CFLAGS += $(CDEFS)
+OPTFLAGS ?= -ox -5s
+CFLAGS += $(CDEFS) $(OPTFLAGS)
 
-ifneq ($(USE_X86),1)
+ifeq ($(USE_X86),1)
+CFLAGS += -DGL_X86
+else
 CFLAGS += -DGLIDE_USE_C_TRISETUP
 endif
 
@@ -141,7 +136,6 @@ GLIDE_OBJECTS = \
 	diget.obj \
 	gstrip.obj \
 	distrip.obj \
-	cpuid.obj \
 	diglide.obj \
 	disst.obj \
 	ditex.obj \
@@ -161,6 +155,8 @@ GLIDE_OBJECTS = \
 	gxdraw.obj
 
 ifeq ($(USE_X86),1)
+GLIDE_OBJECTS += \
+	cpuid.o
 ifeq ($(FX_GLIDE_HW),sst1)
 GLIDE_OBJECTS += \
 	xdraw.obj

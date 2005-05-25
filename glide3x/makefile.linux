@@ -26,10 +26,10 @@
 #	H4=1		High speed Avenger/Napalm.
 #			target  = h3, h5
 #			default = no
-#	CPU		optimize for the given processor.
+#	OPTFLAGS	pass given optimization flags to compiler
 #			target  = sst1, sst96, cvg, h3, h5
-#			default = pentium
-#	DEBUG=1		disable optimizations and build for debug.
+#			default = -O2 -ffastmath (+ -mcpu=pentium if USE_X86=1)
+#	DEBUG=1		enable debugging checks and messages
 #			target  = sst1, sst96, cvg, h3, h5
 #			default = no
 #	USE_X86=1	use assembler triangle specializations; req by CVG

@@ -17,9 +17,9 @@
 #			default = h5
 #	H4=1		High speed Avenger/Napalm.
 #			default = no
-#	CPU		optimize for the given processor.
-#			default = 6 (PentiumPro)
-#	DEBUG=1		disable optimizations and build for debug.
+#	OPTFLAGS	pass given optimization flags to compiler
+#			default = -G6 -O2 (or -Od if DEBUG=1)
+#	DEBUG=1		enable debugging checks and messages
 #			default = no
 #	USE_X86=1	use assembler triangle specializations!
 #			default = no
@@ -125,19 +125,20 @@ CFLAGS  = -nologo -W3 -WX -D__MSC__=1
 
 LDLIBS = user32.lib kernel32.lib ddraw.lib gdi32.lib dxguid.lib advapi32.lib
 ifdef DEBUG
-CFLAGS += -Od -MTd -Zi
+CFLAGS += -MTd -Zi
 LDFLAGS += -debugtype:both -debug
 LDLIBS += LIBCMTD.lib
+OPTFLAGS ?= -Od
 else
-CPU ?= 6
-CFLAGS += -DNDEBUG -G$(CPU) -O2 -MT
+CFLAGS += -DNDEBUG -MT
 LDLIBS += LIBCMT.lib
+OPTFLAGS ?= -G6 -O2
 endif
 
 CFLAGS += -I. -I../../incsrc -I../../minihwc
 CFLAGS += -I$(FX_GLIDE_SW)/fxmisc -I$(FX_GLIDE_SW)/newpci/pcilib -I$(FX_GLIDE_SW)/fxmemmap
 CFLAGS += -I$(FX_GLIDE_SW)/texus2/lib
-CFLAGS += $(CDEFS)
+CFLAGS += $(CDEFS) $(OPTFLAGS)
 
 ifeq ($(USE_3DNOW),1)
 CFLAGS += -DGL_AMD3D
@@ -156,7 +157,9 @@ CFLAGS += -DGL_SSE2
 override USE_X86 = 1
 endif
 
-ifneq ($(USE_X86),1)
+ifeq ($(USE_X86),1)
+CFLAGS += -DGL_X86
+else
 CFLAGS += -DGLIDE_USE_C_TRISETUP
 endif
 
@@ -187,11 +190,11 @@ GLIDE_OBJECTS = \
 	gsst.obj \
 	gtex.obj \
 	gtexdl.obj \
-	cpuid.obj \
 	xtexdl_def.obj
 
 ifeq ($(USE_X86),1)
 GLIDE_OBJECTS += \
+	cpuid.obj \
 	xdraw2_def.obj \
 	xdraw3_def.obj
 ifeq ($(USE_3DNOW),1)

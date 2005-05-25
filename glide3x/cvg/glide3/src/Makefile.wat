@@ -15,15 +15,16 @@
 #    Environment variables:
 #	FX_GLIDE_HW	build for the given ASIC (cvg).
 #			default = cvg
-#	CPU		optimize for the given processor.
-#			default = 5s (Pentium, stack)
-#	DEBUG=1		disable optimizations and build for debug.
+#	OPTFLAGS	pass given optimization flags to compiler
+#			default = -ox -5s (Pentium, stack)
+#	DEBUG=1		enable debugging checks and messages
 #			default = no
 #	USE_X86=1	use assembler triangle specializations; req by CVG
 #			default = no
 #	USE_MMX=1	allow MMX specializations. However, the true CPU
 #			capabilities are still checked at run-time to avoid
 #			crashes.
+#			default = no
 #	USE_3DNOW=1	allow 3DNow! specializations. However, the true CPU
 #			capabilities are still checked at run-time to avoid
 #			crashes.
@@ -110,20 +111,11 @@ ASFLAGS += $(CDEFS)
 
 # compiler
 CFLAGS = -wx
-
-ifdef DEBUG
-CFLAGS += -od -d2
-else
-CPU ?= 5s
-CFLAGS += -ox -$(CPU)
-endif
-
 CFLAGS += -I. -I../../incsrc -I../../init
 CFLAGS += -I$(FX_GLIDE_SW)/fxmisc -I$(FX_GLIDE_SW)/newpci/pcilib -I$(FX_GLIDE_SW)/fxmemmap
 CFLAGS += -I$(FX_GLIDE_SW)/texus2/lib
-CFLAGS += $(CDEFS)
-
-override USE_X86 = 1
+OPTFLAGS ?= -ox -5s
+CFLAGS += $(CDEFS) $(OPTFLAGS)
 
 ifeq ($(USE_MMX),1)
 CFLAGS += -DGL_MMX
@@ -135,7 +127,9 @@ CFLAGS += -DGL_AMD3D
 override USE_X86 = 1
 endif
 
-ifneq ($(USE_X86),1)
+ifeq ($(USE_X86),1)
+CFLAGS += -DGL_X86
+else
 CFLAGS += -DGLIDE_USE_C_TRISETUP
 endif
 
@@ -169,11 +163,11 @@ GLIDE_OBJECTS = \
 	gsst.obj \
 	gtex.obj \
 	gtexdl.obj \
-	cpuid.obj \
 	xtexdl_d.obj
 
 ifeq ($(USE_X86),1)
 GLIDE_OBJECTS += \
+	cpuid.obj \
 	xdraw2_d.obj \
 	xdraw3_d.obj
 ifeq ($(USE_MMX),1)
