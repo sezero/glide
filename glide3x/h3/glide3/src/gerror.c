@@ -20,6 +20,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.2.6.5  2003/11/08 08:39:15  guillemj
+** Unify multi-arch implementation of _grErrorDefaultCallback() function.
+**
 ** Revision 1.2.6.4  2003/11/04 12:53:38  dborca
 ** Removed balanced #endif.
 **
@@ -272,7 +275,7 @@ _grAssert(char *exp, char *fileName, int lineNo)
     
     gdbg_printf("Command Fifo:\n");
     gdbg_printf("\tSoftware:\n");
-    gdbg_printf("\t\tfifoPtr:           0x%X\n", (FxU32)gc->cmdTransportInfo.fifoPtr - (FxU32) gc->rawLfb);
+    gdbg_printf("\t\tfifoPtr:           0x%X\n", (unsigned long)gc->cmdTransportInfo.fifoPtr - (unsigned long) gc->rawLfb);
     gdbg_printf("\t\tfifoOffset:        0x%X\n", gc->cmdTransportInfo.fifoOffset); 
     gdbg_printf("\t\tfifoEnd:           0x%X\n", gc->cmdTransportInfo.fifoEnd - gc->rawLfb);
     gdbg_printf("\t\tfifoSize:          0x%X\n", gc->cmdTransportInfo.fifoSize); 
@@ -282,7 +285,7 @@ _grAssert(char *exp, char *fileName, int lineNo)
 
     if ( !gc->windowed ) {
       gdbg_printf("\tHardware:\n");
-      gdbg_printf("\t\treadPtrL:          0x%X\n", HW_FIFO_PTR(FXTRUE) - (FxU32)gc->rawLfb);
+      gdbg_printf("\t\treadPtrL:          0x%X\n", HW_FIFO_PTR(FXTRUE) - (unsigned long)gc->rawLfb);
       gdbg_printf("\t\tdepth:             0x%X\n", GR_CAGP_GET(depth));
       gdbg_printf("\t\tholeCount:         0x%X\n", GR_CAGP_GET(holeCount));
       gdbg_printf("\t\tbaseAddrL:         0x%X\n", GR_CAGP_GET(baseAddrL));

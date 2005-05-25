@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.2.2.3  2005/05/25 08:51:50  jwrdegoede
+** Add #ifdef GL_X86 around x86 specific code
+**
 ** Revision 1.2.2.2  2004/10/08 06:22:10  dborca
 ** use whatever swap interval user decides
 **
@@ -427,14 +430,14 @@ static GrTriSetupProc _triSetupProcs[][2][2][2] =
   {
     /* Window coords */
     {
-      { _trisetup_null, _trisetup_null },
-      { _trisetup_null, _trisetup_null },
+      { (GrTriSetupProc) _trisetup_null, (GrTriSetupProc) _trisetup_null },
+      { (GrTriSetupProc) _trisetup_null, (GrTriSetupProc) _trisetup_null },
     },
 
     /* Clip coordinates */
     {
-      { _trisetup_null, _trisetup_null },
-      { _trisetup_null, _trisetup_null },
+      { (GrTriSetupProc) _trisetup_null, (GrTriSetupProc) _trisetup_null },
+      { (GrTriSetupProc) _trisetup_null, (GrTriSetupProc) _trisetup_null },
     },
   },
 };
@@ -1037,7 +1040,7 @@ DllMain(HANDLE hInst, ULONG  ul_reason_for_call, LPVOID lpReserved)
       GR_DCL_GC;
 
       /* If there is no current gc in tls then set the current context. */
-      if (gc == NULL) setThreadValue((FxU32)&_GlideRoot.GCs[_GlideRoot.current_sst]);
+      if (gc == NULL) setThreadValue((unsigned long)&_GlideRoot.GCs[_GlideRoot.current_sst]);
     }
     break;
   case DLL_THREAD_DETACH:

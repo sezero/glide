@@ -74,13 +74,13 @@ typedef struct {
 
   /* Platform device address management */
   FxBool (*addrMap)(FxU32 busNumber, FxU32 physAddr,
-                    FxU32* linearAddr, FxU32* length);
-  FxBool (*addrUnmap)(FxU32 linearAddr, FxU32 length);
+                    unsigned long* linearAddr, FxU32* length);
+  FxBool (*addrUnmap)(unsigned long linearAddr, FxU32 length);
 
   /* Optional things that a platform may or maynot support and clients
    * should not rely on the call to suceed.  
    */
-  FxBool (*addrSetPermission)(const FxU32 addrBase, const FxU32 addrLen,
+  FxBool (*addrSetPermission)(const unsigned long addrBase, const FxU32 addrLen,
                               const FxBool writePermP);
 
   FxBool (*msrGet)(MSRInfo* in, MSRInfo* out);

@@ -199,9 +199,8 @@ typedef struct hwcExtLinearAddrReq_s {
 
 /* Returned from HWCEXT_GETLINEARADDR */
 typedef struct hwcExtLinearAddrRes_s {
-  FxU32
-    numBaseAddrs,               /* # base addresses */
-    baseAddresses[HWCEXT_MAX_BASEADDR]; /* linear Addresses  */
+  FxU32 numBaseAddrs;               /* # base addresses */
+  unsigned long baseAddresses[HWCEXT_MAX_BASEADDR]; /* linear Addresses  */
 } hwcExtLinearAddrRes_t;
 
 /*

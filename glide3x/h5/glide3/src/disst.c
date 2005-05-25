@@ -209,7 +209,7 @@ GR_DIENTRY(grSstSelect, void, ( int which ))
   
   /* Attach a full screen context to the TLS slot */
   _GlideRoot.current_sst = which;
-  setThreadValue( (FxU32)&_GlideRoot.GCs[_GlideRoot.current_sst] );
+  setThreadValue( (unsigned long)&_GlideRoot.GCs[_GlideRoot.current_sst] );
   
 #ifdef GLIDE_MULTIPLATFORM
   _GlideRoot.curGCFuncs = _GlideRoot.curGC->gcFuncs;

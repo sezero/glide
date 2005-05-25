@@ -63,13 +63,13 @@ initThreadStorage( void )
 
 } /* initThreadStorage */
 
-void setThreadValue( FxU32 value ) {
+void setThreadValue( unsigned long value ) {
     GR_CHECK_F( "setThreadValue", !threadInit, "Thread storage not initialized\n" );
     TlsSetValue( _GlideRoot.tlsIndex, (void*)value );
 }
 
 #pragma warning (4:4035)        /* No return value */
-FxU32 getThreadValueSLOW( void ) {
+unsigned long getThreadValueSLOW( void ) {
     GR_CHECK_F( "getThreadValue", !threadInit, "Thread storage not initialized\n" );
 
 #if 0
@@ -122,7 +122,7 @@ void initThreadStorage(void)
 {
 }
 
-void setThreadValue( FxU32 value )
+void setThreadValue( unsigned long value )
 {
 	_threadValueMacOS = value;
 }
@@ -157,18 +157,18 @@ void endCriticalSection(void)
 #include "fxglide.h"
 #include "fxcmd.h"
 
-FxU32 threadValueLinux;
+unsigned long threadValueLinux;
 
 void initThreadStorage(void)
 {
 }
 
-void setThreadValue( FxU32 value )
+void setThreadValue( unsigned long value )
 {
 	threadValueLinux = value;
 }
 
-FxU32 getThreadValueSLOW( void )
+unsigned long getThreadValueSLOW( void )
 {
 	return threadValueLinux;
 }

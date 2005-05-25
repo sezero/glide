@@ -3017,8 +3017,8 @@ GR_ENTRY(grDRIBufferSwap, void, (FxU32 swapInterval))
     for ( i = 0; i < MAX_BUFF_PENDING && j == -1; i++) {
       if (gc->bufferSwaps[i] == 0xffffffff) {
         gc->bufferSwaps[i] =
-          (FxU32) gc->cmdTransportInfo.fifoPtr -
-          (FxU32) gc->cmdTransportInfo.fifoStart; 
+          (unsigned long) gc->cmdTransportInfo.fifoPtr -
+          (unsigned long) gc->cmdTransportInfo.fifoStart; 
         j = i;
       }
     }
@@ -3061,7 +3061,7 @@ GR_ENTRY(grDRIBufferSwap, void, (FxU32 swapInterval))
       REG_GROUP_SET_WAX(hw, srcXY, x | ((driInfo.y+(y-driInfo.y))<<16));
       REG_GROUP_SET_WAX(hw, dstSize, (w&0x1FFF)|((h&0x1FFF)<<16));
       REG_GROUP_SET_WAX(hw, dstXY, (x&0x1FFF) | ((y&0x1FFF)<<16));
-      REG_GROUP_SET_WAX(hw, command, (0xCC<<24) | 0x1 | BIT(8));
+      REG_GROUP_SET_WAX(hw, command, (0xCCu<<24) | 0x1 | BIT(8));
       REG_GROUP_END();
     } while (cnt);
 
@@ -4153,7 +4153,7 @@ GR_ENTRY(grGlideShutdown, void, (void))
            * continuing so that any internal glide calls have a valid
            * gc from tls via GR_DCL_GC. F*ck this up at your own peril.
            */
-          setThreadValue((FxU32)gc);
+          setThreadValue((unsigned long)gc);
 #if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
           /* Flush any remaining commands and cleanup any per gc state */
           grSurfaceReleaseContext((GrContext_t)gc);

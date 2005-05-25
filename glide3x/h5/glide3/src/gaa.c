@@ -388,8 +388,8 @@ aaVpDrawArrayEdgeSense(float *a, float *b, float *c, float oowa, float oowb)
   }
   else {
     ia = gc->state.vData.pargbInfo.offset;
-    *((FxU32 *)&v1a)=*((FxU32 *)((int)a + ia))&0x00ffffff;
-    *((FxU32 *)&v2a)=*((FxU32 *)((int)b + ia))&0x00ffffff;
+    *((FxU32 *)&v1a)=*((FxU32 *)((long)a + ia))&0x00ffffff;
+    *((FxU32 *)&v2a)=*((FxU32 *)((long)b + ia))&0x00ffffff;
   }
 
   {
@@ -692,7 +692,7 @@ _grAADrawPoints(FxI32 mode, FxI32 count, void *pointers)
               FxU32 argb;
               
               if (i == ia) {
-                argb = *((FxU32 *)((int)e + i)) & 0x00ffffff;
+                argb = *((FxU32 *)((long)e + i)) & 0x00ffffff;
                 TRI_SETF(*((float *)&argb));
               }
               else {
@@ -871,8 +871,8 @@ _grAADrawLineStrip(FxI32 mode, FxI32 ltype, FxI32 count, void *pointers)
         ady = -ady;
       
       if (gc->state.vData.colorType != GR_FLOAT) {
-        *((FxU32 *)&v1a)=*((FxU32 *)((int)v1 + ia))&0x00ffffff;
-        *((FxU32 *)&v2a)=*((FxU32 *)((int)v2 + ia))&0x00ffffff;
+        *((FxU32 *)&v1a)=*((FxU32 *)((long)v1 + ia))&0x00ffffff;
+        *((FxU32 *)&v2a)=*((FxU32 *)((long)v2 + ia))&0x00ffffff;
       }
       
       if (adx >= ady) {           /* X major line */
@@ -1272,8 +1272,8 @@ aaDrawArrayEdgeSense(float *a, float *b, float *c)
   }
   else {
     ia = gc->state.vData.pargbInfo.offset;
-    *((FxU32 *)&v1a)=*((FxU32 *)((int)a + ia))&0x00ffffff;
-    *((FxU32 *)&v2a)=*((FxU32 *)((int)b + ia))&0x00ffffff;
+    *((FxU32 *)&v1a)=*((FxU32 *)((long)a + ia))&0x00ffffff;
+    *((FxU32 *)&v2a)=*((FxU32 *)((long)b + ia))&0x00ffffff;
   }
 
   {

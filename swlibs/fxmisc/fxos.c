@@ -99,7 +99,7 @@ FILE *fxFopenPath(const char *filename, const char *mode, const char *path, cons
 
     // first try and open up the file in the current directory
     if (pprefix) *pprefix = NULL;
-    if ((file = fopen(filename,mode)))
+    if ((file = fopen(filename,mode)) != NULL)
         return file;
     if (path == NULL)
         return NULL;
@@ -116,7 +116,7 @@ FILE *fxFopenPath(const char *filename, const char *mode, const char *path, cons
         strcat(nameWithPath,"/");               // add directory separator
         strcat(nameWithPath,filename);          // add filename
         if (pprefix) *pprefix = path;           // save the prefix
-        if ((file = fopen(nameWithPath,mode)))
+        if ((file = fopen(nameWithPath,mode)) != NULL)
             return file;
         path = psemi;                           // advance to next path element
         if (path)

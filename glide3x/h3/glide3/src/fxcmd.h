@@ -21,6 +21,9 @@
 ** $Revision$ 
 ** $Date$ 
 ** $Log$
+** Revision 1.1.1.1.6.1  2003/06/29 18:43:27  guillemj
+** Fix compilation warnings.
+**
 ** Revision 1.1.1.1  1999/11/24 21:44:55  joseph
 ** Initial checkin for SourceForge
 **
@@ -182,7 +185,7 @@ do { \
 /* NB: This should be used sparingly because it does a 'real' hw read
  * which is *SLOW*.
  */
-FxU32 _grHwFifoPtr(FxBool);
+unsigned long _grHwFifoPtr(FxBool);
 #define HW_FIFO_PTR(a) _grHwFifoPtr(a)
 
 #if FIFO_ASSERT_FULL
@@ -716,8 +719,8 @@ do { \
 
 #define REG_GROUP_END() \
   ASSERT(_checkP); \
-  ASSERT((((FxU32)_regGroupFifoPtr - (FxU32)gc->cmdTransportInfo.fifoPtr) >> 2) == _groupNum + 1); \
-  gc->cmdTransportInfo.fifoRoom -= ((FxU32)_regGroupFifoPtr - (FxU32)gc->cmdTransportInfo.fifoPtr); \
+  ASSERT((((unsigned long)_regGroupFifoPtr - (unsigned long)gc->cmdTransportInfo.fifoPtr) >> 2) == _groupNum + 1); \
+  gc->cmdTransportInfo.fifoRoom -= ((unsigned long)_regGroupFifoPtr - (unsigned long)gc->cmdTransportInfo.fifoPtr); \
   gc->cmdTransportInfo.fifoPtr = (FxU32*)_regGroupFifoPtr; \
   GDBG_INFO(gc->myLevel + 200, "\tGroupEnd: (0x%X : 0x%X)\n", \
             gc->cmdTransportInfo.fifoPtr, gc->cmdTransportInfo.fifoRoom); \
@@ -1028,7 +1031,7 @@ do { \
 
 #define TRI_END \
   TRI_ASSERT(); \
-  gc->cmdTransportInfo.fifoRoom -= ((FxU32)tPackPtr - (FxU32)gc->cmdTransportInfo.fifoPtr); \
+  gc->cmdTransportInfo.fifoRoom -= ((unsigned long)tPackPtr - (unsigned long)gc->cmdTransportInfo.fifoPtr); \
   gc->cmdTransportInfo.fifoPtr = tPackPtr; \
   GDBG_INFO(gc->myLevel + 200, "\tTriEnd: (0x%X : 0x%X)\n", tPackPtr, gc->cmdTransportInfo.fifoRoom); \
   FIFO_ASSERT(); \
@@ -1047,12 +1050,12 @@ do { \
   GR_CHECK_COMPATABILITY(FN_NAME, \
                          !gc->open, \
                          "Called before grSstWinOpen()"); \
-  GR_ASSERT(((FxU32)(packetPtr) & FIFO_ALIGN_MASK) == 0);        /* alignment */ \
+  GR_ASSERT(((unsigned long)(packetPtr) & FIFO_ALIGN_MASK) == 0);        /* alignment */ \
   GR_ASSERT((__numWords) > 0);                                   /* packet size */ \
   GR_ASSERT((__numWords) < ((0x01 << 19) - 2)); \
   GR_ASSERT((((FxU32)(__numWords) + 2) << 2) <= (FxU32)gc->cmdTransportInfo.fifoRoom); \
-  GR_ASSERT(((FxU32)packetPtr + (((__numWords) + 2) << 2)) < \
-            (FxU32)gc->cmdTransportInfo.fifoEnd); \
+  GR_ASSERT(((unsigned long)packetPtr + (((__numWords) + 2) << 2)) < \
+            (unsigned long)gc->cmdTransportInfo.fifoEnd); \
   GR_ASSERT((hdr2 & 0xE0000000UL) == 0x00UL); \
   GR_ASSERT(((__addr) & 0x03UL) == 0x00UL); \
   FIFO_ASSERT(); \
@@ -1097,8 +1100,8 @@ do { \
 
 #define FIFO_LINEAR_WRITE_END \
   DEBUGFIFODUMP_LINEAR(gc->cmdTransportInfo.fifoPtr); \
-  GR_ASSERT((((FxU32)packetPtr - (FxU32)gc->cmdTransportInfo.fifoPtr) >> 2) == __writeSize + 2); \
-  gc->cmdTransportInfo.fifoRoom -= ((FxU32)packetPtr - (FxU32)gc->cmdTransportInfo.fifoPtr); \
+  GR_ASSERT((((unsigned long)packetPtr - (unsigned long)gc->cmdTransportInfo.fifoPtr) >> 2) == __writeSize + 2); \
+  gc->cmdTransportInfo.fifoRoom -= ((unsigned long)packetPtr - (unsigned long)gc->cmdTransportInfo.fifoPtr); \
   gc->cmdTransportInfo.fifoPtr = packetPtr; \
   GDBG_INFO(gc->myLevel + 200, "\tLinearEnd: (0x%X : 0x%X)\n", \
             packetPtr, gc->cmdTransportInfo.fifoRoom); \
@@ -1512,7 +1515,7 @@ GR_CHECK_SIZE()
     } \
     else { \
       FxU32 argb; \
-      argb = *((FxU32 *)((int)_s + i)) & 0x00ffffff; \
+      argb = *((FxU32 *)((long)_s + i)) & 0x00ffffff; \
       TRI_SETF(*((float *)&argb)); \
       dataElem++; \
       i = gc->tsuDataList[dataElem]; \

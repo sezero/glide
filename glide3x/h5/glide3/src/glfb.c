@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.7.4.21  2005/05/25 08:51:50  jwrdegoede
+** Add #ifdef GL_X86 around x86 specific code
+**
 ** Revision 1.7.4.20  2005/05/07 08:40:30  jwrdegoede
 ** lvalue cast fixes for gcc4
 **
@@ -2292,7 +2295,7 @@ _grLfbWriteRegion(FxBool pixPipelineP,
 	  }
 #else
       length  = src_width * 2;
-      aligned = !((int)dstData&0x2);
+      aligned = !((long)dstData&0x2);
       srcJump = src_stride - length;
       dstJump = info.strideInBytes - length;
       if (aligned) {
@@ -2708,7 +2711,7 @@ GR_ENTRY(grLfbReadRegion, FxBool, (GrBuffer_t src_buffer,
     length   = src_width * 2;
     dstJump  = dst_stride - length;
     srcJump  = info.strideInBytes - length;
-    aligned  = !((int)srcData&0x2);
+    aligned  = !((long)srcData&0x2);
     odd      = (src_y+src_height) & 0x1;
     
 #if __POWERPC__

@@ -1210,8 +1210,8 @@ initGC ( GrGC *gc )
     gc->bufferSwaps[t] = 0xffffffff;
   }
   
-  gc->bufferSwaps[0] = ((FxU32) gc->cmdTransportInfo.fifoPtr -
-                        (FxU32) gc->cmdTransportInfo.fifoStart);
+  gc->bufferSwaps[0] = ((unsigned long) gc->cmdTransportInfo.fifoPtr -
+                        (unsigned long) gc->cmdTransportInfo.fifoStart);
   
   gc->swapsPending = 1;
   
@@ -1502,7 +1502,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
    * current gc. This gc is valid for all threads in the fullscreen
    * context.
    */
-  setThreadValue( (FxU32)&_GlideRoot.GCs[_GlideRoot.current_sst] );
+  setThreadValue( (unsigned long)&_GlideRoot.GCs[_GlideRoot.current_sst] );
   
   {
     /* Partial Argument Validation */
@@ -2336,7 +2336,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
     for (buffer = 0; buffer < nColBuffers; buffer++) {
       gc->buffers0[buffer] = bufInfo->colBuffStart0[buffer];
       GDBG_INFO(80, "Buffer %d:  Start: 0x%x\n", buffer, gc->buffers0[buffer]);
-      gc->lfbBuffers[buffer] = (FxU32)gc->rawLfb + bufInfo->lfbBuffAddr0[buffer];
+      gc->lfbBuffers[buffer] = (unsigned long)gc->rawLfb + bufInfo->lfbBuffAddr0[buffer];
       if (bInfo->buffInfo.enable2ndbuffer) {
         gc->buffers1[buffer] = bufInfo->colBuffStart1[buffer];
         GDBG_INFO(80, "Buffer %d:  Start: 0x%x\n", buffer, gc->buffers1[buffer]);
@@ -2345,7 +2345,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
     if (nAuxBuffers != 0) {
       gc->buffers0[buffer] = bufInfo->auxBuffStart0;
       GDBG_INFO(80, "Aux Buffer:  Start: 0x%x\n", gc->buffers0[buffer]);
-      gc->lfbBuffers[buffer] = (FxU32)gc->rawLfb + bufInfo->lfbBuffAddr0[buffer];
+      gc->lfbBuffers[buffer] = (unsigned long)gc->rawLfb + bufInfo->lfbBuffAddr0[buffer];
       if (bInfo->buffInfo.enable2ndbuffer) {
         gc->buffers1[buffer] = bufInfo->auxBuffStart1;
         GDBG_INFO(80, "Aux Buffer:  Start: 0x%x\n", gc->buffers1[buffer]);
@@ -2506,7 +2506,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
     gc->tmu_state[0].total_mem = gc->tramSize;
 #else
     /* gc->fbOffset               = (FxU32)fxHalFbiGetMemory((SstRegs*)gc->reg_ptr); */
-    gc->fbOffset                  = (FxU32)gc->rawLfb;
+    gc->fbOffset                  = (unsigned long)gc->rawLfb;
     gc->fbOffset                  = 0;
     gc->tmuMemInfo[0].tramOffset  = 
       (pixelformat == GR_PIXFMT_ARGB_8888) ? 0x400000 : 0x200000;
@@ -3198,7 +3198,7 @@ GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
    * the tls gc explicitly otherwise other whacky-ness (read 'random
    * crashes' will ensue). 
    */
-  setThreadValue((FxU32)gc);
+  setThreadValue((unsigned long)gc);
   if ((gc != NULL) && gc->open) grFlush();
 
   /* Make sure that the user specified gc is not whacked */

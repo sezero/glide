@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.6.3  2004/02/16 07:42:16  dborca
+** grSetNumPendingBuffers visible with grGetProcAddress
+**
 ** Revision 1.1.1.1.6.2  2003/12/08 13:13:11  dborca
 ** better Texus2 integration
 **
@@ -621,10 +624,11 @@ GR_DIENTRY(grGet, FxU32, (FxU32 pname, FxU32 plength, FxI32 *params))
     break;
 
   case GR_SURFACE_TEXTURE:
-    if (plength == 4) {
+    if (plength == sizeof(unsigned long)) {
+      unsigned long *p = (unsigned long *)params;
       GR_DCL_GC;
 
-      *params = (FxU32) &gc->tBuffer;
+      *p = (unsigned long) &gc->tBuffer;
       retVal = plength;
     }
     break;

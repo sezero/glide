@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.1  2003/11/07 13:38:38  dborca
+** unite the clans
+**
 ** Revision 1.1.1.1  1999/11/24 21:45:02  joseph
 ** Initial checkin for SourceForge
 **
@@ -712,7 +715,7 @@ _grLfbWriteRegion(FxBool pixPipelineP,
     case GR_LFB_SRC_FMT_ZA16:
       dstData = (FxU32*)(((FxU16*)dstData) + dst_x);
       length  = src_width * 2;
-      aligned = !((int)dstData&0x2);
+      aligned = !((long)dstData&0x2);
       srcJump = src_stride - length;
       dstJump = info.strideInBytes - length;
       if (aligned) {
@@ -917,7 +920,7 @@ GR_ENTRY(grLfbReadRegion, FxBool, (GrBuffer_t src_buffer,
     length   = src_width * 2;
     dstJump  = dst_stride - length;
     srcJump  = info.strideInBytes - length;
-    aligned  = !((int)srcData&0x2);
+    aligned  = !((long)srcData&0x2);
     odd      = (src_y+src_height) & 0x1;
     
     if (aligned) {

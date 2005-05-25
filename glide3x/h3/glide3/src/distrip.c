@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.6.1  2005/05/07 08:40:18  jwrdegoede
+** lvalue cast fixes for gcc4
+**
 ** Revision 1.1.1.1  1999/11/24 21:44:54  joseph
 ** Initial checkin for SourceForge
 **
@@ -544,10 +547,10 @@ GR_DIENTRY(grDrawVertexArrayContiguous, void , (FxU32 mode, FxU32 Count, void *p
     else {
       void *b_ptr, *c_ptr;
       while ((int)Count >= 3) {
-        b_ptr = (void *)((FxU32)pointers + stride);
-        c_ptr = (void *)((FxU32)pointers + stride*2);
+        b_ptr = (void *)((unsigned long)pointers + stride);
+        c_ptr = (void *)((unsigned long)pointers + stride*2);
         TRISETUP(pointers, b_ptr, c_ptr);
-        pointers = (void *)((FxU32)c_ptr + stride);
+        pointers = (void *)((unsigned long)c_ptr + stride);
         Count -= 3;
       }
     }

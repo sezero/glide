@@ -112,9 +112,12 @@
 */
 
 #ifdef _H2INC
+# ifdef __LP64__
+typedef unsigned int   FxU32;
+# else
 typedef unsigned long   FxU32;
+# endif
 #endif
-
 //----------------- SST chip I/O layout -------------------------
 // I/O registers remapped into memory space
 // Includes init, dac/pll, video, and VGA registers
@@ -282,8 +285,8 @@ typedef volatile struct sstgregs {      // THE 2D CHIP
 //----------------- SST chip 3D layout -------------------------
 // registers are in groups of 8 for easy decode
 typedef struct vertex_Rec {
-    unsigned long x;            // 12.4 format
-    unsigned long y;            // 12.4
+    FxU32 x;            // 12.4 format
+    FxU32 y;            // 12.4
 } vtxRec;
 
 typedef volatile struct sstregs {       // THE 3D CHIP
@@ -294,127 +297,127 @@ typedef volatile struct sstregs {       // THE 3D CHIP
     vtxRec vB;
     vtxRec vC;
 
-    long r;             // 12.12        Parameters
-    long g;             // 12.12
-    long b;             // 12.12
-    long z;             // 20.12 in 16bpp, 28.4 in 32bpp (there is an ugly hack in csimio.c, search "//EVIL:")
-    long a;             // 12.12
-    long s;             // 14.18
-    long t;             // 14.18
-    long w;             //  2.30
+    FxI32 r;             // 12.12        Parameters
+    FxI32 g;             // 12.12
+    FxI32 b;             // 12.12
+    FxI32 z;             // 20.12 in 16bpp, 28.4 in 32bpp (there is an ugly hack in csimio.c, search "//EVIL:")
+    FxI32 a;             // 12.12
+    FxI32 s;             // 14.18
+    FxI32 t;             // 14.18
+    FxI32 w;             //  2.30
 
-    long drdx;                  // X Gradients
-    long dgdx;
-    long dbdx;
-    long dzdx;  //20.12 in 16bpp, 28.4 in 32bpp (there is an ugly hack in csimio.c, search "//EVIL:")
-    long dadx;
-    long dsdx;
-    long dtdx;
-    long dwdx;
+    FxI32 drdx;                  // X Gradients
+    FxI32 dgdx;
+    FxI32 dbdx;
+    FxI32 dzdx;  //20.12 in 16bpp, 28.4 in 32bpp (there is an ugly hack in csimio.c, search "//EVIL:")
+    FxI32 dadx;
+    FxI32 dsdx;
+    FxI32 dtdx;
+    FxI32 dwdx;
 
-    long drdy;                  // Y Gradients
-    long dgdy;
-    long dbdy;
-    long dzdy;  //20.12 in 16bpp, 28.4 in 32bpp (there is an ugly hack in csimio.c, search "//EVIL:")
-    long dady;
-    long dsdy;
-    long dtdy;
-    long dwdy;
+    FxI32 drdy;                  // Y Gradients
+    FxI32 dgdy;
+    FxI32 dbdy;
+    FxI32 dzdy;  //20.12 in 16bpp, 28.4 in 32bpp (there is an ugly hack in csimio.c, search "//EVIL:")
+    FxI32 dady;
+    FxI32 dsdy;
+    FxI32 dtdy;
+    FxI32 dwdy;
 
-    unsigned long triangleCMD;  // execute a triangle command (float)
-    unsigned long reservedA;
+    FxU32 triangleCMD;  // execute a triangle command (float)
+    FxU32 reservedA;
     vtxRec FvA;                 // floating point version
     vtxRec FvB;
     vtxRec FvC;
 
-    long Fr;                    // floating point version
-    long Fg;
-    long Fb;
-    long Fz;
-    long Fa;
-    long Fs;
-    long Ft;
-    long Fw;
+    FxI32 Fr;                    // floating point version
+    FxI32 Fg;
+    FxI32 Fb;
+    FxI32 Fz;
+    FxI32 Fa;
+    FxI32 Fs;
+    FxI32 Ft;
+    FxI32 Fw;
 
-    long Fdrdx;
-    long Fdgdx;
-    long Fdbdx;
-    long Fdzdx;
-    long Fdadx;
-    long Fdsdx;
-    long Fdtdx;
-    long Fdwdx;
+    FxI32 Fdrdx;
+    FxI32 Fdgdx;
+    FxI32 Fdbdx;
+    FxI32 Fdzdx;
+    FxI32 Fdadx;
+    FxI32 Fdsdx;
+    FxI32 Fdtdx;
+    FxI32 Fdwdx;
 
-    long Fdrdy;
-    long Fdgdy;
-    long Fdbdy;
-    long Fdzdy;
-    long Fdady;
-    long Fdsdy;
-    long Fdtdy;
-    long Fdwdy;
+    FxI32 Fdrdy;
+    FxI32 Fdgdy;
+    FxI32 Fdbdy;
+    FxI32 Fdzdy;
+    FxI32 Fdady;
+    FxI32 Fdsdy;
+    FxI32 Fdtdy;
+    FxI32 Fdwdy;
 
-    unsigned long FtriangleCMD;         // execute a triangle command
-    unsigned long fbzColorPath;         // color select and combine
-    unsigned long fogMode;              // fog Mode
-    unsigned long alphaMode;            // alpha Mode
-    unsigned long fbzMode;              // framebuffer and Z mode
-    unsigned long lfbMode;              // linear framebuffer Mode
-    unsigned long clipLeftRight;        // (6)10(6)10
-    unsigned long clipBottomTop;        // (6)10(6)10
+    FxU32 FtriangleCMD;         // execute a triangle command
+    FxU32 fbzColorPath;         // color select and combine
+    FxU32 fogMode;              // fog Mode
+    FxU32 alphaMode;            // alpha Mode
+    FxU32 fbzMode;              // framebuffer and Z mode
+    FxU32 lfbMode;              // linear framebuffer Mode
+    FxU32 clipLeftRight;        // (6)10(6)10
+    FxU32 clipBottomTop;        // (6)10(6)10
 
-    unsigned long nopCMD;       // execute a nop command
-    unsigned long fastfillCMD;  // execute a fast fill command
-    unsigned long swapbufferCMD;// execute a swapbuffer command
-    unsigned long fogColor;             // (8)888
-    unsigned long zaColor;              // 8.24
-    unsigned long chromaKey;            // (8)888
-    unsigned long chromaRange;
-    unsigned long userIntrCmd;
+    FxU32 nopCMD;       // execute a nop command
+    FxU32 fastfillCMD;  // execute a fast fill command
+    FxU32 swapbufferCMD;// execute a swapbuffer command
+    FxU32 fogColor;             // (8)888
+    FxU32 zaColor;              // 8.24
+    FxU32 chromaKey;            // (8)888
+    FxU32 chromaRange;
+    FxU32 userIntrCmd;
 
-    unsigned long stipple;              // 32 bits, MSB masks pixels
-    unsigned long c0;                   // 8.8.8.8 (ARGB)
-    unsigned long c1;                   // 8.8.8.8 (ARGB)
+    FxU32 stipple;              // 32 bits, MSB masks pixels
+    FxU32 c0;                   // 8.8.8.8 (ARGB)
+    FxU32 c1;                   // 8.8.8.8 (ARGB)
     struct {                            // statistic gathering variables
-        unsigned long fbiPixelsIn;
-        unsigned long fbiChromaFail;
-        unsigned long fbiZfuncFail;
-        unsigned long fbiAfuncFail;
-        unsigned long fbiPixelsOut;
+        FxU32 fbiPixelsIn;
+        FxU32 fbiChromaFail;
+        FxU32 fbiZfuncFail;
+        FxU32 fbiAfuncFail;
+        FxU32 fbiPixelsOut;
     } stats;
 
-    unsigned long fogTable[32];         // 64 entries, 2 per word, 2 bytes each
+    FxU32 fogTable[32];         // 64 entries, 2 per word, 2 bytes each
 
-    unsigned long renderMode;		// new 32bpp and 1555 modes
-    unsigned long stencilMode;
-    unsigned long stencilOp;
-    unsigned long colBufferAddr;        //This is the primary colBufferAddr
-    unsigned long colBufferStride;    
-    unsigned long auxBufferAddr;        //This is the primary auxBufferAddr
-    unsigned long auxBufferStride;
-    unsigned long fbiStencilFail;
+    FxU32 renderMode;		// new 32bpp and 1555 modes
+    FxU32 stencilMode;
+    FxU32 stencilOp;
+    FxU32 colBufferAddr;        //This is the primary colBufferAddr
+    FxU32 colBufferStride;    
+    FxU32 auxBufferAddr;        //This is the primary auxBufferAddr
+    FxU32 auxBufferStride;
+    FxU32 fbiStencilFail;
 
-    unsigned long clipLeftRight1;
-    unsigned long clipBottomTop1;
-    unsigned long combineMode;
-    unsigned long sliCtrl;
-    unsigned long aaCtrl;
-    unsigned long chipMask;
-    unsigned long leftDesktopBuf;
-    unsigned long reservedD[2];         // NOTE: used to store TMUprivate ptr  (reservedD[0])
+    FxU32 clipLeftRight1;
+    FxU32 clipBottomTop1;
+    FxU32 combineMode;
+    FxU32 sliCtrl;
+    FxU32 aaCtrl;
+    FxU32 chipMask;
+    FxU32 leftDesktopBuf;
+    FxU32 reservedD[2];         // NOTE: used to store TMUprivate ptr  (reservedD[0])
                                         // NOTE: used to store CSIMprivate ptr (reservedD[1])
 
-    unsigned long reservedE[7];         // NOTE: reservedE[0] stores the secondary colBufferAddr
+    FxU32 reservedE[7];         // NOTE: reservedE[0] stores the secondary colBufferAddr
                                         // NOTE: reservedE[1] stores the secondary auxBufferAddr  
                                         // NOTE: reservedE[2] stores the primary colBufferAddr  
                                         // NOTE: reservedE[3] stores the primary auxBufferAddr  
                       
-    unsigned long reservedF[3];  
-    unsigned long swapBufferPend;
-    unsigned long leftOverlayBuf;
-    unsigned long rightOverlayBuf;
-    unsigned long fbiSwapHistory;
-    unsigned long fbiTrianglesOut;      // triangles out counter
+    FxU32 reservedF[3];  
+    FxU32 swapBufferPend;
+    FxU32 leftOverlayBuf;
+    FxU32 rightOverlayBuf;
+    FxU32 fbiSwapHistory;
+    FxU32 fbiTrianglesOut;      // triangles out counter
 
     FxU32 sSetupMode;
     FxU32 sVx;
@@ -436,24 +439,24 @@ typedef volatile struct sstregs {       // THE 3D CHIP
 
     FxU32 sDrawTriCMD;
     FxU32 sBeginTriCMD;
-    unsigned long reservedG[6];
+    FxU32 reservedG[6];
 
-    unsigned long reservedH[8];
+    FxU32 reservedH[8];
 
-    unsigned long reservedI[8];
+    FxU32 reservedI[8];
 
-    unsigned long textureMode;          // texture Mode
-    unsigned long tLOD;                 // texture LOD settings
-    unsigned long tDetail;              // texture detail settings
-    unsigned long texBaseAddr;          // current texture base address
-    unsigned long texBaseAddr1;
-    unsigned long texBaseAddr2;
-    unsigned long texBaseAddr38;
-    unsigned long trexInit0;            // hardware init bits
-    unsigned long trexInit1;            // hardware init bits
+    FxU32 textureMode;          // texture Mode
+    FxU32 tLOD;                 // texture LOD settings
+    FxU32 tDetail;              // texture detail settings
+    FxU32 texBaseAddr;          // current texture base address
+    FxU32 texBaseAddr1;
+    FxU32 texBaseAddr2;
+    FxU32 texBaseAddr38;
+    FxU32 trexInit0;            // hardware init bits
+    FxU32 trexInit1;            // hardware init bits
    
-    unsigned long nccTable0[12];        // NCC decode tables, bits are packed
-    unsigned long nccTable1[12];        // 4 words Y, 4 words I, 4 words Q
+    FxU32 nccTable0[12];        // NCC decode tables, bits are packed
+    FxU32 nccTable1[12];        // 4 words Y, 4 words I, 4 words Q
 
 #if GLIDE_USE_DEBUG_FIFO
     unsigned long cmdFifoDepth;         // command fifo depth

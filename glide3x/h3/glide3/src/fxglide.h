@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.2.4.11  2005/05/25 08:53:22  jwrdegoede
+** Add P6FENCE (ish) macro for non-x86 archs
+**
 ** Revision 1.2.4.10  2005/05/25 08:51:49  jwrdegoede
 ** Add #ifdef GL_X86 around x86 specific code
 **
@@ -1087,7 +1090,7 @@ typedef struct GrGC_s
           SET(*curFifoPtr++, *curPktData++); \
         } \
         GR_INC_SIZE((__writeCount) * sizeof(FxU32)); \
-        gc->cmdTransportInfo.fifoRoom -= ((FxU32)curFifoPtr - (FxU32)gc->cmdTransportInfo.fifoPtr); \
+        gc->cmdTransportInfo.fifoRoom -= ((unsigned long)curFifoPtr - (unsigned long)gc->cmdTransportInfo.fifoPtr); \
         gc->cmdTransportInfo.fifoPtr = curFifoPtr; \
       } \
       GR_CHECK_SIZE(); \
@@ -1206,7 +1209,7 @@ typedef struct GrGC_s
                           */
     
     FxU32* fifoPtr;      /* Current write pointer into fifo */
-    FxU32  fifoRead;     /* Last known hw read ptr. 
+    unsigned long   fifoRead;     /* Last known hw read ptr. 
                           * If on an sli enabled system this will be
                           * the 'closest' hw read ptr of the sli
                           * master and slave.
@@ -1289,11 +1292,12 @@ typedef struct GrGC_s
     curBuffer,
     frontBuffer,
     backBuffer,
-    buffers[4],
+    buffers[4];
+  unsigned long
     lfbBuffers[4];              /* Tile relative addresses of the color/aux
                                  * buffers for lfbReads.
                                  */  
-  FxU32 lockPtrs[2];        /* pointers to locked buffers */
+  unsigned long lockPtrs[2];        /* pointers to locked buffers */
   FxU32 fbStride;
 
   struct {
@@ -1906,7 +1910,7 @@ getThreadValueFast() {
 #endif
 
 #ifdef __linux__
-extern FxU32 threadValueLinux;
+extern unsigned long threadValueLinux;
 #define getThreadValueFast() threadValueLinux
 #endif
 
@@ -1926,9 +1930,9 @@ void
 initThreadStorage( void );
 
 void 
-setThreadValue( FxU32 value );
+setThreadValue( unsigned long value );
 
-FxU32
+unsigned long
 getThreadValueSLOW( void );
 
 void 
@@ -2203,7 +2207,11 @@ assertDefaultState( void );
 #if defined(GLIDE_SANITY_ASSERT)
 #define GR_ASSERT(exp) ((void)((!(exp)) ? (_grAssert(#exp,  __FILE__, __LINE__),0) : 0xFFFFFFFF))
 #else
-#define GR_ASSERT(exp) ((void)(0 && ((FxU32)(exp))))
+# ifdef __GNUC__
+#  define GR_ASSERT(exp)	((void) 0)
+# else
+#  define GR_ASSERT(exp) ((void)(0 && ((FxU32)(exp))))
+# endif
 #endif
 
 #define INTERNAL_CHECK(__name, __cond, __msg, __fatalP) \
@@ -2273,7 +2281,7 @@ void i3(void);
 #define HW_TEX_PTR(__b)        ((FxU32*)(((FxU32)(__b)) + HW_TEXTURE_OFFSET))   
 
 /* access a floating point array with a byte index */
-#define FARRAY(p,i)    (*(float *)((i)+(int)(p)))
+#define FARRAY(p,i)    (*(float *)((i)+(long)(p)))
 #define ArraySize(__a) (sizeof(__a) / sizeof((__a)[0]))
 
 #if GDBG_INFO_ON

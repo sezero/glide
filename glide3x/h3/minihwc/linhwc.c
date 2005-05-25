@@ -240,8 +240,8 @@ hwcMapBoard(hwcBoardInfo *bInfo, FxU32 bAddrMask) {
   }
 
   bInfo->linearInfo.initialized = FXTRUE;
-  bInfo->linearInfo.linearAddress[0]=(FxU32)driInfo.pRegs;
-  bInfo->linearInfo.linearAddress[1]=(FxU32)driInfo.pFB;
+  bInfo->linearInfo.linearAddress[0]=(unsigned long)driInfo.pRegs;
+  bInfo->linearInfo.linearAddress[1]=(unsigned long)driInfo.pFB;
   return FXTRUE;
 }
 
@@ -851,5 +851,5 @@ void grDRIInvalidateAll() {
 
 void grDRIResetSAREA()
 {
-  _grExportFifo(driInfo.fifoPtr, driInfo.fifoRead);
+  _grExportFifo((int *)driInfo.fifoPtr, (int *)driInfo.fifoRead);
 }

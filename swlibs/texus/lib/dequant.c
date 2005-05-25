@@ -160,12 +160,12 @@ _txImgDequantizeRGB332(FxU32 *out, FxU8 *in, int w, int h)
 }
 
 static void
-_txImgDequantizeYIQ422(FxU32 *out, FxU8 *in, int w, int h, const long *yabTable)
+_txImgDequantizeYIQ422(FxU32 *out, FxU8 *in, int w, int h, const FxU32 *yabTable)
 {
     int                         n = w * h;
     FxU32                       pal[256];
 
-    txYABtoPal256((long *)pal, (long *)yabTable);
+    txYABtoPal256(pal, yabTable);
     out += n;
     in  += n;
     while (n--) *--out = pal[*--in] | 0xff000000;
@@ -223,10 +223,10 @@ _txImgDequantizeARGB8332(FxU32 *out, FxU16 *in, int w, int h)
 }
 
 static void
-_txImgDequantizeAYIQ8422(FxU32 *out, FxU16 *in, int w, int h, const long *yab)
+_txImgDequantizeAYIQ8422(FxU32 *out, FxU16 *in, int w, int h, const FxU32 *yab)
 {
     int         n = w * h;
-    long        pal[256];
+    FxU32       pal[256];
 
     txYABtoPal256(pal, yab);
     out += n;
@@ -348,7 +348,7 @@ txMipDequantize(TxMip *txMip, TxMip *pxMip)
         case GR_TEXFMT_RGB_332:         _txImgDequantizeRGB332(dst, src, w, h);         
                                                                 break;
         case GR_TEXFMT_YIQ_422:         _txImgDequantizeYIQ422(dst, src, w, h, 
-                                                                        (long *)pxMip->pal); break;
+                                                                        pxMip->pal); break;
         case GR_TEXFMT_A_8:                     _txImgDequantizeA8(dst, src, w, h);             
                                                                 break;
         case GR_TEXFMT_I_8:                     _txImgDequantizeI8(dst, src, w, h);             
@@ -361,7 +361,7 @@ txMipDequantize(TxMip *txMip, TxMip *pxMip)
         case GR_TEXFMT_ARGB_8332:       _txImgDequantizeARGB8332(dst, src, w, h);       
                                                                 break;
         case GR_TEXFMT_AYIQ_8422:       _txImgDequantizeAYIQ8422(dst, src, w, h, 
-                                                                        (long *)pxMip->pal); break;
+                                                                        pxMip->pal); break;
         case GR_TEXFMT_RGB_565:         _txImgDequantizeRGB565(dst, src, w, h); 
                                                                 break;
         case GR_TEXFMT_ARGB_1555:       _txImgDequantizeARGB1555(dst, src, w, h);       

@@ -243,8 +243,8 @@ hwcMapBoard(hwcBoardInfo *bInfo, FxU32 bAddrMask) {
   bInfo->linearInfo.initialized = FXTRUE;
   /*bInfo->osNT = FXFALSE;*/
   bInfo->procHandle = getpid();
-  bInfo->linearInfo.linearAddress[0]=(FxU32)driInfo.pRegs;
-  bInfo->linearInfo.linearAddress[1]=(FxU32)driInfo.pFB;
+  bInfo->linearInfo.linearAddress[0]=(unsigned long)driInfo.pRegs;
+  bInfo->linearInfo.linearAddress[1]=(unsigned long)driInfo.pFB;
   return FXTRUE;
 }
 
@@ -903,6 +903,10 @@ hwcResolutionSupported(hwcBoardInfo *bInfo, GrScreenResolution_t res,
 #undef FN_NAME
 } /* hwcResolutionSupported */
 
+extern void _grImportFifo (int, int);
+extern void _grInvalidateAll (void);
+extern void _grExportFifo (int *, int *);
+
 /* This two routines hwcSLIRead{Enable,Disable} are currently NOPs XXX */
 
 void hwcSLIReadEnable(hwcBoardInfo *bInfo)
@@ -991,6 +995,6 @@ void grDRIInvalidateAll() {
 
 void grDRIResetSAREA()
 {
-  _grExportFifo(driInfo.fifoPtr, driInfo.fifoRead);
+  _grExportFifo((int *)driInfo.fifoPtr, driInfo.fifoRead);
 }
 

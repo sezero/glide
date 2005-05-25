@@ -263,7 +263,7 @@ _grAssert(char *exp, char *fileName, int lineNo)
     
     GDBG_PRINTF("Command Fifo:\n");
     GDBG_PRINTF("\tSoftware:\n");
-    GDBG_PRINTF("\t\tfifoPtr:           0x%X\n", (FxU32)gc->cmdTransportInfo.fifoPtr - (FxU32) gc->rawLfb);
+    GDBG_PRINTF("\t\tfifoPtr:           0x%lX\n", (unsigned long)gc->cmdTransportInfo.fifoPtr - (unsigned long)gc->rawLfb);
     GDBG_PRINTF("\t\tfifoOffset:        0x%X\n", gc->cmdTransportInfo.fifoOffset); 
     GDBG_PRINTF("\t\tfifoEnd:           0x%X\n", gc->cmdTransportInfo.fifoEnd - gc->rawLfb);
     GDBG_PRINTF("\t\tfifoSize:          0x%X\n", gc->cmdTransportInfo.fifoSize); 
@@ -273,7 +273,7 @@ _grAssert(char *exp, char *fileName, int lineNo)
 
     if ( !gc->windowed ) {
       GDBG_PRINTF("\tHardware:\n");
-      GDBG_PRINTF("\t\treadPtrL:          0x%X\n", HW_FIFO_PTR(FXTRUE) - (FxU32)gc->rawLfb);
+      GDBG_PRINTF("\t\treadPtrL:          0x%lX\n", HW_FIFO_PTR(FXTRUE) - (unsigned long)gc->rawLfb);
       GDBG_PRINTF("\t\tdepth:             0x%X\n", GR_CAGP_GET(depth));
       GDBG_PRINTF("\t\tholeCount:         0x%X\n", GR_CAGP_GET(holeCount));
       GDBG_PRINTF("\t\tbaseAddrL:         0x%X\n", GR_CAGP_GET(baseAddrL));

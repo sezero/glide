@@ -180,15 +180,15 @@ pciSetConfigDataRaw( PciRegister reg, FxU32 device_bus_func_number, FxU32 *data 
  * on bus0 which would not work across pci bridges or on agp devices.   
  */
 FX_ENTRY FxBool FX_CALL 
-pciMapPhysicalToLinear(FxU32 *linear_addr, FxU32 physical_addr,FxU32 *length);
+pciMapPhysicalToLinear(unsigned long *linear_addr, FxU32 physical_addr,FxU32 *length);
 
 FX_ENTRY FxBool FX_CALL 
-pciMapPhysicalDeviceToLinear(FxU32 *linear_addr, 
+pciMapPhysicalDeviceToLinear(unsigned long *linear_addr, 
                              FxU32 busNumber, FxU32 physical_addr,
                              FxU32 *length);
 
 FX_ENTRY void   FX_CALL 
-pciUnmapPhysical( FxU32 linear_addr, FxU32 length );
+pciUnmapPhysical( unsigned long linear_addr, FxU32 length );
 
 const char *
 pciGetVendorName( FxU16 vendor_id );
@@ -235,7 +235,7 @@ FX_ENTRY FxBool FX_CALL
 pciOutputDebugString(const char* debugMsg);
 
 FX_ENTRY FxBool FX_CALL
-pciLinearRangeSetPermission(const FxU32 addrBase, const FxU32 addrLen, const FxBool writeableP);
+pciLinearRangeSetPermission(const unsigned long addrBase, const FxU32 addrLen, const FxBool writeableP);
 
 #define PCI_ERR_NOERR           0
 #define PCI_ERR_WINRTINIT       1

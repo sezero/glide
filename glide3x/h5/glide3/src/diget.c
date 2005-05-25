@@ -810,11 +810,12 @@ GR_DIENTRY(grGet, FxU32, (FxU32 pname, FxU32 plength, FxI32 *params))
     break;
 
   case GR_SURFACE_TEXTURE:
-    if (plength == 4) {
+    if (plength == sizeof(unsigned long)) {
+      unsigned long *p = (unsigned long *)params;
       GR_DCL_GC;
 
 #ifdef GLIDE_INIT_HWC
-      *params = (FxU32) &gc->tBuffer;
+      *p = (unsigned long) &gc->tBuffer;
       retVal = plength;
 #endif
     }

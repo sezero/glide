@@ -72,9 +72,9 @@
 #endif /* defined(__WATCOMC__) || defined(__WATCOM_CPLUSPLUS__) */
 
 #ifdef __GNUC__ /* variadic macros */
-#define GDBG_INFO(level, format, ...)      do {} while (0)
-#define GDBG_INFO_MORE(level, format, ...) do {} while (0)
-#define GDBG_PRINTF(format, ...)           do {} while (0)
+#define GDBG_INFO(level, format, ...)
+#define GDBG_INFO_MORE(level, format, ...)
+#define GDBG_PRINTF(format, ...)
 #else
 #define GDBG_INFO      0 && (unsigned long)
 #define GDBG_INFO_MORE 0 && (unsigned long)

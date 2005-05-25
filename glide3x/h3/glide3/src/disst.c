@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/11/24 21:44:54  joseph
+** Initial checkin for SourceForge
+**
 ** 
 ** 4     4/06/99 3:54p Dow
 ** Alt tab again.
@@ -180,7 +183,7 @@ GR_DIENTRY(grSstSelect, void, ( int which ))
     GrErrorCallback( "grSstSelect:  non-existent SST", FXTRUE );
 
   _GlideRoot.current_sst = which;
-  setThreadValue( (FxU32)&_GlideRoot.GCs[_GlideRoot.current_sst] );
+  setThreadValue( (unsigned long)&_GlideRoot.GCs[_GlideRoot.current_sst] );
 
 #ifdef GLIDE_MULTIPLATFORM
   _GlideRoot.curGCFuncs = _GlideRoot.curGC->gcFuncs;

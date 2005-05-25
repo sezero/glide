@@ -1948,7 +1948,7 @@ FxBool imgReadFile(const char *filename, ImgInfo *info)
 	if (prefix) {					// if there's a path prefix
 	    char buf[1024], *p;
 	    strcpy(buf,prefix);			// copy and replace semicolon
-	    if ((p = strchr(buf,';'))) *p = '\0';
+	    if ((p = strchr(buf,';')) != NULL) *p = '\0';
 	    fprintf(stderr,buf);
 	    fprintf(stderr,"/");
 	}

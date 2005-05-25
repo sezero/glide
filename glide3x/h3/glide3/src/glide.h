@@ -54,7 +54,7 @@ typedef FxU8  GrAlpha_t;
 typedef FxU32 GrMipMapId_t;
 typedef FxU32 GrStipplePattern_t;
 typedef FxU8  GrFog_t;
-typedef FxU32 GrContext_t;
+typedef unsigned long GrContext_t;
 typedef int (FX_CALL *GrProc)();
 
 /*

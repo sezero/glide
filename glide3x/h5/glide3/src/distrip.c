@@ -552,12 +552,12 @@ GR_DIENTRY(grDrawVertexArrayContiguous, void , (FxU32 mode, FxU32 Count, void *p
     else {
       void *b_ptr, *c_ptr;
       while ((int)Count >= 3) {
-        b_ptr = (void *)((FxU32)pointers + stride);
-        c_ptr = (void *)((FxU32)b_ptr + stride);
+        b_ptr = (void *)((unsigned long)pointers + stride);
+        c_ptr = (void *)((unsigned long)b_ptr + stride);
         /*TRISETUP(pointers, b_ptr, c_ptr);*/
         /* Do extra context checking. Fixes GLExcess (Spaceship chase) crash with Mesa. */
         grDrawTriangle(pointers, b_ptr, c_ptr);
-        pointers = (void *)((FxU32)c_ptr + stride);
+        pointers = (void *)((unsigned long)c_ptr + stride);
         Count -= 3;
       }
     }

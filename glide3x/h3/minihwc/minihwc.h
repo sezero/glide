@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.6.1  2004/10/07 07:17:56  dborca
+** use the right Escape sequence on win32
+**
 ** Revision 1.1.1.1  1999/11/24 21:45:07  joseph
 ** Initial checkin for SourceForge
 **
@@ -238,22 +241,21 @@ typedef struct hwcPCIInfo_s {
 typedef struct hwcLinearInfo_s {
   FxBool
     initialized;
-  FxU32
-    linearAddress[HWC_NUM_BASE_ADDR];
+  unsigned long linearAddress[HWC_NUM_BASE_ADDR];
 } hwcLinearInfo;
 
 typedef struct hwcRegInfo_s {
   FxBool
     initialized;
-  volatile FxU32
-    ioMemBase,                  /* mem base for I/O aliases */
-    cmdAGPBase,                 /* CMD/AGP register base */
-    waxBase,                    /* 2D register base */
-    sstBase,                    /* 3D register base */
-    lfbBase,                    /* 3D lfb base */
-    rawLfbBase;                 /* Raw LFB base (base address 1) */
+  volatile unsigned long
+    ioMemBase,                 /* mem base for I/O aliases */
+    cmdAGPBase,                /* CMD/AGP register base */
+    waxBase,                   /* 2D register base */
+    sstBase,                   /* 3D register base */
+    lfbBase,                   /* 3D lfb base */
+    rawLfbBase;                /* Raw LFB base (base address 1) */
 #if __POWERPC__
-  ioPortBase;                   /* PPC does I/O via a 32-bit address */
+  FxU32 ioPortBase;             /* PPC does I/O via a 32-bit address */
 #else       
   volatile FxU16
     ioPortBase,                 /* I/O base address */

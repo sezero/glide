@@ -99,6 +99,7 @@
  * Added GR_DIENTRY for di glide functions
 **
 */
+#include <ctype.h>
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>

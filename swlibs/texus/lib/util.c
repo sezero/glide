@@ -133,14 +133,14 @@ txGCD(int a, int b)
 }
 
 void
-txYABtoPal256(long *palette, const long* yabTable)
+txYABtoPal256(int *palette, const int* yabTable)
 {
         // Convert YAB table to a 256 color palette 
         // Assume yabTable[] has first 16Y's, 12 A's, 12 B's
 
-        const   long    *Y = yabTable;
-        const   long    *A = yabTable + 16;
-        const   long    *B = yabTable + 16 + 12;
+        const   int    *Y = yabTable;
+        const   int    *A = yabTable + 16;
+        const   int    *B = yabTable + 16 + 12;
         int             i;
 
         for (i=0; i<256; i++) {
@@ -265,7 +265,7 @@ int     _explode3[255+256] = {
 int  *explode3 = &_explode3[255];
 
 int
-txNearestColor(long ir, long ig, long ib, const FxU32 *pal, int ncolors)
+txNearestColor(int ir, int ig, int ib, const FxU32 *pal, int ncolors)
 {
         int             i, d; 
         int             mindist, minpos;                // closest distance to input

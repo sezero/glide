@@ -709,9 +709,8 @@ pciMapCardMulti(FxU32 vendorID, FxU32 deviceID,
                 FxU32 *devNum,
                 FxU32 cardNum, FxU32 addressNum)
 {
-  FxU32 
-    physAddress, 
-    virtAddress;
+  FxU32 physAddress;
+  unsigned long virtAddress;
   
   /* 1) open the PCI device and scan it for devices
    * 2) scan the existing devices for a match
@@ -721,7 +720,7 @@ pciMapCardMulti(FxU32 vendorID, FxU32 deviceID,
 
   /* 3) find the current physcial address of the card */
   pciGetConfigData( baseAddresses[addressNum], *devNum, &physAddress );
-  if (length <= 0) return (FxU32*)length;
+  if (length <= 0) return (FxU32*)(long)length;
 
   /* Mask the memory type information bits off.
    *   [0]: Memory type indicator (0 memory/1 i/o)
@@ -770,7 +769,7 @@ pciMapCard(FxU32 vendorID, FxU32 deviceID,
 } /* pciMapCard */
 
 FX_EXPORT FxBool FX_CSTYLE
-pciMapPhysicalToLinear( FxU32 *linear_addr, FxU32 physical_addr,
+pciMapPhysicalToLinear( unsigned long *linear_addr, FxU32 physical_addr,
                         FxU32 *length ) 
 { 
   return pciMapPhysicalDeviceToLinear(linear_addr, 
@@ -779,7 +778,7 @@ pciMapPhysicalToLinear( FxU32 *linear_addr, FxU32 physical_addr,
 } /* pciMapPhysicalToLinear */
 
 FX_ENTRY FxBool FX_CALL 
-pciMapPhysicalDeviceToLinear(FxU32 *linear_addr, 
+pciMapPhysicalDeviceToLinear(unsigned long *linear_addr, 
                              FxU32 busNumber, FxU32 physical_addr,
                              FxU32 *length)
 {
@@ -789,7 +788,7 @@ pciMapPhysicalDeviceToLinear(FxU32 *linear_addr,
 
 
 FX_EXPORT void FX_CSTYLE
-pciUnmapPhysical( FxU32 linear_addr, FxU32 length ) 
+pciUnmapPhysical( unsigned long linear_addr, FxU32 length ) 
 {
   int i,j;
   
@@ -829,7 +828,7 @@ pciOutputDebugString(const char* msg)
 }
 
 FX_EXPORT FxBool FX_CSTYLE
-pciLinearRangeSetPermission(const FxU32 addrBase, const FxU32 addrLen, const FxBool writeableP)
+pciLinearRangeSetPermission(const unsigned long addrBase, const FxU32 addrLen, const FxBool writeableP)
 {
   return pciLinearRangeSetPermissionDD(addrBase, addrLen, writeableP);
 }

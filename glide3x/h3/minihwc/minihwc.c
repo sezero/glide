@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.6.9  2005/05/25 08:53:22  jwrdegoede
+** Add P6FENCE (ish) macro for non-x86 archs
+**
 ** Revision 1.1.1.1.6.8  2004/10/07 07:17:55  dborca
 ** use the right Escape sequence on win32
 **
@@ -1140,7 +1143,7 @@ hwcMapBoard(hwcBoardInfo *bInfo, FxU32 bAddrMask)
     for (bAddr = 0; bAddr < 2; bAddr++) {
       if ((bAddrMask & (0x01UL << bAddr)) != 0x00UL) {
         bInfo->linearInfo.linearAddress[bAddr] = 
-          (FxU32)pciMapCardMulti(bInfo->pciInfo.vendorID, bInfo->pciInfo.deviceID,
+          pciMapCardMulti(bInfo->pciInfo.vendorID, bInfo->pciInfo.deviceID,
                                  0x1000000, &bInfo->deviceNum, bInfo->boardNum, bAddr);
       }
     }
@@ -1149,13 +1152,13 @@ hwcMapBoard(hwcBoardInfo *bInfo, FxU32 bAddrMask)
      * unconditionally
      */
     bInfo->linearInfo.linearAddress[2] = 
-      (FxU32)pciMapCardMulti(bInfo->pciInfo.vendorID, bInfo->pciInfo.deviceID,
+      pciMapCardMulti(bInfo->pciInfo.vendorID, bInfo->pciInfo.deviceID,
                              0x1000000, &bInfo->deviceNum, bInfo->boardNum, 2);
 
     /* Does the caller want the rom bios? */
     if ((bAddrMask & 0x08UL) != 0x00UL) {
       bInfo->linearInfo.linearAddress[3] = 
-        (FxU32)pciMapCardMulti(bInfo->pciInfo.vendorID, bInfo->pciInfo.deviceID,
+        pciMapCardMulti(bInfo->pciInfo.vendorID, bInfo->pciInfo.deviceID,
                                0x1000000, &bInfo->deviceNum, bInfo->boardNum, 3);
     }
   }

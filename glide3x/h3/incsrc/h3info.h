@@ -28,7 +28,11 @@
 // basic data types
 #define FxU8  unsigned char
 #define FxU16 unsigned short
-#define FxU32 unsigned long
+# ifdef __LP64__
+#  define FxU32 unsigned int
+# else
+#  define FxU32 unsigned long
+# endif
 #define FxBool int
 // defn of registers not reqd, treat (SstRegs *) as (void *)
 typedef void SstRegs;

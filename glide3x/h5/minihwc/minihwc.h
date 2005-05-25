@@ -318,14 +318,14 @@ typedef struct hwcPCIInfo_s {
 typedef struct hwcLinearInfo_s {
   FxBool
     initialized;
-  FxU32
+  unsigned long
     linearAddress[HWC_NUM_BASE_ADDR];
 } hwcLinearInfo;
 
 typedef struct hwcRegInfo_s {
   FxBool
     initialized;
-  volatile FxU32
+  volatile unsigned long
     ioMemBase,                  /* mem base for I/O aliases */
     cmdAGPBase,                 /* CMD/AGP register base */
     waxBase,                    /* 2D register base */
