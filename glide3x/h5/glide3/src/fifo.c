@@ -789,8 +789,6 @@ void
 _FifoFlush( void ) 
 {
 #define FN_NAME "_FifoFlush"
-  GR_DCL_GC;
-  
   _grCommandTransportMakeRoom(0, __FILE__, __LINE__);
 #undef FN_NAME
 } /* _FifoFlush */
@@ -1450,7 +1448,7 @@ _grImportFifo(int fifoPtr, int fifoRead) {
   GR_DCL_GC;
 
 #if 1
-  int dummy, d;
+  FxU32 dummy, d;
 
   do {
     dummy=GET(gc->cRegs->cmdFifo0.depth);

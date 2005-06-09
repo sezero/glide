@@ -53,8 +53,8 @@
     else printf("%s\tequ %10d\n",pname,((int)&o)-(int)&p)
 
 #define SIZEOF(p,pname) if (hex) \
-        printf("SIZEOF_%s\tequ %08lxh\n",pname,sizeof(p)); \
-    else printf("SIZEOF_%s\tequ %10ld\n",pname,sizeof(p))
+        printf("SIZEOF_%s\tequ %08lxh\n",pname,(unsigned long)sizeof(p)); \
+    else printf("SIZEOF_%s\tequ %10lu\n",pname,(unsigned long)sizeof(p))
 
 
 int
@@ -71,25 +71,25 @@ main (int argc, char **argv)
 
     if (argc > 1) {
       if (strcmp("-inline", argv[1]) == 0) {
-        SstRegs dummyRegs = { 0x00UL };
+        SstRegs dummyRegs;
 
         printf("#ifndef __FX_INLINE_H__\n");
         printf("#define __FX_INLINE_H__\n");
         printf("\n");
 
         printf("#define kCurGCOffset   0x%lXUL\n",
-               offsetof(struct _GlideRoot_s, curGC));
+               (unsigned long)offsetof(struct _GlideRoot_s, curGC));
 
 #if GLIDE_DISPATCH_SETUP
         printf("#define kTriProcOffset 0x%lXUL\n",
-               offsetof(struct GrGC_s, curArchProcs.triSetupProc));
+               (unsigned long)offsetof(struct GrGC_s, curArchProcs.triSetupProc));
 	printf("#define kGCStateInvalid 0x%lXUL\n",
-	       offsetof(struct GrGC_s, state.invalid));
+	       (unsigned long)offsetof(struct GrGC_s, state.invalid));
 #endif /* GLIDE_DISPATCH_SETUP */
         
         printf("/* The # of 2-byte entries in the hw fog table */\n");
-        printf("#define kInternalFogTableEntryCount 0x%lXUL\n",
-               sizeof(dummyRegs.fogTable) >> 1);
+        printf("#define kInternalFogTableEntryCount 0x%X\n",
+               (unsigned int)sizeof(dummyRegs.fogTable) >> 1);
 
         printf("\n");
         printf("#endif /* __FX_INLINE_H__ */\n");

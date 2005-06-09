@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.4  2004/12/27 20:46:57  koolsmoky
+** added dll entry point to call grGlideShutdown when a process is detached
+**
 ** Revision 1.1.1.1.8.3  2004/12/12 15:05:25  koolsmoky
 ** revert swapInterval environmental override in grBufferSwap(). SLI lines get misaligned when swapInterval 0 and vsync disabled.
 **
@@ -980,7 +983,7 @@ GR_ENTRY(grBufferSwap, void, (FxU32 swapInterval))
    * wants something other than 0 then we need to honor their choice.  
    */
   swapInterval = ((_GlideRoot.environment.swapInterval >= 0)
-                  ? _GlideRoot.environment.swapInterval
+                  ? (FxU32)_GlideRoot.environment.swapInterval
                   : (gc->scanline_interleaved ? MAX(swapInterval, 1) : swapInterval));
   
   GR_CHECK_F(myName,

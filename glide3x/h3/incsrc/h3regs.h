@@ -45,11 +45,7 @@
 // STB Begin Changes
 // STB-SR 1/13/98 Adding code for bj
 #ifdef _H2INC
-# ifdef __LP64__
 typedef unsigned int   FxU32;
-# else
-typedef unsigned long   FxU32;
-# endif
 #endif
 // STB End Changes
 

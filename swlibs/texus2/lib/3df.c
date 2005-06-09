@@ -122,7 +122,7 @@ _txRead3DFHeader(FILE* stream, FxU32 cookie, TxMip *txMip)
         if (c == EOF) return FXFALSE;
     }
     if (c == EOF) return FXFALSE;
-    ungetc (c, stream);
+    if (ungetc (c, stream) == EOF) return FXFALSE;
 
     /* color format, lod range, aspect ratio */
     if (5 != fscanf (stream, "%10s lod range: %i %i aspect ratio: %i %i",

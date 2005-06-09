@@ -39,7 +39,7 @@
 #include <stdio.h>
 #include <time.h>
 
-int main (int argc, char **argv)
+int main (void)
 {
     struct tm	locTime;
     time_t	sysTime;

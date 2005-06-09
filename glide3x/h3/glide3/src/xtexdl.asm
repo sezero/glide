@@ -19,6 +19,9 @@
 ;; $Header$
 ;; $Revision$
 ;; $Log$
+;; Revision 1.1.1.1.8.1  2003/11/07 13:38:39  dborca
+;; unite the clans
+;;
 ;; Revision 1.1.8.7  2003/09/12 05:08:35  koolsmoky
 ;; preparing for graphic context checks
 ;;
@@ -515,7 +518,7 @@ endp
 
 
 
-segment		TEXT
+;segment		TEXT
 
               ALIGN  32
 

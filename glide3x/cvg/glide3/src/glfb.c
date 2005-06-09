@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/12/07 21:42:32  joseph
+** Initial checkin into SourceForge.
+**
 ** 
 ** 1     10/08/98 11:30a Brent
 ** 
@@ -231,7 +234,7 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t type, GrBuffer_t buffer,
 {
 #define FN_NAME "grLfbLock"
   FxBool rv = FXTRUE;
-  FxU32 lfbMode, zaColor, fbzMode;
+  FxU32 lfbMode, zaColor = 0, fbzMode = 0;
   const FxBool idleLockP = ((type & GR_LFB_NOIDLE) == 0);
 #if (GLIDE_PLATFORM & GLIDE_OS_MACOS) && SET_BSWAP
   FxBool swizzleByteP = FXFALSE;

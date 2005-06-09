@@ -25,7 +25,9 @@
 ** configuration information.
 **
 */
+#ifndef __GNUC__
 #pragma optimize ("",off)
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <sst.h>
@@ -41,7 +43,7 @@ readAndSum4x4(FxU32 *sstbase, FxU32 x, FxU32 y,
     		FxU32 *r_sum, FxU32 *g_sum, FxU32 *b_sum)
 {
     FxU32 rd_x, rd_y;
-    FxU32 rd_col;
+    FxU32 rd_col = 0;
     FxU32 rd_r, rd_g, rd_b;
     volatile Sstregs *sst = (Sstregs *) sstbase;
 
@@ -167,7 +169,7 @@ unDither(FxU32 r_sum, FxU32 g_sum, FxU32 b_sum, FxU32 *result)
 static FxBool
 getTmuConfigData(FxU32 *sstbase, sst1DeviceInfoStruct *info)
 {
-    int x=0, y=0;
+    int i, x=0, y=0;
     FxU32 r_sum, g_sum, b_sum;
     volatile Sstregs *sst = (Sstregs *) sstbase;
 
@@ -187,15 +189,17 @@ getTmuConfigData(FxU32 *sstbase, sst1DeviceInfoStruct *info)
     readAndSum4x4(sstbase, x,y, &r_sum,&g_sum,&b_sum);
     if(unDither(r_sum,g_sum,b_sum,&info->tmuConfig) == FXFALSE)
 		return(FXFALSE);
-	if(GETENV(("SST_TMUCFG")))
-        SSCANF(GETENV(("SST_TMUCFG")), "%i", &info->tmuConfig);
+    
+    if(GETENV(("SST_TMUCFG")) &&
+       (SSCANF(GETENV(("SST_TMUCFG")), "%i", &i) == 1))
+      info->tmuConfig = i;
 
     /* reset trex's init registers */
     ISET(SST_TREX(sst,0)->trexInit1, info->tmuInit1[0]);
     ISET(SST_TREX(sst,1)->trexInit1, info->tmuInit1[1]);
     ISET(SST_TREX(sst,2)->trexInit1, info->tmuInit1[2]);
 
-	return(FXTRUE);
+    return(FXTRUE);
 }
 
 #define SENSE2 0x92F56EB0
@@ -450,13 +454,12 @@ sst1InitGetFbiInfo(FxU32 *sstbase, sst1DeviceInfoStruct *info)
 {
 	volatile Sstregs *sst = (Sstregs *) sstbase;
 
-    info->fbiMemSize = fbiMemSize(sstbase);
+	info->fbiMemSize = fbiMemSize(sstbase);
 
 	/* Detect board identification and memory speed */
-	if(GETENV(("SST_FBICFG")))
-        SSCANF(GETENV(("SST_FBICFG")), "%i", &info->fbiConfig);
-    else
-		info->fbiConfig = (IGET(sst->fbiInit3) & SST_FBI_MEM_TYPE) >>
+	if(!GETENV(("SST_FBICFG")) ||
+	   (SSCANF(GETENV(("SST_FBICFG")), "%i", &info->fbiConfig) != 1))
+	  info->fbiConfig = (IGET(sst->fbiInit3) & SST_FBI_MEM_TYPE) >>
 			SST_FBI_MEM_TYPE_SHIFT;
 
 	info->fbiBoardID = (info->fbiConfig >> 2) & 0x1;
@@ -466,7 +469,7 @@ sst1InitGetFbiInfo(FxU32 *sstbase, sst1DeviceInfoStruct *info)
 	/* Detect scanline interleaving */
 	info->sstSliDetect = sst1InitSliDetect(sstbase);
 
-    return FXTRUE;
+	return FXTRUE;
 }
 
 /*
@@ -505,15 +508,13 @@ FxBool sst1InitFillDeviceInfo(FxU32 *sstbase, sst1DeviceInfoStruct *info)
         /* fill device info struct with sane values... */
     	INIT_PRINTF(("sst1DeviceInfo: Filling info Struct with default values...\n"));
 
-		if(GETENV(("SST_FBICFG")))
-        	SSCANF(GETENV(("SST_FBICFG")), "%i", &info->fbiConfig);
-		else
-	        info->fbiConfig = 0x0;
+    if(!GETENV(("SST_FBICFG")) ||
+       (SSCANF(GETENV(("SST_FBICFG")), "%i", &info->fbiConfig) != 1))
+      info->fbiConfig = 0x0;
 
-		if(GETENV(("SST_TMUCFG")))
-        	SSCANF(GETENV(("SST_TMUCFG")), "%i", &info->tmuConfig);
-		else
-	        info->tmuConfig = 0x0;
+    if(!GETENV(("SST_TMUCFG")) ||
+       (SSCANF(GETENV(("SST_TMUCFG")), "%i", &info->tmuConfig) != 1))
+      info->tmuConfig = 0x0;
 
         info->numberTmus = 1;
     	if (info->tmuConfig & FXBIT(6)) /* if TMU 1 exists */
@@ -586,4 +587,7 @@ FxBool sst1InitFillDeviceInfo(FxU32 *sstbase, sst1DeviceInfoStruct *info)
 
     return(FXTRUE);
 }
+
+#ifndef __GNUC__
 #pragma optimize ("",on)
+#endif

@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.3  2005/05/25 08:51:52  jwrdegoede
+** Add #ifdef GL_X86 around x86 specific code
+**
 ** Revision 1.1.2.2  2004/10/04 09:36:00  dborca
 ** second cut at Glide3x for Voodoo1/Rush (massive update):
 ** delayed validation, vertex snapping, clip coordinates, strip/fan_continue, bugfixes.
@@ -147,7 +150,6 @@ static char *indexNames[] = {
 GR_DDFUNC(_trisetup, FxI32, ( const void *va, const void *vb, const void *vc ))
 {
   GR_DCL_GC;
-  GR_DCL_HW;
   FxI32 xindex = (gc->state.vData.vertexInfo.offset >> 2);
   FxI32 yindex = xindex + 1;
   const float *fa = (const float *)va + xindex;
@@ -155,7 +157,9 @@ GR_DDFUNC(_trisetup, FxI32, ( const void *va, const void *vb, const void *vc ))
   const float *fc = (const float *)vc + xindex;
   float ooa, dxAB, dxBC, dyAB, dyBC;
   int i,j,culltest;
-  int ay, by, cy;
+  union { float f; int i; } ay;
+  union { float f; int i; } by;
+  union { float f; int i; } cy;
   float *fp;
   struct dataList_s *dlp;
   volatile FxU32 *fifoPtr;
@@ -176,15 +180,15 @@ GR_DDFUNC(_trisetup, FxI32, ( const void *va, const void *vb, const void *vc ))
    **  that we know the first two elements are X & Y by looking at the
    **  grVertex structure.  
    */
-  ay = *(int *)&snap_ya;
-  by = *(int *)&snap_yb;
-  if (ay < 0) ay ^= 0x7FFFFFFF;
-  cy = *(int *)&snap_yc;
-  if (by < 0) by ^= 0x7FFFFFFF;
-  if (cy < 0) cy ^= 0x7FFFFFFF;
-  if (ay < by) {
-    if (by > cy) {              /* acb */
-      if (ay < cy) {
+  ay.f = snap_ya;
+  by.f = snap_yb;
+  cy.f = snap_yc;
+  if (ay.i < 0) ay.i ^= 0x7FFFFFFF;
+  if (by.i < 0) by.i ^= 0x7FFFFFFF;
+  if (cy.i < 0) cy.i ^= 0x7FFFFFFF;
+  if (ay.i < by.i) {
+    if (by.i > cy.i) {              /* acb */
+      if (ay.i < cy.i) {
         fa = (const float *)va + xindex;
         fb = (const float *)vc + xindex;
         fc = (const float *)vb + xindex;
@@ -197,8 +201,8 @@ GR_DDFUNC(_trisetup, FxI32, ( const void *va, const void *vb, const void *vc ))
       /* else it's already sorted */
     }
   } else {
-    if (by < cy) {              /* bac */
-      if (ay < cy) {
+    if (by.i < cy.i) {              /* bac */
+      if (ay.i < cy.i) {
         fa = (const float *)vb + xindex;
         fb = (const float *)va + xindex;
         fc = (const float *)vc + xindex;
@@ -427,7 +431,9 @@ GR_DDFUNC(_trisetup, FxI32, ( const void *va, const void *vb, const void *vc ))
   const float *fc = (const float *)vc + xindex;
   float ooa, dxAB, dxBC, dyAB, dyBC;
   int i,j,culltest;
-  int ay, by, cy;
+  union { float f; int i; } ay;
+  union { float f; int i; } by;
+  union { float f; int i; } cy;
   float *fp;
   struct dataList_s *dlp;
   float snap_xa, snap_ya, snap_xb, snap_yb, snap_xc, snap_yc;
@@ -447,15 +453,15 @@ GR_DDFUNC(_trisetup, FxI32, ( const void *va, const void *vb, const void *vc ))
    **  that we know the first two elements are X & Y by looking at the
    **  grVertex structure.  
    */
-  ay = *(int *)&snap_ya;
-  by = *(int *)&snap_yb;
-  if (ay < 0) ay ^= 0x7FFFFFFF;
-  cy = *(int *)&snap_yc;
-  if (by < 0) by ^= 0x7FFFFFFF;
-  if (cy < 0) cy ^= 0x7FFFFFFF;
-  if (ay < by) {
-    if (by > cy) {              /* acb */
-      if (ay < cy) {
+  ay.f = snap_ya;
+  by.f = snap_yb;
+  cy.f = snap_yc;
+  if (ay.i < 0) ay.i ^= 0x7FFFFFFF;
+  if (by.i < 0) by.i ^= 0x7FFFFFFF;
+  if (cy.i < 0) cy.i ^= 0x7FFFFFFF;
+  if (ay.i < by.i) {
+    if (by.i > cy.i) {              /* acb */
+      if (ay.i < cy.i) {
         fa = (const float *)va + xindex;
         fb = (const float *)vc + xindex;
         fc = (const float *)vb + xindex;
@@ -468,8 +474,8 @@ GR_DDFUNC(_trisetup, FxI32, ( const void *va, const void *vb, const void *vc ))
       /* else it's already sorted */
     }
   } else {
-    if (by < cy) {              /* bac */
-      if (ay < cy) {
+    if (by.i < cy.i) {              /* bac */
+      if (ay.i < cy.i) {
         fa = (const float *)vb + xindex;
         fb = (const float *)va + xindex;
         fc = (const float *)vc + xindex;
@@ -624,7 +630,6 @@ GR_DDFUNC(_trisetup, FxI32, ( const void *va, const void *vb, const void *vc ))
 GR_DDFUNC(_trisetup_nogradients, FxI32, ( const void *va, const void *vb, const void *vc ))
 {
   GR_DCL_GC;
-  GR_DCL_HW;
   FxI32 xindex = (gc->state.vData.vertexInfo.offset >> 2);
   FxI32 yindex = xindex + 1;
   const float *fa = (const float *)va + xindex;
@@ -632,7 +637,9 @@ GR_DDFUNC(_trisetup_nogradients, FxI32, ( const void *va, const void *vb, const 
   const float *fc = (const float *)vc + xindex;
   float dxAB, dxBC, dyAB, dyBC;
   int i,j;
-  int ay, by, cy;
+  union { float f; int i; } ay;
+  union { float f; int i; } by;
+  union { float f; int i; } cy;
   float *fp;
   struct dataList_s *dlp;
   volatile FxU32 *fifoPtr;
@@ -650,15 +657,15 @@ GR_DDFUNC(_trisetup_nogradients, FxI32, ( const void *va, const void *vb, const 
   **  that we know the first two elements are X & Y by looking at the
   **  grVertex structure.  
   */
-  ay = *(int *)&snap_ya;
-  by = *(int *)&snap_yb;
-  if (ay < 0) ay ^= 0x7FFFFFFF;
-  cy = *(int *)&snap_yc;
-  if (by < 0) by ^= 0x7FFFFFFF;
-  if (cy < 0) cy ^= 0x7FFFFFFF;
-  if (ay < by) {
-    if (by > cy) {              /* acb */
-      if (ay < cy) {
+  ay.f = snap_ya;
+  by.f = snap_yb;
+  cy.f = snap_yc;
+  if (ay.i < 0) ay.i ^= 0x7FFFFFFF;
+  if (by.i < 0) by.i ^= 0x7FFFFFFF;
+  if (cy.i < 0) cy.i ^= 0x7FFFFFFF;
+  if (ay.i < by.i) {
+    if (by.i > cy.i) {              /* acb */
+      if (ay.i < cy.i) {
         fa = (const float *)va + xindex;
         fb = (const float *)vc + xindex;
         fc = (const float *)vb + xindex;
@@ -670,8 +677,8 @@ GR_DDFUNC(_trisetup_nogradients, FxI32, ( const void *va, const void *vb, const 
       /* else it's already sorted */
     }
   } else {
-    if (by < cy) {              /* bac */
-      if (ay < cy) {
+    if (by.i < cy.i) {              /* bac */
+      if (ay.i < cy.i) {
         fa = (const float *)vb + xindex;
         fb = (const float *)va + xindex;
         fc = (const float *)vc + xindex;
@@ -853,7 +860,9 @@ GR_DDFUNC(_trisetup_nogradients, FxI32, ( const void *va, const void *vb, const 
   const float *fc = (const float *)vc + xindex;
   float dxAB, dxBC, dyAB, dyBC;
   int i,j;
-  int ay, by, cy;
+  union { float f; int i; } ay;
+  union { float f; int i; } by;
+  union { float f; int i; } cy;
   float *fp;
   struct dataList_s *dlp;
   float snap_xa, snap_ya, snap_xb, snap_yb, snap_xc, snap_yc;
@@ -870,15 +879,15 @@ GR_DDFUNC(_trisetup_nogradients, FxI32, ( const void *va, const void *vb, const 
   **  that we know the first two elements are X & Y by looking at the
   **  grVertex structure.  
   */
-  ay = *(int *)&snap_ya;
-  by = *(int *)&snap_yb;
-  if (ay < 0) ay ^= 0x7FFFFFFF;
-  cy = *(int *)&snap_yc;
-  if (by < 0) by ^= 0x7FFFFFFF;
-  if (cy < 0) cy ^= 0x7FFFFFFF;
-  if (ay < by) {
-    if (by > cy) {              /* acb */
-      if (ay < cy) {
+  ay.f = snap_ya;
+  by.f = snap_yb;
+  cy.f = snap_yc;
+  if (ay.i < 0) ay.i ^= 0x7FFFFFFF;
+  if (by.i < 0) by.i ^= 0x7FFFFFFF;
+  if (cy.i < 0) cy.i ^= 0x7FFFFFFF;
+  if (ay.i < by.i) {
+    if (by.i > cy.i) {              /* acb */
+      if (ay.i < cy.i) {
         fa = (const float *)va + xindex;
         fb = (const float *)vc + xindex;
         fc = (const float *)vb + xindex;
@@ -890,8 +899,8 @@ GR_DDFUNC(_trisetup_nogradients, FxI32, ( const void *va, const void *vb, const 
       /* else it's already sorted */
     }
   } else {
-    if (by < cy) {              /* bac */
-      if (ay < cy) {
+    if (by.i < cy.i) {              /* bac */
+      if (ay.i < cy.i) {
         fa = (const float *)vb + xindex;
         fb = (const float *)va + xindex;
         fc = (const float *)vc + xindex;

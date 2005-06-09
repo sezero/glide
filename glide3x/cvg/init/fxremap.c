@@ -109,7 +109,7 @@ void fxremap_dowork(int argc,char **argv,int doit_silently)
    /* expand region of mapping for S3 card */
    AdjustMapForS3();
    /* see if we find any conflicts with any voodoo card */
-   while (conflict=TestForConflicts())
+   while ((conflict=TestForConflicts()))
    {
       conflicts_found++;
       /* since it is going to move */
@@ -302,7 +302,7 @@ RangeStruct *TestForConflicts(void)
             else {
                if (!silent) {
                  printf("FxRemap: Possible PCI conflict not with Voodoo device\n");
-                 printf("%X (%X) <-> %X:%X (%X)\n",cur->id, cur->address,  
+                 printf("%X (%X) <-> %X (%X)\n",cur->id, cur->address,  
                        cur->next->id, cur->next->address);
                }
             }
@@ -830,12 +830,14 @@ FxBool ReadHex(char *string,FxU32 *num)
    /* read in number */
    while(((string[i]>=0x30)&&(string[i]<0x3A))||((string[i]>=0x41)&&(string[i]<0x47))||((string[i]>=0x61)&&(string[i]<0x67)))
    {
-      if ((string[i]>=0x30)&&(string[i]<0x3A))
-         temp2=string[i] - 0x30;
-      else if ((string[i]>=0x41)&&(string[i]<0x47))
-         temp2=string[i] - 0x37;
-      else if ((string[i]>=0x61)&&(string[i]<0x67))
-         temp2=string[i] - 0x57;
+      if ((string[i]>='0')&&(string[i]<='9'))
+         temp2=string[i] - '0';
+      else if ((string[i]>='A')&&(string[i]<='F'))
+         temp2=10 + string[i] - 'A';
+      else if ((string[i]>='a')&&(string[i]<='f'))
+         temp2=10 + string[i] - 'a';
+      else
+         return FXFALSE;
       if (num_count!=0)
          temp=(temp<<4)+temp2;
       else if (num_count<8)

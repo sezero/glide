@@ -113,7 +113,8 @@ _grShamelessPlug(void)
 
   if (gc->pluginInfo.plugProc != NULL) {
     FxU32
-      plugWidth, plugHeight,
+      plugWidth, plugHeight;
+    FxI32
       plugStride;
     GrLfbWriteMode_t
       plugFormat;
@@ -214,7 +215,7 @@ FxBool FX_CALL fxSplashInit (FxU32 hWnd,
     FILE *f;
     if ((f = fopen("3dfxplug.tga", "rb")) != NULL) {
        int bpp, skip;
-       int i, j, decoded;
+       unsigned int i, j, decoded;
        unsigned char header[18], b1[4], b0;
 
        /* read TGA header */
@@ -355,7 +356,7 @@ FxBool FX_CALL fxSplashInit (FxU32 hWnd,
      * embedded image is always 16bit RLE and does not need to be flipped
      */
     int k = 0;
-    int i, j, decoded;
+    unsigned int i, j, decoded;
     unsigned char b0;
 
     /* allocate datablock */

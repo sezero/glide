@@ -1205,7 +1205,6 @@ GR_ENTRY(grTexCombine, void,
     FxU32 combineMode = gc->state.tmuShadow[tmu].combineMode;
     FxU32 isCombineExt = (combineMode & SST_CM_USE_COMBINE_MODE);
     if (isCombineExt) {
-      SstRegs* tmuHw = SST_TMU(hw, tmu);
       /* It appears that some of the combineMode bits still take effect */
       /* even if SST_CM_USE_COMBINE_MODE is cleared.  Thus, to make sure */
       /* that things work right with old style combine modes, we clear   */
@@ -3144,16 +3143,20 @@ GR_ENTRY(grTexMultibaseAddress, void,
           FxU32 evenOdd, GrTexInfo *info))
 {
 #define FN_NAME "grTexMultibaseAddress"
+#if GLIDE_DEBUG
   GrTexBaseRange_t
     maxPossibleLodRange = GR_TEXBASE_256; /* But see below for Napalm */
+#endif
 
   GR_BEGIN_NOFIFOCHECK("grTexMultibaseAddress", 88);
   GDBG_INFO_MORE(gc->myLevel,"(%d, 0x%X, 0x%X)\n", tmu, range, startAddress);
 
   GR_CHECK_TMU(FN_NAME, tmu);
+#if 0 /* GLIDE_DEBUG  FIXME: this is NOT handled in the case below */
   if (IS_NAPALM(gc->bInfo->pciInfo.deviceID)) {
     maxPossibleLodRange = GR_TEXBASE_2048;
-  }
+  } 
+#endif
   GR_CHECK_F(FN_NAME, range > maxPossibleLodRange, "invalid range");
   GR_CHECK_F(FN_NAME, startAddress >= gc->tmu_state[tmu].total_mem,
              "invalid startAddress");
@@ -3195,6 +3198,7 @@ GR_ENTRY(grTexMultibaseAddress, void,
       break;
       
     case GR_TEXBASE_32_TO_1:
+    default: /* should never happen because of range check above */
       largeLevelLod = GR_LOD_LOG2_32;
       baseAddrRegIndex = (offsetof(SstRegs, texBaseAddr38) >> 2UL);
       addrRegShadow = &gc->state.tmuShadow[tmu].texBaseAddr_3_8;
@@ -3397,7 +3401,6 @@ _grTexForceLod(GrChipID_t tmu, int value)
 {
 #define FN_NAME "_grTexForceLod"
   GR_DCL_GC;
-  GR_DCL_HW;
   FxU32 tLod = gc->state.tmuShadow[tmu].tLOD;
   FxBool tBig = FXFALSE;
 

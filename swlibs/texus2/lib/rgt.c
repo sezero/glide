@@ -58,6 +58,7 @@ static void swapShorts(unsigned short *array, long length)
     }
 }
 
+#if 0 /* not used */
 static void swapLongs(unsigned int *array, long length)
 {
     unsigned int s;
@@ -67,6 +68,7 @@ static void swapLongs(unsigned int *array, long length)
                         ((s&0xFF00) << 8) | (s>>24);
     }
 }
+#endif
 
 // just swap RGB into BGR (leave MSB undefined)
 static void swapRGB(unsigned int *array, long length)

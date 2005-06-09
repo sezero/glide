@@ -321,6 +321,7 @@ clean:
 	-$(RM) ../../cinit/*.o ../../cinit/*.lo
 	-$(RM) ../../minihwc/*.o ../../minihwc/*.lo
 	-$(RM) $(FX_GLIDE_SW)/newpci/pcilib/*.o $(FX_GLIDE_SW)/newpci/pcilib/*.lo
+	-$(RM) $(FX_GLIDE_SW)/fxmisc/linutil.o
 	-$(RM) fxinline.h
 	-$(RM) fxgasm.h
 	-$(RM) $(FX_GLIDE_SW)/texus2/lib/*.o $(FX_GLIDE_SW)/texus2/lib/*.lo

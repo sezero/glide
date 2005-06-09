@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/12/07 21:42:35  joseph
+** Initial checkin into SourceForge.
+**
 ** 
 ** 1     10/08/98 11:30a Brent
 ** 
@@ -10674,7 +10677,7 @@ static Gu3dfInfo hilite_3dfinfo = {
 #endif
     GR_TEXFMT_INTENSITY_8 /* format */
   },
-  { 0x0000000 },          /* table */
+  { },                    /* table */
   NULL,                   /* data */
   0x00000ab0              /* mem_required */
 };
@@ -12065,7 +12068,7 @@ static Gu3dfInfo shadow_3dfinfo = {
 #endif
     GR_TEXFMT_INTENSITY_8 /* format */
   },
-  { 0x00000000 },         /* table */
+  { },         /* table */
   NULL,                   /* data */
   0x00000ab0              /* mem_required */
 };

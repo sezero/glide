@@ -69,7 +69,7 @@ char lin_getch() {
   char c;
 
   if (!init_done) do_init();
-  read(0, &c, 1);
+  if (read(0, &c, 1) != 1)
+    return EOF;
   return c;
 }
-

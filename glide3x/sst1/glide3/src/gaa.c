@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.3  2005/05/10 11:27:23  jwrdegoede
+** sst1 gcc4 compile fixes
+**
 ** Revision 1.1.2.2  2004/10/04 09:35:59  dborca
 ** second cut at Glide3x for Voodoo1/Rush (massive update):
 ** delayed validation, vertex snapping, clip coordinates, strip/fan_continue, bugfixes.
@@ -74,7 +77,6 @@
 static void grSetVertexParameter(const void *v1)
 {
   GR_DCL_GC;
-  GR_DCL_HW;
   struct dataList_s *dlp;
   int i;
   float *fp;
@@ -110,7 +112,6 @@ static void grSetVertexParameter(const void *v1)
 static void grVpSetVertexParameter(float oow, const void *v1)
 {
   GR_DCL_GC;
-  GR_DCL_HW;
   struct dataList_s *dlp;
   int i;
   float *fp, dp;
@@ -250,7 +251,7 @@ static void grVpSetVertexParameter(float oow, const void *v1)
       i = dlp->i;
     }
     else {
-      dp = FARRAY(v1,i) * oow * gc->state.tmu_config[1].st_scale[k];
+      dp = FARRAY(v1,i) * oow * gc->state.tmu_config[1].st_scale[0 /* k ?? */];
       GR_SETF( fp[0], dp );
       dlp++;
       i = dlp->i;
@@ -635,13 +636,14 @@ _grAADrawPoints(FxI32 mode, FxI32 count, void *pointers)
 {
 #define FN_NAME "_grAADrawPoints"
 
-  int i, j;
+  int i;
   float *fp;
   struct dataList_s *dlp;
   float dp;
   float PX, PY;
   FxI32 stride = mode;
   FxI32 index;
+  union { float f; FxI32 i; } j;
 
   GR_BEGIN_NOFIFOCHECK("grAADrawPoint",94);
 
@@ -667,12 +669,12 @@ _grAADrawPoints(FxI32 mode, FxI32 count, void *pointers)
       PY = (volatile float) (VY(e)+SNAP_BIAS);
       
       if (gc->state.vData.colorType == GR_FLOAT) {
-        j = *(long *)(((int)e)+gc->state.vData.aInfo.offset);
+        j.f = *(float *)((unsigned char *)e + gc->state.vData.aInfo.offset);
       }
       else {
-        *(float *)&j = FbARRAY(e, gc->state.vData.pargbInfo.offset + GR_PARGB_A);
+        j.f = FbARRAY(e, gc->state.vData.pargbInfo.offset + GR_PARGB_A);
       }
-      j ^= 0x80000000;
+      j.i ^= 0x80000000;
       
       /* 1st triangle EDA */
       GR_SETF(hw->FvA.x, PX);
@@ -710,7 +712,7 @@ _grAADrawPoints(FxI32 mode, FxI32 count, void *pointers)
           GR_SETF( fp[DPDY_OFFSET>>2] , _GlideRoot.pool.f0 );
         }
       }
-      GR_SET(hw->Fdady, j);
+      GR_SET(hw->Fdady, j.i);
       P6FENCE_CMD( GR_SET(hw->triangleCMD, 0xffffffff) );
       
       /* 2nd triangle BEC */
@@ -722,7 +724,7 @@ _grAADrawPoints(FxI32 mode, FxI32 count, void *pointers)
       GR_SETF(hw->FvB.y, PY);
     
       GR_SET(hw->Fa, 0);
-      GR_SET(hw->Fdadx, j);
+      GR_SET(hw->Fdadx, j.i);
       GR_SET(hw->Fdady, 0);
       P6FENCE_CMD( GR_SET(hw->triangleCMD, 0xffffffff) );
       
@@ -731,9 +733,9 @@ _grAADrawPoints(FxI32 mode, FxI32 count, void *pointers)
       GR_SETF(hw->FvA.x, dp);
       GR_SETF(hw->FvC.x, dp);
       
-      j ^= 0x80000000;
+      j.i ^= 0x80000000;
       GR_SET(hw->Fa, 0);
-      GR_SET(hw->Fdadx, j);
+      GR_SET(hw->Fdadx, j.i);
       P6FENCE_CMD( GR_SET(hw->triangleCMD, 1) );
       
       /* 4th triangle ABE */
@@ -746,7 +748,7 @@ _grAADrawPoints(FxI32 mode, FxI32 count, void *pointers)
       
       GR_SET(hw->Fa, 0);
       GR_SET(hw->Fdadx, 0);
-      GR_SET(hw->Fdady, j);
+      GR_SET(hw->Fdady, j.i);
       P6FENCE_CMD( GR_SET(hw->triangleCMD, 1) );
       
       GR_END();
@@ -773,12 +775,12 @@ _grAADrawPoints(FxI32 mode, FxI32 count, void *pointers)
                              gc->state.Viewport.oy + SNAP_BIAS);
       
       if (gc->state.vData.colorType == GR_FLOAT) {
-        *(float *)&j = FARRAY(e, gc->state.vData.aInfo.offset) * _GlideRoot.pool.f255;
+        j.f = FARRAY(e, gc->state.vData.aInfo.offset) * _GlideRoot.pool.f255;
       }
       else {
-        *(float *)&j = FbARRAY(e, gc->state.vData.pargbInfo.offset + GR_PARGB_A);
+        j.f = FbARRAY(e, gc->state.vData.pargbInfo.offset + GR_PARGB_A);
       }
-      j ^= 0x80000000;
+      j.i ^= 0x80000000;
       
       /* 1st triangle EDA */
       GR_SETF(hw->FvA.x, PX);
@@ -969,7 +971,7 @@ _grAADrawPoints(FxI32 mode, FxI32 count, void *pointers)
         }
       }
 
-      GR_SET(hw->Fdady, j);
+      GR_SET(hw->Fdady, j.i);
       P6FENCE_CMD( GR_SET(hw->triangleCMD, 0xffffffff) );
       
       /* 2nd triangle BEC */
@@ -981,7 +983,7 @@ _grAADrawPoints(FxI32 mode, FxI32 count, void *pointers)
       GR_SETF(hw->FvB.y, PY);
     
       GR_SET(hw->Fa, 0);
-      GR_SET(hw->Fdadx, j);
+      GR_SET(hw->Fdadx, j.i);
       GR_SET(hw->Fdady, 0);
       P6FENCE_CMD( GR_SET(hw->triangleCMD, 0xffffffff) );
       
@@ -990,9 +992,9 @@ _grAADrawPoints(FxI32 mode, FxI32 count, void *pointers)
       GR_SETF(hw->FvA.x, dp);
       GR_SETF(hw->FvC.x, dp);
       
-      j ^= 0x80000000;
+      j.i ^= 0x80000000;
       GR_SET(hw->Fa, 0);
-      GR_SET(hw->Fdadx, j);
+      GR_SET(hw->Fdadx, j.i);
       P6FENCE_CMD( GR_SET(hw->triangleCMD, 1) );
       
       /* 4th triangle ABE */
@@ -1005,7 +1007,7 @@ _grAADrawPoints(FxI32 mode, FxI32 count, void *pointers)
       
       GR_SET(hw->Fa, 0);
       GR_SET(hw->Fdadx, 0);
-      GR_SET(hw->Fdady, j);
+      GR_SET(hw->Fdady, j.i);
       P6FENCE_CMD( GR_SET(hw->triangleCMD, 1) );
       
       GR_END();
@@ -1033,7 +1035,7 @@ _grAADrawLineStrip(FxI32 mode, FxI32 ltype, FxI32 count, void *pointers)
   float *tv;
   struct dataList_s *dlp;
   int i;
-  float *fp, dp;
+  float *fp, dp = 0.0f;   /* dp may be used unitialised at line 1715 ? */
   float tmp1, tmp2;
   float dx, dy;           /* delta X and Y */
   FxI32 stride = mode;
@@ -1904,18 +1906,21 @@ _grAADrawTriangles(FxI32 mode, FxI32 ttype, FxI32 count, void *pointers)
       **  grVertex structure.  
       */
       {
-        int ay = *(int *)&a[(gc->state.vData.vertexInfo.offset>>2)+1];
-        int by = *(int *)&b[(gc->state.vData.vertexInfo.offset>>2)+1];
-        int cy = *(int *)&c[(gc->state.vData.vertexInfo.offset>>2)+1];
         int culltest = gc->state.cull_mode;
+        union { float f; int i; } ay;
+        union { float f; int i; } by;
+        union { float f; int i; } cy;
+        ay.f = a[(gc->state.vData.vertexInfo.offset>>2)+1];
+        by.f = b[(gc->state.vData.vertexInfo.offset>>2)+1];
+        cy.f = c[(gc->state.vData.vertexInfo.offset>>2)+1];
         
-        if (ay < 0) ay ^= 0x7FFFFFFF;
-        if (by < 0) by ^= 0x7FFFFFFF;
-        if (cy < 0) cy ^= 0x7FFFFFFF;
+        if (ay.i < 0) ay.i ^= 0x7FFFFFFF;
+        if (by.i < 0) by.i ^= 0x7FFFFFFF;
+        if (cy.i < 0) cy.i ^= 0x7FFFFFFF;
         
-        if (ay < by) {
-          if (by > cy) {    /* acb */
-            if (ay < cy) {
+        if (ay.i < by.i) {
+          if (by.i > cy.i) {    /* acb */
+            if (ay.i < cy.i) {
               fa = a;
               fb = c;
               fc = b;
@@ -1928,8 +1933,8 @@ _grAADrawTriangles(FxI32 mode, FxI32 ttype, FxI32 count, void *pointers)
             /* else it's already sorted */
           }
         } else {
-          if (by < cy) {    /* bac */
-            if (ay < cy) {
+          if (by.i < cy.i) {    /* bac */
+            if (ay.i < cy.i) {
               fa = b;
               fb = a;
               fc = c;
@@ -2310,8 +2315,6 @@ _grAAVpDrawTriangle(const void *a, const void *b, const void *c,
   GR_DCL_GC;
 
   FxU32 fbzModeOld;                 /* Squirrel away current fbzMode */
-  FxI32 xindex = (gc->state.vData.vertexInfo.offset >> 2);
-  FxI32 yindex = xindex + 1;
   float oowa, oowb, oowc;
 
   GDBG_INFO((96, "_grAADrawTriangles (a = 0x%x,a = 0x%x,a = 0x%x, ab_aa = %d,bc_aa = %d, ca_aa = %d)\n",

@@ -19,6 +19,9 @@
 ;; $Header$
 ;; $Revision$
 ;; $Log$
+;; Revision 1.1.1.1.8.2  2004/11/25 19:12:22  koolsmoky
+;; fixed 3dnow! and mmx texture download routines
+;;
 ;; Revision 1.1.1.1.8.1  2003/11/03 13:34:30  dborca
 ;; Voodoo2 happiness (DJGPP & Linux)
 ;;
@@ -527,7 +530,7 @@ endp
 
 
 
-segment		TEXT
+;segment		TEXT
 
               ALIGN  32
 

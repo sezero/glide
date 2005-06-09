@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.3  2004/10/04 09:17:16  dborca
+** killed some warnings / compilation errors
+**
 ** Revision 1.1.1.1.8.2  2004/01/20 14:04:10  dborca
 ** compilation and some other minor fixes to aid in debugging
 **
@@ -93,10 +96,10 @@ extern const int _grMipMapHostWH[G3_ASPECT_TRANSLATE(GR_ASPECT_LOG2_1x8)+1][G3_L
 extern FxU32 _gr_aspect_index_table[];
 extern FxU32 _grMipMapHostSize[4][16];
 
-static FxU16 ReadDataShort(FILE *);
-static FxU32 ReadDataLong(FILE *);
-static void  Read8Bit(FxU8 *dst, FILE *image, int small_lod, int large_lod, GrAspectRatio_t aspect);
-static void  Read16Bit(FxU16 *dst, FILE *image, int small_lod, int large_lod, GrAspectRatio_t aspect);
+static FxBool ReadDataShort(FILE *, FxU16 *data);
+static FxBool ReadDataLong(FILE *, FxU32 *data);
+static FxBool Read8Bit(FxU8 *dst, FILE *image, int small_lod, int large_lod, GrAspectRatio_t aspect);
+static FxBool Read16Bit(FxU16 *dst, FILE *image, int small_lod, int large_lod, GrAspectRatio_t aspect);
 
 #if ((GLIDE_PLATFORM & (GLIDE_OS_DOS32 | GLIDE_OS_WIN32 | GLIDE_OS_MACOS)) != 0)
 const char *openmode = "rb";
@@ -140,7 +143,6 @@ GR_DIENTRY(gu3dfGetInfo, FxBool,
 {
   FILE *image_file;
   FxU32 i;
-  FxU32 newlines = 0;
   char  version[5];
   char  color_format[10];
   int   aspect_width, aspect_height;
@@ -211,7 +213,7 @@ GR_DIENTRY(gu3dfGetInfo, FxBool,
             version,
             color_format,
             &small_lod, &large_lod,
-            &aspect_width, &aspect_height) == 0)
+            &aspect_width, &aspect_height) != 6)
     return FXFALSE;
 
   /*
@@ -450,7 +452,6 @@ GR_DIENTRY(gu3dfLoad, FxBool, (const char *filename, Gu3dfInfo *info))
 {
   FILE *image_file  = 0;
   FxU32 index       = 0;
-  FxU32 newlines    = 0;
   char  buffer[100] = "";
 
   GDBG_INFO(81,"gu3dfLoad(%s,0x%x)\n",filename,info);
@@ -470,30 +471,71 @@ GR_DIENTRY(gu3dfLoad, FxBool, (const char *filename, Gu3dfInfo *info))
     ** read in Y
     */
     for (index = 0; index < 16; index++)
-      info->table.nccTable.yRGB[index] = ((FxI16) ReadDataShort(image_file)) & 0xFF;
+    {
+      FxU16 val;
+      if (!ReadDataShort(image_file, &val))
+      {
+        fclose(image_file);
+        return FXFALSE;
+      }
+      info->table.nccTable.yRGB[index] = val & 0xFF;
+    }
 
     /*
     ** read in I
     */
     for (index = 0; index < 4; index++) {
-      info->table.nccTable.iRGB[index][0] = ((FxI16) ReadDataShort(image_file)) & 0x1FF;
-      info->table.nccTable.iRGB[index][1] = ((FxI16) ReadDataShort(image_file)) & 0x1FF;
-      info->table.nccTable.iRGB[index][2] = ((FxI16) ReadDataShort(image_file)) & 0x1FF;
+      FxU16 val;
+      if (!ReadDataShort(image_file, &val))
+      {
+        fclose(image_file);
+        return FXFALSE;
+      }
+      info->table.nccTable.iRGB[index][0] = val & 0x1FF;
+      if (!ReadDataShort(image_file, &val))
+      {
+        fclose(image_file);
+        return FXFALSE;
+      }
+      info->table.nccTable.iRGB[index][1] = val & 0x1FF;
+      if (!ReadDataShort(image_file, &val))
+      {
+        fclose(image_file);
+        return FXFALSE;
+      }
+      info->table.nccTable.iRGB[index][2] = val & 0x1FF;
     }
 
     /*
     ** read in Q
     */
     for (index = 0; index < 4; index++) {
-      info->table.nccTable.qRGB[index][0] = ((FxI16) ReadDataShort(image_file)) & 0x1FF;
-      info->table.nccTable.qRGB[index][1] = ((FxI16) ReadDataShort(image_file)) & 0x1FF;
-      info->table.nccTable.qRGB[index][2] = ((FxI16) ReadDataShort(image_file)) & 0x1FF;
+      FxU16 val;
+      if (!ReadDataShort(image_file, &val))
+      {
+        fclose(image_file);
+        return FXFALSE;
+      }
+      info->table.nccTable.qRGB[index][0] = val & 0x1FF;
+      if (!ReadDataShort(image_file, &val))
+      {
+        fclose(image_file);
+        return FXFALSE;
+      }
+      info->table.nccTable.qRGB[index][1] = val & 0x1FF;
+      if (!ReadDataShort(image_file, &val))
+      {
+        fclose(image_file);
+        return FXFALSE;
+      }
+      info->table.nccTable.qRGB[index][2] = val & 0x1FF;
     }
 
     /*
     ** pack the table Y entries
     */
-    for (index = 0; index < 4; index++) {
+    for (index = 0; index < 4; index++)
+    {
       FxU32 packedvalue;
 
       packedvalue  = ((FxU32) info->table.nccTable.yRGB[index*4+0]);
@@ -538,7 +580,15 @@ GR_DIENTRY(gu3dfLoad, FxBool, (const char *filename, Gu3dfInfo *info))
       (info->header.format == GR_TEXFMT_AP_88)) {
     FxU32 i;
     for(i = 0; i < 256; i++)
-      info->table.palette.data[i] = ReadDataLong(image_file);
+    {
+      FxU32 val;
+      if (!ReadDataLong(image_file, &val))
+      {
+        fclose(image_file);
+        return FXFALSE;
+      }
+      info->table.palette.data[i] = val;
+    }
   }
 
   /*
@@ -552,10 +602,14 @@ GR_DIENTRY(gu3dfLoad, FxBool, (const char *filename, Gu3dfInfo *info))
   case GR_TEXFMT_YIQ_422:
   case GR_TEXFMT_RGB_332:
   case GR_TEXFMT_P_8:
-    Read8Bit(info->data, image_file, 
+    if(!Read8Bit(info->data, image_file, 
              G3_LOD_TRANSLATE(info->header.small_lod), 
              G3_LOD_TRANSLATE(info->header.large_lod), 
-             G3_ASPECT_TRANSLATE(info->header.aspect_ratio));
+             G3_ASPECT_TRANSLATE(info->header.aspect_ratio)))
+    {
+      fclose(image_file);
+      return FXFALSE;
+    }
     break;
 
   case GR_TEXFMT_RGB_565:
@@ -565,10 +619,14 @@ GR_DIENTRY(gu3dfLoad, FxBool, (const char *filename, Gu3dfInfo *info))
   case GR_TEXFMT_ARGB_4444:
   case GR_TEXFMT_ALPHA_INTENSITY_88:
   case GR_TEXFMT_AP_88:
-    Read16Bit(info->data, image_file, 
+    if (!Read16Bit(info->data, image_file, 
               G3_LOD_TRANSLATE(info->header.small_lod),
               G3_LOD_TRANSLATE(info->header.large_lod),
-              G3_ASPECT_TRANSLATE(info->header.aspect_ratio));
+              G3_ASPECT_TRANSLATE(info->header.aspect_ratio)))
+    {
+      fclose(image_file);
+      return FXFALSE;
+    }
     break;
 
   default:
@@ -588,7 +646,7 @@ GR_DIENTRY(gu3dfLoad, FxBool, (const char *filename, Gu3dfInfo *info))
 **
 ** Read in an 8-bit texture map, unpacked.
 */
-static void 
+static FxBool
 Read8Bit(FxU8 *data, FILE *image_file, 
          int small_lod, int large_lod, 
          GrAspectRatio_t aspect_ratio)
@@ -600,9 +658,12 @@ Read8Bit(FxU8 *data, FILE *image_file,
     width  = _grMipMapHostWH[aspect_ratio][lod][0];
     height = _grMipMapHostWH[aspect_ratio][lod][1];
 
-    fread(data, sizeof(char), width*height, image_file);
+    if (fread(data, sizeof(char), width*height, image_file) !=
+        (sizeof(char)*width*height))
+      return FXFALSE;
     data += width*height;
   }
+  return FXTRUE;
 }
 
 /*
@@ -610,7 +671,7 @@ Read8Bit(FxU8 *data, FILE *image_file,
 **
 ** Read in a 16-bit texture map, unpacked.
 */
-static void Read16Bit(FxU16 *data, FILE *image_file, 
+static FxBool Read16Bit(FxU16 *data, FILE *image_file, 
                       int small_lod, int large_lod, 
                       GrAspectRatio_t aspect_ratio)
 {
@@ -623,42 +684,54 @@ static void Read16Bit(FxU16 *data, FILE *image_file,
     height = _grMipMapHostWH[aspect_ratio][lod][1];
 
     for (index = 0; index < (width * height); index++) {
-      *data = ReadDataShort(image_file);
+      if (!ReadDataShort(image_file,data))
+        return FXFALSE;
       data++;
     }
   }
+  return FXTRUE;
 }
 
 /*
 ** FxU16 ReadDataShort
 */
-static FxU16 ReadDataShort(FILE *fp)
+static FxBool ReadDataShort(FILE *fp, FxU16 *data)
 {
-  FxU16 b1 = (FxU16)getc(fp);
-  FxU16 b2 = (FxU16)getc(fp);
-  
+  FxU16 b1, b2;
+  int b;
+
+  b = getc(fp);
+  if (b == EOF)
+    return FXFALSE;
+  b1 = b;
+      
+  b = getc(fp);
+  if (b == EOF)
+    return FXFALSE;
+  b2 = b;
+      
 #define kShiftB1        8
 #define kShiftB2        0
 
-        return (((b1 & 0xFF) << kShiftB1) | ((b2 & 0xFF) << kShiftB2));
+  *data = ((b1 & 0xFF) << kShiftB1) | ((b2 & 0xFF) << kShiftB2);
+
+  return FXTRUE;
 }
 
 /*
 ** ReadDataLong
 */
-static FxU32 ReadDataLong(FILE *fp)
+static FxBool ReadDataLong(FILE *fp, FxU32 *data)
 {
-  FxU32 data;
   FxU8 byte[4];
 
-  fread(byte, 4, 1, fp);
-  data = (((FxU32) byte[0]) << 24) |
+  if (fread(byte, 4, 1, fp) != 4)
+    return FXFALSE;
+
+  *data = (((FxU32) byte[0]) << 24) |
     (((FxU32) byte[1]) << 16) |
     (((FxU32) byte[2]) <<  8) |
     ((FxU32) byte[3]);
 
-  return data;
+  return FXTRUE;
 }
-
-
-

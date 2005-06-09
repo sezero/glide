@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.3  2005/05/25 08:56:23  jwrdegoede
+** Make h5 and h3 tree 64 bit clean. This is ported over from the non-devel branch so this might be incomplete
+**
 ** Revision 1.1.2.2  2004/02/16 07:42:16  dborca
 ** grSetNumPendingBuffers visible with grGetProcAddress
 **
@@ -709,7 +712,9 @@ GR_STATE_ENTRY(grAlphaTestReferenceValue, void, (GrAlpha_t value))
 } /* grAlphaTestReferenceValue */
 
 
+#define ADDWAXMASK(mask, reg, base) mask |= (1 << ((offsetof(SstGRegs, reg) - offsetof(SstGRegs, base)) >> 2))
 
+#if 0 /* unused */
 static void
 _grBufferClear2D(const FxU32 buffOffset, 
                  const FxU32 clipLeft, const FxU32 clipTop,
@@ -723,8 +728,6 @@ _grBufferClear2D(const FxU32 buffOffset,
     regMask = 0L;
 
   GR_BEGIN_NOFIFOCHECK("_grBufferClear2D", 86);
-
-#define ADDWAXMASK(mask, reg, base) mask |= (1 << ((offsetof(SstGRegs, reg) - offsetof(SstGRegs, base)) >> 2))
 
   ADDWAXMASK(regMask, clip0min, clip0min);
   ADDWAXMASK(regMask, clip0max, clip0min);
@@ -786,8 +789,7 @@ _grBufferClear2D(const FxU32 buffOffset,
   REG_GROUP_END();
 #undef FN_NAME
 } /* _grBufferClear2D */
-
-
+#endif /* unused */
 
 /*---------------------------------------------------------------------------
 ** grBufferClear
@@ -918,7 +920,7 @@ GR_ENTRY(grBufferClear, void, (GrColor_t color, GrAlpha_t alpha, FxU32 depth))
           REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 2, 0x3);
           REG_GROUP_SET(hw, colBufferAddr,gc->buffers[gc->grColBuf]);
 #if DRI_BUILD
-          REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer)? driInfo.stride :
+          REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer)? (FxU32)driInfo.stride :
 			gc->state.shadow.auxBufferStride);
 #else
           REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.auxBufferStride);
@@ -952,7 +954,7 @@ GR_ENTRY(grBufferClear, void, (GrColor_t color, GrAlpha_t alpha, FxU32 depth))
         REG_GROUP_SET(hw, colBufferAddr, gc->buffers[gc->windowed ? 0 : gc->curBuffer]);
 
 #if DRI_BUILD
-        REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride :
+        REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? (FxU32)driInfo.stride :
 		      gc->state.shadow.colBufferStride);
 #else
         REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride);
@@ -2364,7 +2366,7 @@ GR_STATE_ENTRY(grRenderBuffer, void, (GrBuffer_t buffer))
                      : gc->backBuffer);
     REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 2, 0x3); 
     REG_GROUP_SET(hw, colBufferAddr, gc->buffers[gc->curBuffer]);
-    REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride :
+    REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? (FxU32)driInfo.stride :
 		    gc->state.shadow.colBufferStride);
     REG_GROUP_END();
 

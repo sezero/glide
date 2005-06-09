@@ -89,6 +89,7 @@ getMode(FxU32 bits3)
             break;
         default:
             txError("FXT1 bad mode\n");
+            mode = -1;
             break;
         }
     }

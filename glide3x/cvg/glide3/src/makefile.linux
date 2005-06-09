@@ -311,7 +311,7 @@ fxgasm: fxgasm.c
 ###############################################################################
 
 clean:
-	-$(RM) *.o *.lo
+	-$(RM) *.o *.obj *.lo
 	-$(RM) ../../init/*.o ../../init/*.lo
 	-$(RM) $(FX_GLIDE_SW)/newpci/pcilib/*.o $(FX_GLIDE_SW)/newpci/pcilib/*.lo
 	-$(RM) fxinline.h

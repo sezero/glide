@@ -19,6 +19,11 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.2  2004/10/04 09:36:00  dborca
+** second cut at Glide3x for Voodoo1/Rush (massive update):
+** delayed validation, vertex snapping, clip coordinates, strip/fan_continue, bugfixes.
+** and probably a bunch of other crap that I forgot
+**
 ** Revision 1.1.2.1  2004/03/02 07:55:30  dborca
 ** Bastardised Glide3x for SST1
 **
@@ -103,7 +108,7 @@ extern const int _grMipMapHostWH[G3_ASPECT_TRANSLATE(GR_ASPECT_LOG2_1x8)+1][G3_L
 GR_DDFUNC(_grTexDownloadNccTable, void, ( GrChipID_t tmu, FxU32 which, const GuNccTable *table, int start, int end ))
 {
   int i;
-  FxU32 *hwNCC;
+  unsigned long *hwNCC;
   
   GR_BEGIN_NOFIFOCHECK("_grTexDownloadNccTable",89);
   GDBG_INFO_MORE((gc->myLevel,"(%d,%d, 0x%x, %d,%d)\n",tmu,which,table,start,end));
@@ -120,7 +125,7 @@ GR_DDFUNC(_grTexDownloadNccTable, void, ( GrChipID_t tmu, FxU32 which, const GuN
     GR_SET_EXPECTED_SIZE(48+2*PACKER_WORKAROUND_SIZE);
     PACKER_WORKAROUND;
     hw = SST_TMU(hw,tmu);
-    hwNCC = which == 0 ? hw->nccTable0 : hw->nccTable1;
+    hwNCC = (which == 0)? hw->nccTable0 : hw->nccTable1;
 
     for ( i = 0; i < 12; i++ )
       GR_SET(hwNCC[i], table->packed_data[i] );

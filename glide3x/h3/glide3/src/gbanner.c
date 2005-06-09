@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/11/24 21:44:56  joseph
+** Initial checkin for SourceForge
+**
 ** 
 ** 4     4/06/99 3:54p Dow
 ** Alt tab again.
@@ -110,7 +113,8 @@ _grShamelessPlug(void)
 #if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
   if (gc->pluginInfo.plugProc != NULL) {
     FxU32
-      plugWidth, plugHeight,
+      plugWidth, plugHeight;
+    FxI32
       plugStride;
     GrLfbWriteMode_t
       plugFormat;

@@ -19,6 +19,9 @@
  **
  ** $Header$
  ** $Log$
+ ** Revision 1.1.2.1  2004/03/02 07:55:30  dborca
+ ** Bastardised Glide3x for SST1
+ **
  ** Revision 1.1.1.1  1999/12/07 21:42:33  joseph
  ** Initial checkin into SourceForge.
  **
@@ -509,7 +512,7 @@ drawFaces(int frame, int objnum)
 {
   int facenum;
   int material_index;
-  float intensity_factor[3];
+  float intensity_factor[3] = { 0.0f, 0.0f, 0.0f };
   GrVertex gvert[3];
   static int prev_mat_index = 0xffff;
   int i;

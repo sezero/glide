@@ -235,7 +235,9 @@ pciMapLinearLinux(FxU32 bus, FxU32 physical_addr,
     }
   }
   if (((*linear_addr)=(unsigned long)mmap(0, *length, PROT_READ|PROT_WRITE,
-				  MAP_SHARED, fd, physical_addr))<0) {
+				  MAP_SHARED, fd, physical_addr)) ==
+       (unsigned long)MAP_FAILED)
+  {
     if (fd!=linuxDevFd) close(fd);
     return FXFALSE;
   }

@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.5  2005/05/25 08:56:23  jwrdegoede
+** Make h5 and h3 tree 64 bit clean. This is ported over from the non-devel branch so this might be incomplete
+**
 ** Revision 1.1.2.4  2004/10/05 14:47:15  dborca
 ** conditional compilation a bit more sane
 **
@@ -553,6 +556,9 @@
 #define kPageBoundarySlop 0x1000UL
 #define kPageBoundaryMask (kPageBoundarySlop - 1)
 
+/* Some forward declarations */
+void _grImportFifo (int, int);
+
 /* Init hw */
 
 ResEntry
@@ -664,6 +670,7 @@ assertDefaultState( void )
   gc->triSetupProc = CUR_TRI_PROC(FXTRUE, (gc->state.cull_mode != GR_CULL_DISABLE));
 } /* assertDefaultState */
 
+#ifndef DRI_BUILD
 static void 
 clearBuffers( GrGC *gc ) 
 {
@@ -683,6 +690,7 @@ clearBuffers( GrGC *gc )
     grRenderBuffer( GR_BUFFER_FRONTBUFFER );
   }
 } /* clearBuffers */
+#endif
 
 static void 
 doSplash( void ) 
@@ -1509,7 +1517,7 @@ GR_ENTRY(grSstWinOpen, GrContext_t, ( FxU32                   hWnd,
     {
       REG_GROUP_SET(hw, colBufferAddr, gc->state.shadow.colBufferAddr);
 #if DRI_BUILD
-      REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride :
+      REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? (FxU32)driInfo.stride :
 		    gc->state.shadow.colBufferStride);
 #else
       REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride);

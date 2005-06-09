@@ -75,7 +75,9 @@ typedef unsigned short  ushort;
 #define BLUEI           2       
 #define TRUE            1
 #define FALSE           0
+#ifndef bzero
 #define bzero(ptr, sz)  memset(ptr, 0, sz)
+#endif
 
 typedef struct {
     float               weightedvar;            /* weighted variance */

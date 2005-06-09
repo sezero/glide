@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.1  2004/09/27 08:59:45  dborca
+** clamp lod bias
+**
 ** Revision 1.1.1.1  1999/11/24 21:44:57  joseph
 ** Initial checkin for SourceForge
 **
@@ -1540,6 +1543,7 @@ GR_ENTRY(grTexMultibaseAddress, void,
       break;
       
     case GR_TEXBASE_32_TO_1:
+    default: /* should never happen because of range check above */
       largeLevelLod = G3_LOD_TRANSLATE(GR_LOD_LOG2_32);
       baseAddrRegIndex = (offsetof(SstRegs, texBaseAddr38) >> 2UL);
       addrRegShadow = &gc->state.shadow.tmuState[tmu].texBaseAddr_3_8;

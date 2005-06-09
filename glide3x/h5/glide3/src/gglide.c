@@ -1336,7 +1336,7 @@ _grTriFill(GrColor_t color, FxU32 depth, GrStencil_t stencil)
       {
         REG_GROUP_SET(hw, stencilMode, (GR_CMP_ALWAYS << SST_STENCIL_FUNC_SHIFT) |
                                        (stencil       << SST_STENCIL_REF_SHIFT)  |
-                                        stencilMode & (SST_STENCIL_WMASK | SST_STENCIL_MASK) |
+                                       (stencilMode & (SST_STENCIL_WMASK | SST_STENCIL_MASK)) |
                                         SST_STENCIL_ENABLE) ;
         REG_GROUP_SET(hw, stencilOp, (GR_STENCILOP_REPLACE << SST_STENCIL_SFAIL_OP_SHIFT) |
                                      (GR_STENCILOP_REPLACE << SST_STENCIL_ZFAIL_OP_SHIFT) |
@@ -1883,7 +1883,7 @@ GR_ENTRY(grBufferClear, void, (GrColor_t color, GrAlpha_t alpha, FxU32 depth))
             REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 2, 0x3);
             REG_GROUP_SET(hw, colBufferAddr, gc->state.shadow.auxBufferAddr );
 #ifdef DRI_BUILD
-            REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer)? driInfo.stride :
+            REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer)? (FxU32)driInfo.stride :
                           gc->state.shadow.auxBufferStride);
 #else	/* defined(DRI_BUILD) */
             REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.auxBufferStride );
@@ -1934,7 +1934,7 @@ GR_ENTRY(grBufferClear, void, (GrColor_t color, GrAlpha_t alpha, FxU32 depth))
             REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 2, 0x3);
             REG_GROUP_SET(hw, colBufferAddr, gc->buffers0[gc->windowed ? 0 : gc->curBuffer]);
 #ifdef DRI_BUILD
-            REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride : 
+            REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? (FxU32)driInfo.stride : 
                           gc->state.shadow.colBufferStride );
 #else
             REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride );
@@ -2430,7 +2430,7 @@ GR_EXT_ENTRY(grBufferClearExt, void, (GrColor_t color, GrAlpha_t alpha, FxU32 de
             REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 2, 0x3) ;
             REG_GROUP_SET(hw, colBufferAddr, gc->state.shadow.auxBufferAddr) ;
 #ifdef DRI_BUILD
-	    REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride : 
+	    REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? (FxU32)driInfo.stride : 
 			  gc->state.shadow.auxBufferStride );
 #else
 	    REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.auxBufferStride );
@@ -2480,7 +2480,7 @@ GR_EXT_ENTRY(grBufferClearExt, void, (GrColor_t color, GrAlpha_t alpha, FxU32 de
             REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 2, 0x3) ;
             REG_GROUP_SET(hw, colBufferAddr, gc->buffers0[gc->windowed ? 0 : gc->curBuffer]) ;
 #ifdef DRI_BUILD
-	    REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride : 
+	    REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? (FxU32)driInfo.stride : 
 			  gc->state.shadow.colBufferStride );
 #else
 	    REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride );
@@ -4422,7 +4422,7 @@ GR_STATE_ENTRY(grRenderBuffer, void, (GrBuffer_t buffer))
                      : gc->backBuffer);
     REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 2, 0x3); 
     REG_GROUP_SET(hw, colBufferAddr, gc->buffers0[gc->curBuffer]);
-    REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride :
+    REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? (FxU32)driInfo.stride :
 		    gc->state.shadow.colBufferStride);
     REG_GROUP_END();
     gc->state.shadow.colBufferAddr = gc->buffers0[gc->curBuffer];
@@ -5594,7 +5594,7 @@ GR_EXT_ENTRY(grTBufferWriteMaskExt, void , (FxU32 tmask) )
       {
         REG_GROUP_SET(hw, colBufferAddr, gc->state.shadow.colBufferAddr);
 #ifdef DRI_BUILD
-	REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride :
+	REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? (FxU32)driInfo.stride :
                       gc->state.shadow.colBufferStride );
 #else
         REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride );
@@ -5617,7 +5617,7 @@ GR_EXT_ENTRY(grTBufferWriteMaskExt, void , (FxU32 tmask) )
         REG_GROUP_SET(hw, colBufferAddr, gc->state.shadow.colBufferAddr);
         REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride );
 #ifdef DRI_BUILD
-	REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride :
+	REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? (FxU32)driInfo.stride :
                       gc->state.shadow.colBufferStride );
 #else
         REG_GROUP_SET(hw, auxBufferAddr, gc->state.shadow.auxBufferAddr);
@@ -5637,7 +5637,7 @@ GR_EXT_ENTRY(grTBufferWriteMaskExt, void , (FxU32 tmask) )
       {
         REG_GROUP_SET(hw, colBufferAddr, gc->state.shadow.colBufferAddr);
 #ifdef DRI_BUILD
-	REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride :
+	REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? (FxU32)driInfo.stride :
                       gc->state.shadow.colBufferStride );
 #else
         REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride );
@@ -5650,7 +5650,7 @@ GR_EXT_ENTRY(grTBufferWriteMaskExt, void , (FxU32 tmask) )
       {
         REG_GROUP_SET(hw, colBufferAddr, gc->buffers1[gc->curBuffer] | SST_BUFFER_BASE_SELECT);
 #ifdef DRI_BUILD
-	REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride :
+	REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? (FxU32)driInfo.stride :
                       gc->state.shadow.colBufferStride );
 #else
         REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride );

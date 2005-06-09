@@ -753,7 +753,7 @@ encodeColors(int mode, int mixmode, int alpha, float c0[3], float c1[3], float c
 
         /* Map input colors to closest entry in the palette */
         for (i=0; i<32; i++) {
-            index[i] = bestColor((float *) &input[i][0], fpal, 4);
+            index[i] = bestColor(&input[i][0], (const float (*)[3])fpal, 4);
         }
 
         /* Now encode these into the 128 bits */
@@ -1043,7 +1043,7 @@ again:
         for (i=0; i<32; i++) {  // for each input point
             float   e;
 
-            j = bestColorError((float *) &input[i][0], colors, ncolors, &e);
+            j = bestColorError(&input[i][0], (const float (*)[3])colors, ncolors, &e);
             counts[j] += 1.0f;
             sums[j][0] += (input[i][0]);
             sums[j][1] += (input[i][1]);
@@ -1102,13 +1102,13 @@ again:
 
     {
         float worsterr = -1.0f;
-        int   worsti;
+        int   worsti = 0;
 
         for (i=0; i<32; i++) {
             float   dr, dg, db;
             float   e;           /* distance according to the L-infinity metric */
 
-            j = bestColor((float *) &input[i][0], colors, ncolors); /* distance according to the L-squared metric */
+            j = bestColor(&input[i][0], (const float (*)[3])colors, ncolors); /* distance according to the L-squared metric */
             dr = ABS( input[i][0] - colors[j][0] );
             dg = ABS( input[i][1] - colors[j][1] );
             db = ABS( input[i][2] - colors[j][2] );
@@ -1190,15 +1190,19 @@ vqChromaAlpha(const float in[][3], FxI32 ain[], int ncolors, float colors[][4], 
     colors[0][0] = input[ 0][0];
     colors[0][1] = input[ 0][1];
     colors[0][2] = input[ 0][2];
+    colors[0][3] = input[ 0][3];
     colors[1][0] = input[10][0];
     colors[1][1] = input[10][1];
     colors[1][2] = input[10][2];
+    colors[1][3] = input[10][3];
     colors[2][0] = input[16][0];
     colors[2][1] = input[16][1];
     colors[2][2] = input[16][2];
+    colors[2][3] = input[16][3];
     colors[3][0] = input[26][0];  /* wasted if ncolors == 3 */
     colors[3][1] = input[26][1];  /* wasted if ncolors == 3 */
     colors[3][2] = input[26][2];  /* wasted if ncolors == 3 */
+    colors[3][3] = input[26][3];  /* wasted if ncolors == 3 */
 
 again:
     // Here's the vector quantizer:
@@ -1215,7 +1219,7 @@ again:
         for (i=0; i<32; i++) {
             float   e0, e1, e2, e;
 
-            j = bestColorAlpha((float *) &input[i][0], input[i][3], colors, ncolors, lerp);
+            j = bestColorAlpha(&input[i][0], input[i][3], (const float (*)[4])colors, ncolors, lerp);
             if ( !lerp && ( j == 3 )) continue; // transparent black handled specially
             counts[j] += 1.0f;
             deltas[j][0] += (input[i][0] - colors[j][0]) * alpha;
@@ -1293,12 +1297,12 @@ again:
 
     {
         float worsterr = -1.0f;
-        int   worsti;
+        int   worsti = 0;
 
         for (i=0; i<32; i++) {
             float   dr, dg, db, da, e;
 
-            j = bestColorAlpha((float *) &input[i][0], input[i][3], colors, ncolors, lerp);
+            j = bestColorAlpha(&input[i][0], input[i][3], (const float (*)[4])colors, ncolors, lerp);
             if ( !lerp && ( j == 3 )) continue;
             dr = ABS( input[i][0] - colors[j][0] );
             dg = ABS( input[i][1] - colors[j][1] );
@@ -1363,7 +1367,7 @@ encodeAlpha( float input[][3], FxI32  ainput[], void *bits, FxU32 lerp)
     float   fpal[4][4];
     int     i, index[32];
 
-    vqChromaAlpha( input, ainput, 3, col, lerp);
+    vqChromaAlpha( (const float (*)[3])input, ainput, 3, col, lerp);
 
     if ( lerp ) {
         /* Deal with even block */
@@ -1375,7 +1379,7 @@ encodeAlpha( float input[][3], FxI32  ainput[], void *bits, FxU32 lerp)
 
         /* Map input colors to closest entry in the palette */
         for (i=0; i<16; i++) {
-            index[i] = bestColorAlpha((float *) &input[i][0], (float)ainput[i], fpal, 4, lerp);
+            index[i] = bestColorAlpha(&input[i][0], (float)ainput[i], (const float (*)[4])fpal, 4, lerp);
         }
 
         /* Now deal with odd block */
@@ -1386,7 +1390,7 @@ encodeAlpha( float input[][3], FxI32  ainput[], void *bits, FxU32 lerp)
 
         /* Map input colors to closest entry in the palette */
         for (i=16; i<32; i++) {
-            index[i] = bestColorAlpha((float *) &input[i][0], (float)ainput[i], fpal, 4, lerp);
+            index[i] = bestColorAlpha(&input[i][0], (float)ainput[i], (const float (*)[4])fpal, 4, lerp);
         }
     } else { // no interpolation
         p[0] = ARGB( (int)col[0][3], (int) col[0][0], (int) col[0][1], (int) col[0][2]);
@@ -1398,7 +1402,7 @@ encodeAlpha( float input[][3], FxI32  ainput[], void *bits, FxU32 lerp)
 
         /* Map input colors to closest entry in the palette */
         for (i=0; i<32; i++) {
-            index[i] = bestColorAlpha((float *) &input[i][0], (float)ainput[i], col, 3, lerp);
+            index[i] = bestColorAlpha(&input[i][0], (float)ainput[i], (const float (*)[4])col, 3, lerp);
         }
     } 
 
@@ -1454,7 +1458,7 @@ quantize4bpp_block(float input[][3], FxI32  ainput[], void *bits)
 #endif
 
     // whole block statistics
-    eigenStatistics(32, input, Wvalues, output, Wflo, Wfhi, Wavg /*not used*/, Wmin, Wmax, Werr);
+    eigenStatistics(32, (const float (*)[3])input, Wvalues, output, Wflo, Wfhi, Wavg /*not used*/, Wmin, Wmax, Werr);
 
 #if PRINT
     fprintf(stderr, "NEW TILE----------------------(%4d %4d)\n", globalX, globalY);
@@ -1487,7 +1491,7 @@ quantize4bpp_block(float input[][3], FxI32  ainput[], void *bits)
             return;
 
         case TCC_CHROMA:
-            vqChroma( input, alpha ? 3 : 4, col);
+            vqChroma( (const float (*)[3])input, alpha ? 3 : 4, col);
             encodeColors( TCC_CHROMA, 0, 0,
                 &col[0][0], &col[1][0], &col[2][0], &col[3][0], input, ainput, bits);
             _cc_chroma++;
@@ -1551,7 +1555,7 @@ quantize4bpp_block(float input[][3], FxI32  ainput[], void *bits)
     	}    
 #endif
 
-        vqChroma( input, alpha ? 3 : 4, col);
+        vqChroma( (const float (*)[3])input, alpha ? 3 : 4, col);
         encodeColors( TCC_CHROMA, 0, alpha,
             &col[0][0], &col[1][0], &col[2][0], &col[3][0], input, ainput, bits);
         _cc_chroma++;

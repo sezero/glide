@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.1  2003/11/07 13:38:38  dborca
+** unite the clans
+**
 ** Revision 1.1.1.1  1999/11/24 21:44:54  joseph
 ** Initial checkin for SourceForge
 **
@@ -687,6 +690,7 @@ GR_DIENTRY(grTexDownloadMipMap, void,
                  "(%d, 0x%X, 0x%X, 0x%X\n",
                  tmu, startAddress, evenOdd, info);
 
+#if GLIDE_CHECK_COMPATABILITY && GLIDE_DEBUG
   {
     GR_DCL_GC;
     const FxU32 
@@ -699,6 +703,7 @@ GR_DIENTRY(grTexDownloadMipMap, void,
     GR_CHECK_F(FN_NAME, evenOdd > 0x3, "evenOdd mask invalid" );
     GR_CHECK_F(FN_NAME, !info, "info invalid" );
   }
+#endif
 
   {
     struct GrTmuMemInfo*

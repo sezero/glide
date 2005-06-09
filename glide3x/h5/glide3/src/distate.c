@@ -1573,7 +1573,7 @@ _grValidateTMUState()
         tmu > 0 ? gc->state.tcc_requires_prev_texture[tmu - 1] : gc->state.ac_requires_texture);
 #endif
        
-    if(tmuRequiredByDownstreamUnit && !doTMU0Passthrough || palletizedTexture) {
+    if((tmuRequiredByDownstreamUnit && !doTMU0Passthrough) || palletizedTexture) {
 #if DEBUG_2PPC
       GDBG_PRINTF("Setup TMU%d\n",tmu);
 #endif

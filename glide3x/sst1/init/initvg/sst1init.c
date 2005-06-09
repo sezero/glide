@@ -122,7 +122,9 @@
 **
 */
 
+#ifndef __GNUC__
 #pragma optimize ("",off)
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -331,9 +333,8 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitRegisters(FxU32 *sstbase)
     
     /* Adjust Fbi-to-Trex clock delay value */
     /* Adjust Trex-to-Fbi FIFO */
-    if(GETENV(("SST_TF_FIFO_THRESH")))
-        SSCANF(GETENV(("SST_TF_FIFO_THRESH")), "%i", &tf_fifo_thresh);
-    else
+    if(!GETENV(("SST_TF_FIFO_THRESH")) ||
+       (SSCANF(GETENV(("SST_TF_FIFO_THRESH")), "%i", &tf_fifo_thresh) != 1))
         tf_fifo_thresh = 0x8;
     INIT_PRINTF(("sst1InitRegisters(): Setting TREX-to-FBI FIFO THRESHOLD to 0x%x...\n",
         tf_fifo_thresh));
@@ -344,8 +345,9 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitRegisters(FxU32 *sstbase)
     else
         /* .6 micron */
         ft_clk_del = 0xa; /* Okay for 16 MHz startup... */
-    if(GETENV(("SST_PFT_CLK_DEL")))
-        SSCANF(GETENV(("SST_PFT_CLK_DEL")), "%i", &ft_clk_del);
+    if(GETENV(("SST_PFT_CLK_DEL")) &&
+       (SSCANF(GETENV(("SST_PFT_CLK_DEL")), "%i", &n) == 1))
+      ft_clk_del = n;
     INIT_PRINTF(("sst1InitRegisters(): Setting PRELIM FT-CLK delay to 0x%x...\n", ft_clk_del));
     ISET(sst->fbiInit3,
         (SST_FBIINIT3_DEFAULT & ~(SST_FT_CLK_DEL_ADJ | SST_TF_FIFO_THRESH)) |
@@ -403,24 +405,23 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitRegisters(FxU32 *sstbase)
     }
 
     /* set TREX0 init values */
-    if(GETENV(("SST_TREX0INIT0"))) {
+    if(GETENV(("SST_TREX0INIT0")) &&
+       (SSCANF(GETENV(("SST_TREX0INIT0")), "%i",
+         &sst1CurrentBoard->tmuInit0[0]) == 1) ) {
         INIT_PRINTF(("sst1InitRegisters(): Using SST_TREX0INIT0 environment variable\n"));
-        SSCANF(GETENV(("SST_TREX0INIT0")), "%i",
-            &sst1CurrentBoard->tmuInit0[0]);
     } else
         sst1CurrentBoard->tmuInit0[0] = SST_TREX0INIT0_DEFAULT;
 
     INIT_PRINTF(("sst1InitRegisters(): Storing TREX0INIT0=0x%x\n",
         sst1CurrentBoard->tmuInit0[0]));
-    if(GETENV(("SST_TREX0INIT1"))) {
-
+    if(GETENV(("SST_TREX0INIT1")) &&
+       (SSCANF(GETENV(("SST_TREX0INIT1")), "%i",
+         &sst1CurrentBoard->tmuInit1[0]) == 1) ) {
         INIT_PRINTF(("sst1InitRegisters(): Using SST_TREX0INIT1 environment variable\n"));
-        SSCANF(GETENV(("SST_TREX0INIT1")), "%i",
-            &sst1CurrentBoard->tmuInit1[0]);
     } else
         sst1CurrentBoard->tmuInit1[0] = SST_TREX0INIT1_DEFAULT;
-    if(GETENV(("SST_PTF0_CLK_DEL"))) {
-        SSCANF(GETENV(("SST_PTF0_CLK_DEL")), "%i", &tf0_clk_del);
+    if(GETENV(("SST_PTF0_CLK_DEL")) &&
+       (SSCANF(GETENV(("SST_PTF0_CLK_DEL")), "%i", &tf0_clk_del) == 1) ) {
         sst1CurrentBoard->tmuInit1[0] = (sst1CurrentBoard->tmuInit1[0] &
             ~SST_TEX_TF_CLK_DEL_ADJ) |
             (tf0_clk_del<<SST_TEX_TF_CLK_DEL_ADJ_SHIFT);
@@ -434,22 +435,22 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitRegisters(FxU32 *sstbase)
     sst1InitIdleFBINoNOP(sstbase);
 
     /* set TREX1 init values */
-    if(GETENV(("SST_TREX1INIT0"))) {
+    if(GETENV(("SST_TREX1INIT0")) &&
+       (SSCANF(GETENV(("SST_TREX1INIT0")), "%i",
+         &sst1CurrentBoard->tmuInit0[1]) == 1) ) {
         INIT_PRINTF(("sst1InitRegisters(): Using SST_TREX1INIT0 environment variable\n"));
-        SSCANF(GETENV(("SST_TREX1INIT0")), "%i",
-            &sst1CurrentBoard->tmuInit0[1]);
     } else
         sst1CurrentBoard->tmuInit0[1] = SST_TREX1INIT0_DEFAULT;
     INIT_PRINTF(("sst1InitRegisters(): Storing TREX1INIT0=0x%x\n",
         sst1CurrentBoard->tmuInit0[1]));
-    if(GETENV(("SST_TREX1INIT1"))) {
+    if(GETENV(("SST_TREX1INIT1")) &&
+       (SSCANF(GETENV(("SST_TREX1INIT1")), "%i",
+         &sst1CurrentBoard->tmuInit1[1]) == 1) ) {
         INIT_PRINTF(("sst1InitRegisters(): Using SST_TREX1INIT1 environment variable\n"));
-        SSCANF(GETENV(("SST_TREX1INIT1")), "%i",
-            &sst1CurrentBoard->tmuInit1[1]);
     } else
         sst1CurrentBoard->tmuInit1[1] = SST_TREX1INIT1_DEFAULT;
-    if(GETENV(("SST_PTF1_CLK_DEL"))) {
-        SSCANF(GETENV(("SST_PTF1_CLK_DEL")), "%i", &tf1_clk_del);
+    if(GETENV(("SST_PTF1_CLK_DEL")) &&
+       (SSCANF(GETENV(("SST_PTF1_CLK_DEL")), "%i", &tf1_clk_del) == 1) ) {
         sst1CurrentBoard->tmuInit1[1] = (sst1CurrentBoard->tmuInit1[1] &
             ~SST_TEX_TF_CLK_DEL_ADJ) |
             (tf1_clk_del<<SST_TEX_TF_CLK_DEL_ADJ_SHIFT);
@@ -463,22 +464,22 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitRegisters(FxU32 *sstbase)
     sst1InitIdleFBINoNOP(sstbase);
 
     /* set TREX2 init values */
-    if(GETENV(("SST_TREX2INIT0"))) {
+    if(GETENV(("SST_TREX2INIT0")) &&
+       (SSCANF(GETENV(("SST_TREX2INIT0")), "%i",
+         &sst1CurrentBoard->tmuInit0[2]) == 1) ) {
         INIT_PRINTF(("sst1InitRegisters(): Using SST_TREX2INIT0 environment variable\n"));
-        SSCANF(GETENV(("SST_TREX2INIT0")), "%i",
-            &sst1CurrentBoard->tmuInit0[2]);
     } else
         sst1CurrentBoard->tmuInit0[2] = SST_TREX2INIT0_DEFAULT;
     INIT_PRINTF(("sst1InitRegisters(): Storing TREX2INIT0=0x%x\n",
         sst1CurrentBoard->tmuInit0[2]));
-    if(GETENV(("SST_TREX2INIT1"))) {
+    if(GETENV(("SST_TREX2INIT1")) &&
+       (SSCANF(GETENV(("SST_TREX2INIT1")), "%i",
+         &sst1CurrentBoard->tmuInit1[2]) == 1) ) {
         INIT_PRINTF(("sst1InitRegisters(): Using SST_TREX2INIT1 environment variable\n"));
-        SSCANF(GETENV(("SST_TREX2INIT1")), "%i",
-            &sst1CurrentBoard->tmuInit1[2]);
     } else
         sst1CurrentBoard->tmuInit1[2] = SST_TREX2INIT1_DEFAULT;
-    if(GETENV(("SST_PTF2_CLK_DEL"))) {
-        SSCANF(GETENV(("SST_PTF2_CLK_DEL")), "%i", &tf2_clk_del);
+    if(GETENV(("SST_PTF2_CLK_DEL")) &&
+       (SSCANF(GETENV(("SST_PTF2_CLK_DEL")), "%i", &tf2_clk_del) == 1) ) {
         sst1CurrentBoard->tmuInit1[2] = (sst1CurrentBoard->tmuInit1[2] &
             ~SST_TEX_TF_CLK_DEL_ADJ) |
             (tf2_clk_del<<SST_TEX_TF_CLK_DEL_ADJ_SHIFT);
@@ -718,7 +719,7 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitShutdown(FxU32 *sstbase)
 #endif
 
     if(GETENV(("SST_NOSHUTDOWN")))
-        INIT_PRINTF(("sst1InitShutdown(): Bypassing shutdown with SST_NOSHUTDOWN\n", n));
+        INIT_PRINTF(("sst1InitShutdown(): Bypassing shutdown with SST_NOSHUTDOWN\n"));
 
     n = 0;
     while(!GETENV(("SST_NOSHUTDOWN"))) {
@@ -912,5 +913,6 @@ sst1InitCachingOn(void)
 
 } /* sst1InitSetCacheType */
 
-
+#ifndef __GNUC__
 #pragma optimize ("",on)
+#endif

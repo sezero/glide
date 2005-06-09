@@ -51,16 +51,22 @@
 
 static int sst1InitFgets(char *, FILE *);
 static int sst1InitFgetc(FILE *);
-static int sst1InitParseFieldDac(char *);
 static int sst1InitParseFieldCfg(char *);
+static void sst1InitToLower(char *string);
+#if TEST || (!defined(INIT_LINUX) && !defined(DIRECTX))
+static int sst1InitParseFieldDac(char *);
 static int sst1InitParseDacRdWrString(char *, sst1InitDacStruct *);
 static int sst1InitParseDacRdWr(char *, sst1InitDacRdWrStruct *);
 static int sst1InitParseSetVideoString(char *, sst1InitDacStruct *);
 static int sst1InitParseSetMemClkString(char *, sst1InitDacStruct *);
 static int sst1InitParseSetVideoModeString(char *, sst1InitDacStruct *);
-static void sst1InitPrintDacRdWr(sst1InitDacRdWrStruct *, char *);
-static void sst1InitToLower(char *string);
+#endif
+#if !defined(INIT_LINUX) && !defined(DIRECTX) && __DOS32__
 static void sst1InitFixFilename(char *dst, char *src);
+#endif
+#if TEST
+static void sst1InitPrintDacRdWr(sst1InitDacRdWrStruct *, char *);
+#endif
 
 static FxBool checkedFileP = FXFALSE;
 
@@ -282,7 +288,6 @@ __errExit:
 */
 FX_ENTRY FxBool FX_CALL sst1InitVoodooFile() {
   static FxBool retVal = FXFALSE;
-  int inCfg, inDac;
   FILE *file = 0;
   char buffer[1024], filename[256];
   char *tmpPtr;
@@ -430,6 +435,7 @@ static void foo(int argc, char **argv)
 }
 #endif
 
+#if !defined(INIT_LINUX) && !defined(DIRECTX) && __DOS32__
 static void sst1InitFixFilename(char *dst, char *src)
 {
     while(*src) {
@@ -440,7 +446,7 @@ static void sst1InitFixFilename(char *dst, char *src)
     }
     *dst = (char) NULL;
 }
-
+#endif
 
 static int sst1InitFgets(char *string, FILE *stream)
 {
@@ -544,6 +550,7 @@ static int sst1InitParseFieldCfg(char *string)
     return(1);
 }
 
+#if TEST || (!defined(INIT_LINUX) && !defined(DIRECTX))
 static int sst1InitParseFieldDac(char *string)
 {
     char *dacFieldReference, *dacFieldValue;
@@ -656,6 +663,7 @@ static int sst1InitParseDacRdWr(char *string, sst1InitDacRdWrStruct *dacRdWrPtr)
 {
     char *addr, *data, *mask, *addrDataCmd;
     char stringCpy[2048];
+    int i1, i2, i3;
 
     strcpy(stringCpy, string);
 
@@ -681,10 +689,14 @@ static int sst1InitParseDacRdWr(char *string, sst1InitDacRdWrStruct *dacRdWrPtr)
             return(0);
         if(data[strlen(data)-1] != ')')
             return(0);
-        data[strlen(data)-1] = (char) NULL;
+        data[strlen(data)-1] = '\0';
         dacRdWrPtr->type = DACRDWR_TYPE_WR;
-        SSCANF(addr, "%i", &dacRdWrPtr->addr);
-        SSCANF(data, "%i", &dacRdWrPtr->data);
+        if (SSCANF(addr, "%i", &i1) != 1)
+            return(0);
+        if (SSCANF(data, "%i", &i2) != 1)
+            return(0);
+        dacRdWrPtr->addr = i1;
+        dacRdWrPtr->data = i2;
     } else if(!strcmp(stringCpy, "dacwrpop")) {
         if((addr = strtok(addrDataCmd, ",")) == NULL)
             return(0);
@@ -696,9 +708,15 @@ static int sst1InitParseDacRdWr(char *string, sst1InitDacRdWrStruct *dacRdWrPtr)
             return(0);
         data[strlen(data)-1] = (char) NULL;
         dacRdWrPtr->type = DACRDWR_TYPE_WRMOD_POP;
-        SSCANF(addr, "%i", &dacRdWrPtr->addr);
-        SSCANF(mask, "%i", &dacRdWrPtr->mask);
-        SSCANF(data, "%i", &dacRdWrPtr->data);
+        if (SSCANF(addr, "%i", &i1) != 1)
+            return(0);
+        if (SSCANF(mask, "%i", &i2) != 1)
+            return(0);
+        if (SSCANF(data, "%i", &i3) != 1)
+            return(0);
+        dacRdWrPtr->addr = i1;
+        dacRdWrPtr->mask = i2;
+        dacRdWrPtr->data = i3;
     } else if(!strcmp(stringCpy, "dacrdwr")) {
         if((addr = strtok(addrDataCmd, ",")) == NULL)
             return(0);
@@ -710,15 +728,23 @@ static int sst1InitParseDacRdWr(char *string, sst1InitDacRdWrStruct *dacRdWrPtr)
             return(0);
         data[strlen(data)-1] = (char) NULL;
         dacRdWrPtr->type = DACRDWR_TYPE_RDMODWR;
-        SSCANF(addr, "%i", &dacRdWrPtr->addr);
-        SSCANF(mask, "%i", &dacRdWrPtr->mask);
-        SSCANF(data, "%i", &dacRdWrPtr->data);
+        if (SSCANF(addr, "%i", &i1) != 1)
+            return(0);
+        if (SSCANF(mask, "%i", &i2) != 1)
+            return(0);
+        if (SSCANF(data, "%i", &i3) != 1)
+            return(0);
+        dacRdWrPtr->addr = i1;
+        dacRdWrPtr->mask = i2;
+        dacRdWrPtr->data = i3;
     } else if(!strcmp(stringCpy, "dacrd")) {
         if((addr = strtok(addrDataCmd, ",")) == NULL)
             return(0);
         if(addr[strlen(addr)-1] == ')') {
             dacRdWrPtr->type = DACRDWR_TYPE_RDNOCHECK;
-            SSCANF(addr, "%i", &dacRdWrPtr->addr);
+            if (SSCANF(addr, "%i", &i1) != 1)
+                return(0);
+            dacRdWrPtr->addr = i1;
         } else {
             dacRdWrPtr->type = DACRDWR_TYPE_RDCHECK;
             if((data = strtok(NULL, ",")) == NULL)
@@ -726,15 +752,21 @@ static int sst1InitParseDacRdWr(char *string, sst1InitDacRdWrStruct *dacRdWrPtr)
             if(data[strlen(data)-1] != ')')
                 return(0);
             data[strlen(data)-1] = (char) NULL;
-            SSCANF(addr, "%i", &dacRdWrPtr->addr);
-            SSCANF(data, "%i", &dacRdWrPtr->data);
+            if (SSCANF(addr, "%i", &i1) != 1)
+                return(0);
+            if (SSCANF(data, "%i", &i2) != 1)
+                return(0);
+            dacRdWrPtr->addr = i1;
+            dacRdWrPtr->data = i2;
         }
     } else if(!strcmp(stringCpy, "dacrdpush")) {
         if((addr = strtok(addrDataCmd, ",")) == NULL)
             return(0);
         if(addr[strlen(addr)-1] == ')') {
             dacRdWrPtr->type = DACRDWR_TYPE_RDPUSH;
-            SSCANF(addr, "%i", &dacRdWrPtr->addr);
+            if (SSCANF(addr, "%i", &i1) != 1)
+                return(0);
+            dacRdWrPtr->addr = i1;
         } else
             return(0);
     } else {
@@ -804,19 +836,23 @@ static int sst1InitParseSetVideoString(char *string, sst1InitDacStruct *dacBase)
             }
             dacSetVideoPtr->nextSetVideo = (sst1InitDacSetVideoStruct *) NULL;
             /* Width */
-            SSCANF(dacRdWrCmd, "%i", &dacSetVideoPtr->width);
+            if (SSCANF(dacRdWrCmd, "%i", &dacSetVideoPtr->width) != 1)
+                return(0);
             /* Height */
             if((dacRdWrCmd = strtok(NULL, ";")) == NULL)
                 return(0);
-            SSCANF(dacRdWrCmd, "%i", &dacSetVideoPtr->height);
+            if (SSCANF(dacRdWrCmd, "%i", &dacSetVideoPtr->height) != 1)
+                return(0);
             /* Refresh */
             if((dacRdWrCmd = strtok(NULL, ";")) == NULL)
                 return(0);
-            SSCANF(dacRdWrCmd, "%i", &dacSetVideoPtr->refresh);
+            if (SSCANF(dacRdWrCmd, "%i", &dacSetVideoPtr->refresh) != 1)
+                return(0);
             /* video16BPP */
             if((dacRdWrCmd = strtok(NULL, ";")) == NULL)
                 return(0);
-            SSCANF(dacRdWrCmd, "%i", &dacSetVideoPtr->video16BPP);
+            if (SSCANF(dacRdWrCmd, "%i", &dacSetVideoPtr->video16BPP) != 1)
+                return(0);
             /* First DacRdWr */
             if((dacRdWrCmd = strtok(NULL, ";")) == NULL)
                 return(0);
@@ -879,7 +915,8 @@ static int sst1InitParseSetMemClkString(char *string,
             dacSetMemClkPtr->nextSetMemClk = (sst1InitDacSetMemClkStruct *)
               NULL;
             /* Frequency */
-            SSCANF(dacRdWrCmd, "%i", &dacSetMemClkPtr->frequency);
+            if (SSCANF(dacRdWrCmd, "%i", &dacSetMemClkPtr->frequency) != 1)
+              return(0);
 
             /* First DacRdWr */
             if((dacRdWrCmd = strtok(NULL, ";")) == NULL)
@@ -943,7 +980,8 @@ static int sst1InitParseSetVideoModeString(char *string,
             dacSetVideoModePtr->nextSetVideoMode =
               (sst1InitDacSetVideoModeStruct *) NULL;
             /* video16BPP */
-            SSCANF(dacRdWrCmd, "%i", &dacSetVideoModePtr->video16BPP);
+            if (SSCANF(dacRdWrCmd, "%i", &dacSetVideoModePtr->video16BPP) != 1)
+              return(0);
 
             /* First DacRdWr */
             if((dacRdWrCmd = strtok(NULL, ";")) == NULL)
@@ -971,6 +1009,7 @@ static int sst1InitParseSetVideoModeString(char *string,
     }
     return(1);
 }
+#endif /* !defined(INIT_LINUX) && !defined(DIRECTX) */
 
 static void sst1InitToLower(char *string)
 {

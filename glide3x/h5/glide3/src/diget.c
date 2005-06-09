@@ -1194,6 +1194,7 @@ GR_DIENTRY(grQueryResolutions, FxI32, (const GlideResolution *resTemplate, Glide
     /* 0x10000 is the minimum interesting FIFO size */
     fbmem = (gc->bInfo->h3Mem << 20) - gc->bInfo->min_tramSize - 0x10000;
 
+#if GDBG_INFO_ON
   static char *resNames[] = {
     "GR_RESOLUTION_320x200", 
     "GR_RESOLUTION_320x240", 
@@ -1220,6 +1221,7 @@ GR_DIENTRY(grQueryResolutions, FxI32, (const GlideResolution *resTemplate, Glide
     "GR_RESOLUTION_2048x1536", 
     "GR_RESOLUTION_2048x2048"   
   };
+#endif
 
   GDBG_INFO(80, FN_NAME"(0x%x, 0x%x)\n", resTemplate, output);
   

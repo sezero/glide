@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.2.2.4  2005/05/25 08:56:23  jwrdegoede
+** Make h5 and h3 tree 64 bit clean. This is ported over from the non-devel branch so this might be incomplete
+**
 ** Revision 1.2.2.3  2005/05/25 08:51:50  jwrdegoede
 ** Add #ifdef GL_X86 around x86 specific code
 **
@@ -968,8 +971,11 @@ _GlideInitEnvironment(void)
             _GlideRoot.environment.autoBump ? "FXTRUE" : "FXFALSE");
   
   if (GETENV("FX_GLIDE_BUMPSIZE"))
-    sscanf(GETENV("FX_GLIDE_BUMPSIZE"), "%x",
-           &_GlideRoot.environment.bumpSize);
+  {
+    unsigned int u;
+    if (sscanf(GETENV("FX_GLIDE_BUMPSIZE"), "%x", &u) == 1)
+      _GlideRoot.environment.bumpSize = u;
+  }
   else
 #if __POWERPC__  
     _GlideRoot.environment.bumpSize = 0x1000;

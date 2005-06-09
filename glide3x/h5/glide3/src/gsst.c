@@ -843,6 +843,8 @@ static FxU32 lostcontext_csim;
 #define kPageBoundaryMask (kPageBoundarySlop - 1)
 
 /* Some forward declarations */
+void _grImportFifo (int, int);
+GR_ENTRY(grDRIBufferSwap, void, (FxU32 swapInterval));
 #ifdef FX_GLIDE_NAPALM
 static void _grSstSetColumnsOfNWidth(FxU32 width);
 #endif /* FX_GLIDE_NAPALM */
@@ -1058,7 +1060,7 @@ clearBuffers( GrGC *gc )
     grRenderBuffer( GR_BUFFER_FRONTBUFFER );
   }
 } /* clearBuffers */
-#else	/* defined(DRI_BUILD) */
+#elif 0	/* defined(DRI_BUILD) */ /* not used in DRI build */
 static void 
 clearBuffers( GrGC *gc ) 
 {
@@ -2879,7 +2881,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
               gcFifo->fifoPtr ); 
     
 #ifdef DRI_BUILD
-    _grImportFifo(*driInfo.fifoPtr, *driInfo.fifoRead);
+    _grImportFifo(*(int *)driInfo.fifoPtr, *(int *)driInfo.fifoRead);
 #endif
 
     /* The hw is now in a usable state from the fifo macros.
@@ -2937,7 +2939,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
     {
       REG_GROUP_SET(hw, colBufferAddr, gc->state.shadow.colBufferAddr);
 #ifdef DRI_BUILD
-      REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride : 
+      REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? (FxU32)driInfo.stride : 
 		    gc->state.shadow.colBufferStride );
 #else
       REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride );
@@ -2953,7 +2955,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
         {
             REG_GROUP_SET(hw, colBufferAddr, gc->buffers1[gc->curBuffer] | SST_BUFFER_BASE_SELECT);
 #ifdef DRI_BUILD
-	    REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? driInfo.stride : 
+	    REG_GROUP_SET(hw, colBufferStride, (!gc->curBuffer) ? (FxU32)driInfo.stride : 
 			  gc->state.shadow.colBufferStride );
 #else
 	    REG_GROUP_SET(hw, colBufferStride, gc->state.shadow.colBufferStride );
@@ -3658,7 +3660,9 @@ GR_ENTRY(guGammaCorrectionRGB, void, (float r, float g, float b))
     	  hwcGammaRGB(gc->bInfo, r, g, b);
   }
   else
+  {
 	GDBG_INFO(69,"guGammaCorrectionRGB::hwcGammaRGB (%3.3f, %3.3f, %3.3f)  call ignored\n", r,g,b);
+  }
 
 #endif /* !GLIDE_INIT_HAL */
 
@@ -3690,7 +3694,9 @@ GR_DIENTRY(grLoadGammaTable, void, (FxU32 nentries, FxU32 *red, FxU32 *green, Fx
   if (_GlideRoot.environment.useAppGamma)
    	hwcGammaTable(gc->bInfo, nentries, red, green, blue);  
   else
+  {
 	GDBG_INFO(69, "grLoadGammaTable::hwcGammaRGB call ignored\n");
+  }
 #endif
 
   GR_END();
@@ -3994,9 +4000,11 @@ _grEnableSliCtrl(void)
   if( gc-> chipCount == 2 )
   	sliChipCountDivisor = (gc->grPixelSample == 4) ? 2 : 1;
 
-  if( gc-> chipCount == 4 )
+  else if( gc-> chipCount == 4 )
 	sliChipCountDivisor = (gc->grPixelSample == 2) ? 2 : 1;
 
+  else
+	sliChipCountDivisor = 0; /* should never happen will cause div by 0 */
 
   renderMask = (gc->chipCount / sliChipCountDivisor - 1) << gc->sliBandHeight;
   scanMask = (1 << gc->sliBandHeight) - 1;

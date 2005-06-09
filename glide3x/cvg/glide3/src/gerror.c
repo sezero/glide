@@ -20,6 +20,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.1  2003/07/25 07:13:41  dborca
+** removed debris
+**
 ** Revision 1.1.1.1  1999/12/07 21:42:32  joseph
 ** Initial checkin into SourceForge.
 **
@@ -238,7 +241,7 @@ _grAssert(char *exp, char *fileName, int lineNo)
                 GR_GET(hw->cmdFifoDepth), GR_GET(hw->cmdFifoHoles), GR_GET(hw->cmdFifoBase),
                 GR_GET(hw->status));
 
-#if !GLIDE_INIT_HAL
+#if !GLIDE_INIT_HAL && GDBG_INFO_ON
     if (gc->scanline_interleaved) {
       SstRegs* slaveHw = (SstRegs*)gc->slave_ptr;
       

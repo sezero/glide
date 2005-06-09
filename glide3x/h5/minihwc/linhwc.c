@@ -103,7 +103,7 @@ typedef struct envitem_t {
 static envitem *first=0;
 static int envinit=0;
 
-DRIDef driInfo={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+DRIDef driInfo={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 void grDRIOpen(char *pFB, char *pRegs, int deviceID, int width, int height, 
 	       int mem, int cpp, int stride, int fifoOffset, int fifoSize, 
@@ -177,6 +177,7 @@ static void loadEnvFile() {
   }
 }
 
+#if 0 /* not used */
 static void deleteEnvData() {
   envitem *ptr, *next;
 
@@ -191,6 +192,7 @@ static void deleteEnvData() {
   first=0;
   envinit=0;
 }
+#endif
 
 char *
 hwcGetErrorString()
@@ -207,7 +209,7 @@ hwcInit(FxU32 vID, FxU32 dID) {
   errorString[0] = '\0';
 
   if (!driInfo.pFB) return 0;
-  if (dID!=driInfo.deviceID) return 0;
+  if (dID!=(FxU32)driInfo.deviceID) return 0;
   hInfo.boardInfo[0].pciInfo.initialized = FXFALSE;
   hInfo.nBoards++;
   hInfo.boardInfo[0].boardNum = 0;
@@ -385,9 +387,9 @@ static FxU32
 calculateLfbStride(FxU32 screenWidth)
 {
 #if	1
-    int TileAperturePitch;
+    unsigned int TileAperturePitch;
     for (TileAperturePitch = 1024;
-         (TileAperturePitch < (16 << 10)) && (TileAperturePitch < screenWidth);
+         (TileAperturePitch < (16u << 10)) && (TileAperturePitch < screenWidth);
          TileAperturePitch <<= 1);
     return(TileAperturePitch);
 #else
@@ -995,6 +997,5 @@ void grDRIInvalidateAll() {
 
 void grDRIResetSAREA()
 {
-  _grExportFifo((int *)driInfo.fifoPtr, driInfo.fifoRead);
+  _grExportFifo((int *)driInfo.fifoPtr, (int *)driInfo.fifoRead);
 }
-

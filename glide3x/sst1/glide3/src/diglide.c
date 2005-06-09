@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.3  2005/05/25 08:51:52  jwrdegoede
+** Add #ifdef GL_X86 around x86 specific code
+**
 ** Revision 1.1.2.2  2004/10/04 09:35:59  dborca
 ** second cut at Glide3x for Voodoo1/Rush (massive update):
 ** delayed validation, vertex snapping, clip coordinates, strip/fan_continue, bugfixes.
@@ -351,7 +354,7 @@ GR_DIENTRY(grTriStats, void, ( FxU32 *trisProcessed, FxU32 *trisDrawn ))
 void GR_CDECL
 _grFence( void )
 {
-#if (GLIDE_PLATFORM & GLIDE_HW_SST96)
+#if (GLIDE_PLATFORM & GLIDE_HW_SST96) && GDBG_INFO_ON
   GR_DCL_GC;
   GDBG_INFO((125,"\t\t\t\t%d writes since last fence\n",
              gc->hwDep.sst96Dep.writesSinceFence));

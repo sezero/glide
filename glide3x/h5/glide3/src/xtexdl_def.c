@@ -201,8 +201,8 @@ _grTexDownload_Default_8_1(struct GrGC_s* gc, const FxU32 tmuBaseAddr,
     FxI32
       shiftTexel = 0;
     FxU32
-      shiftData,
-      shiftMask;
+      shiftData = 0,
+      shiftMask = 0;
       
     for(; t <= maxT; t++) {
       texData |= (*src8++ << (texShift << 3UL));

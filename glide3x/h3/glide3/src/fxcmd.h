@@ -21,6 +21,9 @@
 ** $Revision$ 
 ** $Date$ 
 ** $Log$
+** Revision 1.1.1.1.6.2  2005/05/25 08:56:23  jwrdegoede
+** Make h5 and h3 tree 64 bit clean. This is ported over from the non-devel branch so this might be incomplete
+**
 ** Revision 1.1.1.1.6.1  2003/06/29 18:43:27  guillemj
 ** Fix compilation warnings.
 **
@@ -1514,9 +1517,10 @@ GR_CHECK_SIZE()
       i = gc->tsuDataList[dataElem]; \
     } \
     else { \
-      FxU32 argb; \
-      argb = *((FxU32 *)((long)_s + i)) & 0x00ffffff; \
-      TRI_SETF(*((float *)&argb)); \
+      union { float f; FxU32 u; } argb; \
+      argb.f = *(float *)((unsigned char *)_s + i); \
+      argb.u &= 0x00ffffff; \
+      TRI_SETF(argb.f); \
       dataElem++; \
       i = gc->tsuDataList[dataElem]; \
     } \

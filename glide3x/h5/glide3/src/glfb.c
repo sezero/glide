@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.7.4.22  2005/05/25 08:56:26  jwrdegoede
+** Make h5 and h3 tree 64 bit clean. This is ported over from the non-devel branch so this might be incomplete
+**
 ** Revision 1.7.4.21  2005/05/25 08:51:50  jwrdegoede
 ** Add #ifdef GL_X86 around x86 specific code
 **
@@ -1853,8 +1856,6 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t _type, GrBuffer_t buffer,
 {
 #define FN_NAME "grLfbLock"
   FxBool rv = FXTRUE;
-  FxBool wantHwc = FXFALSE;
-  FxBool forbidden = FXFALSE;
   
   GrLock_t type;
   
@@ -2069,8 +2070,6 @@ static FxBool _grLfbUnlock (GrLock_t type, GrBuffer_t buffer)
 GR_ENTRY(grLfbUnlock, FxBool, (GrLock_t _type, GrBuffer_t buffer))
 {
 #define FN_NAME "grLfbUnlock"
-  FxBool rval = FXFALSE;
-  FxBool wantHwc = FXFALSE;
   GrLock_t type;
   
   GR_BEGIN_NOFIFOCHECK_RET("grLfbUnLock", 83);
@@ -2498,7 +2497,6 @@ static FxBool grLfbReadRegionOrigin (GrBuffer_t src_buffer, GrOriginLocation_t o
 #define FN_NAME "grLfbReadRegion"
    FxU32 bpp;
    FxBool rv;
-   FxBool wantHwc = FXFALSE;
    GrLfbInfo_t info;
 
    GR_BEGIN_NOFIFOCHECK_RET("grLfbReadRegion",82);

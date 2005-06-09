@@ -1712,7 +1712,6 @@ _grTexCalcBaseAddress( FxU32 start, GrLOD_t large_lod,
 {
 #define FN_NAME "_grTexCalcBaseAddress"
   FxU32 sum_of_lod_sizes;
-  GR_DCL_GC;
 
   GR_CHECK_F(FN_NAME, _grBitsPerTexel[format] == 0, "invalid texture format");
 
@@ -2050,6 +2049,7 @@ GR_DIENTRY(grTexDownloadMipMap, void,
                  tmu, startAddress, evenOdd, info);
   GR_CHECK_F(FN_NAME, formatMult == 0, "invalid texture format");
 
+#if GLIDE_CHECK_COMPATABILITY && GLIDE_DEBUG
   {
     GR_DCL_GC;
     const FxU32 
@@ -2062,6 +2062,7 @@ GR_DIENTRY(grTexDownloadMipMap, void,
     GR_CHECK_F(FN_NAME, evenOdd > 0x3, "evenOdd mask invalid" );
     GR_CHECK_F(FN_NAME, !info, "info invalid" );
   }
+#endif
 
   {
     struct GrTmuMemInfo*

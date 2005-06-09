@@ -971,15 +971,16 @@ FX_EXPORT void FX_CSTYLE sst1InitPrintInitRegs(FxU32 *sstbase)
 */
 FX_EXPORT FxU32 FX_CSTYLE sst1InitMeasureSiProcess(FxU32 *sstbase, FxU32 which)
 {
-    FxU32 n, siProcess, nandOsc, norOsc;
+    FxU32 n, u, siProcess, nandOsc, norOsc;
     FxU32 pciCntrLoad = 0xfff;
     FxU32 cntr;
 
     if(sst1InitCheckBoard(sstbase) == FXFALSE)
         return(FXFALSE);
 
-    if(GETENV(("SSTV2_SIPROCESS_CNTR"))) {
-        SSCANF(GETENV(("SSTV2_SIPROCESS_CNTR")), "%ld", &pciCntrLoad);
+    if(GETENV(("SSTV2_SIPROCESS_CNTR")) &&
+       (SSCANF(GETENV(("SSTV2_SIPROCESS_CNTR")), "%u", &u) == 1) ) {
+        pciCntrLoad = u;
         INIT_PRINTF(("sst1InitMeasureSiProcess(): Using PCI Counter preload value of 0x%x...\n", pciCntrLoad));
     }
 

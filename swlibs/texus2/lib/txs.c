@@ -32,7 +32,6 @@ static FxBool _txsRead32 (FILE *stream, FxU32* data);
 static FxBool _readTXSPalTable (FILE* stream, FxI32* pal);
 static FxBool _txsWrite16 (FILE *stream, FxU16 data);
 static FxBool _txsWrite32 (FILE *stream, FxU32 data);
-static FxBool _writeTxsNCCTable (FILE *stream, FxU32 *yab);
 static FxBool _writeTXSPalTable (FILE *stream, FxU32 *pal);
 
 // General procedure to read a TXS header.  The output_info parameter control whether the header
@@ -53,7 +52,7 @@ FxBool readTXSHeader(FILE *stream, TXSInfo *info, FxBool output_info)
   
   // Read the full header
   
-  if ( fscanf ( stream, "%4s %f %d %d %d %d %8x", cookie, &info->version,
+  if ( fscanf ( stream, "%4s %f %hu %hu %hu %hu %8x", cookie, &info->version,
                 &info->format, &info->width, &info->height, &info->mipmap_levels,
                 &data_offset ) != TXS_READ_NUM_FIELDS )
     {
@@ -164,7 +163,7 @@ FxBool _txReadTXSHeader(FILE* stream, TxMip *txMip, FxBool output_info )
 
 FxBool _readTXSNCCTable(FILE *stream, FxU32 *nccTable)
 {
-  int i;
+  unsigned int i;
   
   for (i = 0; i < sizeof(GuNccTable) >> 2; i++)
     {
@@ -418,7 +417,7 @@ FxBool writeTXSHeader (FILE *stream, TXSInfo *info)
 
 FxBool _writeTXSNCCTable (FILE *stream, FxU32 *nccTable)
 {
-  int i;
+  unsigned int i;
   
   for (i = 0; i < sizeof(GuNccTable) >> 2; i++)
     {

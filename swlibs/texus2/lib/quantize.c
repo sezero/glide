@@ -707,6 +707,7 @@ _txColorBlend(const FxU32 c0, const FxU32 c1,
           ((FxU32)blendB << (0 + 0)));
 }
 
+#if 0 /* not used */
 static void
 _txImgEncodeBlock(FxU16* dst, 
                   const FxU32* src, int srcW, int srcH,
@@ -820,6 +821,7 @@ _txImgEncodeBlock(FxU16* dst,
     dst[3] = texelData[1];
   }
 }
+#endif
 
 /* 4-color encoding (opaque) */
 static void
@@ -1368,7 +1370,7 @@ txImgQuantize(char *dst, char *src,
                int w, int h, 
                FxU32 format, FxU32 dither)
 {
-    int (*quantizer)(unsigned long argb, int x, int y, int w);
+    int (*quantizer)(unsigned long argb, int x, int y, int w) = NULL;
     int         x, y;
 
     dither &= TX_DITHER_MASK;
@@ -1424,7 +1426,6 @@ txImgQuantize(char *dst, char *src,
                                                                 break;
 
         default: txPanic("Unable to dither this format\n");                         
-                                                                break;
         }
     } else {            // No dithering.
 
@@ -1457,11 +1458,10 @@ txImgQuantize(char *dst, char *src,
         case GR_TEXFMT_YUYV_422:
         case GR_TEXFMT_UYVY_422:
         case GR_TEXFMT_AYUV_444:        
-        case GR_TEXFMT_RGB_888:                 quantizer = NULL;
+        case GR_TEXFMT_RGB_888:
           break;
 
         default: txPanic("Bad texture format in txQuantize()\n");                 
-          break;
         }
     }
 

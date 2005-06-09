@@ -53,8 +53,7 @@ static FxBool enableTransport( InitFIFOData *info ) {
 static void disableTransport( void ) {
 }
 
-static InitSwapType_t swapBuffers( FxU32 code ) {
-    return 0;
+static void swapBuffers( FxU32 code ) {
 } 
 
 static FxU32 status( void ) {
@@ -92,7 +91,7 @@ static FxBool wrapFIFO(InitFIFOData *fd) {
     return FXTRUE;
 }
 
-static void gamma( double gamma ) {
+static void h3gamma( double gamma ) {
 }
 
 static void sliPciOwner( FxU32 *regbase, FxU32 owner ) {
@@ -115,6 +114,6 @@ void h3DriverInit( InitContext *context ) {
     context->wrapFIFO         = wrapFIFO;
 
 
-    context->gamma            = gamma;
+    context->gamma            = h3gamma;
     context->sliPciOwner      = sliPciOwner;
 }

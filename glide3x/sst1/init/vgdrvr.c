@@ -100,8 +100,7 @@ static FxBool enableTransport( InitFIFOData *info ) {
 static void disableTransport( void ) {
 }
 
-static InitSwapType_t swapBuffers( FxU32 code ) {
-    return INIT_SWAP_FLIP;
+static void swapBuffers( FxU32 code ) {
 } 
 
 static FxU32 status( void ) {
@@ -153,7 +152,7 @@ static FxBool wrapFIFO(InitFIFOData *fd) {
     return FXTRUE;
 }
 
-static void gamma( double gamma ) {
+static void sst1gamma( double gamma ) {
   sst1InitGamma((FxU32 *) context->info.hwDep.vgInfo.vgBaseAddr, gamma);
 }
 
@@ -190,7 +189,7 @@ void vgDriverInit( InitContext *context ) {
     context->wrapFIFO         = wrapFIFO;
 
 
-    context->gamma            = gamma;
+    context->gamma            = sst1gamma;
     context->sliPciOwner      = sliPciOwner;
 
     context->gammaRGB         = gammargb;

@@ -67,7 +67,9 @@ typedef unsigned short  ushort;
 
 #define TRUE            1
 #define FALSE           0
+#ifndef bzero
 #define bzero(ptr, sz)  memset(ptr, 0, sz)
+#endif
 
 #define INVERSE_PAL_A_BITS iPalBits[ALPHAI]
 #define INVERSE_PAL_R_BITS iPalBits[REDI]

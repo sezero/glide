@@ -290,6 +290,7 @@ _txImgDequantizeAP88(FxU32 *out, FxU16 *in, int w, int h, const FxU32 *pal)
     }
 }
 
+#if 0 /* not used */
 static void
 _txImgDequantizeRGB88(FxU32 *out, FxU8 *in, int w, int h)
 {
@@ -309,6 +310,7 @@ _txImgDequantizeRGB88(FxU32 *out, FxU8 *in, int w, int h)
         *--out = (a << 24) | (r << 16) | (g << 8) | b;
     }
 }
+#endif
 
 static void
 _txImgDequantizeARGB8888(FxU32 *out, FxU32 *in, int w, int h)

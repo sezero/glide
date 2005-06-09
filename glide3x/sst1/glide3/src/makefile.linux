@@ -14,6 +14,8 @@
 #    Environment variables:
 #	FX_GLIDE_HW	build for the given ASIC (sst1, sst96).
 #			default = sst1
+#	XPATH		specify X libraries path; needed for sst96.
+#			default = /usr/X11R6/lib (sst96 only)
 #	OPTFLAGS	pass given optimization flags to compiler
 #			default = -O2 -ffastmath (+ -mcpu=pentium if USE_X86=1)
 #	DEBUG=1		enable debugging checks and messages
@@ -67,6 +69,11 @@ CP = cp
 
 # platform
 CDEFS = -DINIT_LINUX
+XPATH ?= /usr/X11R6/lib
+ifeq ($(FX_GLIDE_HW),sst96)
+LDFLAGS = -L$(XPATH)
+LDLIBS = -lX11 -lXxf86dga -lXxf86rush -lXxf86vm
+endif
 
 # general
 CDEFS += -DGLIDE3 -DGLIDE3_ALPHA -DGLIDE_HARDWARE

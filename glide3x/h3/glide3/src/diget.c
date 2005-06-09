@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.6.4  2005/05/25 08:56:23  jwrdegoede
+** Make h5 and h3 tree 64 bit clean. This is ported over from the non-devel branch so this might be incomplete
+**
 ** Revision 1.1.1.1.6.3  2004/02/16 07:42:16  dborca
 ** grSetNumPendingBuffers visible with grGetProcAddress
 **
@@ -916,6 +919,7 @@ GR_DIENTRY(grQueryResolutions, FxI32, (const GlideResolution *resTemplate, Glide
     /* 0x10000 is the minimum interesting FIFO size */
     fbmem = (gc->bInfo->h3Mem << 20) - gc->bInfo->min_tramSize - 0x10000;
 
+#if GDBG_INFO_ON
   static char *resNames[] = {
     "GR_RESOLUTION_320x200", 
     "GR_RESOLUTION_320x240", 
@@ -942,6 +946,7 @@ GR_DIENTRY(grQueryResolutions, FxI32, (const GlideResolution *resTemplate, Glide
     "GR_RESOLUTION_2048x1536", 
     "GR_RESOLUTION_2048x2048",
   };
+#endif
 
   GDBG_INFO(80, FN_NAME"(0x%x, 0x%x)\n", resTemplate, output);
   

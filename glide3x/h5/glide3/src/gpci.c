@@ -1976,8 +1976,11 @@ _GlideInitEnvironment(void)
             _GlideRoot.environment.autoBump ? "FXTRUE" : "FXFALSE");
   
   if (GETENV("FX_GLIDE_BUMPSIZE"))
-    sscanf(GETENV("FX_GLIDE_BUMPSIZE"), "%x",
-             &_GlideRoot.environment.bumpSize);
+  {
+    unsigned int u;
+    if (sscanf(GETENV("FX_GLIDE_BUMPSIZE"), "%x", &u) == 1)
+      _GlideRoot.environment.bumpSize = u;
+  }
   else
 #if __POWERPC__  
     _GlideRoot.environment.bumpSize = 0x1000;

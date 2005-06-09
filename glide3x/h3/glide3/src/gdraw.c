@@ -19,6 +19,9 @@
  **
  ** $Header$
  ** $Log$
+ ** Revision 1.2.6.7  2005/05/25 08:56:23  jwrdegoede
+ ** Make h5 and h3 tree 64 bit clean. This is ported over from the non-devel branch so this might be incomplete
+ **
  ** Revision 1.2.6.6  2005/05/07 08:40:29  jwrdegoede
  ** lvalue cast fixes for gcc4
  **
@@ -779,7 +782,7 @@ _grDrawLineStrip(FxI32 mode, FxI32 ltype, FxI32 count, void *pointers)
   }
   else {
 
-    float oowa, oowb, owa, owb, tmp1, tmp2, fax, fay, fbx, fby;
+    float oowa, oowb = 0.0f, owa, owb, tmp1, tmp2, fax, fay, fbx, fby;
 
     while (sCount > 0) {
       FxI32 k, i;
@@ -795,29 +798,21 @@ _grDrawLineStrip(FxI32 mode, FxI32 ltype, FxI32 count, void *pointers)
         oowb = 1.0f / FARRAY(a, gc->state.vData.wInfo.offset);        
       }
       for (k = 0; k < vcount; k++) {
+        a = (float *)pointers;
+        b = (float *)pointers + stride;
+        if (mode) {
+          a = *(float **)a;
+          b = *(float **)b;
+        }
+        pointers = (float *)pointers + stride;
         if (ltype == GR_LINES) {
-          a = (float *)pointers;
-          b = (float *)pointers + stride;
-          if (mode) {
-            a = *(float **)a;
-            b = *(float **)b;
-          }
-          pointers = (float *)pointers + stride;
           owa = oowa = 1.0f / FARRAY(a, gc->state.vData.wInfo.offset);        
-          owb = oowb = 1.0f / FARRAY(b, gc->state.vData.wInfo.offset);        
           pointers = (float *)pointers + stride;
         }
-        else {
+        else
           owa = oowa = oowb;
-          a = (float *)pointers;
-          b = (float *)pointers + stride;
-          if (mode) {
-            a = *(float **)a;
-            b = *(float **)b;
-          }
-          pointers = (float *)pointers + stride;
-          owb = oowb = 1.0f / FARRAY(b, gc->state.vData.wInfo.offset);
-        }
+        owb = oowb = 1.0f / FARRAY(b, gc->state.vData.wInfo.offset);
+
         fay = tmp1 = FARRAY(a, gc->state.vData.vertexInfo.offset+4)
           *oowa*gc->state.Viewport.hheight+gc->state.Viewport.oy;
         fby = tmp2 = FARRAY(b, gc->state.vData.vertexInfo.offset+4)

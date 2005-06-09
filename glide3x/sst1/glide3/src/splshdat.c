@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.1  2004/03/02 07:55:30  dborca
+** Bastardised Glide3x for SST1
+**
 ** Revision 1.1.1.1  1999/12/07 21:42:35  joseph
 ** Initial checkin into SourceForge.
 **
@@ -10665,7 +10668,7 @@ static Gu3dfInfo hilite_3dfinfo = {
     GR_ASPECT_LOG2_1x1,        /* aspect_ratio */
     GR_TEXFMT_INTENSITY_8 /* format */
   },
-  { 0x0000000 },          /* table */
+  { },                    /* table */
   NULL,                   /* data */
   0x00000ab0              /* mem_required */
 };
@@ -12050,7 +12053,7 @@ static Gu3dfInfo shadow_3dfinfo = {
     GR_ASPECT_LOG2_2x1,        /* aspect_ratio */
     GR_TEXFMT_INTENSITY_8 /* format */
   },
-  { 0x00000000 },         /* table */
+  { },         /* table */
   NULL,                   /* data */
   0x00000ab0              /* mem_required */
 };

@@ -49,7 +49,7 @@ readAndSum4x4(FxU32 *sstbase, FxU32 x, FxU32 y,
     		FxU32 *r_sum, FxU32 *g_sum, FxU32 *b_sum)
 {
     FxU32 rd_x, rd_y;
-    FxU32 rd_col;
+    FxU32 rd_col = 0;
     FxU32 rd_r, rd_g, rd_b;
     SstRegs *sst = (SstRegs *) sstbase;
 
@@ -237,7 +237,11 @@ getTmuConfigData(FxU32 *sstbase, sst1DeviceInfoStruct *info)
     ISET(SST_TREX(sst,2)->trexInit1, info->tmuInit1[2]);
 
 	if(GETENV(("SSTV2_TMUCFG")))
-        SSCANF(GETENV(("SSTV2_TMUCFG")), "%ld", &info->tmuConfig);
+	{
+	  FxU32 u;
+          if (SSCANF(GETENV(("SSTV2_TMUCFG")), "%u", &u) == 1)
+            info->tmuConfig = u;
+        }
 
 	return(FXTRUE);
 }
@@ -508,14 +512,16 @@ fbiMemSizeDone:
 FX_EXPORT FxBool FX_CSTYLE
 sst1InitGetFbiInfo(FxU32 *sstbase, sst1DeviceInfoStruct *info)
 {
+	FxU32 u;
 	SstRegs *sst = (SstRegs *) sstbase;
 
-  info->fbiMemSize = fbiMemSize(sstbase);
+	info->fbiMemSize = fbiMemSize(sstbase);
   
 	/* Detect board identification and memory speed */
-	if(GETENV(("SSTV2_FBICFG")))
-    SSCANF(GETENV(("SSTV2_FBICFG")), "%ld", &info->fbiConfig);
-  else
+	if(GETENV(("SSTV2_FBICFG")) &&
+	   (SSCANF(GETENV(("SSTV2_FBICFG")), "%u", &u) == 1))
+		info->fbiConfig = u;
+	else
 		info->fbiConfig = (IGET(sst->fbiInit3) & SST_FBI_MEM_TYPE) >>
 			SST_FBI_MEM_TYPE_SHIFT;
   
@@ -556,6 +562,8 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitGetDeviceInfo(FxU32 *sstbase,
 */
 FxBool sst1InitFillDeviceInfo(FxU32 *sstbase, sst1DeviceInfoStruct *info)
 {
+    FxU32 u;
+    
     if(!sstbase)
         return(FXFALSE);
 
@@ -566,15 +574,17 @@ FxBool sst1InitFillDeviceInfo(FxU32 *sstbase, sst1DeviceInfoStruct *info)
         /* fill device info struct with sane values... */
     	INIT_PRINTF(("sst1DeviceInfo: Filling info Struct with default values...\n"));
 
-		if(GETENV(("SSTV2_FBICFG")))
-        	SSCANF(GETENV(("SSTV2_FBICFG")), "%ld", &info->fbiConfig);
+		if(GETENV(("SSTV2_FBICFG")) &&
+		   (SSCANF(GETENV(("SSTV2_FBICFG")), "%u", &u) == 1))
+        	  info->fbiConfig = u;
 		else
-	        info->fbiConfig = 0x0;
+	          info->fbiConfig = 0x0;
 
-		if(GETENV(("SSTV2_TMUCFG")))
-        	SSCANF(GETENV(("SSTV2_TMUCFG")), "%ld", &info->tmuConfig);
+		if(GETENV(("SSTV2_TMUCFG")) &&
+        	   (SSCANF(GETENV(("SSTV2_TMUCFG")), "%u", &u) == 1))
+        	  info->tmuConfig = u;
 		else
-	        info->tmuConfig = 0x0;
+	          info->tmuConfig = 0x0;
 
         info->numberTmus = 1;
     	if (info->tmuConfig & FXBIT(6)) /* if TMU 1 exists */

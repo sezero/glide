@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.5  2005/05/25 08:51:52  jwrdegoede
+** Add #ifdef GL_X86 around x86 specific code
+**
 ** Revision 1.1.2.4  2004/10/05 14:47:18  dborca
 ** conditional compilation a bit more sane
 **
@@ -1157,7 +1160,6 @@ _grSstControl(GrControl_t code)
 {
 #define FN_NAME "grSstControl"  
 
-  GR_DCL_GC;
   GDBG_INFO((41, "%s:  code = 0x%x, windowsInit = %d\n", FN_NAME,
              code, _GlideRoot.windowsInit));
   

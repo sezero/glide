@@ -19,6 +19,9 @@
 ;; $Header$
 ;; $Revision$
 ;; $Log$
+;; Revision 1.1.8.8  2004/05/04 17:04:31  koolsmoky
+;; clean up
+;;
 ;; Revision 1.1.8.7  2003/09/12 05:08:35  koolsmoky
 ;; preparing for graphic context checks
 ;;
@@ -512,7 +515,7 @@ endp
 
 
 
-segment		TEXT
+;segment		TEXT
 
               ALIGN  32
 

@@ -67,10 +67,9 @@ static void disableTransport( void ) {
     init96DisableTransport();
 }
 
-static InitSwapType_t swapBuffers( FxU32 code ) {
+static void swapBuffers( FxU32 code ) {
     if ( context && context->writeMethod )
         init96Swap( code, &context->info.regs, context->writeMethod );
-    return INIT_SWAP_FLIP;
 } 
 
 static FxU32 status( void ) {
@@ -119,7 +118,7 @@ static FxBool wrapFIFO(InitFIFOData *fd) {
     return init96WrapFIFO(&(context->info.regs), fd);
 }
 
-static void gamma( double gamma ) {
+static void sst96gamma( double gamma ) {
 }
 
 static void sliPciOwner( FxU32 *regbase, FxU32 owner ) {
@@ -153,7 +152,7 @@ void vg96DriverInit( InitContext *context ) {
     context->control          = control;
     context->wrapFIFO         = wrapFIFO;
 
-    context->gamma            = gamma;
+    context->gamma            = sst96gamma;
     context->sliPciOwner      = sliPciOwner;
 
     context->gammaRGB         = gammargb;

@@ -529,7 +529,7 @@ typedef struct {
 
 typedef GrResolution GlideResolution;
 
-#define GR_QUERY_ANY  ((FxU32)(~0))
+#define GR_QUERY_ANY -1
 
 typedef FxU32 GrLfbSrcFmt_t;
 #define GR_LFB_SRC_FMT_565          0x00

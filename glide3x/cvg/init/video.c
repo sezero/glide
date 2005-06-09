@@ -121,7 +121,7 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitVideoBuffers(FxU32 *sstbase,
   FxU32 nColorBuffs, FxU32 nAuxBuffs, sst1VideoTimingStruct *altVideoTiming,
   FxBool switchPassThru)
 {
-    FxU32 n, vtmp;
+    FxU32 n, u, vtmp;
     SstRegs *sst = (SstRegs *) sstbase;
     sst1VideoTimingStruct *sstVideoRez;
     FxU32 video16BPP;
@@ -131,6 +131,7 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitVideoBuffers(FxU32 *sstbase,
     FxU32 ft_clkdel, memSizeInPages;
     FxU32 nCol, nAux, miscCtrl;
     int memFifoEntries;
+    float vidClkFreq;
 
     if(!sst)
         return(FXFALSE);
@@ -221,30 +222,30 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitVideoBuffers(FxU32 *sstbase,
     ISET(sst->fbiInit1, IGET(sst->fbiInit1) | SST_VIDEO_RESET);
     
     // Setup SST video timing registers
-    if(GETENV(("SSTV2_HSYNC"))) {
-        SSCANF(GETENV(("SSTV2_HSYNC")), "%ld", &vtmp);
+    if(GETENV(("SSTV2_HSYNC")) &&
+       (SSCANF(GETENV(("SSTV2_HSYNC")), "%u", &vtmp) == 1) ) {
         INIT_PRINTF(("sst1InitVideo(): Using SST_HSYNC=0x%x\n", vtmp));
         ISET(sst->hSync, vtmp);
     } else
         ISET(sst->hSync, ((sstVideoRez->hSyncOff << SST_VIDEO_HSYNC_OFF_SHIFT) |
                       (sstVideoRez->hSyncOn << SST_VIDEO_HSYNC_ON_SHIFT)));
-    if(GETENV(("SSTV2_VSYNC"))) {
-        SSCANF(GETENV(("SSTV2_VSYNC")), "%ld", &vtmp);
+    if(GETENV(("SSTV2_VSYNC")) &&
+       (SSCANF(GETENV(("SSTV2_VSYNC")), "%u", &vtmp) == 1) ) {
         INIT_PRINTF(("sst1InitVideo(): Using SST_VSYNC=0x%x\n", vtmp));
         ISET(sst->vSync, vtmp);
     } else
         ISET(sst->vSync, ((sstVideoRez->vSyncOff << SST_VIDEO_VSYNC_OFF_SHIFT) |
                       (sstVideoRez->vSyncOn << SST_VIDEO_VSYNC_ON_SHIFT)));
-    if(GETENV(("SSTV2_BACKPORCH"))) {
-        SSCANF(GETENV(("SSTV2_BACKPORCH")), "%ld", &vtmp);
+    if(GETENV(("SSTV2_BACKPORCH")) &&
+       (SSCANF(GETENV(("SSTV2_BACKPORCH")), "%u", &vtmp) == 1) ) {
         INIT_PRINTF(("sst1InitVideo(): Using SST_BACKPORCH=0x%x\n", vtmp));
         ISET(sst->backPorch, vtmp);
     } else
         ISET(sst->backPorch,
                      ((sstVideoRez->vBackPorch << SST_VIDEO_VBACKPORCH_SHIFT) |
                       (sstVideoRez->hBackPorch << SST_VIDEO_HBACKPORCH_SHIFT)));
-    if(GETENV(("SSTV2_DIMENSIONS"))) {
-        SSCANF(GETENV(("SSTV2_DIMENSIONS")), "%ld", &vtmp);
+    if(GETENV(("SSTV2_DIMENSIONS")) &&
+       (SSCANF(GETENV(("SSTV2_DIMENSIONS")), "%u", &vtmp) == 1) ) {
         INIT_PRINTF(("sst1InitVideo(): Using SST_DIMENSIONS=0x%x\n", vtmp));
         sstVideoRez->yDimension = (vtmp >>  SST_VIDEO_YDIM_SHIFT) & 0x3ff;
         sstVideoRez->xDimension = vtmp & 0x3ff;
@@ -252,13 +253,13 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitVideoBuffers(FxU32 *sstbase,
     ISET(sst->videoDimensions,
                      ((sstVideoRez->yDimension << SST_VIDEO_YDIM_SHIFT) |
                       ((sstVideoRez->xDimension-1) << SST_VIDEO_XDIM_SHIFT)));
-    if(GETENV(("SSTV2_MEMOFFSET"))) {
-        SSCANF(GETENV(("SSTV2_MEMOFFSET")), "%ld", &vtmp);
+    if(GETENV(("SSTV2_MEMOFFSET")) &&
+       (SSCANF(GETENV(("SSTV2_MEMOFFSET")), "%u", &vtmp) == 1) ) {
         INIT_PRINTF(("sst1InitVideo(): Using video memOffset=0x%x\n", vtmp));
         sstVideoRez->memOffset = vtmp;
     }
-    if(GETENV(("SSTV2_TILESINX"))) {
-        SSCANF(GETENV(("SSTV2_TILESINX")), "%ld", &vtmp);
+    if(GETENV(("SSTV2_TILESINX")) &&
+       (SSCANF(GETENV(("SSTV2_TILESINX")), "%u", &vtmp) == 1) ) {
         INIT_PRINTF(("sst1InitVideo(): Using video tilesInX=0x%x\n", vtmp));
         sstVideoRez->tilesInX = vtmp;
     }
@@ -319,14 +320,17 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitVideoBuffers(FxU32 *sstbase,
     sst1InitIdleFBINoNOP(sstbase);
 
     memFifoLwm = 23;
-    if(GETENV(("SSTV2_MEMFIFO_LWM")))
-        SSCANF(GETENV(("SSTV2_MEMFIFO_LWM")), "%ld", &memFifoLwm);
+    if(GETENV(("SSTV2_MEMFIFO_LWM")) &&
+       (SSCANF(GETENV(("SSTV2_MEMFIFO_LWM")), "%u", &u) == 1))
+      memFifoLwm = u;
     memFifoHwm = 54;
-    if(GETENV(("SSTV2_MEMFIFO_HWM")))
-        SSCANF(GETENV(("SSTV2_MEMFIFO_HWM")), "%ld", &memFifoHwm);
+    if(GETENV(("SSTV2_MEMFIFO_HWM")) &&
+       (SSCANF(GETENV(("SSTV2_MEMFIFO_HWM")), "%u", &u) == 1))
+      memFifoHwm = u;
     pciFifoLwm = 13;
-    if(GETENV(("SSTV2_PCIFIFO_LWM")))
-        SSCANF(GETENV(("SSTV2_PCIFIFO_LWM")), "%ld", &pciFifoLwm);
+    if(GETENV(("SSTV2_PCIFIFO_LWM")) &&
+       (SSCANF(GETENV(("SSTV2_PCIFIFO_LWM")), "%u", &u) == 1))
+      pciFifoLwm = u;
     INIT_PRINTF(("sst1InitVideo(): pciFifoLwm:%d  memFifoLwm:%d  memFifoHwm:%d\n",
         pciFifoLwm, memFifoLwm, memFifoHwm));
 
@@ -372,6 +376,7 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitVideoBuffers(FxU32 *sstbase,
         n = 1;
 
     if(n) {
+        int i;
         sst1CurrentBoard->fbiMemoryFifoEn = 1;
         memFifoEntries = (65536 - (int)
           (((int) (memSizeInPages - 1) -
@@ -383,8 +388,9 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitVideoBuffers(FxU32 *sstbase,
             memFifoEntries));
           return(FXFALSE);
         }
-        if(GETENV(("SSTV2_MEMFIFO_ENTRIES")))
-            SSCANF(GETENV(("SSTV2_MEMFIFO_ENTRIES")), "%d", &memFifoEntries);
+        if(GETENV(("SSTV2_MEMFIFO_ENTRIES")) &&
+           (SSCANF(GETENV(("SSTV2_MEMFIFO_ENTRIES")), "%d", &i) == 1))
+          memFifoEntries = i;
         INIT_PRINTF(("sst1InitVideo(): Enabling Memory FIFO (Entries=%d)...\n",
             65536 - (memFifoEntries << 5)));
 
@@ -401,12 +407,14 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitVideoBuffers(FxU32 *sstbase,
     }
 
     vInClkDel = 1;
-    if(GETENV(("SSTV2_VIN_CLKDEL")))
-        SSCANF(GETENV(("SSTV2_VIN_CLKDEL")), "%ld", &vInClkDel);
+    if(GETENV(("SSTV2_VIN_CLKDEL")) &&
+       (SSCANF(GETENV(("SSTV2_VIN_CLKDEL")), "%u", &u) == 1))
+      vInClkDel = u;
 
     vOutClkDel = 0;
-    if(GETENV(("SSTV2_VOUT_CLKDEL")))
-        SSCANF(GETENV(("SSTV2_VOUT_CLKDEL")), "%ld", &vOutClkDel);
+    if(GETENV(("SSTV2_VOUT_CLKDEL")) &&
+       (SSCANF(GETENV(("SSTV2_VOUT_CLKDEL")), "%u", &u) == 1))
+      vOutClkDel = u;
 
     INIT_PRINTF(("sst1InitVideo(): vInClkDel=0x%x  vOutClkDel=0x%x\n",
 
@@ -470,11 +478,10 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitVideoBuffers(FxU32 *sstbase,
         sst1InitIdleFBINoNOP(sstbase);
         if(!GETENV(("SSTV2_VIDEO_FILTER_DISABLE"))) {
             ISET(sst->fbiInit1, IGET(sst->fbiInit1) | SST_VIDEO_FILTER_EN);
-            if(GETENV(("SSTV2_VIDEO_FILTER_THRESHOLD"))) {
-                SSCANF(GETENV(("SSTV2_VIDEO_FILTER_THRESHOLD")), "%ld", &n);
-                INIT_PRINTF(("sst1InitVideo(): Setting Video Filtering Treshold to 0x%x...\n", n));
-
-                ISET(sst->videoFilterRgbThreshold, n);
+            if(GETENV(("SSTV2_VIDEO_FILTER_THRESHOLD")) &&
+               (SSCANF(GETENV(("SSTV2_VIDEO_FILTER_THRESHOLD")), "%u", &u) == 1)) {
+                INIT_PRINTF(("sst1InitVideo(): Setting Video Filtering Treshold to 0x%x...\n", u));
+                ISET(sst->videoFilterRgbThreshold, u);
             } else
                 // ISET(sst->videoFilterRgbThreshold, 0x180c18);
                 ISET(sst->videoFilterRgbThreshold, 0x080408);
@@ -553,10 +560,8 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitVideoBuffers(FxU32 *sstbase,
 
     // Adjust Video Clock
 #ifndef DIRECTX
-    if(GETENV(("SSTV2_VIDCLK2X"))) {
-        float vidClkFreq;
-
-        SSCANF(GETENV(("SSTV2_VIDCLK2X")), "%f", &vidClkFreq);
+    if(GETENV(("SSTV2_VIDCLK2X")) &&
+       (SSCANF(GETENV(("SSTV2_VIDCLK2X")), "%f", &vidClkFreq) == 1)) {
         if(sst1InitSetVidClk(sstbase, vidClkFreq) == FXFALSE)
             return(FXFALSE);
     } else {
@@ -602,10 +607,11 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitVideoBuffers(FxU32 *sstbase,
     // Clear memory...
     if(!GETENV(("SSTV2_VIDEO_NOCLEAR"))) {
         FxU32 clearColor = 0x0;
-        FxU32 pagesToFill;
+        FxU32 u, pagesToFill;
 
-        if(GETENV(("SSTV2_VIDEO_CLEARCOLOR")))
-            SSCANF(GETENV(("SSTV2_VIDEO_CLEARCOLOR")), "%ld", &clearColor);
+        if(GETENV(("SSTV2_VIDEO_CLEARCOLOR")) &&
+           (SSCANF(GETENV(("SSTV2_VIDEO_CLEARCOLOR")), "%u", &u) == 1))
+          clearColor = u;
 
         if(sst1CurrentBoard->fbiMemSize == 1)
            pagesToFill = 256;
@@ -1261,8 +1267,9 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitMonitorDetect(FxU32 *sstbase)
    //   return (FXTRUE);
    // }
 
-   if(GETENV(("SSTV2_MDETECT_CONST"))) {
-     SSCANF(GETENV(("SSTV2_MDETECT_CONST")), "%ld", &gammaCorrectConstant);
+   if(GETENV(("SSTV2_MDETECT_CONST")) &&
+      (SSCANF(GETENV(("SSTV2_MDETECT_CONST")), "%u", &j) == 1)) {
+     gammaCorrectConstant = j;
      INIT_PRINTF(("sst1InitMonitorDetect(): Using value 0x%x for constant gamma value...\n", gammaCorrectConstant));
    }
 
@@ -1329,7 +1336,7 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitMonitorDetect(FxU32 *sstbase)
 */
 FX_EXPORT FxBool FX_CSTYLE sst1InitSetClkDelays(FxU32 *sstbase)
 {
-   FxU32 tf0_clkdel, tf1_clkdel, tf2_clkdel, ft_clkdel;
+   FxU32 tf0_clkdel, tf1_clkdel, tf2_clkdel, ft_clkdel, u;
    SstRegs *sst = (SstRegs *) sstbase;
 
    if(sst1CurrentBoard->fbiBoardID == 0x3) {
@@ -1425,14 +1432,18 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitSetClkDelays(FxU32 *sstbase)
 setDelays:
 
    // Override with environment variables
-   if(GETENV(("SSTV2_FT_CLKDEL")))
-       SSCANF(GETENV(("SSTV2_FT_CLKDEL")), "%ld", &ft_clkdel);
-   if(GETENV(("SSTV2_TF0_CLKDEL")))
-       SSCANF(GETENV(("SSTV2_TF0_CLKDEL")), "%ld", &tf0_clkdel);
-   if(GETENV(("SSTV2_TF1_CLKDEL")))
-       SSCANF(GETENV(("SSTV2_TF1_CLKDEL")), "%ld", &tf1_clkdel);
-   if(GETENV(("SSTV2_TF2_CLKDEL")))
-       SSCANF(GETENV(("SSTV2_TF2_CLKDEL")), "%ld", &tf2_clkdel);
+   if(GETENV(("SSTV2_FT_CLKDEL")) &&
+      (SSCANF(GETENV(("SSTV2_FT_CLKDEL")), "%u", &u) == 1))
+     ft_clkdel = u;
+   if(GETENV(("SSTV2_TF0_CLKDEL")) &&
+      (SSCANF(GETENV(("SSTV2_TF0_CLKDEL")), "%u", &u) == 1))
+     tf0_clkdel = u;
+   if(GETENV(("SSTV2_TF1_CLKDEL")) &&
+      (SSCANF(GETENV(("SSTV2_TF1_CLKDEL")), "%u", &u) == 1))
+     tf1_clkdel = u;
+   if(GETENV(("SSTV2_TF2_CLKDEL")) &&
+      (SSCANF(GETENV(("SSTV2_TF2_CLKDEL")), "%u", &u) == 1))
+     tf2_clkdel = u;
 
    INIT_PRINTF(("sst1InitSetClkDelays(): Setting FBI-to-TREX clock delay to 0x%x...\n", ft_clkdel));
    INIT_PRINTF(("sst1InitSetClkDelays(): Setting TREX#0 TREX-to-FBI clock delay to 0x%x\n",

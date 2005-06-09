@@ -41,7 +41,7 @@
 FxU32   pciVxdVer = 0;
 FxU32   pciErrorCode = PCI_ERR_NOERR;
 FxBool  pciLibraryInitialized  = FXFALSE;
-PciHwcCallbacks pciHwcCallbacks = { 1 };
+PciHwcCallbacks pciHwcCallbacks = { 1, NULL, NULL, NULL, NULL, NULL, NULL };
 
 const FxPlatformIOProcs* gCurPlatformIO = NULL;
 
@@ -377,7 +377,7 @@ pciGetErrorString( void )
 {
   static char vxdErrString[120];
   if (pciErrorCode == PCI_ERR_WRONGVXD) {
-    sprintf(vxdErrString, "Expected VXD version V%d.%d, got V%ld.%ld\n",
+    sprintf(vxdErrString, "Expected VXD version V%d.%d, got V%u.%u\n",
             FX_MAJOR_VER, FX_MINOR_VER,
             BYTE1(pciVxdVer), BYTE0(pciVxdVer));
     return vxdErrString;

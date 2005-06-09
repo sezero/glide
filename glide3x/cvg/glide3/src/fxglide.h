@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.10  2005/05/25 08:53:10  jwrdegoede
+** Add P6FENCE (ish) macro for non-x86 archs
+**
 ** Revision 1.1.1.1.8.9  2005/05/25 08:51:49  jwrdegoede
 ** Add #ifdef GL_X86 around x86 specific code
 **
@@ -3325,9 +3328,10 @@ double_precision_asm(void);
       TRI_SETF(0.0f); \
     } \
     else { \
-      FxU32 argb; \
-      argb = *((FxU32 *)((int)_s + i)) & 0x00ffffff; \
-      TRI_SETF(*((float *)&argb)); \
+      union { float f; FxU32 u; } argb; \
+      argb.f = *(float *)((unsigned char *)_s + i); \
+      argb.u &= 0x00ffffff; \
+      TRI_SETF(argb.f); \
       dataElem++; \
       i = gc->tsuDataList[dataElem]; \
     } \

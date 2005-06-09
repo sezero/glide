@@ -66,6 +66,12 @@ hwcCheckMemSize(hwcBoardInfo *bInfo, FxU32 xres, FxU32 yres, FxU32 nColBuffers,
 #include <X11/extensions/xf86vmode.h>
 #include "lindri.h"
 
+void
+_grInvalidateAll(void);
+void
+_grExportFifo(int *fifoPtr, int *fifoRead);
+void
+_grImportFifo(int fifoPtr, int fifoRead);
 static FxU32
 hwcBufferLfbAddr(const hwcBoardInfo *bInfo, FxU32 physAddress);
 
@@ -104,7 +110,7 @@ typedef struct envitem_t {
 static envitem *first=0;
 static int envinit=0;
 
-DRIDef driInfo={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+DRIDef driInfo={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 void grDRIOpen(char *pFB, char *pRegs, int deviceID, int width, int height, 
 	       int mem, int cpp, int stride, int fifoOffset, int fifoSize, 
@@ -140,6 +146,7 @@ void grDRIPosition(int x, int y, int w, int h,
   driInfo.pClip=pClip;
 }
 
+#if 0 /* unused */
 static FxU32
 pow2Round(FxU32 val, FxU32 pow2Const)
 {
@@ -147,6 +154,7 @@ pow2Round(FxU32 val, FxU32 pow2Const)
 
   return ((val + pow2Mask) & ~pow2Mask);
 }
+#endif
 
 static void loadEnvFile() {
   FILE *file;
@@ -185,6 +193,7 @@ static void loadEnvFile() {
   }
 }
 
+#if 0 /* not used */
 static void deleteEnvData() {
   envitem *ptr, *next;
 
@@ -199,6 +208,7 @@ static void deleteEnvData() {
   first=0;
   envinit=0;
 }
+#endif
 
 char *
 hwcGetErrorString()
@@ -215,7 +225,7 @@ hwcInit(FxU32 vID, FxU32 dID) {
   errorString[0] = '\0';
 
   if (!driInfo.pFB) return 0;
-  if (dID!=driInfo.deviceID) return 0;
+  if (dID!=(FxU32)driInfo.deviceID) return 0;
   hInfo.boardInfo[0].pciInfo.initialized = FXFALSE;
   hInfo.nBoards++;
   hInfo.boardInfo[0].boardNum = 0;
@@ -589,19 +599,21 @@ hwcCheckMemSize(hwcBoardInfo *bInfo, FxU32 xres, FxU32 yres, FxU32 nColBuffers,
 #undef FN_NAME
 } /* hwcCheckMemSize */
 
+#if 0 /* unused */
 static FxU32
 calculateLfbStride(FxU32 screenWidth)
 {
 #if	1
-    int TileAperturePitch;
+    unsigned int TileAperturePitch;
     for (TileAperturePitch = 1024;
-         (TileAperturePitch < (16 << 10)) && (TileAperturePitch < screenWidth);
+         (TileAperturePitch < (16u << 10)) && (TileAperturePitch < screenWidth);
          TileAperturePitch <<= 1);
     return(TileAperturePitch);
 #else
     return(0x1000);
 #endif
 }
+#endif
 
 /* How the hw treats lfb accesses are dependent on the 'type' of
  * memory (tiled/linear) that the color/aux buffers are in. We

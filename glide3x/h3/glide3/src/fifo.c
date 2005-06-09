@@ -19,6 +19,9 @@
  **
  ** $Header$
  ** $Log$
+ ** Revision 1.1.1.1.6.5  2005/05/25 08:56:23  jwrdegoede
+ ** Make h5 and h3 tree 64 bit clean. This is ported over from the non-devel branch so this might be incomplete
+ **
  ** Revision 1.1.1.1.6.4  2004/10/05 14:47:15  dborca
  ** conditional compilation a bit more sane
  **
@@ -692,8 +695,6 @@ void
 _FifoFlush( void ) 
 {
 #define FN_NAME "_FifoFlush"
-  GR_DCL_GC;
-  
   _grCommandTransportMakeRoom(0, __FILE__, __LINE__);
 #undef FN_NAME
 } /* _FifoFlush */
@@ -1194,7 +1195,7 @@ _grImportFifo(int fifoPtr, int fifoRead) {
   FxU32 readPos;
   GR_DCL_GC;
 #if 1
-  int dummy, d;
+  FxU32 dummy, d;
 
   do {
     dummy=GET(gc->cRegs->cmdFifo0.depth);

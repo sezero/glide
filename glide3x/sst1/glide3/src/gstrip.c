@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.3  2005/05/25 08:51:52  jwrdegoede
+** Add #ifdef GL_X86 around x86 specific code
+**
 ** Revision 1.1.2.2  2005/05/10 11:27:23  jwrdegoede
 ** sst1 gcc4 compile fixes
 **
@@ -616,7 +619,9 @@ GR_DDFUNC(_trisetup_mixed_datalist, FxI32, ( const void *va, const void *vb, con
   float ooa, dxAB, dxBC, dyAB, dyBC;
   int i,j,culltest;
   int ii, ia, ib, ic;
-  int ay, by, cy;
+  union { float f; int i; } ay;
+  union { float f; int i; } by;
+  union { float f; int i; } cy;
   float *fp;
   struct dataList_s *dlp;
   float snap_xa, snap_ya, snap_xb, snap_yb, snap_xc, snap_yc;
@@ -637,15 +642,15 @@ GR_DDFUNC(_trisetup_mixed_datalist, FxI32, ( const void *va, const void *vb, con
    **  that we know the first two elements are X & Y by looking at the
    **  grVertex structure.  
    */
-  ay = *(int *)&snap_ya;
-  by = *(int *)&snap_yb;
-  if (ay < 0) ay ^= 0x7FFFFFFF;
-  cy = *(int *)&snap_yc;
-  if (by < 0) by ^= 0x7FFFFFFF;
-  if (cy < 0) cy ^= 0x7FFFFFFF;
-  if (ay < by) {
-    if (by > cy) {              /* acb */
-      if (ay < cy) {
+  ay.f = snap_ya;
+  by.f = snap_yb;
+  cy.f = snap_yc;
+  if (ay.i < 0) ay.i ^= 0x7FFFFFFF;
+  if (by.i < 0) by.i ^= 0x7FFFFFFF;
+  if (cy.i < 0) cy.i ^= 0x7FFFFFFF;
+  if (ay.i < by.i) {
+    if (by.i > cy.i) {              /* acb */
+      if (ay.i < cy.i) {
         fa = (const float *)va + xindex;
         fb = (const float *)vc + xindex;
         fc = (const float *)vb + xindex;
@@ -664,8 +669,8 @@ GR_DDFUNC(_trisetup_mixed_datalist, FxI32, ( const void *va, const void *vb, con
       /* else it's already sorted */
     }
   } else {
-    if (by < cy) {              /* bac */
-      if (ay < cy) {
+    if (by.i < cy.i) {              /* bac */
+      if (ay.i < cy.i) {
         fa = (const float *)vb + xindex;
         fb = (const float *)va + xindex;
         fc = (const float *)vc + xindex;
@@ -820,7 +825,6 @@ GR_DDFUNC(_trisetup_mixed_datalist, FxI32, ( const void *va, const void *vb, con
 GR_DDFUNC(_trisetup_mixed_datalist, FxI32, ( const void *va, const void *vb, const void *vc, FxBool f1, FxBool f2, FxBool f3 ))
 {
   GR_DCL_GC;
-  GR_DCL_HW;
   FxI32 xindex = 0;
   FxI32 yindex = 1;
   const float *fa = (const float *)va + xindex;
@@ -829,7 +833,9 @@ GR_DDFUNC(_trisetup_mixed_datalist, FxI32, ( const void *va, const void *vb, con
   float ooa, dxAB, dxBC, dyAB, dyBC;
   int i,j,culltest;
   int ii, ia, ib, ic;
-  int ay, by, cy;
+  union { float f; int i; } ay;
+  union { float f; int i; } by;
+  union { float f; int i; } cy;
   float *fp;
   struct dataList_s *dlp;
   volatile FxU32 *fifoPtr;
@@ -851,15 +857,15 @@ GR_DDFUNC(_trisetup_mixed_datalist, FxI32, ( const void *va, const void *vb, con
    **  that we know the first two elements are X & Y by looking at the
    **  grVertex structure.  
    */
-  ay = *(int *)&snap_ya;
-  by = *(int *)&snap_yb;
-  if (ay < 0) ay ^= 0x7FFFFFFF;
-  cy = *(int *)&snap_yc;
-  if (by < 0) by ^= 0x7FFFFFFF;
-  if (cy < 0) cy ^= 0x7FFFFFFF;
-  if (ay < by) {
-    if (by > cy) {              /* acb */
-      if (ay < cy) {
+  ay.f = snap_ya;
+  by.f = snap_yb;
+  cy.f = snap_yc;
+  if (ay.i < 0) ay.i ^= 0x7FFFFFFF;
+  if (by.i < 0) by.i ^= 0x7FFFFFFF;
+  if (cy.i < 0) cy.i ^= 0x7FFFFFFF;
+  if (ay.i < by.i) {
+    if (by.i > cy.i) {              /* acb */
+      if (ay.i < cy.i) {
         fa = (const float *)va + xindex;
         fb = (const float *)vc + xindex;
         fc = (const float *)vb + xindex;
@@ -878,8 +884,8 @@ GR_DDFUNC(_trisetup_mixed_datalist, FxI32, ( const void *va, const void *vb, con
       /* else it's already sorted */
     }
   } else {
-    if (by < cy) {              /* bac */
-      if (ay < cy) {
+    if (by.i < cy.i) {              /* bac */
+      if (ay.i < cy.i) {
         fa = (const float *)vb + xindex;
         fb = (const float *)va + xindex;
         fc = (const float *)vc + xindex;
@@ -1139,7 +1145,6 @@ FxI32 FX_CSTYLE
 _vp_trisetup_mixed_datalist( const void *va, const void *vb, const void *vc, FxBool f1, FxBool f2, FxBool f3 )
 {
   GR_DCL_GC;
-  GR_DCL_HW;
   FxI32 xindex = 0;
   FxI32 yindex = 1;
   const float *fa = (const float *)va;
@@ -1148,7 +1153,9 @@ _vp_trisetup_mixed_datalist( const void *va, const void *vb, const void *vc, FxB
   float ooa, dxAB, dxBC, dyAB, dyBC;
   int i,j,culltest;
   int ii, ia, ib, ic;
-  int ay, by, cy;
+  union { float f; int i; } ay;
+  union { float f; int i; } by;
+  union { float f; int i; } cy;
   float *fp;
   struct dataList_s *dlp;
   float oowa, oowb, oowc;
@@ -1184,15 +1191,15 @@ _vp_trisetup_mixed_datalist( const void *va, const void *vb, const void *vc, FxB
   snap_yb = tmp_snap_yb = (volatile float) (*((const float *)vb + yindex) * oowb * gc->state.Viewport.hheight + gc->state.Viewport.oy + SNAP_BIAS);
   snap_yc = tmp_snap_yc = (volatile float) (*((const float *)vc + yindex) * oowc * gc->state.Viewport.hheight + gc->state.Viewport.oy + SNAP_BIAS);
 
-  ay = *(int *)&tmp_snap_ya;
-  by = *(int *)&tmp_snap_yb;
-  if (ay < 0) ay ^= 0x7FFFFFFF;
-  cy = *(int *)&tmp_snap_yc;
-  if (by < 0) by ^= 0x7FFFFFFF;
-  if (cy < 0) cy ^= 0x7FFFFFFF;
-  if (ay < by) {
-    if (by > cy) {              /* acb */
-      if (ay < cy) {
+  ay.f = tmp_snap_ya;
+  by.f = tmp_snap_yb;
+  cy.f = tmp_snap_yc;
+  if (ay.i < 0) ay.i ^= 0x7FFFFFFF;
+  if (by.i < 0) by.i ^= 0x7FFFFFFF;
+  if (cy.i < 0) cy.i ^= 0x7FFFFFFF;
+  if (ay.i < by.i) {
+    if (by.i > cy.i) {              /* acb */
+      if (ay.i < cy.i) {
         fa = (const float *)va + xindex;
         fb = (const float *)vc + xindex;
         fc = (const float *)vb + xindex;
@@ -1217,8 +1224,8 @@ _vp_trisetup_mixed_datalist( const void *va, const void *vb, const void *vc, FxB
       /* else it's already sorted */
     }
   } else {
-    if (by < cy) {              /* bac */
-      if (ay < cy) {
+    if (by.i < cy.i) {              /* bac */
+      if (ay.i < cy.i) {
         fa = (const float *)vb + xindex;
         fb = (const float *)va + xindex;
         fc = (const float *)vc + xindex;
@@ -1926,7 +1933,9 @@ _vp_trisetup_mixed_datalist( const void *va, const void *vb, const void *vc, FxB
   float ooa, dxAB, dxBC, dyAB, dyBC;
   int i,j,culltest;
   int ii, ia, ib, ic;
-  int ay, by, cy;
+  union { float f; int i; } ay;
+  union { float f; int i; } by;
+  union { float f; int i; } cy;
   float *fp;
   struct dataList_s *dlp;
   float oowa, oowb, oowc;
@@ -1960,15 +1969,15 @@ _vp_trisetup_mixed_datalist( const void *va, const void *vb, const void *vc, FxB
   snap_yb = tmp_snap_yb = (volatile float) (*((const float *)vb + yindex) * oowb * gc->state.Viewport.hheight + gc->state.Viewport.oy + SNAP_BIAS);
   snap_yc = tmp_snap_yc = (volatile float) (*((const float *)vc + yindex) * oowc * gc->state.Viewport.hheight + gc->state.Viewport.oy + SNAP_BIAS);
 
-  ay = *(int *)&tmp_snap_ya;
-  by = *(int *)&tmp_snap_yb;
-  if (ay < 0) ay ^= 0x7FFFFFFF;
-  cy = *(int *)&tmp_snap_yc;
-  if (by < 0) by ^= 0x7FFFFFFF;
-  if (cy < 0) cy ^= 0x7FFFFFFF;
-  if (ay < by) {
-    if (by > cy) {              /* acb */
-      if (ay < cy) {
+  ay.f = tmp_snap_ya;
+  by.f = tmp_snap_yb;
+  cy.f = tmp_snap_yc;
+  if (ay.i < 0) ay.i ^= 0x7FFFFFFF;
+  if (by.i < 0) by.i ^= 0x7FFFFFFF;
+  if (cy.i < 0) cy.i ^= 0x7FFFFFFF;
+  if (ay.i < by.i) {
+    if (by.i > cy.i) {              /* acb */
+      if (ay.i < cy.i) {
         fa = (const float *)va + xindex;
         fb = (const float *)vc + xindex;
         fc = (const float *)vb + xindex;
@@ -1993,8 +2002,8 @@ _vp_trisetup_mixed_datalist( const void *va, const void *vb, const void *vc, FxB
       /* else it's already sorted */
     }
   } else {
-    if (by < cy) {              /* bac */
-      if (ay < cy) {
+    if (by.i < cy.i) {              /* bac */
+      if (ay.i < cy.i) {
         fa = (const float *)vb + xindex;
         fb = (const float *)va + xindex;
         fc = (const float *)vc + xindex;

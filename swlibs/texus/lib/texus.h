@@ -38,13 +38,8 @@ extern "C" {
 typedef unsigned char   FxU8;
 typedef unsigned short  FxU16;
 typedef short           FxI16;
-#ifdef __LP64__
 typedef unsigned int    FxU32;
 typedef int             FxI32;
-#else
-typedef unsigned long   FxU32;
-typedef long            FxI32;
-#endif
 typedef int             FxBool;
 
 /*

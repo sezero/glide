@@ -52,7 +52,7 @@
 */
 FX_EXPORT FxBool FX_CSTYLE sst1InitSli(FxU32 *sstbase0, FxU32 *sstbase1)
 {
-    FxU32 j, n, MasterPhysAddr, cntr;
+    FxU32 j, n, u, MasterPhysAddr, cntr;
     SstRegs *sstMaster = (SstRegs *) sstbase0;
     SstRegs *sstSlave = (SstRegs *) sstbase1;
     FxU32 masterVInClkDel, masterVOutClkDel;
@@ -241,12 +241,15 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitSli(FxU32 *sstbase0, FxU32 *sstbase1)
         slaveVOutClkDel = 0;
         slavePVOutClkDel = 0;
 
-        if(GETENV(("SSTV2_SLIS_VOUT_CLKDEL")))
-            SSCANF(GETENV(("SSTV2_SLIS_VOUT_CLKDEL")), "%ld", &slaveVOutClkDel);
-        if(GETENV(("SSTV2_SLIS_PVOUT_CLKDEL")))
-            SSCANF(GETENV(("SSTV2_SLIS_PVOUT_CLKDEL")), "%ld", &slavePVOutClkDel);
-        if(GETENV(("SSTV2_SLIS_VIN_CLKDEL")))
-            SSCANF(GETENV(("SSTV2_SLIS_VIN_CLKDEL")), "%ld", &slaveVInClkDel);
+        if(GETENV(("SSTV2_SLIS_VOUT_CLKDEL")) &&
+           (SSCANF(GETENV(("SSTV2_SLIS_VOUT_CLKDEL")), "%u", &u) == 1))
+            slaveVOutClkDel = u;
+        if(GETENV(("SSTV2_SLIS_PVOUT_CLKDEL")) &&
+           (SSCANF(GETENV(("SSTV2_SLIS_PVOUT_CLKDEL")), "%u", &u) == 1))
+            slavePVOutClkDel = u;
+        if(GETENV(("SSTV2_SLIS_VIN_CLKDEL")) &&
+           (SSCANF(GETENV(("SSTV2_SLIS_VIN_CLKDEL")), "%u", &u) == 1))
+            slaveVInClkDel = u;
         INIT_PRINTF(("sst1InitSli(): slaveVinClkdel=0x%x, slaveVOutClkDel=0x%x, slavePVOutClkDel=0x%x\n",
             slaveVInClkDel, slaveVOutClkDel, slavePVOutClkDel));
         if(sst1CurrentBoard->fbiVideo16BPP)
@@ -390,12 +393,15 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitSli(FxU32 *sstbase0, FxU32 *sstbase1)
     masterVInClkDel = 3;
     masterVOutClkDel = 2;
     masterPVOutClkDel = 0;
-    if(GETENV(("SSTV2_SLIM_VOUT_CLKDEL")))
-        SSCANF(GETENV(("SSTV2_SLIM_VOUT_CLKDEL")), "%ld", &masterVOutClkDel);
-    if(GETENV(("SSTV2_SLIM_PVOUT_CLKDEL")))
-        SSCANF(GETENV(("SSTV2_SLIM_PVOUT_CLKDEL")), "%ld", &masterPVOutClkDel);
-    if(GETENV(("SSTV2_SLIM_VIN_CLKDEL")))
-        SSCANF(GETENV(("SSTV2_SLIM_VIN_CLKDEL")), "%ld", &masterVInClkDel);
+    if(GETENV(("SSTV2_SLIM_VOUT_CLKDEL")) &&
+       (SSCANF(GETENV(("SSTV2_SLIM_VOUT_CLKDEL")), "%u", &u) == 1))
+        masterVOutClkDel = u;
+    if(GETENV(("SSTV2_SLIM_PVOUT_CLKDEL")) &&
+       (SSCANF(GETENV(("SSTV2_SLIM_PVOUT_CLKDEL")), "%u", &u) == 1))
+        masterPVOutClkDel = u;
+    if(GETENV(("SSTV2_SLIM_VIN_CLKDEL")) &&
+       (SSCANF(GETENV(("SSTV2_SLIM_VIN_CLKDEL")), "%u", &u) == 1))
+        masterVInClkDel = u;
     INIT_PRINTF(("sst1InitSli(): masterVinClkdel=0x%x, masterVOutClkDel=0x%x, masterPVOutClkDel=0x%x\n",
         masterVInClkDel, masterVOutClkDel, masterPVOutClkDel));
     if(sst1CurrentBoard->fbiVideo16BPP)

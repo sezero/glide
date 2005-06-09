@@ -24,7 +24,9 @@
 ** Initialization code for initializing scanline interleaving
 **
 */
+#ifndef __GNUC__
 #pragma optimize ("",off)
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -141,12 +143,15 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitSli(FxU32 *sstbase0, FxU32 *sstbase1)
         slaveVInClkDel = 2;
         slaveVOutClkDel = 0;
         slavePVOutClkDel = 3;
-        if(GETENV(("SST_SLIS_VOUT_CLKDEL")))
-            SSCANF(GETENV(("SST_SLIS_VOUT_CLKDEL")), "%i", &slaveVOutClkDel);
-        if(GETENV(("SST_SLIS_PVOUT_CLKDEL")))
-            SSCANF(GETENV(("SST_SLIS_PVOUT_CLKDEL")), "%i", &slavePVOutClkDel);
-        if(GETENV(("SST_SLIS_VIN_CLKDEL")))
-            SSCANF(GETENV(("SST_SLIS_VIN_CLKDEL")), "%i", &slaveVInClkDel);
+        if(GETENV(("SST_SLIS_VOUT_CLKDEL")) &&
+           (SSCANF(GETENV(("SST_SLIS_VOUT_CLKDEL")), "%i", &n) == 1))
+          slaveVOutClkDel = n;
+        if(GETENV(("SST_SLIS_PVOUT_CLKDEL")) &&
+           (SSCANF(GETENV(("SST_SLIS_PVOUT_CLKDEL")), "%i", &n) == 1)) 
+          slavePVOutClkDel = n;
+        if(GETENV(("SST_SLIS_VIN_CLKDEL")) &&
+           (SSCANF(GETENV(("SST_SLIS_VIN_CLKDEL")), "%i", &n) == 1)) 
+          slaveVInClkDel = n;
         INIT_PRINTF(("sst1InitSli(): slaveVinClkdel=0x%x, slaveVOutClkDel=0x%x, slavePVOutClkDel=0x%x\n",
             slaveVInClkDel, slaveVOutClkDel, slavePVOutClkDel));
         if(sst1CurrentBoard->fbiVideo16BPP)
@@ -262,12 +267,15 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitSli(FxU32 *sstbase0, FxU32 *sstbase1)
     masterVInClkDel = 2;
     masterVOutClkDel = 0;
     masterPVOutClkDel = 3;
-    if(GETENV(("SST_SLIM_VOUT_CLKDEL")))
-        SSCANF(GETENV(("SST_SLIM_VOUT_CLKDEL")), "%i", &masterVOutClkDel);
-    if(GETENV(("SST_SLIM_PVOUT_CLKDEL")))
-        SSCANF(GETENV(("SST_SLIM_PVOUT_CLKDEL")), "%i", &masterPVOutClkDel);
-    if(GETENV(("SST_SLIM_VIN_CLKDEL")))
-        SSCANF(GETENV(("SST_SLIM_VIN_CLKDEL")), "%i", &masterVInClkDel);
+    if(GETENV(("SST_SLIM_VOUT_CLKDEL")) &&
+       (SSCANF(GETENV(("SST_SLIM_VOUT_CLKDEL")), "%i", &n) == 1)) 
+      masterVOutClkDel = n;
+    if(GETENV(("SST_SLIM_PVOUT_CLKDEL")) &&
+       (SSCANF(GETENV(("SST_SLIM_PVOUT_CLKDEL")), "%i", &n) == 1)) 
+      masterPVOutClkDel = n;
+    if(GETENV(("SST_SLIM_VIN_CLKDEL")) &&
+       (SSCANF(GETENV(("SST_SLIM_VIN_CLKDEL")), "%i", &n) == 1)) 
+      masterVInClkDel = n;
     INIT_PRINTF(("sst1InitSli(): masterVinClkdel=0x%x, masterVOutClkDel=0x%x, masterPVOutClkDel=0x%x\n",
         masterVInClkDel, masterVOutClkDel, masterPVOutClkDel));
     if(sst1CurrentBoard->fbiVideo16BPP)
@@ -368,8 +376,9 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitSli(FxU32 *sstbase0, FxU32 *sstbase1)
         /* Clear Screen */
         FxU32 clearColor = 0x0;
 
-        if(GETENV(("SST_VIDEO_CLEARCOLOR")))
-            SSCANF(GETENV(("SST_VIDEO_CLEARCOLOR")), "%i", &clearColor);
+        if(GETENV(("SST_VIDEO_CLEARCOLOR")) &&
+           (SSCANF(GETENV(("SST_VIDEO_CLEARCOLOR")), "%i", &n) == 1)) 
+          clearColor = n;
         ISET(sstMaster->c1, clearColor);
         ISET(sstMaster->c0, clearColor);
         ISET(sstMaster->zaColor, 0x0);
@@ -541,4 +550,6 @@ FX_ENTRY FxU32 FX_CALL sst1InitSliDetect(FxU32 *sstbase)
     return(sliDetected);
 }
 
+#ifndef __GNUC__
 #pragma optimize ("",on)
+#endif

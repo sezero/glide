@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.5  2005/05/25 08:51:52  jwrdegoede
+** Add #ifdef GL_X86 around x86 specific code
+**
 ** Revision 1.1.2.4  2005/05/10 11:27:23  jwrdegoede
 ** sst1 gcc4 compile fixes
 **
@@ -203,7 +206,6 @@ FxI32 FX_CSTYLE
 _grVpDrawTriangle( const void *va, const void *vb, const void *vc )
 {
   GR_DCL_GC;
-  GR_DCL_HW;
   FxI32 xindex = (gc->state.vData.vertexInfo.offset >> 2);
   FxI32 yindex = xindex + 1;
   const float *fa = (const float *)va + xindex;
@@ -211,7 +213,9 @@ _grVpDrawTriangle( const void *va, const void *vb, const void *vc )
   const float *fc = (const float *)vc + xindex;
   float ooa, dxAB, dxBC, dyAB, dyBC;
   int i,j,culltest;
-  int ay, by, cy;
+  union { float f; int i; } ay;
+  union { float f; int i; } by;
+  union { float f; int i; } cy;
   float *fp;
   struct dataList_s *dlp;
   float oowa, oowb, oowc;
@@ -242,15 +246,15 @@ _grVpDrawTriangle( const void *va, const void *vb, const void *vc )
   snap_yb = tmp_snap_yb = (volatile float) (*((const float *)vb + yindex) * oowb * gc->state.Viewport.hheight + gc->state.Viewport.oy + SNAP_BIAS);
   snap_yc = tmp_snap_yc = (volatile float) (*((const float *)vc + yindex) * oowc * gc->state.Viewport.hheight + gc->state.Viewport.oy + SNAP_BIAS);
 
-  ay = *(int *)&tmp_snap_ya;
-  by = *(int *)&tmp_snap_yb;
-  if (ay < 0) ay ^= 0x7FFFFFFF;
-  cy = *(int *)&tmp_snap_yc;
-  if (by < 0) by ^= 0x7FFFFFFF;
-  if (cy < 0) cy ^= 0x7FFFFFFF;
-  if (ay < by) {
-    if (by > cy) {              /* acb */
-      if (ay < cy) {
+  ay.f = tmp_snap_ya;
+  by.f = tmp_snap_yb;
+  cy.f = tmp_snap_yc;
+  if (ay.i < 0) ay.i ^= 0x7FFFFFFF;
+  if (by.i < 0) by.i ^= 0x7FFFFFFF;
+  if (cy.i < 0) cy.i ^= 0x7FFFFFFF;
+  if (ay.i < by.i) {
+    if (by.i > cy.i) {              /* acb */
+      if (ay.i < cy.i) {
         fa = (const float *)va + xindex;
         fb = (const float *)vc + xindex;
         fc = (const float *)vb + xindex;
@@ -269,8 +273,8 @@ _grVpDrawTriangle( const void *va, const void *vb, const void *vc )
       /* else it's already sorted */
     }
   } else {
-    if (by < cy) {              /* bac */
-      if (ay < cy) {
+    if (by.i < cy.i) {              /* bac */
+      if (ay.i < cy.i) {
         fa = (const float *)vb + xindex;
         fb = (const float *)va + xindex;
         fc = (const float *)vc + xindex;
@@ -914,7 +918,9 @@ _grVpDrawTriangle( const void *va, const void *vb, const void *vc )
   const float *fc = (const float *)vc + xindex;
   float ooa, dxAB, dxBC, dyAB, dyBC;
   int i,j,culltest;
-  int ay, by, cy;
+  union { float f; int i; } ay;
+  union { float f; int i; } by;
+  union { float f; int i; } cy;
   float *fp;
   struct dataList_s *dlp;
   float oowa, oowb, oowc;
@@ -943,15 +949,15 @@ _grVpDrawTriangle( const void *va, const void *vb, const void *vc )
   snap_yb = tmp_snap_yb = (volatile float) (*((const float *)vb + yindex) * oowb * gc->state.Viewport.hheight + gc->state.Viewport.oy + SNAP_BIAS);
   snap_yc = tmp_snap_yc = (volatile float) (*((const float *)vc + yindex) * oowc * gc->state.Viewport.hheight + gc->state.Viewport.oy + SNAP_BIAS);
 
-  ay = *(int *)&tmp_snap_ya;
-  by = *(int *)&tmp_snap_yb;
-  if (ay < 0) ay ^= 0x7FFFFFFF;
-  cy = *(int *)&tmp_snap_yc;
-  if (by < 0) by ^= 0x7FFFFFFF;
-  if (cy < 0) cy ^= 0x7FFFFFFF;
-  if (ay < by) {
-    if (by > cy) {              /* acb */
-      if (ay < cy) {
+  ay.i = tmp_snap_ya;
+  by.i = tmp_snap_yb;
+  cy.i = tmp_snap_yc;
+  if (ay.i < 0) ay.i ^= 0x7FFFFFFF;
+  if (by.i < 0) by.i ^= 0x7FFFFFFF;
+  if (cy.i < 0) cy.i ^= 0x7FFFFFFF;
+  if (ay.i < by.i) {
+    if (by.i > cy.i) {              /* acb */
+      if (ay.i < cy.i) {
         fa = (const float *)va + xindex;
         fb = (const float *)vc + xindex;
         fc = (const float *)vb + xindex;
@@ -970,8 +976,8 @@ _grVpDrawTriangle( const void *va, const void *vb, const void *vc )
       /* else it's already sorted */
     }
   } else {
-    if (by < cy) {              /* bac */
-      if (ay < cy) {
+    if (by.i < cy.i) {              /* bac */
+      if (ay.i < cy.i) {
         fa = (const float *)vb + xindex;
         fb = (const float *)va + xindex;
         fc = (const float *)vc + xindex;
@@ -1887,7 +1893,7 @@ _grDrawLineStrip(FxI32 mode, FxI32 ltype, FxI32 count, void *pointers)
   }
   else {
 
-    float oowa, oowb, owa, owb, tmp1, tmp2, fax, fay, fbx, fby;
+    float oowa, oowb = 0.0f, owa, owb, tmp1, tmp2, fax, fay, fbx, fby;
     float *a, *b;
     int k;
 
@@ -1902,27 +1908,20 @@ _grDrawLineStrip(FxI32 mode, FxI32 ltype, FxI32 count, void *pointers)
     for (index = 0; index < count; index++) {
       GR_SET_EXPECTED_SIZE(12+_GlideRoot.curTriSize);
       
+      a = (float *)pointers;
+      b = (float *)pointers + stride;
+      if (mode) {
+        a = *(float **)a;
+        b = *(float **)b;
+      }
       if (ltype == GR_LINES) {
-        a = (float *)pointers;
-        b = (float *)pointers + stride;
-        if (mode) {
-          a = *(float **)a;
-          b = *(float **)b;
-        }
         pointers = (float *)pointers + stride;
         owa = oowa = 1.0f / FARRAY(a, gc->state.vData.wInfo.offset);        
-        owb = oowb = 1.0f / FARRAY(b, gc->state.vData.wInfo.offset);        
       }
-      else {
+      else
         owa = oowa = oowb;
-        a = (float *)pointers;
-        b = (float *)pointers + stride;
-        if (mode) {
-          a = *(float **)a;
-          b = *(float **)b;
-        }
-        owb = oowb = 1.0f / FARRAY(b, gc->state.vData.wInfo.offset);
-      }
+      owb = oowb = 1.0f / FARRAY(b, gc->state.vData.wInfo.offset);        
+
       fay = tmp1 = FARRAY(a, gc->state.vData.vertexInfo.offset+4)
         *oowa*gc->state.Viewport.hheight+gc->state.Viewport.oy + SNAP_BIAS;
       fby = tmp2 = FARRAY(b, gc->state.vData.vertexInfo.offset+4)

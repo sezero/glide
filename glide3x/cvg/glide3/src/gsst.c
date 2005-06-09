@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.6  2005/01/13 16:02:32  koolsmoky
+** Restict calls to pciOpen() pciClose() when compiled with DIRECTX option. this fixes problems with the win32 miniport opened in exclusive mode.
+**
 ** Revision 1.1.1.1.8.5  2004/12/13 08:40:18  dborca
 ** fixed splash DLL code (but partially left disabled)
 **
@@ -1095,6 +1098,8 @@ __errSliExit:
       break;
 
     default:
+      /* GR_ASSERT should never return, just to shut up warnings */
+      xres = yres = 0;
       GR_ASSERT(0);
     }
   } else {
@@ -2025,12 +2030,12 @@ GR_ENTRY(guGammaCorrectionRGB, void, (float r, float g, float b))
 GR_DIENTRY(grLoadGammaTable, void, (FxU32 nentries, FxU32 *red, FxU32 *green, FxU32 *blue))
 {
 #define FN_NAME "grLoadGammaTable"
-  FxU32 max;
+  FxI32 max;
 
   GR_BEGIN_NOFIFOCHECK("grLoadGammaTable",80);
   
   grGet(GR_GAMMA_TABLE_ENTRIES, 4, &max);
-  if (nentries > max)
+  if (nentries > (FxU32)max)
     nentries = max;
   sst1InitGammaTable(gc->reg_ptr, nentries, red, green, blue);
 

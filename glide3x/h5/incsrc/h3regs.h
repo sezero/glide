@@ -112,11 +112,7 @@
 */
 
 #ifdef _H2INC
-# ifdef __LP64__
 typedef unsigned int   FxU32;
-# else
-typedef unsigned long   FxU32;
-# endif
 #endif
 //----------------- SST chip I/O layout -------------------------
 // I/O registers remapped into memory space

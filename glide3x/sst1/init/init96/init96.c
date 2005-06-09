@@ -177,8 +177,10 @@ static FxU32 numStalls;
 
 Init96HALData *curHALData;
 
+#ifdef __DOS32__
 static FxU16
 oldVidMode;
+#endif
 
 static FxU32 
 devNum, 
@@ -492,9 +494,11 @@ get96(FxU32 *addr)
 #define GETREGVALFROMENV(val, envStr, constant)\
 {\
   const char *envVal;\
+  unsigned int u; \
   val = constant;\
-  if ((envVal = myGetenv(envStr)) != NULL) {\
-    sscanf(envVal, "%x", &val);\
+  if ( (envVal = myGetenv(envStr)) && \
+       (sscanf(envVal, "%x", &u) == 1) ) { \
+    val = u; \
     GDBG_INFO((80,\
                "%s:  The environment variable %s == 0x%x overloaded a register value\n", \
                FN_NAME, envStr, val));\
@@ -506,6 +510,8 @@ init96LoadBufRegs(int nBuffers,
                   InitBufDesc_t *pBufDesc, 
                   int xRes, int yRes, 
                   InitRegisterDesc *rd);
+static void init96SetupRendering(InitRegisterDesc *regDesc,
+		  GrScreenResolution_t sRes);
 
 #define XY_ONE (1<<SST_XY_FRACBITS)
 
@@ -765,8 +771,6 @@ INITVG96ENTRY(init96MapBoard, FxBool , (void *rd, void *info, FxU16 vID, FxU16 d
   {
     FxBool rv=FXTRUE;
     GrScreenResolution_t    res = GR_RESOLUTION_640x480;
-    static void init96SetupRendering(InitRegisterDesc *regDesc,
-				     GrScreenResolution_t sRes);
 
     if (curHALData->initAperture)
       (*curHALData->initAperture)(regDesc);
@@ -954,15 +958,13 @@ init96SetupRendering(InitRegisterDesc *regDesc, GrScreenResolution_t sRes)
   {
     FxU32 trexinit0, trexinit1;
         
-    if(myGetenv(("SST_TREX0INIT0"))) {
-      sscanf(myGetenv(("SST_TREX0INIT0")), "%i", &trexinit0);
-    } else {
+    if( !myGetenv(("SST_TREX0INIT0")) ||
+        (sscanf(myGetenv(("SST_TREX0INIT0")), "%i", &trexinit0) != 1) ) {
       trexinit0 = 0x05441;      /* TREXINIT0 */
     }
         
-    if(myGetenv(("SST_TREX0INIT1"))) {
-      sscanf(myGetenv(("SST_TREX0INIT1")), "%i", &trexinit1);
-    } else {
+    if( !myGetenv(("SST_TREX0INIT1")) ||
+        (sscanf(myGetenv(("SST_TREX0INIT1")), "%i", &trexinit1) != 1) ) {
       trexinit1 = 0x3643c; /* TREXINIT1 */
     }
         
@@ -1477,10 +1479,6 @@ INITVG96ENTRY(init96Swap, void ,
 #define FN_NAME "init96Swap"
   FxU32 status;
 
-  static FxBool gotEnv;
-  static FxBool overrideSwap;
-  static FxU32 overrideVal;
-
   GDBG_INFO((80, "init96Swap()\n"));
 
   /*
@@ -1517,6 +1515,10 @@ INITVG96ENTRY(init96Swap, void ,
 
     sstPtr->swappendCMD = 0x1;
     
+  {
+    static FxBool gotEnv = FXFALSE;
+    static FxBool overrideSwap;
+    static FxU32 overrideVal;
 
     if (gotEnv == FXFALSE) {
       const char *envVal;
@@ -1532,6 +1534,8 @@ INITVG96ENTRY(init96Swap, void ,
 
     if (overrideSwap == FXTRUE)
       code = overrideVal;
+      
+  }
 
     GDBG_INFO((80, "%s:  Sending swapbufferCMD (0x%x) via FIFO callback\n",
                FN_NAME, code));
@@ -2143,12 +2147,14 @@ init96LoadBufRegs(int nBuffers, InitBufDesc_t *pBufDesc, int xRes,
   if (myGetenv("SST96_FORCEALIGN")) {
     FxU32 F, B, T, A;
     
-    sscanf(myGetenv("SST96_FORCEALIGN"), "%x,%x,%x,%x", &F, &B, &T, &A);
-    GDBG_INFO((80, "!!!!!GROSS HACK... forcing values!!!!!\n"));
-    pFront->bufOffset = F;
-    pBack->bufOffset = B;
-    pTriple->bufOffset = T;
-    pAux->bufOffset = A;
+    if (sscanf(myGetenv("SST96_FORCEALIGN"), "%x,%x,%x,%x", &F, &B, &T, &A) == 4)
+    {
+      GDBG_INFO((80, "!!!!!GROSS HACK... forcing values!!!!!\n"));
+      pFront->bufOffset = F;
+      pBack->bufOffset = B;
+      pTriple->bufOffset = T;
+      pAux->bufOffset = A;
+    }
   }
 
   if (pFront) {

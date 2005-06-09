@@ -6,6 +6,7 @@
 #define swapValue(K, i, j)  t=K[i], K[i] = K[j], K[j] = (float) t
 #define swapVector(U, i, j) swapValue(U[0], i, j); swapValue(U[1], i, j); swapValue(U[2], i, j)
 
+#if 0 /* not used */
 static void 
 printMatrix(const char *title, const float m[3][3])
 {
@@ -20,6 +21,7 @@ printMatrix(const char *title, const float m[3][3])
         printf("\n");
     }
 }
+#endif
 
 static void 
 normalizeColumns( float a[3][3])
@@ -49,7 +51,6 @@ static void eigenVectors (const float S[3][3], float U[3][3], float K[3])
     double c, s, tau, ta, OffDq, a, b;
 #endif
     int sweep, i, j, p, q;
-    static int ncount = 0;
     static int mod3[]  = { 0, 1, 2, 0, 1, 2};
 
     for (i = 0; i < 3; i++) {
@@ -286,7 +287,7 @@ eigenSpace(int n, float *data, float mean[3], float evectors[3][3], float evalue
     float   cov[3][3];
 
     covariance(n, (float (*)[3]) data, mean, cov); 
-    eigenVectors(cov, evectors, evalues);
+    eigenVectors((const float (*)[3])cov, evectors, evalues);
 }
 
 /*
