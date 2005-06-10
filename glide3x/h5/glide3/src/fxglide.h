@@ -2025,7 +2025,7 @@ typedef struct GrGC_s
 **  stuff near the top is accessed a lot
 */
 struct _GlideRoot_s {
-#if GL_X86
+#if defined(__WATCOMC__) || defined(__MSC__) || (defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__)))
   int   p6Fencer;           /* xchg to here to keep this in cache!!! */
 #endif
   FxU32 tlsIndex;

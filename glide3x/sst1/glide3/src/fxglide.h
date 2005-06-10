@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.5  2005/05/25 08:51:52  jwrdegoede
+** Add #ifdef GL_X86 around x86 specific code
+**
 ** Revision 1.1.2.4  2004/10/07 07:49:08  dborca
 ** comment the GR_CDECL hack to prevent accidents
 **
@@ -892,7 +895,7 @@ typedef struct GrGC_s
 **  stuff near the top is accessed a lot
 */
 struct _GlideRoot_s {
-#if GL_X86
+#if defined(__WATCOMC__) || defined(__MSC__) || (defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__)))
   int p6Fencer;                 /* xchg to here to keep this in cache!!! */
 #endif
   int current_sst;

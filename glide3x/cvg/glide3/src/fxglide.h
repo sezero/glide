@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.11  2005/06/09 18:32:08  jwrdegoede
+** Fixed all warnings with gcc4 -Wall -W -Wno-unused-parameter, except for a couple I believe to be a gcc bug. This has been reported to gcc.
+**
 ** Revision 1.1.1.1.8.10  2005/05/25 08:53:10  jwrdegoede
 ** Add P6FENCE (ish) macro for non-x86 archs
 **
@@ -1331,7 +1334,7 @@ typedef struct GrGC_s
 **  stuff near the top is accessed a lot
 */
 struct _GlideRoot_s {
-#if GL_X86
+#if defined(__WATCOMC__) || defined(__MSC__) || (defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__)))
   int p6Fencer;                 /* xchg to here to keep this in cache!!! */
 #endif
   int current_sst;

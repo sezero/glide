@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.2.4.12  2005/05/25 08:56:23  jwrdegoede
+** Make h5 and h3 tree 64 bit clean. This is ported over from the non-devel branch so this might be incomplete
+**
 ** Revision 1.2.4.11  2005/05/25 08:53:22  jwrdegoede
 ** Add P6FENCE (ish) macro for non-x86 archs
 **
@@ -1404,7 +1407,7 @@ typedef struct GrGC_s
 **  stuff near the top is accessed a lot
 */
 struct _GlideRoot_s {
-#if GL_X86
+#if defined(__WATCOMC__) || defined(__MSC__) || (defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__)))
   int p6Fencer;                 /* xchg to here to keep this in cache!!! */
 #endif
   FxU32
