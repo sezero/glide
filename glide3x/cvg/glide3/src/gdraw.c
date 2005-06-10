@@ -19,6 +19,9 @@
  **
  ** $Header$
  ** $Log$
+ ** Revision 1.1.1.1.8.3  2005/06/09 18:32:08  jwrdegoede
+ ** Fixed all warnings with gcc4 -Wall -W -Wno-unused-parameter, except for a couple I believe to be a gcc bug. This has been reported to gcc.
+ **
  ** Revision 1.1.1.1.8.2  2005/05/07 08:40:17  jwrdegoede
  ** lvalue cast fixes for gcc4
  **
@@ -249,7 +252,7 @@ GR_ENTRY(grDrawTriangle, void, (const void *a, const void *b, const void *c))
     vlist[0] = (float *)a;
     vlist[1] = (float *)b;
     vlist[2] = (float *)c;
-    _grDrawTriangles(GR_VTX_PTR_ARRAY, 3, vlist);
+    _grDrawTriangles_Default(GR_VTX_PTR_ARRAY, 3, vlist);
   } else {
     /* 
     ** draw a simple triangle 
