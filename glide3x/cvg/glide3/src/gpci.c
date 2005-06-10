@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.6  2005/05/25 08:51:49  jwrdegoede
+** Add #ifdef GL_X86 around x86 specific code
+**
 ** Revision 1.1.1.1.8.5  2005/01/13 15:42:51  koolsmoky
 ** fixed warning typo
 **
@@ -236,6 +239,9 @@
 /* Collection of all of the known procs for a given system */
 static GrTriSetupProc _triSetupProcs[][2][2] = 
 {
+#ifdef GLIDE_USE_C_TRISETUP
+  { {NULL,NULL}, {NULL, NULL} }, { {NULL,NULL}, {NULL, NULL} }
+#else
   /* Default Procs */
   {
     { _trisetup_Default_Default, _trisetup_Default_cull }, /* GR_WINDOW_COORDS */
@@ -248,10 +254,20 @@ static GrTriSetupProc _triSetupProcs[][2][2] =
     { _trisetup_clip_coor_thunk, _trisetup_clip_coor_thunk }, /* GR_CLIP_COORDS */
   },
 #endif /* GL_AMD3D */
+#endif /* GLIDE_USE_C_TRISETUP */
 };
 
+#ifdef GLIDE_USE_C_TRISETUP
+void FX_CSTYLE
+_grDrawVertexList(FxU32 pktype, FxU32 type, FxI32 mode, FxI32 count, void *pointers);
+#endif
+
 static GrVertexListProc _vertexListProcs[][2] = {
+#if GLIDE_USE_C_TRISETUP
+  { _grDrawVertexList, _grDrawVertexList },
+#else
   { _drawvertexlist, _vpdrawvertexlist },
+#endif
 #if GL_AMD3D
   { _grDrawVertexList_3DNow_Window, _grDrawVertexList_3DNow_Clip }
 #endif /* GL_AMD3D */
