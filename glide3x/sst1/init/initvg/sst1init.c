@@ -298,6 +298,7 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitRegisters(FxU32 *sstbase)
     FxU32 ft_clk_del, tf0_clk_del, tf1_clk_del, tf2_clk_del;
     sst1ClkTimingStruct sstGrxClk;
     volatile Sstregs *sst = (Sstregs *) sstbase;
+    int i;
 
     if(!sst)
         return(FXFALSE);
@@ -346,8 +347,8 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitRegisters(FxU32 *sstbase)
         /* .6 micron */
         ft_clk_del = 0xa; /* Okay for 16 MHz startup... */
     if(GETENV(("SST_PFT_CLK_DEL")) &&
-       (SSCANF(GETENV(("SST_PFT_CLK_DEL")), "%i", &n) == 1))
-      ft_clk_del = n;
+       (SSCANF(GETENV(("SST_PFT_CLK_DEL")), "%i", &i) == 1))
+      ft_clk_del = i;
     INIT_PRINTF(("sst1InitRegisters(): Setting PRELIM FT-CLK delay to 0x%x...\n", ft_clk_del));
     ISET(sst->fbiInit3,
         (SST_FBIINIT3_DEFAULT & ~(SST_FT_CLK_DEL_ADJ | SST_TF_FIFO_THRESH)) |

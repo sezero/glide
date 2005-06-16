@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.4  2005/06/09 18:32:35  jwrdegoede
+** Fixed all warnings with gcc4 -Wall -W -Wno-unused-parameter, except for a couple I believe to be a gcc bug. This has been reported to gcc.
+**
 ** Revision 1.1.2.3  2005/05/10 11:27:23  jwrdegoede
 ** sst1 gcc4 compile fixes
 **
@@ -115,7 +118,7 @@ static void grVpSetVertexParameter(float oow, const void *v1)
   struct dataList_s *dlp;
   int i;
   float *fp, dp;
-  int k;
+  int k = 0;
 
   dlp = gc->dataList;
   i = dlp->i;
@@ -251,7 +254,14 @@ static void grVpSetVertexParameter(float oow, const void *v1)
       i = dlp->i;
     }
     else {
-      dp = FARRAY(v1,i) * oow * gc->state.tmu_config[1].st_scale[0 /* k ?? */];
+      /* hmm this caused a k may be used unitialised warning, which is
+         silenced for now by initialising k with 0 at decleration. Problably
+         k is always 2 in this scenario because most likely when
+         (gc->state.paramIndex & STATE_REQUIRES_ST_TMU1) is true then
+         (gc->state.paramIndex & STATE_REQUIRES_ST_TMU0) is also true and
+         the for (k = 0; k < 2; k++) loop in the
+         (gc->state.paramIndex & STATE_REQUIRES_ST_TMU0) case leaves k at 2 */
+      dp = FARRAY(v1,i) * oow * gc->state.tmu_config[1].st_scale[k];
       GR_SETF( fp[0], dp );
       dlp++;
       i = dlp->i;

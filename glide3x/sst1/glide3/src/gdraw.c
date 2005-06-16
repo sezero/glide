@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.6  2005/06/09 18:32:35  jwrdegoede
+** Fixed all warnings with gcc4 -Wall -W -Wno-unused-parameter, except for a couple I believe to be a gcc bug. This has been reported to gcc.
+**
 ** Revision 1.1.2.5  2005/05/25 08:51:52  jwrdegoede
 ** Add #ifdef GL_X86 around x86 specific code
 **
@@ -949,9 +952,9 @@ _grVpDrawTriangle( const void *va, const void *vb, const void *vc )
   snap_yb = tmp_snap_yb = (volatile float) (*((const float *)vb + yindex) * oowb * gc->state.Viewport.hheight + gc->state.Viewport.oy + SNAP_BIAS);
   snap_yc = tmp_snap_yc = (volatile float) (*((const float *)vc + yindex) * oowc * gc->state.Viewport.hheight + gc->state.Viewport.oy + SNAP_BIAS);
 
-  ay.i = tmp_snap_ya;
-  by.i = tmp_snap_yb;
-  cy.i = tmp_snap_yc;
+  ay.f = tmp_snap_ya;
+  by.f = tmp_snap_yb;
+  cy.f = tmp_snap_yc;
   if (ay.i < 0) ay.i ^= 0x7FFFFFFF;
   if (by.i < 0) by.i ^= 0x7FFFFFFF;
   if (cy.i < 0) cy.i ^= 0x7FFFFFFF;

@@ -55,6 +55,7 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitSli(FxU32 *sstbase0, FxU32 *sstbase1)
     FxU32 masterPVOutClkDel, slavePVOutClkDel;
     FxU32 pciFifoLwm, memFifoLwm;
     FxU32 clkFreqMaster;
+    int i;
 
     /* Check to make sure master and slave are installed properly */
     /* Master should have a clock frequency setting of 54 MHz */
@@ -144,14 +145,14 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitSli(FxU32 *sstbase0, FxU32 *sstbase1)
         slaveVOutClkDel = 0;
         slavePVOutClkDel = 3;
         if(GETENV(("SST_SLIS_VOUT_CLKDEL")) &&
-           (SSCANF(GETENV(("SST_SLIS_VOUT_CLKDEL")), "%i", &n) == 1))
-          slaveVOutClkDel = n;
+           (SSCANF(GETENV(("SST_SLIS_VOUT_CLKDEL")), "%i", &i) == 1))
+          slaveVOutClkDel = i;
         if(GETENV(("SST_SLIS_PVOUT_CLKDEL")) &&
-           (SSCANF(GETENV(("SST_SLIS_PVOUT_CLKDEL")), "%i", &n) == 1)) 
-          slavePVOutClkDel = n;
+           (SSCANF(GETENV(("SST_SLIS_PVOUT_CLKDEL")), "%i", &i) == 1)) 
+          slavePVOutClkDel = i;
         if(GETENV(("SST_SLIS_VIN_CLKDEL")) &&
-           (SSCANF(GETENV(("SST_SLIS_VIN_CLKDEL")), "%i", &n) == 1)) 
-          slaveVInClkDel = n;
+           (SSCANF(GETENV(("SST_SLIS_VIN_CLKDEL")), "%i", &i) == 1)) 
+          slaveVInClkDel = i;
         INIT_PRINTF(("sst1InitSli(): slaveVinClkdel=0x%x, slaveVOutClkDel=0x%x, slavePVOutClkDel=0x%x\n",
             slaveVInClkDel, slaveVOutClkDel, slavePVOutClkDel));
         if(sst1CurrentBoard->fbiVideo16BPP)
@@ -268,14 +269,14 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitSli(FxU32 *sstbase0, FxU32 *sstbase1)
     masterVOutClkDel = 0;
     masterPVOutClkDel = 3;
     if(GETENV(("SST_SLIM_VOUT_CLKDEL")) &&
-       (SSCANF(GETENV(("SST_SLIM_VOUT_CLKDEL")), "%i", &n) == 1)) 
-      masterVOutClkDel = n;
+       (SSCANF(GETENV(("SST_SLIM_VOUT_CLKDEL")), "%i", &i) == 1)) 
+      masterVOutClkDel = i;
     if(GETENV(("SST_SLIM_PVOUT_CLKDEL")) &&
-       (SSCANF(GETENV(("SST_SLIM_PVOUT_CLKDEL")), "%i", &n) == 1)) 
-      masterPVOutClkDel = n;
+       (SSCANF(GETENV(("SST_SLIM_PVOUT_CLKDEL")), "%i", &i) == 1)) 
+      masterPVOutClkDel = i;
     if(GETENV(("SST_SLIM_VIN_CLKDEL")) &&
-       (SSCANF(GETENV(("SST_SLIM_VIN_CLKDEL")), "%i", &n) == 1)) 
-      masterVInClkDel = n;
+       (SSCANF(GETENV(("SST_SLIM_VIN_CLKDEL")), "%i", &i) == 1)) 
+      masterVInClkDel = i;
     INIT_PRINTF(("sst1InitSli(): masterVinClkdel=0x%x, masterVOutClkDel=0x%x, masterPVOutClkDel=0x%x\n",
         masterVInClkDel, masterVOutClkDel, masterPVOutClkDel));
     if(sst1CurrentBoard->fbiVideo16BPP)
@@ -377,8 +378,8 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitSli(FxU32 *sstbase0, FxU32 *sstbase1)
         FxU32 clearColor = 0x0;
 
         if(GETENV(("SST_VIDEO_CLEARCOLOR")) &&
-           (SSCANF(GETENV(("SST_VIDEO_CLEARCOLOR")), "%i", &n) == 1)) 
-          clearColor = n;
+           (SSCANF(GETENV(("SST_VIDEO_CLEARCOLOR")), "%i", &i) == 1)) 
+          clearColor = i;
         ISET(sstMaster->c1, clearColor);
         ISET(sstMaster->c0, clearColor);
         ISET(sstMaster->zaColor, 0x0);
