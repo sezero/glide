@@ -201,12 +201,13 @@ FX_EXPORT FxU32 * FX_CSTYLE sst1InitMapBoardDirect(FxU32 BoardNumber,
     FxU32 deviceID;                    // 0x0002 - Look for a Voodoo2 board (0xFFFF - Find any 3Dfx board)
     FxU32 sizeOfCard = 0x1000000;      // 16 MBytes of addr space for SST-1
     FxU32 *sstbase;
-    FxU32 j, n, u;
+    FxU32 j, n;
     FxU32 sstv2_noremap = 0;
+    int i;
 
     if( GETENV( ("SSTV2_DEVICEID") ) &&
-        (SSCANF(GETENV(("SSTV2_DEVICEID")), "%u", &u) == 1) )
-      deviceID = u;
+        (SSCANF(GETENV(("SSTV2_DEVICEID")), "%i", &i) == 1) )
+      deviceID = i;
     else
       deviceID = 0x0002;
 
@@ -237,8 +238,8 @@ FX_EXPORT FxU32 * FX_CSTYLE sst1InitMapBoardDirect(FxU32 BoardNumber,
       sst1InitUseVoodooFile = sst1InitVoodooFile();
       
       if( GETENV( ("SSTV2_NOREMAP") ) &&
-          (SSCANF(GETENV(("SSTV2_NOREMAP")), "%u", &u) == 1) )
-        sstv2_noremap = u;
+          (SSCANF(GETENV(("SSTV2_NOREMAP")), "%i", &i) == 1) )
+        sstv2_noremap = i;
       else
         sstv2_noremap = 0;
 #if !macintosh && !__linux__     
@@ -432,10 +433,11 @@ FX_EXPORT FxU32 * FX_CSTYLE sst1InitMapBoardDirect(FxU32 BoardNumber,
 */
 FX_EXPORT FxBool FX_CSTYLE sst1InitRegisters(FxU32 *sstbase)
 {
-    FxU32 n, u, tf_fifo_thresh;
+    FxU32 n, tf_fifo_thresh;
     FxU32 ft_clkdel, tf0_clkdel, tf1_clkdel, tf2_clkdel;
     sst1ClkTimingStruct sstGrxClk;
     SstRegs *sst = (SstRegs *) sstbase;
+    int i;
 
     if(!sst)
         return(FXFALSE);
@@ -471,16 +473,16 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitRegisters(FxU32 *sstbase)
     
     // Adjust Trex-to-Fbi FIFO
     if(GETENV(("SSTV2_TF_FIFO_THRESH")) &&
-       (SSCANF(GETENV(("SSTV2_TF_FIFO_THRESH")), "%u", &u) == 1) )
-        tf_fifo_thresh = u;
+       (SSCANF(GETENV(("SSTV2_TF_FIFO_THRESH")), "%i", &i) == 1) )
+        tf_fifo_thresh = i;
     else
         tf_fifo_thresh = 0x8;
     INIT_PRINTF(("sst1InitRegisters(): Setting TREX-to-FBI FIFO THRESHOLD to 0x%x...\n",
         tf_fifo_thresh));
 
     if(GETENV(("SSTV2_PFT_CLKDEL")) &&
-       (SSCANF(GETENV(("SSTV2_PFT_CLKDEL")), "%u", &u) == 1) )
-        ft_clkdel = u;
+       (SSCANF(GETENV(("SSTV2_PFT_CLKDEL")), "%i", &i) == 1) )
+        ft_clkdel = i;
     else
         ft_clkdel = 0x8; // Okay for 16 MHz startup...
     INIT_PRINTF(("sst1InitRegisters(): Setting PRELIM FT-CLK delay to 0x%x...\n", ft_clkdel));
@@ -546,23 +548,23 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitRegisters(FxU32 *sstbase)
 
     // set TREX0 init values
     if(GETENV(("SSTV2_TREX0INIT0")) &&
-       (SSCANF(GETENV(("SSTV2_TREX0INIT0")), "%u", &u) == 1) ) {
+       (SSCANF(GETENV(("SSTV2_TREX0INIT0")), "%i", &i) == 1) ) {
         INIT_PRINTF(("sst1InitRegisters(): Using SST_TREX0INIT0 environment variable\n"));
-        sst1CurrentBoard->tmuInit0[0] = u;
+        sst1CurrentBoard->tmuInit0[0] = i;
     } else
         sst1CurrentBoard->tmuInit0[0] = SST_TREX0INIT0_DEFAULT;
 
     INIT_PRINTF(("sst1InitRegisters(): Storing TREX0INIT0=0x%x\n",
         sst1CurrentBoard->tmuInit0[0]));
     if(GETENV(("SSTV2_TREX0INIT1")) &&
-       (SSCANF(GETENV(("SSTV2_TREX0INIT1")), "%u", &u) == 1) ) {
+       (SSCANF(GETENV(("SSTV2_TREX0INIT1")), "%i", &i) == 1) ) {
         INIT_PRINTF(("sst1InitRegisters(): Using SST_TREX0INIT1 environment variable\n"));
-        sst1CurrentBoard->tmuInit1[0] = u;
+        sst1CurrentBoard->tmuInit1[0] = i;
     } else
         sst1CurrentBoard->tmuInit1[0] = SST_TREX0INIT1_DEFAULT;
 
     if(GETENV(("SSTV2_PTF0_CLKDEL")) &&
-       (SSCANF(GETENV(("SSTV2_PTF0_CLKDEL")), "%u", &tf0_clkdel) == 1)) {
+       (SSCANF(GETENV(("SSTV2_PTF0_CLKDEL")), "%i", &tf0_clkdel) == 1)) {
         sst1CurrentBoard->tmuInit1[0] = (sst1CurrentBoard->tmuInit1[0] &
             ~SST_TEX_TF_CLK_DEL_ADJ) |
             (tf0_clkdel<<SST_TEX_TF_CLK_DEL_ADJ_SHIFT);
@@ -572,21 +574,21 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitRegisters(FxU32 *sstbase)
 
     // set TREX1 init values
     if(GETENV(("SSTV2_TREX1INIT0")) && 
-       (SSCANF(GETENV(("SSTV2_TREX1INIT0")), "%u", &u) == 1) ) {
+       (SSCANF(GETENV(("SSTV2_TREX1INIT0")), "%i", &i) == 1) ) {
         INIT_PRINTF(("sst1InitRegisters(): Using SST_TREX1INIT0 environment variable\n"));
-        sst1CurrentBoard->tmuInit0[1] = u;
+        sst1CurrentBoard->tmuInit0[1] = i;
     } else
         sst1CurrentBoard->tmuInit0[1] = SST_TREX1INIT0_DEFAULT;
     INIT_PRINTF(("sst1InitRegisters(): Storing TREX1INIT0=0x%x\n",
         sst1CurrentBoard->tmuInit0[1]));
     if(GETENV(("SSTV2_TREX1INIT1")) &&
-       (SSCANF(GETENV(("SSTV2_TREX1INIT1")), "%u", &u) == 1) ) {
+       (SSCANF(GETENV(("SSTV2_TREX1INIT1")), "%i", &i) == 1) ) {
         INIT_PRINTF(("sst1InitRegisters(): Using SST_TREX1INIT1 environment variable\n"));
-        sst1CurrentBoard->tmuInit1[1] = u;
+        sst1CurrentBoard->tmuInit1[1] = i;
     } else
         sst1CurrentBoard->tmuInit1[1] = SST_TREX1INIT1_DEFAULT;
     if(GETENV(("SSTV2_PTF1_CLKDEL")) &&
-       (SSCANF(GETENV(("SSTV2_PTF1_CLKDEL")), "%u", &tf1_clkdel) == 1) ) {
+       (SSCANF(GETENV(("SSTV2_PTF1_CLKDEL")), "%i", &tf1_clkdel) == 1) ) {
         sst1CurrentBoard->tmuInit1[1] = (sst1CurrentBoard->tmuInit1[1] &
             ~SST_TEX_TF_CLK_DEL_ADJ) |
             (tf1_clkdel<<SST_TEX_TF_CLK_DEL_ADJ_SHIFT);
@@ -597,21 +599,21 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitRegisters(FxU32 *sstbase)
 
     // set TREX2 init values
     if(GETENV(("SSTV2_TREX2INIT0")) &&
-       (SSCANF(GETENV(("SSTV2_TREX2INIT0")), "%u", &u) == 1) ) {
+       (SSCANF(GETENV(("SSTV2_TREX2INIT0")), "%i", &i) == 1) ) {
         INIT_PRINTF(("sst1InitRegisters(): Using SST_TREX2INIT0 environment variable\n"));
-        sst1CurrentBoard->tmuInit0[2] = u;
+        sst1CurrentBoard->tmuInit0[2] = i;
     } else
         sst1CurrentBoard->tmuInit0[2] = SST_TREX2INIT0_DEFAULT;
     INIT_PRINTF(("sst1InitRegisters(): Storing TREX2INIT0=0x%x\n",
         sst1CurrentBoard->tmuInit0[2]));
     if(GETENV(("SSTV2_TREX2INIT1")) &&
-       (SSCANF(GETENV(("SSTV2_TREX2INIT1")), "%u", &u) == 1) ) {
+       (SSCANF(GETENV(("SSTV2_TREX2INIT1")), "%i", &i) == 1) ) {
         INIT_PRINTF(("sst1InitRegisters(): Using SST_TREX2INIT1 environment variable\n"));
-        sst1CurrentBoard->tmuInit1[2] = u;
+        sst1CurrentBoard->tmuInit1[2] = i;
     } else
         sst1CurrentBoard->tmuInit1[2] = SST_TREX2INIT1_DEFAULT;
     if(GETENV(("SSTV2_PTF2_CLKDEL")) &&
-       (SSCANF(GETENV(("SSTV2_PTF2_CLKDEL")), "%u", &tf2_clkdel) == 1) ) {
+       (SSCANF(GETENV(("SSTV2_PTF2_CLKDEL")), "%i", &tf2_clkdel) == 1) ) {
         sst1CurrentBoard->tmuInit1[2] = (sst1CurrentBoard->tmuInit1[2] &
             ~SST_TEX_TF_CLK_DEL_ADJ) |
             (tf2_clkdel<<SST_TEX_TF_CLK_DEL_ADJ_SHIFT);
