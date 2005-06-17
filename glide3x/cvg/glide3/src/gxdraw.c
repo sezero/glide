@@ -19,6 +19,9 @@
  **
  ** $Header$
  ** $Log$
+ ** Revision 1.1.1.1  1999/12/07 21:42:34  joseph
+ ** Initial checkin into SourceForge.
+ **
 ** 
 ** 1     10/08/98 11:30a Brent
 ** 
@@ -255,7 +258,7 @@ GR_DDFUNC(_trisetup_nogradients,
     {
       int vectorIndex;
 
-      for(vectorIndex = 0; vectorIndex < sizeof(vectorArray) / sizeof(float*); vectorIndex++) {
+      for(vectorIndex = 0; vectorIndex < ((int)sizeof(vectorArray) / (int)sizeof(float*)); vectorIndex++) {
         const float* const vector = vectorArray[vectorIndex];
       
         /* Triangle vertex coordinages (x, y) */

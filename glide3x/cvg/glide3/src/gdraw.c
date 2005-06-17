@@ -19,6 +19,9 @@
  **
  ** $Header$
  ** $Log$
+ ** Revision 1.1.1.1.8.4  2005/06/10 19:10:54  jwrdegoede
+ ** Really fix cvg linking when GL_X86 is not defined
+ **
  ** Revision 1.1.1.1.8.3  2005/06/09 18:32:08  jwrdegoede
  ** Fixed all warnings with gcc4 -Wall -W -Wno-unused-parameter, except for a couple I believe to be a gcc bug. This has been reported to gcc.
  **
@@ -265,17 +268,17 @@ GR_ENTRY(grDrawTriangle, void, (const void *a, const void *b, const void *c))
       ** culling
       */
       float dxAB, dxBC, dyAB, dyBC;
-      FxI32 j;
+      union { float f; FxI32 i; } j;
       dxAB = FARRAY(a, 0) - FARRAY(b, 0);
       dxBC = FARRAY(b, 0) - FARRAY(c, 0);
       
       dyAB = FARRAY(a, 4) - FARRAY(b, 4);
       dyBC = FARRAY(b, 4) - FARRAY(c, 4);
       
-      *(float *)&j = dxAB * dyBC - dxBC * dyAB;
-      if ((j & 0x7FFFFFFF) == 0) 
+      j.f = dxAB * dyBC - dxBC * dyAB;
+      if ((j.i & 0x7FFFFFFF) == 0) 
         return;
-      if ((gc->state.cull_mode != GR_CULL_DISABLE) && (((FxI32)(j ^ (gc->state.cull_mode << 31UL))) >= 0))
+      if ((gc->state.cull_mode != GR_CULL_DISABLE) && (((FxI32)(j.i ^ (gc->state.cull_mode << 31UL))) >= 0))
         return;
     }
 
@@ -1139,7 +1142,6 @@ _vptrisetup_cull(const void *va, const void *vb, const void *vc)
   GR_BEGIN_NOFIFOCHECK(FN_NAME, 90);
   {
     float oow[3];
-    float one = 1.f;
     register float oowa;
 
     oow[0] = 1.0f / FARRAY(va, gc->state.vData.wInfo.offset);
@@ -1149,7 +1151,9 @@ _vptrisetup_cull(const void *va, const void *vb, const void *vc)
     
 
     {
-      float **vPtr = (float **)&va;
+      /* Hmm very dirty it seems as if vPtr first points to va, then vb then
+         vc, iow it seems as if this code assumes a certain stack layout! */
+      const void **vPtr = &va; 
       int i;
       
       GR_FLUSH_STATE();

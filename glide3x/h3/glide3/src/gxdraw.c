@@ -19,6 +19,9 @@
  **
  ** $Header$
  ** $Log$
+ ** Revision 1.1.1.1  1999/11/24 21:44:57  joseph
+ ** Initial checkin for SourceForge
+ **
 ** 
 ** 4     4/06/99 3:54p Dow
 ** Alt tab again.
@@ -216,11 +219,12 @@ _grTriCull(const void* a, const void* b, const void* c)
       area = dxAB * dyBC - dxBC * dyAB;
   
     {
-      const FxI32 j = *(FxI32*)&area;
+      union { float f; FxI32 i; } j;
       const FxU32 culltest = (gc->state.cull_mode << 31UL);
+      j.f = area;
     
       /* Zero-area triangles are BAD!! */
-      if ((j & 0x7FFFFFFF) == 0) {
+      if ((j.i & 0x7FFFFFFF) == 0) {
         GDBG_INFO(291, FN_NAME": Culling (%g %g) (%g %g) (%g %g) : (%g : 0x%X : 0x%X)\n",
                   (fa[0]), (fa[1]), 
                   (fb[0]), (fb[1]), 
@@ -231,7 +235,7 @@ _grTriCull(const void* a, const void* b, const void* c)
       }
     
       /* Backface culling, use sign bit as test */
-      if ((gc->state.cull_mode != GR_CULL_DISABLE) && (((FxI32)(j ^ culltest)) >= 0)) {
+      if ((gc->state.cull_mode != GR_CULL_DISABLE) && (((FxI32)(j.i ^ culltest)) >= 0)) {
         GDBG_INFO(291, FN_NAME": Culling (%g %g) (%g %g) (%g %g) : (%g : 0x%X : 0x%X)\n",
                   (fa[0]), (fa[1]), 
                   (fb[0]), (fb[1]), 
@@ -271,6 +275,7 @@ internal_trisetup(const char* FN_NAME,
   }
 
   /* Validate parameter coordinates */
+#if defined(GLIDE_SANITY_ASSERT)
   {
     const FxI32 
       xindex = (gc->state.vData.vertexInfo.offset >> 2),
@@ -295,6 +300,7 @@ internal_trisetup(const char* FN_NAME,
 #undef kDimThreshX
 #undef kDimThreshY
   }
+#endif
 
   /* Send triangle parameters */
   {
