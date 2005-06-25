@@ -289,7 +289,7 @@ GR_ENTRY(grDrawLine, void, (const void *a, const void *b))
           else
             _grDrawLineStrip(GR_VTX_PTR_ARRAY, GR_LINES, 2, verts);
   }
-#else
+#else /* WARNING: this makes assumptions about the stack layout */
 #ifdef __GNUC__
   if (gc->state.grEnableArgs.primitive_smooth_mode & GR_AA_ORDERED_LINES_MASK)
     _grAADrawLineStrip(GR_VTX_PTR_ARRAY, GR_LINES, 2, (void *)&a);
