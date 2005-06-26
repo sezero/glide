@@ -48,3 +48,9 @@ and assume this can be used as an array, iow they assume a certain stack
 layout. Known functions doing this are:
 cvg/glide3/src/gdraw.c:1142: _vptrisetup_cull
 h5/glide3/src/gdraw.c:279: grDrawLine
+
+64 bit todo:
+-change use of long to int in texus2
+-change use of long to FxX32 in register definitions of cvg, sst1, sst96
+-actually compile it on a 64 bit platform and fix all warnings
+-test, test, test
