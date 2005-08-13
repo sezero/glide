@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.6.4  2005/06/09 18:32:28  jwrdegoede
+** Fixed all warnings with gcc4 -Wall -W -Wno-unused-parameter, except for a couple I believe to be a gcc bug. This has been reported to gcc.
+**
 ** Revision 1.1.1.1.6.3  2004/01/20 14:04:10  dborca
 ** compilation and some other minor fixes to aid in debugging
 **
@@ -730,7 +733,7 @@ static FxBool ReadDataLong(FILE *fp, FxU32 *data)
 {
   FxU8 byte[4];
 
-  if (fread(byte, 4, 1, fp) != 4)
+  if (fread(byte, 1, 4, fp) != 4)
     return FXFALSE;
 
   *data = (((FxU32) byte[0]) << 24) |

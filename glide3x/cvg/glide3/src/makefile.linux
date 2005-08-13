@@ -286,8 +286,8 @@ xdraw2_def.lo: xdraw2_def.o
 	$(CP) $< $@
 xdraw3_def.lo: xdraw3_def.o
 	$(CP) $< $@
-xtexdl_def.lo: xtexdl_def.o
-	$(CP) $< $@
+xtexdl_def.lo: xtexdl.c
+	$(CC) -o $@ $(CFLAGS) -DPIC -fPIC -c $<
 xdraw2_3dnow.lo: xdraw2_3dnow.o
 	$(CP) $< $@
 xdraw3_3dnow.lo: xdraw3_3dnow.o

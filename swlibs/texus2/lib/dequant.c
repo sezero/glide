@@ -158,12 +158,12 @@ _txImgDequantizeRGB332(FxU32 *out, FxU8 *in, int w, int h)
 }
 
 static void
-_txImgDequantizeYIQ422(FxU32 *out, FxU8 *in, int w, int h, const long *yabTable)
+_txImgDequantizeYIQ422(FxU32 *out, FxU8 *in, int w, int h, const int *yabTable)
 {
     int                         n = w * h;
     FxU32                       pal[256];
 
-    txYABtoPal256((long *)pal, (long *)yabTable);
+    txYABtoPal256((int *)pal, (int *)yabTable);
     out += n;
     in  += n;
     while (n--) *--out = pal[*--in] | 0xff000000;
@@ -221,10 +221,10 @@ _txImgDequantizeARGB8332(FxU32 *out, FxU16 *in, int w, int h)
 }
 
 static void
-_txImgDequantizeAYIQ8422(FxU32 *out, FxU16 *in, int w, int h, const long *yab)
+_txImgDequantizeAYIQ8422(FxU32 *out, FxU16 *in, int w, int h, const int *yab)
 {
     int         n = w * h;
-    long        pal[256];
+    int        pal[256];
 
     txYABtoPal256(pal, yab);
     out += n;
@@ -341,10 +341,10 @@ _txImgDequantizeRGB888(FxU32 *out, FxU32 *in_, int w, int h)
 }
 
 static void 
-_txCalcRGBFromYUV(unsigned long y, unsigned long u, unsigned long v, FxU32 *rgb)
+_txCalcRGBFromYUV(unsigned int y, unsigned int u, unsigned int v, FxU32 *rgb)
 {
         FxI32 r, g, b;
-        long  y16, u128, v128;
+        int  y16, u128, v128;
 
         y16 = y - 16;
         u128 = u - 128;
@@ -388,7 +388,7 @@ void
 _txImgDequantizeYUV(FxU32 *out, FxU16 *in, int w, int h, FxU32 format)
 {
         int i, j, k;
-        unsigned long Y[2], UV[2];
+        unsigned int Y[2], UV[2];
 
 
         k = w * h;
@@ -432,7 +432,7 @@ void
 _txImgDequantizeAYUV(FxU32 *out, FxU32 *in, int w, int h)
 {
         int           i, k;
-        unsigned long y, u, v;
+        unsigned int y, u, v;
 
         k = w * h;
 
@@ -489,13 +489,13 @@ txMipDequantize(TxMip *txMip, TxMip *pxMip)
             
         switch(pxMip->format) {
         case GR_TEXFMT_RGB_332:         _txImgDequantizeRGB332(dst, src, w, h); break;
-        case GR_TEXFMT_YIQ_422:         _txImgDequantizeYIQ422(dst, src, w, h, (long *)pxMip->pal); break;
+        case GR_TEXFMT_YIQ_422:         _txImgDequantizeYIQ422(dst, src, w, h, (int *)pxMip->pal); break;
         case GR_TEXFMT_A_8:             _txImgDequantizeA8(dst, src, w, h); break;
         case GR_TEXFMT_I_8:             _txImgDequantizeI8(dst, src, w, h); break;
         case GR_TEXFMT_AI_44:           _txImgDequantizeAI44(dst, src, w, h); break;
         case GR_TEXFMT_P_8:             _txImgDequantizeP8(dst, src, w, h, pxMip->pal); break;
         case GR_TEXFMT_ARGB_8332:       _txImgDequantizeARGB8332(dst, src, w, h); break;
-        case GR_TEXFMT_AYIQ_8422:       _txImgDequantizeAYIQ8422(dst, src, w, h, (long *)pxMip->pal); break;
+        case GR_TEXFMT_AYIQ_8422:       _txImgDequantizeAYIQ8422(dst, src, w, h, (int *)pxMip->pal); break;
         case GR_TEXFMT_RGB_565:         _txImgDequantizeRGB565(dst, src, w, h); break;
         case GR_TEXFMT_ARGB_1555:       _txImgDequantizeARGB1555(dst, src, w, h); break;
         case GR_TEXFMT_ARGB_4444:       _txImgDequantizeARGB4444(dst, src, w, h); break;

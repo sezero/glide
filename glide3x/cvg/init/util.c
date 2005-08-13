@@ -479,7 +479,7 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitResetTmus(FxU32 *sstbase)
 
    // Fix problem where first Texture downloads to TMU weren't being
    //  received properly
-   ISET(*(long *) (0xf00000 + (long) sstbase), 0xdeadbeef);
+   ISET(*(int *) (0xf00000 + (long) sstbase), 0xdeadbeef);
    sst1InitIdle(sstbase);
 
    return(FXTRUE);
@@ -559,7 +559,7 @@ FX_EXPORT void FX_CSTYLE sst1InitWrite32(FxU32 *addr, FxU32 data)
    * the command fifo, and, inconveniently, these are not contiguously
    * allocated.  
    */
-  const FxU32 addrOffset = ((const FxU32)addr - (const FxU32)sst1CurrentBoard->virtAddr[0]);
+  const FxU32 addrOffset = ((const unsigned long)addr - (const unsigned long)sst1CurrentBoard->virtAddr[0]);
   FxBool directWriteP = ((sst1CurrentBoard == NULL) ||
                          (sst1CurrentBoard->set32 == NULL) ||
                          sst1CurrentBoard->fbiLfbLocked ||
@@ -610,7 +610,7 @@ FX_EXPORT FxU32 FX_CSTYLE sst1InitRead32(FxU32 *addr)
 **
 */
 FX_ENTRY FxBool FX_CALL sst1InitCmdFifo(FxU32 *sstbase, FxBool enable, 
-  FxU32 *virtAddrStart, FxU32 *memAddrStart, FxU32 *size, FxSet32Proc set32Proc)
+  unsigned long *virtAddrStart, FxU32 *memAddrStart, FxU32 *size, FxSet32Proc set32Proc)
 {
     SstRegs *sst = (SstRegs *) sstbase;
     FxU32 fbiInit, fifoStart, fifoSize;
@@ -681,7 +681,7 @@ FX_ENTRY FxBool FX_CALL sst1InitCmdFifo(FxU32 *sstbase, FxBool enable,
     if(fifoSize > (256<<10))
       fifoSize = (256<<10);
 
-    *virtAddrStart =  (FxU32) (((FxU32) sstbase) + SST_CMDFIFO_ADDR);
+    *virtAddrStart = ((unsigned long) sstbase) + SST_CMDFIFO_ADDR;
     *memAddrStart = fifoStart;
     *size = fifoSize;
 
@@ -742,8 +742,8 @@ FX_ENTRY FxBool FX_CALL sst1InitCmdFifoDirect(FxU32 *sstbase, FxU32 which,
       directExec, disableHoles));
     INIT_PRINTF(("sst1InitCmdFifoDirect(): pageStart:%d, pageEnd:%d\n",
       pageStart, pageEnd));
-    INIT_PRINTF(("sst1InitCmdFifoDirect(): set32Proc: 0x%X\n",
-                 (FxU32)set32Proc));
+    INIT_PRINTF(("sst1InitCmdFifoDirect(): set32Proc: 0x%lX\n",
+                 (unsigned long)set32Proc));
 
     if(sst1CurrentBoard->fbiCmdFifoEn || (IGET(sst->fbiInit7) & SST_EN_CMDFIFO))
         sst1InitIdleNoNOP(sstbase);

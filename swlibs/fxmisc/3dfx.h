@@ -53,7 +53,7 @@ typedef struct { float r, g, b, a; } FxColor4;
 ** helper macros
 */
 #define FXUNUSED( a ) ((void)(a))
-#define FXBIT( i )    ( 1L << (i) )
+#define FXBIT( i )    ( 1 << (i) )
 
 /*
 ** export macros

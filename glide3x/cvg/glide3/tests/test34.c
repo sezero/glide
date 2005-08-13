@@ -50,7 +50,7 @@ void main( int argc, char **argv) {
     GrFog_t              *fogtable = NULL;
 
     TlTexture  baseTexture;
-    unsigned long baseTextureAddr;
+    unsigned int baseTextureAddr;
     FogVertex vtxA, vtxB, vtxC, vtxD;
     TlVertex3D srcVerts[4];
     TlVertex3D xfVerts[4];

@@ -254,7 +254,7 @@ size_t txInit3dfInfoFromFile( FILE *file,
                               int *destWidth, int *destHeight,
                               int mipLevels, FxU32 flags )
 {
-  long file_start_position;
+  int file_start_position;
   size_t size_retval;
   int input_format;
   TxMip txMip;
@@ -403,7 +403,7 @@ size_t txInit3dfInfo( Gu3dfInfo *info, GrTextureFormat_t destFormat,
 FxBool txConvertFromFile( FILE *file, Gu3dfInfo *info, 
                           FxU32 flags, const void *palNcc )
 {
-  long file_start_position;
+  int file_start_position;
   FxBool retval;
   TxMip txMip;
   

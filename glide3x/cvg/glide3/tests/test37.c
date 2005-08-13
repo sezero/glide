@@ -50,14 +50,14 @@
 #define CORRECT_GR_VIEWPORT_WIDTH 640
 #define CORRECT_GR_VIEWPORT_HEIGHT 480
 
-void TestGet(char * getvalstr, int getval, int memcount , long * memval, int * failures);
+void TestGet(char * getvalstr, int getval, int memcount , int * memval, int * failures);
 void TestGetString(char * getvalstr, int getval, int * failures);
 
 int hwconfig;
 static const char *version;
 static const char *extension;
 
-extern unsigned long hWndMain;
+extern unsigned int hWndMain;
 
 void 
 main( int argc, char **argv) 
@@ -65,9 +65,9 @@ main( int argc, char **argv)
   GrScreenResolution_t resolution = GR_RESOLUTION_640x480;
   float                scrWidth   = 640.0f;
   float                scrHeight  = 480.0f;
-  long val4[4];
-  long * histbuffer;
-  long histsize;
+  int val4[4];
+  int * histbuffer;
+  int histsize;
   const char * str;
   int ret;
   int i;
@@ -245,10 +245,10 @@ main( int argc, char **argv)
   ret = grGet(GR_NUM_SWAP_HISTORY_BUFFER, sizeof(histsize), &histsize );
   
   if(ret==sizeof(histsize)) {
-    histbuffer = malloc(histsize*sizeof(long));
+    histbuffer = malloc(histsize*sizeof(int));
     
-    ret = grGet(GR_SWAP_HISTORY, histsize*sizeof(long), histbuffer );
-    if(ret==(int)(histsize*sizeof(long)))
+    ret = grGet(GR_SWAP_HISTORY, histsize*sizeof(int), histbuffer );
+    if(ret==(int)(histsize*sizeof(int)))
       printf("Success(%d) - ",ret);
     else {
       printf("Failed (%d) - ", ret);
@@ -321,7 +321,7 @@ main( int argc, char **argv)
 
 
 void
-TestGet(char * getvalstr, int getval, int memcount , long * memval, int * failures)
+TestGet(char * getvalstr, int getval, int memcount , int * memval, int * failures)
 {
   int ret;
   int i;
@@ -332,7 +332,7 @@ TestGet(char * getvalstr, int getval, int memcount , long * memval, int * failur
   for(i=0;i<4;i++)              /*Clear Memory to some unique Pattern*/
     memval[i] =0xdeadbeef;
   
-  ret = grGet(getval, memcount*sizeof(long), memval );  /*Do the Get*/
+  ret = grGet(getval, memcount*sizeof(int), memval );  /*Do the Get*/
   
   for(i=0;i<memcount;i++)
     /*if pattern still exists, then we have a problem*/
@@ -340,7 +340,7 @@ TestGet(char * getvalstr, int getval, int memcount , long * memval, int * failur
       correct=FXFALSE;
   
   /* if Number of bytes returned is wrong, then we have a problem*/
-  if(ret!=(int)(memcount*sizeof(long))) 
+  if(ret!=(int)(memcount*sizeof(int))) 
     correct=FXFALSE;
   
   if(correct)                   /*print the results*/

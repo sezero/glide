@@ -28,8 +28,8 @@
 //----------------- SST chip 3D layout -------------------------
 // registers are in groups of 8 for easy decode
 typedef struct vertex_Rec {
-    unsigned long x;            // 12.4 format
-    unsigned long y;            // 12.4
+    FxU32 x;            // 12.4 format
+    FxU32 y;            // 12.4
 } vtxRec;
 
 typedef volatile struct sstregs {       // THE 3D CHIP
@@ -40,87 +40,87 @@ typedef volatile struct sstregs {       // THE 3D CHIP
     vtxRec vB;
     vtxRec vC;
 
-    long r;             // 12.12        Parameters
-    long g;             // 12.12
-    long b;             // 12.12
-    long z;             // 20.12
-    long a;             // 12.12
-    long s;             // 14.18
-    long t;             // 14.18
-    long w;             //  2.30
+    FxI32 r;             // 12.12        Parameters
+    FxI32 g;             // 12.12
+    FxI32 b;             // 12.12
+    FxI32 z;             // 20.12
+    FxI32 a;             // 12.12
+    FxI32 s;             // 14.18
+    FxI32 t;             // 14.18
+    FxI32 w;             //  2.30
 
-    long drdx;                  // X Gradients
-    long dgdx;
-    long dbdx;
-    long dzdx;
-    long dadx;
-    long dsdx;
-    long dtdx;
-    long dwdx;
+    FxI32 drdx;                  // X Gradients
+    FxI32 dgdx;
+    FxI32 dbdx;
+    FxI32 dzdx;
+    FxI32 dadx;
+    FxI32 dsdx;
+    FxI32 dtdx;
+    FxI32 dwdx;
 
-    long drdy;                  // Y Gradients
-    long dgdy;
-    long dbdy;
-    long dzdy;
-    long dady;
-    long dsdy;
-    long dtdy;
-    long dwdy;
+    FxI32 drdy;                  // Y Gradients
+    FxI32 dgdy;
+    FxI32 dbdy;
+    FxI32 dzdy;
+    FxI32 dady;
+    FxI32 dsdy;
+    FxI32 dtdy;
+    FxI32 dwdy;
 
-    unsigned long triangleCMD;  // execute a triangle command (float)
-    unsigned long reservedA;
+    FxU32 triangleCMD;  // execute a triangle command (float)
+    FxU32 reservedA;
     vtxRec FvA;                 // floating point version
     vtxRec FvB;
     vtxRec FvC;
 
-    long Fr;                    // floating point version
-    long Fg;
-    long Fb;
-    long Fz;
-    long Fa;
-    long Fs;
-    long Ft;
-    long Fw;
+    FxI32 Fr;                    // floating point version
+    FxI32 Fg;
+    FxI32 Fb;
+    FxI32 Fz;
+    FxI32 Fa;
+    FxI32 Fs;
+    FxI32 Ft;
+    FxI32 Fw;
 
-    long Fdrdx;
-    long Fdgdx;
-    long Fdbdx;
-    long Fdzdx;
-    long Fdadx;
-    long Fdsdx;
-    long Fdtdx;
-    long Fdwdx;
+    FxI32 Fdrdx;
+    FxI32 Fdgdx;
+    FxI32 Fdbdx;
+    FxI32 Fdzdx;
+    FxI32 Fdadx;
+    FxI32 Fdsdx;
+    FxI32 Fdtdx;
+    FxI32 Fdwdx;
 
-    long Fdrdy;
-    long Fdgdy;
-    long Fdbdy;
-    long Fdzdy;
-    long Fdady;
-    long Fdsdy;
-    long Fdtdy;
-    long Fdwdy;
+    FxI32 Fdrdy;
+    FxI32 Fdgdy;
+    FxI32 Fdbdy;
+    FxI32 Fdzdy;
+    FxI32 Fdady;
+    FxI32 Fdsdy;
+    FxI32 Fdtdy;
+    FxI32 Fdwdy;
 
-    unsigned long FtriangleCMD;         // execute a triangle command
-    unsigned long fbzColorPath;         // color select and combine
-    unsigned long fogMode;              // fog Mode
-    unsigned long alphaMode;            // alpha Mode
-    unsigned long fbzMode;              // framebuffer and Z mode
-    unsigned long lfbMode;              // linear framebuffer Mode
-    unsigned long clipLeftRight;        // (6)10(6)10
-    unsigned long clipBottomTop;        // (6)10(6)10
+    FxU32 FtriangleCMD;         // execute a triangle command
+    FxU32 fbzColorPath;         // color select and combine
+    FxU32 fogMode;              // fog Mode
+    FxU32 alphaMode;            // alpha Mode
+    FxU32 fbzMode;              // framebuffer and Z mode
+    FxU32 lfbMode;              // linear framebuffer Mode
+    FxU32 clipLeftRight;        // (6)10(6)10
+    FxU32 clipBottomTop;        // (6)10(6)10
 
-    unsigned long nopCMD;       // execute a nop command
-    unsigned long fastfillCMD;  // execute a fast fill command
-    unsigned long swapbufferCMD;// execute a swapbuffer command
-    unsigned long fogColor;             // (8)888
-    unsigned long zaColor;              // 8(8)16
-    unsigned long chromaKey;            // (8)888
-    unsigned long chromaRange;
-    unsigned long reservedB;
+    FxU32 nopCMD;       // execute a nop command
+    FxU32 fastfillCMD;  // execute a fast fill command
+    FxU32 swapbufferCMD;// execute a swapbuffer command
+    FxU32 fogColor;             // (8)888
+    FxU32 zaColor;              // 8(8)16
+    FxU32 chromaKey;            // (8)888
+    FxU32 chromaRange;
+    FxU32 reservedB;
 
-    unsigned long stipple;              // 32 bits, MSB masks pixels
-    unsigned long c0;                   // 8.8.8.8 (ARGB)
-    unsigned long c1;                   // 8.8.8.8 (ARGB)
+    FxU32 stipple;              // 32 bits, MSB masks pixels
+    FxU32 c0;                   // 8.8.8.8 (ARGB)
+    FxU32 c1;                   // 8.8.8.8 (ARGB)
     struct {                            // statistic gathering variables
         unsigned int fbiPixelsIn;
         unsigned int fbiChromaFail;
@@ -129,7 +129,7 @@ typedef volatile struct sstregs {       // THE 3D CHIP
         unsigned int fbiPixelsOut;
     } stats;
 
-    unsigned long fogTable[32];         // 64 entries, 2 per word, 2 bytes each
+    FxU32 fogTable[32];         // 64 entries, 2 per word, 2 bytes each
 
     FxU32 cmdFifoBase;                  // beginning of CMDFIFO area
     FxU32 cmdFifoBump;                  // number of words to bump (write only)
@@ -138,22 +138,22 @@ typedef volatile struct sstregs {       // THE 3D CHIP
     FxU32 cmdFifoAmax;                  // highest address written (not visible)
     FxU32 cmdFifoDepth;                 // number of valid sequential words
     FxU32 cmdFifoHoles;                 // number of current holes
-    unsigned long reservedC;
+    FxU32 reservedC;
 
-    unsigned long fbiInit4;
-    unsigned long vRetrace;
-    unsigned long backPorch;
-    unsigned long videoDimensions;
-    unsigned long fbiInit0;
-    unsigned long fbiInit1;
-    unsigned long fbiInit2;
-    unsigned long fbiInit3;
+    FxU32 fbiInit4;
+    FxU32 vRetrace;
+    FxU32 backPorch;
+    FxU32 videoDimensions;
+    FxU32 fbiInit0;
+    FxU32 fbiInit1;
+    FxU32 fbiInit2;
+    FxU32 fbiInit3;
 
-    unsigned long hSync;
-    unsigned long vSync;
-    unsigned long clutData;
-    unsigned long dacData;
-    unsigned long videoFilterRgbThreshold;
+    FxU32 hSync;
+    FxU32 vSync;
+    FxU32 clutData;
+    FxU32 dacData;
+    FxU32 videoFilterRgbThreshold;
     FxU32 hBorder;
     FxU32 vBorder;
     FxU32 borderColor;
@@ -162,7 +162,7 @@ typedef volatile struct sstregs {       // THE 3D CHIP
     FxU32 fbiInit5;
     FxU32 fbiInit6;
     FxU32 fbiInit7;
-    unsigned long reservedD[2];
+    FxU32 reservedD[2];
     FxU32 fbiSwapHistory;
     FxU32 fbiTrianglesOut;              // triangles out counter
 
@@ -186,7 +186,7 @@ typedef volatile struct sstregs {       // THE 3D CHIP
 
     FxU32 sDrawTriCMD;
     FxU32 sBeginTriCMD;
-    unsigned long reservedE[6];
+    FxU32 reservedE[6];
 
     FxU32 bltSrcBaseAddr;
     FxU32 bltDstBaseAddr;
@@ -206,18 +206,18 @@ typedef volatile struct sstregs {       // THE 3D CHIP
     FxU32 bltCommand;
     FxU32 bltData;
 
-    unsigned long textureMode;          // texture Mode
-    unsigned long tLOD;                 // texture LOD settings
-    unsigned long tDetail;              // texture detail settings
-    unsigned long texBaseAddr;          // current texture base address
-    unsigned long texBaseAddr1;
-    unsigned long texBaseAddr2;
-    unsigned long texBaseAddr38;
-    unsigned long trexInit0;            // hardware init bits
+    FxU32 textureMode;          // texture Mode
+    FxU32 tLOD;                 // texture LOD settings
+    FxU32 tDetail;              // texture detail settings
+    FxU32 texBaseAddr;          // current texture base address
+    FxU32 texBaseAddr1;
+    FxU32 texBaseAddr2;
+    FxU32 texBaseAddr38;
+    FxU32 trexInit0;            // hardware init bits
 
-    unsigned long trexInit1;            // hardware init bits
-    unsigned long nccTable0[12];        // NCC decode tables, bits are packed
-    unsigned long nccTable1[12];        // 4 words Y, 4 words I, 4 words Q
+    FxU32 trexInit1;            // hardware init bits
+    FxU32 nccTable0[12];        // NCC decode tables, bits are packed
+    FxU32 nccTable1[12];        // 4 words Y, 4 words I, 4 words Q
     FxU32 tchromaKey;                   // texture chromakey
     FxU32 tchromaRange;                 // texture chromarange
     FxU32 reservedH[5];

@@ -223,7 +223,7 @@
 #define OUTBOUNDS(a) (OUTBOUNDSX(a) || OUTBOUNDSY(a))
 
 /* access an array of four-byte opaque datums with a byte index */
-#define ARRAY(p,i)    (*(int *)((i)+(int)(p)))
+#define ARRAY(p,i)    (*(int *)((i)+(long)(p)))
 
 /*---------------------------------------------------------------------------
 ** grDrawPoint
@@ -275,34 +275,17 @@ GR_ENTRY(grDrawPoint, void, (const void *p))
 
 GR_ENTRY(grDrawLine, void, (const void *a, const void *b))
 {
+  const void *verts[2];
 #define FN_NAME "grDrawLine"
   GR_BEGIN_NOFIFOCHECK(FN_NAME, 91);
   GDBG_INFO_MORE(gc->myLevel, "(a = 0x%x, b = 0x%x)\n", a, b);
 
-#if defined (__POWERPC__)  || defined(__ia64__)
-  {
-        const void *verts[2];
         verts[0] = a; verts[1] = b;
         
           if (gc->state.grEnableArgs.primitive_smooth_mode & GR_AA_ORDERED_LINES_MASK)
             _grAADrawLineStrip(GR_VTX_PTR_ARRAY, GR_LINES, 2, verts);
           else
             _grDrawLineStrip(GR_VTX_PTR_ARRAY, GR_LINES, 2, verts);
-  }
-#else /* WARNING: this makes assumptions about the stack layout */
-#ifdef __GNUC__
-  if (gc->state.grEnableArgs.primitive_smooth_mode & GR_AA_ORDERED_LINES_MASK)
-    _grAADrawLineStrip(GR_VTX_PTR_ARRAY, GR_LINES, 2, (void *)&a);
-  else
-    _grDrawLineStrip(GR_VTX_PTR_ARRAY, GR_LINES, 2, (void *)&a);
-#else  /* __GNUC__ */
-  if (gc->state.grEnableArgs.primitive_smooth_mode & GR_AA_ORDERED_LINES_MASK)
-    _grAADrawLineStrip(GR_VTX_PTR_ARRAY, GR_LINES, 2, &(void *)a);
-  else
-    _grDrawLineStrip(GR_VTX_PTR_ARRAY, GR_LINES, 2, &(void *)a);
-#endif /* __GNUC__ */
-#endif
-    
 #undef FN_NAME
 } /* grDrawLine */
 

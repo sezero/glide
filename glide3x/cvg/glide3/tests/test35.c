@@ -38,7 +38,7 @@ void main( int argc, char **argv) {
     int                  ftsize = 0;
 
     TlTexture  baseTexture;
-    unsigned long baseTextureAddr;
+    unsigned int baseTextureAddr;
     GrVertex vtxA, vtxB, vtxC, vtxD;
     GrTexChromakeyMode_t texchroma = GR_TEXCHROMA_DISABLE_EXT;
     char *extstr;

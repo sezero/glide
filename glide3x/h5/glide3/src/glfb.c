@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.7.4.23  2005/06/09 18:32:32  jwrdegoede
+** Fixed all warnings with gcc4 -Wall -W -Wno-unused-parameter, except for a couple I believe to be a gcc bug. This has been reported to gcc.
+**
 ** Revision 1.7.4.22  2005/05/25 08:56:26  jwrdegoede
 ** Make h5 and h3 tree 64 bit clean. This is ported over from the non-devel branch so this might be incomplete
 **
@@ -1640,7 +1643,7 @@ static FxBool _grLfbLock (GrLock_t type, GrBuffer_t buffer,
         if(gc->textureBuffer.on && 
            (buffer == GR_BUFFER_TEXTUREBUFFER_EXT || buffer == GR_BUFFER_TEXTUREAUXBUFFER_EXT)) {
           if(type == GR_LFB_READ_ONLY) {
-            info->lfbPtr         = (void *)((FxU32)gc->rawLfb + gc->textureBuffer.addr);
+            info->lfbPtr         = (void *)((unsigned long)gc->rawLfb + gc->textureBuffer.addr);
             info->strideInBytes  = gc->textureBuffer.stride;
 #if __POWERPC__
             if(IS_NAPALM(gc->bInfo->pciInfo.deviceID)) {
@@ -1662,7 +1665,7 @@ static FxBool _grLfbLock (GrLock_t type, GrBuffer_t buffer,
                   (!pixelPipeline) &&
                   /* Origin must be upper left since we will return raw lfb */
                   (origin != GR_ORIGIN_LOWER_LEFT)) {
-            info->lfbPtr        = (void *)((FxU32)gc->rawLfb + gc->textureBuffer.addr);
+            info->lfbPtr        = (void *)((unsigned long)gc->rawLfb + gc->textureBuffer.addr);
             info->strideInBytes = gc->textureBuffer.stride;
           }
 #endif
@@ -2240,7 +2243,7 @@ _grLfbWriteRegion(FxBool pixPipelineP,
 
   info.size = sizeof(info);
   
-#define SET_LFB_STRAIGHT (!HAL_CSIM && !SET_SWIZZLEHACK && !SET_BSWAP) /* Hack alert: more tests? */
+#define SET_LFB_STRAIGHT (!HAL_CSIM && !SET_SWIZZLEHACK && !SET_BSWAP && GL_X86) /* Hack alert: more tests? */
   if (_grLfbLock(GR_LFB_WRITE_ONLY_EXPLICIT_EXT, 
                  dst_buffer, 
                  writeMode,
@@ -2270,7 +2273,6 @@ _grLfbWriteRegion(FxBool pixPipelineP,
     case GR_LFB_SRC_FMT_ZA16:
       dstData = (FxU32*)(((FxU16*)dstData) + dst_x);
 #if SET_LFB_STRAIGHT
-#if GL_X86
       if (_GlideRoot.CPUType.os_support & _CPU_FEATURE_MMX) {
          do {
              MMX_DSTLINE2(srcData, dstData, src_width);
@@ -2282,7 +2284,6 @@ _grLfbWriteRegion(FxBool pixPipelineP,
          break;
       }
       else
-#endif
       {
          do {
              FPU_DSTLINE2(srcData, dstData, src_width);
@@ -2354,7 +2355,6 @@ _grLfbWriteRegion(FxBool pixPipelineP,
     case GR_LFBWRITEMODE_Z32:
       dstData = ((FxU32*)dstData) + dst_x;
 #if SET_LFB_STRAIGHT
-#if GL_X86
       if (_GlideRoot.CPUType.os_support & _CPU_FEATURE_MMX) {
          do {
              MMX_DSTLINE4(srcData, dstData, src_width);
@@ -2366,7 +2366,6 @@ _grLfbWriteRegion(FxBool pixPipelineP,
          break;
       }
       else
-#endif      
       {
 		 do {
              FPU_DSTLINE4(srcData, dstData, src_width);
@@ -2521,19 +2520,12 @@ static FxBool grLfbReadRegionOrigin (GrBuffer_t src_buffer, GrOriginLocation_t o
                   GR_ORIGIN_UPPER_LEFT,
                   FXFALSE,
                   &info)) {
-     FxU32 *src;
-     FxI32 len;
-#if 0
-     FxU32 *dst;
-     FxU32 src_adjust,dst_adjust,tmp;
-#endif
-
-     src=(FxU32 *) (((char*)info.lfbPtr)+
+     FxU32 *src=(FxU32 *) (((char*)info.lfbPtr)+
                     (src_y*info.strideInBytes) + (src_x * bpp));
-     len = src_width * bpp;
+     FxI32 len = src_width * bpp;
 
-     if(!gc->state.forced32BPP) {
 #if GL_X86
+     if(!gc->state.forced32BPP) {
        if(_GlideRoot.CPUType.os_support & _CPU_FEATURE_MMX) {
          do {
            MMX_SRCLINE(src, dst_data, len);
@@ -2544,7 +2536,6 @@ static FxBool grLfbReadRegionOrigin (GrBuffer_t src_buffer, GrOriginLocation_t o
          MMX_RESET();
        }
        else
-#endif
        {
          do {
            FPU_SRCLINE(src, dst_data, len);
@@ -2553,14 +2544,13 @@ static FxBool grLfbReadRegionOrigin (GrBuffer_t src_buffer, GrOriginLocation_t o
            dst_data = (FxU32 *)((FxU8 *)dst_data + dst_stride);
          } while (--src_height);
        }
-       goto okay;
      }
-
-#if 0
-     dst=dst_data;
+#else
+     FxU32 *dst=dst_data;
+     FxU32 src_adjust,dst_adjust,tmp;
 
      /* set length - alignment fix*/
-     tmp=(((FxU32)src)&2);
+     tmp=((unsigned long)src)&2;
      len -= tmp;
      src_adjust=info.strideInBytes - tmp;
      dst_adjust=dst_stride - tmp;
@@ -2571,7 +2561,7 @@ static FxBool grLfbReadRegionOrigin (GrBuffer_t src_buffer, GrOriginLocation_t o
      if(!gc->state.forced32BPP) {
        while(src_height--) {
          /* adjust starting alignment */
-         if (((FxU32)src)&3) {
+         if (((unsigned long)src)&3) {
            /* Old code: *((FxU16 *)dst)++ = *((FxU16 *)src)++; */
            FxU16 *p = (FxU16 *)dst;
            *p = *((FxU16 *)src);
@@ -2586,12 +2576,12 @@ static FxBool grLfbReadRegionOrigin (GrBuffer_t src_buffer, GrOriginLocation_t o
 
            /* copies aligned dwords */
            do {
-             *((FxU32 *)(((FxU32)dst) + byte_index))=*((FxU32 *)(((FxU32)src) + byte_index));
+             *((FxU32 *)(((unsigned long)dst) + byte_index))=*((FxU32 *)(((unsigned long)src) + byte_index));
            } while((byte_index+=4)<aligned);
 
            /* handle backend misalignment */
            if(byte_index!=(FxU32)len) {
-               *((FxU16 *)(((FxU32)dst) + byte_index))=*((FxU16 *)(((FxU32)src) + byte_index));
+               *((FxU16 *)(((unsigned long)dst) + byte_index))=*((FxU16 *)(((unsigned long)src) + byte_index));
            }
          }
          /* adjust for next line */
@@ -2611,11 +2601,11 @@ static FxBool grLfbReadRegionOrigin (GrBuffer_t src_buffer, GrOriginLocation_t o
 
            /* copies aligned dwords */
            do {
-             FxU32 s =*((FxU32 *)(((FxU32)src) + byte_index));
+             FxU32 s =*((FxU32 *)(((unsigned long)src) + byte_index));
              FxU16 d = (FxU16) (s & 0xF8) >> 3;
              d |= (s & 0xFC00) >> 5;
              d |= (s & 0xF80000) >> 8;
-             *((FxU16 *)(((FxU32)dst_data) + (byte_index2))) = d;
+             *((FxU16 *)(((unsigned long)dst_data) + (byte_index2))) = d;
              byte_index +=4;
            } while((byte_index2+=2)<(src_width*2));
          }
@@ -2633,11 +2623,11 @@ static FxBool grLfbReadRegionOrigin (GrBuffer_t src_buffer, GrOriginLocation_t o
 
            /* copies aligned dwords */
            do {
-             FxU32 s =*((FxU32 *)(((FxU32)src) + byte_index));
+             FxU32 s =*((FxU32 *)(((unsigned long)src) + byte_index));
              FxU16 d = (FxU16) (s & 0xF8) >> 3;
              d |= (s & 0xF800) >> 6;
              d |= (s & 0xF80000) >> 9;
-             *((FxU16 *)(((FxU32)dst_data) + (byte_index2))) = d;
+             *((FxU16 *)(((unsigned long)dst_data) + (byte_index2))) = d;
              byte_index +=4;
            } while((byte_index2+=2)<(src_width*2));
          }
@@ -2647,8 +2637,6 @@ static FxBool grLfbReadRegionOrigin (GrBuffer_t src_buffer, GrOriginLocation_t o
          dst_data = (FxU32 *)((FxU8 *)dst_data + dst_stride);
        }
      }
-
-okay:
      rv=FXTRUE;
      /* unlock buffer */
      _grLfbUnlock(GR_LFB_READ_ONLY,src_buffer);
@@ -2804,4 +2792,16 @@ GR_ENTRY(grLfbReadRegion, FxBool, (GrBuffer_t src_buffer,
   GR_RETURN(rv);
 #undef FN_NAME
 }/* grLfbReadRegion */
+
+/* grLfbReadRegionOrigin, just call grLfbReadRegion, ignoring the origin
+   argument, since it is ignored by the X86 version too. */
+static FxBool grLfbReadRegionOrigin (GrBuffer_t src_buffer, GrOriginLocation_t origin, 
+                                     FxU32 src_x, FxU32 src_y, 
+                                     FxU32 src_width, FxU32 src_height, 
+                                     FxU32 dst_stride, void *dst_data)
+{
+  return grLfbReadRegion(src_buffer, src_x, src_y, src_width, src_height,
+    dst_stride, dst_data);
+}
+
 #endif /* if __POWERPC__ */

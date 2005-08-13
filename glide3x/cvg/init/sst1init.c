@@ -397,8 +397,8 @@ FX_EXPORT FxU32 * FX_CSTYLE sst1InitMapBoardDirect(FxU32 BoardNumber,
     if(!(sstbase = (FxU32 *) sst1BoardInfo[BoardNumber].virtAddr[0]))
         return (NULL);
 
-    INIT_PRINTF(("sst1InitMapBoard(): vAddr:0x%x pAddr:0x%x Dev:0x%x Board:%d\n",
-        (FxU32) sst1BoardInfo[BoardNumber].virtAddr[0],
+    INIT_PRINTF(("sst1InitMapBoard(): vAddr:0x%lx pAddr:0x%x Dev:0x%x Board:%d\n",
+        (unsigned long) sst1BoardInfo[BoardNumber].virtAddr[0],
         (FxU32) sst1BoardInfo[BoardNumber].physAddr[0],
         (FxU32) sst1BoardInfo[BoardNumber].deviceNumber, BoardNumber));
 

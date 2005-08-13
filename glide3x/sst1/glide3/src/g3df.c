@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.3  2005/06/09 18:32:35  jwrdegoede
+** Fixed all warnings with gcc4 -Wall -W -Wno-unused-parameter, except for a couple I believe to be a gcc bug. This has been reported to gcc.
+**
 ** Revision 1.1.2.2  2004/10/04 09:35:59  dborca
 ** second cut at Glide3x for Voodoo1/Rush (massive update):
 ** delayed validation, vertex snapping, clip coordinates, strip/fan_continue, bugfixes.
@@ -623,7 +626,7 @@ static FxBool ReadDataLong(FILE *fp, FxU32 *data)
 {
   FxU8 byte[4];
 
-  if (fread(byte, 4, 1, fp) != 4)
+  if (fread(byte, 1, 4, fp) != 4)
     return FXFALSE;
 
   *data = (((FxU32) byte[0]) << 24) |

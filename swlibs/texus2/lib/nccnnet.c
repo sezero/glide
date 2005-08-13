@@ -85,19 +85,19 @@
 #define MAX_NEURONS             256
 
 typedef struct  _weight {
-    long         r,  g,  b;                             // fixed point, SUBPIXEL precision bits
+    int         r,  g,  b;                             // fixed point, SUBPIXEL precision bits
     int         ir, ig, ib;                             // pure integers, maybe -256 to 255.
 } Weight;
 
 typedef struct  _vector {
     Weight      *py, *pa, *pb;
-    long         r,  g,  b;                             // pure integers, 0 to 255.
+    int         r,  g,  b;                             // pure integers, 0 to 255.
 } Neuron;
 
 static  Weight                  Y[16], A[4], B[4];
 static  Neuron                  N[MAX_NEURONS];
-static  long                    errR, errG, errB, errMax;
-static  long                    totR, totG, totB;
+static  int                    errR, errG, errB, errMax;
+static  int                    totR, totG, totB;
 
 
 #define SUBPIXEL                22
@@ -111,12 +111,12 @@ static  long                    totR, totG, totB;
                                                 x = ((256 << SUBPIXEL) -1)
 
 static int
-_nn_modifyNeurons(long ir, long ig, long ib)
+_nn_modifyNeurons(int ir, int ig, int ib)
 {
     int         i; 
     int         d0, d1;                         // closest & next closest distance to input
     int         p0, p1;                         // index into the 256 color table.
-    long        d, dr, dg, db;
+    int        d, dr, dg, db;
     Weight      *py, *pa, *pb;
     Neuron      *n;
 
@@ -219,7 +219,7 @@ _nn_initTables()
 
     // Intensity ramp
     for (i=0; i<16; i++) {
-        Y[i].r = ((long) ((255.0f * i)/15.0f))  << SUBPIXEL;
+        Y[i].r = ((int) ((255.0f * i)/15.0f))  << SUBPIXEL;
         Y[i].ir = INT(Y[i].r);
     }
 
@@ -265,10 +265,10 @@ static void
 txMapPal256toYAB(FxU32 *YAB, FxU8 *map, int nsamples, FxU32 *samples)
 {
     int         i;
-    long        bstR, bstG, bstB, bstMax;
+    int        bstR, bstG, bstB, bstMax;
     int         iterations;                     // track how many inputs have been fed to NN
     int         drySpells;                      // how many inputs since last best case.
-    long        yab2pal[256];
+    int        yab2pal[256];
 
     _nn_initTables();
     /* 
@@ -364,7 +364,7 @@ txMapPal256toYAB(FxU32 *YAB, FxU8 *map, int nsamples, FxU32 *samples)
      * Replace MSB of samples with index to be used with YAB table.
      */
 
-    txYABtoPal256((long*)yab2pal, (long*)YAB);
+    txYABtoPal256((int*)yab2pal, (int*)YAB);
 
     for (i=0; i<nsamples; i++) {
         int             ir, ig, ib;
@@ -385,7 +385,7 @@ txMipNccNNet(TxMip *pxMip, TxMip *txMip, int format, FxU32 dither, FxU32 comp)
     int         i, w, h;
     int         ncolors;
     int         pixsize = (pxMip->format == GR_TEXFMT_YIQ_422) ? 1 : 2;
-    long        yabTable[16+12+12];
+    int        yabTable[16+12+12];
     FxU8        map[256];
 
 
@@ -409,7 +409,7 @@ txMipNccNNet(TxMip *pxMip, TxMip *txMip, int format, FxU32 dither, FxU32 comp)
     txMapPal256toYAB((FxU32 *)yabTable, (FxU8 *)map, ncolors, (FxU32 *)pxMip->pal);
     if( txVerbose )
       {
-        printf("eMax=(%3ld%3ld%3ld)...eAvg=(%3ld%3ld%3ld)\n",
+        printf("eMax=(%3d%3d%3d)...eAvg=(%3d%3d%3d)\n",
                errG, errR, errB, 
                totG/ncolors, totR/ncolors, totB/ncolors
                );
@@ -422,7 +422,7 @@ txMipNccNNet(TxMip *pxMip, TxMip *txMip, int format, FxU32 dither, FxU32 comp)
          * the 256 color palette generated from the YAB table. This will be 
          * useful for error diffusion dithering.
          */
-        txYABtoPal256((long *)pxMip->pal, (long *)yabTable);
+        txYABtoPal256((int *)pxMip->pal, (int *)yabTable);
         txDiffuseIndex(pxMip, txMip, pixsize, pxMip->pal, 256);
     } 
     else {

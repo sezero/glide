@@ -164,7 +164,7 @@ doNothing:
     return;
 }
 
-static unsigned long randx = 1;
+static unsigned int randx = 1;
 
 static unsigned int iRandom (unsigned int maxr)
 {

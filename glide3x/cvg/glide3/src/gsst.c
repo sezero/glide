@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.7  2005/06/09 18:32:08  jwrdegoede
+** Fixed all warnings with gcc4 -Wall -W -Wno-unused-parameter, except for a couple I believe to be a gcc bug. This has been reported to gcc.
+**
 ** Revision 1.1.1.1.8.6  2005/01/13 16:02:32  koolsmoky
 ** Restict calls to pciOpen() pciClose() when compiled with DIRECTX option. this fixes problems with the win32 miniport opened in exclusive mode.
 **
@@ -1247,13 +1250,13 @@ __errSliExit:
 #endif
 #else /* !GLIDE_INIT_HAL */
         {
-          /* NB: This is a dummy since fifoStart is always hwBase +
-           * HW_FIFO_OFFSET (0x200000)
-           */
-          FxU32 fifoStart = 0;
+          /* NB: This is a dummy since we always use sstbase +
+             cmdTransportInfo.fifoOffset, so we don't need a direct
+             virtual address for the cmdfifo. */
+          unsigned long fifoVirtAddr = 0;
           
           rv = sst1InitCmdFifo(gc->reg_ptr, FXTRUE,
-                               &fifoStart,
+                               &fifoVirtAddr,
                                &gc->cmdTransportInfo.fifoOffset,
                                &fifoSize,
                                _grSet32);
@@ -1303,12 +1306,12 @@ __errSliExit:
       {
 #if (GLIDE_PLATFORM & GLIDE_HW_H3)
         /* dpc - 12 nov 1997 - WTF!?!?!? */
-        gc->cmdTransportInfo.fifoStart = (FxU32 *) ((FxU32) gc->base_ptr + 0x3c0000);
+        gc->cmdTransportInfo.fifoStart = (FxU32 *) ((unsigned long) gc->base_ptr + 0x3c0000);
 #else
-        gc->cmdTransportInfo.fifoStart = (FxU32*)((FxU32)gc->base_ptr + HW_FIFO_OFFSET);
+        gc->cmdTransportInfo.fifoStart = (FxU32*)((unsigned long)gc->base_ptr + HW_FIFO_OFFSET);
 #endif
         gc->cmdTransportInfo.fifoEnd   = 
-          (FxU32*)((FxU32)gc->cmdTransportInfo.fifoStart + fifoSize);
+          (FxU32*)((unsigned long)gc->cmdTransportInfo.fifoStart + fifoSize);
         gc->cmdTransportInfo.fifoSize  = fifoSize;
 
         /* Adjust room values. 
@@ -1338,14 +1341,14 @@ __errSliExit:
       gc->cmdTransportInfo.lfbLockCount = 0;
           
       GDBG_INFO(1, "Fifo Parameters:\n"
-                "\tStart: 0x%X\n"
-                "\tHW Read: 0x%X\n"
+                "\tStart: 0x%lX\n"
+                "\tHW Read: 0x%lX\n"
                 "\tHW Offset: 0x%X\n"
-                "\tSW Write: 0x%X\n",
-                gc->cmdTransportInfo.fifoStart,
-                gc->cmdTransportInfo.fifoRead,
+                "\tSW Write: 0x%lX\n",
+                (unsigned long)gc->cmdTransportInfo.fifoStart,
+                (unsigned long)gc->cmdTransportInfo.fifoRead,
                 gc->cmdTransportInfo.fifoOffset,
-                gc->cmdTransportInfo.fifoPtr);
+                (unsigned long)gc->cmdTransportInfo.fifoPtr);
 
 #undef MB2B
     }

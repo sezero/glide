@@ -56,7 +56,7 @@ static struct {
   struct {
     FxBool
     mapped;
-    FxU32 
+    unsigned long
     addr;
   } addrList[MAX_PCI_BASEADDRESSES];
 } linearAddressMapList[MAX_PCI_DEVICES];
@@ -280,15 +280,17 @@ _pciUpdateRegister( FxU32 offset, FxU32 data, FxU32 size_in_bytes,
   return;
 } /* _pciUpdateRegister */
 
-static FxU32 
+static unsigned long
 find_mapped_address(FxU32 device_bus_func_number, FxU32 addrNum) 
 {
   FxU32 
-    i,
+    i;
+  unsigned long
     retVal = 0x00UL;
 
   for(i = 0; i < MAX_PCI_DEVICES; i++) {
-    if (linearAddressMapList[i].device_bus_func_number == device_bus_func_number) {
+    if ((linearAddressMapList[i].device_bus_func_number == device_bus_func_number) &&
+        linearAddressMapList[i].addrList[addrNum].mapped) {
       retVal = linearAddressMapList[i].addrList[addrNum].addr;
 
       break;
@@ -299,7 +301,7 @@ find_mapped_address(FxU32 device_bus_func_number, FxU32 addrNum)
 }
 
 static void 
-set_mapped_address(FxU32 device_bus_func_number, FxU32 addrNum, FxU32 value) 
+set_mapped_address(FxU32 device_bus_func_number, FxU32 addrNum, unsigned long value) 
 {
   FxU32 i;
   

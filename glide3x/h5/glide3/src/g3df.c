@@ -1315,7 +1315,7 @@ static FxBool ReadDataLong(FILE *fp, FxU32 *data)
 {
   FxU8 byte[4];
 
-  if (fread(byte, 4, 1, fp) != 4)
+  if (fread(byte, 1, 4, fp) != 4)
     return FXFALSE;
 
   *data = (((FxU32) byte[0]) << 24) |

@@ -29,8 +29,8 @@
 
 // if we use FFLOAT as an integer, we need to handle clocks in Hz
 #define CLOCK_MULTIPLIER        1000000L        
-typedef unsigned long   FFLOAT;
-typedef unsigned long   DDOUBLE;
+typedef unsigned int   FFLOAT;
+/* HDG: unused: typedef unsigned int   DDOUBLE; */
 
 /* FixMe!! Is this right? */
 #define CANOPUS_ID 0x10UL

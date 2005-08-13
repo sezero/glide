@@ -3,6 +3,9 @@
  *
  * $Header$
  * $Log$
+ * Revision 1.1.2.2  2005/05/11 14:42:15  jwrdegoede
+ * Also fix gcc4 PIC compilation of cpuid.c for cvg
+ *
  * Revision 1.1.2.10  2004/10/05 14:54:29  dborca
  * DOS/OpenWatcom woes
  *
@@ -36,7 +39,7 @@
 
 #include "cpuid.h"
 
-typedef unsigned long word32;
+typedef unsigned int word32;
 
 /* These are the bit flags that get set on calling cpuid
  * with register eax set to 1

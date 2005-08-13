@@ -793,7 +793,7 @@ _FifoFlush( void )
 #undef FN_NAME
 } /* _FifoFlush */
 
-FxU32 _grHwFifoPtrSlave(FxU32 slave, FxBool ignored);
+unsigned long _grHwFifoPtrSlave(FxU32 slave, FxBool ignored);
 
 void FX_CALL
 _grCommandTransportMakeRoom(const FxI32 blockSize, const char* fName, const int fLine)
@@ -1009,11 +1009,11 @@ _grCommandTransportMakeRoom(const FxI32 blockSize, const char* fName, const int 
   again:
       /* do we need to stall? */
       {
-        FxU32 lastHwRead = gc->cmdTransportInfo.fifoRead;
+        unsigned long lastHwRead = gc->cmdTransportInfo.fifoRead;
         FxI32 roomToReadPtr = gc->cmdTransportInfo.roomToReadPtr;
         
         while (roomToReadPtr < blockSize) {
-          FxU32 curReadPtr = HW_FIFO_PTR(FXTRUE);
+          unsigned long curReadPtr = HW_FIFO_PTR(FXTRUE);
           FxU32 curReadDist = curReadPtr - lastHwRead;
 
           /* Handle slave chips.  This code lifted from cvg and modified
@@ -1021,13 +1021,13 @@ _grCommandTransportMakeRoom(const FxI32 blockSize, const char* fName, const int 
           if(gc->chipCount > 1) {
             FxU32 slave;
             for(slave = 1; slave < gc->chipCount; slave++) {              
-              const FxU32 slaveReadPtr = _grHwFifoPtrSlave(slave, 0);
+              const unsigned long slaveReadPtr = _grHwFifoPtrSlave(slave, 0);
               const FxU32 slaveReadDist = (slaveReadPtr - lastHwRead);
               FxI32 distSlave = (FxI32)slaveReadDist;
               FxI32 distMaster = (FxI32)curReadDist;
 
-              GR_ASSERT((slaveReadPtr >= (FxU32)gc->cmdTransportInfo.fifoStart) &&
-                        (slaveReadPtr < (FxU32)gc->cmdTransportInfo.fifoEnd));
+              GR_ASSERT((slaveReadPtr >= (unsigned long)gc->cmdTransportInfo.fifoStart) &&
+                        (slaveReadPtr < (unsigned long)gc->cmdTransportInfo.fifoEnd));
           
               /* Get the actual absolute distance to the respective fifo ptrs */
               if (distSlave < 0) distSlave += (FxI32)gc->cmdTransportInfo.fifoSize - FIFO_END_ADJUST;
@@ -1103,8 +1103,8 @@ _grCommandTransportMakeRoom(const FxI32 blockSize, const char* fName, const int 
             checks = 0;
           }
 #endif /* GLIDE_DEBUG */
-          GR_ASSERT((curReadPtr >= (FxU32)gc->cmdTransportInfo.fifoStart) &&
-                    (curReadPtr < (FxU32)gc->cmdTransportInfo.fifoEnd));
+          GR_ASSERT((curReadPtr >= (unsigned long)gc->cmdTransportInfo.fifoStart) &&
+                    (curReadPtr < (unsigned long)gc->cmdTransportInfo.fifoEnd));
               
           roomToReadPtr += curReadDist;
               
@@ -1314,11 +1314,9 @@ _grHwFifoPtr(FxBool ignored)
 } /* _grHwFifoPtr */
 
 
-FxU32
+unsigned long
 _grHwFifoPtrSlave(FxU32 slave, FxBool ignored)
 {
-  FxU32 rVal = 0;
-
   FxU32 status, readPtrL1, readPtrL2;
   GR_DCL_GC;
 
@@ -1332,11 +1330,8 @@ _grHwFifoPtrSlave(FxU32 slave, FxBool ignored)
     readPtrL2 = GET(gc->slaveCRegs[slave-1]->cmdFifo0.readPtrL);
   } while (readPtrL1 != readPtrL2);
 
-  rVal = (((FxU32)gc->cmdTransportInfo.fifoStart) + 
-          readPtrL2 - 
-          (FxU32)gc->cmdTransportInfo.fifoOffset);
-  
-  return rVal;
+  return (((unsigned long)gc->cmdTransportInfo.fifoStart) + 
+    readPtrL2 - gc->cmdTransportInfo.fifoOffset);
 } /* _grHwFifoPtr */
 
 

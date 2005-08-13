@@ -39,7 +39,7 @@ static const char name[]    = "test38";
 static const char purpose[] = "Test the guGammaCorrectionRGB(..) function.";
 static const char usage[]   = "-n <frames> -r <res> -d <filename>";
 
-extern unsigned long hWndMain;
+extern unsigned int hWndMain;
 
 void main( int argc, char **argv) 
 {

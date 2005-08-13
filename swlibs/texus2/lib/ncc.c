@@ -39,7 +39,7 @@ static struct   {
 } ncc;
 
 static int
-_txPixQuantize_YIQ422 (unsigned long argb, int x, int y, int w)
+_txPixQuantize_YIQ422 (unsigned int argb, int x, int y, int w)
 {
     int         r, g, b; 
     int         iy, ii, iq;
@@ -76,7 +76,7 @@ _txPixQuantize_YIQ422 (unsigned long argb, int x, int y, int w)
 
 
 static int
-_txPixQuantize_YIQ422_D4x4 (unsigned long argb, int x, int y, int w)
+_txPixQuantize_YIQ422_D4x4 (unsigned int argb, int x, int y, int w)
 {
     int         r, g, b;
     int         iy, ii, iq;
@@ -121,10 +121,10 @@ _txPixQuantize_YIQ422_D4x4 (unsigned long argb, int x, int y, int w)
 }
 
 static void
-_txImgNcc(char *odata, unsigned long *idata, int w, int h, int format, 
+_txImgNcc(char *odata, unsigned int *idata, int w, int h, int format, 
     int dither)
 {
-    int (*quantizer)(unsigned long argb, int x, int y, int w);
+    int (*quantizer)(unsigned int argb, int x, int y, int w);
     int         x, y, pixsize;
 
     quantizer = (dither) ? _txPixQuantize_YIQ422_D4x4 : _txPixQuantize_YIQ422;
@@ -305,7 +305,7 @@ txMipNcc(TxMip *pxMip, TxMip *txMip, int format, FxU32 dither, FxU32 compression
 
 
     if ((dither & TX_DITHER_MASK) == TX_DITHER_ERR) {
-        txYABtoPal256((long *)pxMip->pal, (long *) &ncc.y[0]);
+        txYABtoPal256((int *)pxMip->pal, (int *) &ncc.y[0]);
         txDiffuseIndex(pxMip, txMip, pixsize, pxMip->pal, 256);
     }
     else {

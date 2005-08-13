@@ -19,6 +19,9 @@
  **
  ** $Header$
  ** $Log$
+ ** Revision 1.1.1.1  1999/12/07 21:42:31  joseph
+ ** Initial checkin into SourceForge.
+ **
 ** 
 ** 1     10/08/98 11:30a Brent
 ** 
@@ -350,16 +353,16 @@ cvgRegNames[] = {
   "reserved0FF",                /* 0xff */  
 };
 
-#define GEN_INDEX(a) ((((FxU32) a) - ((FxU32) gc->reg_ptr)) >> 2)
+#define GEN_INDEX(a) ((((unsigned long) a) - ((unsigned long) gc->reg_ptr)) >> 2)
 
 void
-_grFifoWriteDebug(FxU32 addr, FxU32 val, FxU32 fifoPtr)
+_grFifoWriteDebug(FxU32 addr, FxU32 val, unsigned long fifoPtr)
 {
   GR_DCL_GC;
   FxU32 index = GEN_INDEX(addr);
 
   GDBG_INFO(gc->myLevel + 199, "Storing to FIFO:\n");
-  GDBG_INFO(gc->myLevel + 199, "  FIFO Ptr:    0x%x : 0x%X\n", fifoPtr, gc->cmdTransportInfo.fifoRoom);  
+  GDBG_INFO(gc->myLevel + 199, "  FIFO Ptr:    0x%lx : 0x%X\n", fifoPtr, gc->cmdTransportInfo.fifoRoom);  
   if (index <= 0xff) { 
     GDBG_INFO(gc->myLevel + 199, "  Reg Name:    %s\n", cvgRegNames[index]);
     GDBG_INFO(gc->myLevel + 199, "  Reg Num:     0x%X\n", index);
@@ -382,19 +385,19 @@ _grFifoWriteDebug(FxU32 addr, FxU32 val, FxU32 fifoPtr)
   }
   GDBG_INFO(gc->myLevel + 199, "  Value:       0x%X 0x%X\n", (index << 2), val);
 
-  GDBG_INFO(120, "        SET(0x%X, %ld(0x%X)) 0 %s (0x%X)\n",
+  GDBG_INFO(120, "        SET(0x%X, %ld(0x%X)) 0 %s (0x%lX)\n",
             0x10000000UL + (FxU32)(index << 2), val, val, 
             cvgRegNames[index & 0xFF], fifoPtr);
 } /* _grFifoWriteDebug */
 
 void
-_grFifoFWriteDebug(FxU32 addr, float val, FxU32 fifoPtr)
+_grFifoFWriteDebug(FxU32 addr, float val, unsigned long fifoPtr)
 {
   GR_DCL_GC;
   FxU32 index = GEN_INDEX(addr);
 
   GDBG_INFO(gc->myLevel + 200, "Storing to FIFO:\n");
-  GDBG_INFO(gc->myLevel + 200, "  FIFO Ptr:    0x%x\n", fifoPtr);
+  GDBG_INFO(gc->myLevel + 200, "  FIFO Ptr:    0x%lx\n", fifoPtr);
   if (index <= 0xff) {
     GDBG_INFO(gc->myLevel + 200, "  Reg Name:    %s\n", cvgRegNames[index]);
     GDBG_INFO(gc->myLevel + 200, "  Reg Num:     0x%x\n", index);
@@ -523,7 +526,6 @@ void GR_CDECL
 _FifoMakeRoom(const FxI32 blockSize, const char* fName, const int fLine)
 {
 #define FN_NAME "_FifoMakeRoom"
-  FxU32 wrapAddr = 0x00UL;
   GR_BEGIN_NOFIFOCHECK(FN_NAME, 400);
 
   GR_ASSERT(blockSize > 0);
@@ -542,11 +544,11 @@ _FifoMakeRoom(const FxI32 blockSize, const char* fName, const int fLine)
 
 #if GDBG_INFO_ON
     GDBG_INFO_MORE(gc->myLevel, ": (%s : %d)\n"
-                   "\tfifoBlock: (0x%X : 0x%X)\n"
+                   "\tfifoBlock: (0x%lX : 0x%X)\n"
                    "\tfifoRoom: (0x%X : 0x%X) : (0x%X : 0x%X)\n"
-                   "\tfifo hw: (0x%X : 0x%X)\n",
+                   "\tfifo hw: (0x%lX : 0x%lX)\n",
                    ((fName == NULL) ? "Unknown" : fName), fLine,
-                   (FxU32)gc->cmdTransportInfo.fifoPtr, blockSize,
+                   (unsigned long)gc->cmdTransportInfo.fifoPtr, blockSize,
                    gc->cmdTransportInfo.roomToReadPtr, gc->cmdTransportInfo.roomToEnd, 
                    gc->cmdTransportInfo.fifoRoom, writes,
                    HW_FIFO_PTR(FXTRUE), gc->cmdTransportInfo.fifoRead);
@@ -571,28 +573,28 @@ _FifoMakeRoom(const FxI32 blockSize, const char* fName, const int fLine)
 again:
   /* do we need to stall? */
   {
-    FxU32 lastHwRead = gc->cmdTransportInfo.fifoRead;
+    unsigned long lastHwRead = gc->cmdTransportInfo.fifoRead;
     FxI32 roomToReadPtr = gc->cmdTransportInfo.roomToReadPtr;
 
     while (roomToReadPtr < blockSize) {
-      FxU32 curReadPtr = HW_FIFO_PTR(FXTRUE);
+      unsigned long curReadPtr = HW_FIFO_PTR(FXTRUE);
       FxU32 curReadDist = curReadPtr - lastHwRead;
 
-      GR_ASSERT((curReadPtr >= (FxU32)gc->cmdTransportInfo.fifoStart) &&
-                (curReadPtr < (FxU32)gc->cmdTransportInfo.fifoEnd));
+      GR_ASSERT((curReadPtr >= (unsigned long)gc->cmdTransportInfo.fifoStart) &&
+                (curReadPtr < (unsigned long)gc->cmdTransportInfo.fifoEnd));
 
 #if !GLIDE_INIT_HAL
       /* If we're in an sli configuration then we need to make sure
        * that we don't catch up to either the slave as well.
        */
       if (gc->scanline_interleaved) {
-        const FxU32 slaveReadPtr = HW_FIFO_PTR(FXFALSE);
+        const unsigned long slaveReadPtr = HW_FIFO_PTR(FXFALSE);
         const FxU32 slaveReadDist = (slaveReadPtr - lastHwRead);
         FxI32 distSlave = (FxI32)slaveReadDist;
         FxI32 distMaster = (FxI32)curReadDist;
 
-        GR_ASSERT((slaveReadPtr >= (FxU32)gc->cmdTransportInfo.fifoStart) &&
-                  (slaveReadPtr < (FxU32)gc->cmdTransportInfo.fifoEnd));
+        GR_ASSERT((slaveReadPtr >= (unsigned long)gc->cmdTransportInfo.fifoStart) &&
+                  (slaveReadPtr < (unsigned long)gc->cmdTransportInfo.fifoEnd));
 
         /* Get the actual absolute distance to the respective fifo ptrs */
         if (distSlave < 0) distSlave += (FxI32)gc->cmdTransportInfo.fifoSize - FIFO_END_ADJUST;
@@ -603,9 +605,9 @@ again:
 #if GDBG_INFO_ON  
           {
             SstRegs* slaveHw = (SstRegs*)gc->slave_ptr; 
-            GDBG_INFO(gc->myLevel, "  Wait sli: 0x%X : (0x%X : 0x%X : 0x%X)\n"
-                      "\tMaster: 0x%X : 0x%X\n"
-                      "\tSlave : 0x%X : 0x%X\n",
+            GDBG_INFO(gc->myLevel, "  Wait sli: 0x%lX : (0x%X : 0x%X : 0x%X)\n"
+                      "\tMaster: 0x%lX : 0x%X\n"
+                      "\tSlave : 0x%lX : 0x%X\n",
                       HW_FIFO_PTR(FXFALSE), 
                       GR_GET(slaveHw->cmdFifoDepth), 
                       GR_GET(slaveHw->cmdFifoHoles), 
@@ -632,23 +634,23 @@ again:
       lastHwRead = curReadPtr;
     }
 
-    GR_ASSERT((lastHwRead >= (FxU32)gc->cmdTransportInfo.fifoStart) &&
-              (lastHwRead < (FxU32)gc->cmdTransportInfo.fifoEnd));
+    GR_ASSERT((lastHwRead >= (unsigned long)gc->cmdTransportInfo.fifoStart) &&
+              (lastHwRead < (unsigned long)gc->cmdTransportInfo.fifoEnd));
 
     /* Update cached copies */
     gc->cmdTransportInfo.fifoRead = lastHwRead;
     gc->cmdTransportInfo.roomToReadPtr = roomToReadPtr;
 
-    GDBG_INFO(gc->myLevel, "  Wait: (0x%X : 0x%X) : 0x%X\n", 
+    GDBG_INFO(gc->myLevel, "  Wait: (0x%X : 0x%X) : 0x%lX\n", 
               gc->cmdTransportInfo.roomToReadPtr, gc->cmdTransportInfo.roomToEnd,
-              gc->cmdTransportInfo.fifoRead);
+              (unsigned long)gc->cmdTransportInfo.fifoRead);
   }
   
   /* Do we need to wrap to front? */
   if (gc->cmdTransportInfo.roomToEnd <= blockSize) {
-    GDBG_INFO(gc->myLevel + 10, "  Pre-Wrap: (0x%X : 0x%X) : 0x%X\n", 
+    GDBG_INFO(gc->myLevel + 10, "  Pre-Wrap: (0x%X : 0x%X) : 0x%lX\n", 
               gc->cmdTransportInfo.roomToReadPtr, gc->cmdTransportInfo.roomToEnd,
-              gc->cmdTransportInfo.fifoRead);
+              (unsigned long)gc->cmdTransportInfo.fifoRead); 
 
     /* Set the jsr packet. 
      * NB: This command must be fenced.
@@ -660,8 +662,6 @@ again:
     }
     FIFO_ASSERT();
     
-    wrapAddr = (FxU32)gc->cmdTransportInfo.fifoPtr;
-
     /* Update roomXXX fields for the actual wrap */
     gc->cmdTransportInfo.roomToReadPtr -= gc->cmdTransportInfo.roomToEnd;
     gc->cmdTransportInfo.roomToEnd = gc->cmdTransportInfo.fifoSize - FIFO_END_ADJUST;
@@ -684,9 +684,9 @@ again:
     }
 #endif /* GLIDE_USE_SHADOW_FIFO */
 
-    GDBG_INFO(gc->myLevel + 10, "  Post-Wrap: (0x%X : 0x%X) : 0x%X\n", 
+    GDBG_INFO(gc->myLevel + 10, "  Post-Wrap: (0x%X : 0x%X) : 0x%lX\n", 
               gc->cmdTransportInfo.roomToReadPtr, gc->cmdTransportInfo.roomToEnd,
-              gc->cmdTransportInfo.fifoRead);
+              (unsigned long)gc->cmdTransportInfo.fifoRead);
 
     goto again;
   }
@@ -697,10 +697,10 @@ again:
 #if GDBG_INFO_ON  
 #if (GLIDE_PLATFORM & GLIDE_HW_CVG)
   GDBG_INFO(gc->myLevel, FN_NAME"_Done:\n"
-            "\tfifoBlock: (0x%X : 0x%X)\n"
+            "\tfifoBlock: (0x%lX : 0x%X)\n"
             "\tfifoRoom: (0x%X : 0x%X : 0x%X)\n"
-            "\tfifo hw: (0x%X : 0x%X) : (0x%X : 0x%X : 0x%X)\n",
-            (FxU32)gc->cmdTransportInfo.fifoPtr, blockSize,
+            "\tfifo hw: (0x%lX : 0x%lX) : (0x%X : 0x%X : 0x%X)\n",
+            (unsigned long)gc->cmdTransportInfo.fifoPtr, blockSize,
             gc->cmdTransportInfo.roomToReadPtr, 
             gc->cmdTransportInfo.roomToEnd, gc->cmdTransportInfo.fifoRoom,
             HW_FIFO_PTR(FXTRUE), gc->cmdTransportInfo.fifoRead, 

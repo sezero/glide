@@ -37,11 +37,11 @@ void main( int argc, char **argv) {
     int frames                      = -1;
 
     TlTexture  baseTexture;
-    unsigned long baseTextureAddr;
+    unsigned int baseTextureAddr;
     TlTexture  lightTexture;
-    unsigned long lightTextureAddr;
+    unsigned int lightTextureAddr;
     TlTexture  detailTexture;
-    unsigned long detailTextureAddr;
+    unsigned int detailTextureAddr;
 
     TlVertex3D srcVerts[4];
     float      distance, dDelta;

@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.1  2005/05/07 08:40:18  jwrdegoede
+** lvalue cast fixes for gcc4
+**
 ** Revision 1.1.1.1  1999/12/07 21:42:33  joseph
 ** Initial checkin into SourceForge.
 **
@@ -151,7 +154,7 @@ _grDrawVertexList(FxU32 pktype, FxU32 type, FxI32 mode, FxI32 count, void *point
   ** simplified code
   */
   FxU32 vSize;
-  FxI32 stride = mode;
+  FxI32 stride;
 
   GR_BEGIN_NOFIFOCHECK(FN_NAME, 90);
 
@@ -161,8 +164,10 @@ _grDrawVertexList(FxU32 pktype, FxU32 type, FxI32 mode, FxI32 count, void *point
   GR_FLUSH_STATE();
 
   vSize = gc->state.vData.vSize;
-  if (stride == 0)
+  if (mode == 0)
     stride = gc->state.vData.vStride;
+  else
+    stride = sizeof(float *) / sizeof (float);
 
   /* Draw the first (or possibly only) set.  This is necessary because
      the packet is 3_BDDDDDD, and in the next set, the packet is

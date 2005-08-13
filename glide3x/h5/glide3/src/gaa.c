@@ -595,7 +595,7 @@ _grAADrawPoints(FxI32 mode, FxI32 count, void *pointers)
   float *e, ptX, ptY;
   FxI32 i, ia;
   FxU32 vsize;
-  FxI32 stride = mode;
+  FxI32 stride;
   FxU32 tmp_cullStripHdr;
 
   GDBG_INFO(94,"_grAADrawPoints(0x%x, %d, 0x%x)\n", mode, count, pointers);
@@ -603,8 +603,10 @@ _grAADrawPoints(FxI32 mode, FxI32 count, void *pointers)
   GDBG_INFO_MORE(gc->myLevel, "(count = %d, pointers = 0x%x)\n",
                  count, pointers);
 
-  if (stride == 0)
+  if (mode == 0)
     stride = gc->state.vData.vStride;
+  else
+    stride = sizeof(float *) / sizeof (float);
 
   GR_FLUSH_STATE();
 
@@ -818,7 +820,7 @@ _grAADrawLineStrip(FxI32 mode, FxI32 ltype, FxI32 count, void *pointers)
   FxU32 ia;
   FxU32 vsize;
   FxU32 sCount;
-  FxI32 stride = mode;
+  FxI32 stride;
   FxU32 tmp_cullStripHdr;
 
   GDBG_INFO(95,"_grAADrawLineStrip(count = %d, pointers = 0x%x)\n",
@@ -831,8 +833,11 @@ _grAADrawLineStrip(FxI32 mode, FxI32 ltype, FxI32 count, void *pointers)
 
   GR_FLUSH_STATE();
 
-  if (stride == 0)
+  if (mode == 0)
     stride = gc->state.vData.vStride;
+  else
+    stride = sizeof(float *) / sizeof (float);
+
   if (ltype == GR_LINES)
     sCount = count >> 1; /* line list */
   else
@@ -1350,7 +1355,7 @@ _grAADrawTriangles(FxI32 mode, FxI32 ttype, FxI32 count, void *pointers)
   float **lPtr = (float **)pointers;
   FxI32 tCount = 3;
   FxU32 fbzModeOld;                 /* Squirrel away current fbzMode */
-  FxI32 stride = mode;
+  FxI32 stride;
   FxI32 xindex = (gc->state.vData.vertexInfo.offset >> 2);
   FxI32 yindex = xindex + 1;
 
@@ -1367,8 +1372,10 @@ _grAADrawTriangles(FxI32 mode, FxI32 ttype, FxI32 count, void *pointers)
   /* gc->state.invalid |= fbzModeBIT; */
   GR_FLUSH_STATE();
 
-  if (stride == 0)
+  if (mode == 0)
     stride = gc->state.vData.vStride;
+  else
+    stride = sizeof(float *) / sizeof (float);
 
   /* backfaced or zero area */
   while (tCount <= count) {
@@ -1523,7 +1530,7 @@ _grAAVpDrawTriangles(FxI32 mode, FxI32 ttype, FxI32 count, void *pointers)
   float **lPtr = (float **)pointers;
   FxI32 tCount = 3;
   FxU32 fbzModeOld;                 /* Squirrel away current fbzMode */
-  FxI32 stride = mode;
+  FxI32 stride;
   FxI32 xindex = (gc->state.vData.vertexInfo.offset >> 2);
   FxI32 yindex = xindex + 1;
 
@@ -1540,8 +1547,10 @@ _grAAVpDrawTriangles(FxI32 mode, FxI32 ttype, FxI32 count, void *pointers)
   /* gc->state.invalid |= fbzModeBIT; */
   GR_FLUSH_STATE();
 
-  if (stride == 0)
+  if (mode == 0)
     stride = gc->state.vData.vStride;
+  else
+    stride = sizeof(float *) / sizeof (float);
 
   /* backfaced or zero area */
   while (tCount <= count) {
@@ -1709,7 +1718,7 @@ _grAADrawVertexList(FxU32 type, FxI32 mode, FxI32 count, void *pointers)
   float *v[3];
   FxBool flip = FXFALSE;
   FxU32 fbzModeOld;                 /* Squirrel away current fbzMode */
-  FxI32 stride = mode;
+  FxI32 stride;
 
   if (sCount <= 2) return;
 
@@ -1720,8 +1729,10 @@ _grAADrawVertexList(FxU32 type, FxI32 mode, FxI32 count, void *pointers)
   gc->state.shadow.fbzMode &= ~(SST_ZAWRMASK);
   /* gc->state.invalid |= fbzModeBIT; */
   GR_FLUSH_STATE();
-  if (stride == 0)
+  if (mode == 0)
     stride = gc->state.vData.vStride;
+  else
+    stride = sizeof(float *) / sizeof (float);
 
   sCount-=2;
   if (type == kSetupFan) {

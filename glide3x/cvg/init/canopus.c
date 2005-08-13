@@ -95,12 +95,12 @@ sst1InitComputeClkParamsATT_Int(FFLOAT dwFreq, sst1ClkTimingStruct *clkTiming)
   lBestErr = 99999999;
   sNBest = 0;
   sMBest = 0;
-  lRatio = (unsigned long)((dwFreq*10l)/(FI/100l)) * lPDiv; // lRatio in [1/1000]
+  lRatio = (unsigned int)((dwFreq*10l)/(FI/100l)) * lPDiv; // lRatio in [1/1000]
   for ( sN= (NMID-NDELTA); sN <= (NMID+NDELTA); sN++ ) {
     sM = (unsigned short)((lRatio * sN + 500) / 1000l);
     if (sM > MMAX) sM = MMAX;
     
-    lActual = (unsigned long)((FI * sM) / (sN * lPDiv));
+    lActual = (unsigned int)((FI * sM) / (sN * lPDiv));
     lError = (lActual > dwFreq) ? (lActual - dwFreq) : (dwFreq - lActual);
     if ( lError < lBestErr ) {
       sNBest    = sN;
@@ -113,7 +113,7 @@ sst1InitComputeClkParamsATT_Int(FFLOAT dwFreq, sst1ClkTimingStruct *clkTiming)
     sM++;
     if (sM > MMAX) sM = MMAX;
 
-    lActual = (unsigned long)((FI * sM) / (sN * lPDiv));
+    lActual = (unsigned int)((FI * sM) / (sN * lPDiv));
     lError = (lActual > dwFreq) ? (lActual - dwFreq) : (dwFreq - lActual);
     if ( lError < lBestErr) {
       sNBest    = sN;

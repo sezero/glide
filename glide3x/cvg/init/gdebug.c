@@ -68,7 +68,7 @@ EngDebugPrint(
 static char *gdbg_myname = "gd";		// default library name
 static char gdbg_debuglevel[GDBG_MAX_LEVELS];	// array of debuglevel controls
 
-static long gdbg_errors = 0;
+static int gdbg_errors = 0;
 
 
 #ifdef KERNEL

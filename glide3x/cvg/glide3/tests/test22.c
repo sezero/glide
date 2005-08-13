@@ -35,9 +35,9 @@ void main( int argc, char **argv) {
     int frames                      = -1;
 
     TlTexture  baseTexture;
-    unsigned long baseTextureAddr;
+    unsigned int baseTextureAddr;
     TlTexture  lightTexture;
-    unsigned long lightTextureAddr;
+    unsigned int lightTextureAddr;
 
     int                  ftsize = 0;
     GrFog_t              *fogtable = NULL;

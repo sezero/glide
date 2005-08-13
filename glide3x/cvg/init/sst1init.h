@@ -703,7 +703,7 @@ FX_ENTRY sst1VideoTimingStruct* FX_CALL
 sst1InitFindVideoTimingStruct(GrScreenResolution_t, GrScreenRefresh_t);
 FX_ENTRY FxU32 FX_CALL sst1InitMeasureSiProcess(FxU32 *, FxU32);
 
-FX_ENTRY FxBool FX_CALL sst1InitCmdFifo(FxU32 *, FxBool, FxU32 *, FxU32 *,
+FX_ENTRY FxBool FX_CALL sst1InitCmdFifo(FxU32 *, FxBool, unsigned long *, FxU32 *,
                                         FxU32 *, FxSet32Proc);
 FX_ENTRY FxBool FX_CALL sst1InitCmdFifoDirect(FxU32 *, FxU32, FxU32, FxU32,
                                               FxBool, FxBool, FxSet32Proc);

@@ -27,7 +27,7 @@
 
 #if defined(__unix__) && ! defined(__CVGREGS_H__)
 // basic data types
-#define FxU32 unsigned long
+#define FxU32 unsigned int
 #define FxBool int
 // defn of registers not reqd, treat (SstRegs *) as (void *)
 typedef void SstRegs;

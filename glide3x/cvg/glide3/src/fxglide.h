@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.12  2005/06/10 14:17:53  jwrdegoede
+** Fix compilation when GL_X86 is not defined
+**
 ** Revision 1.1.1.1.8.11  2005/06/09 18:32:08  jwrdegoede
 ** Fixed all warnings with gcc4 -Wall -W -Wno-unused-parameter, except for a couple I believe to be a gcc bug. This has been reported to gcc.
 **
@@ -427,10 +430,8 @@
  * dpc - 21 may 1997 - FixMe!
  * This was yoinked from sst1/include/sst1init.h, and should be
  * merged back into something if we decide that we need it later.
- */
-extern FxU32 p6FenceVar;
-
-/* dpc - 2 june 1997 
+ *
+ * dpc - 2 june 1997 
  * Moved the fence check out to avoid empty if body warning w/ gcc.
  * This only applies to systems that require the p6 fencing.
  */
@@ -1035,47 +1036,47 @@ void FX_CSTYLE _grDrawVertexList_3DNow_Clip(FxU32 pktype, FxU32 type, FxI32 mode
  * xtexdl.c
  */
 struct GrGC_s;
-typedef void  (FX_CALL* GrTexDownloadProc)(struct GrGC_s* gc, const FxU32 tmuBaseAddr,
+typedef void  (FX_CALL* GrTexDownloadProc)(struct GrGC_s* gc, const unsigned long tmuBaseAddr,
                                            const FxU32 maxS, const FxU32 minT, const FxU32 maxT,
                                            void* texData);
 typedef GrTexDownloadProc GrTexDownloadProcVector[2][4];
 
-extern void FX_CALL _grTexDownload_Default_8_1(struct GrGC_s* gc, const FxU32 tmuBaseAddr,
+extern void FX_CALL _grTexDownload_Default_8_1(struct GrGC_s* gc, const unsigned long tmuBaseAddr,
                                                const FxU32 maxS, const FxU32 minT, const FxU32 maxT,
                                                void* texData);
-extern void FX_CALL _grTexDownload_Default_8_2(struct GrGC_s* gc, const FxU32 tmuBaseAddr,
+extern void FX_CALL _grTexDownload_Default_8_2(struct GrGC_s* gc, const unsigned long tmuBaseAddr,
                                                const FxU32 maxS, const FxU32 minT, const FxU32 maxT,
                                                void* texData);
-extern void FX_CALL _grTexDownload_Default_8_4(struct GrGC_s* gc, const FxU32 tmuBaseAddr,
+extern void FX_CALL _grTexDownload_Default_8_4(struct GrGC_s* gc, const unsigned long tmuBaseAddr,
                                                const FxU32 maxS, const FxU32 minT, const FxU32 maxT,
                                                void* texData);
-extern void FX_CALL _grTexDownload_Default_8_WideS(struct GrGC_s* gc, const FxU32 tmuBaseAddr,
+extern void FX_CALL _grTexDownload_Default_8_WideS(struct GrGC_s* gc, const unsigned long tmuBaseAddr,
                                                    const FxU32 maxS, const FxU32 minT, const FxU32 maxT,
                                                    void* texData);
 
-extern void FX_CALL _grTexDownload_Default_16_1(struct GrGC_s* gc, const FxU32 tmuBaseAddr,
+extern void FX_CALL _grTexDownload_Default_16_1(struct GrGC_s* gc, const unsigned long tmuBaseAddr,
                                                 const FxU32 maxS, const FxU32 minT, const FxU32 maxT,
                                                 void* texData);
-extern void FX_CALL _grTexDownload_Default_16_2(struct GrGC_s* gc, const FxU32 tmuBaseAddr,
+extern void FX_CALL _grTexDownload_Default_16_2(struct GrGC_s* gc, const unsigned long tmuBaseAddr,
                                                 const FxU32 maxS, const FxU32 minT, const FxU32 maxT,
                                                 void* texData);
-extern void FX_CALL _grTexDownload_Default_16_4(struct GrGC_s* gc, const FxU32 tmuBaseAddr,
+extern void FX_CALL _grTexDownload_Default_16_4(struct GrGC_s* gc, const unsigned long tmuBaseAddr,
                                                 const FxU32 maxS, const FxU32 minT, const FxU32 maxT,
                                                 void* texData);
-extern void FX_CALL _grTexDownload_Default_16_WideS(struct GrGC_s* gc, const FxU32 tmuBaseAddr,
+extern void FX_CALL _grTexDownload_Default_16_WideS(struct GrGC_s* gc, const unsigned long tmuBaseAddr,
                                                     const FxU32 maxS, const FxU32 minT, const FxU32 maxT,
                                                     void* texData);
 
 #if GL_AMD3D
 /* xtexdl.asm */
-extern void FX_CALL _grTexDownload_3DNow_MMX(struct GrGC_s* gc, const FxU32 tmuBaseAddr,
+extern void FX_CALL _grTexDownload_3DNow_MMX(struct GrGC_s* gc, const unsigned long tmuBaseAddr,
                                              const FxU32 maxS, const FxU32 minT, const FxU32 maxT,
                                              void* texData);
 #endif /* GL_AMD3D */
 
 #if GL_MMX
 /* xtexdl.asm */
-extern void FX_CALL _grTexDownload_MMX(struct GrGC_s* gc, const FxU32 tmuBaseAddr,
+extern void FX_CALL _grTexDownload_MMX(struct GrGC_s* gc, const unsigned long tmuBaseAddr,
                                        const FxU32 maxS, const FxU32 minT, const FxU32 maxT,
                                        void* texData);
 #endif /* GL_MMX */
@@ -1164,7 +1165,7 @@ typedef struct GrGC_s
     FxU32  fifoJmpHdr;   /* Type0 packet for jmp to fifo start */
     
     FxU32* fifoPtr;      /* Current write pointer into fifo */
-    FxU32  fifoRead;     /* Last known hw read ptr. 
+    unsigned long fifoRead;     /* Last known hw read ptr. 
                           * This is the sli master, if enabled.
                           */
     
@@ -1223,7 +1224,7 @@ typedef struct GrGC_s
                             * FixMe: Will this ever happen?
                             */
 
-      FxU32 yTileShift;    /* (0x01UL << yTileShift) is the # of lines in a
+      FxU32 yTileShift;    /* (0x01U << yTileShift) is the # of lines in a
                             * tile.  This is dependent on the sli-ness of the
                             * board. 
                             */
@@ -1263,7 +1264,7 @@ typedef struct GrGC_s
   } hwDep;
 
   /* lfb config */
-  FxU32 lockPtrs[2];        /* pointers to locked buffers */
+  unsigned long lockPtrs[2];        /* pointers to locked buffers */
   FxU32 fbStride;
 
   struct {
@@ -1302,7 +1303,7 @@ typedef struct GrGC_s
   FxI32 expected_counter;       /* the number of bytes expected to be sent */
 
   FxU32 checkCounter;
-  FxU32 checkPtr;
+  unsigned long checkPtr;
    
   FxVideoTimingInfo* vidTimings;/* init code overrides */
 
@@ -1375,15 +1376,15 @@ struct _GlideRoot_s {
 #define kPackBiasG _GlideRoot.pool.fBiasHi
 #define kPackBiasB _GlideRoot.pool.fBiasLo
 
-#define kPackShiftA 16UL
-#define kPackShiftR 8UL
-#define kPackShiftG 0UL
-#define kPackShiftB 0UL
+#define kPackShiftA 16U
+#define kPackShiftR 8U
+#define kPackShiftG 0U
+#define kPackShiftB 0U
 
-#define kPackMaskA  0x00FF00UL
-#define kPackMaskR  0x00FF00UL
-#define kPackMaskG  0x00FF00UL
-#define kPackMaskB  0x00FFUL
+#define kPackMaskA  0x00FF00U
+#define kPackMaskR  0x00FF00U
+#define kPackMaskG  0x00FF00U
+#define kPackMaskB  0x00FFU
 
     float  fBiasHi;
     float  fBiasLo;
@@ -1900,14 +1901,14 @@ _grGetCommandTransportInfo(GrCmdTransportInfo*);
  */
 #if (GLIDE_PLATFORM & GLIDE_HW_CVG)
 #define HW_FIFO_PTR(__masterP)\
-((FxU32)gc->cmdTransportInfo.fifoStart + \
+((unsigned long)gc->cmdTransportInfo.fifoStart + \
  (GET(((SstRegs*)((__masterP) \
                   ? gc->reg_ptr \
                   : gc->slave_ptr))->cmdFifoReadPtr) - \
   gc->cmdTransportInfo.fifoOffset))
 #elif (GLIDE_PLATFORM & GLIDE_HW_H3)
 #  define HW_FIFO_PTR(__masterP) \
-  ((FxU32)gc->cmdTransportInfo.fifoStart +\
+  ((unsigned long)gc->cmdTransportInfo.fifoStart +\
    (GET(((SstCRegs*)(gc->hwDep.h3Dep.cRegs))->cmdFifo0.readPtrL)) - \
    gc->cmdTransportInfo.fifoOffset)
 #else
@@ -1923,9 +1924,9 @@ if ((gFifoCheckCount++ & kFifoCheckMask) == 0) { \
    const FxU32 cmdFifoDepth = GR_GET(((SstRegs*)(gc->reg_ptr))->cmdFifoDepth); \
    const FxU32 maxFifoDepth = ((gc->cmdTransportInfo.fifoSize - FIFO_END_ADJUST) >> 2); \
    if(cmdFifoDepth > maxFifoDepth) { \
-     gdbg_printf(__FILE__"(%ld): cmdFifoDepth > size: 0x%X : 0x%X : (0x%X : 0x%X)\n", \
+     gdbg_printf(__FILE__"(%ld): cmdFifoDepth > size: 0x%X : 0x%X : (0x%lX : 0x%lX)\n", \
                  __LINE__, cmdFifoDepth, maxFifoDepth, \
-                 HW_FIFO_PTR(FXTRUE), gc->cmdTransportInfo.fifoPtr); \
+                 HW_FIFO_PTR(FXTRUE), (unsigned long)gc->cmdTransportInfo.fifoPtr); \
      ASSERT_FAULT_IMMED(cmdFifoDepth <= maxFifoDepth); \
    } else if (cmdFifoDepth + (gc->cmdTransportInfo.fifoRoom >> 2) > maxFifoDepth) { \
      gdbg_printf(__FILE__"(%ld): cmdFifoDepth + fifoRoom > size: (0x%X : 0x%X) : 0x%X\n", \
@@ -1933,14 +1934,14 @@ if ((gFifoCheckCount++ & kFifoCheckMask) == 0) { \
      ASSERT_FAULT_IMMED(cmdFifoDepth + (gc->cmdTransportInfo.fifoRoom >> 2) <= maxFifoDepth); \
    } \
 } \
-ASSERT_FAULT_IMMED(HW_FIFO_PTR(FXTRUE) >= (FxU32)gc->cmdTransportInfo.fifoStart); \
-ASSERT_FAULT_IMMED(HW_FIFO_PTR(FXTRUE) < (FxU32)gc->cmdTransportInfo.fifoEnd); \
+ASSERT_FAULT_IMMED(HW_FIFO_PTR(FXTRUE) >= (unsigned long)gc->cmdTransportInfo.fifoStart); \
+ASSERT_FAULT_IMMED(HW_FIFO_PTR(FXTRUE) < (unsigned long)gc->cmdTransportInfo.fifoEnd); \
 ASSERT_FAULT_IMMED((FxU32)gc->cmdTransportInfo.fifoRoom < gc->cmdTransportInfo.fifoSize); \
-ASSERT_FAULT_IMMED((FxU32)gc->cmdTransportInfo.fifoPtr < (FxU32)gc->cmdTransportInfo.fifoEnd)
+ASSERT_FAULT_IMMED((unsigned long)gc->cmdTransportInfo.fifoPtr < (unsigned long)gc->cmdTransportInfo.fifoEnd)
 #else /* !FIFO_ASSERT_FULL */
 #define FIFO_ASSERT() \
 ASSERT_FAULT_IMMED((FxU32)gc->cmdTransportInfo.fifoRoom < gc->cmdTransportInfo.fifoSize); \
-ASSERT_FAULT_IMMED((FxU32)gc->cmdTransportInfo.fifoPtr < (FxU32)gc->cmdTransportInfo.fifoEnd)
+ASSERT_FAULT_IMMED((unsigned long)gc->cmdTransportInfo.fifoPtr < (unsigned long)gc->cmdTransportInfo.fifoEnd)
 #endif /* !FIFO_ASSERT_FULL */
 
 void GR_CDECL
@@ -1949,7 +1950,7 @@ _FifoMakeRoom(const FxI32 blockSize, const char* fName, const int fLine);
 #define GR_CHECK_FOR_ROOM(__n, __p) \
 do { \
   const FxU32 writeSize = (__n) + ((__p) * sizeof(FxU32));            /* Adjust for size of hdrs */ \
-  ASSERT(((FxU32)(gc->cmdTransportInfo.fifoPtr) & FIFO_ALIGN_MASK) == 0); /* alignment */ \
+  ASSERT(((unsigned long)(gc->cmdTransportInfo.fifoPtr) & FIFO_ALIGN_MASK) == 0); /* alignment */ \
   ASSERT(writeSize < gc->cmdTransportInfo.fifoSize - sizeof(FxU32)); \
   FIFO_ASSERT(); \
   if (gc->cmdTransportInfo.fifoRoom < (FxI32)writeSize) { \
@@ -1976,23 +1977,23 @@ do { \
 #if GLIDE_USE_SHADOW_FIFO
 #define GR_CHECK_SHADOW_FIFO \
   if ((gc != NULL) && (gc->cmdTransportInfo.fifoShadowPtr != NULL)) \
-  ASSERT_FAULT_IMMED((((FxU32)gc->cmdTransportInfo.fifoPtr) & (kDebugFifoSize - 1)) == \
-                     (((FxU32)gc->cmdTransportInfo.fifoShadowPtr) & (kDebugFifoSize - 1)))
+  ASSERT_FAULT_IMMED((((unsigned long)gc->cmdTransportInfo.fifoPtr) & (kDebugFifoSize - 1)) == \
+                     (((unsigned long)gc->cmdTransportInfo.fifoShadowPtr) & (kDebugFifoSize - 1)))
 #else /* !GLIDE_USE_SHADOW_FIFO */
 #define GR_CHECK_SHADOW_FIFO
 #endif /* !GLIDE_USE_SHADOW_FIFO */
 
 #define GR_CHECK_FIFO_PTR() \
-  if((FxU32)gc->cmdTransportInfo.fifoPtr != gc->checkPtr + gc->checkCounter) \
+  if((unsigned long)gc->cmdTransportInfo.fifoPtr != (gc->checkPtr + gc->checkCounter)) \
      GDBG_ERROR("GR_ASSERT_FIFO", "(%s : %d) : " \
-                "fifoPtr should be 0x%X (0x%X : 0x%X) but is 0x%X\n", \
+                "fifoPtr should be 0x%lX (0x%lX : 0x%X) but is 0x%lX\n", \
                 __FILE__, __LINE__, \
                 gc->checkPtr + gc->checkCounter, gc->checkPtr, gc->checkCounter, \
-                gc->cmdTransportInfo.fifoPtr); \
+                (unsigned long)gc->cmdTransportInfo.fifoPtr); \
   GR_CHECK_SHADOW_FIFO; \
   ASSERT_FAULT_IMMED((FxU32)gc->cmdTransportInfo.fifoPtr == gc->checkPtr + gc->checkCounter)
 #define GR_SET_FIFO_PTR(__n, __p) \
-  gc->checkPtr = (FxU32)gc->cmdTransportInfo.fifoPtr; \
+  gc->checkPtr = (unsigned long)gc->cmdTransportInfo.fifoPtr; \
   gc->checkCounter = ((__n) + ((__p) << 2))
 #else
 #define GR_CHECK_FIFO_PTR() 
@@ -2004,7 +2005,7 @@ do { \
     GDBG_ERROR("GR_ASSERT_SIZE","byte counter should be %d but is %d\n", \
                gc->expected_counter,gc->counter); \
   GR_CHECK_FIFO_PTR(); \
-  gc->checkPtr = (FxU32)gc->cmdTransportInfo.fifoPtr; \
+  gc->checkPtr = (unsigned long)gc->cmdTransportInfo.fifoPtr; \
   gc->checkCounter = 0; \
   ASSERT(gc->counter == gc->expected_counter); \
   gc->counter = gc->expected_counter = 0
@@ -2038,7 +2039,7 @@ do { \
                 GR_ASSERT(gc != NULL);  \
                 GR_ASSERT(hw != NULL);  \
                 gc->myLevel = level; \
-                gc->checkPtr = (FxU32)gc->cmdTransportInfo.fifoPtr; \
+                gc->checkPtr = (unsigned long)gc->cmdTransportInfo.fifoPtr; \
                 GDBG_INFO(gc->myLevel,myName); \
                 FXUNUSED(saveLevel); \
                 FXUNUSED(hw)
@@ -2076,7 +2077,11 @@ do { \
 #if defined(GLIDE_SANITY_ASSERT)
 #define GR_ASSERT(exp) ((void)((!(exp)) ? (_grAssert(#exp,  __FILE__, __LINE__),0) : 0xFFFFFFFF))
 #else
-#define GR_ASSERT(exp) ((void)(0 && ((FxU32)(exp))))
+# ifdef __GNUC__
+#  define GR_ASSERT(exp)	((void) 0)
+# else
+#  define GR_ASSERT(exp) ((void)(0 && ((FxU32)(exp))))
+# endif
 #endif
 
 #define INTERNAL_CHECK(__name, __cond, __msg, __fatalP) \
@@ -2105,12 +2110,12 @@ _grAssert(char *, char *, int);
 
 #if USE_PACKET_FIFO
 #ifdef GDBG_INFO_ON
-void _grFifoWriteDebug(FxU32 addr, FxU32 val, FxU32 fifoPtr);
+void _grFifoWriteDebug(FxU32 addr, FxU32 val, unsigned long fifoPtr);
 #define DEBUGFIFOWRITE(a,b,c) \
-_grFifoWriteDebug((FxU32) a, (FxU32) b, (FxU32) c)
-void _grFifoFWriteDebug(FxU32 addr, float val, FxU32 fifoPtr);
+_grFifoWriteDebug((FxU32) (a), (FxU32) (b), (unsigned long) (c))
+void _grFifoFWriteDebug(FxU32 addr, float val, unsigned long fifoPtr);
 #define DEBUGFIFOFWRITE(a,b,c) \
-_grFifoFWriteDebug((FxU32) a, (float) b, (FxU32) c)
+_grFifoFWriteDebug((FxU32) (a), (float) (b), (unsigned long) (c))
 #else /* ~GDBG_INFO_ON */
 #define DEBUGFIFOWRITE(a,b,c)
 #define DEBUGFIFOFWRITE(a,b,c)
@@ -2166,8 +2171,8 @@ do { \
                                 __stwbrx( *((FxU32*)&temp), (void*)&(d), 0 ); \
                              }
 #define SET_LINEAR(d, s)     SET((d), (s))
-#define SET_LINEAR_16(d, s)  SET((d), ((((FxU32)(s)) >> 16UL) | \
-                                       (((FxU32)(s)) << 16UL)))
+#define SET_LINEAR_16(d, s)  SET((d), ((((FxU32)(s)) >> 16U) | \
+                                       (((FxU32)(s)) << 16U)))
 #define SET_LINEAR_8(d, s)   ((d) = (s))
 #else /* !defined(__MWERKS__) && POWERPC */
 #error "Define byte swapped macros for GET/SET"
@@ -2175,7 +2180,7 @@ do { \
 #endif /* SET_BSWAP */
 
 #if GLIDE_USE_DEBUG_FIFO
-#define kDebugFifoSize 0x1000UL
+#define kDebugFifoSize 0x1000U
 #endif /* GLIDE_USE_DEBUG_FIFO */
 
 #ifndef SET_LINEAR
@@ -2188,9 +2193,9 @@ do { \
  * NB: The value passed to this macro must be convertable
  * into an l-value.
  */
-#define kFPExpMask        0x7F800000UL
-#define kFPZeroMask       0x80000000UL
-#define kFPExpShift       0x17UL
+#define kFPExpMask        0x7F800000U
+#define kFPZeroMask       0x80000000U
+#define kFPExpShift       0x17U
 #define FP_FLOAT_EXP(__fpVal)   ((FxU32)(((*(const FxU32*)(&(__fpVal))) & kFPExpMask) >> kFPExpShift))
 #define FP_FLOAT_ZERO(__fpVal)  (((*(const FxU32*)(&(__fpVal))) & ~kFPZeroMask) == 0x00)
 
@@ -2204,17 +2209,17 @@ do { \
  * NB: This requires that the boolean value being passed in be the
  * result of one of the standard relational operators. 
  */
-#define MaskSelect(__b, __val) (~(((FxU32)(__b)) - 1UL) & (__val))
+#define MaskSelect(__b, __val) (~(((FxU32)(__b)) - 1U) & (__val))
 
 /* Chipfield ids that glide uses. */
-#define kChipFieldShift (8UL + 3UL)
+#define kChipFieldShift (8U + 3U)
 typedef enum {
-  eChipBroadcast    = 0x00UL,
-  eChipFBI          = 0x01UL,
-  eChipTMU0         = 0x02UL,
-  eChipTMU1         = 0x04UL,
-  eChipTMU2         = 0x08UL,
-  eChipAltBroadcast = 0x0FUL,
+  eChipBroadcast    = 0x00U,
+  eChipFBI          = 0x01U,
+  eChipTMU0         = 0x02U,
+  eChipTMU1         = 0x04U,
+  eChipTMU2         = 0x08U,
+  eChipAltBroadcast = 0x0FU,
 } FifoChipField;
 
 #if GLIDE_CHIP_BROADCAST && (GLIDE_PLATFORM & GLIDE_HW_CVG)
@@ -2239,7 +2244,7 @@ FxU32 _regBase = offsetof(SstRegs, __regBase)
 { \
   const FxU32 curRegAddr = offsetof(SstRegs, __regAddr); \
   const FxU32 curRegIndex = (curRegAddr - _regBase) >> 2; \
-  const FxU32 curRegBit = (0x01UL << curRegIndex); \
+  const FxU32 curRegBit = (0x01U << curRegIndex); \
   const float floatVal = (const float)(__val); \
   GDBG_INFO(gc->myLevel + 200, "\t(0x%X : 0x%X) : 0x%X\n", \
             curRegIndex, curRegAddr, *(const FxU32*)&floatVal); \
@@ -2251,7 +2256,7 @@ FxU32 _regBase = offsetof(SstRegs, __regBase)
                          "Called within grLfbLock/grLfbUnlockPair"); \
   GR_ASSERT((_regMask & curRegBit) == curRegBit);                            /* reg allocated in mask */ \
   if (curRegIndex > 0) \
-  GR_ASSERT(((0xFFFFFFFFUL >> (32 - curRegIndex)) & _regCheckMask) == 0x00); /* All previous regs done */ \
+  GR_ASSERT(((0xFFFFFFFFU >> (32 - curRegIndex)) & _regCheckMask) == 0x00); /* All previous regs done */ \
   _regCheckMask ^= curRegBit;                                                /* Mark current reg */ \
 }
 #else /* !GDBG_INFO_ON */
@@ -2337,12 +2342,12 @@ REG_GROUP_BEGIN_INTERNAL(__chipId, __regBase, __groupNum, \
   GR_DCL_GC; \
   volatile FxU32* _regGroupFifoPtr = gc->cmdTransportInfo.fifoPtr; \
   REG_GROUP_DCL(__groupMask, __regBase, __groupNum, __checkP); \
-  GR_ASSERT(((__pktHdr) & 0xE0000000UL) == 0x00UL); \
+  GR_ASSERT(((__pktHdr) & 0xE0000000U) == 0x00U); \
   FIFO_ASSERT(); \
-  GDBG_INFO(120, "REG_GROUP_BEGIN: (0x%X : 0x%X) : (0x%X - 0x%X : 0x%X) : (0x%X : 0x%X)\n", \
+  GDBG_INFO(120, "REG_GROUP_BEGIN: (0x%X : 0x%X) : (0x%X - 0x%X : 0x%X) : (0x%lX : 0x%X)\n", \
             (__pktHdr), (__groupMask), \
             FIFO_REG(__chipId, __regBase), __chipId, offsetof(SstRegs, __regBase), \
-            (FxU32)gc->cmdTransportInfo.fifoPtr, gc->cmdTransportInfo.fifoRoom); \
+            (unsigned long)gc->cmdTransportInfo.fifoPtr, gc->cmdTransportInfo.fifoRoom); \
   SET(*_regGroupFifoPtr++, (__pktHdr))
 
 #define REG_GROUP_SET(__regBase, __regAddr, __val) \
@@ -2377,20 +2382,20 @@ do { \
 
 #define REG_GROUP_NO_CHECK_END() \
   ASSERT(!_checkP); \
-  ASSERT((((FxU32)_regGroupFifoPtr - (FxU32)gc->cmdTransportInfo.fifoPtr) >> 2) == _groupNum + 1); \
-  gc->cmdTransportInfo.fifoRoom -= ((FxU32)_regGroupFifoPtr - (FxU32)gc->cmdTransportInfo.fifoPtr); \
+  ASSERT((((unsigned long)_regGroupFifoPtr - (unsigned long)gc->cmdTransportInfo.fifoPtr) >> 2) == _groupNum + 1); \
+  gc->cmdTransportInfo.fifoRoom -= ((unsigned long)_regGroupFifoPtr - (unsigned long)gc->cmdTransportInfo.fifoPtr); \
   gc->cmdTransportInfo.fifoPtr = (FxU32*)_regGroupFifoPtr; \
   FIFO_ASSERT(); \
 }
 
 #define REG_GROUP_END() \
   ASSERT(_checkP); \
-  ASSERT((((FxU32)_regGroupFifoPtr - (FxU32)gc->cmdTransportInfo.fifoPtr) >> 2) == _groupNum + 1); \
-  gc->cmdTransportInfo.fifoRoom -= ((FxU32)_regGroupFifoPtr - (FxU32)gc->cmdTransportInfo.fifoPtr); \
+  ASSERT((((unsigned long)_regGroupFifoPtr - (unsigned long)gc->cmdTransportInfo.fifoPtr) >> 2) == _groupNum + 1); \
+  gc->cmdTransportInfo.fifoRoom -= ((unsigned long)_regGroupFifoPtr - (unsigned long)gc->cmdTransportInfo.fifoPtr); \
   gc->cmdTransportInfo.fifoPtr = (FxU32*)_regGroupFifoPtr; \
-  GDBG_INFO(gc->myLevel + 200, "\tGroupEnd: (0x%X : 0x%X) : (0x%X : 0x%X)\n", \
-            _regGroupFifoPtr, gc->cmdTransportInfo.fifoRoom, \
-            HW_FIFO_PTR(FXTRUE), gc->cmdTransportInfo.fifoPtr); \
+  GDBG_INFO(gc->myLevel + 200, "\tGroupEnd: (0x%lX : 0x%X) : (0x%lX : 0x%lX)\n", \
+            (unsigned long)_regGroupFifoPtr, gc->cmdTransportInfo.fifoRoom, \
+            HW_FIFO_PTR(FXTRUE), (unsigned long)gc->cmdTransportInfo.fifoPtr); \
   FIFO_ASSERT(); \
 } \
 GR_CHECK_SIZE()
@@ -2399,7 +2404,7 @@ GR_CHECK_SIZE()
 /* Send all of the triangle parameters in a single cmd fifo packet to
  * the chip until the tsu is fixed.
  */
-#define kNumTriParam 0x1FUL
+#define kNumTriParam 0x1FU
    
 #define TRI_NO_TSU_BEGIN(__floatP) \
 GR_CHECK_COMPATABILITY(FN_NAME, \
@@ -2444,8 +2449,8 @@ do { \
 } while(0)
    
 #define TRI_NO_TSU_END() \
-   gc->cmdTransportInfo.fifoRoom -= ((FxU32)noTsuFifoPtr - \
-                                 (FxU32)gc->cmdTransportInfo.fifoPtr); \
+   gc->cmdTransportInfo.fifoRoom -= ((unsigned long)noTsuFifoPtr - \
+                                 (unsigned long)gc->cmdTransportInfo.fifoPtr); \
    gc->cmdTransportInfo.fifoPtr = noTsuFifoPtr; \
    FIFO_ASSERT(); \
 }
@@ -2641,41 +2646,41 @@ _grCVGFifoDump_Linear(const FxU32* const linearPacketAddr);
   GR_CHECK_COMPATABILITY(FN_NAME, \
                          (gc->cmdTransportInfo.lfbLockCount != 0), \
                          "Called within grLfbLock/grLfbUnlockPair"); \
-  GR_ASSERT(((FxU32)(tPackPtr) & FIFO_ALIGN_MASK) == 0);   /* alignment */ \
+  GR_ASSERT(((unsigned long)(tPackPtr) & FIFO_ALIGN_MASK) == 0);   /* alignment */ \
   GR_ASSERT((((__nVerts) * (__vertSize)) + sizeof(FxU32)) <= (FxU32)gc->cmdTransportInfo.fifoRoom); \
-  GR_ASSERT((((FxU32)tPackPtr) + ((__nVerts) * (__vertSize)) + sizeof(FxU32)) < \
-            (FxU32)gc->cmdTransportInfo.fifoEnd); \
+  GR_ASSERT((((unsigned long)tPackPtr) + ((__nVerts) * (__vertSize)) + sizeof(FxU32)) < \
+            (unsigned long)gc->cmdTransportInfo.fifoEnd); \
   GR_ASSERT(nVertex < 0x10); \
   GR_ASSERT(nVertex > 0x00); \
-  GR_ASSERT(((__packetHdr) & 0xE0000000UL) == 0x00UL); \
+  GR_ASSERT(((__packetHdr) & 0xE0000000U) == 0x00U); \
   FIFO_ASSERT(); \
   GDBG_INFO(120, "Triangle(0x%X): (0x%X : 0x%X)\n", (__packetHdr), __nVerts, __vertSize); \
   DEBUGFIFODUMP_TRI(__packetHdr)
 #define CLAMP_DUMP(__val, __floatVal) \
   pCount++; \
-  GDBG_INFO(gc->myLevel + 200, "\t(0x%X) : V#: 0x%X - P#: 0x%X - ParamVal: (%f : 0x%X)\n", \
-            (FxU32)tPackPtr, \
-            ((FxU32)tPackPtr - ((FxU32)gc->cmdTransportInfo.fifoPtr + sizeof(FxU32))) / sVertex, \
-             (((FxU32)tPackPtr - ((FxU32)gc->cmdTransportInfo.fifoPtr + sizeof(FxU32))) % sVertex) >> 2, \
+  GDBG_INFO(gc->myLevel + 200, "\t(0x%lX) : V#: 0x%lX - P#: 0x%lX - ParamVal: (%f : 0x%X)\n", \
+            (unsigned long)tPackPtr, \
+            ((unsigned long)tPackPtr - ((unsigned long)gc->cmdTransportInfo.fifoPtr + sizeof(FxU32))) / sVertex, \
+             (((unsigned long)tPackPtr - ((unsigned long)gc->cmdTransportInfo.fifoPtr + sizeof(FxU32))) % sVertex) >> 2, \
             (((__val) < 786432.875) ? (__val) : ((__val) - 786432.875)), \
             (__floatVal))
 #define SETF_DUMP(__val) \
   pCount++; \
-  GDBG_INFO(gc->myLevel + 200, "\t(0x%X) : V#: 0x%X - P#: 0x%X - ParamVal: %f\n", \
-            (FxU32)tPackPtr, \
-            ((FxU32)tPackPtr - ((FxU32)gc->cmdTransportInfo.fifoPtr + sizeof(FxU32))) / sVertex, \
-             (((FxU32)tPackPtr - ((FxU32)gc->cmdTransportInfo.fifoPtr + sizeof(FxU32))) % sVertex) >> 2, \
+  GDBG_INFO(gc->myLevel + 200, "\t(0x%lX) : V#: 0x%lX - P#: 0x%lX - ParamVal: %f\n", \
+            (unsigned long)tPackPtr, \
+            ((unsigned long)tPackPtr - ((unsigned long)gc->cmdTransportInfo.fifoPtr + sizeof(FxU32))) / sVertex, \
+             (((unsigned long)tPackPtr - ((unsigned long)gc->cmdTransportInfo.fifoPtr + sizeof(FxU32))) % sVertex) >> 2, \
             (((__val) < 786432.875) ? (__val) : ((__val) - 786432.875)))
 #define SET_DUMP(__val) \
   pCount++; \
-  GDBG_INFO(gc->myLevel + 200, "\t(0x%X) : V#: 0x%X - P#: 0x%X - ParamVal: 0x%X\n", \
-            (FxU32)tPackPtr, \
-            ((FxU32)tPackPtr - ((FxU32)gc->cmdTransportInfo.fifoPtr + sizeof(FxU32))) / sVertex, \
-             (((FxU32)tPackPtr - ((FxU32)gc->cmdTransportInfo.fifoPtr + sizeof(FxU32))) % sVertex) >> 2, \
+  GDBG_INFO(gc->myLevel + 200, "\t(0x%lX) : V#: 0x%lX - P#: 0x%lX - ParamVal: 0x%X\n", \
+            (unsigned long)tPackPtr, \
+            ((unsigned long)tPackPtr - ((unsigned long)gc->cmdTransportInfo.fifoPtr + sizeof(FxU32))) / sVertex, \
+             (((unsigned long)tPackPtr - ((unsigned long)gc->cmdTransportInfo.fifoPtr + sizeof(FxU32))) % sVertex) >> 2, \
             (__val))
 #define TRI_ASSERT() \
   GR_ASSERT(pCount == (nVertex * (sVertex >> 2))); \
-  ASSERT(((FxU32)tPackPtr - (FxU32)gc->cmdTransportInfo.fifoPtr) == (nVertex * sVertex) + sizeof(FxU32))
+  ASSERT(((unsigned long)tPackPtr - (unsigned long)gc->cmdTransportInfo.fifoPtr) == (nVertex * sVertex) + sizeof(FxU32))
 #else /* !GDBG_INFO_ON */
 #define DEBUGFIFODUMP_TRI(__packetAddr)
 #define DEBUGFIFODUMP_LINEAR(__packetAddr)
@@ -2707,9 +2712,9 @@ _grCVGFifoDump_Linear(const FxU32* const linearPacketAddr);
  * Mmm..... sequence operator.
  */
 #if GLIDE_FP_CLAMP
-#define kFPClampThreshold 0x20UL
+#define kFPClampThreshold 0x20U
 #define FP_FLOAT_CLAMP(__fpVal) ((FP_FLOAT_EXP(__fpVal) < kFPClampThreshold) \
-                                 ? (_GlideRoot.stats.tsuValClamp++, 0x00UL) \
+                                 ? (_GlideRoot.stats.tsuValClamp++, 0x00U) \
                                  : *(const FxU32*)(&(__fpVal)))
 
 #define TRI_SETF_CLAMP(__val) \
@@ -2740,9 +2745,9 @@ do { \
 
 #define TRI_END \
   TRI_ASSERT(); \
-  gc->cmdTransportInfo.fifoRoom -= ((FxU32)tPackPtr - (FxU32)gc->cmdTransportInfo.fifoPtr); \
+  gc->cmdTransportInfo.fifoRoom -= ((unsigned long)tPackPtr - (unsigned long)gc->cmdTransportInfo.fifoPtr); \
   gc->cmdTransportInfo.fifoPtr = tPackPtr; \
-  GDBG_INFO(gc->myLevel + 200, "\tTriEnd: (0x%X : 0x%X)\n", tPackPtr, gc->cmdTransportInfo.fifoRoom); \
+  GDBG_INFO(gc->myLevel + 200, "\tTriEnd: (0x%lX : 0x%X)\n", (unsigned long)tPackPtr, gc->cmdTransportInfo.fifoRoom); \
   FIFO_ASSERT(); \
 }
 
@@ -2755,27 +2760,27 @@ do { \
                       (((FxU32)(__maskWN)) << SSTCP_PKT5_BYTEN_WN_SHIFT) | \
                       (__writeSize << SSTCP_PKT5_NWORDS_SHIFT) | \
                       SSTCP_PKT5); \
-  const FxU32 hdr2 = ((FxU32)(__addr)) & SSTCP_PKT5_BASEADDR; \
+  const FxU32 hdr2 = ((FxU32)((unsigned long)(__addr))) & SSTCP_PKT5_BASEADDR; \
   GR_CHECK_COMPATABILITY(FN_NAME, \
                          !gc->open, \
                          "Called before grSstWinOpen()"); \
   GR_CHECK_COMPATABILITY(FN_NAME, \
                          (gc->cmdTransportInfo.lfbLockCount != 0), \
                          "Called within grLfbLock/grLfbUnlockPair"); \
-  GR_ASSERT(((FxU32)(packetPtr) & FIFO_ALIGN_MASK) == 0);        /* alignment */ \
+  GR_ASSERT(((unsigned long)(packetPtr) & FIFO_ALIGN_MASK) == 0);        /* alignment */ \
   GR_ASSERT((__numWords) > 0);                                   /* packet size */ \
   GR_ASSERT((__numWords) < ((0x01 << 19) - 2)); \
   GR_ASSERT((((__numWords) + 2) << 2) <= (FxU32)gc->cmdTransportInfo.fifoRoom); \
-  GR_ASSERT(((FxU32)packetPtr + (((__numWords) + 2) << 2)) < \
-            (FxU32)gc->cmdTransportInfo.fifoEnd); \
-  GR_ASSERT((hdr2 & 0xE0000000UL) == 0x00UL); \
+  GR_ASSERT(((unsigned long)packetPtr + (((__numWords) + 2) << 2)) < \
+            (unsigned long)gc->cmdTransportInfo.fifoEnd); \
+  GR_ASSERT((hdr2 & 0xE0000000U) == 0x00U); \
   GR_ASSERT((((FxU32)(__type)) >= ((FxU32)kLinearWriteLFB)) &&   /* packet type */ \
             (((FxU32)(__type)) <= ((FxU32)kLinearWriteTex))); \
   FIFO_ASSERT(); \
   GDBG_INFO(120, "LinearWrite(0x%X : 0x%X)\n", hdr1, hdr2); \
   GDBG_INFO(gc->myLevel + 200, "\tFile: %s - Line: %ld\n", __f, __l); \
   GDBG_INFO(gc->myLevel + 200, "\tType: 0x%X\n", (FxU32)(__type)); \
-  GDBG_INFO(gc->myLevel + 200, "\tAddr: 0x%X\n", (FxU32)(__addr)); \
+  GDBG_INFO(gc->myLevel + 200, "\tAddr: 0x%X\n", (FxU32)((unsigned long)(__addr))); \
   GDBG_INFO(gc->myLevel + 200, "\tMaskW2: 0x%X\n", (FxU32)(__maskW2)); \
   GDBG_INFO(gc->myLevel + 200, "\tMaskWN: 0x%X\n", (FxU32)(__maskWN)); \
   GDBG_INFO(gc->myLevel + 200, "\twriteSize: 0x%X\n", __writeSize); \
@@ -2787,32 +2792,32 @@ do { \
 
 #define FIFO_LINEAR_WRITE_SET(__val) \
 do { \
-  GDBG_INFO(gc->myLevel + 205, "\t0x%X : 0x%X\n", packetPtr, (__val)); \
+  GDBG_INFO(gc->myLevel + 205, "\t0x%lX : 0x%X\n", (unsigned long)packetPtr, (__val)); \
   SET_LINEAR(*packetPtr++, (__val)); \
   GR_INC_SIZE(sizeof(FxU32)); \
 } while(0)
   
 #define FIFO_LINEAR_WRITE_SET_16(__val) \
 do { \
-  GDBG_INFO(gc->myLevel + 205, "\t0x%X : 0x%X\n", packetPtr, (__val)); \
+  GDBG_INFO(gc->myLevel + 205, "\t0x%lX : 0x%X\n", (unsigned long)packetPtr, (__val)); \
   SET_LINEAR_16(*packetPtr++, (__val)); \
   GR_INC_SIZE(sizeof(FxU32)); \
 } while(0)
   
 #define FIFO_LINEAR_WRITE_SET_8(__val) \
 do { \
-  GDBG_INFO(gc->myLevel + 205, "\t0x%X : 0x%X\n", packetPtr, (__val)); \
+  GDBG_INFO(gc->myLevel + 205, "\t0x%lX : 0x%X\n", (unsigned long)packetPtr, (__val)); \
   SET_LINEAR_8(*packetPtr++, (__val)); \
   GR_INC_SIZE(sizeof(FxU32)); \
 } while(0)
 
 #define FIFO_LINEAR_WRITE_END \
   DEBUGFIFODUMP_LINEAR(gc->cmdTransportInfo.fifoPtr); \
-  GR_ASSERT((((FxU32)packetPtr - (FxU32)gc->cmdTransportInfo.fifoPtr) >> 2) == __writeSize + 2); \
-  gc->cmdTransportInfo.fifoRoom -= ((FxU32)packetPtr - (FxU32)gc->cmdTransportInfo.fifoPtr); \
+  GR_ASSERT((((unsigned long)packetPtr - (unsigned long)gc->cmdTransportInfo.fifoPtr) >> 2) == __writeSize + 2); \
+  gc->cmdTransportInfo.fifoRoom -= ((unsigned long)packetPtr - (unsigned long)gc->cmdTransportInfo.fifoPtr); \
   gc->cmdTransportInfo.fifoPtr = packetPtr; \
-  GDBG_INFO(gc->myLevel + 200, "\tLinearEnd: (0x%X : 0x%X)\n", \
-            packetPtr, gc->cmdTransportInfo.fifoRoom); \
+  GDBG_INFO(gc->myLevel + 200, "\tLinearEnd: (0x%lX : 0x%X)\n", \
+            (unsigned long)packetPtr, gc->cmdTransportInfo.fifoRoom); \
   FIFO_ASSERT(); \
 }
 
@@ -2876,7 +2881,7 @@ enum {
 
 #define LINEAR_WRITE_BEGIN(__numWords, __type, __addr, __maskW2, __maskWN) \
 { \
-   GR_SET_EXPECTED_SIZE(((FxU32)((__numWords) + 1UL) << 2UL), 1); \
+   GR_SET_EXPECTED_SIZE(((FxU32)((__numWords) + 1U) << 2U), 1); \
    FIFO_LINEAR_WRITE_BEGIN(__numWords, __type, __addr, __maskW2, __maskWN, __FILE__, __LINE__)
 #define LINEAR_WRITE_SET(__addr, __val) \
    FIFO_LINEAR_WRITE_SET(__val)
@@ -2895,9 +2900,9 @@ enum {
  * to mask of crap for the actual write.
  */
 #if (GLIDE_PLATFORM & GLIDE_HW_CVG)
-#define FIFO_LINEAR_EDGE_MASK_ADJUST(__mask) ((~(__mask)) & 0x0FUL)
-#define FIFO_LINEAR_EDGE_SET(__val) FIFO_LINEAR_WRITE_SET((((__val) & 0xFFFF0000UL) >> 16UL) | \
-                                                          (((__val) & 0x0000FFFFUL) << 16UL))
+#define FIFO_LINEAR_EDGE_MASK_ADJUST(__mask) ((~(__mask)) & 0x0FU)
+#define FIFO_LINEAR_EDGE_SET(__val) FIFO_LINEAR_WRITE_SET((((__val) & 0xFFFF0000U) >> 16U) | \
+                                                          (((__val) & 0x0000FFFFU) << 16U))
 #else
 #define FIFO_LINEAR_EDGE_SET(__val) FIFO_LINEAR_WRITE_SET(__val)
 #define FIFO_LINEAR_EDGE_MASK_ADJUST(__mask) (__mask)
@@ -2905,14 +2910,14 @@ enum {
 
 #define LINEAR_WRITE_EDGE(__type, __addr, __val, __valBytes) \
 do { \
-  const FxU32 edgeAddr = (FxU32)(((FxU32)__addr) & 0x03UL); \
+  const FxU32 edgeAddr = (FxU32)(((FxU32)((unsigned long)(__addr))) & 0x03U); \
   GR_ASSERT((__valBytes) <= sizeof(FxU32)); \
-  GR_ASSERT((((FxU32)(__addr)) + (__valBytes)) <= ((((FxU32)(__addr)) & ~0x03UL) + sizeof(FxU32))); \
-  LINEAR_WRITE_BEGIN(1, __type, ((FxU32)__addr & ~0x03UL), \
-                     FIFO_LINEAR_EDGE_MASK_ADJUST((0xF0UL | (0x0FUL >> (__valBytes))) >> edgeAddr), \
+  GR_ASSERT((((FxU32)(__addr)) + (__valBytes)) <= ((((FxU32)((unsigned long)(__addr))) & ~0x03U) + sizeof(FxU32))); \
+  LINEAR_WRITE_BEGIN(1, __type, ((FxU32)((unsigned long)(__addr)) & ~0x03U), \
+                     FIFO_LINEAR_EDGE_MASK_ADJUST((0xF0U | (0x0FU >> (__valBytes))) >> edgeAddr), \
                      0x00); \
-  FIFO_LINEAR_EDGE_SET(((FxU32)(__val)) << (((sizeof(FxU32) - edgeAddr) << 3UL) - \
-                                             ((__valBytes) << 3UL))); \
+  FIFO_LINEAR_EDGE_SET(((FxU32)(__val)) << (((sizeof(FxU32) - edgeAddr) << 3U) - \
+                                             ((__valBytes) << 3U))); \
   LINEAR_WRITE_END(); \
 } while(0) 
 #else /* !USE_PACKET_FIFO */
@@ -3015,7 +3020,7 @@ GR_CHECK_SIZE()
 /* Send all of the triangle parameters in a single cmd fifo packet to
  * the chip until the tsu is fixed.
  */
-#define kNumTriParam 0x1FUL
+#define kNumTriParam 0x1FU
    
 #define TRI_NO_TSU_BEGIN(__floatP) \
 GR_CHECK_COMPATABILITY(FN_NAME, \
@@ -3063,7 +3068,7 @@ do { \
 /* Offsets to 'virtual' addresses in the hw */
 #if (GLIDE_PLATFORM & GLIDE_HW_CVG)
 #define HW_REGISTER_OFFSET      SST_3D_OFFSET
-#define HW_FIFO_OFFSET          0x00200000UL    
+#define HW_FIFO_OFFSET          0x00200000U    
 #elif (GLIDE_PLATFORM & GLIDE_HW_H3)
 #define HW_IO_REG_REMAP         SST_IO_OFFSET
 #define HW_CMD_AGP_OFFSET       SST_CMDAGP_OFFSET
@@ -3074,7 +3079,7 @@ do { \
 #error "Must define virtual address spaces for this hw"
 #endif
 
-#define HW_FIFO_OFFSET          0x00200000UL
+#define HW_FIFO_OFFSET          0x00200000U
 #define HW_LFB_OFFSET           SST_LFB_OFFSET
 #define HW_TEXTURE_OFFSET       SST_TEX_OFFSET
 
@@ -3084,12 +3089,12 @@ do { \
 #error "Need HW_BASE_PTR to convert hw address into board address."
 #endif
    
-#define HW_REG_PTR(__b)        ((FxU32*)(((FxU32)(__b)) + HW_REGISTER_OFFSET))
-#define HW_LFB_PTR(__b)        ((FxU32*)(((FxU32)(__b)) + HW_LFB_OFFSET))
-#define HW_TEX_PTR(__b)        ((FxU32*)(((FxU32)(__b)) + HW_TEXTURE_OFFSET))   
+#define HW_REG_PTR(__b)        ((FxU32*)(((unsigned long)(__b)) + HW_REGISTER_OFFSET))
+#define HW_LFB_PTR(__b)        ((FxU32*)(((unsigned long)(__b)) + HW_LFB_OFFSET))
+#define HW_TEX_PTR(__b)        ((FxU32*)(((unsigned long)(__b)) + HW_TEXTURE_OFFSET))   
 
 /* access a floating point array with a byte index */
-#define FARRAY(p,i)    (*(float *)((i)+(int)(p)))
+#define FARRAY(p,i)    (*(float *)((i)+(long)(p)))
 #define ArraySize(__a) (sizeof(__a) / sizeof((__a)[0]))
 
 void rle_decode_line_asm(FxU16 *tlut,FxU8 *src,FxU16 *dest);

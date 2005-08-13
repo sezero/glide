@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.4  2004/09/27 08:51:05  dborca
+** reorg brackets
+**
 ** Revision 1.1.1.1.8.3  2004/01/13 09:22:51  dborca
 ** compilation errors (mainly for DEBUG mode)
 **
@@ -889,12 +892,12 @@ GR_ENTRY(grTexDownloadMipMapLevelPartial,
   {
     const FxU32 
       width = _grMipMapHostWH[aspectRatio][thisLod][0],
-      formatSel = (format >= GR_TEXFMT_16BIT),
-      tmuBaseAddr = ((FxU32)gc->tex_ptr + 
-                     (((FxU32)tmu) << 21UL) + 
-                     (((FxU32)thisLod) << 17UL));
+      formatSel = (format >= GR_TEXFMT_16BIT);
+    const unsigned long tmuBaseAddr = ((unsigned long)gc->tex_ptr +
+                     (((FxU32)tmu) << 21U) + 
+                     (((FxU32)thisLod) << 17U));
     FxU32 
-      widthSel = (width >> 0x01UL),
+      widthSel = (width >> 0x01U),
       max_s = width >> (formatSel
                         ? 1   /* 16-bit texture */
                         : 2); /* 8-bit texture */

@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.1  2005/06/09 18:32:08  jwrdegoede
+** Fixed all warnings with gcc4 -Wall -W -Wno-unused-parameter, except for a couple I believe to be a gcc bug. This has been reported to gcc.
+**
 ** Revision 1.1.1.1  1999/12/07 21:42:32  joseph
 ** Initial checkin into SourceForge.
 **
@@ -800,7 +803,7 @@ _grLfbWriteRegion(FxBool pixPipelineP,
      * start of the lfb so we don't need to add it in here.
      */
 #if USE_PACKET_FIFO
-    dstData = (FxU32*)(dst_y * info.strideInBytes);
+    dstData = (FxU32*)((unsigned long)(dst_y * info.strideInBytes));
 #else
     dstData = (FxU32*)(((FxU8*)info.lfbPtr) + (dst_y * info.strideInBytes));
 #endif
@@ -816,19 +819,19 @@ _grLfbWriteRegion(FxBool pixPipelineP,
     case GR_LFB_SRC_FMT_ZA16:
       dstData = (FxU32*)(((FxU16*)dstData) + dst_x);
       length  = src_width * 2;
-      aligned = !((int)dstData & 0x2);
+      aligned = !((unsigned long)dstData & 0x2);
       srcJump = src_stride - length;
       dstJump = info.strideInBytes - length;
 
       if (aligned) {
         while(scanline--) {
-          GR_ASSERT(((FxU32)dstData & 0x03UL) == 0);
+          GR_ASSERT(((unsigned long)dstData & 0x03UL) == 0);
           end = (FxU32*)((char*)srcData + length - 2);
                
           if (srcData < end) {
             LINEAR_WRITE_BEGIN(length >> 2, kLinearWriteLFB, dstData, 0x00, 0x00);
             while(srcData < end) {
-              LINEAR_WRITE_SET_16((FxU32)dstData, srcData[0]);
+              LINEAR_WRITE_SET_16(dstData, srcData[0]);
               dstData++;
               srcData++;
             }
@@ -846,7 +849,7 @@ _grLfbWriteRegion(FxBool pixPipelineP,
         }
       } else {
         while(scanline--) {
-          GR_ASSERT(((FxU32)dstData & 0x03UL) != 0);
+          GR_ASSERT(((unsigned long)dstData & 0x03UL) != 0);
           end = (FxU32*)((char*)srcData + length);
 
           LINEAR_WRITE_EDGE(kLinearWriteLFB, dstData, 
@@ -855,12 +858,12 @@ _grLfbWriteRegion(FxBool pixPipelineP,
           srcData = (FxU32*)(((FxU16*)srcData) + 1);
                   
           if (srcData < end) {
-            const FxU32 numWords = (((FxU32)end - (FxU32)srcData) >> 2);
+            const FxU32 numWords = (((unsigned long)end - (unsigned long)srcData) >> 2);
             FxU32 i;
 
             LINEAR_WRITE_BEGIN(numWords, kLinearWriteLFB, dstData, 0x00, 0x00);
             for(i = 0; i < numWords; i++) {
-              LINEAR_WRITE_SET_16((FxU32)dstData, srcData[0]);
+              LINEAR_WRITE_SET_16(dstData, srcData[0]);
               dstData++;
               srcData++;
             }
@@ -895,10 +898,10 @@ _grLfbWriteRegion(FxBool pixPipelineP,
             
         LINEAR_WRITE_BEGIN(src_width,
                            kLinearWriteLFB,
-                           (FxU32)dstData,
+                           dstData,
                            0x00, 0x00);
         while(srcData < end) {
-          LINEAR_WRITE_SET((FxU32)dstData, srcData[0]);
+          LINEAR_WRITE_SET(dstData, srcData[0]);
           dstData++;
           srcData++;
         }
@@ -1055,20 +1058,20 @@ GR_ENTRY(grLfbReadRegion, FxBool, (GrBuffer_t src_buffer,
           const FxU32* tileEndAlign;
 
           /* Leading slop up to the start of a logical 0 tile */
-          if (((FxU32)srcData & kPageMask) != 0) {
-            FxU32 tileSlopMask = 0xFFFFFFFFUL;
+          if (((unsigned long)srcData & kPageMask) != 0) {
+            unsigned long tileSlopMask = -1UL;
             FxU32 tileSlopAdjust = kTileSize;
 
             /* Do we have a partial 0 tile? */
-            if (((FxU32)srcData & kTileSize) == 0) {
-              tilePtr      = (const FxU32*)((FxU32)srcData + kTileSize);
-              tileEnd      = (const FxU32*)(((FxU32)end <= ((FxU32)tilePtr & ~kTileMask))
-                                            ? ((FxU32)end + kTileSize)
-                                            : (((FxU32)tilePtr + kTileSize) & ~kTileMask));
-              tileEndAlign = (const FxU32*)((FxU32)tileEnd & ~0x03UL);
+            if (((unsigned long)srcData & kTileSize) == 0) {
+              tilePtr      = (const FxU32*)((unsigned long)srcData + kTileSize);
+              tileEnd      = (const FxU32*)(((unsigned long)end <= ((unsigned long)tilePtr & ~kTileMask))
+                                            ? ((unsigned long)end + kTileSize)
+                                            : (((unsigned long)tilePtr + kTileSize) & ~kTileMask));
+              tileEndAlign = (const FxU32*)((unsigned long)tileEnd & ~0x03UL);
 
               /* Are we aligned in the hw lfb? */
-              if (((FxU32)tilePtr & 0x03UL) != 0) {
+              if (((unsigned long)tilePtr & 0x03UL) != 0) {
                 *(FxU16*)dstData = GR_GET16(*tilePtr);
                 dstData = (FxU32*)((FxU8*)dstData + sizeof(FxU16));
                 tilePtr = (const FxU32*)((FxU8*)tilePtr + sizeof(FxU16));
@@ -1086,14 +1089,14 @@ GR_ENTRY(grLfbReadRegion, FxBool, (GrBuffer_t src_buffer,
              * 'backwards' in physical memory if there was no logical
              * 0 tile in the current read.  
              */
-            tilePtr      = (const FxU32*)(((FxU32)srcData - tileSlopAdjust) & tileSlopMask);
-            tileEnd      = (const FxU32*)MIN((((FxU32)tilePtr + kTileSize) & ~kTileMask), 
-                                             (FxU32)end - kTileSize - sizeof(FxU16));
-            tileEndAlign = (const FxU32*)((FxU32)tileEnd & ~0x03UL);
+            tilePtr      = (const FxU32*)(((unsigned long)srcData - tileSlopAdjust) & tileSlopMask);
+            tileEnd      = (const FxU32*)MIN((((unsigned long)tilePtr + kTileSize) & ~kTileMask), 
+                                             (unsigned long)end - kTileSize - sizeof(FxU16));
+            tileEndAlign = (const FxU32*)((unsigned long)tileEnd & ~0x03UL);
 
             if (tilePtr < tileEnd) {
               /* Are we aligned in the hw lfb? */
-              if (((FxU32)tilePtr & 0x03UL) != 0) {
+              if (((unsigned long)tilePtr & 0x03UL) != 0) {
                 *(FxU16*)dstData = GR_GET16(*tilePtr);
                 dstData = (FxU32*)((FxU8*)dstData + sizeof(FxU16));
                 tilePtr = (const FxU32*)((FxU8*)tilePtr + sizeof(FxU16));
@@ -1105,20 +1108,20 @@ GR_ENTRY(grLfbReadRegion, FxBool, (GrBuffer_t src_buffer,
                 *(FxU16*)dstData = GR_GET16(*tilePtr);
             }
               
-            srcData = (const FxU32*)(((FxU32)srcData + (kTileSize << 1)) & ~kPageMask);
+            srcData = (const FxU32*)(((unsigned long)srcData + (kTileSize << 1)) & ~kPageMask);
           }
 
           /* Loop over complete logical 01 tile groups */
           {
-            const FxU32* endTileAddr = (const FxU32*)((FxU32)end & ~kPageMask);
+            const FxU32* endTileAddr = (const FxU32*)((unsigned long)end & ~kPageMask);
 
             while(srcData < endTileAddr) {
-              tilePtr     = (const FxU32*)((FxU32)srcData + kTileSize);
-              tileEnd     = (const FxU32*)((FxU32)tilePtr + kTileSize);
+              tilePtr     = (const FxU32*)((unsigned long)srcData + kTileSize);
+              tileEnd     = (const FxU32*)((unsigned long)tilePtr + kTileSize);
               while(tilePtr < tileEnd) *dstData++ = GR_GET(*tilePtr++);
               
               tilePtr = srcData;
-              tileEnd = (const FxU32*)((FxU32)tilePtr + kTileSize);
+              tileEnd = (const FxU32*)((unsigned long)tilePtr + kTileSize);
               while(tilePtr < tileEnd) *dstData++ = GR_GET(*tilePtr++);
 
               srcData = (const FxU32*)((FxU8*)srcData + (kTileSize << 1));
@@ -1127,12 +1130,12 @@ GR_ENTRY(grLfbReadRegion, FxBool, (GrBuffer_t src_buffer,
 
           /* Slop 01 tile group */
           if (srcData < end) {
-            const FxU32* startTileAddr = (const FxU32*)((FxU32)srcData + kTileSize);
+            const FxU32* startTileAddr = (const FxU32*)((unsigned long)srcData + kTileSize);
             
             tilePtr      = startTileAddr;
-            tileEnd      = (const FxU32*)((FxU32)startTileAddr + 
-                                          MIN(kTileSize, ((FxU32)end - (FxU32)srcData)));
-            tileEndAlign = (const FxU32*)((FxU32)tileEnd & ~0x3);
+            tileEnd      = (const FxU32*)((unsigned long)startTileAddr + 
+                                          MIN(kTileSize, ((unsigned long)end - (unsigned long)srcData)));
+            tileEndAlign = (const FxU32*)((unsigned long)tileEnd & ~0x3);
 
             while(tilePtr < tileEndAlign) *dstData++ = GR_GET(*tilePtr++);
             if (tileEnd != tileEndAlign) 
@@ -1141,8 +1144,8 @@ GR_ENTRY(grLfbReadRegion, FxBool, (GrBuffer_t src_buffer,
             if (startTileAddr < end) {
               tilePtr      = srcData;
               tileEnd      = (const FxU32*)((FxU8*)tilePtr + kTileSize - 
-                                            ((FxU32)tileEndAlign - (FxU32)end));
-              tileEndAlign = (const FxU32*)((FxU32)tileEnd & ~0x3);
+                                            ((unsigned long)tileEndAlign - (unsigned long)end));
+              tileEndAlign = (const FxU32*)((unsigned long)tileEnd & ~0x3);
 
               while(tilePtr < tileEndAlign) *dstData++ = GR_GET(*tilePtr++);
               if (tileEnd != tileEndAlign) 
@@ -1157,7 +1160,7 @@ GR_ENTRY(grLfbReadRegion, FxBool, (GrBuffer_t src_buffer,
       } else
 #endif /* (GLIDE_PLATFORM & GLIDE_HW_CVG) */     
       /* If the source data is aligned for 4 byte pci reads */
-      if (((FxU32)srcData & 0x02UL) == 0) {
+      if (((unsigned long)srcData & 0x02UL) == 0) {
         while(scanline--) {
           const FxU32* end = (const FxU32*)((char*)srcData + length - 2);
           

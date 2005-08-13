@@ -32,7 +32,7 @@
 #	DEBUG=1		enable debugging checks and messages
 #			target  = sst1, sst96, cvg, h3, h5
 #			default = no
-#	USE_X86=1	use assembler triangle specializations; req by CVG
+#	USE_X86=1	use assembler triangle specializations
 #			target  = sst1, sst96, cvg, h3, h5
 #			default = no
 #	USE_3DNOW=1	allow 3DNow! specializations. However, the true CPU

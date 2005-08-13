@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/12/07 21:42:38  joseph
+** Initial checkin into SourceForge.
+**
 ** 
 ** 1     10/08/98 11:30a Brent
 ** 
@@ -37,21 +40,22 @@
 #include "fxglide.h"
 
 void FX_CSTYLE
-_grTexDownload_Default_8_1(struct GrGC_s* gc, const FxU32 tmuBaseAddr,
+_grTexDownload_Default_8_1(struct GrGC_s* gc, const unsigned long tmuBaseAddr,
 			   const FxU32 maxS, const FxU32 minT, const FxU32 maxT,
                            void* texData)
 {
 #define FN_NAME "_grTexDownload_Default_8_1"
   FxU32 
-    t = minT,
+    t = minT;
+  unsigned long
     tex_address = tmuBaseAddr + TEX_ROW_ADDR_INCR(t);
   const FxU8
     *src8  = (const FxU8*)texData;
   
   for (; t <= maxT; t++) {
     LINEAR_WRITE_BEGIN(1, kLinearWriteTex, 
-                       (FxU32)tex_address - (FxU32)gc->tex_ptr,
-                       0x00UL, 0x00UL);
+                       tex_address - (unsigned long)gc->tex_ptr,
+                       0x00U, 0x00U);
     LINEAR_WRITE_SET_8(tex_address, (const FxU32)*(const FxU8*)src8);
     LINEAR_WRITE_END();
     
@@ -62,21 +66,22 @@ _grTexDownload_Default_8_1(struct GrGC_s* gc, const FxU32 tmuBaseAddr,
 }
 
 void FX_CSTYLE
-_grTexDownload_Default_8_2(struct GrGC_s* gc, const FxU32 tmuBaseAddr,
+_grTexDownload_Default_8_2(struct GrGC_s* gc, const unsigned long tmuBaseAddr,
                            const FxU32 maxS, const FxU32 minT, const FxU32 maxT,
                            void* texData)
 {
 #define FN_NAME "_grTexDownload_Default_8_2"
   FxU32 
-    t = minT,
+    t = minT;
+  unsigned long
     tex_address = tmuBaseAddr + TEX_ROW_ADDR_INCR(t);
   const FxU8
     *src8  = (const FxU8*)texData;
   
   for (; t <= maxT; t++) {
     LINEAR_WRITE_BEGIN(1, kLinearWriteTex, 
-                       (FxU32)tex_address - (FxU32)gc->tex_ptr,
-                       0x00UL, 0x00UL);
+                       tex_address - (unsigned long)gc->tex_ptr,
+                       0x00U, 0x00U);
     LINEAR_WRITE_SET_8(tex_address, (const FxU32)*(const FxU16*)src8);
     LINEAR_WRITE_END();
     
@@ -87,21 +92,22 @@ _grTexDownload_Default_8_2(struct GrGC_s* gc, const FxU32 tmuBaseAddr,
 }
 
 void FX_CSTYLE
-_grTexDownload_Default_8_4(struct GrGC_s* gc, const FxU32 tmuBaseAddr,
+_grTexDownload_Default_8_4(struct GrGC_s* gc, const unsigned long tmuBaseAddr,
 			   const FxU32 maxS, const FxU32 minT, const FxU32 maxT,
                            void* texData)
 {
 #define FN_NAME "_grTexDownload_Default_8_4"
   FxU32 
-    t = minT,
+    t = minT;
+  unsigned long
     tex_address = tmuBaseAddr + TEX_ROW_ADDR_INCR(t);
   const FxU8
     *src8  = (const FxU8*)texData;
   
   for (; t <= maxT; t++) {
     LINEAR_WRITE_BEGIN(1, kLinearWriteTex, 
-                       (FxU32)tex_address - (FxU32)gc->tex_ptr,
-                       0x00UL, 0x00UL);
+                       tex_address - (unsigned long)gc->tex_ptr,
+                       0x00U, 0x00U);
     LINEAR_WRITE_SET_8(tex_address, *(const FxU32*)src8);
     LINEAR_WRITE_END();
     
@@ -112,13 +118,14 @@ _grTexDownload_Default_8_4(struct GrGC_s* gc, const FxU32 tmuBaseAddr,
 }
 
 void FX_CSTYLE
-_grTexDownload_Default_8_WideS(struct GrGC_s* gc, const FxU32 tmuBaseAddr,
+_grTexDownload_Default_8_WideS(struct GrGC_s* gc, const unsigned long tmuBaseAddr,
 			       const FxU32 maxS, const FxU32 minT, const FxU32 maxT,
 			       void* texData)
 {
 #define FN_NAME "_grTexDownload_Default_8_WideS"
   FxU32 
-    t = minT,
+    t = minT;
+  unsigned long
     tex_address;
   const FxU8
     *src8  = (const FxU8*)texData;
@@ -127,8 +134,8 @@ _grTexDownload_Default_8_WideS(struct GrGC_s* gc, const FxU32 tmuBaseAddr,
     tex_address = tmuBaseAddr + TEX_ROW_ADDR_INCR(t);
     
     LINEAR_WRITE_BEGIN(maxS, kLinearWriteTex,
-                       (FxU32)tex_address - (FxU32)gc->tex_ptr,
-                       0x00UL, 0x00UL);
+                       tex_address - (unsigned long)gc->tex_ptr,
+                       0x00U, 0x00U);
     {
       FxU32 s;
       
@@ -149,21 +156,22 @@ _grTexDownload_Default_8_WideS(struct GrGC_s* gc, const FxU32 tmuBaseAddr,
 }
 
 extern void FX_CSTYLE
-_grTexDownload_Default_16_1(struct GrGC_s* gc, const FxU32 tmuBaseAddr,
+_grTexDownload_Default_16_1(struct GrGC_s* gc, const unsigned long tmuBaseAddr,
 			    const FxU32 maxS, const FxU32 minT, const FxU32 maxT,
                             void* texData)
 {
 #define FN_NAME "_grTexDownload_Default_16_1"
   FxU32 
-    t = minT,
+    t = minT;
+  unsigned long
     tex_address = tmuBaseAddr + TEX_ROW_ADDR_INCR(t);
   const FxU16
     *src16 = (const FxU16*)texData;
 
   for (; t <= maxT; t++) {
     LINEAR_WRITE_BEGIN(1, kLinearWriteTex,
-                       (FxU32)tex_address - (FxU32)gc->tex_ptr,
-                       0x00UL, 0x00UL);
+                       tex_address - (unsigned long)gc->tex_ptr,
+                       0x00U, 0x00U);
     LINEAR_WRITE_SET_16(tex_address, (const FxU32)*(const FxU16*)src16);
     LINEAR_WRITE_END();
     
@@ -174,21 +182,22 @@ _grTexDownload_Default_16_1(struct GrGC_s* gc, const FxU32 tmuBaseAddr,
 }
 
 extern void FX_CSTYLE
-_grTexDownload_Default_16_2(struct GrGC_s* gc, const FxU32 tmuBaseAddr,
+_grTexDownload_Default_16_2(struct GrGC_s* gc, const unsigned long tmuBaseAddr,
 			    const FxU32 maxS, const FxU32 minT, const FxU32 maxT,
                             void* texData)
 {
 #define FN_NAME "_grTexDownload_Default_16_2"
   FxU32 
-    t = minT,
+    t = minT;
+  unsigned long
     tex_address = tmuBaseAddr + TEX_ROW_ADDR_INCR(t);
   const FxU16
     *src16 = (const FxU16*)texData;
 
   for (; t <= maxT; t++) {
     LINEAR_WRITE_BEGIN(1, kLinearWriteTex,
-                       (FxU32)tex_address - (FxU32)gc->tex_ptr,
-                       0x00UL, 0x00UL);
+                       tex_address - (unsigned long)gc->tex_ptr,
+                       0x00U, 0x00U);
     LINEAR_WRITE_SET_16(tex_address, *(const FxU32*)src16);
     LINEAR_WRITE_END();
     
@@ -199,13 +208,14 @@ _grTexDownload_Default_16_2(struct GrGC_s* gc, const FxU32 tmuBaseAddr,
 }
 
 extern void FX_CSTYLE
-_grTexDownload_Default_16_WideS(struct GrGC_s* gc, const FxU32 tmuBaseAddr,
+_grTexDownload_Default_16_WideS(struct GrGC_s* gc, const unsigned long tmuBaseAddr,
 				const FxU32 maxS, const FxU32 minT, const FxU32 maxT,
 				void* texData)
 {
 #define FN_NAME "_grTexDownload_Default_16_WideS"
   FxU32 
-    t = minT,
+    t = minT;
+  unsigned long
     tex_address;
   const FxU16
     *src16 = (const FxU16*)texData;
@@ -215,8 +225,8 @@ _grTexDownload_Default_16_WideS(struct GrGC_s* gc, const FxU32 tmuBaseAddr,
     
     /* Loop unrolled to process 2 dwords per iteration */            
     LINEAR_WRITE_BEGIN(maxS, kLinearWriteTex,
-                       (FxU32)tex_address - (FxU32)gc->tex_ptr,
-                       0x00UL, 0x00UL);
+                       tex_address - (unsigned long)gc->tex_ptr,
+                       0x00U, 0x00U);
     {
       FxU32 s;
       

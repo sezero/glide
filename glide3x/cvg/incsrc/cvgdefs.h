@@ -195,7 +195,7 @@
 // end up looking like twos complement numbers (they carry out from the '1')
 #define FLOAT_FIX(f,fracbits) ((f)+(float)(3<<(22-(fracbits))))
 
-#define SST_FLOAT(f,scale,shift) (unsigned long)((f)*((scale)*(float)(1<<shift)))
+#define SST_FLOAT(f,scale,shift) (unsigned int)((f)*((scale)*(float)(1<<shift)))
 #define SST_TLOD_MINMAX(lodmin,lodmax) \
                 (((lodmin) << (SST_LODMIN_SHIFT)) | \
                 ((lodmax) << (SST_LODMAX_SHIFT)))
@@ -208,10 +208,10 @@
 #define FLOAT_ISNEG(f) ((*(int *)(&(f))) < 0)
 
 // these crazy macros returns the sign of a number (1 if >= 0; -1 if < 0)
-#define ISIGN(x) (((x) | 0x40000000L) >> 30)
-#define FSIGN(f) ISIGN(*(long *)&f)
+#define ISIGN(x) (((x) | 0x40000000) >> 30)
+#define FSIGN(f) ISIGN(*(int *)&f)
 
-#define BIT(n)  (1UL<<(n))
+#define BIT(n)  (1U<<(n))
 #define SST_MASK(n) (0xFFFFFFFFL >> (32-(n)))
 #define SST_MASK64(n) FX_MASK64(n)
 
@@ -899,9 +899,9 @@
 
 //----------------- useful addressing macros -----------------------
 // return pointer to SST at specified WRAP, CHIP, or TREX
-#define SST_WRAP(sst,n) ((SstRegs *)((n)*0x4000+(FxI32)(sst)))
-#define SST_CHIP(sst,n) ((SstRegs *)((n)*0x400+(FxI32)(sst)))
-#define SST_TMU(sst,n)  ((SstRegs *)((0x800<<(n))+(FxI32)(sst)))
+#define SST_WRAP(sst,n) ((SstRegs *)((n)*0x4000+(unsigned long)(sst)))
+#define SST_CHIP(sst,n) ((SstRegs *)((n)*0x400+(unsigned long)(sst)))
+#define SST_TMU(sst,n)  ((SstRegs *)((0x800<<(n))+(unsigned long)(sst)))
 #define SST_TREX(sst,n) SST_TMU(sst,n)
 
 #define SST_BYTESWAP_BIT        BIT(20)
@@ -917,8 +917,8 @@
 #define SST_TEX_OFFSET  SST_TEX_ADDR
 
 // return byte addresses of LFB and TEX spaces
-#define SST_LFB_ADDRESS(sst)    (SST_LFB_BIT+(FxI32)(sst))
-#define SST_TEX_ADDRESS(sst)    (SST_TEX_BIT+(FxI32)(sst))
+#define SST_LFB_ADDRESS(sst)    (SST_LFB_BIT+(unsigned long)(sst))
+#define SST_TEX_ADDRESS(sst)    (SST_TEX_BIT+(unsigned long)(sst))
 
 
 // SET macros for FBI

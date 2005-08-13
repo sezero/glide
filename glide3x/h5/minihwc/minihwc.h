@@ -349,8 +349,9 @@ typedef struct hwcFifoInfo_s {
   FxBool
     agpFifo,
     initialized;
+  unsigned long
+    agpVirtAddr;
   FxU32
-    agpVirtAddr,
     agpPhysAddr,
     agpSize,
     fifoStart,                  /* Beg of fifo (offset from base) */

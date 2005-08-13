@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/12/07 21:42:31  joseph
+** Initial checkin into SourceForge.
+**
 ** 
 ** 1     10/08/98 11:30a Brent
 ** 
@@ -452,8 +455,8 @@ GR_DIENTRY(grDrawVertexArrayContiguous, void , (FxU32 mode, FxU32 Count, void *p
   {
     FxU32 i;
     for (i = 0; i < Count; i++)
-      GDBG_INFO(110, "%s:  pointers[%d] = 0x%x\n",
-                FN_NAME, i, (int)pointers + gc->state.vData.vStride * i);
+      GDBG_INFO(110, "%s:  pointers[%d] = 0x%lx\n",
+                FN_NAME, i, (unsigned long)pointers + gc->state.vData.vStride * i);
   }
 #endif
 

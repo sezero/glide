@@ -41,15 +41,15 @@ FxBool FindHole(RangeStruct *conflict);
 FxU32 SnapToDecentAddress(FxU32 address,RangeStruct *conflict);
 FxBool fits_in_hole(RangeStruct *begin,FxU32 end,RangeStruct *hole,RangeStruct *conflict);
 FxBool fits_under(RangeStruct *first,FxU32 minimum,RangeStruct *hole,RangeStruct *conflict);
-FxU32 pciGetType(long i);
+FxU32 pciGetType(int i);
 void pciGetRange(PciRegister reg,FxU32 device_number,FxU32 *data);
 FxBool pciGetAddress(PciRegister reg,FxU32 device_number,FxU32 *data);
 
 void ForceCleanUp(void);
 FxBool FindNecessaryCards(void);
 void ProcessCommandLine(char **argv,int argc);
-FxBool IsCardVoodoo(long i);
-FxBool IsCardS3(long i);
+FxBool IsCardVoodoo(int i);
+FxBool IsCardS3(int i);
 FxBool ReadHex(char *string,FxU32 *num);
 void AddMapEntry(FxU32 address,FxU32 range,FxU32 id,FxBool VoodooCard,FxBool S3Card);
 void HandleMemoryOverlap(void);
@@ -74,12 +74,10 @@ RangeStruct test_data[6]=  {{0xF0000000,0x100000,1,0,0,0,0},
 
 RangeStruct map[80];
 RangeStruct hole[80];
-long        num_holes=0;
 RangeStruct *first_entry;
 RangeStruct *last_entry;
-long        entries=0;
+static int  entries=0;
 RangeStruct master_hole;
-long        voodoo_loc;
 FxU32       conflicts_found=0;
 
 void fxremap_dowork(int argc,char **argv,int doit_silently)
@@ -176,7 +174,7 @@ void GetMemoryMap(void)
 {
    FxU32    temp,temp2;
    FxU32    type;
-   long     devNum;
+   int      devNum;
    int fn;     /* function number iterator */
    int maxFnNumber;
    int multi_fn = 0;
@@ -323,13 +321,13 @@ void AddMapEntry(FxU32 address,FxU32 range,FxU32 id,FxBool VoodooCard,FxBool S3C
    RangeStruct *temp,*cur,*next;
 
 //jcochrane@3dfx.com
-   long        entry=0;
+   int        entry=0;
    FxU32	   tmp_address=0;
 //END
 
 
 #if 0
-   static long    test_entry=0;
+   static int    test_entry=0;
 
    address=test_data[test_entry].address;
    range=~(test_data[test_entry++].range - 0x1);
@@ -624,7 +622,7 @@ void ForceCleanUp(void)
 FxBool FindNecessaryCards(void)
 {
    FxBool voodoo_found=FXFALSE;
-   long   i;
+   int   i;
 
    for (i=0;i<MAX_PCI_DEVICES;i++)
    {
@@ -649,7 +647,7 @@ FxBool FindNecessaryCards(void)
 
 void ProcessCommandLine(char **argv,int argc)
 {
-   long     i;
+   int     i;
    FxU32    temp,temp2;
    FxU32    address,range;
    char     *hex_ptr;
@@ -756,7 +754,7 @@ void ProcessCommandLine(char **argv,int argc)
    }
 }
 
-FxU32 pciGetType(long i)
+FxU32 pciGetType(int i)
 {
    FxU32 header_type;
 
@@ -765,7 +763,7 @@ FxU32 pciGetType(long i)
    return header_type;
 }
 
-FxBool IsCardVoodoo(long i)
+FxBool IsCardVoodoo(int i)
 {
    FxU32    vendor,dev_id;
    FxU32    fn_num = (i >> 13) & 0x7; 
@@ -796,7 +794,7 @@ FxBool IsCardVoodoo(long i)
    return FXFALSE;
 }
 
-FxBool IsCardS3(long i)
+FxBool IsCardS3(int i)
 {
    FxU32    vendor,dev_id;
    
@@ -810,9 +808,9 @@ FxBool IsCardS3(long i)
 
 FxBool ReadHex(char *string,FxU32 *num)
 {
-   long  i=0;
+   int  i=0;
    FxU32 temp=0,temp2;
-   long  num_count=0;
+   int  num_count=0;
 
    /* bypass leading spaces */
    while((string[i])&&(string[i]==' '))

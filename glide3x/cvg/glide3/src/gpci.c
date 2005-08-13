@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.7  2005/06/10 18:59:00  jwrdegoede
+** Fix linking when GL_X86 is not defined
+**
 ** Revision 1.1.1.1.8.6  2005/05/25 08:51:49  jwrdegoede
 ** Add #ifdef GL_X86 around x86 specific code
 **
@@ -563,7 +566,7 @@ _grSstDetectResources(void)
             fxHalShutdown(devRegs);
 #else /* !GLIDE_INIT_HAL */
             sst1InitCaching((FxU32*)devRegs, FXFALSE);
-            pciUnmapPhysical((FxU32)devRegs, 0x1000000UL);
+            pciUnmapPhysical((unsigned long)devRegs, 0x1000000UL);
 #endif /* !GLIDE_INIT_HAL */
           }
         }
