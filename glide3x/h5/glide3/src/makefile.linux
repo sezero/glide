@@ -291,7 +291,7 @@ $(GLIDE_LIBDIR)/$(GLIDE_LIB): $(GLIDE_OBJECTS)
 	$(AR) $(ARFLAGS) $@ $^
 
 $(GLIDE_LIBDIR)/$(GLIDE_SO): $(GLIDE_OBJECTS:.o=.lo)
-	$(CC) -o $@ -shared $^ $(LDFLAGS) $(LDLIBS)
+	$(CC) -o $@ -shared -Wl,-soname,libglide3.so.3 $^ $(LDFLAGS) $(LDLIBS)
 
 $(TEXUS_EXEDIR)/$(TEXUS_EXE): $(FX_GLIDE_SW)/texus2/cmd/cmd.c $(GLIDE_LIBDIR)/$(GLIDE_LIB)
 ifeq ($(TEXUS2),1)
