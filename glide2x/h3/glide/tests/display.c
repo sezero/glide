@@ -65,6 +65,10 @@ static const char *sourceFormatString[] = {
     "GR_LFB_SRC_FMT_ZA16      "
 };
 
+static void imageConvert( void *dst,
+                          void *src,
+                          GrLfbSrcFmt_t format,
+                          FxU32 *bpp );
 
 int main( int argc, char **argv)
 {
@@ -90,11 +94,6 @@ int main( int argc, char **argv)
 
     static FxU32 imageWidth;
     static FxU32 imageHeight;
-
-    static void imageConvert( void *dst, 
-                              void *src,
-                              GrLfbSrcFmt_t format, 
-                              FxU32 *bpp );
 
     srcfname[0] = 0;
     dstfname[0] = 0;
