@@ -21,7 +21,10 @@
 
 /*  $Header$ */
 /*  $Revision$ */
-/*  $Log$ */
+/*  $Log$
+/*  Revision 1.1.1.1  1999/12/07 21:49:31  joseph
+/*  Initial checkin into SourceForge.
+/* */
 /*   */
 /*  2     10/30/97 6:53p Peter */
 /*  first real cut at tri asm */
@@ -38,13 +41,18 @@
 
 .file "xdraw2.inc"
 
-#ifdef GL_AMD3D
-	
+#ifndef GR_FIFO_WRITE_MACRO
+#define GR_FIFO_WRITE_MACRO
 .MACRO	GR_FIFO_WRITE __addr __offset __data
 	mov \__data , \__offset(\__addr)
 .ENDM 	/*  GR_FIFO_WRITE */
+#endif
 
+#ifdef GL_AMD3D
+	
 
+#ifndef MM1_FIFO_MACROS
+#define MM1_FIFO_MACROS
 .MACRO  WRITE_MM1_FIFO_ALIGNED
 	movq %mm1 , (%ebp)	/*  store current param | previous param */
 .ENDM 	/*  WRITE_MM1_FIFO_ALIGNED */
@@ -52,6 +60,7 @@
 .MACRO  WRITE_MM1LOW_FIFO
 	movd %mm1 , (%ebp)	/*  store current param | previous param */
 .ENDM 	/*  WRITE_MM1LOW_FIFO */
+#endif
 
 #define gc %edi	/*  points to graphics context */
 #define fifo %ebp	/*  points to fifo entries */
@@ -1099,10 +1108,6 @@ LOCAL(Area_Computation):
 
 #define packCol %edi
 #define tempVal %edi
-
-.MACRO  GR_FIFO_WRITE __addr __offset __data
-	mov \__data , \__offset(\__addr)
-.ENDM 	/*  GR_FIFO_WRITE */
 
 .align 4
 LOCAL(__triBegin):
