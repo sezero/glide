@@ -20,7 +20,7 @@
 #			default = no
 #	OPTFLAGS	pass given optimization flags to compiler
 #			target  = sst1, sst96, cvg, h3, h5
-#			default = -O2 -ffastmath (+ -mcpu=pentium if USE_X86=1)
+#			default = -ox -5s (Pentium, stack)
 #	DEBUG=1		enable debugging checks and messages
 #			target  = sst1, sst96, cvg, h3, h5
 #			default = no

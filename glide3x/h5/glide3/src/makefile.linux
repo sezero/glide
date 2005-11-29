@@ -23,7 +23,7 @@
 #	H4=1		High speed Avenger/Napalm.
 #			default = no
 #	OPTFLAGS	pass given optimization flags to compiler
-#			default = -O2 -ffastmath (+ -mcpu=pentium if USE_X86=1)
+#			default = -O2 -ffast-math
 #	DEBUG=1		enable debugging checks and messages
 #			default = no
 #	USE_X86=1	use assembler triangle specializations!
@@ -157,7 +157,7 @@ endif
 
 ifeq ($(USE_X86),1)
 CFLAGS += -DGL_X86
-OPTFLAGS ?= -O2 -ffast-math -mcpu=pentium
+OPTFLAGS ?= -O2 -ffast-math
 else
 CFLAGS += -DGLIDE_USE_C_TRISETUP
 OPTFLAGS ?= -O2 -ffast-math

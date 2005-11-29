@@ -15,7 +15,7 @@
 #	FX_GLIDE_HW	build for the given ASIC (cvg).
 #			default = cvg
 #	OPTFLAGS	pass given optimization flags to compiler
-#			default = -O2 -ffastmath (+ -mcpu=pentium if USE_X86=1)
+#			default = -O2 -ffast-math
 #	DEBUG=1		enable debugging checks and messages
 #			default = no
 #	USE_X86=1	use assembler triangle specializations; req by CVG
@@ -130,7 +130,7 @@ endif
 
 ifeq ($(USE_X86),1)
 CFLAGS += -DGL_X86
-OPTFLAGS ?= -O2 -ffast-math -mcpu=pentium
+OPTFLAGS ?= -O2 -ffast-math
 else
 CFLAGS += -DGLIDE_USE_C_TRISETUP
 OPTFLAGS ?= -O2 -ffast-math
