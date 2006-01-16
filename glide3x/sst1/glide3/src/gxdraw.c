@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.4  2005/06/09 18:32:35  jwrdegoede
+** Fixed all warnings with gcc4 -Wall -W -Wno-unused-parameter, except for a couple I believe to be a gcc bug. This has been reported to gcc.
+**
 ** Revision 1.1.2.3  2005/05/25 08:51:52  jwrdegoede
 ** Add #ifdef GL_X86 around x86 specific code
 **
@@ -156,7 +159,7 @@ GR_DDFUNC(_trisetup, FxI32, ( const void *va, const void *vb, const void *vc ))
   const float *fb = (const float *)vb + xindex;
   const float *fc = (const float *)vc + xindex;
   float ooa, dxAB, dxBC, dyAB, dyBC;
-  int i,j,culltest;
+  int i,culltest;
   union { float f; int i; } ay;
   union { float f; int i; } by;
   union { float f; int i; } cy;
@@ -236,16 +239,15 @@ GR_DDFUNC(_trisetup, FxI32, ( const void *va, const void *vb, const void *vc ))
   dyBC = snap_yb - snap_yc;
   
   /* this is where we store the area */
-  _GlideRoot.pool.ftemp1 = dxAB * dyBC - dxBC * dyAB;
+  _GlideRoot.pool.temp1.1 = dxAB * dyBC - dxBC * dyAB;
   
   /* Zero-area triangles are BAD!! */
-  j = *(long *)&_GlideRoot.pool.ftemp1;
-  if ((j & 0x7FFFFFFF) == 0)
+  if ((_GlideRoot.pool.temp1.i & 0x7FFFFFFF) == 0)
     return 0;
   
   /* Backface culling, use sign bit as test */
   if (gc->state.cull_mode != GR_CULL_DISABLE) {
-    if ((j ^ (culltest<<31)) >= 0) {
+    if ((_GlideRoot.pool.temp1.i ^ (culltest<<31)) >= 0) {
       return -1;
     }
   }
@@ -288,7 +290,7 @@ GR_DDFUNC(_trisetup, FxI32, ( const void *va, const void *vb, const void *vc ))
   SET_GW_CMD(    fifoPtr, 0, gc->hwDep.sst96Dep.gwCommand );
   SET_GW_HEADER( fifoPtr, 1, gc->hwDep.sst96Dep.gwHeaders[0] );
 
-  ooa = _GlideRoot.pool.f1 / _GlideRoot.pool.ftemp1;
+  ooa = _GlideRoot.pool.f1 / _GlideRoot.pool.temp1.f;
   /* GMT: note that we spread out our PCI writes */
   /* write out X & Y for vertex A */
   FSET_GW_ENTRY( fifoPtr, 2, snap_xa );
@@ -350,7 +352,7 @@ GR_DDFUNC(_trisetup, FxI32, ( const void *va, const void *vb, const void *vc ))
 
   /* write triangle command */
 triangle_command:
-  FSET_GW_ENTRY( fifoPtr, 0, _GlideRoot.pool.ftemp1 );
+  FSET_GW_ENTRY( fifoPtr, 0, _GlideRoot.pool.temp1.f );
   fifoPtr+=1;
   
   if (((FxU32)fifoPtr) & 0x7) {
@@ -430,7 +432,7 @@ GR_DDFUNC(_trisetup, FxI32, ( const void *va, const void *vb, const void *vc ))
   const float *fb = (const float *)vb + xindex;
   const float *fc = (const float *)vc + xindex;
   float ooa, dxAB, dxBC, dyAB, dyBC;
-  int i,j,culltest;
+  int i,culltest;
   union { float f; int i; } ay;
   union { float f; int i; } by;
   union { float f; int i; } cy;
@@ -514,16 +516,15 @@ GR_DDFUNC(_trisetup, FxI32, ( const void *va, const void *vb, const void *vc ))
   dyBC = snap_yb - snap_yc;
   
   /* this is where we store the area */
-  _GlideRoot.pool.ftemp1 = dxAB * dyBC - dxBC * dyAB;
+  _GlideRoot.pool.temp1.f = dxAB * dyBC - dxBC * dyAB;
   
   /* Zero-area triangles are BAD!! */
-  j = *(long *)&_GlideRoot.pool.ftemp1;
-  if ((j & 0x7FFFFFFF) == 0)
+  if ((_GlideRoot.pool.temp1.i & 0x7FFFFFFF) == 0)
     return 0;
   
   /* Backface culling, use sign bit as test */
   if (gc->state.cull_mode != GR_CULL_DISABLE) {
-    if ((j ^ (culltest<<31)) >= 0) {
+    if ((_GlideRoot.pool.temp1.i ^ (culltest<<31)) >= 0) {
       return -1;
     }
   }
@@ -532,7 +533,7 @@ GR_DDFUNC(_trisetup, FxI32, ( const void *va, const void *vb, const void *vc ))
 
   GR_SET_EXPECTED_SIZE(_GlideRoot.curTriSize);
   
-  ooa = _GlideRoot.pool.f1 / _GlideRoot.pool.ftemp1;
+  ooa = _GlideRoot.pool.f1 / _GlideRoot.pool.temp1.f;
   /* GMT: note that we spread out our PCI writes */
   /* write out X & Y for vertex A */
   GR_SETF( hw->FvA.x, snap_xa );
@@ -605,7 +606,7 @@ GR_DDFUNC(_trisetup, FxI32, ( const void *va, const void *vb, const void *vc ))
   }
 
   /* Draw the triangle by writing the area to the triangleCMD register */
-  P6FENCE_CMD( GR_SETF( hw->FtriangleCMD, _GlideRoot.pool.ftemp1 ) );
+  P6FENCE_CMD( GR_SETF( hw->FtriangleCMD, _GlideRoot.pool.temp1.f ) );
   _GlideRoot.stats.trisDrawn++;
 
   GR_CHECK_SIZE();
@@ -636,7 +637,7 @@ GR_DDFUNC(_trisetup_nogradients, FxI32, ( const void *va, const void *vb, const 
   const float *fb = (const float *)vb + xindex;
   const float *fc = (const float *)vc + xindex;
   float dxAB, dxBC, dyAB, dyBC;
-  int i,j;
+  int i;
   union { float f; int i; } ay;
   union { float f; int i; } by;
   union { float f; int i; } cy;
@@ -710,12 +711,11 @@ GR_DDFUNC(_trisetup_nogradients, FxI32, ( const void *va, const void *vb, const 
   dyBC = snap_yb - snap_yc;
 
   /* this is where we store the area */
-  _GlideRoot.pool.ftemp1 = dxAB * dyBC - dxBC * dyAB;
+  _GlideRoot.pool.temp1.f = dxAB * dyBC - dxBC * dyAB;
   _GlideRoot.stats.trisProcessed++;
 
   /* Zero-area triangles are BAD!! */
-  j = *(long *)&_GlideRoot.pool.ftemp1;
-  if ((j & 0x7FFFFFFF) == 0) {
+  if ((_GlideRoot.pool.temp1.i & 0x7FFFFFFF) == 0) {
     return 0;
   }
 
@@ -792,7 +792,7 @@ GR_DDFUNC(_trisetup_nogradients, FxI32, ( const void *va, const void *vb, const 
   }
 
 triangle_command:
-  FSET_GW_ENTRY( fifoPtr, 0, _GlideRoot.pool.ftemp1 );
+  FSET_GW_ENTRY( fifoPtr, 0, _GlideRoot.pool.temp1.f );
   fifoPtr += 1;
 
   if (((FxU32)fifoPtr) & 0x7) {
@@ -859,7 +859,7 @@ GR_DDFUNC(_trisetup_nogradients, FxI32, ( const void *va, const void *vb, const 
   const float *fb = (const float *)vb + xindex;
   const float *fc = (const float *)vc + xindex;
   float dxAB, dxBC, dyAB, dyBC;
-  int i,j;
+  int i;
   union { float f; int i; } ay;
   union { float f; int i; } by;
   union { float f; int i; } cy;
@@ -947,12 +947,11 @@ GR_DDFUNC(_trisetup_nogradients, FxI32, ( const void *va, const void *vb, const 
    GR_SETF( hw->FvB.y, snap_yb );
 
   /* this is where we store the area */
-  _GlideRoot.pool.ftemp1 = dxAB * dyBC - dxBC * dyAB;
+  _GlideRoot.pool.temp1.f = dxAB * dyBC - dxBC * dyAB;
   _GlideRoot.stats.trisProcessed++;
 
   /* Zero-area triangles are BAD!! */
-  j = *(long *)&_GlideRoot.pool.ftemp1;
-  if ((j & 0x7FFFFFFF) == 0) {
+  if ((_GlideRoot.pool.temp1.i & 0x7FFFFFFF) == 0) {
     GR_CHECK_SIZE_SLOPPY();
     return 0;
   }
@@ -992,7 +991,7 @@ GR_DDFUNC(_trisetup_nogradients, FxI32, ( const void *va, const void *vb, const 
   }
 
   /* Draw the triangle by writing the area to the triangleCMD register */
-  P6FENCE_CMD( GR_SETF( hw->FtriangleCMD, _GlideRoot.pool.ftemp1 ) );
+  P6FENCE_CMD( GR_SETF( hw->FtriangleCMD, _GlideRoot.pool.temp1.f ) );
   _GlideRoot.stats.trisDrawn++;
 
   GR_CHECK_SIZE();

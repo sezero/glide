@@ -19,6 +19,9 @@
  **
  ** $Header$
  ** $Log$
+ ** Revision 1.1.1.1.8.1  2005/06/17 14:18:49  jwrdegoede
+ ** Fix few warnings when USE_X86=1 is not set
+ **
  ** Revision 1.1.1.1  1999/12/07 21:42:34  joseph
  ** Initial checkin into SourceForge.
  **
@@ -210,31 +213,31 @@ GR_DDFUNC(_trisetup_nogradients,
     dyBC = fb[yindex] - fc[yindex];
     
     /* Stash the area in the float pool for easy access */
-    _GlideRoot.pool.ftemp1 = dxAB * dyBC - dxBC * dyAB;
+    _GlideRoot.pool.temp1.f = dxAB * dyBC - dxBC * dyAB;
     
 #define FloatVal(__f) (((__f) < 786432.875) ? (__f) : ((__f) - 786432.875))
     {
-      const FxI32 j = *(FxI32*)&_GlideRoot.pool.ftemp1;
       const FxU32 culltest = (gc->state.cull_mode << 31UL);
       
       /* Zero-area triangles are BAD!! */
-      if ((j & 0x7FFFFFFF) == 0) {
+      if ((_GlideRoot.pool.temp1.i & 0x7FFFFFFF) == 0) {
         GDBG_INFO(291, FN_NAME": Culling (%g %g) (%g %g) (%g %g) : (%g : 0x%X : 0x%X)\n",
                   FloatVal(fa[0]), FloatVal(fa[1]), 
                   FloatVal(fb[0]), FloatVal(fb[1]), 
                   FloatVal(fc[0]), FloatVal(fc[1]), 
-                  _GlideRoot.pool.ftemp1, gc->state.cull_mode, culltest);
+                  _GlideRoot.pool.temp1.f, gc->state.cull_mode, culltest);
         
         return 0;
       }
       
       /* Backface culling, use sign bit as test */
-      if ((gc->state.cull_mode != GR_CULL_DISABLE) && (((FxI32)(j ^ culltest)) >= 0)) {
+      if ((gc->state.cull_mode != GR_CULL_DISABLE) &&
+          (((FxI32)(_GlideRoot.pool.temp1.i ^ culltest)) >= 0)) {
         GDBG_INFO(291, FN_NAME": Culling (%g %g) (%g %g) (%g %g) : (%g : 0x%X : 0x%X)\n",
                   FloatVal(fa[0]), FloatVal(fa[1]), 
                   FloatVal(fb[0]), FloatVal(fb[1]), 
                   FloatVal(fc[0]), FloatVal(fc[1]), 
-                  _GlideRoot.pool.ftemp1, gc->state.cull_mode, culltest);
+                  _GlideRoot.pool.temp1.f, gc->state.cull_mode, culltest);
         
         return -1;
       }

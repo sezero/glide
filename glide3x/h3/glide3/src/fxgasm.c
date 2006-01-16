@@ -183,8 +183,8 @@ main (int argc, char **argv)
 #endif
 
 #if GLIDE_PACKED_RGB
-    OFFSET (gc, pool.ftemp1, "fTemp1");
-    OFFSET (gc, pool.ftemp2, "fTemp2");
+    OFFSET (gc, pool.temp1.f, "fTemp1");
+    OFFSET (gc, pool.temp2.f, "fTemp2");
 #endif
 
     HEADER ("GlideRoot");

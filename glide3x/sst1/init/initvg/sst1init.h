@@ -105,8 +105,8 @@
 #define IGET(A)    A
 #define ISET(A,D)  A = (D)
 #else
-#define IGET(A)    sst1InitRead32((FxU32 *) &(A))
-#define ISET(A,D)  sst1InitWrite32((FxU32 *) &(A), D)  
+#define IGET(A)    sst1InitRead32((FxU32 *)(void *)&(A))
+#define ISET(A,D)  sst1InitWrite32((FxU32 *)(void *)&(A), D)  
 #endif
 
 /*

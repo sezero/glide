@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.13  2005/08/13 21:06:56  jwrdegoede
+** Last needed 64 bit fixes for h5/h3, complete 64 bit support for cvg
+**
 ** Revision 1.1.1.1.8.12  2005/06/10 14:17:53  jwrdegoede
 ** Fix compilation when GL_X86 is not defined
 **
@@ -1367,7 +1370,9 @@ struct _GlideRoot_s {
     float  fHalf;
     float  f1;
     float  f255;
-    float  ftemp1, ftemp2;       /* temps to convert floats to ints */
+    /* temps to convert floats to ints */
+    union { float f; FxI32 i; FxU32 u; } temp1;
+    union { float f; FxI32 i; FxU32 u; } temp2;
     float  fIntTruncBias;
 
 #if GLIDE_PACKED_RGB
@@ -2699,10 +2704,10 @@ _grCVGFifoDump_Linear(const FxU32* const linearPacketAddr);
  */
 #if GLIDE_PACKED_RGB
 #define RGBA_COMP(__fpVal, __fpBias, __fpShift, __fpMask) \
-((_GlideRoot.pool.ftemp1 = (float)((float)(__fpVal) + (float)(__fpBias))), \
+((_GlideRoot.pool.temp1.f = (float)((float)(__fpVal) + (float)(__fpBias))), \
  GR_ASSERT((__fpVal) >= 0.0f), \
  GR_ASSERT((__fpVal) < 256.0f), \
- (((*(const FxU32*)&_GlideRoot.pool.ftemp1) & (__fpMask)) << (__fpShift)))
+ ((_GlideRoot.pool.temp1.u & (__fpMask)) << (__fpShift)))
                                                   
 #define RGBA_COMP_CLAMP(__fpVal, __compToken) \
    RGBA_COMP(__fpVal, kPackBias##__compToken, kPackShift##__compToken, kPackMask##__compToken)

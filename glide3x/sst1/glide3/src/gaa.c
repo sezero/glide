@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.5  2005/06/16 18:58:32  jwrdegoede
+** Fix 2 sst1 bugs accidently introduced by warning fixes
+**
 ** Revision 1.1.2.4  2005/06/09 18:32:35  jwrdegoede
 ** Fixed all warnings with gcc4 -Wall -W -Wno-unused-parameter, except for a couple I believe to be a gcc bug. This has been reported to gcc.
 **
@@ -1970,35 +1973,31 @@ _grAADrawTriangles(FxI32 mode, FxI32 ttype, FxI32 count, void *pointers)
         dyBC = fb[1] - fc[1];
         
         /* Stash the area in the float pool for easy access */
-        _GlideRoot.pool.ftemp1 = dxAB * dyBC - dxBC * dyAB;
+        _GlideRoot.pool.temp1.f = dxAB * dyBC - dxBC * dyAB;
         
 #define FloatVal(__f) (((__f) < 786432.875) ? (__f) : ((__f) - 786432.875))
-        {
-          const FxI32 j = *(FxI32*)&_GlideRoot.pool.ftemp1;
-          
-          /* Zero-area triangles are BAD!! */
-          if ((j & 0x7FFFFFFF) == 0) {
-            GDBG_INFO((291, FN_NAME": Culling (%g %g) (%g %g) (%g %g) : (%g : 0x%X : 0x%X)\n",
-                       FloatVal(fa[0]), FloatVal(fa[1]), 
-                       FloatVal(fb[0]), FloatVal(fb[1]), 
-                       FloatVal(fc[0]), FloatVal(fc[1]), 
-                       _GlideRoot.pool.ftemp1, gc->state.cull_mode, culltest));
+        /* Zero-area triangles are BAD!! */
+        if ((_GlideRoot.pool.temp1.i & 0x7FFFFFFF) == 0) {
+          GDBG_INFO((291, FN_NAME": Culling (%g %g) (%g %g) (%g %g) : (%g : 0x%X : 0x%X)\n",
+                     FloatVal(fa[0]), FloatVal(fa[1]), 
+                     FloatVal(fb[0]), FloatVal(fb[1]), 
+                     FloatVal(fc[0]), FloatVal(fc[1]), 
+                     _GlideRoot.pool.temp1.f, gc->state.cull_mode, culltest));
 
-            goto done;
-          }
+          goto done;
+        }
+    
+        /* Backface culling, use sign bit as test */
+        if ((gc->state.cull_mode != GR_CULL_DISABLE) &&
+            ((_GlideRoot.pool.temp1.i ^ (culltest << 31)) >= 0)) {
       
-          /* Backface culling, use sign bit as test */
-          if ((gc->state.cull_mode != GR_CULL_DISABLE) &&
-              ((j ^ (culltest << 31)) >= 0)) {
-        
-            GDBG_INFO((291, FN_NAME": Culling (%g %g) (%g %g) (%g %g) : (%g : 0x%X : 0x%X)\n",
-                       FloatVal(fa[0]), FloatVal(fa[1]), 
-                       FloatVal(fb[0]), FloatVal(fb[1]), 
-                       FloatVal(fc[0]), FloatVal(fc[1]), 
-                       _GlideRoot.pool.ftemp1, gc->state.cull_mode, culltest));
-        
-            goto done;
-          }
+          GDBG_INFO((291, FN_NAME": Culling (%g %g) (%g %g) (%g %g) : (%g : 0x%X : 0x%X)\n",
+                     FloatVal(fa[0]), FloatVal(fa[1]), 
+                     FloatVal(fb[0]), FloatVal(fb[1]), 
+                     FloatVal(fc[0]), FloatVal(fc[1]), 
+                     _GlideRoot.pool.temp1.f, gc->state.cull_mode, culltest));
+      
+          goto done;
         }
       }
     } /* end culling test */

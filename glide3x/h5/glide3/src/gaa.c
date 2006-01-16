@@ -1458,35 +1458,32 @@ _grAADrawTriangles(FxI32 mode, FxI32 ttype, FxI32 count, void *pointers)
         dyBC = fb[yindex] - fc[yindex];
         
         /* Stash the area in the float pool for easy access */
-        gc->pool.ftemp1 = dxAB * dyBC - dxBC * dyAB;
+        gc->pool.temp1.f = dxAB * dyBC - dxBC * dyAB;
         
 #define FloatVal(__f) (((__f) < 786432.875) ? (__f) : ((__f) - 786432.875))
-        {
-          const FxI32 j = *(FxI32*)&gc->pool.ftemp1;
-          
-          /* Zero-area triangles are BAD!! */
-          if ((j & 0x7FFFFFFF) == 0) {
-            GDBG_INFO(291, FN_NAME": Culling (%g %g) (%g %g) (%g %g) : (%g : 0x%X : 0x%X)\n",
-                      FloatVal(fa[xindex]), FloatVal(fa[yindex]), 
-                      FloatVal(fb[xindex]), FloatVal(fb[yindex]), 
-                      FloatVal(fc[xindex]), FloatVal(fc[yindex]), 
-                      gc->pool.ftemp1, gc->state.cull_mode, culltest);
 
-            goto done;
-          }
+        /* Zero-area triangles are BAD!! */
+        if ((gc->pool.temp1.i & 0x7FFFFFFF) == 0) {
+          GDBG_INFO(291, FN_NAME": Culling (%g %g) (%g %g) (%g %g) : (%g : 0x%X : 0x%X)\n",
+                    FloatVal(fa[xindex]), FloatVal(fa[yindex]), 
+                    FloatVal(fb[xindex]), FloatVal(fb[yindex]), 
+                    FloatVal(fc[xindex]), FloatVal(fc[yindex]), 
+                    gc->pool.temp1.f, gc->state.cull_mode, culltest);
+
+          goto done;
+        }
+    
+        /* Backface culling, use sign bit as test */
+        if ((gc->state.cull_mode != GR_CULL_DISABLE) &&
+            ((gc->pool.temp1.i ^ (culltest << 31)) >= 0)) {
       
-          /* Backface culling, use sign bit as test */
-          if ((gc->state.cull_mode != GR_CULL_DISABLE) &&
-              ((j ^ (culltest << 31)) >= 0)) {
-        
-            GDBG_INFO(291, FN_NAME": Culling (%g %g) (%g %g) (%g %g) : (%g : 0x%X : 0x%X)\n",
-                      FloatVal(fa[xindex]), FloatVal(fa[yindex]), 
-                      FloatVal(fb[xindex]), FloatVal(fb[yindex]), 
-                      FloatVal(fc[xindex]), FloatVal(fc[yindex]), 
-                      gc->pool.ftemp1, gc->state.cull_mode, culltest);
-        
-            goto done;
-          }
+          GDBG_INFO(291, FN_NAME": Culling (%g %g) (%g %g) (%g %g) : (%g : 0x%X : 0x%X)\n",
+                    FloatVal(fa[xindex]), FloatVal(fa[yindex]), 
+                    FloatVal(fb[xindex]), FloatVal(fb[yindex]), 
+                    FloatVal(fc[xindex]), FloatVal(fc[yindex]), 
+                    gc->pool.temp1.f, gc->state.cull_mode, culltest);
+      
+          goto done;
         }
       }
     } /* end culling test */
@@ -1646,35 +1643,31 @@ _grAAVpDrawTriangles(FxI32 mode, FxI32 ttype, FxI32 count, void *pointers)
         dyBC = fb[yindex] - fc[yindex];
         
         /* Stash the area in the float pool for easy access */
-        gc->pool.ftemp1 = dxAB * dyBC - dxBC * dyAB;
+        gc->pool.temp1.f = dxAB * dyBC - dxBC * dyAB;
         
 #define FloatVal(__f) (((__f) < 786432.875) ? (__f) : ((__f) - 786432.875))
-        {
-          const FxI32 j = *(FxI32*)&gc->pool.ftemp1;
-          
-          /* Zero-area triangles are BAD!! */
-          if ((j & 0x7FFFFFFF) == 0) {
-            GDBG_INFO(291, FN_NAME": Culling (%g %g) (%g %g) (%g %g) : (%g : 0x%X : 0x%X)\n",
-                      FloatVal(fa[xindex]), FloatVal(fa[yindex]), 
-                      FloatVal(fb[xindex]), FloatVal(fb[yindex]), 
-                      FloatVal(fc[xindex]), FloatVal(fc[yindex]), 
-                      gc->pool.ftemp1, gc->state.cull_mode, culltest);
+        /* Zero-area triangles are BAD!! */
+        if ((gc->pool.temp1.i & 0x7FFFFFFF) == 0) {
+          GDBG_INFO(291, FN_NAME": Culling (%g %g) (%g %g) (%g %g) : (%g : 0x%X : 0x%X)\n",
+                    FloatVal(fa[xindex]), FloatVal(fa[yindex]), 
+                    FloatVal(fb[xindex]), FloatVal(fb[yindex]), 
+                    FloatVal(fc[xindex]), FloatVal(fc[yindex]), 
+                    gc->pool.temp1.f, gc->state.cull_mode, culltest);
 
-            goto done;
-          }
+          goto done;
+        }
+    
+        /* Backface culling, use sign bit as test */
+        if ((gc->state.cull_mode != GR_CULL_DISABLE) &&
+            ((gc->pool.temp1.i ^ (culltest << 31)) >= 0)) {
       
-          /* Backface culling, use sign bit as test */
-          if ((gc->state.cull_mode != GR_CULL_DISABLE) &&
-              ((j ^ (culltest << 31)) >= 0)) {
-        
-            GDBG_INFO(291, FN_NAME": Culling (%g %g) (%g %g) (%g %g) : (%g : 0x%X : 0x%X)\n",
-                      FloatVal(fa[xindex]), FloatVal(fa[yindex]), 
-                      FloatVal(fb[xindex]), FloatVal(fb[yindex]), 
-                      FloatVal(fc[xindex]), FloatVal(fc[yindex]), 
-                      gc->pool.ftemp1, gc->state.cull_mode, culltest);
-        
-            goto done;
-          }
+          GDBG_INFO(291, FN_NAME": Culling (%g %g) (%g %g) (%g %g) : (%g : 0x%X : 0x%X)\n",
+                    FloatVal(fa[xindex]), FloatVal(fa[yindex]), 
+                    FloatVal(fb[xindex]), FloatVal(fb[yindex]), 
+                    FloatVal(fc[xindex]), FloatVal(fc[yindex]), 
+                    gc->pool.temp1.f, gc->state.cull_mode, culltest);
+      
+          goto done;
         }
       }
     } /* end culling test */

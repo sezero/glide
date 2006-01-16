@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.2.4.13  2005/06/10 14:17:54  jwrdegoede
+** Fix compilation when GL_X86 is not defined
+**
 ** Revision 1.2.4.12  2005/05/25 08:56:23  jwrdegoede
 ** Make h5 and h3 tree 64 bit clean. This is ported over from the non-devel branch so this might be incomplete
 **
@@ -1011,7 +1014,9 @@ typedef struct GrGC_s
   } stats;
 
   struct {
-    float  ftemp1, ftemp2;       /* temps to convert floats to ints */
+    /* temps to convert floats to ints */
+    union { float f; FxI32 i; FxU32 u; } temp1;
+    union { float f; FxI32 i; FxU32 u; } temp2;
   } pool;
 
 #if GLIDE_HW_TRI_SETUP

@@ -19,6 +19,9 @@
  **
  ** $Header$
  ** $Log$
+ ** Revision 1.2.6.8  2005/06/09 18:32:28  jwrdegoede
+ ** Fixed all warnings with gcc4 -Wall -W -Wno-unused-parameter, except for a couple I believe to be a gcc bug. This has been reported to gcc.
+ **
  ** Revision 1.2.6.7  2005/05/25 08:56:23  jwrdegoede
  ** Make h5 and h3 tree 64 bit clean. This is ported over from the non-devel branch so this might be incomplete
  **
@@ -442,8 +445,8 @@ _grDrawPoints(FxI32 mode, FxI32 count, void *pointers)
                   0x02, sizeof(FxU32) << 1, SSTCP_PKT3_BDDDDD);
 
           /* Convert to 32-bit representation */
-          gc->pool.ftemp1 = FARRAY(vPtr, gc->state.vData.vertexInfo.offset) + bias;
-          gc->pool.ftemp2 = FARRAY(vPtr, gc->state.vData.vertexInfo.offset + 4) + bias;
+          gc->pool.temp1.f = FARRAY(vPtr, gc->state.vData.vertexInfo.offset) + bias;
+          gc->pool.temp2.f = FARRAY(vPtr, gc->state.vData.vertexInfo.offset + 4) + bias;
         
           /* draw a little triangle, with the lower left corner at pixel center. */
           
@@ -458,9 +461,9 @@ _grDrawPoints(FxI32 mode, FxI32 count, void *pointers)
 
           /* Mask off the real fractional bits from the mantissa */
           /* [dBorca] Hack alert: bad type-punning with gcc -O2 */
-          x = ((*(FxU32*)&gc->pool.ftemp1 & (0xFFFFFFFFUL << (22UL - kNumMantissaBits))) +
+          x = ((gc->pool.temp1.u & (0xFFFFFFFFUL << (22UL - kNumMantissaBits))) +
                (0x01UL << (22UL - kNumMantissaBits)));
-          y = ((*(FxU32*)&gc->pool.ftemp2 & (0xFFFFFFFFUL << (22UL - kNumMantissaBits))) +
+          y = ((gc->pool.temp2.u & (0xFFFFFFFFUL << (22UL - kNumMantissaBits))) +
                (0x01UL << (22UL - kNumMantissaBits)));
           
           /* Lower right corner */          
@@ -527,21 +530,21 @@ _grDrawPoints(FxI32 mode, FxI32 count, void *pointers)
                          0x02, sizeof(FxU32) << 1, SSTCP_PKT3_BDDDDD);
 
           /* Convert to 32-bit representation */
-          gc->pool.ftemp1 = (FARRAY(vPtr, gc->state.vData.vertexInfo.offset) * 
+          gc->pool.temp1.f = (FARRAY(vPtr, gc->state.vData.vertexInfo.offset) * 
                                     oow * 
                                     gc->state.Viewport.hwidth + 
                                     gc->state.Viewport.ox + 
                                     bias);
-          gc->pool.ftemp2 = (FARRAY(vPtr, gc->state.vData.vertexInfo.offset + 4) * 
+          gc->pool.temp2.f = (FARRAY(vPtr, gc->state.vData.vertexInfo.offset + 4) * 
                                     oow *
                                     gc->state.Viewport.hheight + 
                                     gc->state.Viewport.oy +
                                     bias);
 
           /* Mask off the real fractional bits from the mantissa */
-          x = ((*(FxU32*)&gc->pool.ftemp1 & (0xFFFFFFFFUL << (22UL - kNumMantissaBits))) +
+          x = ((gc->pool.temp1.u & (0xFFFFFFFFUL << (22UL - kNumMantissaBits))) +
                (0x01UL << (22UL - kNumMantissaBits)));
-          y = ((*(FxU32*)&gc->pool.ftemp2 & (0xFFFFFFFFUL << (22UL - kNumMantissaBits))) +
+          y = ((gc->pool.temp2.u & (0xFFFFFFFFUL << (22UL - kNumMantissaBits))) +
                (0x01UL << (22UL - kNumMantissaBits)));
           
           /* Lower right cornder */
@@ -600,13 +603,11 @@ _grDrawLineStrip(FxI32 mode, FxI32 ltype, FxI32 count, void *pointers)
    * except the data set up is from the pointer array and 
    * its data layout
    */
-  int j;
-  FxI32 sCount;
+  FxI32 stride, sCount;
   FxU32 vertexParamOffset;
-  FxI32 stride;
 
-#define  DX gc->pool.ftemp1
-#define ADY gc->pool.ftemp2
+#define  DX gc->pool.temp1
+#define ADY gc->pool.temp2
 
   GR_BEGIN_NOFIFOCHECK("_grDrawLineStrip", 91);
 
@@ -631,8 +632,7 @@ _grDrawLineStrip(FxI32 mode, FxI32 ltype, FxI32 count, void *pointers)
 
   if (gc->state.grCoordinateSpaceArgs.coordinate_space_mode == GR_WINDOW_COORDS) {
     while (sCount > 0) {
-      FxI32 k, i;
-      FxI32 vcount = sCount >= LINES_BUFFER ? LINES_BUFFER : sCount;
+      FxI32 k, vcount = sCount >= LINES_BUFFER ? LINES_BUFFER : sCount;
 
       GR_SET_EXPECTED_SIZE((gc->state.vData.vSize << 2) * vcount, vcount);
       DA_BEGIN;
@@ -650,23 +650,18 @@ _grDrawLineStrip(FxI32 mode, FxI32 ltype, FxI32 count, void *pointers)
         /*
         ** compute absolute deltas and draw from low Y to high Y
         */
-        ADY = FARRAY(b, gc->state.vData.vertexInfo.offset+4) - FARRAY(a, gc->state.vData.vertexInfo.offset+4);
-        i = *(int *)&ADY;
-        if (i < 0) {
+        ADY.f = FARRAY(b, gc->state.vData.vertexInfo.offset+4) - FARRAY(a, gc->state.vData.vertexInfo.offset+4);
+        if (ADY.i < 0) {
           float *tv;
           tv = a; a = b; b = tv;
-          i ^= 0x80000000;            /* ady = -ady; */
-          (*(int *)&ADY) = i;
+          ADY.i ^= 0x80000000;            /* ady = -ady; */
         }
         
-        DX = FARRAY(b, gc->state.vData.vertexInfo.offset) - FARRAY(a, gc->state.vData.vertexInfo.offset);
-        j = *(int *)&DX;
-        if (j < 0) {
-          j ^= 0x80000000;            /* adx = -adx; */
-        }
+        DX.f = FARRAY(b, gc->state.vData.vertexInfo.offset) - FARRAY(a, gc->state.vData.vertexInfo.offset);
+        DX.i &= 0x7fffffff;               /* abs(adx) */
         
         /* check for zero-length lines */
-        if ((j >= i) && (j == 0)) {
+        if ((DX.i >= ADY.i) && (DX.i == 0)) {
 #ifdef GLIDE_DEBUG
           gc->expected_counter -= (gc->state.vData.vSize << 2 );
           gc->checkCounter -= ((gc->state.vData.vSize+1) << 2 );
@@ -683,10 +678,11 @@ _grDrawLineStrip(FxI32 mode, FxI32 ltype, FxI32 count, void *pointers)
          */
         DA_CONT(kSetupCullDisable | kSetupStrip, gc->cmdTransportInfo.paramMask,
                 0x04UL, vertexParamOffset, SSTCP_PKT3_BDDDDD);
-        {        
+        {
+          int i;
           FxU32 dataElem;
           /* x major */
-          if (j >= i) {
+          if (DX.i >= ADY.i) {
             DA_SETF(FARRAY(b, gc->state.vData.vertexInfo.offset));
             dataElem = 0;
             DA_SETF(FARRAY(b, gc->state.vData.vertexInfo.offset+4) - _GlideRoot.pool.fHalf);
@@ -785,8 +781,7 @@ _grDrawLineStrip(FxI32 mode, FxI32 ltype, FxI32 count, void *pointers)
     float oowa, oowb = 0.0f, owa, owb, tmp1, tmp2, fax, fay, fbx, fby;
 
     while (sCount > 0) {
-      FxI32 k, i;
-      FxI32 vcount = sCount >= LINES_BUFFER ? LINES_BUFFER : sCount;
+      FxI32 k, vcount = sCount >= LINES_BUFFER ? LINES_BUFFER : sCount;
       float *a,*b;
       GR_SET_EXPECTED_SIZE((gc->state.vData.vSize << 2) * vcount, vcount);
       DA_BEGIN;
@@ -821,36 +816,31 @@ _grDrawLineStrip(FxI32 mode, FxI32 ltype, FxI32 count, void *pointers)
         /*
         ** compute absolute deltas and draw from low Y to high Y
         */
-        ADY = tmp2 - tmp1;
-        i = *(int *)&ADY;
-        if (i < 0) {
+        ADY.f = tmp2 - tmp1;
+        if (ADY.i < 0) {
           float *tv;          
           owa = oowb; owb = oowa;
           fay = tmp2;
           fby = tmp1;
           tv = a; a = b; b = tv;
-          i ^= 0x80000000;            /* ady = -ady; */
-          (*(int *)&ADY) = i;
+          ADY.i ^= 0x80000000;            /* ady = -ady; */
         }
         fax = FARRAY(a, gc->state.vData.vertexInfo.offset)
           *owa*gc->state.Viewport.hwidth+gc->state.Viewport.ox;
         fbx = FARRAY(b, gc->state.vData.vertexInfo.offset)
           *owb*gc->state.Viewport.hwidth+gc->state.Viewport.ox;
         
-        DX = fbx - fax;
-        j = *(int *)&DX;
-        if (j < 0) {
-          j ^= 0x80000000;            /* adx = -adx; */
-        }
+        DX.f = fbx - fax;
+        DX.i &= 0x7fffffff;               /* abs(adx) */        
         
         /* check for zero-length lines */
-        if ((j >= i) && (j == 0)) goto all_done_vp;
+        if ((DX.i >= ADY.i) && (DX.i == 0)) goto all_done_vp;
     
         DA_CONT(kSetupCullDisable | kSetupStrip, gc->cmdTransportInfo.paramMask,
                 0x04UL, vertexParamOffset, SSTCP_PKT3_BDDDDD);
         {        
           /* x major */
-          if (j >= i) {
+          if (DX.i >= ADY.i) {
             DA_SETF(fbx);
             DA_SETF(fby - _GlideRoot.pool.fHalf);
             DA_VP_SETFS(b,oowb);

@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.6  2005/06/10 14:17:56  jwrdegoede
+** Fix compilation when GL_X86 is not defined
+**
 ** Revision 1.1.2.5  2005/05/25 08:51:52  jwrdegoede
 ** Add #ifdef GL_X86 around x86 specific code
 **
@@ -920,7 +923,9 @@ struct _GlideRoot_s {
     float f1;
     float f255;
     float f256;
-    float ftemp1, ftemp2;       /* temps to convert floats to ints */
+    /* temps to convert floats to ints */
+    union { float f; FxI32 i; FxU32 u; } temp1;
+    union { float f; FxI32 i; FxU32 u; } temp2;
   } pool;
 
   struct {                      /* environment data             */

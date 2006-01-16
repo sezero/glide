@@ -21,6 +21,9 @@
 ** $Revision$ 
 ** $Date$ 
 ** $Log$
+** Revision 1.1.1.1.6.3  2005/06/09 18:32:28  jwrdegoede
+** Fixed all warnings with gcc4 -Wall -W -Wno-unused-parameter, except for a couple I believe to be a gcc bug. This has been reported to gcc.
+**
 ** Revision 1.1.1.1.6.2  2005/05/25 08:56:23  jwrdegoede
 ** Make h5 and h3 tree 64 bit clean. This is ported over from the non-devel branch so this might be incomplete
 **
@@ -988,10 +991,10 @@ _grH3FifoDump_Linear(const FxU32* const linearPacketAddr);
  */
 #if GLIDE_PACKED_RGB
 #define RGBA_COMP(__fpVal, __fpBias, __fpShift, __fpMask) \
-((gc->pool.ftemp1 = (float)((float)(__fpVal + (float)(__fpBias))), \
+((gc->pool.temp1.f = (float)((float)(__fpVal + (float)(__fpBias))), \
  GR_ASSERT((__fpVal) >= 0.0f), \
  GR_ASSERT((__fpVal) < 256.0f), \
- (((*(const FxU32*)&gc->pool.ftemp1) & (__fpMask)) << (__fpShift)))
+ ((gc->pool.temp1.u & (__fpMask)) << (__fpShift)))
                                                   
 #define RGBA_COMP_CLAMP(__fpVal, __compToken) \
    RGBA_COMP(__fpVal, kPackBias##__compToken, kPackShift##__compToken, kPackMask##__compToken)

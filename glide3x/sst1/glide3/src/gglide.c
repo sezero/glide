@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.5  2005/05/25 08:51:52  jwrdegoede
+** Add #ifdef GL_X86 around x86 specific code
+**
 ** Revision 1.1.2.4  2004/10/04 09:35:59  dborca
 ** second cut at Glide3x for Voodoo1/Rush (massive update):
 ** delayed validation, vertex snapping, clip coordinates, strip/fan_continue, bugfixes.
@@ -1755,13 +1758,13 @@ GR_DDFUNC(_grRebuildDataList, void, ( void ))
       /* non packed color */
       /* add 9 to size array for r,drdx,drdy,g,dgdx,dgdy,b,dbdx,dbdy */
       gc->dataList[curTriSize + 0].i     = gc->state.vData.rgbInfo.offset;
-      gc->dataList[curTriSize + 0].addr  = (float *)&hw->RED;
+      gc->dataList[curTriSize + 0].addr  = (float *)(void *)&hw->RED;
       gc->dataList[curTriSize + 0].bddr  = 0;
       gc->dataList[curTriSize + 1].i     = gc->state.vData.rgbInfo.offset+GR_COLOR_OFFSET_GREEN;
-      gc->dataList[curTriSize + 1].addr  = (float *)&hw->GRN;
+      gc->dataList[curTriSize + 1].addr  = (float *)(void *)&hw->GRN;
       gc->dataList[curTriSize + 1].bddr  = 0;
       gc->dataList[curTriSize + 2].i     = gc->state.vData.rgbInfo.offset+GR_COLOR_OFFSET_BLUE;
-      gc->dataList[curTriSize + 2].addr  = (float *)&hw->BLU;
+      gc->dataList[curTriSize + 2].addr  = (float *)(void *)&hw->BLU;
       gc->dataList[curTriSize + 2].bddr  = 0;
       curTriSize += 3;
       params += 3;
@@ -1773,13 +1776,13 @@ GR_DDFUNC(_grRebuildDataList, void, ( void ))
       /* packed color, argb */
       /* add 9 to size array for r,drdx,drdy,g,dgdx,dgdy,b,dbdx,dbdy */
       gc->dataList[curTriSize + 0].i     = gc->state.vData.pargbInfo.offset;
-      gc->dataList[curTriSize + 0].addr  = (float *)&hw->RED;
+      gc->dataList[curTriSize + 0].addr  = (float *)(void *)&hw->RED;
       gc->dataList[curTriSize + 0].bddr  = gc->state.vData.pargbInfo.offset + GR_PARGB_R;
       gc->dataList[curTriSize + 1].i     = gc->state.vData.pargbInfo.offset;
-      gc->dataList[curTriSize + 1].addr  = (float *)&hw->GRN;
+      gc->dataList[curTriSize + 1].addr  = (float *)(void *)&hw->GRN;
       gc->dataList[curTriSize + 1].bddr  = gc->state.vData.pargbInfo.offset + GR_PARGB_G;
       gc->dataList[curTriSize + 2].i     = gc->state.vData.pargbInfo.offset;
-      gc->dataList[curTriSize + 2].addr  = (float *)&hw->BLU;
+      gc->dataList[curTriSize + 2].addr  = (float *)(void *)&hw->BLU;
       gc->dataList[curTriSize + 2].bddr  = gc->state.vData.pargbInfo.offset + GR_PARGB_B;
       curTriSize += 3;
       params += 3;
@@ -1791,7 +1794,7 @@ GR_DDFUNC(_grRebuildDataList, void, ( void ))
   
   if (i & STATE_REQUIRES_OOZ) {
     gc->dataList[curTriSize + 0].i     = gc->state.vData.zInfo.offset;
-    gc->dataList[curTriSize + 0].addr  = (float *)&hw->Z;
+    gc->dataList[curTriSize + 0].addr  = (float *)(void *)&hw->Z;
     gc->dataList[curTriSize + 0].bddr  = 0;
     curTriSize += 1;
     params += 1;
@@ -1803,7 +1806,7 @@ GR_DDFUNC(_grRebuildDataList, void, ( void ))
   if (i & STATE_REQUIRES_IT_ALPHA) {
     if (gc->state.vData.colorType == GR_FLOAT) {
       gc->dataList[curTriSize + 0].i     = gc->state.vData.aInfo.offset;
-      gc->dataList[curTriSize + 0].addr  = (float *)&hw->ALF;
+      gc->dataList[curTriSize + 0].addr  = (float *)(void *)&hw->ALF;
       gc->dataList[curTriSize + 0].bddr  = 0;
       curTriSize += 1;
       params += 1;
@@ -1814,7 +1817,7 @@ GR_DDFUNC(_grRebuildDataList, void, ( void ))
     else {
       /* packed color, argb */
       gc->dataList[curTriSize + 0].i     = gc->state.vData.pargbInfo.offset;
-      gc->dataList[curTriSize + 0].addr  = (float *)&hw->ALF;
+      gc->dataList[curTriSize + 0].addr  = (float *)(void *)&hw->ALF;
       gc->dataList[curTriSize + 0].bddr  = gc->state.vData.pargbInfo.offset + GR_PARGB_A;
       curTriSize += 1;
       params += 1;
@@ -1828,10 +1831,10 @@ GR_DDFUNC(_grRebuildDataList, void, ( void ))
   /* always output to ALL chips, saves from having to change CHIP field */
   if (i & STATE_REQUIRES_ST_TMU0) {
     gc->dataList[curTriSize + 0].i     = gc->state.vData.st0Info.offset;
-    gc->dataList[curTriSize + 0].addr  = (float *)&hw->S;
+    gc->dataList[curTriSize + 0].addr  = (float *)(void *)&hw->S;
     gc->dataList[curTriSize + 0].bddr  = 0;
     gc->dataList[curTriSize + 1].i     = gc->state.vData.st0Info.offset + GR_TEXTURE_OFFSET_T;
-    gc->dataList[curTriSize + 1].addr  = (float *)&hw->T;
+    gc->dataList[curTriSize + 1].addr  = (float *)(void *)&hw->T;
     gc->dataList[curTriSize + 1].bddr  = 0;
     curTriSize += 2;
     params += 2;
@@ -1843,7 +1846,7 @@ GR_DDFUNC(_grRebuildDataList, void, ( void ))
   /* we squeeze FBI.OOW in here for sequential writes in the simple case */
   if (i & STATE_REQUIRES_OOW_FBI) {
     gc->dataList[curTriSize + 0].i     = gc->state.vData.qInfo.offset;
-    gc->dataList[curTriSize + 0].addr  = (float *)&hw->W;
+    gc->dataList[curTriSize + 0].addr  = (float *)(void *)&hw->W;
     gc->dataList[curTriSize + 0].bddr  = 0;
     curTriSize += 1;
     params += 1;
@@ -1857,7 +1860,7 @@ GR_DDFUNC(_grRebuildDataList, void, ( void ))
     /* We do this a bit differently for grouped writes */
     gc->dataList[curTriSize + 0].i     = packMask;
     gc->dataList[curTriSize + 0].addr  =
-      (float *) GWH_GEN_ADDRESS(&tmu0->FvA.x);
+      (float *)(void *) GWH_GEN_ADDRESS(&tmu0->FvA.x);
     gc->dataList[curTriSize + 0].bddr  = 0;
     if (gc->state.vData.q0Info.mode == GR_PARAM_ENABLE)    
       gc->dataList[curTriSize + 1].i     = gc->state.vData.q0Info.offset;
@@ -1867,7 +1870,7 @@ GR_DDFUNC(_grRebuildDataList, void, ( void ))
       else
         gc->dataList[curTriSize + 1].i     = gc->state.vData.wInfo.offset;
     }
-    gc->dataList[curTriSize + 1].addr  = 0L;
+    gc->dataList[curTriSize + 1].addr  = NULL;
     gc->dataList[curTriSize + 1].bddr  = 0;
     
     if (gwpSize & 1)
@@ -1883,7 +1886,7 @@ GR_DDFUNC(_grRebuildDataList, void, ( void ))
   gc->dataList[curTriSize++].i = 0;     /* terminate the list with 0,*      */
   /* followed by the FtriangleCMD reg */
   gc->dataList[curTriSize].i = packMask;/* encode P6 flag here for asm code */
-  gc->dataList[curTriSize].addr = (float *)&hw->FtriangleCMD;
+  gc->dataList[curTriSize].addr = (float *)(void *)&hw->FtriangleCMD;
   
   /* 6 X,Y values plus AREA = 7, plus parameters */
   if (gwHeaderNum) {
@@ -1958,13 +1961,13 @@ GR_DDFUNC(_grRebuildDataList, void, ( void ))
       /* non packed color */
       /* add 9 to size array for r,drdx,drdy,g,dgdx,dgdy,b,dbdx,dbdy */
       gc->dataList[curTriSize + 0].i     = gc->state.vData.rgbInfo.offset;
-      gc->dataList[curTriSize + 0].addr  = (float *)&hw->RED;
+      gc->dataList[curTriSize + 0].addr  = (float *)(void *)&hw->RED;
       gc->dataList[curTriSize + 0].bddr  = 0;
       gc->dataList[curTriSize + 1].i     = gc->state.vData.rgbInfo.offset+GR_COLOR_OFFSET_GREEN;
-      gc->dataList[curTriSize + 1].addr  = (float *)&hw->GRN;
+      gc->dataList[curTriSize + 1].addr  = (float *)(void *)&hw->GRN;
       gc->dataList[curTriSize + 1].bddr  = 0;
       gc->dataList[curTriSize + 2].i     = gc->state.vData.rgbInfo.offset+GR_COLOR_OFFSET_BLUE;
-      gc->dataList[curTriSize + 2].addr  = (float *)&hw->BLU;
+      gc->dataList[curTriSize + 2].addr  = (float *)(void *)&hw->BLU;
       gc->dataList[curTriSize + 2].bddr  = 0;
       curTriSize += 3;
       params += 3;
@@ -1973,13 +1976,13 @@ GR_DDFUNC(_grRebuildDataList, void, ( void ))
       /* packed color, argb */
       /* add 9 to size array for r,drdx,drdy,g,dgdx,dgdy,b,dbdx,dbdy */
       gc->dataList[curTriSize + 0].i     = gc->state.vData.pargbInfo.offset;
-      gc->dataList[curTriSize + 0].addr  = (float *)&hw->RED;
+      gc->dataList[curTriSize + 0].addr  = (float *)(void *)&hw->RED;
       gc->dataList[curTriSize + 0].bddr  = gc->state.vData.pargbInfo.offset + GR_PARGB_R;
       gc->dataList[curTriSize + 1].i     = gc->state.vData.pargbInfo.offset;
-      gc->dataList[curTriSize + 1].addr  = (float *)&hw->GRN;
+      gc->dataList[curTriSize + 1].addr  = (float *)(void *)&hw->GRN;
       gc->dataList[curTriSize + 1].bddr  = gc->state.vData.pargbInfo.offset + GR_PARGB_G;
       gc->dataList[curTriSize + 2].i     = gc->state.vData.pargbInfo.offset;
-      gc->dataList[curTriSize + 2].addr  = (float *)&hw->BLU;
+      gc->dataList[curTriSize + 2].addr  = (float *)(void *)&hw->BLU;
       gc->dataList[curTriSize + 2].bddr  = gc->state.vData.pargbInfo.offset + GR_PARGB_B;
       curTriSize += 3;
       params += 3;
@@ -1988,7 +1991,7 @@ GR_DDFUNC(_grRebuildDataList, void, ( void ))
   
   if (i & STATE_REQUIRES_OOZ) {
     gc->dataList[curTriSize + 0].i     = gc->state.vData.zInfo.offset;
-    gc->dataList[curTriSize + 0].addr  = (float *)&hw->Z;
+    gc->dataList[curTriSize + 0].addr  = (float *)(void *)&hw->Z;
     gc->dataList[curTriSize + 0].bddr  = 0;
     curTriSize += 1;
     params += 1;
@@ -1997,7 +2000,7 @@ GR_DDFUNC(_grRebuildDataList, void, ( void ))
   if (i & STATE_REQUIRES_IT_ALPHA) {
     if (gc->state.vData.colorType == GR_FLOAT) {
       gc->dataList[curTriSize + 0].i     = gc->state.vData.aInfo.offset;
-      gc->dataList[curTriSize + 0].addr  = (float *)&hw->ALF;
+      gc->dataList[curTriSize + 0].addr  = (float *)(void *)&hw->ALF;
       gc->dataList[curTriSize + 0].bddr  = 0;
       curTriSize += 1;
       params += 1;
@@ -2005,7 +2008,7 @@ GR_DDFUNC(_grRebuildDataList, void, ( void ))
     else {
       /* packed color, argb */
       gc->dataList[curTriSize + 0].i     = gc->state.vData.pargbInfo.offset;
-      gc->dataList[curTriSize + 0].addr  = (float *)&hw->ALF;
+      gc->dataList[curTriSize + 0].addr  = (float *)(void *)&hw->ALF;
       gc->dataList[curTriSize + 0].bddr  = gc->state.vData.pargbInfo.offset + GR_PARGB_A;
       curTriSize += 1;
       params += 1;
@@ -2016,11 +2019,11 @@ GR_DDFUNC(_grRebuildDataList, void, ( void ))
   /* always output to ALL chips, saves from having to change CHIP field */
   if (i & STATE_REQUIRES_ST_TMU0) {
     gc->dataList[curTriSize + 0].i     = gc->state.vData.st0Info.offset;
-    gc->dataList[curTriSize + 0].addr  = (float *)&hw->S;
+    gc->dataList[curTriSize + 0].addr  = (float *)(void *)&hw->S;
     gc->dataList[curTriSize + 0].bddr  = 0;
     gc->dataList[curTriSize + 1].i     = gc->state.vData.st0Info.offset 
       + GR_TEXTURE_OFFSET_T;
-    gc->dataList[curTriSize + 1].addr  = (float *)&hw->T;
+    gc->dataList[curTriSize + 1].addr  = (float *)(void *)&hw->T;
     gc->dataList[curTriSize + 1].bddr  = 0;
     curTriSize += 2;
     params += 2;
@@ -2029,7 +2032,7 @@ GR_DDFUNC(_grRebuildDataList, void, ( void ))
   /* we squeeze FBI.OOW in here for sequential writes in the simple case */
   if (i & STATE_REQUIRES_OOW_FBI) {
     gc->dataList[curTriSize + 0].i     = gc->state.vData.qInfo.offset;
-    gc->dataList[curTriSize + 0].addr  = (float *)&hw->W;
+    gc->dataList[curTriSize + 0].addr  = (float *)(void *)&hw->W;
     gc->dataList[curTriSize + 0].bddr  = 0;
     curTriSize += 1;
     params += 1;
@@ -2047,7 +2050,7 @@ GR_DDFUNC(_grRebuildDataList, void, ( void ))
       else
         gc->dataList[curTriSize + 1].i     = gc->state.vData.wInfo.offset;
     }
-    gc->dataList[curTriSize + 1].addr  = (float *)&tmu0->W;
+    gc->dataList[curTriSize + 1].addr  = (float *)(void *)&tmu0->W;
     gc->dataList[curTriSize + 1].bddr  = 0;
     curTriSize += 2;
     params += 1;
@@ -2060,10 +2063,10 @@ GR_DDFUNC(_grRebuildDataList, void, ( void ))
     packerFlag = 0;
     gc->dataList[curTriSize + 0].bddr  = 0;
     gc->dataList[curTriSize + 1].i     = gc->state.vData.st1Info.offset;
-    gc->dataList[curTriSize + 1].addr  = (float *)&tmu1->S;
+    gc->dataList[curTriSize + 1].addr  = (float *)(void *)&tmu1->S;
     gc->dataList[curTriSize + 1].bddr  = 0;
     gc->dataList[curTriSize + 2].i     = gc->state.vData.st1Info.offset + GR_TEXTURE_OFFSET_T;
-    gc->dataList[curTriSize + 2].addr  = (float *)&tmu1->T;
+    gc->dataList[curTriSize + 2].addr  = (float *)(void *)&tmu1->T;
     gc->dataList[curTriSize + 2].bddr  = 0;
     curTriSize += 3;
     params += 2;
@@ -2085,7 +2088,7 @@ GR_DDFUNC(_grRebuildDataList, void, ( void ))
       else
         gc->dataList[curTriSize + 0].i     = gc->state.vData.wInfo.offset;
     }
-    gc->dataList[curTriSize + 0].addr  = (float *)&tmu1->W;
+    gc->dataList[curTriSize + 0].addr  = (float *)(void *)&tmu1->W;
     gc->dataList[curTriSize + 0].bddr  = 0;
     curTriSize += 1;
     params += 1;
@@ -2107,7 +2110,7 @@ GR_DDFUNC(_grRebuildDataList, void, ( void ))
   gc->dataList[curTriSize++].i = 0; /* terminate the list with 0,*      */
                                 /* followed by the FtriangleCMD reg */
   gc->dataList[curTriSize].i = packMask;/* encode P6 flag here for asm code */
-  gc->dataList[curTriSize].addr = (float *)&hw->FtriangleCMD;
+  gc->dataList[curTriSize].addr = (float *)(void *)&hw->FtriangleCMD;
   
   /* 6 X,Y values plus AREA = 7, plus parameters */
   _GlideRoot.curTriSize = (6 + curTriSize + (params<<1)) <<2;

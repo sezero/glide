@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.4  2005/08/13 21:06:57  jwrdegoede
+** Last needed 64 bit fixes for h5/h3, complete 64 bit support for cvg
+**
 ** Revision 1.1.1.1.8.3  2005/06/09 18:32:08  jwrdegoede
 ** Fixed all warnings with gcc4 -Wall -W -Wno-unused-parameter, except for a couple I believe to be a gcc bug. This has been reported to gcc.
 **
@@ -270,34 +273,30 @@ _grDrawTextureLine_Default(const void *a, const void *b)
 
   GR_BEGIN_NOFIFOCHECK(FN_NAME, 91);
 
-#define  DX _GlideRoot.pool.ftemp1
-#define ADY _GlideRoot.pool.ftemp2
+#define  DX _GlideRoot.pool.temp1
+#define ADY _GlideRoot.pool.temp2
 
   GR_FLUSH_STATE();
 
   {
-    FxI32 i, j;
-    FxU32 dataElem;
-    FxU32 vSize;
+    int i;
+    FxU32 vSize, dataElem;
     
     /*
     ** compute absolute deltas and draw from low Y to high Y
     */
-    ADY = FARRAY(b, 4) - FARRAY(a, 4);
-    i = *(int *)&ADY;
-    if (i < 0) {
+    ADY.f = FARRAY(b, 4) - FARRAY(a, 4);
+    if (ADY.i < 0) {
       const void *tv;
       tv = a; a = b; b = tv;
-      i ^= 0x80000000;            /* ady = -ady; */
-      /* (*(long *)&ADY) = i; */
+      ADY.i ^= 0x80000000;            /* ady = -ady; */
     }
     
-    DX = FARRAY(b, 0) - FARRAY(a, 0);
-    j = *(int *)&DX;
-    j &= 0x7fffffffL;            /* abs(adx) */
+    DX.f = FARRAY(b, 0) - FARRAY(a, 0);
+    DX.i &= 0x7fffffff;            /* abs(adx) */
     
     /* check for zero-length lines */
-    if ((j >= i) && (j == 0))
+    if ((DX.i >= ADY.i) && (DX.i == 0))
       return;
     
     vSize = gc->state.vData.vSize + 8;
@@ -305,7 +304,7 @@ _grDrawTextureLine_Default(const void *a, const void *b)
     TRI_STRIP_BEGIN(kSetupCullDisable | kSetupStrip, 4, vSize, 
                     SSTCP_PKT3_BDDDDD | (1<<15));
     /* x major */
-    if (j >= i) {
+    if (DX.i >= ADY.i) {
       TRI_SETF(FARRAY(b, 0));
       dataElem = 0;
       TRI_SETF(FARRAY(b, 4) - _GlideRoot.pool.fHalf);
@@ -1388,35 +1387,31 @@ _grAADrawTriangles(FxI32 mode, FxI32 ttype, FxI32 count, void *pointers)
         dyBC = fb[yindex] - fc[yindex];
         
         /* Stash the area in the float pool for easy access */
-        _GlideRoot.pool.ftemp1 = dxAB * dyBC - dxBC * dyAB;
+        _GlideRoot.pool.temp1.f = dxAB * dyBC - dxBC * dyAB;
         
 #define FloatVal(__f) (((__f) < 786432.875) ? (__f) : ((__f) - 786432.875))
-        {
-          const FxI32 j = *(FxI32*)&_GlideRoot.pool.ftemp1;
-          
-          /* Zero-area triangles are BAD!! */
-          if ((j & 0x7FFFFFFF) == 0) {
-            GDBG_INFO(291, FN_NAME": Culling (%g %g) (%g %g) (%g %g) : (%g : 0x%X : 0x%X)\n",
-                      FloatVal(fa[xindex]), FloatVal(fa[yindex]), 
-                      FloatVal(fb[xindex]), FloatVal(fb[yindex]), 
-                      FloatVal(fc[xindex]), FloatVal(fc[yindex]), 
-                      _GlideRoot.pool.ftemp1, gc->state.cull_mode, culltest);
+        /* Zero-area triangles are BAD!! */
+        if ((_GlideRoot.pool.temp1.i & 0x7FFFFFFF) == 0) {
+          GDBG_INFO(291, FN_NAME": Culling (%g %g) (%g %g) (%g %g) : (%g : 0x%X : 0x%X)\n",
+                    FloatVal(fa[xindex]), FloatVal(fa[yindex]), 
+                    FloatVal(fb[xindex]), FloatVal(fb[yindex]), 
+                    FloatVal(fc[xindex]), FloatVal(fc[yindex]), 
+                    _GlideRoot.pool.temp1.f, gc->state.cull_mode, culltest);
 
-            goto done;
-          }
+          goto done;
+        }
+    
+        /* Backface culling, use sign bit as test */
+        if ((gc->state.cull_mode != GR_CULL_DISABLE) &&
+            ((_GlideRoot.pool.temp1.i ^ (culltest << 31)) >= 0)) {
       
-          /* Backface culling, use sign bit as test */
-          if ((gc->state.cull_mode != GR_CULL_DISABLE) &&
-              ((j ^ (culltest << 31)) >= 0)) {
-        
-            GDBG_INFO(291, FN_NAME": Culling (%g %g) (%g %g) (%g %g) : (%g : 0x%X : 0x%X)\n",
-                      FloatVal(fa[xindex]), FloatVal(fa[yindex]), 
-                      FloatVal(fb[xindex]), FloatVal(fb[yindex]), 
-                      FloatVal(fc[xindex]), FloatVal(fc[yindex]), 
-                      _GlideRoot.pool.ftemp1, gc->state.cull_mode, culltest);
-        
-            goto done;
-          }
+          GDBG_INFO(291, FN_NAME": Culling (%g %g) (%g %g) (%g %g) : (%g : 0x%X : 0x%X)\n",
+                    FloatVal(fa[xindex]), FloatVal(fa[yindex]), 
+                    FloatVal(fb[xindex]), FloatVal(fb[yindex]), 
+                    FloatVal(fc[xindex]), FloatVal(fc[yindex]), 
+                    _GlideRoot.pool.temp1.f, gc->state.cull_mode, culltest);
+      
+          goto done;
         }
       }
     } /* end culling test */
@@ -1715,35 +1710,31 @@ _grAAVpDrawTriangles(FxI32 mode, FxI32 ttype, FxI32 count, void *pointers)
         dyBC = fb[yindex] - fc[yindex];
         
         /* Stash the area in the float pool for easy access */
-        _GlideRoot.pool.ftemp1 = dxAB * dyBC - dxBC * dyAB;
+        _GlideRoot.pool.temp1.f = dxAB * dyBC - dxBC * dyAB;
         
 #define FloatVal(__f) (((__f) < 786432.875) ? (__f) : ((__f) - 786432.875))
-        {
-          const FxI32 j = *(FxI32*)&_GlideRoot.pool.ftemp1;
-          
-          /* Zero-area triangles are BAD!! */
-          if ((j & 0x7FFFFFFF) == 0) {
-            GDBG_INFO(291, FN_NAME": Culling (%g %g) (%g %g) (%g %g) : (%g : 0x%X : 0x%X)\n",
-                      FloatVal(fa[xindex]), FloatVal(fa[yindex]), 
-                      FloatVal(fb[xindex]), FloatVal(fb[yindex]), 
-                      FloatVal(fc[xindex]), FloatVal(fc[yindex]), 
-                      _GlideRoot.pool.ftemp1, gc->state.cull_mode, culltest);
+        /* Zero-area triangles are BAD!! */
+        if ((_GlideRoot.pool.temp1.i & 0x7FFFFFFF) == 0) {
+          GDBG_INFO(291, FN_NAME": Culling (%g %g) (%g %g) (%g %g) : (%g : 0x%X : 0x%X)\n",
+                    FloatVal(fa[xindex]), FloatVal(fa[yindex]), 
+                    FloatVal(fb[xindex]), FloatVal(fb[yindex]), 
+                    FloatVal(fc[xindex]), FloatVal(fc[yindex]), 
+                    _GlideRoot.pool.temp1.f, gc->state.cull_mode, culltest);
 
-            goto done;
-          }
+          goto done;
+        }
+    
+        /* Backface culling, use sign bit as test */
+        if ((gc->state.cull_mode != GR_CULL_DISABLE) &&
+            ((_GlideRoot.pool.temp1.i ^ (culltest << 31)) >= 0)) {
       
-          /* Backface culling, use sign bit as test */
-          if ((gc->state.cull_mode != GR_CULL_DISABLE) &&
-              ((j ^ (culltest << 31)) >= 0)) {
-        
-            GDBG_INFO(291, FN_NAME": Culling (%g %g) (%g %g) (%g %g) : (%g : 0x%X : 0x%X)\n",
-                      FloatVal(fa[xindex]), FloatVal(fa[yindex]), 
-                      FloatVal(fb[xindex]), FloatVal(fb[yindex]), 
-                      FloatVal(fc[xindex]), FloatVal(fc[yindex]), 
-                      _GlideRoot.pool.ftemp1, gc->state.cull_mode, culltest);
-        
-            goto done;
-          }
+          GDBG_INFO(291, FN_NAME": Culling (%g %g) (%g %g) (%g %g) : (%g : 0x%X : 0x%X)\n",
+                    FloatVal(fa[xindex]), FloatVal(fa[yindex]), 
+                    FloatVal(fb[xindex]), FloatVal(fb[yindex]), 
+                    FloatVal(fc[xindex]), FloatVal(fc[yindex]), 
+                    _GlideRoot.pool.temp1.f, gc->state.cull_mode, culltest);
+      
+          goto done;
         }
       }
     } /* end culling test */

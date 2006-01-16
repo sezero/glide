@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.2.7  2005/06/16 18:58:32  jwrdegoede
+** Fix 2 sst1 bugs accidently introduced by warning fixes
+**
 ** Revision 1.1.2.6  2005/06/09 18:32:35  jwrdegoede
 ** Fixed all warnings with gcc4 -Wall -W -Wno-unused-parameter, except for a couple I believe to be a gcc bug. This has been reported to gcc.
 **
@@ -215,7 +218,7 @@ _grVpDrawTriangle( const void *va, const void *vb, const void *vc )
   const float *fb = (const float *)vb + xindex;
   const float *fc = (const float *)vc + xindex;
   float ooa, dxAB, dxBC, dyAB, dyBC;
-  int i,j,culltest;
+  int i,culltest;
   union { float f; int i; } ay;
   union { float f; int i; } by;
   union { float f; int i; } cy;
@@ -316,16 +319,15 @@ _grVpDrawTriangle( const void *va, const void *vb, const void *vc )
   dyBC = snap_yb - snap_yc;
   
   /* this is where we store the area */
-  _GlideRoot.pool.ftemp1 = dxAB * dyBC - dxBC * dyAB;
+  _GlideRoot.pool.temp1.f = dxAB * dyBC - dxBC * dyAB;
   
   /* Zero-area triangles are BAD!! */
-  j = *(long *)&_GlideRoot.pool.ftemp1;
-  if ((j & 0x7FFFFFFF) == 0)
+  if ((_GlideRoot.pool.temp1.i & 0x7FFFFFFF) == 0)
     return 0;
   
   /* Backface culling, use sign bit as test */
   if (gc->state.cull_mode != GR_CULL_DISABLE) {
-    if ((j ^ (culltest<<31)) >= 0) {
+    if ((_GlideRoot.pool.temp1.i ^ (culltest<<31)) >= 0) {
       return -1;
     }
   }
@@ -368,7 +370,7 @@ _grVpDrawTriangle( const void *va, const void *vb, const void *vc )
   SET_GW_CMD(    fifoPtr, 0, gc->hwDep.sst96Dep.gwCommand );
   SET_GW_HEADER( fifoPtr, 1, gc->hwDep.sst96Dep.gwHeaders[0] );
 
-  ooa = _GlideRoot.pool.f1 / _GlideRoot.pool.ftemp1;
+  ooa = _GlideRoot.pool.f1 / _GlideRoot.pool.temp1.f;
   /* GMT: note that we spread out our PCI writes */
   /* write out X & Y for vertex A */
   FSET_GW_ENTRY( fifoPtr, 2, snap_xa );
@@ -679,7 +681,7 @@ GDBG_INFO((285,"p0,1y: %g %g dpdy: %g\n",dpBC * dxAB,dpAB * dxBC,dpdy));
 
   /* write triangle command */
 triangle_command:
-  FSET_GW_ENTRY( fifoPtr, 0, _GlideRoot.pool.ftemp1 );
+  FSET_GW_ENTRY( fifoPtr, 0, _GlideRoot.pool.temp1.f );
   fifoPtr+=1;
   
   if (((FxU32)fifoPtr) & 0x7) {
@@ -920,7 +922,7 @@ _grVpDrawTriangle( const void *va, const void *vb, const void *vc )
   const float *fb = (const float *)vb + xindex;
   const float *fc = (const float *)vc + xindex;
   float ooa, dxAB, dxBC, dyAB, dyBC;
-  int i,j,culltest;
+  int i,culltest;
   union { float f; int i; } ay;
   union { float f; int i; } by;
   union { float f; int i; } cy;
@@ -1019,16 +1021,15 @@ _grVpDrawTriangle( const void *va, const void *vb, const void *vc )
   dyBC = snap_yb - snap_yc;
   
   /* this is where we store the area */
-  _GlideRoot.pool.ftemp1 = dxAB * dyBC - dxBC * dyAB;
+  _GlideRoot.pool.temp1.f = dxAB * dyBC - dxBC * dyAB;
   
   /* Zero-area triangles are BAD!! */
-  j = *(long *)&_GlideRoot.pool.ftemp1;
-  if ((j & 0x7FFFFFFF) == 0)
+  if ((_GlideRoot.pool.temp1.i & 0x7FFFFFFF) == 0)
     return 0;
   
   /* Backface culling, use sign bit as test */
   if (gc->state.cull_mode != GR_CULL_DISABLE) {
-    if ((j ^ (culltest<<31)) >= 0) {
+    if ((_GlideRoot.pool.temp1.i ^ (culltest<<31)) >= 0) {
       return -1;
     }
   }
@@ -1037,7 +1038,7 @@ _grVpDrawTriangle( const void *va, const void *vb, const void *vc )
 
   GR_SET_EXPECTED_SIZE(_GlideRoot.curTriSize);
   
-  ooa = _GlideRoot.pool.f1 / _GlideRoot.pool.ftemp1;
+  ooa = _GlideRoot.pool.f1 / _GlideRoot.pool.temp1.f;
   /* GMT: note that we spread out our PCI writes */
   /* write out X & Y for vertex A */
   GR_SETF( hw->FvA.x, snap_xa);
@@ -1359,7 +1360,7 @@ GDBG_INFO((285,"p0,1y: %g %g dpdy: %g\n",dpBC * dxAB,dpAB * dxBC,dpdy));
   }
 
   /* Draw the triangle by writing the area to the triangleCMD register */
-  P6FENCE_CMD( GR_SETF( hw->FtriangleCMD, _GlideRoot.pool.ftemp1 ) );
+  P6FENCE_CMD( GR_SETF( hw->FtriangleCMD, _GlideRoot.pool.temp1.f ) );
   _GlideRoot.stats.trisDrawn++;
 
   GR_CHECK_SIZE_SLOPPY();
@@ -1451,10 +1452,10 @@ _grDrawPoints(FxI32 mode, FxI32 count, void *pointers)
 #endif
       fx = *vPtr + bias;
       fy = *(vPtr+1) + bias;
-      _GlideRoot.pool.ftemp1 = (float)fx;
-      _GlideRoot.pool.ftemp2 = (float)fy;
-      x = *(int *)&_GlideRoot.pool.ftemp1;
-      y = *(int *)&_GlideRoot.pool.ftemp2;
+      _GlideRoot.pool.temp1.f = (float)fx;
+      _GlideRoot.pool.temp2.f = (float)fy;
+      x = _GlideRoot.pool.temp1.i;
+      y = _GlideRoot.pool.temp2.i;
       x <<= SST_XY_FRACBITS;                /* convert to fixed point */
       x += SST_XY_HALF;                     /* and center within pixel */
     
@@ -1525,10 +1526,10 @@ _grDrawPoints(FxI32 mode, FxI32 count, void *pointers)
       fy = FARRAY(vPtr, 4)*oow*gc->state.Viewport.hheight
         + gc->state.Viewport.oy + bias;
 
-      _GlideRoot.pool.ftemp1 = (float)fx;
-      _GlideRoot.pool.ftemp2 = (float)fy;
-      x = *(int *)&_GlideRoot.pool.ftemp1;
-      y = *(int *)&_GlideRoot.pool.ftemp2;
+      _GlideRoot.pool.temp1.f = (float)fx;
+      _GlideRoot.pool.temp2.f = (float)fy;
+      x = _GlideRoot.pool.temp1.i;
+      y = _GlideRoot.pool.temp2.i;
       x <<= SST_XY_FRACBITS;                /* convert to fixed point */
       x += SST_XY_HALF;                     /* and center within pixel */
     
@@ -1702,11 +1703,11 @@ _grDrawLineStrip(FxI32 mode, FxI32 ltype, FxI32 count, void *pointers)
 {
 #define FN_NAME "_grDrawLineStrip"
 
+  int i;
   float    m, dp;
-  #define  DX _GlideRoot.pool.ftemp1
-  #define ADY _GlideRoot.pool.ftemp2
+  #define  DX _GlideRoot.pool.temp1
+  #define ADY _GlideRoot.pool.temp2
 
-  int i,j;
   float *fp;
   struct dataList_s *dlp;
   FxI32 index;
@@ -1756,30 +1757,25 @@ _grDrawLineStrip(FxI32 mode, FxI32 ltype, FxI32 count, void *pointers)
       /*
       ** compute absolute deltas and draw from low Y to high Y
       */
-      ADY = snap_yb - snap_ya;
-      i = *(long *)&ADY;
-      if ( i < 0 ) {
+      ADY.f = snap_yb - snap_ya;
+      if ( ADY.i < 0 ) {
         float *tv, ts;
         tv = a; a = b; b = tv;
-        i ^= 0x80000000;        /* ady = -ady; */
-        (*(long *)&ADY) = i;
+        ADY.i ^= 0x80000000;        /* ady = -ady; */
 	ts = snap_xa; snap_xa = snap_xb; snap_xb = ts;
 	ts = snap_ya; snap_ya = snap_yb; snap_yb = ts;
       }
       
-      DX = snap_xb - snap_xa;
-      j = *(long *)&DX;
-      if (j < 0 ) {
-        j ^= 0x80000000;        /* adx = -adx; */
-      }
+      DX.f = snap_xb - snap_xa;
+      DX.i &= 0x7fffffff;           /* abs(adx) */        
       
       /*
       ** X major line
       */
-      if (j >= i ) {                       /* if (adx > ady) */
-        if (j == 0) goto all_done;         /* check for zero-length lines */
+      if (DX.i >= ADY.i) {                       /* if (adx > ady) */
+        if (DX.i == 0) goto all_done;         /* check for zero-length lines */
         /* start up divide and overlap with as much integer stuff as possible*/
-        m = _GlideRoot.pool.f1 / DX;
+        m = _GlideRoot.pool.f1 / DX.f;
         dlp = gc->dataList;
         GR_SETF(hw->FvA.x, snap_xa);
         dp = snap_xb;
@@ -1824,18 +1820,18 @@ _grDrawLineStrip(FxI32 mode, FxI32 ltype, FxI32 count, void *pointers)
             GR_SETF( fp[DPDY_OFFSET>>2] , _GlideRoot.pool.f0 );
           }
         }
-        P6FENCE_CMD( GR_SETF(hw->FtriangleCMD,_GlideRoot.pool.ftemp1) );
+        P6FENCE_CMD( GR_SETF(hw->FtriangleCMD, DX.f) );
         
         GR_SETF(hw->FvB.x, snap_xa);
         GR_SETF(hw->FvB.y, snap_ya + _GlideRoot.pool.fHalf);
-        P6FENCE_CMD( GR_SETF(hw->FtriangleCMD,-_GlideRoot.pool.ftemp1));
+        P6FENCE_CMD( GR_SETF(hw->FtriangleCMD, -DX.f));
       }
       
       /*
       ** Y major line
       */
       else {
-        m = _GlideRoot.pool.f1 / ADY;
+        m = _GlideRoot.pool.f1 / ADY.f;
         dlp = gc->dataList;
         GR_SETF(hw->FvA.y, snap_ya);
         dp = snap_yb;
@@ -1941,31 +1937,26 @@ _grDrawLineStrip(FxI32 mode, FxI32 ltype, FxI32 count, void *pointers)
       /*
       ** compute absolute deltas and draw from low Y to high Y
       */
-      ADY = tmp2 - tmp1;
-      i = *(long *)&ADY;
-      if ( i < 0 ) {
+      ADY.f = tmp2 - tmp1;
+      if ( ADY.i < 0 ) {
         float *tv, ts;
         owa = oowb; owb = oowa;
         tv = a; a = b; b = tv;
-        i ^= 0x80000000;        /* ady = -ady; */
-        (*(long *)&ADY) = i;
+        ADY.i ^= 0x80000000;        /* ady = -ady; */
 	ts = fax; fax = fbx; fbx = ts;
 	ts = fay; fay = fby; fby = ts;
       }
       
-      DX = fbx - fax;
-      j = *(long *)&DX;
-      if (j < 0 ) {
-        j ^= 0x80000000;        /* adx = -adx; */
-      }
+      DX.f = fbx - fax;
+      DX.i &= 0x7fffffff;           /* abs(adx) */        
       
       /*
       ** X major line
       */
-      if (j >= i ) {                       /* if (adx > ady) */
-        if (j == 0) goto all_done_vp;         /* check for zero-length lines */
+      if (DX.i >= ADY.i ) {                       /* if (adx > ady) */
+        if (DX.i == 0) goto all_done_vp;         /* check for zero-length lines */
         /* start up divide and overlap with as much integer stuff as possible*/
-        m = _GlideRoot.pool.f1 / DX;
+        m = _GlideRoot.pool.f1 / DX.f;
         dlp = gc->dataList;
         GR_SETF(hw->FvA.x, fax);
         GR_SETF(hw->FvB.x, fbx);
@@ -2174,18 +2165,18 @@ _grDrawLineStrip(FxI32 mode, FxI32 ltype, FxI32 count, void *pointers)
           }
         }
         
-        P6FENCE_CMD( GR_SETF(hw->FtriangleCMD,_GlideRoot.pool.ftemp1) );
+        P6FENCE_CMD( GR_SETF(hw->FtriangleCMD, DX.f) );
         
         GR_SETF(hw->FvB.x, fax);
         GR_SETF(hw->FvB.y, fay + _GlideRoot.pool.fHalf);
-        P6FENCE_CMD( GR_SETF(hw->FtriangleCMD,-_GlideRoot.pool.ftemp1));
+        P6FENCE_CMD( GR_SETF(hw->FtriangleCMD, -DX.f) );
       }
       
       /*
       ** Y major line
       */
       else {
-        m = _GlideRoot.pool.f1 / ADY;
+        m = _GlideRoot.pool.f1 / ADY.f;
         dlp = gc->dataList;
         GR_SETF(hw->FvA.y, fay);
         GR_SETF(hw->FvB.y, fby);

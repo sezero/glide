@@ -1547,7 +1547,9 @@ typedef struct GrGC_s
   } stats;
 
   struct {
-    float  ftemp1, ftemp2;       /* temps to convert floats to ints */
+    /* temps to convert floats to ints */
+    union { float f; FxI32 i; FxU32 u; } temp1;
+    union { float f; FxI32 i; FxU32 u; } temp2;
   } pool;
 
 #if GLIDE_HW_TRI_SETUP

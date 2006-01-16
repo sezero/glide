@@ -210,8 +210,8 @@ main (int argc, char **argv)
     OFFSET (gr, pool.f1,    "pool_f1");
     OFFSET (gr, pool.f255,  "pool_f255");
 
-    OFFSET (gr, pool.ftemp1, "pool_fTemp1");
-    OFFSET (gr, pool.ftemp2, "pool_fTemp2");
+    OFFSET (gr, pool.temp1.f, "pool_fTemp1");
+    OFFSET (gr, pool.temp2.f, "pool_fTemp2");
 
     SIZEOF (gr,"GlideRoot");
     NEWLINE;
