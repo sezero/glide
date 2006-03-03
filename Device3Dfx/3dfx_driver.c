@@ -78,7 +78,7 @@
 #include <asm/processor.h>
 
 #include <asm/uaccess.h>
-#ifdef HAVE_MTRR
+#ifdef CONFIG_MTRR
 #include <asm/mtrr.h>
 #endif
 
@@ -206,7 +206,7 @@ struct cardInfo_t {
 	unsigned char dev;
 #endif
 	struct file *curFile;
-#ifdef HAVE_MTRR
+#ifdef CONFIG_MTRR
 	int mtrr_buf;
 	int mtrr_ctl;
 #endif
@@ -621,7 +621,7 @@ static int ioctl_3dfx(struct inode *inode, struct file *file, unsigned int cmd, 
 	}
 }
 
-#ifdef HAVE_MTRR
+#ifdef CONFIG_MTRR
 int setmtrr_3dfx(void)
 {
 	int i = 0, retval = -2;
@@ -735,7 +735,7 @@ int resetmtrr_3dfx(void)
 	return retval;
 }
 
-#endif /* HAVE_MTRR */
+#endif /* CONFIG_MTRR */
 
 static struct file_operations fops_3dfx = {
 #if KERNEL_MIN_VER(2, 4, 0)
@@ -831,7 +831,7 @@ int init_module(void)
 	DEBUGMSG(("3dfx: Successfully registered device 3dfx\n"));
 	findCards();
 
-#ifdef HAVE_MTRR
+#ifdef CONFIG_MTRR
 	ret = setmtrr_3dfx();
 	if (ret < 0) {
 		DEBUGMSG(("setmtrr_3dfx() failed, returned %d\n", ret));
@@ -849,7 +849,7 @@ void cleanup_module(void)
 {
 	DEBUGMSG(("3dfx: Entering cleanup_module\n"));
 
-#ifdef HAVE_MTRR
+#ifdef CONFIG_MTRR
 	resetmtrr_3dfx();
 #endif
 #if KERNEL_MIN_VER(2,6,0)

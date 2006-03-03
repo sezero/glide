@@ -1,3 +1,7 @@
+2006-03-03  Guillem Jover  <guillem@hadrons.org>
+
+	* 3dfx_device.c: Rename HAVE_MTRR to CONFIG_MTRR.
+
 2005-04-23  Guillem Jover  <guillem@hadrons.org>
 
 	* 3dfx_device.c: Add GPL notice.
