@@ -1437,6 +1437,7 @@ char tlGetCH( void ) {
 FxBool
 tlErrorMessage( char *err) {
   fprintf(stderr, err);
+  return FXTRUE;
 } /* tlErrorMessage */
 
 #else
