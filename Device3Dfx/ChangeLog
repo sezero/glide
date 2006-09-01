@@ -39,11 +39,11 @@
 	* Use new pci probe present in 2.6.x kernels.
 	* Use module auto-loading.
 
-2004-01-22   Guillem Jover   <guillem@debian.org>
+2004-01-22  Guillem Jover  <guillem@debian.org>
 
 	* Ported to 2.6 kernels.
 
-2002-05-05   Guillem Jover   <guillem@hadrons.org>
+2002-05-05  Guillem Jover  <guillem@hadrons.org>
 
 	* Re-included VOODOO pci id, accidentally removed in last patch,
 	  thanks to Jan Kuipers to point this out.
