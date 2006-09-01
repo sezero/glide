@@ -177,6 +177,9 @@ devNum,
 physAddr,
 fifoMTRRNum = 0xffffffff;
 
+static void init96SetupRendering(InitRegisterDesc *regDesc,
+                                 GrScreenResolution_t sRes);
+
 /*-----------Debuging Info Data------------------------------*/
 #ifdef GDBG_INFO_ON
 /* NOTE:
@@ -759,8 +762,6 @@ INITVG96ENTRY(init96MapBoard, FxBool , (void *rd, void *info, FxU16 vID, FxU16 d
   {
     FxBool rv=FXTRUE;
     GrScreenResolution_t    res = GR_RESOLUTION_640x480;
-    static void init96SetupRendering(InitRegisterDesc *regDesc,
-				     GrScreenResolution_t sRes);
 
     if (curHALData->initAperture)
       (*curHALData->initAperture)(regDesc);
