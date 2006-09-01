@@ -294,7 +294,10 @@ INITMCRXENTRY(initMCRXEnableRegs, FxBool, (InitRegisterDesc *rd))
   GDBG_INFO((80, "%s:  Enabling PUMA\n", FN_NAME));
   CRTC_GET(0x28, tmp);
   tmp |= 1;
-  if (envVal = myGetenv("MCRX_28")) sscanf(envVal, "%x", &tmp);
+
+  envVal = myGetenv("MCRX_28");
+  if (envVal)
+    sscanf(envVal, "%x", &tmp);
   CRTC_SET(0x28, tmp);
 
   GDBG_INFO((80, "%s:  Restoring Protection\n", FN_NAME));
@@ -542,7 +545,8 @@ INITMCRXENTRY(initMCRXUseTiles, int, (InitRegisterDesc *rd,
   if (nBuffers == 3) tmp |= 0x08;
   mcrxHALData.initSwapTiles = initMCRXSwapTiles;
 
-  if (envVal = myGetenv("MRCX_71")) 
+  envVal = myGetenv("MRCX_71");
+  if (envVal)
     sscanf(envVal, "%x", &tmp);
   CRTC_SET(0x70, tmp);
 
