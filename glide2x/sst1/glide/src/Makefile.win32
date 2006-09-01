@@ -258,9 +258,9 @@ endif
 ###############################################################################
 #	main
 ###############################################################################
-all: glide3x $(TEXUS_EXEDIR)/$(TEXUS_EXE)
+all: glide2x $(TEXUS_EXEDIR)/$(TEXUS_EXE)
 
-glide3x: $(GLIDE_LIBDIR)/$(GLIDE_DLL)
+glide2x: $(GLIDE_LIBDIR)/$(GLIDE_DLL)
 
 $(GLIDE_LIBDIR)/$(GLIDE_DLL): $(GLIDE_OBJECTS) $(GLIDE_RES)
 	$(LD) -out:$@ $(LDFLAGS) $(GLIDE_OBJECTS) $(LDLIBS) $(GLIDE_RES)
