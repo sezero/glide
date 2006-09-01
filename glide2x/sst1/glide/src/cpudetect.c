@@ -20,6 +20,7 @@
 
 #include <sys/utsname.h>
 #include <stdio.h>
+#include <string.h>
 
 int _cpu_detect_asm() {
   struct utsname name;
