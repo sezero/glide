@@ -75,7 +75,8 @@ static void imageConvert( void *dst,
                           GrLfbSrcFmt_t format,
                           FxU32 *bpp );
 
-void main( int argc, char **argv) {
+int main( int argc, char **argv)
+{
     char match; 
     char **remArgs;
     int  rv;
@@ -103,7 +104,7 @@ void main( int argc, char **argv) {
     dstfname[0] = 0;
 
     /* Process Command Line Arguments */
-    while( rv = tlGetOpt( argc, argv, "nrst", &match, &remArgs ) ) {
+    while ((rv = tlGetOpt(argc, argv, "nrst", &match, &remArgs))) {
         if ( rv == -1 ) {
             printf( "Unrecognized command line argument\n" );
             printf( "%s %s\n", name, usage );
@@ -173,7 +174,7 @@ void main( int argc, char **argv) {
 	/* readng the LFB file header */
 	fread(&src.signature, 4, 1, fp);
 	if (src.signature != IMAGE_SRLE) {
-	  printf("%s file type incorrect\n");
+	  printf("%s file type incorrect\n", srcfname);
 	  return;
 	}
 	fread(&src.width, 2, 1, fp);
@@ -207,7 +208,7 @@ void main( int argc, char **argv) {
 	/* readng the LFB file header */
 	fread(&dst.signature, 4, 1, fp);
 	if (dst.signature != IMAGE_SRLE) {
-	  printf("%s file type incorrect\n");
+	  printf("%s file type incorrect\n", dstfname);
 	  return;
 	}
 	fread(&dst.width, 2, 1, fp);
