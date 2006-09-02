@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.2.3  2005/01/22 14:52:01  koolsmoky
+** enabled packed argb for cmd packet type 3
+**
 ** Revision 1.1.1.1.2.2  2004/12/23 20:45:56  koolsmoky
 ** converted to nasm syntax
 ** added x86 asm, 3dnow! triangle and mmx, 3dnow! texture download optimizations
@@ -134,58 +137,6 @@ static char glideIdent[] = "@#%" VERSIONSTR ;
 /* the root of all EVIL */
 struct _GlideRoot_s GR_CDECL _GlideRoot;
 /* This is global to speed up the function call wrappers */
-
-/*;------------------------------------------------------------------------------   
-; this routine sets the precision to single
-; which effects all adds, mults, and divs
- */
-void single_precision_asm()
-{
-#if __MSC__
-  __asm {
-    push  eax       ; make room
-    fnclex          ; clear pending exceptions    
-    fstcw WORD PTR [esp]
-    mov   eax, DWORD PTR [esp]
-    and   eax, 0000fcffh  ; clear bits 9:8
-    mov   DWORD PTR [esp], eax
-    fldcw WORD PTR [esp]
-    pop   eax
-    }
-#elif __GNUC__
-  asm("push %eax \n fnclex \n fstcw (%esp) \n movl (%esp), %eax \n "
-      "and $0x0000fcff, %eax \n movl %eax, (%esp) \n fldcw (%esp) \n pop %eax");
-#else
-#error "Need to implement single_precision_asm() for this compiler"
-#endif
-}
-
-/*;------------------------------------------------------------------------------   
-; this routine sets the precision to double
-; which effects all adds, mults, and divs
- */
-void double_precision_asm()
-{
-#if __MSC__
-  __asm {
-    push  eax       ; make room
-    fnclex          ; clear pending exceptions    
-    fstcw WORD PTR [esp]
-    mov   eax, DWORD PTR [esp]
-    and   eax, 0000fcffh  ; clear bits 9:8
-    or    eax, 000002ffh  ; set 9:8 to 10
-    mov   DWORD PTR [esp], eax
-    fldcw WORD PTR [esp]
-    pop   eax
-    }
-#elif __GNUC__
-  asm("push %eax \n fnclex \n fstcw (%esp) \n movw (%esp), %eax \n "
-      "and $0x0000fcff, %eax \n or $0x000002ff, %eax \n mov %eax, (%esp) \n "
-      "fldcw (%esp) \n pop %eax");
-#else
-#error "Need to implement double_precision_asm() for this compiler"
-#endif
-}
 
 /*---------------------------------------------------------------------------
 **
