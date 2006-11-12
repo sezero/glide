@@ -79,6 +79,7 @@ endif
 
 # general
 CDEFS += -DGLIDE3 -DGLIDE3_ALPHA -DGLIDE_HARDWARE
+LDLIBS += -lm
 
 # subsystem
 ifeq ($(FX_GLIDE_HW),sst1)
