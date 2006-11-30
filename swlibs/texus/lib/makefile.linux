@@ -164,5 +164,6 @@ clean:
 
 realclean: clean
 	-$(RM) $(TEXUS_LIBDIR)/$(TEXUS_LIB)
+	-$(RM) $(TEXUS_LIBDIR)/$(TEXUS_SHARED)
 	-$(RM) $(TEXUS_LIBDIR)/$(TEXUS_SO)
 
