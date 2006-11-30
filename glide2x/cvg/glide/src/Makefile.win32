@@ -196,6 +196,7 @@ GLIDE_OBJECTS = \
 	gtexdl.obj \
 	gutex.obj \
 	cpuid.obj \
+	fpu.obj \
 	xtexdl_def.obj
 
 ifeq ($(USE_X86),1)

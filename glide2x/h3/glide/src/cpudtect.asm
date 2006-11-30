@@ -19,9 +19,15 @@
 ;;
 ;; $Header$
 ;; $Log$
+;; Revision 1.1.1.1.8.1  2003/11/07 13:38:38  dborca
+;; unite the clans
+;;
+;; Revision 1.1.1.1  1999/11/24 21:44:53  joseph
+;; Initial checkin for SourceForge
+;;
 ;; 
-;; 3     3/17/99 6:14p Dow
-;; Phantom Menace and other fixes.
+;; 4     4/06/99 3:54p Dow
+;; Alt tab again.
 ;; 
 ;; 9     3/10/99 10:40a Peter
 ;; detect katmai-ness
@@ -45,10 +51,7 @@
 ;;
 ;;
 
-TITLE  cpudtect.asm
-
-.586P
-.model FLAT,C                   ; Flat memory, mangle publics with leading '_'
+%include "xos.inc"
 
 ;;      Data for data segment goes here
 ;_DATA   SEGMENT DWORD USE32 PUBLIC 'DATA'; 
@@ -56,14 +59,14 @@ TITLE  cpudtect.asm
     
 ;;; Some useful constants
 ; CPU Type
-CPUTypeUnknown  = 0ffffffffh
-CPUTypePrePent  = 4h
-CPUTypeP5       = 5h    
-CPUTypeP6       = 6h    
+CPUTypeUnknown  equ 0ffffffffh
+CPUTypePrePent  equ 4h
+CPUTypeP5       equ 5h
+CPUTypeP6       equ 6h
         
 ;;; References to external data:
     
-_TEXT   SEGMENT
+segment		TEXT
 ;;
 ;;  _cpu_detect_asm - detect the type of CPU 
 ;; 
@@ -73,10 +76,8 @@ _TEXT   SEGMENT
 ;;
 ;;  returns 4 for non-pen
 
-PUBLIC  _cpu_detect_asm
-_cpu_detect_asm PROC NEAR
+proc _cpu_detect_asm
 P6Stuff:
-    .586
     push   esi                          ; save registers that are not volatile
     push   edi
     push   ebx
@@ -276,45 +277,38 @@ UnknownVendor:
     jmp  DoneCpu
 
         
-_cpu_detect_asm ENDP
+endp
 
 
 ;------------------------------------------------------------------------------   
 ; this routine sets the precision to single
 ; which effects all adds, mults, and divs
     align 4                 ; 
-    PUBLIC  single_precision_asm
-single_precision_asm PROC NEAR
-.586
+proc single_precision_asm
     push  eax       ; make room
     fnclex          ; clear pending exceptions    
-    fstcw WORD PTR [esp]
-    mov   eax, DWORD PTR [esp]
+    fstcw WORD [esp]
+    mov   eax, DWORD [esp]
     and   eax, 0000fcffh  ; clear bits 9:8
-    mov   DWORD PTR [esp], eax
-    fldcw WORD PTR [esp]
+    mov   DWORD [esp], eax
+    fldcw WORD [esp]
     pop   eax
-    ret   0
-single_precision_asm ENDP
+    ret
+endp
 
 ;------------------------------------------------------------------------------   
 ; this routine sets the precision to double
 ; which effects all adds, mults, and divs
     align 4                 ; 
-    PUBLIC  double_precision_asm
-double_precision_asm PROC NEAR
-.586
+proc double_precision_asm
     push  eax       ; make room
     fnclex          ; clear pending exceptions    
-    fstcw WORD PTR [esp]
-    mov   eax, DWORD PTR [esp]
+    fstcw WORD [esp]
+    mov   eax, DWORD [esp]
     and   eax, 0000fcffh  ; clear bits 9:8
     or    eax, 000002ffh  ; set 9:8 to 10
-    mov   DWORD PTR [esp], eax
-    fldcw WORD PTR [esp]
+    mov   DWORD [esp], eax
+    fldcw WORD [esp]
     pop   eax
-    ret   0
-double_precision_asm ENDP
-    
-_TEXT ENDS
-END
+    ret
+endp
