@@ -42,9 +42,6 @@
 #	USE_MMX=1	(see USE_3DNOW)
 #			target  = h3
 #			default = no
-#	TEXUS2=1	embed Texus2 functions into Glide2.
-#			target  = sst1, sst96, cvg, h3
-#			default = no
 #
 #    Targets:
 #	all:		build everything
