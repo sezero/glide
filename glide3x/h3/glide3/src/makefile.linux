@@ -201,6 +201,12 @@ GLIDE_OBJECTS += \
 	../../minihwc/hwcio.o \
 	../../minihwc/gdebug.o
 
+# FIXME: needed for now to match the old library signature, should be checked
+#        if it's really needed.
+GLIDE_OBJECTS += \
+	$(FX_GLIDE_SW)/fxmisc/fxos.o \
+	$(FX_GLIDE_SW)/fxmisc/fximg.o
+
 ifeq ($(DRI),1)
 GLIDE_OBJECTS += \
 	../../minihwc/linhwc.o \
@@ -324,7 +330,7 @@ clean:
 	-$(RM) ../../cinit/*.o ../../cinit/*.lo
 	-$(RM) ../../minihwc/*.o ../../minihwc/*.lo
 	-$(RM) $(FX_GLIDE_SW)/newpci/pcilib/*.o $(FX_GLIDE_SW)/newpci/pcilib/*.lo
-	-$(RM) $(FX_GLIDE_SW)/fxmisc/linutil.o $(FX_GLIDE_SW)/fxmisc/linutil.lo
+	-$(RM) $(FX_GLIDE_SW)/fxmisc/*.o $(FX_GLIDE_SW)/fxmisc/*.lo
 	-$(RM) fxinline.h
 	-$(RM) fxgasm.h
 	-$(RM) $(FX_GLIDE_SW)/texus2/lib/*.o $(FX_GLIDE_SW)/texus2/lib/*.lo

@@ -204,6 +204,12 @@ GLIDE_OBJECTS += \
 	../../init/video.o \
 	../../init/fxremap.o
 
+# FIXME: needed for now to match the old library signature, should be checked
+#        if it's really needed.
+GLIDE_OBJECTS += \
+	$(FX_GLIDE_SW)/fxmisc/fxos.o \
+	$(FX_GLIDE_SW)/fxmisc/fximg.o
+
 TEXUS_SOURCES = \
 	$(FX_GLIDE_SW)/texus2/lib/texuslib.c \
 	$(FX_GLIDE_SW)/texus2/lib/clamp.c \
@@ -317,6 +323,7 @@ clean:
 	-$(RM) *.o *.obj *.lo
 	-$(RM) ../../init/*.o ../../init/*.lo
 	-$(RM) $(FX_GLIDE_SW)/newpci/pcilib/*.o $(FX_GLIDE_SW)/newpci/pcilib/*.lo
+	-$(RM) $(FX_GLIDE_SW)/fxmisc/*.o $(FX_GLIDE_SW)/fxmisc/*.lo
 	-$(RM) fxinline.h
 	-$(RM) fxgasm.h
 	-$(RM) $(FX_GLIDE_SW)/texus2/lib/*.o $(FX_GLIDE_SW)/texus2/lib/*.lo
