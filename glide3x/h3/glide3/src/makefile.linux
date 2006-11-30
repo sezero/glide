@@ -54,11 +54,15 @@ export PATH := $(PATH):.
 #	general defines (user settable?)
 ###############################################################################
 
+GLIDE_VERSION_MAJOR = 3
+GLIDE_VERSION_MINOR = 10
+
 GLIDE_LIB = libglide3.a
 GLIDE_SO  = libglide3.so
 TEXUS_EXE = texus2
 
-GLIDE_SONAME = libglide3.so.3
+GLIDE_SONAME = $(GLIDE_SO).$(GLIDE_VERSION_MAJOR)
+GLIDE_SHARED = $(GLIDE_SONAME).$(GLIDE_VERSION_MINOR)
 
 FX_GLIDE_HW ?= h3
 FX_GLIDE_SW = ../../../swlibs
@@ -270,7 +274,10 @@ glide3x: $(GLIDE_LIBDIR)/$(GLIDE_LIB) $(GLIDE_LIBDIR)/$(GLIDE_SO)
 $(GLIDE_LIBDIR)/$(GLIDE_LIB): $(GLIDE_OBJECTS)
 	$(AR) $(ARFLAGS) $@ $^
 
-$(GLIDE_LIBDIR)/$(GLIDE_SO): $(GLIDE_OBJECTS:.o=.lo)
+$(GLIDE_LIBDIR)/$(GLIDE_SO): $(GLIDE_LIBDIR)/$(GLIDE_SHARED)
+	ln -fs $(GLIDE_SHARED) $(GLIDE_LIBDIR)/$(GLIDE_SO)
+
+$(GLIDE_LIBDIR)/$(GLIDE_SHARED): $(GLIDE_OBJECTS:.o=.lo)
 	$(CC) -o $@ -shared -Wl,-soname,$(GLIDE_SONAME) $^ $(LDFLAGS) $(LDLIBS)
 
 $(TEXUS_EXEDIR)/$(TEXUS_EXE): $(FX_GLIDE_SW)/texus2/cmd/cmd.c $(GLIDE_LIBDIR)/$(GLIDE_LIB)
@@ -337,5 +344,6 @@ clean:
 
 realclean: clean
 	-$(RM) $(GLIDE_LIBDIR)/$(GLIDE_LIB)
+	-$(RM) $(GLIDE_LIBDIR)/$(GLIDE_SHARED)
 	-$(RM) $(GLIDE_LIBDIR)/$(GLIDE_SO)
 	-$(RM) $(TEXUS_EXEDIR)/$(TEXUS_EXE)
