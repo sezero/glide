@@ -191,7 +191,10 @@ static struct pci_card {
 #define VM_OFFSET_ALIGNED(vma) ((vma->vm_pgoff) & ~PAGE_MASK)
 #endif
 
-#if KERNEL_MIN_VER(2,6,0)
+#if KERNEL_MIN_VER(2,6,10)
+#define my_remap_page_range(vma, start, ofs, len, prot) \
+	remap_pfn_range(vma, start, ofs >> PAGE_SHIFT, len, prot)
+#elif KERNEL_MIN_VER(2,6,0)
 #define my_remap_page_range(vma, start, ofs, len, prot) \
 	remap_page_range(vma, start, ofs, len, prot)
 #else

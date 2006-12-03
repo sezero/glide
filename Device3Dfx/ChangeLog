@@ -1,5 +1,10 @@
 2006-12-03  Guillem Jover  <guillem@hadrons.org>
 
+	* 3dfx_device.c (my_remap_page_range): Define as remap_pfn_range for
+	linux 2.6.10 or higher.
+
+2006-12-03  Guillem Jover  <guillem@hadrons.org>
+
 	Use the "new" kernel level exception handling for memory accesses
 	introduced in linux 2.1.8, which obsoletes verify_aread.
 
