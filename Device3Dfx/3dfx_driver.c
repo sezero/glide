@@ -174,8 +174,10 @@ static struct pci_card {
  */
 #if !KERNEL_MIN_VER(2,3,14)
 #define VM_OFFSET(vma) (vma->vm_offset)
+#define VM_OFFSET_ALIGNED(vma) ((vma->vm_offset) & ~PAGE_MASK)
 #else
 #define VM_OFFSET(vma) (vma->vm_pgoff << PAGE_SHIFT)
+#define VM_OFFSET_ALIGNED(vma) ((vma->vm_pgoff) & ~PAGE_MASK)
 #endif
 
 #if KERNEL_MIN_VER(2,6,0)
@@ -311,20 +313,10 @@ static int mmap_3dfx(struct file *file, struct vm_area_struct *vma)
 			 VM_OFFSET(vma)));
 		return -EPERM;
 	}
-	/*
-	 * This one is a special case, the macro doesn't help.
-	 */
-#if !KERNEL_MIN_VER(2,3,14)
-	if ((vma->vm_offset) & ~PAGE_MASK) {
+	if (VMA_OFFSET_ALIGNED(vma)) {
 		DEBUGMSG(("3dfx: Map request not page aligned\n"));
 		return -ENXIO;
 	}
-#else
-	if ((vma->vm_pgoff) & ~PAGE_MASK) {
-		DEBUGMSG(("3dfx: Map request not page aligned\n"));
-		return -ENXIO;
-	}
-#endif
 	len = vma->vm_end - vma->vm_start;
 	if ((len < 0) || (len > 0x2000000)) {
 		DEBUGMSG(("3dfx: Invalid mapping size requested\n"));

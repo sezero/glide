@@ -1,5 +1,11 @@
 2006-12-03  Guillem Jover  <guillem@hadrons.org>
 
+	* 3dfx_device.c (VMA_OFFSET_ALIGNED): New macro.
+	(mmap_3dfx): Use VMA_OFFSET_ALIGNED, instead of checking for specific
+	kernel versions and changing behaviour.
+
+2006-12-03  Guillem Jover  <guillem@hadrons.org>
+
 	* 3dfx_device.c: Indentation fixes.
 
 2006-03-03  Guillem Jover  <guillem@hadrons.org>
