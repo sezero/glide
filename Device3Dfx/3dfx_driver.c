@@ -491,7 +491,7 @@ static int doQueryUpdate(pioData *desc)
 	}
 
 	retval = (retval & ~mask) | preval;
-	pci_write_config_dword(cards[desc->device].bus, cards[desc->device].dev, desc->port, retval);
+	pci_write_config_dword(cards[desc->device].dev, desc->port, retval);
 
 	return 0;
 }
