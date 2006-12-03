@@ -362,9 +362,12 @@ static int doQueryFetch(pioData *desc)
 	char retchar;
 	short retword;
 	int retlong;
+	int i;
 
 	if (desc->device < 0 || desc->device >= numCards)
 		return -EINVAL;
+	i = desc->device;
+
 	if ((retval = verify_area(VERIFY_WRITE, desc->value, desc->size)))
 		return retval;
 
@@ -372,27 +375,27 @@ static int doQueryFetch(pioData *desc)
 	case PCI_VENDOR_ID_LINUX:
 		if (desc->size != 2)
 			return -EINVAL;
-		copy_to_user(desc->value, &cards[desc->device].vendor, desc->size);
+		copy_to_user(desc->value, &cards[i].vendor, desc->size);
 		return 0;
 	case PCI_DEVICE_ID_LINUX:
 		if (desc->size != 2)
 			return -EINVAL;
-		copy_to_user(desc->value, &cards[desc->device].type, desc->size);
+		copy_to_user(desc->value, &cards[i].type, desc->size);
 		return 0;
 	case PCI_BASE_ADDRESS_0_LINUX:
 		if (desc->size != 4)
 			return -EINVAL;
-		copy_to_user(desc->value, &cards[desc->device].addr0, desc->size);
+		copy_to_user(desc->value, &cards[i].addr0, desc->size);
 		return 0;
 	case PCI_BASE_ADDRESS_1_LINUX:
 		if (desc->size != 4)
 			return -EINVAL;
-		copy_to_user(desc->value, &cards[desc->device].addr1, desc->size);
+		copy_to_user(desc->value, &cards[i].addr1, desc->size);
 		return 0;
 	case PCI_BASE_ADDRESS_2_LINUX:
 		if (desc->size != 4)
 			return -EINVAL;
-		copy_to_user(desc->value, &cards[desc->device].addr2, desc->size);
+		copy_to_user(desc->value, &cards[i].addr2, desc->size);
 		return 0;
 	case SST1_PCI_SPECIAL1_LINUX:
 		if (desc->size != 4)
@@ -412,15 +415,15 @@ static int doQueryFetch(pioData *desc)
 
 	switch (desc->size) {
 	case 1:
-		pci_read_config_byte(cards[desc->device].dev, desc->port, &retchar);
+		pci_read_config_byte(cards[i].dev, desc->port, &retchar);
 		copy_to_user(desc->value, &retchar, 1);
 		break;
 	case 2:
-		pci_read_config_word(cards[desc->device].dev, desc->port, &retword);
+		pci_read_config_word(cards[i].dev, desc->port, &retword);
 		copy_to_user(desc->value, &retword, 2);
 		break;
 	case 4:
-		pci_read_config_dword(cards[desc->device].dev, desc->port, &retlong);
+		pci_read_config_dword(cards[i].dev, desc->port, &retlong);
 		copy_to_user(desc->value, &retlong, 4);
 		break;
 	default:
