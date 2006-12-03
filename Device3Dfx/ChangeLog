@@ -1,5 +1,10 @@
 2006-12-03  Guillem Jover  <guillem@hadrons.org>
 
+	* 3dfx_device.c (setmtrr_3dfx): Make it static.
+	(resetmtrr_3dfx): Likewise.
+
+2006-12-03  Guillem Jover  <guillem@hadrons.org>
+
 	* 3dfx_device.c (id_table_3dfx): Move newar the corresponding ifdef
 	for older kernels.
 	(findCards): Likewise.

@@ -632,7 +632,7 @@ static int ioctl_3dfx(struct inode *inode, struct file *file, unsigned int cmd, 
 }
 
 #ifdef CONFIG_MTRR
-int setmtrr_3dfx(void)
+static int setmtrr_3dfx(void)
 {
 	int i = 0, retval = -2;
 	unsigned char dlc;
@@ -723,7 +723,7 @@ int setmtrr_3dfx(void)
 	return retval;
 }
 
-int resetmtrr_3dfx(void)
+static int resetmtrr_3dfx(void)
 {
 	int i, ret, retval = 0;
 
