@@ -1,3 +1,7 @@
+2006-12-03  Guillem Jover  <guillem@hadrons.org>
+
+	* 3dfx_device.c: Indentation fixes.
+
 2006-03-03  Guillem Jover  <guillem@hadrons.org>
 
 	* 3dfx_device.c: Rename HAVE_MTRR to CONFIG_MTRR.

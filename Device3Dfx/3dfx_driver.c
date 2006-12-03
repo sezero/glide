@@ -36,7 +36,7 @@
 
 #define KERNEL_MIN_VER(a,b,c) (LINUX_VERSION_CODE >= KERNEL_VERSION(a,b,c))
 
-#if !KERNEL_MIN_VER (2, 1, 115)
+#if !KERNEL_MIN_VER(2,1,115)
 /*
  * It might work with smaller kernels, but I never tested that.
  */
@@ -152,13 +152,13 @@ static struct pci_card {
 	unsigned short vendor;
 	unsigned short device;
 } pci_card_list[] = {
-	{PCI_VENDOR_ID_3DFX, 		PCI_DEVICE_ID_3DFX_VOODOO},
-	{PCI_VENDOR_ID_3DFX, 		PCI_DEVICE_ID_3DFX_VOODOO2},
-	{PCI_VENDOR_ID_ALLIANCE, 	PCI_DEVICE_ID_ALLIANCE_AT3D},
+	{PCI_VENDOR_ID_3DFX,		PCI_DEVICE_ID_3DFX_VOODOO},
+	{PCI_VENDOR_ID_3DFX,		PCI_DEVICE_ID_3DFX_VOODOO2},
+	{PCI_VENDOR_ID_ALLIANCE,	PCI_DEVICE_ID_ALLIANCE_AT3D},
 	{PCI_VENDOR_ID_MACRONIX,	PCI_DEVICE_ID_MACRONIX_MX86251},
-	{PCI_VENDOR_ID_3DFX, 		PCI_DEVICE_ID_3DFX_BANSHEE},
-	{PCI_VENDOR_ID_3DFX, 		PCI_DEVICE_ID_3DFX_VOODOO3},
-	{PCI_VENDOR_ID_3DFX, 		PCI_DEVICE_ID_3DFX_VOODOO4}
+	{PCI_VENDOR_ID_3DFX,		PCI_DEVICE_ID_3DFX_BANSHEE},
+	{PCI_VENDOR_ID_3DFX,		PCI_DEVICE_ID_3DFX_VOODOO3},
+	{PCI_VENDOR_ID_3DFX,		PCI_DEVICE_ID_3DFX_VOODOO4}
 };
 #endif /* LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0) */
 
@@ -172,7 +172,7 @@ static struct pci_card {
  * This macro is for accessing vma->vm_offset or vma->vm_pgoff depending
  * on kernel version.
  */
-#if !KERNEL_MIN_VER(2, 3, 14)
+#if !KERNEL_MIN_VER(2,3,14)
 #define VM_OFFSET(vma) (vma->vm_offset)
 #else
 #define VM_OFFSET(vma) (vma->vm_pgoff << PAGE_SHIFT)
@@ -314,7 +314,7 @@ static int mmap_3dfx(struct file *file, struct vm_area_struct *vma)
 	/*
 	 * This one is a special case, the macro doesn't help.
 	 */
-#if !KERNEL_MIN_VER(2, 3, 14)
+#if !KERNEL_MIN_VER(2,3,14)
 	if ((vma->vm_offset) & ~PAGE_MASK) {
 		DEBUGMSG(("3dfx: Map request not page aligned\n"));
 		return -ENXIO;
@@ -665,7 +665,7 @@ int setmtrr_3dfx(void)
 			retval = cards[i].mtrr_buf = mtrr_add(cards[i].addr0, 0x400000, MTRR_TYPE_WRCOMB, 1);
 			if (retval >= 0) {
 				retval = cards[i].mtrr_ctl = mtrr_add(cards[i].addr0, 0x1000, MTRR_TYPE_UNCACHABLE, 1);
-				if (retval<0) {
+				if (retval < 0) {
 					mtrr_del(cards[i].mtrr_buf, 0, 0);
 					cards[i].mtrr_buf = -1;
 				}
@@ -738,12 +738,12 @@ int resetmtrr_3dfx(void)
 #endif /* CONFIG_MTRR */
 
 static struct file_operations fops_3dfx = {
-#if KERNEL_MIN_VER(2, 4, 0)
+#if KERNEL_MIN_VER(2,4,0)
 	.owner =	THIS_MODULE,
 #endif
 	.ioctl =	ioctl_3dfx,
-	.mmap = 	mmap_3dfx,
-	.open = 	open_3dfx,
+	.mmap =		mmap_3dfx,
+	.open =		open_3dfx,
 	.release =	release_3dfx,
 };
 
@@ -777,17 +777,17 @@ static void remove_3dfx(struct pci_dev *dev)
 static struct pci_device_id id_table_3dfx[] = {
 	{PCI_VENDOR_ID_3DFX,		PCI_DEVICE_ID_3DFX_VOODOO,
 	 PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
-	{PCI_VENDOR_ID_3DFX, 		PCI_DEVICE_ID_3DFX_VOODOO2,
+	{PCI_VENDOR_ID_3DFX,		PCI_DEVICE_ID_3DFX_VOODOO2,
 	 PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
-	{PCI_VENDOR_ID_ALLIANCE, 	PCI_DEVICE_ID_ALLIANCE_AT3D,
+	{PCI_VENDOR_ID_ALLIANCE,	PCI_DEVICE_ID_ALLIANCE_AT3D,
 	 PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
-	{PCI_VENDOR_ID_MACRONIX, 	PCI_DEVICE_ID_MACRONIX_MX86251,
+	{PCI_VENDOR_ID_MACRONIX,	PCI_DEVICE_ID_MACRONIX_MX86251,
 	 PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
-	{PCI_VENDOR_ID_3DFX, 		PCI_DEVICE_ID_3DFX_BANSHEE,
+	{PCI_VENDOR_ID_3DFX,		PCI_DEVICE_ID_3DFX_BANSHEE,
 	 PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
-	{PCI_VENDOR_ID_3DFX, 		PCI_DEVICE_ID_3DFX_VOODOO3,
+	{PCI_VENDOR_ID_3DFX,		PCI_DEVICE_ID_3DFX_VOODOO3,
 	 PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
-	{PCI_VENDOR_ID_3DFX, 		PCI_DEVICE_ID_3DFX_VOODOO4,
+	{PCI_VENDOR_ID_3DFX,		PCI_DEVICE_ID_3DFX_VOODOO4,
 	 PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
 };
 MODULE_DEVICE_TABLE(pci, id_table_3dfx);
@@ -913,7 +913,7 @@ MODULE_VERSION("2004.05.05");
  */
 inline int verify_area(int type, const void * addr, unsigned long size)
 {
-	return access_ok(type,addr,size) ? 0 : -EFAULT;
+	return access_ok(type, addr, size) ? 0 : -EFAULT;
 }
 
 int a_last_dummy_function(int a)
