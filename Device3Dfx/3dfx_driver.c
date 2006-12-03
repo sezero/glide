@@ -141,12 +141,6 @@
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
 static char name_3dfx[] = "3dfx";
-
-#define pcibios_read_config_byte(x,y,z,w) pci_read_config_byte(y,z,w)
-#define pcibios_read_config_word(x,y,z,w) pci_read_config_word(y,z,w)
-#define pcibios_read_config_dword(x,y,z,w) pci_read_config_dword(y,z,w)
-#define pcibios_write_config_dword(x,y,z,w) pci_write_config_dword(y,z,w)
-
 #else /* LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0) */
 static struct pci_card {
 	unsigned short vendor;
@@ -394,15 +388,15 @@ static int doQueryFetch(pioData *desc)
 
 	switch (desc->size) {
 	case 1:
-		pcibios_read_config_byte(cards[desc->device].bus, cards[desc->device].dev, desc->port, &retchar);
+		pci_read_config_byte(cards[desc->device].dev, desc->port, &retchar);
 		copy_to_user(desc->value, &retchar, 1);
 		break;
 	case 2:
-		pcibios_read_config_word(cards[desc->device].bus, cards[desc->device].dev, desc->port, &retword);
+		pci_read_config_word(cards[desc->device].dev, desc->port, &retword);
 		copy_to_user(desc->value, &retword, 2);
 		break;
 	case 4:
-		pcibios_read_config_dword(cards[desc->device].bus, cards[desc->device].dev, desc->port, &retlong);
+		pci_read_config_dword(cards[desc->device].dev, desc->port, &retlong);
 		copy_to_user(desc->value, &retlong, 4);
 		break;
 	default:
@@ -451,7 +445,7 @@ static int doQueryUpdate(pioData *desc)
 		return -EINVAL;
 	}
 
-	pcibios_read_config_dword(cards[desc->device].bus, cards[desc->device].dev, desc->port & ~0x3, &retval);
+	pci_read_config_dword(cards[desc->device].dev, desc->port & ~0x3, &retval);
 	switch (desc->size) {
 	case 1:
 		copy_from_user(&retchar, desc->value, 1);
@@ -473,7 +467,7 @@ static int doQueryUpdate(pioData *desc)
 	}
 
 	retval = (retval & ~mask) | preval;
-	pcibios_write_config_dword(cards[desc->device].bus, cards[desc->device].dev, desc->port, retval);
+	pci_write_config_dword(cards[desc->device].bus, cards[desc->device].dev, desc->port, retval);
 
 	return 0;
 }
