@@ -358,7 +358,6 @@ static int doQueryBoards(void)
 
 static int doQueryFetch(pioData *desc)
 {
-	int retval;
 	char retchar;
 	short retword;
 	int retlong;
@@ -368,34 +367,36 @@ static int doQueryFetch(pioData *desc)
 		return -EINVAL;
 	i = desc->device;
 
-	if ((retval = verify_area(VERIFY_WRITE, desc->value, desc->size)))
-		return retval;
-
 	switch (desc->port) {
 	case PCI_VENDOR_ID_LINUX:
 		if (desc->size != 2)
 			return -EINVAL;
-		copy_to_user(desc->value, &cards[i].vendor, desc->size);
+		if (copy_to_user(desc->value, &cards[i].vendor, desc->size))
+			return -EFAULT;
 		return 0;
 	case PCI_DEVICE_ID_LINUX:
 		if (desc->size != 2)
 			return -EINVAL;
-		copy_to_user(desc->value, &cards[i].type, desc->size);
+		if (copy_to_user(desc->value, &cards[i].type, desc->size))
+			return -EFAULT;
 		return 0;
 	case PCI_BASE_ADDRESS_0_LINUX:
 		if (desc->size != 4)
 			return -EINVAL;
-		copy_to_user(desc->value, &cards[i].addr0, desc->size);
+		if (copy_to_user(desc->value, &cards[i].addr0, desc->size))
+			return -EFAULT;
 		return 0;
 	case PCI_BASE_ADDRESS_1_LINUX:
 		if (desc->size != 4)
 			return -EINVAL;
-		copy_to_user(desc->value, &cards[i].addr1, desc->size);
+		if (copy_to_user(desc->value, &cards[i].addr1, desc->size))
+			return -EFAULT;
 		return 0;
 	case PCI_BASE_ADDRESS_2_LINUX:
 		if (desc->size != 4)
 			return -EINVAL;
-		copy_to_user(desc->value, &cards[i].addr2, desc->size);
+		if (copy_to_user(desc->value, &cards[i].addr2, desc->size))
+			return -EFAULT;
 		return 0;
 	case SST1_PCI_SPECIAL1_LINUX:
 		if (desc->size != 4)
@@ -416,15 +417,18 @@ static int doQueryFetch(pioData *desc)
 	switch (desc->size) {
 	case 1:
 		pci_read_config_byte(cards[i].dev, desc->port, &retchar);
-		copy_to_user(desc->value, &retchar, 1);
+		if (copy_to_user(desc->value, &retchar, 1))
+			return -EFAULT;
 		break;
 	case 2:
 		pci_read_config_word(cards[i].dev, desc->port, &retword);
-		copy_to_user(desc->value, &retword, 2);
+		if (copy_to_user(desc->value, &retword, 2))
+			return -EFAULT;
 		break;
 	case 4:
 		pci_read_config_dword(cards[i].dev, desc->port, &retlong);
-		copy_to_user(desc->value, &retlong, 4);
+		if (copy_to_user(desc->value, &retlong, 4))
+			return -EFAULT;
 		break;
 	default:
 		return -EINVAL;
@@ -444,8 +448,6 @@ static int doQueryUpdate(pioData *desc)
 
 	if (desc->device < 0 || desc->device >= numCards)
 		return -EINVAL;
-	if ((retval = verify_area(VERIFY_WRITE, desc->value, desc->size)))
-		return retval;
 
 	switch (desc->port) {
 	case PCI_COMMAND_LINUX:
@@ -475,17 +477,20 @@ static int doQueryUpdate(pioData *desc)
 	pci_read_config_dword(cards[desc->device].dev, desc->port & ~0x3, &retval);
 	switch (desc->size) {
 	case 1:
-		copy_from_user(&retchar, desc->value, 1);
+		if (copy_from_user(&retchar, desc->value, 1))
+			return -EFAULT;
 		preval = retchar << (8 * (desc->port & 0x3));
 		mask = 0xFF << (8 * (desc->port & 0x3));
 		break;
 	case 2:
-		copy_from_user(&retword, desc->value, 2);
+		if (copy_from_user(&retword, desc->value, 2))
+			return -EFAULT;
 		preval = retword << (8 * (desc->port & 0x3));
 		mask = 0xFFFF << (8 * (desc->port & 0x3));
 		break;
 	case 4:
-		copy_from_user(&retlong, desc->value, 4);
+		if (copy_from_user(&retlong, desc->value, 4))
+			return -EFAULT;
 		preval = retlong;
 		mask = ~0;
 		break;
@@ -502,13 +507,11 @@ static int doQueryUpdate(pioData *desc)
 static int doQuery(unsigned int cmd, unsigned long arg)
 {
 	pioData desc;
-	int retval;
 
 	if (_IOC_NR(cmd) == 2)
 		return doQueryBoards();
-	if ((retval = verify_area(VERIFY_READ, (void *)arg, sizeof(pioData))))
-		return retval;
-	copy_from_user(&desc, (void *)arg, sizeof(pioData));
+	if (copy_from_user(&desc, (void *)arg, sizeof(pioData)))
+		return -EFAULT;
 	if (_IOC_NR(cmd) == 3)
 		return doQueryFetch(&desc);
 	if (_IOC_NR(cmd) == 4)
@@ -519,11 +522,7 @@ static int doQuery(unsigned int cmd, unsigned long arg)
 
 static int doPIORead(pioData *desc)
 {
-	int retval;
 	int retchar;
-
-	if ((retval = verify_area(VERIFY_WRITE, desc->value, desc->size)))
-		return retval;
 
 	/* full SSTIO aperture is defined by:
 	 * unsigned short port = desc->port;
@@ -556,18 +555,16 @@ static int doPIORead(pioData *desc)
 	default:
 		return -EINVAL;
 	}
-	copy_to_user(desc->value, &retchar, desc->size);
+
+	if (copy_to_user(desc->value, &retchar, desc->size))
+		return -EFAULT;
 
 	return 0;
 }
 
 static int doPIOWrite(pioData *desc)
 {
-	int retval;
 	int retchar;
-
-	if ((retval = verify_area(VERIFY_READ, desc->value, desc->size)))
-		return retval;
 
 	/* full SSTIO aperture is defined by:
 	 * unsigned short port = desc->port;
@@ -585,7 +582,9 @@ static int doPIOWrite(pioData *desc)
 		return -EPERM;
 	}
 
-	copy_from_user(&retchar, desc->value, desc->size);
+	if (copy_from_user(&retchar, desc->value, desc->size))
+		return -EFAULT;
+
 	switch (desc->size) {
 	case 1:
 		outb(retchar, desc->port);
@@ -606,11 +605,9 @@ static int doPIOWrite(pioData *desc)
 static int doPIO(unsigned int cmd, unsigned long arg)
 {
 	pioData desc;
-	int retval;
 
-	if ((retval = verify_area(VERIFY_READ, (void *)arg, sizeof(pioData))))
-		return retval;
-	copy_from_user(&desc, (void *)arg, sizeof(pioData));
+	if (copy_from_user(&desc, (void *)arg, sizeof(pioData)))
+		return -EFAULT;
 	if (_IOC_DIR(cmd) == _IOC_READ)
 		return doPIORead(&desc);
 	if (_IOC_DIR(cmd) == _IOC_WRITE)
@@ -897,20 +894,5 @@ MODULE_VERSION("2004.05.05");
 #define extern
 #undef _ASM_IO_H
 #include <asm/io.h>
-/*
- * And this is copied from asm/uaccess.h
- * in order to get rid of
- * ./3dfx.o: unresolved symbol verify_area
- * when compiling this module with -g during debugging.
- */
-inline int verify_area(int type, const void * addr, unsigned long size)
-{
-	return access_ok(type, addr, size) ? 0 : -EFAULT;
-}
-
-int a_last_dummy_function(int a)
-{
-	return a;
-}
 #endif
 

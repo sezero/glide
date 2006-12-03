@@ -1,5 +1,21 @@
 2006-12-03  Guillem Jover  <guillem@hadrons.org>
 
+	Use the "new" kernel level exception handling for memory accesses
+	introduced in linux 2.1.8, which obsoletes verify_aread.
+
+	* 3dfx_device.c (doQueryFetch): Remove verify_area and check for
+	copy_to_user return values.
+	(doPIORead): Likewise.
+	(doQueryUpdate): Remove verify_area and check for copy_from_user
+	return values.
+	(doQuery): Likewise.
+	(doPIOWrite): Likewise.
+	(doPIO): Likewise.
+	(verify_area) [DEBUG]: Remove function.
+	(a_last_dummy_function) [DEBUG]: Likewise.
+
+2006-12-03  Guillem Jover  <guillem@hadrons.org>
+
 	* 3dfx_device.c (doQueryFetch): Assign desc->device to i, and use it
 	when referencing cards.
 
