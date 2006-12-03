@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.2  2000/10/03 18:29:55  mercury
+** 003-clean_up_h3-000, h3 tree cleanup.
+**
 ** Revision 1.1.1.1  1999/12/07 21:49:27  joseph
 ** Initial checkin into SourceForge.
 **
@@ -299,18 +302,13 @@ GR_DIENTRY(gu3dfGetInfo, FxBool,
   /*
   ** determine the color format of the input image
   */
-#ifdef __GNUC__
-  /* This function is not found in libgcc.a */
   {
-    char* tempStr = (char*)color_format;
-    while(*tempStr != '\0') *tempStr++ = toupper(*tempStr);
+    char *tempStr = (char*)color_format;
+    while (*tempStr != '\0') {
+          *tempStr = toupper(*tempStr);
+          tempStr++;
+    }
   }
-#else
-        {
-                extern char* strupr(char*);
-        strupr(color_format);
-  }
-#endif /* __GNUC__ */
 
   i = 0;
   format_found = FXFALSE;

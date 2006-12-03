@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.2.1  2004/12/12 15:20:35  koolsmoky
+** use toupper for __MSC__
+**
 ** Revision 1.1.1.1  1999/12/07 21:49:09  joseph
 ** Initial checkin into SourceForge.
 **
@@ -300,18 +303,13 @@ GR_DIENTRY(gu3dfGetInfo, FxBool,
   /*
   ** determine the color format of the input image
   */
-#if defined(__GNUC__) || defined(__MSC__)
-  /* This function is not found in libgcc.a */
   {
-    char* tempStr = (char*)color_format;
-    while(*tempStr != '\0') *tempStr++ = toupper(*tempStr);
+    char *tempStr = (char*)color_format;
+    while (*tempStr != '\0') {
+          *tempStr = toupper(*tempStr);
+          tempStr++;
+    }
   }
-#else
-  {
-    extern char* strupr(char*);
-    strupr(color_format);
-  }
-#endif /* __GNUC__ */
 
   i = 0;
   format_found = FXFALSE;
