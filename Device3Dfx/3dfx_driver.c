@@ -141,6 +141,23 @@
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
 static char name_3dfx[] = "3dfx";
+
+static struct pci_device_id id_table_3dfx[] = {
+	{PCI_VENDOR_ID_3DFX,		PCI_DEVICE_ID_3DFX_VOODOO,
+	 PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
+	{PCI_VENDOR_ID_3DFX,		PCI_DEVICE_ID_3DFX_VOODOO2,
+	 PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
+	{PCI_VENDOR_ID_ALLIANCE,	PCI_DEVICE_ID_ALLIANCE_AT3D,
+	 PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
+	{PCI_VENDOR_ID_MACRONIX,	PCI_DEVICE_ID_MACRONIX_MX86251,
+	 PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
+	{PCI_VENDOR_ID_3DFX,		PCI_DEVICE_ID_3DFX_BANSHEE,
+	 PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
+	{PCI_VENDOR_ID_3DFX,		PCI_DEVICE_ID_3DFX_VOODOO3,
+	 PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
+	{PCI_VENDOR_ID_3DFX,		PCI_DEVICE_ID_3DFX_VOODOO4,
+	 PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
+};
 #else /* LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0) */
 static struct pci_card {
 	unsigned short vendor;
@@ -260,6 +277,13 @@ static int findCards(void)
 		findCardType(pci_card_list[i].vendor, pci_card_list[i].device);
 
 	return numCards;
+}
+#else
+static struct pci_driver driver_3dfx;
+
+static void findCards(void)
+{
+	pci_register_driver(&driver_3dfx);
 }
 #endif
 
@@ -760,22 +784,6 @@ static void remove_3dfx(struct pci_dev *dev)
 
 }
 
-static struct pci_device_id id_table_3dfx[] = {
-	{PCI_VENDOR_ID_3DFX,		PCI_DEVICE_ID_3DFX_VOODOO,
-	 PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
-	{PCI_VENDOR_ID_3DFX,		PCI_DEVICE_ID_3DFX_VOODOO2,
-	 PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
-	{PCI_VENDOR_ID_ALLIANCE,	PCI_DEVICE_ID_ALLIANCE_AT3D,
-	 PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
-	{PCI_VENDOR_ID_MACRONIX,	PCI_DEVICE_ID_MACRONIX_MX86251,
-	 PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
-	{PCI_VENDOR_ID_3DFX,		PCI_DEVICE_ID_3DFX_BANSHEE,
-	 PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
-	{PCI_VENDOR_ID_3DFX,		PCI_DEVICE_ID_3DFX_VOODOO3,
-	 PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
-	{PCI_VENDOR_ID_3DFX,		PCI_DEVICE_ID_3DFX_VOODOO4,
-	 PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
-};
 MODULE_DEVICE_TABLE(pci, id_table_3dfx);
 
 static struct pci_driver driver_3dfx = {
@@ -784,11 +792,6 @@ static struct pci_driver driver_3dfx = {
 	.probe =	probe_3dfx,
 	.remove =	remove_3dfx,
 };
-
-static void findCards(void)
-{
-	pci_register_driver(&driver_3dfx);
-}
 #endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0) */
 
 #ifdef MODULE
