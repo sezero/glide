@@ -331,7 +331,7 @@ static int mmap_3dfx(struct file *file, struct vm_area_struct *vma)
 			 VM_OFFSET(vma)));
 		return -EPERM;
 	}
-	if (VMA_OFFSET_ALIGNED(vma)) {
+	if (VM_OFFSET_ALIGNED(vma)) {
 		DEBUGMSG(("3dfx: Map request not page aligned\n"));
 		return -ENXIO;
 	}
