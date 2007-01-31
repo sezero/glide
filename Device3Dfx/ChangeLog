@@ -38,7 +38,7 @@
 
 2006-12-03  Guillem Jover  <guillem@hadrons.org>
 
-	* 3dfx_device.c (id_table_3dfx): Move newar the corresponding ifdef
+	* 3dfx_device.c (id_table_3dfx): Move near the corresponding ifdef
 	for older kernels.
 	(findCards): Likewise.
 	(driver_3dfx): Forward declare.
