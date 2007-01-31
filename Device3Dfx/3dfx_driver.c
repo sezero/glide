@@ -216,11 +216,7 @@ struct cardInfo_t {
 	int addr1;
 	int addr2;
 	unsigned char bus;
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
 	struct pci_dev *dev;
-#else
-	unsigned char dev;
-#endif
 	struct file *curFile;
 #ifdef CONFIG_MTRR
 	int mtrr_buf;
@@ -254,7 +250,7 @@ static void findCardType(int vendor, int device)
 		pci_read_config_dword(dev, PCI_BASE_ADDRESS_1, &cards[numCards].addr1);
 		pci_read_config_dword(dev, PCI_BASE_ADDRESS_2, &cards[numCards].addr2);
 		cards[numCards].bus = dev->bus->number;
-		cards[numCards].dev = dev->devfn;
+		cards[numCards].dev = dev;
 
 		cards[numCards].addr0 &= ~0xF;
 		cards[numCards].addr1 &= ~0xF;
@@ -263,7 +259,9 @@ static void findCardType(int vendor, int device)
 		cards[numCards].curFile = 0;
 
 		DEBUGMSG(("3dfx: board vendor %d type %d located at %x/%x bus %d dev %d\n",
-		    vendor, device, cards[numCards].addr0, cards[numCards].addr1, cards[numCards].bus, cards[numCards].dev));
+			 vendor, device,
+			 cards[numCards].addr0, cards[numCards].addr1,
+			 cards[numCards].bus, cards[numCards].dev->devfn));
 
 		++numCards;
 	}
