@@ -144,7 +144,7 @@ tar:
 debug:
 	$(MAKE) CFLAGS="-g -Wall -Wstrict-prototypes -DDEBUG"
 
-.PHONY: all sanity modules modules-legacy modules-kbuild
-.PHONY: install install-legacy install-kbuild
-.PHONY: clean clean-legacy tar debug
+.PHONY: all sanity modules modules_legacy modules_kbuild
+.PHONY: install install_legacy install_kbuild
+.PHONY: clean clean_legacy clean_kbuild tar debug
 
