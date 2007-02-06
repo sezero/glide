@@ -1,5 +1,15 @@
 2007-02-06  Guillem Jover  <guillem@hadrons.org>
 
+	* 3dfx_driver.c (HAVE_DEVFS): Define to 1 if
+	LINUX_VERSION_CODE >= 2.3.46 and LINUX_VERSION_CODE <= 2.6.17 or
+	if DEVFS_SUPPORT is defined, define to 0 otherwise.
+	(devfs_handle): Only use if HAVE_DEVFS.
+	(init_module): Only use devfs_mk_cdev or devfs_register if HAVE_DEVFS.
+	(cleanup_module): Only use devfs_remove or devfs_unregister if
+	HAVE_DEVFS.
+
+2007-02-06  Guillem Jover  <guillem@hadrons.org>
+
 	* Makefile (CFLAGS): Use '-march' instead of the deprecated '-mcpu'.
 
 2007-02-06  Guillem Jover  <guillem@hadrons.org>

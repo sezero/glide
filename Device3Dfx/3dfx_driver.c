@@ -68,8 +68,13 @@
 #include <linux/mm.h>
 #include <linux/errno.h>
 #include <linux/pci.h>
-#if KERNEL_MIN_VER(2,3,46) || defined(DEVFS_SUPPORT)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,3,46) && \
+    LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,17) || \
+    defined(DEVFS_SUPPORT)
 #include <linux/devfs_fs_kernel.h>
+#define HAVE_DEVFS 1
+#else
+#define HAVE_DEVFS 0
 #endif
 #include <asm/segment.h>
 #include <asm/ioctl.h>
@@ -235,9 +240,11 @@ void cleanup_module(void);
 
 static cardInfo cards[MAXCARDS];
 static int numCards = 0;
+#if HAVE_DEVFS
 #if KERNEL_MIN_VER(2,3,46) && LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0) \
     || defined(DEVFS_SUPPORT)
 static devfs_handle_t devfs_handle;
+#endif
 #endif
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
@@ -807,6 +814,7 @@ int init_module(void)
 		return ret;
 	}
 
+#if HAVE_DEVFS
 #if KERNEL_MIN_VER(2,6,0)
 	devfs_mk_cdev(MKDEV(MAJOR_3DFX, DEVICE_VOODOO),
 		      S_IFCHR | S_IROTH | S_IWOTH | S_IRGRP | S_IWGRP,
@@ -816,6 +824,7 @@ int init_module(void)
 		MAJOR_3DFX, DEVICE_VOODOO,
 		S_IFCHR | S_IROTH | S_IWOTH | S_IRGRP | S_IWGRP,
 		&fops_3dfx, NULL);
+#endif
 #endif
 
 	DEBUGMSG(("3dfx: Successfully registered device 3dfx\n"));
@@ -842,10 +851,12 @@ void cleanup_module(void)
 #ifdef CONFIG_MTRR
 	resetmtrr_3dfx();
 #endif
+#if HAVE_DEVFS
 #if KERNEL_MIN_VER(2,6,0)
 	devfs_remove("3dfx");
 #elif KERNEL_MIN_VER(2,3,46) || defined(DEVFS_SUPPORT)
 	devfs_unregister(devfs_handle);
+#endif
 #endif
 
 	if (unregister_chrdev(MAJOR_3DFX, "3dfx")) {
