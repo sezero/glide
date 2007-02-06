@@ -17,12 +17,20 @@ endif
 
 KSRC ?= /usr/src/linux
 KHEADERS ?= $(KSRC)/include
-KVERS ?= $(shell ./kinfo --UTS)
+
+-include kver.mak
+
 MODULES_DIR = $(DESTDIR)/lib/modules/$(KVERS)
 
 ALL_CFLAGS := -DMODULE -D__KERNEL__ \
               -I$(KHEADERS) -I$(KHEADERS)/asm/mach-default \
               $(CFLAGS)
+
+ifneq ($(wildcard $(KHEADERS)/linux/utsrelease.h),)
+VERSION_HEADER := $(KHEADERS)/linux/utsrelease.h
+else
+VERSION_HEADER := $(KHEADERS)/linux/version.h
+endif
 
 ###############################################################################
 # You should never need to change anything below.
@@ -30,6 +38,12 @@ ALL_CFLAGS := -DMODULE -D__KERNEL__ \
 NAME := 3dfx
 
 all: modules
+
+kver: kver.c
+	$(CC) -include $(VERSION_HEADER) -x c -o $@ $<
+
+kver.mak: kver
+	./$^ > $@
 
 # Sanity checks
 sanity:
@@ -50,43 +64,30 @@ sanity:
 	fi; \
 	)
 
-ifeq ($(wildcard config),config)
+KVER_MAJOR = $(shell echo "$(KVERS)" | cut -d. -f1 )
+KVER_MINOR = $(shell echo "$(KVERS)" | cut -d. -f2 )
 
-config: sanity
+KBUILD = $(shell [ "$(KVER_MAJOR)" = 2 ] && [ "$(KVER_MINOR)" -ge 6 ] && echo yes )
 
-include config
+help:
+	echo KVER_MAJOR = $(KVER_MAJOR)
+	echo KVER_MINOR = $(KVER_MINOR)
+	echo KBUILD = $(KBUILD)
+
+ifeq ($(KBUILD),yes)
+BUILD_TYPE = kbuild
+MODULE_TDFX = kbuild/$(NAME).ko
+else
+BUILD_TYPE = legacy
+MODULE_TDFX = $(NAME).o
+endif
 
 clean_type = clean_$(BUILD_TYPE)
 module_type = module_$(BUILD_TYPE)
 
-else
-
-config: sanity kinfo
-	@( \
-	KVER_MAJOR=`echo $(KVERS) | cut -d. -f1`; \
-	KVER_MINOR=`echo $(KVERS) | cut -d. -f2`; \
-	if [ $$KVER_MAJOR = 2 -a $$KVER_MINOR -ge 6 ]; then \
-	  echo BUILD_TYPE = kbuild; \
-	  echo MODULE_TDFX = kbuild/$(NAME).ko; \
-	else \
-	  echo BUILD_TYPE = legacy; \
-	  echo MODULE_TDFX = $(NAME).o; \
-	fi; \
-	) > config
-	@$(MAKE) $(MAKECMDGOALS)
-
-endif
-
-kinfo: kinfo.c
-	$(CC) -I$(KHEADERS) -o kinfo kinfo.c
-
-kinfo.h: kinfo
-	@echo Generating kernel information header.
-	@./kinfo
-
 ###############################################################################
 
-modules: config $(module_type)
+modules: sanity $(module_type)
 
 module_legacy: $(NAME).o
 
@@ -98,7 +99,7 @@ module_kbuild:
 
 ###############################################################################
 
-install: config install_modules
+install: sanity install_modules
 	@( \
 	if [ -e $(MODULES_DIR)/modules.dep ]; then \
 		indep=`grep '$(NAME)/$(MODULE_TDFX):' $(MODULES_DIR)/modules.dep`; \
@@ -128,9 +129,8 @@ install_modules: modules
 ###############################################################################
 # This is for debugging purposes by the developers:
 
-clean: config $(clean_type)
-	rm -f kinfo kinfo.h
-	rm -f config
+clean: $(clean_type)
+	rm -f kver.mak kver
 
 clean_legacy:
 	rm -f *.ko *.o *.mod.* .*.mod.* .*.cmd

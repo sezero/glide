@@ -1,5 +1,21 @@
 2007-02-06  Guillem Jover  <guillem@hadrons.org>
 
+	* kinfo.c: Removed.
+	* kver.c: New file.
+	* Makefile: Include kver.mak.
+	(KVERS): Move this variable to 'kver.mak', which is a generated file.
+	(VERSION_HEADER): New variable to cope with UTS_RELEASE being moved
+	from 'linux/version.h' to 'linux/utsrelease.h' in 2.6.18.
+	(kver, kver.mak): New targets.
+	(KBUILD): New variable.
+	(KVER_MAJOR, KVER_MINOR, BUILD_TYPE, MODULE_TDFX): Likewise, moved
+	from the generated file 'config'.
+	(config, kinfo, kinfo.h): Remove targets.
+	(modules, intstall, clean): Do not depend on config target.
+	(modules, intstall): Depend on sanity target .
+
+2007-02-06  Guillem Jover  <guillem@hadrons.org>
+
 	* Makefile (.PHONY): Add clean_kbuild. Rename modules-legacy,
 	modules-kbuild, install-legacy, install-kbuild and clean-legacy to
 	modules_legacy, modules_kbuild, install_legacy, install_kbuild
