@@ -905,7 +905,7 @@ MODULE_AUTHOR("Daryll Strauss et al.");
 MODULE_DESCRIPTION("3dfx glide kernel device driver");
 MODULE_LICENSE("GPL");
 #ifdef MODULE_VERSION
-MODULE_VERSION("2004.05.05");
+MODULE_VERSION("2007.02.06");
 #endif
 #endif
 

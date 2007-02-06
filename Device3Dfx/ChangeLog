@@ -1,5 +1,9 @@
 2007-02-06  Guillem Jover  <guillem@hadrons.org>
 
+	* 3dfx_driver.c (MODULE_VERSION): Bump to '2007.02.06'.
+
+2007-02-06  Guillem Jover  <guillem@hadrons.org>
+
 	Fix warnings when not checking pci_register_driver return codes.
 
 	* 3dfx_driver.c (findCards): Return int instead of void , and normalize
