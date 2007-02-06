@@ -1,5 +1,15 @@
 2007-02-06  Guillem Jover  <guillem@hadrons.org>
 
+	Fix warnings when not checking pci_register_driver return codes.
+
+	* 3dfx_driver.c (findCards): Return int instead of void , and normalize
+	error code to be always negative, otherwise return numCards.
+	(init_module): Check for findCards return code, print a warning and
+	exit the module on error.
+	(init_3dfx): Likewise.
+
+2007-02-06  Guillem Jover  <guillem@hadrons.org>
+
 	* 3dfx_driver.c (HAVE_DEVFS): Define to 1 if
 	LINUX_VERSION_CODE >= 2.3.46 and LINUX_VERSION_CODE <= 2.6.17 or
 	if DEVFS_SUPPORT is defined, define to 0 otherwise.

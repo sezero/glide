@@ -289,9 +289,16 @@ static int findCards(void)
 #else
 static struct pci_driver driver_3dfx;
 
-static void findCards(void)
+static int findCards(void)
 {
-	pci_register_driver(&driver_3dfx);
+	int error;
+
+	error = pci_register_driver(&driver_3dfx);
+
+	if (error)
+		return error < 0 ? error : -error;
+	else
+		return numCards;
 }
 #endif
 
@@ -828,7 +835,11 @@ int init_module(void)
 #endif
 
 	DEBUGMSG(("3dfx: Successfully registered device 3dfx\n"));
-	findCards();
+	ret = findCards();
+	if (ret < 0) {
+		printk("3dfx: findCards() failed, returned %d\n", ret);
+		return ret;
+	}
 
 #ifdef CONFIG_MTRR
 	ret = setmtrr_3dfx();
@@ -872,11 +883,18 @@ void cleanup_module(void)
 
 long init_3dfx(long mem_start, long mem_end)
 {
+	int ret;
+
 	if (register_chrdev(MAJOR_3DFX, "3dfx", &fops_3dfx)) {
 		DEBUGMSG(("3dfx: Unable to register_chrdev with major %d\n", MAJOR_3DFX));
 		return 0;
 	}
-	findCards();
+
+	ret = findCards();
+	if (ret < 0) {
+		printk("3dfx: findCards() failed, returned %d\n", ret);
+		return 0;
+	}
 
 	return mem_start;
 }
