@@ -6,7 +6,7 @@ ARCH := $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/ar
 
 # Setup machine dependant compiler flags
 ifeq ($(ARCH), i386)
-CFLAGS ?= -O2 -mcpu=pentium -fomit-frame-pointer -fno-strength-reduce \
+CFLAGS ?= -O2 -march=pentium -fomit-frame-pointer -fno-strength-reduce \
           -falign-loops=2 -falign-jumps=2 -falign-functions=2
 endif
 
