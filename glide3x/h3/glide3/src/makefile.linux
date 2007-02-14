@@ -55,7 +55,7 @@ export PATH := $(PATH):.
 ###############################################################################
 
 GLIDE_VERSION_MAJOR = 3
-GLIDE_VERSION_MINOR = 10
+GLIDE_VERSION_MINOR = 10.0
 
 GLIDE_LIB = libglide3.a
 GLIDE_SO  = libglide3.so
