@@ -271,6 +271,17 @@ internal_trisetup(const char* FN_NAME,
                   const FxBool cullP, const FxBool validStateP,
                   const void* a, const void* b, const void* c)
 {
+#ifdef FAST_C_CLIP
+  AMG_GR_BEGIN_NOFIFOCHECK();
+  
+  if (!validStateP) GR_FLUSH_STATE();
+
+  if (cullP) {
+    cullVal=_grTriCull(a,b,c);
+    
+    if(cullVal <= 0) return cullVal;
+  }
+#else /* !FAST_C_CLIP */
   GR_BEGIN_NOFIFOCHECK_RET(FN_NAME, 85);
   GDBG_INFO_MORE(gc->myLevel, 
                  "(0x%X, 0x%X, 0x%X)\n", 
@@ -286,6 +297,7 @@ internal_trisetup(const char* FN_NAME,
 
     if (cullVal <= 0) return cullVal;
   }
+#endif /* !FAST_C_CLIP */
 
   /* Validate parameter coordinates */
 #if defined(GLIDE_SANITY_ASSERT)
@@ -318,6 +330,45 @@ internal_trisetup(const char* FN_NAME,
   /* Send triangle parameters */
 
 #if GLIDE_HW_TRI_SETUP && GLIDE_PACKET3_TRI_SETUP
+#ifdef FAST_C_CLIP
+  {
+    FxU32 dataElem,i,i2,nextfifo;
+    unsigned long *casta,*castb,*castc,lenght,Loop;
+
+    FxU32* tPackPtr; 
+    FxU32 packetVal;
+    AMG_GR_SET_EXPECTED_SIZE(gc->curTriSize, 1);	
+    AMG_TRI_STRIP_BEGIN(tPackPtr,packetVal);
+
+    i=gc->curVertexParam;
+    Loop=i-2;
+    i2=i+i;
+    lenght=i-2;
+    nextfifo=6+lenght+lenght;				// lenght of vertex params *2
+    
+    AMG_TRISETXYNOADD(((unsigned long*)a),0);
+    AMG_TRISETXYNOADD(((unsigned long*)b),i);
+    AMG_TRISETXYNOADD(((unsigned long*)c),i2);
+    
+    dataElem=0;
+    i+=2;
+    i2+=2;
+    casta=(unsigned long*)a;
+    castb=(unsigned long*)b;
+    castc=(unsigned long*)c;
+    
+    while(Loop!=0) {
+      AMG_TRISETPARAMNOADD(casta[gc->tsuDataListByte[dataElem]],2);
+      AMG_TRISETPARAMNOADD(castb[gc->tsuDataListByte[dataElem]],i);
+      AMG_TRISETPARAMNOADD(castc[gc->tsuDataListByte[dataElem]],i2);
+      AMG_TRIFIFOADD
+        dataElem++;
+      Loop--;
+    }
+    AMG_TRIFIFOADDVALUE(nextfifo)
+    AMG_TRI_END(tPackPtr)
+  }
+#else /* !FAST_C_CLIP */
   {
     FxU32
       dataElem,
@@ -359,6 +410,7 @@ internal_trisetup(const char* FN_NAME,
       GR_CHECK_SIZE();
     }
   }
+#endif /* !FAST_C_CLIP */
 #else
   {
     GR_DCL_HW;
@@ -532,227 +584,9 @@ _trisetup_Default_win_cull_invalid(const void* a, const void* b, const void* c)
 {
 #define FN_NAME "_trisetup_Default_win_cull_invalid"
 
-#ifdef FAST_C_CLIP
-  AMG_GR_BEGIN_NOFIFOCHECK();
-  
-  GR_FLUSH_STATE();
-  
-  cullVal=_grTriCull(a,b,c);
-  
-  if(cullVal <= 0) return cullVal;
-  
-  /* Send triangle parameters */
-  
-#if GLIDE_HW_TRI_SETUP && GLIDE_PACKET3_TRI_SETUP
-  {
-    FxU32 dataElem,i,i2,nextfifo;
-    unsigned long *casta,*castb,*castc,lenght,Loop;
-
-    FxU32* tPackPtr; 
-    FxU32 packetVal;
-    AMG_GR_SET_EXPECTED_SIZE(gc->curTriSize, 1);	
-    AMG_TRI_STRIP_BEGIN(tPackPtr,packetVal);
-
-    i=gc->curVertexParam;
-    Loop=i-2;
-    i2=i+i;
-    lenght=i-2;
-    nextfifo=6+lenght+lenght;				// lenght of vertex params *2
-    
-    AMG_TRISETXYNOADD(((unsigned long*)a),0);
-    AMG_TRISETXYNOADD(((unsigned long*)b),i);
-    AMG_TRISETXYNOADD(((unsigned long*)c),i2);
-    
-    dataElem=0;
-    i+=2;
-    i2+=2;
-    casta=(unsigned long*)a;
-    castb=(unsigned long*)b;
-    castc=(unsigned long*)c;
-    
-    while(Loop!=0) 
-      {
-        AMG_TRISETPARAMNOADD(casta[gc->tsuDataListByte[dataElem]],2);
-        AMG_TRISETPARAMNOADD(castb[gc->tsuDataListByte[dataElem]],i);
-        AMG_TRISETPARAMNOADD(castc[gc->tsuDataListByte[dataElem]],i2);
-        AMG_TRIFIFOADD
-        dataElem++;
-        Loop--;
-      }
-    AMG_TRIFIFOADDVALUE(nextfifo)
-    AMG_TRI_END(tPackPtr)
-    }
-#else
-  {
-    GR_DCL_HW;
-    int vectorIndex;
-    FxU32 sMode = (gc->cmdTransportInfo.paramMask >> SSTCP_PKT3_PMASK_SHIFT);
-    FxU32 paramMask = (sMode & 0xFF);
-    FxU32 paramCount;
-    const float* vectorArray[3];
-    
-    vectorArray[0] = (const float *)a;
-    vectorArray[1] = (const float *)b;
-    vectorArray[2] = (const float *)c;
-    
-    /* Convert packet 3 paramMask into sMode format */
-    sMode = (paramMask | ((sMode & 0xF000) << 4));
-    
-    {
-      const FxBool hasColor = ((sMode & 0x01) != 0);
-      const FxBool hasAlpha = ((sMode & 0x02) != 0);
-      const FxBool hasZ = ((sMode & 0x04) != 0);
-      const FxBool hasWb = ((sMode & 0x08) != 0);
-      const FxBool hasW0 = ((sMode & 0x10) != 0);
-      const FxBool hasST0 = ((sMode & 0x20) != 0);
-      const FxBool hasW1 = ((sMode & 0x40) != 0);
-      const FxBool hasST1 = ((sMode & 0x80) != 0);
-      
-      /* We always send vertex XY */
-      paramCount = 2;
-      paramMask = 0x03;
-      
-      /* Build parameter data for reg group packet */
-#if GLIDE_PACKED_RGB
-      if (hasColor || hasAlpha) {
-        paramCount += 1;
-        paramMask |= 0x04;
-      }
-#else /* !GLIDE_PACKED_RGB */
-      if (hasColor) {
-        paramCount += 3;
-        paramMask |= 0x38;
-      }
-      if (hasAlpha) {
-        paramCount += 1;
-        paramMask |= 0x40;
-      }
-#endif /* !GLIDE_PACKED_RGB */
-      
-      if (hasZ) {
-        paramCount += 1;
-        paramMask |= 0x80;
-      }
-      if (hasWb) {
-        paramCount += 1;
-        paramMask |= 0x100;
-      }
-      if (hasW0) {
-        paramCount += 1;
-        paramMask |= 0x200;
-      }
-      if (hasST0) {
-        paramCount += 2;
-        paramMask |= 0xC00;
-      }
-      if (hasW1) {
-        paramCount += 1;
-        paramMask |= 0x1000;
-      }
-      if (hasST1) {
-        paramCount += 2;
-        paramMask |= 0x6000;
-      }
-      
-      /* Set mode once for teh whole triangle */
-      GR_SET_EXPECTED_SIZE(sizeof(FxU32), 1);
-      GR_SET(BROADCAST_ID, hw, sSetupMode, sMode);
-      GR_CHECK_SIZE();
-      
-      for(vectorIndex = 0; vectorIndex < sizeof(vectorArray) / sizeof(float*); vectorIndex++) {
-        FxU32
-          dataElem,
-          i;
-        const float* a = (const float *)vectorArray[vectorIndex];
-        
-        REG_GROUP_BEGIN(BROADCAST_ID, sVx, paramCount, paramMask);
-        {
-          REG_GROUP_SETF(hw, sVx, FARRAY(a, 0));
-          REG_GROUP_SETF(hw, sVy, FARRAY(a, sizeof(float)));
-          
-          dataElem = 0;
-          i = gc->tsuDataList[dataElem];
-          
-          if (hasColor) {
-            REG_GROUP_SETF(hw, sRed, FARRAY(a, i));
-            dataElem++;
-            i = gc->tsuDataList[dataElem];
-            REG_GROUP_SETF(hw, sGreen, FARRAY(a, i));
-            dataElem++;
-            i = gc->tsuDataList[dataElem];
-            REG_GROUP_SETF(hw, sBlue, FARRAY(a, i));
-            dataElem++;
-            i = gc->tsuDataList[dataElem];
-          }
-          if (hasAlpha) {
-            REG_GROUP_SETF(hw, sAlpha, FARRAY(a, i));
-            dataElem++;
-            i = gc->tsuDataList[dataElem];
-          }
-          
-          if (hasZ) {
-            REG_GROUP_SETF(hw, sVz, FARRAY(a, i));
-            dataElem++;
-            i = gc->tsuDataList[dataElem];
-          }
-          if (hasWb) {
-            REG_GROUP_SETF(hw, sOowfbi, FARRAY(a, i));
-            dataElem++;
-            i = gc->tsuDataList[dataElem];
-          }
-          
-          /* TMU0 */
-          if (hasW0) {
-            REG_GROUP_SETF(hw, sOow0, FARRAY(a, i));
-            dataElem++;
-            i = gc->tsuDataList[dataElem];
-          }
-          if (hasST0) {
-            REG_GROUP_SETF(hw, sSow0, FARRAY(a, i));
-            dataElem++;
-            i = gc->tsuDataList[dataElem];
-            REG_GROUP_SETF(hw, sTow0, FARRAY(a, i));
-            dataElem++;
-            i = gc->tsuDataList[dataElem];
-          }
-          
-          /* TMU1 */
-          if (hasW1) {
-            REG_GROUP_SETF(hw, sOow1, FARRAY(a, i));
-            dataElem++;
-            i = gc->tsuDataList[dataElem];
-          }
-          if (hasST1) {
-            REG_GROUP_SETF(hw, sSow1, FARRAY(a, i));
-            dataElem++;
-            i = gc->tsuDataList[dataElem];
-            REG_GROUP_SETF(hw, sTow1, FARRAY(a, i));
-            dataElem++;
-            i = gc->tsuDataList[dataElem];
-          }
-        }
-        REG_GROUP_END();
-        
-        GR_SET_EXPECTED_SIZE(sizeof(FxU32), 1);
-        if (vectorIndex == 0) {
-          GR_SET(BROADCAST_ID, hw, sBeginTriCMD, 0);
-        } else {
-          GR_SET(BROADCAST_ID, hw, sDrawTriCMD, 0);
-        }
-        GR_CHECK_SIZE();
-      }
-    }
-  }
-#endif
-  
-  GR_END();
-  
-  return FXTRUE;
-#else /* !FAST_C_CLIP */
   return internal_trisetup(FN_NAME,
                            FXTRUE, FXFALSE,
                            a, b, c);
-#endif /* !FAST_C_CLIP */
 
 #undef FN_NAME
 }
@@ -762,224 +596,9 @@ _trisetup_Default_win_cull_valid(const void* a, const void* b, const void* c)
 {
 #define FN_NAME "_trisetup_Default_win_cull_valid"
 
-#ifdef FAST_C_CLIP
-  AMG_GR_BEGIN_NOFIFOCHECK();
-  
-  cullVal=_grTriCull(a,b,c);
-  
-  if(cullVal <= 0) return cullVal;
-  
-#if GLIDE_HW_TRI_SETUP && GLIDE_PACKET3_TRI_SETUP
-  {
-    FxU32 dataElem,i,i2,nextfifo;
-    
-    unsigned long *casta,*castb,*castc,lenght,Loop;
-    
-    FxU32* tPackPtr; 
-    FxU32 packetVal;
-    AMG_GR_SET_EXPECTED_SIZE(gc->curTriSize, 1);	
-    AMG_TRI_STRIP_BEGIN(tPackPtr,packetVal);
-    
-    i=gc->curVertexParam;
-    Loop=i-2;
-    i2=i+i;
-    lenght=i-2;
-    nextfifo=6+lenght+lenght;				// lenght of vertex params *2
-    
-    AMG_TRISETXYNOADD(((unsigned long*)a),0);
-    AMG_TRISETXYNOADD(((unsigned long*)b),i);
-    AMG_TRISETXYNOADD(((unsigned long*)c),i2);
-    
-    dataElem=0;
-    i+=2;
-    i2+=2;
-    casta=(unsigned long*)a;
-    castb=(unsigned long*)b;
-    castc=(unsigned long*)c;
-    
-    while(Loop!=0) 
-      {
-        AMG_TRISETPARAMNOADD(casta[gc->tsuDataListByte[dataElem]],2);
-        AMG_TRISETPARAMNOADD(castb[gc->tsuDataListByte[dataElem]],i);
-        AMG_TRISETPARAMNOADD(castc[gc->tsuDataListByte[dataElem]],i2);
-        AMG_TRIFIFOADD
-          dataElem++;
-        Loop--;
-      }
-      AMG_TRIFIFOADDVALUE(nextfifo)
-      AMG_TRI_END(tPackPtr)
-    }
-#else
-  {
-    GR_DCL_HW;
-    int vectorIndex;
-    FxU32 sMode = (gc->cmdTransportInfo.paramMask >> SSTCP_PKT3_PMASK_SHIFT);
-    FxU32 paramMask = (sMode & 0xFF);
-    FxU32 paramCount;
-    const float* vectorArray[3];
-    
-    vectorArray[0] = (const float *)a;
-    vectorArray[1] = (const float *)b;
-    vectorArray[2] = (const float *)c;
-    
-    /* Convert packet 3 paramMask into sMode format */
-    sMode = (paramMask | ((sMode & 0xF000) << 4));
-    
-    {
-      const FxBool hasColor = ((sMode & 0x01) != 0);
-      const FxBool hasAlpha = ((sMode & 0x02) != 0);
-      const FxBool hasZ = ((sMode & 0x04) != 0);
-      const FxBool hasWb = ((sMode & 0x08) != 0);
-      const FxBool hasW0 = ((sMode & 0x10) != 0);
-      const FxBool hasST0 = ((sMode & 0x20) != 0);
-      const FxBool hasW1 = ((sMode & 0x40) != 0);
-      const FxBool hasST1 = ((sMode & 0x80) != 0);
-      
-      /* We always send vertex XY */
-      paramCount = 2;
-      paramMask = 0x03;
-      
-      /* Build parameter data for reg group packet */
-#if GLIDE_PACKED_RGB
-      if (hasColor || hasAlpha) {
-        paramCount += 1;
-        paramMask |= 0x04;
-      }
-#else /* !GLIDE_PACKED_RGB */
-      if (hasColor) {
-        paramCount += 3;
-        paramMask |= 0x38;
-      }
-      if (hasAlpha) {
-        paramCount += 1;
-        paramMask |= 0x40;
-      }
-#endif /* !GLIDE_PACKED_RGB */
-      
-      if (hasZ) {
-        paramCount += 1;
-        paramMask |= 0x80;
-      }
-      if (hasWb) {
-        paramCount += 1;
-        paramMask |= 0x100;
-      }
-      if (hasW0) {
-        paramCount += 1;
-        paramMask |= 0x200;
-      }
-      if (hasST0) {
-        paramCount += 2;
-        paramMask |= 0xC00;
-      }
-      if (hasW1) {
-        paramCount += 1;
-        paramMask |= 0x1000;
-      }
-      if (hasST1) {
-        paramCount += 2;
-        paramMask |= 0x6000;
-      }
-      
-      /* Set mode once for teh whole triangle */
-      GR_SET_EXPECTED_SIZE(sizeof(FxU32), 1);
-      GR_SET(BROADCAST_ID, hw, sSetupMode, sMode);
-      GR_CHECK_SIZE();
-      
-      for(vectorIndex = 0; vectorIndex < sizeof(vectorArray) / sizeof(float*); vectorIndex++) {
-        FxU32
-          dataElem,
-        i;
-        const float* a = (const float *)vectorArray[vectorIndex];
-        
-        REG_GROUP_BEGIN(BROADCAST_ID, sVx, paramCount, paramMask);
-        {
-          REG_GROUP_SETF(hw, sVx, FARRAY(a, 0));
-          REG_GROUP_SETF(hw, sVy, FARRAY(a, sizeof(float)));
-          
-          dataElem = 0;
-          i = gc->tsuDataList[dataElem];
-          
-          if (hasColor) {
-            REG_GROUP_SETF(hw, sRed, FARRAY(a, i));
-            dataElem++;
-            i = gc->tsuDataList[dataElem];
-            REG_GROUP_SETF(hw, sGreen, FARRAY(a, i));
-            dataElem++;
-            i = gc->tsuDataList[dataElem];
-            REG_GROUP_SETF(hw, sBlue, FARRAY(a, i));
-            dataElem++;
-            i = gc->tsuDataList[dataElem];
-          }
-          if (hasAlpha) {
-            REG_GROUP_SETF(hw, sAlpha, FARRAY(a, i));
-            dataElem++;
-            i = gc->tsuDataList[dataElem];
-          }
-          
-          if (hasZ) {
-            REG_GROUP_SETF(hw, sVz, FARRAY(a, i));
-            dataElem++;
-            i = gc->tsuDataList[dataElem];
-          }
-          if (hasWb) {
-            REG_GROUP_SETF(hw, sOowfbi, FARRAY(a, i));
-            dataElem++;
-            i = gc->tsuDataList[dataElem];
-          }
-          
-          /* TMU0 */
-          if (hasW0) {
-            REG_GROUP_SETF(hw, sOow0, FARRAY(a, i));
-            dataElem++;
-            i = gc->tsuDataList[dataElem];
-          }
-          if (hasST0) {
-            REG_GROUP_SETF(hw, sSow0, FARRAY(a, i));
-            dataElem++;
-            i = gc->tsuDataList[dataElem];
-            REG_GROUP_SETF(hw, sTow0, FARRAY(a, i));
-            dataElem++;
-            i = gc->tsuDataList[dataElem];
-          }
-          
-          /* TMU1 */
-          if (hasW1) {
-            REG_GROUP_SETF(hw, sOow1, FARRAY(a, i));
-            dataElem++;
-            i = gc->tsuDataList[dataElem];
-          }
-          if (hasST1) {
-            REG_GROUP_SETF(hw, sSow1, FARRAY(a, i));
-            dataElem++;
-            i = gc->tsuDataList[dataElem];
-            REG_GROUP_SETF(hw, sTow1, FARRAY(a, i));
-            dataElem++;
-            i = gc->tsuDataList[dataElem];
-          }
-        }
-        REG_GROUP_END();
-        
-        GR_SET_EXPECTED_SIZE(sizeof(FxU32), 1);
-        if (vectorIndex == 0) {
-          GR_SET(BROADCAST_ID, hw, sBeginTriCMD, 0);
-        } else {
-          GR_SET(BROADCAST_ID, hw, sDrawTriCMD, 0);
-        }
-        GR_CHECK_SIZE();
-      }
-    }
-  }
-#endif
-  
-  GR_END();
-  
-  return FXTRUE;
-#else /* !FAST_C_CLIP */
   return internal_trisetup(FN_NAME,
                            FXTRUE, FXTRUE,
                            a, b, c);
-#endif /* !FAST_C_CLIP */
 
 #undef FN_NAME
 }
@@ -989,225 +608,9 @@ _trisetup_Default_win_nocull_invalid(const void* a, const void* b, const void* c
 {
 #define FN_NAME "_trisetup_Default_win_nocull_invalid"
 
-#ifdef FAST_C_CLIP
-  AMG_GR_BEGIN_NOFIFOCHECK();
-  
-  /* Pass the current culling mode? */
-  
-  GR_FLUSH_STATE();
-  
-  /* Send triangle parameters */
-  
-#if GLIDE_HW_TRI_SETUP && GLIDE_PACKET3_TRI_SETUP
-  {
-    FxU32 dataElem,i,i2,nextfifo;
-    unsigned long *casta,*castb,*castc,lenght,Loop;
-    
-    FxU32* tPackPtr; 
-    FxU32 packetVal;
-    AMG_GR_SET_EXPECTED_SIZE(gc->curTriSize, 1);	
-    AMG_TRI_STRIP_BEGIN(tPackPtr,packetVal);
-    
-    i=gc->curVertexParam;
-    Loop=i-2;
-    i2=i+i;
-    lenght=i-2;
-    nextfifo=6+lenght+lenght;				// lenght of vertex params *2
-    
-    AMG_TRISETXYNOADD(((unsigned long*)a),0);
-    AMG_TRISETXYNOADD(((unsigned long*)b),i);
-    AMG_TRISETXYNOADD(((unsigned long*)c),i2);
-    
-    dataElem=0;
-    i+=2;
-    i2+=2;
-    casta=(unsigned long*)a;
-    castb=(unsigned long*)b;
-    castc=(unsigned long*)c;
-    
-    while(Loop!=0) 
-      {
-        AMG_TRISETPARAMNOADD(casta[gc->tsuDataListByte[dataElem]],2);
-        AMG_TRISETPARAMNOADD(castb[gc->tsuDataListByte[dataElem]],i);
-        AMG_TRISETPARAMNOADD(castc[gc->tsuDataListByte[dataElem]],i2);
-        AMG_TRIFIFOADD
-        dataElem++;
-        Loop--;
-      }
-    AMG_TRIFIFOADDVALUE(nextfifo)
-    AMG_TRI_END(tPackPtr)
-    }
-#else
-  {
-    GR_DCL_HW;
-    int vectorIndex;
-    FxU32 sMode = (gc->cmdTransportInfo.paramMask >> SSTCP_PKT3_PMASK_SHIFT);
-    FxU32 paramMask = (sMode & 0xFF);
-    FxU32 paramCount;
-    const float* vectorArray[3];
-    
-    vectorArray[0] = (const float *)a;
-    vectorArray[1] = (const float *)b;
-    vectorArray[2] = (const float *)c;
-    
-    /* Convert packet 3 paramMask into sMode format */
-    sMode = (paramMask | ((sMode & 0xF000) << 4));
-    
-    {
-      const FxBool hasColor = ((sMode & 0x01) != 0);
-      const FxBool hasAlpha = ((sMode & 0x02) != 0);
-      const FxBool hasZ = ((sMode & 0x04) != 0);
-      const FxBool hasWb = ((sMode & 0x08) != 0);
-      const FxBool hasW0 = ((sMode & 0x10) != 0);
-      const FxBool hasST0 = ((sMode & 0x20) != 0);
-      const FxBool hasW1 = ((sMode & 0x40) != 0);
-      const FxBool hasST1 = ((sMode & 0x80) != 0);
-      
-      /* We always send vertex XY */
-      paramCount = 2;
-      paramMask = 0x03;
-      
-      /* Build parameter data for reg group packet */
-#if GLIDE_PACKED_RGB
-      if (hasColor || hasAlpha) {
-        paramCount += 1;
-        paramMask |= 0x04;
-      }
-#else /* !GLIDE_PACKED_RGB */
-      if (hasColor) {
-        paramCount += 3;
-        paramMask |= 0x38;
-      }
-      if (hasAlpha) {
-        paramCount += 1;
-        paramMask |= 0x40;
-      }
-#endif /* !GLIDE_PACKED_RGB */
-      
-      if (hasZ) {
-        paramCount += 1;
-        paramMask |= 0x80;
-      }
-      if (hasWb) {
-        paramCount += 1;
-        paramMask |= 0x100;
-      }
-      if (hasW0) {
-        paramCount += 1;
-        paramMask |= 0x200;
-      }
-      if (hasST0) {
-        paramCount += 2;
-        paramMask |= 0xC00;
-      }
-      if (hasW1) {
-        paramCount += 1;
-        paramMask |= 0x1000;
-      }
-      if (hasST1) {
-        paramCount += 2;
-        paramMask |= 0x6000;
-      }
-      
-      /* Set mode once for teh whole triangle */
-      GR_SET_EXPECTED_SIZE(sizeof(FxU32), 1);
-      GR_SET(BROADCAST_ID, hw, sSetupMode, sMode);
-      GR_CHECK_SIZE();
-      
-      for(vectorIndex = 0; vectorIndex < sizeof(vectorArray) / sizeof(float*); vectorIndex++) {
-        FxU32
-          dataElem,
-          i;
-        const float* a = (const float *)vectorArray[vectorIndex];
-        
-        REG_GROUP_BEGIN(BROADCAST_ID, sVx, paramCount, paramMask);
-        {
-          REG_GROUP_SETF(hw, sVx, FARRAY(a, 0));
-          REG_GROUP_SETF(hw, sVy, FARRAY(a, sizeof(float)));
-          
-          dataElem = 0;
-          i = gc->tsuDataList[dataElem];
-          
-          if (hasColor) {
-            REG_GROUP_SETF(hw, sRed, FARRAY(a, i));
-            dataElem++;
-            i = gc->tsuDataList[dataElem];
-            REG_GROUP_SETF(hw, sGreen, FARRAY(a, i));
-            dataElem++;
-            i = gc->tsuDataList[dataElem];
-            REG_GROUP_SETF(hw, sBlue, FARRAY(a, i));
-            dataElem++;
-            i = gc->tsuDataList[dataElem];
-          }
-          if (hasAlpha) {
-            REG_GROUP_SETF(hw, sAlpha, FARRAY(a, i));
-            dataElem++;
-            i = gc->tsuDataList[dataElem];
-          }
-          
-          if (hasZ) {
-            REG_GROUP_SETF(hw, sVz, FARRAY(a, i));
-            dataElem++;
-            i = gc->tsuDataList[dataElem];
-          }
-          if (hasWb) {
-            REG_GROUP_SETF(hw, sOowfbi, FARRAY(a, i));
-            dataElem++;
-            i = gc->tsuDataList[dataElem];
-          }
-          
-          /* TMU0 */
-          if (hasW0) {
-            REG_GROUP_SETF(hw, sOow0, FARRAY(a, i));
-            dataElem++;
-            i = gc->tsuDataList[dataElem];
-          }
-          if (hasST0) {
-            REG_GROUP_SETF(hw, sSow0, FARRAY(a, i));
-            dataElem++;
-            i = gc->tsuDataList[dataElem];
-            REG_GROUP_SETF(hw, sTow0, FARRAY(a, i));
-            dataElem++;
-            i = gc->tsuDataList[dataElem];
-          }
-          
-          /* TMU1 */
-          if (hasW1) {
-            REG_GROUP_SETF(hw, sOow1, FARRAY(a, i));
-            dataElem++;
-            i = gc->tsuDataList[dataElem];
-          }
-          if (hasST1) {
-            REG_GROUP_SETF(hw, sSow1, FARRAY(a, i));
-            dataElem++;
-            i = gc->tsuDataList[dataElem];
-            REG_GROUP_SETF(hw, sTow1, FARRAY(a, i));
-            dataElem++;
-            i = gc->tsuDataList[dataElem];
-          }
-        }
-        REG_GROUP_END();
-        
-        GR_SET_EXPECTED_SIZE(sizeof(FxU32), 1);
-        if (vectorIndex == 0) {
-          GR_SET(BROADCAST_ID, hw, sBeginTriCMD, 0);
-        } else {
-          GR_SET(BROADCAST_ID, hw, sDrawTriCMD, 0);
-        }
-        GR_CHECK_SIZE();
-      }
-    }
-  }
-#endif
-  
-  GR_END();
-  
-  return FXTRUE;
-#else /* !FAST_C_CLIP */
   return internal_trisetup(FN_NAME,
                            FXFALSE, FXFALSE,
                            a, b, c);
-#endif /* !FAST_C_CLIP */
 
 #undef FN_NAME
 }
@@ -1217,227 +620,14 @@ _trisetup_Default_win_nocull_valid(const void* a, const void* b, const void* c)
 {
 #define FN_NAME "_trisetup_Default_win_nocull_valid"
 
-#ifdef FAST_C_CLIP
-  AMG_GR_BEGIN_NOFIFOCHECK();
-  
-  /* Send triangle parameters */
-  
-#if GLIDE_HW_TRI_SETUP && GLIDE_PACKET3_TRI_SETUP
-  {
-    FxU32 dataElem,i,i2,nextfifo;
-    
-    unsigned long *casta,*castb,*castc,lenght,Loop;
-    
-    FxU32* tPackPtr; 
-    FxU32 packetVal;
-    AMG_GR_SET_EXPECTED_SIZE(gc->curTriSize, 1);	
-    AMG_TRI_STRIP_BEGIN(tPackPtr,packetVal);
-    
-    i=gc->curVertexParam;
-    Loop=i-2;
-    i2=i+i;
-    lenght=i-2;
-    nextfifo=6+lenght+lenght;				// lenght of vertex params *2
-    
-    AMG_TRISETXYNOADD(((unsigned long*)a),0);
-    AMG_TRISETXYNOADD(((unsigned long*)b),i);
-    AMG_TRISETXYNOADD(((unsigned long*)c),i2);
-    
-    dataElem=0;
-    i+=2;
-    i2+=2;
-    casta=(unsigned long*)a;
-    castb=(unsigned long*)b;
-    castc=(unsigned long*)c;
-    
-    while(Loop!=0) 
-      {
-        AMG_TRISETPARAMNOADD(casta[gc->tsuDataListByte[dataElem]],2);
-        AMG_TRISETPARAMNOADD(castb[gc->tsuDataListByte[dataElem]],i);
-        AMG_TRISETPARAMNOADD(castc[gc->tsuDataListByte[dataElem]],i2);
-        AMG_TRIFIFOADD
-        dataElem++;
-        Loop--;
-      }
-    AMG_TRIFIFOADDVALUE(nextfifo)
-    AMG_TRI_END(tPackPtr)
-    }
-#else
-  {
-    GR_DCL_HW;
-    int vectorIndex;
-    FxU32 sMode = (gc->cmdTransportInfo.paramMask >> SSTCP_PKT3_PMASK_SHIFT);
-    FxU32 paramMask = (sMode & 0xFF);
-    FxU32 paramCount;
-    const float* vectorArray[3];
-    
-    vectorArray[0] = (const float *)a;
-    vectorArray[1] = (const float *)b;
-    vectorArray[2] = (const float *)c;
-    
-    /* Convert packet 3 paramMask into sMode format */
-    sMode = (paramMask | ((sMode & 0xF000) << 4));
-    
-    {
-      const FxBool hasColor = ((sMode & 0x01) != 0);
-      const FxBool hasAlpha = ((sMode & 0x02) != 0);
-      const FxBool hasZ = ((sMode & 0x04) != 0);
-      const FxBool hasWb = ((sMode & 0x08) != 0);
-      const FxBool hasW0 = ((sMode & 0x10) != 0);
-      const FxBool hasST0 = ((sMode & 0x20) != 0);
-      const FxBool hasW1 = ((sMode & 0x40) != 0);
-      const FxBool hasST1 = ((sMode & 0x80) != 0);
-      
-      /* We always send vertex XY */
-      paramCount = 2;
-      paramMask = 0x03;
-      
-      /* Build parameter data for reg group packet */
-#if GLIDE_PACKED_RGB
-      if (hasColor || hasAlpha) {
-        paramCount += 1;
-        paramMask |= 0x04;
-      }
-#else /* !GLIDE_PACKED_RGB */
-      if (hasColor) {
-        paramCount += 3;
-        paramMask |= 0x38;
-      }
-      if (hasAlpha) {
-        paramCount += 1;
-        paramMask |= 0x40;
-      }
-#endif /* !GLIDE_PACKED_RGB */
-      
-      if (hasZ) {
-        paramCount += 1;
-        paramMask |= 0x80;
-      }
-      if (hasWb) {
-        paramCount += 1;
-        paramMask |= 0x100;
-      }
-      if (hasW0) {
-        paramCount += 1;
-        paramMask |= 0x200;
-      }
-      if (hasST0) {
-        paramCount += 2;
-        paramMask |= 0xC00;
-      }
-      if (hasW1) {
-        paramCount += 1;
-        paramMask |= 0x1000;
-      }
-      if (hasST1) {
-        paramCount += 2;
-        paramMask |= 0x6000;
-      }
-      
-      /* Set mode once for teh whole triangle */
-      GR_SET_EXPECTED_SIZE(sizeof(FxU32), 1);
-      GR_SET(BROADCAST_ID, hw, sSetupMode, sMode);
-      GR_CHECK_SIZE();
-      
-      for(vectorIndex = 0; vectorIndex < sizeof(vectorArray) / sizeof(float*); vectorIndex++) {
-        FxU32
-          dataElem,
-          i;
-        const float* a = (const float *)vectorArray[vectorIndex];
-        
-        REG_GROUP_BEGIN(BROADCAST_ID, sVx, paramCount, paramMask);
-        {
-          REG_GROUP_SETF(hw, sVx, FARRAY(a, 0));
-          REG_GROUP_SETF(hw, sVy, FARRAY(a, sizeof(float)));
-          
-          dataElem = 0;
-          i = gc->tsuDataList[dataElem];
-          
-          if (hasColor) {
-            REG_GROUP_SETF(hw, sRed, FARRAY(a, i));
-            dataElem++;
-            i = gc->tsuDataList[dataElem];
-            REG_GROUP_SETF(hw, sGreen, FARRAY(a, i));
-            dataElem++;
-            i = gc->tsuDataList[dataElem];
-            REG_GROUP_SETF(hw, sBlue, FARRAY(a, i));
-            dataElem++;
-            i = gc->tsuDataList[dataElem];
-          }
-          if (hasAlpha) {
-            REG_GROUP_SETF(hw, sAlpha, FARRAY(a, i));
-            dataElem++;
-            i = gc->tsuDataList[dataElem];
-          }
-          
-          if (hasZ) {
-            REG_GROUP_SETF(hw, sVz, FARRAY(a, i));
-            dataElem++;
-            i = gc->tsuDataList[dataElem];
-          }
-          if (hasWb) {
-            REG_GROUP_SETF(hw, sOowfbi, FARRAY(a, i));
-            dataElem++;
-            i = gc->tsuDataList[dataElem];
-          }
-          
-          /* TMU0 */
-          if (hasW0) {
-            REG_GROUP_SETF(hw, sOow0, FARRAY(a, i));
-            dataElem++;
-            i = gc->tsuDataList[dataElem];
-          }
-          if (hasST0) {
-            REG_GROUP_SETF(hw, sSow0, FARRAY(a, i));
-            dataElem++;
-            i = gc->tsuDataList[dataElem];
-            REG_GROUP_SETF(hw, sTow0, FARRAY(a, i));
-            dataElem++;
-            i = gc->tsuDataList[dataElem];
-          }
-          
-          /* TMU1 */
-          if (hasW1) {
-            REG_GROUP_SETF(hw, sOow1, FARRAY(a, i));
-            dataElem++;
-            i = gc->tsuDataList[dataElem];
-          }
-          if (hasST1) {
-            REG_GROUP_SETF(hw, sSow1, FARRAY(a, i));
-            dataElem++;
-            i = gc->tsuDataList[dataElem];
-            REG_GROUP_SETF(hw, sTow1, FARRAY(a, i));
-            dataElem++;
-            i = gc->tsuDataList[dataElem];
-          }
-        }
-        REG_GROUP_END();
-        
-        GR_SET_EXPECTED_SIZE(sizeof(FxU32), 1);
-        if (vectorIndex == 0) {
-          GR_SET(BROADCAST_ID, hw, sBeginTriCMD, 0);
-        } else {
-          GR_SET(BROADCAST_ID, hw, sDrawTriCMD, 0);
-        }
-        GR_CHECK_SIZE();
-      }
-    }
-  }
-#endif
-  
-  GR_END();
-  
-  return FXTRUE;
-#else /* !FAST_C_CLIP */
   return internal_trisetup(FN_NAME,
                            FXFALSE, FXTRUE,
                            a, b, c);
-#endif /* !FAST_C_CLIP */
 
 #undef FN_NAME
 }
 
-#endif
+#endif /* GLIDE_USE_C_TRISETUP */
 
 FxI32 FX_CALL 
 _vptrisetup_cull(const void* a, const void* b, const void* c)
