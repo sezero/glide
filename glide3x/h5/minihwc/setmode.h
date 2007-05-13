@@ -18,6 +18,13 @@
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
  */
 
+#ifdef HWC_EXT_INIT
+FxBool setVideoMode( hwcBoardInfo *bInfo, int refresh );
+
+void resetVideo( hwcBoardInfo *bInfo );
+
+FxBool checkResolutions( FxBool *supportedByResolution, FxU32 stride, hwcBoardInfo *bInfo );
+#else /* HWC_EXT_INIT */
 FxBool setVideoMode( void *hwnd,
                      int  xRes, 
                      int  yRes, 
@@ -29,3 +36,4 @@ FxBool setVideoMode( void *hwnd,
 void resetVideo( void );
 
 FxBool checkResolutions(FxBool *supportedByResolution, FxU32 stride, void *hmon);
+#endif

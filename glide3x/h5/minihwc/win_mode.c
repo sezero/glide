@@ -38,8 +38,8 @@
 #include <ddraw.h> 
 #include <sst1vid.h>
 #include "qmodes.h"
-#include "setmode.h"
 #include "minihwc.h"
+#include "setmode.h"
 #define IS_32
 #define Not_VxD
 #include <minivdd.h>
@@ -50,12 +50,6 @@
 #define SEPARATOR '\\'
 /* UNIX */
 #define SEPARATOR2 '/'
-
-static HWND	hwndApp = 0;
-
-/* Direct Draw stuff */
-LPDIRECTDRAW            lpDD1 = NULL;
-LPDIRECTDRAW2           lpDD  = NULL;
 
 /*
  * parseFilename
@@ -94,6 +88,7 @@ ddEnumCbEx( GUID FAR *guid, LPSTR desc, LPSTR name, LPVOID ctx, HMONITOR hmon )
   if(pEnumInfo->hmon == hmon) {
     if ( guid ) CopyMemory(&pEnumInfo->guid, guid, sizeof(GUID));
     rv = DDENUMRET_CANCEL;
+    GDBG_INFO(80, "DeviceName: %s, DeviceString: %s\n", name, desc);
   }
   
   return rv;
@@ -179,7 +174,7 @@ msgEnumDisplayModes(HRESULT hResult)
 } /* msgEnumDisplayModes */
 
 FxBool 
-setVideoMode( void *hwnd, int xRes, int yRes, int h3pixelSize, int refresh, void *hmon, char *devicename )
+setVideoMode( hwcBoardInfo *bInfo, int refresh )
 {
   LPGUID          ddGuid = NULL;
   HMODULE         ddraw = NULL;
@@ -192,18 +187,19 @@ setVideoMode( void *hwnd, int xRes, int yRes, int h3pixelSize, int refresh, void
   //DWORD style;
 
 #ifdef FX_GLIDE_NAPALM
-  if (h3pixelSize == 4) bpp = 32;
+  if (bInfo->h3pixelSize == 4) bpp = 32;
   GDBG_INFO( 80, "Glide mode: %dx%dx%dbpp@%dHz\n",
-             xRes,
-             yRes,
+             bInfo->vidInfo.xRes,
+             bInfo->vidInfo.yRes,
              bpp,
              refresh);
 #endif
   
-  GDBG_INFO( 80, "setVideoMode sees hwnd 0x%x\n", (HWND)hwnd);
-  hwndApp = ( hwnd == NULL ) ? GetActiveWindow() : ((HWND)hwnd);
-  
-  if ( hwndApp == NULL ) {
+  GDBG_INFO( 80, "setVideoMode sees hwnd 0x%x\n", (HWND)bInfo->vidInfo.hWnd);
+
+  if ((HWND)bInfo->vidInfo.hWnd == NULL) {
+    (HWND)bInfo->vidInfo.hWnd = GetActiveWindow();
+  } else {
     GDBG_INFO( 80, "Couldn't get a valid window handle\n" );
   }
 
@@ -217,14 +213,19 @@ setVideoMode( void *hwnd, int xRes, int yRes, int h3pixelSize, int refresh, void
 
       ZeroMemory(&enumInfo, sizeof(enumInfo));
       ZeroMemory(&enumInfo.guid, sizeof(GUID));
-      enumInfo.hmon = (HMONITOR)hmon;
+      enumInfo.hmon = (HMONITOR)bInfo->hMon;
       ddEnumEx( ddEnumCbEx, &enumInfo, DDENUM_ATTACHEDSECONDARYDEVICES );
       ddGuid = &enumInfo.guid;
-	  GDBG_INFO(80, "GUID %d\n", ddGuid);
+      GDBG_INFO(80, "GUID %d-%d-%d-%d-%d%d%d%d\n",
+                ddGuid->Data1,
+                ddGuid->Data2,
+                ddGuid->Data3,
+                ddGuid->Data4[0], ddGuid->Data4[1],
+                ddGuid->Data4[2], ddGuid->Data4[3], ddGuid->Data4[4]);
     }
   }
 
-   EnumDisplaySettings(devicename, ENUM_REGISTRY_SETTINGS, &devMode);
+   EnumDisplaySettings(bInfo->devName, ENUM_REGISTRY_SETTINGS, &devMode);
 
   /* KoolSmoky - Hack for win95. make a disp struct if we don't get anything
    * from EnumDisplaySettings.
@@ -241,7 +242,7 @@ setVideoMode( void *hwnd, int xRes, int yRes, int h3pixelSize, int refresh, void
     }
   }
 
-  GDBG_INFO(80, "DeviceName: %s Display mode: %dx%dx%dbpp!\n", devicename, devMode.dmPelsWidth, devMode.dmPelsHeight, devMode.dmBitsPerPel);
+  GDBG_INFO(80, "DeviceName: %s Display mode: %dx%dx%dbpp!\n", bInfo->devName, devMode.dmPelsWidth, devMode.dmPelsHeight, devMode.dmBitsPerPel);
 
   /*
   **  Oh, this is lovely.  What we have here is a failure to
@@ -253,23 +254,23 @@ setVideoMode( void *hwnd, int xRes, int yRes, int h3pixelSize, int refresh, void
   **  an 8-bit display, and fix up vidProcCfg in the minihwc.
   */
   /* KoolSmoky - what would happen if we run from 8bpp? */
-  if ((devMode.dmPelsWidth == (FxU32) xRes) &&
-      (devMode.dmPelsHeight ==  (FxU32) yRes)) {
+  if ((devMode.dmPelsWidth == (FxU32) bInfo->vidInfo.xRes) &&
+      (devMode.dmPelsHeight ==  (FxU32) bInfo->vidInfo.yRes)) {
       GDBG_INFO(80, "DDraw communication hack: setting to 8bpp!\n");
       bpp = 8;
   }
   
-  if (lpDD == NULL) {
+  if (bInfo->lpDD == NULL) {
     /* only create directdraw object once */
-    if ( DirectDrawCreate( ddGuid, &lpDD1, NULL ) != DD_OK) {
+    if ( DirectDrawCreate( ddGuid, &bInfo->lpDD1, NULL ) != DD_OK) {
       GDBG_INFO(80, "DDraw Obj Create Failed!\n");
     }
     else GDBG_INFO(80, "DDraw Obj created!\n");
-    if ( IDirectDraw_QueryInterface( lpDD1, &IID_IDirectDraw2, 
-                                     (LPVOID*)&lpDD ) != DD_OK ) {
-      IDirectDraw_Release( lpDD1 );
-      lpDD1 = NULL;
-      lpDD  = NULL;
+    if ( IDirectDraw_QueryInterface( bInfo->lpDD1, &IID_IDirectDraw2, 
+                                     (LPVOID*)&bInfo->lpDD ) != DD_OK ) {
+      IDirectDraw_Release( bInfo->lpDD1 );
+      bInfo->lpDD1 = NULL;
+      bInfo->lpDD  = NULL;
       GDBG_INFO(80, "DDraw Obj Create Failed!\n");
       return FXFALSE;            
     } 
@@ -278,9 +279,9 @@ setVideoMode( void *hwnd, int xRes, int yRes, int h3pixelSize, int refresh, void
   
   /* Set Exclusive Mode, change resolution,  */
   GDBG_INFO(80, "Setting Full screen exclusive mode!\n");
-  GDBG_INFO(80, "Calling IDD2_SetCoop: 0x%x, 0x%x, 0x%x\n", lpDD, hwndApp, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN );
+  GDBG_INFO(80, "Calling IDD2_SetCoop: 0x%x, 0x%x, 0x%x\n", bInfo->lpDD, bInfo->vidInfo.hWnd, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN );
 
-  hResult = IDirectDraw2_SetCooperativeLevel(lpDD, hwndApp,
+  hResult = IDirectDraw2_SetCooperativeLevel(bInfo->lpDD, (HWND)bInfo->vidInfo.hWnd,
                                                /*DDSCL_ALLOWREBOOT |*/
                                                DDSCL_EXCLUSIVE |
                                                DDSCL_FULLSCREEN);
@@ -319,18 +320,18 @@ setVideoMode( void *hwnd, int xRes, int yRes, int h3pixelSize, int refresh, void
   
   ddsd.dwSize = sizeof(DDSURFACEDESC);
   ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT;
-  ddsd.dwWidth = xRes;
-  ddsd.dwHeight = yRes;
+  ddsd.dwWidth = bInfo->vidInfo.xRes;
+  ddsd.dwHeight = bInfo->vidInfo.yRes;
   ddsd.dwRefreshRate = refresh;
   
   /* Set these for use by the callback */
-  emcData.xRes = xRes;
-  emcData.yRes = yRes;
+  emcData.xRes = bInfo->vidInfo.xRes;
+  emcData.yRes = bInfo->vidInfo.yRes;
   emcData.Refresh = refresh;
   emcData.modeOK = FXFALSE;
   emcData.bpp = bpp;
   
-  hResult = IDirectDraw2_EnumDisplayModes(lpDD, 0, &ddsd, 
+  hResult = IDirectDraw2_EnumDisplayModes(bInfo->lpDD, 0, &ddsd, 
                                           (LPVOID) &emcData, enumModesCallback);
   
   if (hResult != DD_OK) {
@@ -341,18 +342,18 @@ setVideoMode( void *hwnd, int xRes, int yRes, int h3pixelSize, int refresh, void
   GDBG_INFO(80, "Setting Display Mode!\n");
   
   if (emcData.modeOK) {
-    GDBG_INFO(80, "Found mode %dx%d.  Attempting at %dHz\n", xRes,
-              yRes, refresh);
-    hResult = IDirectDraw2_SetDisplayMode( lpDD, xRes, yRes, bpp, refresh, 0);
+    GDBG_INFO(80, "Found mode %dx%d.  Attempting at %dHz\n", bInfo->vidInfo.xRes,
+              bInfo->vidInfo.yRes, refresh);
+    hResult = IDirectDraw2_SetDisplayMode( bInfo->lpDD, bInfo->vidInfo.xRes, bInfo->vidInfo.yRes, bpp, refresh, 0);
     if (hResult != DD_OK) {
       GDBG_INFO(80, "Couldn't set display mode\n" );
       msgModeSetFailure(hResult);
       GDBG_INFO(80, "Retrying at default resolution\n");
-      hResult = IDirectDraw2_SetDisplayMode( lpDD, xRes, yRes, bpp, 0, 0 );
+      hResult = IDirectDraw2_SetDisplayMode( bInfo->lpDD, bInfo->vidInfo.xRes, bInfo->vidInfo.yRes, bpp, 0, 0 );
       
       if (hResult != DD_OK) {
         GDBG_INFO(80, "Setting video mode %dx%d@default refresh failed!\n",
-                  xRes, yRes);
+                  bInfo->vidInfo.xRes, bInfo->vidInfo.yRes);
         msgModeSetFailure(hResult);        
         
         if (!_set_vidmode_relaxed) {
@@ -366,14 +367,14 @@ setVideoMode( void *hwnd, int xRes, int yRes, int h3pixelSize, int refresh, void
     GDBG_INFO(80, "Display Mode Set\n" );
   } else {
     
-    GDBG_INFO(80, "Did not find mode %dx%d@any refresh\n", xRes, yRes);
-    GDBG_INFO(80, "Setting video mode %dx%d@default refresh\n", xRes, yRes);
+    GDBG_INFO(80, "Did not find mode %dx%d@any refresh\n", bInfo->vidInfo.xRes, bInfo->vidInfo.yRes);
+    GDBG_INFO(80, "Setting video mode %dx%d@default refresh\n", bInfo->vidInfo.xRes, bInfo->vidInfo.yRes);
 
-    hResult = IDirectDraw2_SetDisplayMode( lpDD, xRes, yRes, bpp, 0, 0 );
+    hResult = IDirectDraw2_SetDisplayMode( bInfo->lpDD, bInfo->vidInfo.xRes, bInfo->vidInfo.yRes, bpp, 0, 0 );
     
     if (hResult != DD_OK) {
       GDBG_INFO(80, "Failed!\n",
-                xRes, yRes);
+                bInfo->vidInfo.xRes, bInfo->vidInfo.yRes);
       msgModeSetFailure(hResult);
       if (!_set_vidmode_relaxed) {
         GDBG_INFO(80, "Returning FXFALSE\n");
@@ -383,44 +384,39 @@ setVideoMode( void *hwnd, int xRes, int yRes, int h3pixelSize, int refresh, void
       }
     }
   }
-
-  if(hResult == DD_OK) {
-    /* ensure that any activity from other windows is obscured. */
-    SetWindowPos(hwndApp, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
-  }
   
   return FXTRUE;
   
 } /* setVideoMode */
 
 void 
-resetVideo( void ) 
+resetVideo( hwcBoardInfo *bInfo ) 
 {
 #define FN_NAME "resetVideo"
   
   GDBG_INFO(80, "%s:  called!\n", FN_NAME);
   
-  if ( lpDD != NULL ) {
+  if ( bInfo->lpDD != NULL ) {
     GDBG_INFO(80, "%s:  has lpDD!\n", FN_NAME);
 
-    IDirectDraw2_RestoreDisplayMode( lpDD );
+    IDirectDraw2_RestoreDisplayMode( bInfo->lpDD );
     GDBG_INFO(80, "%s:  Restored Display Mode!\n", FN_NAME);
     
-    IDirectDraw2_SetCooperativeLevel( lpDD, hwndApp, DDSCL_NORMAL );
+    IDirectDraw2_SetCooperativeLevel( bInfo->lpDD, (HWND)bInfo->vidInfo.hWnd, DDSCL_NORMAL );
     GDBG_INFO(80, "%s:  Set cooperative level!\n", FN_NAME);
     
-    IDirectDraw2_Release( lpDD );
+    IDirectDraw2_Release( bInfo->lpDD );
     GDBG_INFO(80, "%s:  Released lpDD!\n", FN_NAME);
 
-    if ( lpDD1 != NULL ) {
+    if ( bInfo->lpDD1 != NULL ) {
       GDBG_INFO(80, "%s:  has lpDD1!\n", FN_NAME);
-      IDirectDraw_Release( lpDD1 );
+      IDirectDraw_Release( bInfo->lpDD1 );
       GDBG_INFO(80, "%s:  Released lpDD1!\n", FN_NAME);
     }
   }
   
-  lpDD = NULL;
-  lpDD1 = NULL;
+  bInfo->lpDD  = NULL;
+  bInfo->lpDD1 = NULL;
 
   return;
 #undef FN_NAME
@@ -545,7 +541,9 @@ checkResEMCallback(LPDDSURFACEDESC surfaceDesc, LPVOID lpContext)
 **  app's DirectDraw context.
 */
 FxBool
-checkResolutions(FxBool *supportedByResolution, FxU32 stride, void *hmon) 
+checkResolutions(FxBool *supportedByResolution,
+                 FxU32 stride,
+                 hwcBoardInfo *bInfo) 
 {
 #define FN_NAME "checkResolution"  
   LPGUID          ddGuid = NULL;
@@ -564,36 +562,41 @@ checkResolutions(FxBool *supportedByResolution, FxU32 stride, void *hmon)
 
       ZeroMemory(&enumInfo, sizeof(enumInfo));
       ZeroMemory(&enumInfo.guid, sizeof(GUID));
-      enumInfo.hmon = (HMONITOR)hmon;
+      enumInfo.hmon = (HMONITOR)bInfo->hMon;
       ddEnumEx( ddEnumCbEx, &enumInfo, DDENUM_ATTACHEDSECONDARYDEVICES );
       ddGuid = &enumInfo.guid;
-	  GDBG_INFO(80, "GUID %d\n", ddGuid);
+      GDBG_INFO(80, "GUID %d-%d-%d-%d-%d%d%d%d\n",
+                ddGuid->Data1,
+                ddGuid->Data2,
+                ddGuid->Data3,
+                ddGuid->Data4[0], ddGuid->Data4[1],
+                ddGuid->Data4[2], ddGuid->Data4[3], ddGuid->Data4[4]);
     }
   }
   
   //checkSpecialList();
-  if (lpDD == NULL) {
+  if (bInfo->lpDD == NULL) {
     /* only create directdraw object once */
-    if ( DirectDrawCreate( ddGuid, &lpDD1, NULL ) != DD_OK) {
+    if ( DirectDrawCreate( ddGuid, &bInfo->lpDD1, NULL ) != DD_OK) {
       GDBG_INFO(80, "DDraw Obj Create Failed!\n");
     }
     else GDBG_INFO(80, "DDraw Obj created!\n");
-    if ( IDirectDraw_QueryInterface( lpDD1, &IID_IDirectDraw2, 
-                                     (LPVOID*)&lpDD ) != DD_OK ) {
-      IDirectDraw_Release( lpDD1 );
-      lpDD1 = NULL;
-      lpDD  = NULL;
+    if ( IDirectDraw_QueryInterface( bInfo->lpDD1, &IID_IDirectDraw2, 
+                                     (LPVOID*)&bInfo->lpDD ) != DD_OK ) {
+      IDirectDraw_Release( bInfo->lpDD1 );
+      bInfo->lpDD1 = NULL;
+      bInfo->lpDD  = NULL;
       GDBG_INFO(80, "DDraw Obj Create Failed!\n");
       return FXFALSE;            
     } 
     else GDBG_INFO(80, "DDraw2 Obj created!\n");
   }
   
-  hResult = IDirectDraw2_EnumDisplayModes(lpDD, 0, NULL,
+  hResult = IDirectDraw2_EnumDisplayModes(bInfo->lpDD, 0, NULL,
                                           (LPVOID) supportedByResolution,
                                           checkResEMCallback);
   
-  resetVideo();
+  resetVideo(bInfo);
   return FXTRUE;
 #undef FN_NAME
 } /* checkResolutions */
