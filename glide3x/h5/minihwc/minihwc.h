@@ -235,6 +235,7 @@
 #define WIN32_LEAN_AND_MEAN
 #endif
 #include <windows.h>
+#include <ddraw.h>
 #endif
 
 #include <3dfx.h>
@@ -508,8 +509,11 @@ typedef struct hwcBoardInfo_s {
   FxI32 hwcProtocol;
   FxU32 devNode ;   /* AJB- DevNode from display driver for minivdd ioctls */
   FxI16/*FxI32*/ hwcEscape ; /* AJB- sucky: H5 TOT uses a diff't escape code than H3 */
-  char RegPath[256];    /* KoolSmoky - Device registry path */
-  char DeviceName[32];  /* KoolSmoky - Device Name */
+#ifdef HWC_EXT_INIT
+  char devName[32];  /* KoolSmoky - Device Name */
+  LPDIRECTDRAW  lpDD1;
+  LPDIRECTDRAW2 lpDD;
+#endif /* HWC_EXT_INIT */
 } hwcBoardInfo;
 
 
@@ -761,15 +765,7 @@ void hwcSetCPUInfo (_p_info *cpuInfo);
 #endif
 
 #if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
-/* values must be in sync with fxglide.h */
-#define OS_UNKNOWN   0
-#define OS_WIN32_95  1
-#define OS_WIN32_98  2
-#define OS_WIN32_ME  3
-#define OS_WIN32_NT4 4
-#define OS_WIN32_2K  5
-#define OS_WIN32_XP  6
-void hwcSetOSInfo(FxI32 *osInfo);
+FxBool hwcIsOSWin9x(void);
 #endif
 
 #endif                          /* MINIHWC_H not defined */
