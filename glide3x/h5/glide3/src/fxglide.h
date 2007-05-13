@@ -2161,17 +2161,6 @@ struct _GlideRoot_s {
     GrTexDownloadProcVector*  nullTexProcs;    
   } deviceArchProcs;
 
-#if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
-#define OS_UNKNOWN   0
-#define OS_WIN32_95  1
-#define OS_WIN32_98  2
-#define OS_WIN32_ME  3
-#define OS_WIN32_NT4 4
-#define OS_WIN32_2K  5
-#define OS_WIN32_XP  6
-  FxI32 OS;
-#endif
-
 };
 
 extern struct _GlideRoot_s GR_CDECL _GlideRoot;
