@@ -1087,96 +1087,96 @@ doSplash( void )
 {
   GR_DCL_GC;
 
+  FxBool didLoad;
+
   /* The splash screen wants a swapped Y origin, which doesn't
    * work in all SLI configs. */
   if(_GlideRoot.environment.sliBandHeightForce)
     return;
 
-  if (_GlideRoot.environment.noSplash == 0)
-  {
+  if (_GlideRoot.environment.noSplash != 0)
+    return;
 
 #if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
-  {
-    FxBool
-      didLoad;
-
-    if (gc->pluginInfo.moduleHandle == NULL) gc->pluginInfo.moduleHandle = LoadLibrary("3dfxspl3.dll");
-    didLoad = (gc->pluginInfo.moduleHandle != NULL);
+  if (gc->pluginInfo.moduleHandle == NULL)
+    gc->pluginInfo.moduleHandle = LoadLibrary("3dfxspl3.dll");
+  
+  didLoad = (gc->pluginInfo.moduleHandle != NULL);
+  if (didLoad) {
+    gc->pluginInfo.initProc     = (GrSplashInitProc)    GetProcAddress(gc->pluginInfo.moduleHandle, 
+                                                                       "_fxSplashInit@24");
+    gc->pluginInfo.shutdownProc = (GrSplashShutdownProc)GetProcAddress(gc->pluginInfo.moduleHandle, 
+                                                                       "_fxSplashShutdown@0");
+    gc->pluginInfo.splashProc   = (GrSplashProc)        GetProcAddress(gc->pluginInfo.moduleHandle, 
+                                                                       "_fxSplash@20");
+    gc->pluginInfo.plugProc     = (GrSplashPlugProc)    GetProcAddress(gc->pluginInfo.moduleHandle, 
+                                                                       "_fxSplashPlug@16");
+    
+    didLoad = ((gc->pluginInfo.initProc != NULL) &&
+               (gc->pluginInfo.splashProc != NULL) &&
+               (gc->pluginInfo.plugProc != NULL) &&
+               (gc->pluginInfo.shutdownProc != NULL));
     if (didLoad) {
-      gc->pluginInfo.initProc = (GrSplashInitProc)GetProcAddress(gc->pluginInfo.moduleHandle, 
-                                                                 "_fxSplashInit@24");
-      gc->pluginInfo.shutdownProc = (GrSplashShutdownProc)GetProcAddress(gc->pluginInfo.moduleHandle, 
-                                                                         "_fxSplashShutdown@0");
-      gc->pluginInfo.splashProc = (GrSplashProc)GetProcAddress(gc->pluginInfo.moduleHandle, 
-                                                               "_fxSplash@20");
-      gc->pluginInfo.plugProc = (GrSplashPlugProc)GetProcAddress(gc->pluginInfo.moduleHandle, 
-                                                                 "_fxSplashPlug@16");
-
-      didLoad = ((gc->pluginInfo.initProc != NULL) &&
-                 (gc->pluginInfo.splashProc != NULL) &&
-                 (gc->pluginInfo.plugProc != NULL) &&
-                 (gc->pluginInfo.shutdownProc != NULL));
-      if (didLoad) {
-        GrState glideState;
-
-        /* Protect ourselves from the splash screen */
-        grGlideGetState(&glideState);
-        {
-          didLoad = (*gc->pluginInfo.initProc)(gc->grHwnd,
-                                               gc->state.screen_width, gc->state.screen_height,
-                                               gc->grColBuf, gc->grAuxBuf,
-                                               gc->state.color_format);
-          if (!didLoad) (*gc->pluginInfo.shutdownProc)();
-        }
-        grGlideSetState((const void*)&glideState);
-      }
+      GrState glideState;
       
-      if (!didLoad) FreeLibrary(gc->pluginInfo.moduleHandle);
+      /* Protect ourselves from the splash screen */
+      grGlideGetState(&glideState);
+      didLoad = (*gc->pluginInfo.initProc)(gc->grHwnd,
+                                           gc->state.screen_width, gc->state.screen_height,
+                                           gc->grColBuf, gc->grAuxBuf,
+                                           gc->state.color_format);
+      if (didLoad) {
+        (*gc->pluginInfo.splashProc)(0.0f, 0.0f, 
+                                     (float)gc->state.screen_width,
+                                     (float)gc->state.screen_height,
+                                     0);
+        (*gc->pluginInfo.shutdownProc)();
+      }
+      grGlideSetState((const void*)&glideState);
     }
-
-    /* Clear all the info if we could not load for some reason */
-    if (!didLoad) memset(&gc->pluginInfo, 0, sizeof(gc->pluginInfo));
+  }
+  
+  /* Clear all the info if we could not load for some reason */
+  if (!didLoad) {
+    if (gc->pluginInfo.moduleHandle)
+      FreeLibrary(gc->pluginInfo.moduleHandle);
+    memset(&gc->pluginInfo, 0, sizeof(gc->pluginInfo));
   }
 #else
-  {
-    FxBool
-      didLoad;
-
-      gc->pluginInfo.initProc = fxSplashInit;
-      gc->pluginInfo.shutdownProc = fxSplashShutdown;
-      gc->pluginInfo.splashProc = fxSplash;
-      gc->pluginInfo.plugProc = fxSplashPlug;
-
-      didLoad = ((gc->pluginInfo.initProc != NULL) &&
-                 (gc->pluginInfo.splashProc != NULL) &&
-                 (gc->pluginInfo.plugProc != NULL) &&
-                 (gc->pluginInfo.shutdownProc != NULL));
-      if (didLoad) {
-        GrState glideState;
-
-        /* Protect ourselves from the splash screen */
-        grGlideGetState(&glideState);
-        {
-          didLoad = (*gc->pluginInfo.initProc)(gc->grHwnd,
-                                               gc->state.screen_width, gc->state.screen_height,
-                                               gc->grColBuf, gc->grAuxBuf,
-                                               gc->state.color_format);
-          if (!didLoad) (*gc->pluginInfo.shutdownProc)();
-        }
-        grGlideSetState((const void*)&glideState);
-      }
-
-    /* Clear all the info if we could not load for some reason */
-    if (!didLoad) memset(&gc->pluginInfo, 0, sizeof(gc->pluginInfo));
+  gc->pluginInfo.initProc = fxSplashInit;
+  gc->pluginInfo.shutdownProc = fxSplashShutdown;
+  gc->pluginInfo.splashProc = fxSplash;
+  gc->pluginInfo.plugProc = fxSplashPlug;
+  
+  didLoad = ((gc->pluginInfo.initProc != NULL) &&
+             (gc->pluginInfo.splashProc != NULL) &&
+             (gc->pluginInfo.plugProc != NULL) &&
+             (gc->pluginInfo.shutdownProc != NULL));
+  if (didLoad) {
+    GrState glideState;
+    
+    /* Protect ourselves from the splash screen */
+    grGlideGetState(&glideState);
+    didLoad = (*gc->pluginInfo.initProc)(gc->grHwnd,
+                                         gc->state.screen_width, gc->state.screen_height,
+                                         gc->grColBuf, gc->grAuxBuf,
+                                         gc->state.color_format);
+    if (didLoad) {
+      (*gc->pluginInfo.splashProc)(0.0f, 0.0f, 
+                                   (float)gc->state.screen_width,
+                                   (float)gc->state.screen_height,
+                                   0);
+      (*gc->pluginInfo.shutdownProc)();
+    }
+    grGlideSetState((const void*)&glideState);
   }
+
+  /* Clear all the info if we could not load for some reason */
+  if (!didLoad) memset(&gc->pluginInfo, 0, sizeof(gc->pluginInfo));
 #endif /* (GLIDE_PLATFORM & GLIDE_OS_WIN32) */
 
-    grSplash(0.0f, 0.0f, 
-             (float)gc->state.screen_width,
-             (float)gc->state.screen_height,
-             0);
-  }
   _GlideRoot.environment.noSplash = 1;
+
 } /* doSplash */
 
 
@@ -2479,7 +2479,7 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
 #if __POWERPC__
       if (!hwcInitAGPFifo(bInfo, FXFALSE)) {
 #else
-      if (!hwcInitAGPFifo(bInfo, _GlideRoot.environment.autoBump/*FXTRUE*/)) {
+      if (!hwcInitAGPFifo(bInfo, FXTRUE)) {
 #endif      
         hwcRestoreVideo(bInfo);
         GrErrorCallback(hwcGetErrorString(), FXFALSE);
@@ -3296,9 +3296,7 @@ GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
   
 #if (GLIDE_OS & GLIDE_OS_WIN32)
   if (_GlideRoot.environment.is_opengl != FXTRUE) {
-    if ((_GlideRoot.OS == OS_WIN32_95) ||
-        (_GlideRoot.OS == OS_WIN32_98) ||
-        (_GlideRoot.OS == OS_WIN32_ME)) {
+    if ( hwcIsOSWin9x() ) {
       hwcUnmapMemory9x ( gc->bInfo );
     } else {
       hwcUnmapMemory();
