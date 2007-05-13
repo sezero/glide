@@ -1303,70 +1303,6 @@ _GlideInitEnvironment(void)
   /* dBorca - play safe */
   grErrorSetCallback(_grErrorDefaultCallback);
 
-#if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
-  /* Detect Windows OS before we detect glide devices */
-  {
-    OSVERSIONINFO ovi;
-    
-    ovi.dwOSVersionInfoSize = sizeof ( ovi );
-    GetVersionEx ( &ovi );
-    
-    /*XXX: [koolsmoky] I'm too lazy, set default as winxp */
-    _GlideRoot.OS = OS_WIN32_XP/*OS_UNKNOWN*/;
-    
-    if (ovi.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS) {
-      if(ovi.dwMajorVersion == 4) {
-        if (ovi.dwMinorVersion >= 90) {
-          _GlideRoot.OS = OS_WIN32_ME;
-        } else if (ovi.dwMinorVersion >= 10) {
-          _GlideRoot.OS = OS_WIN32_98;
-        } else {
-          _GlideRoot.OS = OS_WIN32_95;
-        }
-      }
-    } else if (ovi.dwPlatformId == VER_PLATFORM_WIN32_NT) {
-      if(ovi.dwMajorVersion == 4) {
-        _GlideRoot.OS = OS_WIN32_NT4;
-      } else if(ovi.dwMajorVersion == 5) {
-        if (ovi.dwMinorVersion >= 1) {
-          _GlideRoot.OS = OS_WIN32_XP;
-        } else {
-          _GlideRoot.OS = OS_WIN32_2K;
-        }
-      } else {
-        _GlideRoot.OS = OS_WIN32_XP;
-      }
-    }
-    
-    switch(_GlideRoot.OS) {
-    case OS_WIN32_95:
-      GDBG_INFO(80, "Detected Windows 95\n");
-      break;
-    case OS_WIN32_98:
-      GDBG_INFO(80, "Detected Windows 98\n");
-      break;
-    case OS_WIN32_ME:
-      GDBG_INFO(80, "Detected Windows Me\n");
-      break;
-    case OS_WIN32_NT4:
-      GDBG_INFO(80, "Detected Windows NT 4.0\n");
-      break;
-    case OS_WIN32_2K:
-      GDBG_INFO(80, "Detected Windows 2000\n");
-      break;
-    case OS_WIN32_XP:
-      GDBG_INFO(80, "Detected Windows XP\n");
-      break;
-    default:
-      GDBG_INFO(80, "Unknown Windows\n");
-      break;
-    }
-    
-    /* Pass retrieved OS info into minihwc */
-    hwcSetOSInfo(&_GlideRoot.OS);
-  }
-#endif
-
 #if GL_X86
   /* Get CPU Info before we detect glide devices */
   _cpuid (&_GlideRoot.CPUType);
@@ -1499,8 +1435,8 @@ _GlideInitEnvironment(void)
   GDBG_INFO(80,"     shamelessPlug: %d\n",_GlideRoot.environment.shamelessPlug);
   _GlideRoot.environment.ignoreReopen      = GETENV("FX_GLIDE_IGNORE_REOPEN") != NULL;
   GDBG_INFO(80,"      ignoreReopen: %d\n",_GlideRoot.environment.ignoreReopen);
-  _GlideRoot.environment.disableDitherSub  = GETENV("FX_GLIDE_NO_DITHER_SUB") != NULL; 
-  GDBG_INFO(80,"  disableDitherSub: %d\n",_GlideRoot.environment.disableDitherSub);
+  /*_GlideRoot.environment.disableDitherSub  = GETENV("FX_GLIDE_NO_DITHER_SUB") != NULL; 
+  GDBG_INFO(80,"  disableDitherSub: %d\n",_GlideRoot.environment.disableDitherSub);*/
   _GlideRoot.environment.fifoSize          = GETENV("FX_GLIDE_FIFO_SIZE") != NULL;
   GDBG_INFO(80,"          fifoSize: %d\n",_GlideRoot.environment.fifoSize);
   _GlideRoot.environment.noHW              = GETENV("FX_GLIDE_NO_HW") != NULL;
