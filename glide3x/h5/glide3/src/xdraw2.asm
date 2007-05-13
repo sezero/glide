@@ -19,6 +19,9 @@
 ;; $Header$
 ;; $Revision$
 ;; $Log$
+;; Revision 1.1.8.10  2004/05/04 17:04:31  koolsmoky
+;; clean up
+;;
 ;; Revision 1.1.8.9  2003/11/07 13:38:39  dborca
 ;; unite the clans
 ;;
@@ -227,7 +230,7 @@ Y       equ 4
     %ELSE
         proc _trisetup_Default_%1, 12
     %ENDIF
-%ENDM
+%ENDMACRO
 
 ;; enables/disables trisProcessed and trisDrawn counters
 %define STATS 1

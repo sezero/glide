@@ -20,6 +20,9 @@
 ;; $Header$
 ;; $Revision$
 ;; $Log$
+;; Revision 1.1.8.9  2004/05/04 17:04:31  koolsmoky
+;; clean up
+;;
 ;; Revision 1.1.8.8  2003/11/07 13:38:39  dborca
 ;; unite the clans
 ;;
@@ -93,45 +96,45 @@
     mov       fb, [esp + _vb$ - 4]  ; get base address of vertex B
     push      ebp                   ; save frame pointer
 
-%IFDEF GLIDE_ALT_TAB
-    test      gc, gc
-    je        .__contextLost
-;    mov       edx, [gc + windowed]
-;    test      edx, 1
-;    jnz       .pastContextTest
-    mov       edx, DWORD [gc+lostContext]
-    mov       ebx, [edx]
-    test      ebx, 1
-    jnz       .__contextLost
-;.pastContextTest:
-%ENDIF
+;%IFDEF GLIDE_ALT_TAB
+;    test      gc, gc
+;    je        .__contextLost
+;;    mov       edx, [gc + windowed]
+;;    test      edx, 1
+;;    jnz       .pastContextTest
+;    mov       edx, DWORD [gc+lostContext]
+;    mov       ebx, [edx]
+;    test      ebx, 1
+;    jnz       .__contextLost
+;;.pastContextTest:
+;%ENDIF
 
-;;%if GLIDE_CLIP_COORDS ;; this is never used
-;;    mov       esi, [gc+CoordinateSpace] ; which coord. space (clip/window)?
-;;%endif
+%if GLIDE_CLIP_COORDS
+    mov       esi, [gc+CoordinateSpace] ; which coord. space (clip/window)?
+%endif
 
 %if GLIDE_VALIDATE_STATE
     mov       ebp, [gc + invalid]   ; state validated?
 %endif
 
-;;%if GLIDE_CLIP_COORDS ;; this is never used
-;;    lea       eax, [esp+ _va$]      ; pointer to vertex pointers
-;;    test      esi, esi              ; window coordinates ?
-;;
-;;    jz        .win_coordinates       ; yup
-;;
-;;    invoke    _grDrawTriangles, 1, 3, eax; draw the triangle in clip coordinate space
-;;
-;;    pop       ebp                   ; restore frame pointer
-;;    pop       ebx                   ; restore caller's register variable
-;;    
-;;    pop       esi                   ; restore caller's register variable
-;;    pop       edi                   ; restore caller's register variable
-;;
-;;    ret                             ; return, pop 3 DWORD arguments off stack
-;;
-;;.win_coordinates:
-;;%endif  ; GLIDE_CLIP_COORDS
+%if GLIDE_CLIP_COORDS
+    lea       eax, [esp+ _va$]      ; pointer to vertex pointers
+    test      esi, esi              ; window coordinates ?
+
+    jz        .win_coordinates       ; yup
+
+    invoke    _grDrawTriangles, 1, 3, eax; draw the triangle in clip coordinate space
+
+    pop       ebp                   ; restore frame pointer
+    pop       ebx                   ; restore caller's register variable
+    
+    pop       esi                   ; restore caller's register variable
+    pop       edi                   ; restore caller's register variable
+
+    ret                             ; return, pop 3 DWORD arguments off stack
+
+.win_coordinates:
+%endif  ; GLIDE_CLIP_COORDS
 
 %if GLIDE_VALIDATE_STATE
     test      ebp, ebp              ; does state need validation?
@@ -236,47 +239,47 @@
 
     push      ebp                   ; save frame pointer
 
-%IFDEF GLIDE_ALT_TAB
-    test      gc, gc
-    je        .__contextLost
-;    mov       edx, [gc + windowed]
-;    test      edx, 1
-;    jnz       .pastContextTest
-    mov       edx, DWORD [gc+lostContext]
-    mov       ebx, [edx]
-    test      ebx, 1
-    jnz       .__contextLost
-;.pastContextTest:
-%ENDIF
+;%IFDEF GLIDE_ALT_TAB
+;    test      gc, gc
+;    je        .__contextLost
+;;    mov       edx, [gc + windowed]
+;;    test      edx, 1
+;;    jnz       .pastContextTest
+;    mov       edx, DWORD [gc+lostContext]
+;    mov       ebx, [edx]
+;    test      ebx, 1
+;    jnz       .__contextLost
+;;.pastContextTest:
+;%ENDIF
 
-;;%if GLIDE_CLIP_COORDS ;; this is never used
-;;    mov       edx, [gc+CoordinateSpace]; window coordinates or clip coordinates ?
-;;%endif
+%if GLIDE_CLIP_COORDS
+    mov       edx, [gc+CoordinateSpace]; window coordinates or clip coordinates ?
+%endif
 
 %if GLIDE_VALIDATE_STATE
     mov       ebp, [gc + invalid]   ; state validated?
 %endif
 
-;;%if GLIDE_CLIP_COORDS ;; this is never used
-;;    lea       eax, [esp+ _va$]      ; pointer to vertex pointers
-;;    test      edx, edx              ; window coordinates ?
-;;
-;;    jz        .win_coordinates       ; yup
-;;
-;;    invoke    _grDrawTriangles, 1, 3, eax; draw the triangle in coordinate space
-;;
-;;    pop       ebp                   ; restore frame pointer
-;;    pop       ebx                   ; restore caller's register variable
-;;    
-;;    pop       esi                   ; restore caller's register variable
-;;    pop       edi                   ; restore caller's register variable
-;;
-;;    ret                             ; return, pop 3 DWORD arguments off stack
-;;
-;;    ALIGN  16
-;;.win_coordinates:
-;;
-;;%endif
+%if GLIDE_CLIP_COORDS
+    lea       eax, [esp+ _va$]      ; pointer to vertex pointers
+    test      edx, edx              ; window coordinates ?
+
+    jz        .win_coordinates       ; yup
+
+    invoke    _grDrawTriangles, 1, 3, eax; draw the triangle in coordinate space
+
+    pop       ebp                   ; restore frame pointer
+    pop       ebx                   ; restore caller's register variable
+    
+    pop       esi                   ; restore caller's register variable
+    pop       edi                   ; restore caller's register variable
+
+    ret                             ; return, pop 3 DWORD arguments off stack
+
+    ALIGN  16
+.win_coordinates:
+
+%endif
 
 %if GLIDE_VALIDATE_STATE
     test      ebp, ebp              ; does state need validation?
@@ -596,19 +599,19 @@
 
     ret                             ; return to caller
 
-%IFDEF GLIDE_ALT_TAB
-.__contextLost:
-    inc       esi                   ; _GlideRoot.stats.trisProcessed++
-    pop       ebp                   ; restore frame pointer
-
-    mov       [gc + trisProcessed], esi ;
-    pop       ebx                   ; restore caller's register variable
-    
-    pop       esi                   ; restore caller's register variable
-    pop       edi                   ; restore caller's register variable
-
-    ret                             ; return to caller
-%ENDIF
+;%IFDEF GLIDE_ALT_TAB
+;.__contextLost:
+;    inc       esi                   ; _GlideRoot.stats.trisProcessed++
+;    pop       ebp                   ; restore frame pointer
+;
+;    mov       [gc + trisProcessed], esi ;
+;    pop       ebx                   ; restore caller's register variable
+;    
+;    pop       esi                   ; restore caller's register variable
+;    pop       edi                   ; restore caller's register variable
+;
+;    ret                             ; return to caller
+;%ENDIF
 
 %IF GLIDE_CULLING
 .__cullFail:
@@ -675,45 +678,45 @@
     mov       fb, [esp + _vb$ - 4]  ; get base address of vertex B
     push      ebp                   ; save frame pointer
 
-%IFDEF GLIDE_ALT_TAB
-    test      gc, gc
-    je        .__contextLost
-;    mov       edx, [gc + windowed]
-;    test      edx, 1
-;    jnz       .pastContextTest
-    mov       edx, DWORD [gc+lostContext]
-    mov       ebx, [edx]
-    test      ebx, 1
-    jnz       .__contextLost
-;.pastContextTest:
-%ENDIF
+;%IFDEF GLIDE_ALT_TAB
+;    test      gc, gc
+;    je        .__contextLost
+;;    mov       edx, [gc + windowed]
+;;    test      edx, 1
+;;    jnz       .pastContextTest
+;    mov       edx, DWORD [gc+lostContext]
+;    mov       ebx, [edx]
+;    test      ebx, 1
+;    jnz       .__contextLost
+;;.pastContextTest:
+;%ENDIF
 
-;;%if GLIDE_CLIP_COORDS ;; this is never used
-;;    mov       esi, [gc+CoordinateSpace] ; which coord. space (clip/window)?
-;;%endif
+%if GLIDE_CLIP_COORDS
+    mov       esi, [gc+CoordinateSpace] ; which coord. space (clip/window)?
+%endif
 
 %if GLIDE_VALIDATE_STATE
     mov       ebp, [gc + invalid]   ; state validated?
 %endif
 
-;;%if GLIDE_CLIP_COORDS ;; this is never used
-;;    lea       eax, [esp+ _va$]      ; pointer to vertex pointers
-;;    test      esi, esi              ; window coordinates ?
-;;
-;;    jz        .win_coordinates       ; yup
-;;
-;;    invoke    _grDrawTriangles, 1, 3, eax; draw the triangle in clip coordinate space
-;;
-;;    pop       ebp                   ; restore frame pointer
-;;    pop       ebx                   ; restore caller's register variable
-;;    
-;;    pop       esi                   ; restore caller's register variable
-;;    pop       edi                   ; restore caller's register variable
-;;
-;;    ret                             ; return, pop 3 DWORD arguments off stack
-;;
-;;.win_coordinates:
-;;%endif  ; GLIDE_CLIP_COORDS
+%if GLIDE_CLIP_COORDS
+    lea       eax, [esp+ _va$]      ; pointer to vertex pointers
+    test      esi, esi              ; window coordinates ?
+
+    jz        .win_coordinates       ; yup
+
+    invoke    _grDrawTriangles, 1, 3, eax; draw the triangle in clip coordinate space
+
+    pop       ebp                   ; restore frame pointer
+    pop       ebx                   ; restore caller's register variable
+    
+    pop       esi                   ; restore caller's register variable
+    pop       edi                   ; restore caller's register variable
+
+    ret                             ; return, pop 3 DWORD arguments off stack
+
+.win_coordinates:
+%endif  ; GLIDE_CLIP_COORDS
 
 %if GLIDE_VALIDATE_STATE
     test      ebp, ebp              ; does state need validation?
@@ -803,47 +806,47 @@
 
     push      ebp                   ; save frame pointer
 
-%IFDEF GLIDE_ALT_TAB
-    test      gc, gc
-    je        .__contextLost
-;    mov       edx, [gc + windowed]
-;    test      edx, 1
-;    jnz       .pastContextTest
-    mov       edx, DWORD [gc+lostContext]
-    mov       ebx, [edx]
-    test      ebx, 1
-    jnz       .__contextLost
-;.pastContextTest:
-%ENDIF
+;%IFDEF GLIDE_ALT_TAB
+;    test      gc, gc
+;    je        .__contextLost
+;;    mov       edx, [gc + windowed]
+;;    test      edx, 1
+;;    jnz       .pastContextTest
+;    mov       edx, DWORD [gc+lostContext]
+;    mov       ebx, [edx]
+;    test      ebx, 1
+;    jnz       .__contextLost
+;;.pastContextTest:
+;%ENDIF
 
-;;%if GLIDE_CLIP_COORDS ;; this is never used
-;;    mov       edx, [gc+CoordinateSpace]; window coordinates or clip coordinates ?
-;;%endif
+%if GLIDE_CLIP_COORDS
+    mov       edx, [gc+CoordinateSpace]; window coordinates or clip coordinates ?
+%endif
 
 %if GLIDE_VALIDATE_STATE
     mov       ebp, [gc + invalid]   ; state validated?
 %endif
 
-;;%if GLIDE_CLIP_COORDS ;; this is never used
-;;    lea       eax, [esp+ _va$]      ; pointer to vertex pointers
-;;    test      edx, edx              ; window coordinates ?
-;;
-;;    jz        .win_coordinates       ; yup
-;;
-;;    invoke    _grDrawTriangles, 1, 3, eax; draw the triangle in coordinate space
-;;
-;;    pop       ebp                   ; restore frame pointer
-;;    pop       ebx                   ; restore caller's register variable
-;;    
-;;    pop       esi                   ; restore caller's register variable
-;;    pop       edi                   ; restore caller's register variable
-;;
-;;    ret                             ; return, pop 3 DWORD arguments off stack
-;;
-;;    ALIGN  16
-;;.win_coordinates:
-;;
-;;%endif
+%if GLIDE_CLIP_COORDS
+    lea       eax, [esp+ _va$]      ; pointer to vertex pointers
+    test      edx, edx              ; window coordinates ?
+
+    jz        .win_coordinates       ; yup
+
+    invoke    _grDrawTriangles, 1, 3, eax; draw the triangle in coordinate space
+
+    pop       ebp                   ; restore frame pointer
+    pop       ebx                   ; restore caller's register variable
+    
+    pop       esi                   ; restore caller's register variable
+    pop       edi                   ; restore caller's register variable
+
+    ret                             ; return, pop 3 DWORD arguments off stack
+
+    ALIGN  16
+.win_coordinates:
+
+%endif
 
 %if GLIDE_VALIDATE_STATE
     test      ebp, ebp              ; does state need validation?
@@ -883,8 +886,8 @@
 
     mov       dlpstrt, dlp          ; save pointer to start of dataList
 
-;    test      fifo, 4               ; is fifo pointer qword aligned ?
-;    jz        .__fifo_aligned       ; yes, it is qword aligned
+    test      fifo, 4               ; is fifo pointer qword aligned ?
+    jz        .__fifo_aligned       ; yes, it is qword aligned
 
     movlps    xmm1,[vertex+X]       ; 0 | 0 | y | x
 
@@ -922,40 +925,40 @@
 
     jmp       .__paramLoopDoneWBzero1; write buffer empty
 
-;.__fifo_aligned:
-;    movss     xmm2,[vertex+X]       ; 0 | 0 | 0 | x of vertex A
-;
-;    GR_FIFO_WRITE fifo, 0, eax      ; write header to fifo
-;
-;    add       fifo, 8               ; fifoPtr += 2*sizeof(FxU32)
-;
-;    movss     [fifo-4],xmm2         ; PCI write x - not CSIM compatible!!!!
-;    movss     xmm1,[vertex+Y]       ; 0 | 0 | 0 | y of vertex A
-;
-;    mov       eax, [dlp]            ; get first offset from the data list
-;    add       dlp, 4                ; dlp++
-;
-;    test      eax, eax              ; end of list ?
-;    jz        .__paramLoopDoneWBone1; yes, "write buffer" has y data
-;
-;.__paramLoop1b:
-;    movss     xmm2,[eax+vertex]     ; 0 | 0 | 0 | get next parameter
-;    add       fifo, 8               ; fifoPtr += 2*sizeof(FxU32)
-;
-;    mov       eax, [dlp]            ; offset = *(dlp + 1)
-;    add       dlp, 8                ; dlp += 2
-;
-;    unpcklps  xmm1,xmm2             ; 0 | 0 | current param | previous param
-;    test      eax, eax              ; at end of offset list (offset == 0) ?
-;  
-;    WRITE_MM1_FIFO_ALIGNED -8       ; PCI write current param | previous param
-;    jz        .__paramLoopDoneWBzero1; exit, "write buffer" empty
-;
-;    movss     xmm1,[eax+vertex]     ; 0 | 0 | 0 | get next parameter
-;    mov       eax, [dlp-4]          ; offset = *(dlp + 1)
-;
-;    test      eax, eax              ; at end of offset list (offset == 0) ?
-;    jnz       .__paramLoop1b        ; nope, copy next parameter
+.__fifo_aligned:
+    movss     xmm2,[vertex+X]       ; 0 | 0 | 0 | x of vertex A
+
+    GR_FIFO_WRITE fifo, 0, eax      ; write header to fifo
+
+    add       fifo, 8               ; fifoPtr += 2*sizeof(FxU32)
+
+    movss     [fifo-4],xmm2         ; PCI write x - not CSIM compatible!!!!
+    movss     xmm1,[vertex+Y]       ; 0 | 0 | 0 | y of vertex A
+
+    mov       eax, [dlp]            ; get first offset from the data list
+    add       dlp, 4                ; dlp++
+
+    test      eax, eax              ; end of list ?
+    jz        .__paramLoopDoneWBone1; yes, "write buffer" has y data
+
+.__paramLoop1b:
+    movss     xmm2,[eax+vertex]     ; 0 | 0 | 0 | get next parameter
+    add       fifo, 8               ; fifoPtr += 2*sizeof(FxU32)
+
+    mov       eax, [dlp]            ; offset = *(dlp + 1)
+    add       dlp, 8                ; dlp += 2
+
+    unpcklps  xmm1,xmm2             ; 0 | 0 | current param | previous param
+    test      eax, eax              ; at end of offset list (offset == 0) ?
+  
+    WRITE_MM1_FIFO_ALIGNED -8       ; PCI write current param | previous param
+    jz        .__paramLoopDoneWBzero1; exit, "write buffer" empty
+
+    movss     xmm1,[eax+vertex]     ; 0 | 0 | 0 | get next parameter
+    mov       eax, [dlp-4]          ; offset = *(dlp + 1)
+
+    test      eax, eax              ; at end of offset list (offset == 0) ?
+    jnz       .__paramLoop1b        ; nope, copy next parameter
 
 .__paramLoopDoneWBone1:
 
@@ -1161,19 +1164,19 @@
 
     ret                             ; return to caller
 
-%IFDEF GLIDE_ALT_TAB
-.__contextLost:
-    inc       esi                   ; _GlideRoot.stats.trisProcessed++
-    pop       ebp                   ; restore frame pointer
-
-    mov       [gc + trisProcessed], esi ;
-    pop       ebx                   ; restore caller's register variable
-    
-    pop       esi                   ; restore caller's register variable
-    pop       edi                   ; restore caller's register variable
-
-    ret                             ; return to caller
-%ENDIF
+;%IFDEF GLIDE_ALT_TAB
+;.__contextLost:
+;    inc       esi                   ; _GlideRoot.stats.trisProcessed++
+;    pop       ebp                   ; restore frame pointer
+;
+;    mov       [gc + trisProcessed], esi ;
+;    pop       ebx                   ; restore caller's register variable
+;    
+;    pop       esi                   ; restore caller's register variable
+;    pop       edi                   ; restore caller's register variable
+;
+;    ret                             ; return to caller
+;%ENDIF
 
 %IF GLIDE_CULLING
 .__cullFail:
@@ -1259,14 +1262,14 @@
 %IFDEF GLIDE_ALT_TAB
    test gc, gc
    je   .__triDone
-;   mov  edx, [gc + windowed]
-;   test edx, 1
-;   jnz  .pastContextTest         ;
+   mov  edx, [gc + windowed]
+   test edx, 1
+   jnz  .pastContextTest         ;
    mov  edx, DWORD [gc+lostContext]
    mov  ebx, [edx]
    test ebx, 1
    jnz  .__triDone
-;.pastContextTest:
+.pastContextTest:
 %ENDIF
 
             align 4
