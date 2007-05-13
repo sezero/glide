@@ -275,17 +275,17 @@ GR_ENTRY(grDrawPoint, void, (const void *p))
 
 GR_ENTRY(grDrawLine, void, (const void *a, const void *b))
 {
-  const void *verts[2];
+  void *verts[2];
 #define FN_NAME "grDrawLine"
   GR_BEGIN_NOFIFOCHECK(FN_NAME, 91);
   GDBG_INFO_MORE(gc->myLevel, "(a = 0x%x, b = 0x%x)\n", a, b);
-
-        verts[0] = a; verts[1] = b;
-        
-          if (gc->state.grEnableArgs.primitive_smooth_mode & GR_AA_ORDERED_LINES_MASK)
-            _grAADrawLineStrip(GR_VTX_PTR_ARRAY, GR_LINES, 2, verts);
-          else
-            _grDrawLineStrip(GR_VTX_PTR_ARRAY, GR_LINES, 2, verts);
+  
+  verts[0] = (void *)a; verts[1] = (void *)b;
+  
+  if (gc->state.grEnableArgs.primitive_smooth_mode & GR_AA_ORDERED_LINES_MASK)
+    _grAADrawLineStrip(GR_VTX_PTR_ARRAY, GR_LINES, 2, verts);
+  else
+    _grDrawLineStrip(GR_VTX_PTR_ARRAY, GR_LINES, 2, verts);
 #undef FN_NAME
 } /* grDrawLine */
 

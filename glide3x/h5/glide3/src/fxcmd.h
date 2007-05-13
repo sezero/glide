@@ -1265,8 +1265,8 @@ do { \
   GR_ASSERT((__numWords) > 0);                                   /* packet size */ \
   GR_ASSERT((__numWords) < ((0x01 << 19) - 2)); \
   GR_ASSERT((((FxU32)(__numWords) + 2) << 2) <= (FxU32)gc->cmdTransportInfo.fifoRoom); \
-  GR_ASSERT(((unsigned unsigned long)packetPtr + (((__numWords) + 2) << 2)) < \
-            (unsigned unsigned long)gc->cmdTransportInfo.fifoEnd); \
+  GR_ASSERT(((unsigned long)packetPtr + (((__numWords) + 2) << 2)) < \
+            (unsigned long)gc->cmdTransportInfo.fifoEnd); \
   GR_ASSERT((hdr2 & 0xE0000000UL) == 0x00UL); \
   GR_ASSERT(((__addr) & 0x03UL) == 0x00UL); \
   FIFO_ASSERT(); \
