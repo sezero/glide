@@ -2263,8 +2263,6 @@ GR_EXT_ENTRY(grBufferClearExt, void, (GrColor_t color, GrAlpha_t alpha, FxU32 de
       }
         REG_GROUP_END() ;
 #endif
-        /* KoolSmoky - there is nothing else to do so return */
-        return;
       }
        else
       {        
@@ -2517,9 +2515,6 @@ GR_EXT_ENTRY(grBufferClearExt, void, (GrColor_t color, GrAlpha_t alpha, FxU32 de
            * so we have to use the triangle engine to do TBuffer clears.  UGH! */
           _grTriFill(color, depth, stencil) ;            
         }
-
-        /* KoolSmoky - there is nothing else to do so return */
-        return;
         
       } /* end of windowed or sdram clear */
 #else /* !GLIDE_INIT_HWC */
@@ -3920,7 +3915,7 @@ GR_STATE_ENTRY(grDitherMode, void, (GrDitherMode_t mode))
   
   /* disable dithering when in 32bpp */
   if (gc->bInfo->h3pixelSize == 4) {
-    fbzMode &= ~SST_ENDITHER;
+    fbzMode &= ~(SST_ENDITHER | SST_DITHER2x2 | SST_ENDITHERSUBTRACT);
   }
   
   gc->state.shadow.fbzMode = fbzMode;
