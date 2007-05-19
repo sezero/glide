@@ -1139,12 +1139,7 @@ _grBufferClear2D(/*const*/ FxU32 buffOffset,
 /* C = (width+1, height*2) */
 /* */
 #define REFERENCE_TRI_FILL 0
-#ifdef FX_GLIDE_NAPALM
-/* KoolSmoky - testing 2-tri fill with napalm */
 #define TWO_TRI_FILL       0
-#else
-#define TWO_TRI_FILL       0
-#endif
 
 void
 _grTriFill(GrColor_t color, FxU32 depth, GrStencil_t stencil)
@@ -1155,16 +1150,14 @@ _grTriFill(GrColor_t color, FxU32 depth, GrStencil_t stencil)
   GrDepthBufferMode_t bufferMode ;
 #endif
 
+  struct 
+  {
+    float x, y, depth ;
+  }
 #if TWO_TRI_FILL
-  struct 
-  {
-    float x, y, depth ;
-  } vertex[6] ;
+  vertex[4] ;
 #else
-  struct 
-  {
-    float x, y, depth ;
-  } vertex[3] ;
+  vertex[3] ;
 #endif
 
   GR_BEGIN_NOFIFOCHECK("_grTriFill", 86);
@@ -1229,19 +1222,12 @@ _grTriFill(GrColor_t color, FxU32 depth, GrStencil_t stencil)
   vertex[2].x =  gc->state.clipwindowf_xmax ;
   vertex[2].y =  gc->state.clipwindowf_ymax ;
   vertex[2].depth = (float)depth ;
-
   vertex[3].x =  gc->state.clipwindowf_xmin ;
-  vertex[3].y =  gc->state.clipwindowf_ymin ;
+  vertex[3].y =  gc->state.clipwindowf_ymax ;
   vertex[3].depth = (float)depth ;
-  vertex[4].x =  gc->state.clipwindowf_xmax ;
-  vertex[4].y =  gc->state.clipwindowf_ymax ;
-  vertex[4].depth = (float)depth;
-  vertex[5].x =  gc->state.clipwindowf_xmin ;
-  vertex[5].y =  gc->state.clipwindowf_ymax ;
-  vertex[5].depth = (float)depth ;
 
   grDrawTriangle(&vertex[0],&vertex[1],&vertex[2]) ; 
-  grDrawTriangle(&vertex[3],&vertex[4],&vertex[5]) ; 
+  grDrawTriangle(&vertex[0],&vertex[2],&vertex[3]) ; 
 #else
   vertex[0].x = 0.0f -(float)gc->state.screen_width ;
   vertex[0].y = 0.0f;
@@ -1381,13 +1367,8 @@ _grTriFill(GrColor_t color, FxU32 depth, GrStencil_t stencil)
     vertex[1].y =  (float)gc->state.clipwindowf_ymin ;
     vertex[2].x =  (float)gc->state.clipwindowf_xmax ;
     vertex[2].y =  (float)gc->state.clipwindowf_ymax ;
-    
     vertex[3].x =  (float)gc->state.clipwindowf_xmin ;
-    vertex[3].y =  (float)gc->state.clipwindowf_ymin ;
-    vertex[4].x =  (float)gc->state.clipwindowf_xmax ;
-    vertex[4].y =  (float)gc->state.clipwindowf_ymax ;
-    vertex[5].x =  (float)gc->state.clipwindowf_xmin ;
-    vertex[5].y =  (float)gc->state.clipwindowf_ymax ;
+    vertex[3].y =  (float)gc->state.clipwindowf_ymax ;
 #else
     vertex[0].x = 0.0f -(float)gc->state.screen_width ;
     vertex[0].y = 0.0f ;
@@ -1401,14 +1382,12 @@ _grTriFill(GrColor_t color, FxU32 depth, GrStencil_t stencil)
     /* depth buffering and odd when z buffering. */
     if (bufferMode)
     {
-	  vertex[0].depth = (float)depth ;
+      vertex[0].depth = (float)depth ;
 #if TWO_TRI_FILL
-      vertex[3].depth = (float)depth ;
-
-      GR_SET_EXPECTED_SIZE(sizeof(float) * 3 * 3 * 2, 1) ;
-      TRI_PACKET_BEGIN(kSetupStrip,
+      GR_SET_EXPECTED_SIZE(sizeof(float) * 3 * 4, 1) ;
+      TRI_PACKET_BEGIN(kSetupFan,
                       SST_SETUP_Z << SSTCP_PKT3_PMASK_SHIFT, 
-                      6, sizeof(float) * 3, SSTCP_PKT3_BDDBDD);
+                      4, sizeof(float) * 3, SSTCP_PKT3_BDDDDD);
 #else
       GR_SET_EXPECTED_SIZE(sizeof(float) * 3 * 3, 1) ;
       TRI_PACKET_BEGIN(kSetupStrip,
@@ -1429,17 +1408,9 @@ _grTriFill(GrColor_t color, FxU32 depth, GrStencil_t stencil)
         TRI_SETF(vertex[0].depth);
 
 #if TWO_TRI_FILL
-		TRI_SETF(vertex[3].x);
+        TRI_SETF(vertex[3].x);
         TRI_SETF(vertex[3].y);
-        TRI_SETF(vertex[3].depth);
-
-        TRI_SETF(vertex[4].x);
-        TRI_SETF(vertex[4].y);
-        TRI_SETF(vertex[3].depth);
-
-        TRI_SETF(vertex[5].x);
-        TRI_SETF(vertex[5].y);
-        TRI_SETF(vertex[3].depth);
+        TRI_SETF(vertex[0].depth);
 #endif
       }
       TRI_END ;
@@ -1450,10 +1421,10 @@ _grTriFill(GrColor_t color, FxU32 depth, GrStencil_t stencil)
     {
       /* When depth buffering is disabled, don't send a depth component */
 #if TWO_TRI_FILL
-      GR_SET_EXPECTED_SIZE(sizeof(float) * 2 * 3 * 2, 1) ;
-      TRI_PACKET_BEGIN(kSetupStrip,
+      GR_SET_EXPECTED_SIZE(sizeof(float) * 2 * 4, 1) ;
+      TRI_PACKET_BEGIN(kSetupFan,
                       0, 
-                      6, sizeof(float) * 2, SSTCP_PKT3_BDDBDD) ;
+                      4, sizeof(float) * 2, SSTCP_PKT3_BDDDDD) ;
 #else
       GR_SET_EXPECTED_SIZE(sizeof(float) * 2 * 3, 1) ;
       TRI_PACKET_BEGIN(kSetupStrip,
@@ -1473,12 +1444,6 @@ _grTriFill(GrColor_t color, FxU32 depth, GrStencil_t stencil)
 #if TWO_TRI_FILL
         TRI_SETF(vertex[3].x);
         TRI_SETF(vertex[3].y);
-
-        TRI_SETF(vertex[4].x);
-        TRI_SETF(vertex[4].y);
-
-        TRI_SETF(vertex[5].x);
-        TRI_SETF(vertex[5].y);
 #endif
       }
       TRI_END ;
