@@ -55,10 +55,10 @@ static FxBool pciPortOutWordNT(FxU16 port, FxU16 data);
 static FxBool pciPortOutLongNT(FxU16 port, FxU32 data);
 
 static FxBool pciMapLinearNT(FxU32 busNumber, FxU32 physAddr,
-                             FxU32* linearAddr, FxU32* length);
-static FxBool pciUnmapLinearNT(FxU32 linearAddr, FxU32 length);
+                             unsigned long* linearAddr, FxU32* length);
+static FxBool pciUnmapLinearNT(unsigned long linearAddr, FxU32 length);
 
-static FxBool pciSetPermissionNT(const FxU32 addrBase, const FxU32 addrLen,
+static FxBool pciSetPermissionNT(const unsigned long addrBase, const FxU32 addrLen,
                                  const FxBool writePermP);
 
 static FxBool pciMsrGetNT(MSRInfo* in, MSRInfo* out);
@@ -147,7 +147,7 @@ pciIdentifierNT(void)
 
 static FxBool
 pciMapLinearNT(FxU32 busNumber, FxU32 physical_addr,
-               FxU32 *linear_addr, FxU32 *length)
+               unsigned long *linear_addr, FxU32 *length)
 {
   FxU32 cbReturned;
   PHYSICAL_MEMORY_INFO pmi;
@@ -172,7 +172,7 @@ pciMapLinearNT(FxU32 busNumber, FxU32 physical_addr,
 }
 
 static FxBool
-pciUnmapLinearNT(FxU32 linear_addr, FxU32 length) 
+pciUnmapLinearNT(unsigned long linear_addr, FxU32 length) 
 {
   FxU32                cbReturned;
   
@@ -359,7 +359,7 @@ pciOutputStringNT(const char* msg)
 }
 
 static FxBool
-pciSetPermissionNT(const FxU32 addrBase, const FxU32 addrLen,
+pciSetPermissionNT(const unsigned long addrBase, const FxU32 addrLen,
                    const FxBool writePermP)
 {
   return FXFALSE;

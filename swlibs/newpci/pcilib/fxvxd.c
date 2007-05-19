@@ -46,10 +46,10 @@ static FxBool pciPortOutWord9x(FxU16 port, FxU16 data);
 static FxBool pciPortOutLong9x(FxU16 port, FxU32 data);
 
 static FxBool pciMapLinear9x(FxU32 busNumber, FxU32 physAddr,
-                             FxU32* linearAddr, FxU32* length);
-static FxBool pciUnmapLinear9x(FxU32 linearAddr, FxU32 length);
+                             unsigned long* linearAddr, FxU32* length);
+static FxBool pciUnmapLinear9x(unsigned long linearAddr, FxU32 length);
 
-static FxBool pciSetPermission9x(const FxU32 addrBase, const FxU32 addrLen,
+static FxBool pciSetPermission9x(const unsigned long addrBase, const FxU32 addrLen,
                                  const FxBool writePermP);
 
 static FxBool pciMsrGet9x(MSRInfo* in, MSRInfo* out);
@@ -119,7 +119,7 @@ pciIdentifier9x(void)
 
 static FxBool
 pciMapLinear9x(FxU32 busNumber, FxU32 physical_addr,
-               FxU32 *linear_addr, FxU32 *length)
+               unsigned long *linear_addr, FxU32 *length)
 {
   FxU32 nret;
   FxU32 Physical [2];         /* Physical address[0] & size[1] */
@@ -191,7 +191,7 @@ pciMapLinear9x(FxU32 busNumber, FxU32 physical_addr,
 }
 
 static FxBool
-pciUnmapLinear9x( FxU32 linear_addr, FxU32 length ) 
+pciUnmapLinear9x( unsigned long linear_addr, FxU32 length ) 
 {
   FxU32 nret;
   
@@ -278,7 +278,7 @@ pciOutputString9x(const char* msg)
 #define PC_USER         0x00040000  /* make the pages ring 3 accessible */
 
 static FxBool
-pciSetPermission9x(const FxU32 addrBase, const FxU32 addrLen,
+pciSetPermission9x(const unsigned long addrBase, const FxU32 addrLen,
                    const FxBool writePermP)
 {
   FxU32 vxdParamArray[] = {
