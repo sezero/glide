@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.2.2.5  2005/01/22 14:52:02  koolsmoky
+** enabled packed argb for cmd packet type 3
+**
 ** Revision 1.2.2.4  2004/12/27 20:46:37  koolsmoky
 ** added dll entry point to call grGlideShutdown when a process is detached
 **
@@ -1530,12 +1533,15 @@ GR_STATE_ENTRY(grDitherMode, void, (GrDitherMode_t mode))
 
   case GR_DITHER_2x2:
   case GR_DITHER_4x4:
-    /* always force 2x2 dither because it looks better */
-    fbzMode |= (SST_ENDITHER | SST_DITHER2x2 | SST_ENDITHERSUBTRACT);
+    /* force 4x4 dither with alpha dither subtraction */
+    fbzMode |= (SST_ENDITHER | SST_ENDITHERSUBTRACT);
 
     /* disable alpha blending dither subtraction according to user request */
-    if (_GlideRoot.environment.disableDitherSub == FXTRUE)
+    if (_GlideRoot.environment.disableDitherSub == FXTRUE) {
+      /* without alpha dither subtraction, 2x2 dither looks better */
+      fbzMode |= SST_DITHER2x2;
       fbzMode &= ~(SST_ENDITHERSUBTRACT);
+    }
     break;
   }
 
@@ -2140,11 +2146,11 @@ _grUpdateTriPacketHdr(FxU32 paramMask,
                                                 ? kSetupCullPositive 
                                                 : kSetupCullNegative);
 
-#if GLIDE_DISPATCH_SETUP
 #define COLOR_COMP_ARGB ((SST_SETUP_RGB | SST_SETUP_A) << SSTCP_PKT3_PMASK_SHIFT)
 #define COLOR_COMP_RGB  (SST_SETUP_RGB << SSTCP_PKT3_PMASK_SHIFT)
 #define COLOR_COMP_MASK COLOR_COMP_ARGB 
 
+#if GLIDE_DISPATCH_SETUP
   /* Setup custom triangle/strip procs.
    *
    * NB: Currently this selection is based entirely on if
@@ -2182,6 +2188,21 @@ _grUpdateTriPacketHdr(FxU32 paramMask,
 
     gc->curArchProcs.triSetupProc = PROC_SELECT_TRISETUP(*curTriProcVector, cullMode);
   }
+#else
+#if GLIDE_PACKED_RGB
+    if ((paramMask & SSTCP_PKT3_PACKEDCOLOR) == SSTCP_PKT3_PACKEDCOLOR) {
+      const FxU32 colorComp = paramMask & COLOR_COMP_MASK;
+
+      switch(colorComp) {
+      case COLOR_COMP_ARGB:
+      case COLOR_COMP_RGB:
+        break;
+      default:
+        paramMask &= ~SSTCP_PKT3_PACKEDCOLOR;
+        break;
+      }
+    }
+#endif
 #endif /* GLIDE_DISPATCH_SETUP */
 
   gc->cmdTransportInfo.paramMask = paramMask;
