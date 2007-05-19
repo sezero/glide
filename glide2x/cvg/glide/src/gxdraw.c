@@ -19,6 +19,9 @@
  **
  ** $Header$
  ** $Log$
+ ** Revision 1.1.1.1.2.1  2005/01/22 14:52:02  koolsmoky
+ ** enabled packed argb for cmd packet type 3
+ **
  ** Revision 1.1.1.1  1999/12/07 21:49:11  joseph
  ** Initial checkin into SourceForge.
  **
@@ -255,6 +258,7 @@ GR_DDFUNC(_trisetup_nogradients,
 #if GLIDE_PACKED_RGB
           if ((gc->cmdTransportInfo.paramMask & SSTCP_PKT3_PACKEDCOLOR) != 0)
           {
+            FxBool doColorP = FXFALSE;
             FxU32 packedColor = 0x00;
             
             if (*dataList == (GR_VERTEX_R_OFFSET << 2)) {
@@ -262,14 +266,16 @@ GR_DDFUNC(_trisetup_nogradients,
                              RGBA_COMP_CLAMP(FARRAY(vector, (GR_VERTEX_G_OFFSET << 2)), G) |
                              RGBA_COMP_CLAMP(FARRAY(vector, (GR_VERTEX_R_OFFSET << 2)), R));
               dataList++;
+              doColorP = FXTRUE;
             }
 
             if (*dataList == (GR_VERTEX_A_OFFSET << 2)) {
               packedColor |= RGBA_COMP_CLAMP(FARRAY(vector, (GR_VERTEX_A_OFFSET << 2)), A);
               dataList++;
+              doColorP = FXTRUE;
             }
             
-            TRI_SET(packedColor);
+            if (doColorP) TRI_SET(packedColor);
           }
 #endif /* GLIDE_PACKED_RGB */
 
@@ -375,10 +381,10 @@ GR_DDFUNC(_trisetup_nogradients,
             if (hasColor || hasAlpha) {
               FxU32 packedVal = 0x00;
 
-              if (hasColor) packedVal = ((RGBA_COMP_CLAMP(curVertex->b) << 0UL) |
-                                         (RGBA_COMP_CLAMP(curVertex->g) << 8UL) |
-                                         (RGBA_COMP_CLAMP(curVertex->r) << 16UL));
-              if (hasAlpha) packedVal |= (RGBA_COMP_CLAMP(curVertex->a) << 24UL);
+              if (hasColor) packedVal = ((RGBA_COMP_CLAMP(curVertex->b, B) << 0UL) |
+                                         (RGBA_COMP_CLAMP(curVertex->g, G) << 8UL) |
+                                         (RGBA_COMP_CLAMP(curVertex->r, R) << 16UL));
+              if (hasAlpha) packedVal |= (RGBA_COMP_CLAMP(curVertex->a, A) << 24UL);
               
               REG_GROUP_SET(hw, sARGB, packedVal);
             }
