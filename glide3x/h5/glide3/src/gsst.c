@@ -2066,83 +2066,66 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
     {
       gc->do2ppc = FXFALSE;
       gc->bInfo->h3analogSli = 0 ;
-
+      
       if (gc->grPixelSize <= 2) 
       {
         switch (gc->grSstRez) 
         {
-        case GR_RESOLUTION_1600x1200:
-        case GR_RESOLUTION_1600x1024:
-        case GR_RESOLUTION_1280x1024:
-        case GR_RESOLUTION_1280x960:
-        case GR_RESOLUTION_1152x864:
-        case GR_RESOLUTION_1024x768:
-        case GR_RESOLUTION_960x720:
-        case GR_RESOLUTION_800x600:
-        case GR_RESOLUTION_856x480:
-        case GR_RESOLUTION_640x480:
-        case GR_RESOLUTION_640x400:
-        case GR_RESOLUTION_640x350:
-          gc->do2ppc = FXTRUE;
-          break;
-        case GR_RESOLUTION_640x200:
-        case GR_RESOLUTION_512x384:
-        case GR_RESOLUTION_512x256:
-        case GR_RESOLUTION_400x300:
-        case GR_RESOLUTION_400x256:
-        case GR_RESOLUTION_320x240:
-        case GR_RESOLUTION_320x200:
-          gc->sliCount = 1 ;
-          gc->chipCount = 1 ;
-          gc->grPixelSample = 1 ;
-          break;
-        case GR_RESOLUTION_2048x2048:
-        case GR_RESOLUTION_2048x1536:
-        case GR_RESOLUTION_1920x1440:
-        case GR_RESOLUTION_1856x1392:
-        case GR_RESOLUTION_1792x1344:
-        default:
-          gc->bInfo->h3analogSli = 1 ;
-          break;
+          case GR_RESOLUTION_1600x1024:
+             gc->do2ppc = FXTRUE;
+             break;
+          case GR_RESOLUTION_1600x1200:
+             break;
+          case GR_RESOLUTION_1792x1344:
+          case GR_RESOLUTION_1856x1392:
+          case GR_RESOLUTION_1920x1440:
+          case GR_RESOLUTION_2048x1536:
+          case GR_RESOLUTION_2048x2048:
+            gc->bInfo->h3analogSli = 1 ;
+            break;          
+          case GR_RESOLUTION_400x300:
+          case GR_RESOLUTION_320x200:
+          case GR_RESOLUTION_320x240:
+          case GR_RESOLUTION_400x256:
+          case GR_RESOLUTION_512x256:
+          case GR_RESOLUTION_512x384:
+          case GR_RESOLUTION_640x200:
+            gc->sliCount = 1 ;
+            gc->chipCount = 1 ;
+            gc->grPixelSample = 1 ;
+          default:
+            gc->do2ppc = FXTRUE;
+            break;
         }
       }
       else if (gc->grPixelSize == 4) 
       {
         switch (gc->grSstRez) 
         {
-        case GR_RESOLUTION_1280x1024:
-        case GR_RESOLUTION_1280x960:
-        case GR_RESOLUTION_1152x864:
-        case GR_RESOLUTION_1024x768:
-        case GR_RESOLUTION_960x720:
-        case GR_RESOLUTION_800x600:
-        case GR_RESOLUTION_856x480:
-        case GR_RESOLUTION_640x480:
-        case GR_RESOLUTION_640x400:
-        case GR_RESOLUTION_640x350:
-          gc->do2ppc = FXTRUE;
-          break;
-        case GR_RESOLUTION_640x200:
-        case GR_RESOLUTION_512x384:
-        case GR_RESOLUTION_512x256:
-        case GR_RESOLUTION_400x300:
-        case GR_RESOLUTION_400x256:
-        case GR_RESOLUTION_320x240:
-        case GR_RESOLUTION_320x200:
-          gc->sliCount = 1 ;
-          gc->chipCount = 1 ;
-          gc->grPixelSample = 1 ;
-		  break;
-        case GR_RESOLUTION_2048x2048:
-        case GR_RESOLUTION_2048x1536:
-        case GR_RESOLUTION_1920x1440:
-        case GR_RESOLUTION_1856x1392:
-        case GR_RESOLUTION_1792x1344:
-        case GR_RESOLUTION_1600x1200:
-        case GR_RESOLUTION_1600x1024:
-        default:
-          gc->bInfo->h3analogSli = 1 ;
-          break;
+          case GR_RESOLUTION_1600x1024:
+            gc->bInfo->h3analogSli = 1 ;
+            gc->do2ppc = FXTRUE;
+            break;
+          case GR_RESOLUTION_1600x1200:
+          case GR_RESOLUTION_1792x1344:
+          case GR_RESOLUTION_1856x1392:
+          case GR_RESOLUTION_1920x1440:
+          case GR_RESOLUTION_2048x1536:
+          case GR_RESOLUTION_2048x2048:
+            gc->bInfo->h3analogSli = 1 ;
+            break;          
+          case GR_RESOLUTION_400x300:
+          case GR_RESOLUTION_320x200:
+          case GR_RESOLUTION_320x240:
+          case GR_RESOLUTION_400x256:
+          case GR_RESOLUTION_512x256:
+          case GR_RESOLUTION_512x384:
+          case GR_RESOLUTION_640x200:
+            gc->sliCount = 1 ;
+            gc->chipCount = 1 ;
+            gc->grPixelSample = 1 ;
+          default:
+            break;
         }
       }
 

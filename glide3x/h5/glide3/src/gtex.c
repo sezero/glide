@@ -884,8 +884,8 @@ _grTexCheckTriLinear(GrChipID_t tmu)
      *
      * Case 1 - TMU set for lod blending and has both even/odd levels
      */
-    if ((curTmu->textureMode & SST_TRILINEAR) &&
-        (curTmu->evenOdd == 3)) {
+    if (((curTmu->textureMode & SST_TRILINEAR) == SST_TRILINEAR) &&
+        (curTmu->evenOdd == GR_MIPMAPLEVELMASK_BOTH)) {
       
       /* Check the 'other' tmu to see if it is active, if not then we
        * are doing two pass trilinear so check that we have the
@@ -924,7 +924,7 @@ _grTexCheckTriLinear(GrChipID_t tmu)
             FxU32 i;
             
             for(i = 0; i < GLIDE_NUM_TMU; i++) {
-              evenOdd[i] = gc->state.shadow[i].tLOD & SST_LOD_ODD;
+              evenOdd[i] = gc->state.shadow.tmuState[i].tLOD & SST_LOD_ODD;
             }
           }
 
@@ -2565,8 +2565,10 @@ GR_ENTRY(grTexMipMapMode, void,
       ----------------------------------------------------------*/
     tLod |= SST_TLOD_MINMAX_INT(gc->state.per_tmu[tmu].largeLod,
                                 gc->state.per_tmu[tmu].smallLod);
-    if(_GlideRoot.environment.texSubLodDither && !lodBlend)
+    if(_GlideRoot.environment.texSubLodDither) {
       gc->state.per_tmu[tmu].texSubLodDither = FXTRUE;
+      mmMode = GR_MIPMAP_NEAREST;
+    }
     break;
 
   default:
@@ -3734,6 +3736,7 @@ void g3LodBiasPerChip(GrChipID_t tmu, FxU32 tLod)
 
   static FxI32 chipLodBias[2][2][4] =
     /* 4.2 format for tLod register
+     * 1chip x2fsaa - no sli, 2 samples per chip
      * 2chip x2fsaa - no sli, 1 sample per chip
      * 2chip x4fsaa - no sli, 2 samples per chip
      * 4chip x2fsaa - 2 way sli, 1 sample per sli unit
@@ -3760,10 +3763,12 @@ void g3LodBiasPerChip(GrChipID_t tmu, FxU32 tLod)
   GR_BEGIN_NOFIFOCHECK("g3LodBiasPerChip", 88);
 
   if( /*(_GlideRoot.environment.texSubLodDither != 1) ||*//* we won't get here if 0 */
-      (gc->sliCount == gc->chipCount) ||
-      (gc->windowed) )
+      ((gc->sliCount == gc->chipCount) && (gc->grSamplesPerChip == 1)) ||
+      (gc->windowed) ||
+      (gc->state.per_tmu[tmu].evenOdd != 3) ||
+      (gc->state.tmuShadow[tmu].textureMode & SST_TRILINEAR) )
     return;
-  
+
   /* sign extend it. */
   oldLodBias = (((tLod & SST_LODBIAS) << (32-6-SST_LODBIAS_SHIFT)) >> (32-6-SST_LODBIAS_SHIFT));
 
