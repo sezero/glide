@@ -252,13 +252,12 @@ GR_ENTRY(grAADrawPoint, void, (const GrVertex *e))
           
           dataList++;
         }
-        
+
         packedColor |= RGBA_COMP_CLAMP(FARRAY(fp, (GR_VERTEX_A_OFFSET << 2)), A);
+        dataList++;
+
         TRI_SET(packedColor);
-      } else {
-        TRI_SETF(FARRAY(fp, (GR_VERTEX_A_OFFSET << 2)));
       }
-      dataList++;
 #endif /* GLIDE_PACKED_RGB */
 
 #if GLIDE_FP_CLAMP_TEX
@@ -306,12 +305,12 @@ GR_ENTRY(grAADrawPoint, void, (const GrVertex *e))
               
               dataList++;
             }
+
+            /* Alpha set to 0.0 */
             
             TRI_SET(packedColor);
           } else {
-            TRI_SETF(0.0f);
-          }
-#else /* !GLIDE_PACKED_RGB */
+#endif /* !GLIDE_PACKED_RGB */
           /* Parameters up to alpha.
            *
            * NB: It is up to the user to correctly set this up
@@ -324,6 +323,8 @@ GR_ENTRY(grAADrawPoint, void, (const GrVertex *e))
           
           /* Send constant Alpha == 0.0f */
           TRI_SETF(0.0f);
+#if GLIDE_PACKED_RGB
+          }
 #endif /* !GLIDE_PACKED_RGB */
 
           /* Skip the actual alpha value in the data list */
@@ -432,13 +433,12 @@ grAADrawStrip(const FxU32 cullMode, const float* const vectorList[], const FxU32
             
             dataList++;
           }
-          
+
           packedColor |= RGBA_COMP_CLAMP(FARRAY(vector, (GR_VERTEX_A_OFFSET << 2)), A);
+          dataList++;
+          
           TRI_SET(packedColor);
-        } else {
-          TRI_SETF(FARRAY(vector, (GR_VERTEX_A_OFFSET << 2)));
         }
-        dataList++;
 #endif /* GLIDE_PACKED_RGB */
         
 #if GLIDE_FP_CLAMP_TEX
@@ -680,11 +680,15 @@ GR_ENTRY(grAADrawLine, void, (const GrVertex *v1, const GrVertex *v2))
         
         datalist++;
       }
-      
+
+      /* Alpha set to 0.0 */
+
       TRI_SET(packedColor);
+
+      /* Skip the actual alpha value in the data list */
       datalist++;
     }
-#endif
+#endif /* GLIDE_PACKED_RGB */
 
     while( *datalist != 0 ) {
         TRI_SETF(FARRAY(v2, *datalist));
@@ -714,8 +718,12 @@ GR_ENTRY(grAADrawLine, void, (const GrVertex *v1, const GrVertex *v2))
         
         datalist++;
       }
-      
+
+      /* Alpha set to 0.0 */
+
       TRI_SET(packedColor);
+
+      /* Skip the actual alpha value in the data list */
       datalist++;
     }
 #endif /* GLIDE_PACKED_RGB */
@@ -808,8 +816,12 @@ GR_ENTRY(grAADrawLine, void, (const GrVertex *v1, const GrVertex *v2))
         
         datalist++;
       }
-      
+
+      /* Alpha set to 0.0 */
+
       TRI_SET(packedColor);
+
+      /* Skip the actual alpha value in the data list */
       datalist++;
     }
 #endif /* GLIDE_PACKED_RGB */
@@ -842,8 +854,12 @@ GR_ENTRY(grAADrawLine, void, (const GrVertex *v1, const GrVertex *v2))
         
         datalist++;
       }
-      
+
+      /* Alpha set to 0.0 */
+
       TRI_SET(packedColor);
+
+      /* Skip the actual alpha value in the data list */
       datalist++;
     }
 #endif /* GLIDE_PACKED_RGB */
