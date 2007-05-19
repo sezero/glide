@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.2.2  2006/12/03 04:49:19  guillemj
+** Backport "sequence point" fix for string upper code from glide3x.
+**
 ** Revision 1.1.1.1.2.1  2004/12/12 15:20:35  koolsmoky
 ** use toupper for __MSC__
 **
@@ -61,7 +64,7 @@
 */
 #include <stdio.h>
 #include <string.h>
-
+#include <ctype.h>
 #include <3dfx.h>
 
 #define FX_DLL_DEFINITION
