@@ -131,7 +131,9 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitVideoBuffers(FxU32 *sstbase,
     FxU32 ft_clkdel, memSizeInPages;
     FxU32 nCol, nAux, miscCtrl;
     int memFifoEntries;
+#ifndef DIRECTX
     float vidClkFreq;
+#endif
 
     if(!sst)
         return(FXFALSE);
