@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.5  2005/06/09 18:32:08  jwrdegoede
+** Fixed all warnings with gcc4 -Wall -W -Wno-unused-parameter, except for a couple I believe to be a gcc bug. This has been reported to gcc.
+**
 ** Revision 1.1.1.1.8.4  2004/12/27 20:46:57  koolsmoky
 ** added dll entry point to call grGlideShutdown when a process is detached
 **
@@ -1755,12 +1758,15 @@ GR_STATE_ENTRY(grDitherMode, void, (GrDitherMode_t mode))
 
   case GR_DITHER_2x2:
   case GR_DITHER_4x4:
-    /* always force 2x2 dither because it looks better */
-    fbzMode |= (SST_ENDITHER | SST_DITHER2x2 | SST_ENDITHERSUBTRACT);
+    /* force 4x4 dither with alpha dither subtraction */
+    fbzMode |= (SST_ENDITHER | SST_ENDITHERSUBTRACT);
 
     /* disable alpha blending dither subtraction according to user request */
-    if (_GlideRoot.environment.disableDitherSub == FXTRUE)
+    if (_GlideRoot.environment.disableDitherSub == FXTRUE) {
+      /* without alpha dither subtraction, 2x2 dither looks better */
+      fbzMode |= SST_DITHER2x2;
       fbzMode &= ~(SST_ENDITHERSUBTRACT);
+    }
     break;
   }
 
