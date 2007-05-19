@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.2  2005/08/13 21:06:57  jwrdegoede
+** Last needed 64 bit fixes for h5/h3, complete 64 bit support for cvg
+**
 ** Revision 1.1.1.1.8.1  2005/06/09 18:32:08  jwrdegoede
 ** Fixed all warnings with gcc4 -Wall -W -Wno-unused-parameter, except for a couple I believe to be a gcc bug. This has been reported to gcc.
 **
@@ -1059,8 +1062,10 @@ GR_ENTRY(grLfbReadRegion, FxBool, (GrBuffer_t src_buffer,
 
           /* Leading slop up to the start of a logical 0 tile */
           if (((unsigned long)srcData & kPageMask) != 0) {
-            unsigned long tileSlopMask = -1UL;
+            unsigned long tileSlopMask = 0UL; // XXX was -1UL. 
             FxU32 tileSlopAdjust = kTileSize;
+
+            tileSlopMask = ~tileSlopMask; // XXX
 
             /* Do we have a partial 0 tile? */
             if (((unsigned long)srcData & kTileSize) == 0) {

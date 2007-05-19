@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.1  2005/06/09 18:32:08  jwrdegoede
+** Fixed all warnings with gcc4 -Wall -W -Wno-unused-parameter, except for a couple I believe to be a gcc bug. This has been reported to gcc.
+**
 ** Revision 1.1.1.1  1999/12/07 21:42:35  joseph
 ** Initial checkin into SourceForge.
 **
@@ -10677,7 +10680,7 @@ static Gu3dfInfo hilite_3dfinfo = {
 #endif
     GR_TEXFMT_INTENSITY_8 /* format */
   },
-  { },                    /* table */
+  { 0x00000000 },                    /* table */
   NULL,                   /* data */
   0x00000ab0              /* mem_required */
 };
@@ -12068,7 +12071,7 @@ static Gu3dfInfo shadow_3dfinfo = {
 #endif
     GR_TEXFMT_INTENSITY_8 /* format */
   },
-  { },         /* table */
+  { 0x0000000 },         /* table */
   NULL,                   /* data */
   0x00000ab0              /* mem_required */
 };
