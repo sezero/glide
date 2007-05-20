@@ -973,6 +973,9 @@ static __inline int min (int x, int y)
 
 #endif
 
+#undef GETENV
+#define GETENV hwcGetenv
+
 #define MAXFIFOSIZE        0x40000
 #define MAXFIFOSIZE_16MB   0xff000
 
@@ -8204,9 +8207,10 @@ hwcGammaTable(hwcBoardInfo *bInfo, FxU32 nEntries, FxU32 *r, FxU32 *g, FxU32 *b)
      Since the DAC is shared between 2 chips, the input to gamma look up table
      is divided by extra 2 and the MSB is lost. To correct this the table should
      be only 7 bits. The resulting image will have only 7.5 bits per prime */
-  if (GETENV("FX_GLIDE_V56K_DAC_FIX")) {
-    if (atoi(GETENV("FX_GLIDE_V56K_DAC_FIX")) > 0 &&
-         bInfo->pciInfo.numChips == 4 && bInfo->h3pixelSample >= 4) {
+  {
+    const char* envStr = GETENV("FX_GLIDE_V56K_DAC_FIX");
+    if ((!envStr || atoi(envStr) > 0) &&
+        bInfo->pciInfo.numChips == 4 && bInfo->h3pixelSample >= 4) {
       /* Go through 1 to 127. Row 0 uses special default. See adjustBrightnessAndContrast_m(). */
       for (i = 1; i < 128; i++) {
         /* DAC output is doubled in 4x, 8xFSAA. Divide by 2 */
@@ -8382,8 +8386,9 @@ hwcGetGammaTable(hwcBoardInfo *bInfo, FxU32 nEntries, FxU32 *r, FxU32 *g, FxU32 
   }
 
   /* Voodoo5 6000 DAC workaround for 4x, 8xFSAA. */
-  if (GETENV("FX_GLIDE_V56K_DAC_FIX")) {
-    if (atoi(GETENV("FX_GLIDE_V56K_DAC_FIX")) > 0 &&
+  {
+    const char* envStr = GETENV("FX_GLIDE_V56K_DAC_FIX");
+    if ((!envStr || atoi(envStr) > 0) &&
         bInfo->pciInfo.numChips == 4 && bInfo->h3pixelSample >= 4) {
       /* Use internal values. */
       /* Go through 0 to 255 */
