@@ -19,6 +19,10 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.2.7  2005/04/25 23:58:41  koolsmoky
+** Fix _texDownloadProcs comma separator.
+** Thanks to Ozkan Sezer <sezeroz@gmail.com>.
+**
 ** Revision 1.1.1.1.2.6  2005/01/22 14:52:02  koolsmoky
 ** enabled packed argb for cmd packet type 3
 **
@@ -760,11 +764,17 @@ _GlideInitEnvironment(void)
     _GlideRoot.environment.snapshot          = GLIDE_GETENV("FX_SNAPSHOT", 0);
 
     /* set default to disable alpha dither subtraction */
-    if ((envStr = GETENV("FX_GLIDE_NO_DITHER_SUB")) == NULL) {
+    switch(GLIDE_GETENV("SSTH3_ALPHADITHERMODE", 1L)) {
+    default:
+    case 1: /* Or Automatic? */
+    case 2:
       _GlideRoot.environment.disableDitherSub = FXTRUE;
-    } else {
-      _GlideRoot.environment.disableDitherSub = (atol(envStr) != 0);
-    }
+      break;
+    case 3:
+      _GlideRoot.environment.disableDitherSub = FXFALSE;
+      break;
+    }  
+    GDBG_INFO(80,"  disableDitherSub: %d\n",_GlideRoot.environment.disableDitherSub);  
     
     GDBG_INFO(80,"    triBoundsCheck: %d\n",_GlideRoot.environment.triBoundsCheck);
     GDBG_INFO(80,"      swapInterval: %d\n",_GlideRoot.environment.swapInterval);
