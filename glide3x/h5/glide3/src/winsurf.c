@@ -408,6 +408,8 @@ GrContext_t _grCreateWindowSurface(FxU32                 hWnd,
   gc->chipmask           = SST_CHIP_MASK_ALL_CHIPS;
   gc->state.color_format = format;
   gc->sliCount           = 1;
+  gc->chipCount          = 1;
+  gc->grSamplesPerChip   = 1;
   grSstOrigin(origin);
   
   /* Clear the buffers */
