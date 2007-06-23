@@ -19,6 +19,9 @@
 ;; $Header$
 ;; $Revision$
 ;; $Log$
+;; Revision 1.1.2.2  2005/04/23 18:36:36  koolsmoky
+;; fixed 3dnow! and mmx optimizations
+;;
 ;; Revision 1.1.2.1  2004/12/23 20:45:56  koolsmoky
 ;; converted to nasm syntax
 ;; added x86 asm, 3dnow! triangle and mmx, 3dnow! texture download optimizations
@@ -163,7 +166,7 @@ proc _grTexDownload_MMX, 24
     femms                               ; we'll use MMX/3DNow!, make sure FPU register cleared
 %ENDIF
 %IFDEF GL_MMX
-    emms                                ; we'll use MMX
+;    emms                                ; we'll use MMX
 %ENDIF
 
     movd      mm3, [esp + _baseAddr$]   ; 0 | address of texture to download

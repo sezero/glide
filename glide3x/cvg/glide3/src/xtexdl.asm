@@ -19,6 +19,9 @@
 ;; $Header$
 ;; $Revision$
 ;; $Log$
+;; Revision 1.1.1.1.8.3  2005/06/09 18:32:08  jwrdegoede
+;; Fixed all warnings with gcc4 -Wall -W -Wno-unused-parameter, except for a couple I believe to be a gcc bug. This has been reported to gcc.
+;;
 ;; Revision 1.1.1.1.8.2  2004/11/25 19:12:22  koolsmoky
 ;; fixed 3dnow! and mmx texture download routines
 ;;
@@ -166,7 +169,7 @@ proc _grTexDownload_MMX, 24
     femms                               ; we'll use MMX/3DNow!, make sure FPU register cleared
 %ENDIF
 %IFDEF GL_MMX
-    emms                                ; we'll use MMX
+;    emms                                ; we'll use MMX
 %ENDIF
 
     mov       edx, curS                 ; curS = maxS = scanline width in DWORDs
