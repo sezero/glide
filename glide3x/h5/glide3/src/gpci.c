@@ -1202,13 +1202,9 @@ _grSstDetectResources(void)
 
       /* KoolSmoky - UMA for the TMUs */
       GC.state.grEnableArgs.texture_uma_mode = GR_MODE_DISABLE;
-      if( GETENV("FX_GLIDE_TEXTURE_UMA") ) {
-        if( atoi(GETENV("FX_GLIDE_TEXTURE_UMA")) == 1 ) {
+      if( GETENV("FX_GLIDE_TEXTURE_UMA") )
+        if( atoi(GETENV("FX_GLIDE_TEXTURE_UMA")) == 1 )
           GC.state.grEnableArgs.texture_uma_mode = GR_MODE_ENABLE;
-        } else {
-          GC.state.grEnableArgs.texture_uma_mode = GR_MODE_DISABLE;
-        }
-      }
 
       SST.sstBoard.SST96Config.fbRam    = GC.fbuf_size;
       SST.sstBoard.SST96Config.nTexelfx = GC.num_tmu;
@@ -1885,15 +1881,16 @@ _GlideInitEnvironment(void)
   GDBG_INFO(80," sliBandHeightForce : %d\n",_GlideRoot.environment.sliBandHeightForce);
   
   _GlideRoot.environment.swapPendingCount  = GLIDE_GETENV("FX_GLIDE_SWAPPENDINGCOUNT", 3L);
-  if (_GlideRoot.environment.swapPendingCount > 3)
-    _GlideRoot.environment.swapPendingCount = 3;
+  /* The hardware counter is 3 bits. Anything above this will cause a hang. */
+  if (_GlideRoot.environment.swapPendingCount > 6)
+    _GlideRoot.environment.swapPendingCount = 6;
   if (_GlideRoot.environment.swapPendingCount < 0)
     _GlideRoot.environment.swapPendingCount = 0;
   GDBG_INFO(80," swapPendingCount : %d\n",_GlideRoot.environment.swapPendingCount);
   
-  _GlideRoot.environment.gammaR = GLIDE_FGETENV("SSTH3_RGAMMA", 1.3f);
-  _GlideRoot.environment.gammaG = GLIDE_FGETENV("SSTH3_GGAMMA", 1.3f);
-  _GlideRoot.environment.gammaB = GLIDE_FGETENV("SSTH3_BGAMMA", 1.3f);
+  _GlideRoot.environment.gammaR = GLIDE_FGETENV("SSTH3_RGAMMA", 1.0f);
+  _GlideRoot.environment.gammaG = GLIDE_FGETENV("SSTH3_GGAMMA", 1.0f);
+  _GlideRoot.environment.gammaB = GLIDE_FGETENV("SSTH3_BGAMMA", 1.0f);
   
   _GlideRoot.environment.useAppGamma  = GLIDE_GETENV("FX_GLIDE_USE_APP_GAMMA", 1L);
   
@@ -1986,7 +1983,7 @@ DllMain(HANDLE hInst, ULONG  ul_reason_for_call, LPVOID lpReserved)
      */
     /* attach a fullscreen gc to the TLS slot if in fullscreen mode. */
     if(_GlideRoot.initialized &&       /* scanned for hw? */
-        (_GlideRoot.windowsInit > 0)) { /* outstanding fullscreen contexts? */
+        (_GlideRoot.windowsInit[_GlideRoot.current_sst] > 0)) { /* outstanding fullscreen contexts? */
       GR_DCL_GC;
 
       /* If there is no current gc in tls then set the current context. */

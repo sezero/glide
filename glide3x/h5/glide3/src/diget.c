@@ -864,6 +864,11 @@ GR_DIENTRY(grGet, FxU32, (FxU32 pname, FxU32 plength, FxI32 *params))
 #else
 #define QUERY_EXT_STR ""
 #endif
+#ifdef MULTIRENDERING
+#define MULTIRENDERING_STR "MULTIRENDERING "
+#else
+#define MULTIRENDERING_STR ""
+#endif
 
 #define BASE_EXT_STR	"CHROMARANGE TEXCHROMA TEXMIRROR TEXUMA PALETTE6666 FOGCOORD SURFACE COMMAND_TRANSPORT TEXTUREBUFFER GETGAMMA GETREGISTRY ALPHAFOG "
 #define NAPALM_EXT_STR	"PIXEXT COMBINE TEXFMT "
@@ -885,7 +890,7 @@ GR_DIENTRY(grGetString, const char *, (FxU32 pname))
       if (!IS_NAPALM(gc->bInfo->pciInfo.deviceID))
         rv = " " BASE_EXT_STR QUERY_EXT_STR POINTCAST_EXT_STR;
       else
-        rv = " " BASE_EXT_STR NAPALM_EXT_STR QUERY_EXT_STR POINTCAST_EXT_STR;
+        rv = " " BASE_EXT_STR NAPALM_EXT_STR QUERY_EXT_STR POINTCAST_EXT_STR MULTIRENDERING_STR;
     }
     break;
   case GR_HARDWARE:
@@ -1125,8 +1130,8 @@ static GrExtensionTuple _extensionTable[] = {
     { "grSstQueryHardware", (GrProc)grSstQueryHardware },
 #endif
     /* POINTCAST */
-    { "grTexDownloadTableExt", (GrProc)grTexDownloadTableExt },
 #if GLIDE_POINTCAST_PALETTE
+    { "grTexDownloadTableExt", (GrProc)grTexDownloadTableExt },
     { "grTexDownloadTablePartialExt", (GrProc)grTexDownloadTablePartialExt },
     { "grTexNCCTableExt", (GrProc)grTexNCCTableExt },
 #endif
@@ -1135,7 +1140,8 @@ static GrExtensionTuple _extensionTable[] = {
     { "txImgQuantize", (GrProc)txImgQuantize },
     { "txPalToNcc", (GrProc)txPalToNcc },
 #endif
-    { "grSetNumPendingBuffers", (GrProc)grSetNumPendingBuffers},
+    { "grTexDownloadMipMapLevelPartialRowExt", (GrProc)grTexDownloadMipMapLevelPartialRowExt },
+    { "grSetNumPendingBuffers", (GrProc)grSetNumPendingBuffers },
     { 0, 0 }
 };
 

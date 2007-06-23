@@ -134,7 +134,7 @@
 **
 ** NOTE:  it is OK to call this routine before grGlideInit
 */
-#ifndef GLIDE3_ALPHA
+#if !defined(GLIDE3_ALPHA) || QUERY_EXTENSION_SUPPORTED
 GR_DIENTRY(grSstQueryBoards, FxBool, ( GrHwConfiguration *hwc ))
 {
   GDBG_INIT();

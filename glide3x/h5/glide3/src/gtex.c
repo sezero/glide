@@ -2540,6 +2540,7 @@ GR_ENTRY(grTexMipMapMode, void,
     --------------------------------------------------------------*/
   tLod    &= ~(SST_LODMIN | SST_LODMAX | SST_LOD_ODD);
   texMode &= ~(SST_TLODDITHER | SST_TRILINEAR);
+  gc->state.per_tmu[tmu].texSubLodDither = FXFALSE;
   
   /*--------------------------------------------------------------
     Encode Mipmap Mode Bits
@@ -2565,10 +2566,15 @@ GR_ENTRY(grTexMipMapMode, void,
       ----------------------------------------------------------*/
     tLod |= SST_TLOD_MINMAX_INT(gc->state.per_tmu[tmu].largeLod,
                                 gc->state.per_tmu[tmu].smallLod);
-    if(_GlideRoot.environment.texSubLodDither) {
+#ifdef FX_GLIDE_NAPALM
+    if(!(gc->sliCount == gc->chipCount && gc->grSamplesPerChip == 1) &&
+       _GlideRoot.environment.texSubLodDither) {
       gc->state.per_tmu[tmu].texSubLodDither = FXTRUE;
+      /* disable lod dithering if we are doing performance trilinear */
+      texMode &= ~SST_TLODDITHER;
       mmMode = GR_MIPMAP_NEAREST;
     }
+#endif
     break;
 
   default:
@@ -2733,6 +2739,57 @@ GR_ENTRY(grTexNCCTable, void,
   GR_END();
 #undef FN_NAME
 } /* grTexNCCTable */
+
+#if GLIDE_POINTCAST_PALETTE
+GR_EXT_ENTRY(grTexNCCTableExt, void, (GrChipID_t tmu, GrNCCTable_t table))
+{
+#define FN_NAME "grTexNCCTableExt"
+  FxU32 texMode;
+  
+  GR_BEGIN("grTexNCCTable",88,4*GLIDE_NUM_TMU, GLIDE_NUM_TMU);
+  GDBG_INFO_MORE(gc->myLevel,"\n");
+  GR_CHECK_F(myName, table > GR_TEXTABLE_PALETTE, "invalid ncc table specified");
+
+  /* Disable 2PPC mode */
+#ifdef FX_GLIDE_NAPALM
+  if (IS_NAPALM(gc->bInfo->pciInfo.deviceID)) {
+    _grTex2ppc(FXFALSE);
+  }
+#endif
+  
+  /* Update local state */
+  gc->state.per_tmu[tmu].nccTable = table;
+  
+  /* Grab shadow texMode, update TexMode, update shadow/real register */
+  texMode  = gc->state.tmuShadow[tmu].textureMode;
+  texMode &= ~(SST_TNCCSELECT);
+  if (table == GR_TEXTABLE_NCC1)
+    texMode |= SST_TNCCSELECT;
+  else 
+    texMode &= ~(SST_TNCCSELECT);
+
+  gc->state.tmuShadow[tmu].textureMode = texMode;
+
+  /* Update real shadows and update hardware immediately if we can. */
+  {
+    SstRegs* tmuHw = SST_TMU(hw, tmu);
+    
+    gc->state.shadow.tmuState[tmu].textureMode = texMode;
+      
+    _grChipMask( SST_CHIP_MASK_ALL_CHIPS );
+    REG_GROUP_BEGIN((0x02 << tmu), textureMode, 1, 0x1);
+    {
+      REG_GROUP_SET(tmuHw, textureMode, gc->state.shadow.tmuState[tmu].textureMode);
+    }
+    REG_GROUP_END();
+    _grChipMask( gc->chipmask );
+  }   
+
+    
+  GR_END();
+#undef FN_NAME
+} /* grTexNCCTableExt */
+#endif
 
 /*-------------------------------------------------------------------
   Function: grTexSource
@@ -3763,8 +3820,8 @@ void g3LodBiasPerChip(GrChipID_t tmu, FxU32 tLod)
   GR_BEGIN_NOFIFOCHECK("g3LodBiasPerChip", 88);
 
   if( /*(_GlideRoot.environment.texSubLodDither != 1) ||*//* we won't get here if 0 */
-      ((gc->sliCount == gc->chipCount) && (gc->grSamplesPerChip == 1)) ||
-      (gc->windowed) ||
+      /*((gc->sliCount == gc->chipCount) && (gc->grSamplesPerChip == 1)) ||*//* check done in grTexMipMapMode */
+      /*(gc->windowed) ||*/
       (gc->state.per_tmu[tmu].evenOdd != 3) ||
       (gc->state.tmuShadow[tmu].textureMode & SST_TRILINEAR) )
     return;

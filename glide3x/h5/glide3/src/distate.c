@@ -2700,6 +2700,19 @@ GR_DIENTRY(grEnable, void , (GrEnableMode_t mode) )
     }
     break;
 #endif
+#ifdef MULTIRENDERING
+  case GR_MULTIRENDERING_EXT:
+    {
+      /* EnableMultiRendering - Win_Mode.c
+      ** Allow minihwc to know about MultiRendering mode
+      */
+      void EnableMultiRendering();
+      EnableMultiRendering();
+      /* disable splash screen */
+      _GlideRoot.environment.noSplash = FXTRUE;
+    }
+    break;
+#endif
   }
 
 #undef FN_NAME

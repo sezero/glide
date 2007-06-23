@@ -323,7 +323,6 @@
 #include "fxglide.h"
 #include "fxcmd.h"
 
-#define GLIDE_POINTCAST_PALETTE 1
 
 /*---------------------------------------------------------------------------
 ** _grTexDownloadNccTableExt
@@ -679,8 +678,6 @@ GR_EXT_ENTRY(grTexDownloadTableExt,
 
   GR_END();
 } /* grTexDownloadTableExt */
-
-#undef GLIDE_POINTCAST_PALETTE
 
 /*---------------------------------------------------------------------------
 ** _grTexDownloadNccTable
@@ -1672,3 +1669,342 @@ GR_ENTRY(grTexDownloadMipMapLevelPartial,
   return FXTRUE;
 #undef FN_NAME
 } /* grTexDownloadMipmapLevelPartial */
+
+/*-------------------------------------------------------------------
+  Function: grTexDownloadMipMapLevelPartialRowExt
+  -------------------------------------------------------------------*/
+GR_EXT_ENTRY(grTexDownloadMipMapLevelPartialRowExt,
+             FxBool, (GrChipID_t tmu, FxU32 startAddress,
+                      GrLOD_t thisLod, GrLOD_t largeLod,
+                      GrAspectRatio_t aspectRatio,
+                      GrTextureFormat_t format, FxU32 evenOdd,
+                      void *data,
+                      int t, int min_s, int max_s))
+{
+#define FN_NAME "grTexDownloadMipMapLevelPartialRowExt"
+  FxBool didcompress = FXFALSE;
+  int max_t = t;
+
+  GR_BEGIN_NOFIFOCHECK_RET(FN_NAME, 89);
+
+  GDBG_INFO_MORE(gc->myLevel,"(%d,0x%x, %d,%d,%d, %d,%d 0x%x, %d, %d,%d)\n",
+                 tmu, startAddress,
+                 thisLod, largeLod, aspectRatio,
+                 format, evenOdd,
+                 data,
+                 t,
+				 min_s, max_s);
+
+  // We increment this
+  max_s++;
+
+  /* Sanity checking */
+  {
+    GR_CHECK_TMU(FN_NAME, tmu);
+    GR_CHECK_F(FN_NAME, 
+               (gc->windowed ? FXFALSE :
+                (startAddress + _grTexTextureMemRequired(thisLod, largeLod,
+                                                         aspectRatio, 
+                                                         format, evenOdd,
+                                                         FXTRUE)
+                 > gc->tmu_state[tmu].total_mem)),
+               "insufficient texture ram at startAddress");
+    GR_CHECK_F(FN_NAME, startAddress & SST_TEXTURE_ALIGN_MASK,
+               "unaligned startAddress");
+    GR_CHECK_F(FN_NAME, _grBitsPerTexel[format] == 0,
+               "invalid texture format");
+    if (!IS_NAPALM(gc->bInfo->pciInfo.deviceID)) {
+      /*
+       * Sanity checks for Banshee and Voodoo3
+       */
+      GR_CHECK_F(FN_NAME, thisLod > GR_LOD_LOG2_256,
+                 "thisLod invalid");
+      GR_CHECK_F(FN_NAME, largeLod > GR_LOD_LOG2_256,
+                 "largeLod invalid");
+      GR_CHECK_F(FN_NAME, (_grBitsPerTexel[format] == 4),
+                 "this hardware doesn't support 4-bit textures");
+      GR_CHECK_F(FN_NAME, (_grBitsPerTexel[format] == 32),
+                 "this hardware doesn't support 32-bit textures");
+    } else {
+      /*
+       * Sanity checks for Napalm
+       */
+      GR_CHECK_F(FN_NAME, thisLod > GR_LOD_LOG2_2048,
+                 "thisLod invalid");
+      GR_CHECK_F(FN_NAME, largeLod > GR_LOD_LOG2_2048,
+                 "largeLod invalid");
+    }
+    GR_CHECK_F(FN_NAME, thisLod > largeLod,
+               "thisLod may not be larger than largeLod");
+    GR_CHECK_F(FN_NAME, 
+               ((aspectRatio > GR_ASPECT_LOG2_8x1) || 
+                (aspectRatio < GR_ASPECT_LOG2_1x8)),
+               "aspectRatio invalid");
+    GR_CHECK_F(FN_NAME, evenOdd > 0x3 || evenOdd == 0,
+               "evenOdd mask invalid");
+    GR_CHECK_F(FN_NAME, !data,
+               "invalid data pointer");
+#ifdef FX_GLIDE_NAPALM
+    switch(format) {
+    case GR_TEXFMT_ARGB_CMP_FXT1:
+    case GR_TEXFMT_ARGB_CMP_DXT1:
+      GR_CHECK_F(FN_NAME, max_t >=
+                 _grMipMapHostWHCmp4Bit[G3_ASPECT_TRANSLATE(aspectRatio)]
+                 [thisLod][1], "invalid end row for fxt1, dxt1");
+      break;
+    case GR_TEXFMT_ARGB_CMP_DXT2:
+    case GR_TEXFMT_ARGB_CMP_DXT3:
+    case GR_TEXFMT_ARGB_CMP_DXT4:
+    case GR_TEXFMT_ARGB_CMP_DXT5:
+      GR_CHECK_F(FN_NAME, max_t >=
+                 _grMipMapHostWHDXT[G3_ASPECT_TRANSLATE(aspectRatio)]
+                 [thisLod][1], "invalid end row for dxt2,3,4,5");
+      break;
+    default:
+      GR_CHECK_F(FN_NAME, max_t >=
+                 _grMipMapHostWH[G3_ASPECT_TRANSLATE(aspectRatio)][thisLod][1],
+                 "invalid end row");
+    }
+#else
+    GR_CHECK_F(FN_NAME, max_t >=
+               _grMipMapHostWH[G3_ASPECT_TRANSLATE(aspectRatio)][thisLod][1],
+               "invalid end row");
+#endif /* FX_GLIDE_NAPALM */
+#ifdef GLIDE_TEST_TEXTURE_ALIGNMENT
+    /* always check texture alignment */
+    INTERNAL_CHECK(FN_NAME, startAddress & SST_TEXTURE_ALIGN_MASK,
+               "unaligned startAddress", FXTRUE);
+#endif
+  }
+
+  /* Skip this level entirely if not in odd/even mask */
+  if (!(evenOdd & (thisLod & 0x1
+                   ? GR_MIPMAPLEVELMASK_ODD : GR_MIPMAPLEVELMASK_EVEN)))
+    goto all_done;
+    
+  {
+    struct GrTmuMemInfo*
+      memInfo = gc->tmuMemInfo + tmu;
+
+    /* Part1 of the texel cache coherency stuff for avenger. According
+     * to the docs, the 3d nopCmd should do this all, but it does not
+     * work as advertised. But wait, there's more after the download...
+     *
+     * Force a pixel flush which should force all of the
+     * texture downloads to flush from internal fifos etc.  
+     */
+    GR_TEX_FLUSH_PRE(memInfo);
+
+    if (memInfo->texTiled) {
+      _grTexDownloadMipMapLevelPartialTiled(tmu, 
+                                            startAddress, 
+                                            thisLod, largeLod, aspectRatio,
+                                            format, 
+                                            evenOdd, data, 
+                                            t, max_t); 
+    } else {
+      FxU32
+        baseAddress;
+
+      /* Compute physical start address for the download. */
+      {
+        FxU32
+          texOffset = 0x00UL;
+        
+        /* We need to do some magic to pack the small levels and have a
+         * properly aligned baseAddr. If the current level is not going
+         * to start on an alignment boundary when working backwards in
+         * the chain we need to offset it into the block so that it is
+         * addressable with an aligned baseAddr.  
+         */
+        {
+          GrLOD_t minLod = thisLod;
+          /*
+           * We can safely skip this part if we're in FXT1-land
+           * because the minimum level size is 16 bytes (8x4x1/2)
+           * which matches the alignment restriction.
+           */
+          if (format != GR_TEXFMT_ARGB_CMP_FXT1 && format < GR_TEXFMT_ARGB_CMP_DXT1 ) {
+            const FxU32
+              aspectIndex = ((aspectRatio < GR_ASPECT_LOG2_1x1) 
+                             ? -aspectRatio 
+                             : aspectRatio),
+              lodIndex = ((thisLod == GR_LOD_LOG2_256)
+                          ? GR_LOD_LOG2_256 : thisLod + 1),
+              formatMult = _grBitsPerTexel[format];
+            FxU32
+              levelSize = (_grMipMapHostSize[aspectIndex][lodIndex]
+                           * formatMult)>>3; /* Cvt from bits to bytes */
+            
+            GR_CHECK_F(FN_NAME, formatMult == 0, "invalid texture format");
+            
+            if (levelSize < SST_TEXTURE_ALIGN) {
+              GrLOD_t
+                maxLod = lodIndex;
+              
+              /* Find the smallest level that naturally starts on an
+               * alignment boundary. If this is larger than the current
+               * mipmap chain's large lod then this we have to compute the
+               * offset within this alignment unit.
+               *
+               * NB: This could be a table lookup, but I'm writing the
+               * obvious code right now so that there aren't any
+               * mystic #'s being pulled out of the recesses of my
+               * colon.
+               */
+              while(maxLod < GR_LOD_LOG2_256) {
+                levelSize = (_grMipMapHostSize[aspectIndex][maxLod]
+                             * formatMult);
+                if (levelSize >= SST_TEXTURE_ALIGN) break;
+                maxLod++;
+                texOffset += levelSize;
+              }
+              
+              /* maxLod is the index of the smallest level of this aspect
+               * ratio that takes up at least a full alignment unit.  We
+               * reset the small lod to this so that we can compute the
+               * offset for the 'large' levels in the mipmap chain.  
+               */
+              GR_ASSERT(maxLod != GR_LOD_LOG2_256);
+              minLod = maxLod - 1;
+            }
+          }
+          
+          if (minLod < largeLod) {
+            texOffset += _grTexTextureMemRequired(minLod + 1, largeLod,
+                                                  aspectRatio,
+                                                  format,
+                                                  evenOdd,
+                                                  FXFALSE);
+          }
+        }
+        
+        /* Compute physical start address for the download. 
+         *
+         * NB: This is going directly to the 2d lfb space rather than
+         * through the texture port so we have to add in the actual hw
+         * offset that the texture 'surface' starts at.
+         */
+        baseAddress = (memInfo->tramOffset + 
+                       startAddress +
+                       texOffset);
+      }
+      
+      /* Do the download */
+      {
+        const FxU32 bitsPerTexel = _grBitsPerTexel[format];
+        FxU32 width, formatSel, widthSel;
+
+        switch(format) {
+        case GR_TEXFMT_ARGB_CMP_FXT1:
+          width =_grMipMapHostWHCmp4Bit[G3_ASPECT_TRANSLATE(aspectRatio)][thisLod][0];
+          break;
+        case GR_TEXFMT_ARGB_CMP_DXT1:
+        case GR_TEXFMT_ARGB_CMP_DXT2:
+        case GR_TEXFMT_ARGB_CMP_DXT3:
+        case GR_TEXFMT_ARGB_CMP_DXT4:
+        case GR_TEXFMT_ARGB_CMP_DXT5:
+          width =_grMipMapHostWHDXT[G3_ASPECT_TRANSLATE(aspectRatio)][thisLod][0];
+          break;
+        default:
+          {
+            int real_width =_grMipMapHostWH[G3_ASPECT_TRANSLATE(aspectRatio)][thisLod][0];
+            width = max_s;
+
+            // 64 bit Align minS if possible
+            if (bitsPerTexel == 8) min_s &= 8;
+            else if (bitsPerTexel == 16) min_s &= 4;
+            else if (bitsPerTexel == 32) min_s &= 2;
+
+            // Get difference
+            width -= min_s;
+
+            // 64 bit Align width if possible
+            if (bitsPerTexel == 8 && width == 3) width = (width+3)&(~3);
+            else if (bitsPerTexel == 8 && width > 4) width = (width+7)&(~7);
+            else if (bitsPerTexel == 16 && width > 2) width = (width+3)&(~3);
+            else if (bitsPerTexel == 32 && width > 1) width = (width+1)&(~1);
+
+            // No width, no download
+            if (!width) goto all_done;
+
+            // Convert min_s into bytes
+            min_s = (min_s*bitsPerTexel)/8;
+
+            // Now the baseAddress
+            data = min_s+(char*)data;
+            baseAddress +=min_s;
+
+            // One 'minor' issue with this... the actual download functions will fail to
+            // properly select the position to start downloading from
+            // so we have to compensate
+            baseAddress += real_width * t * bitsPerTexel / 8;
+            t = 0;
+            max_t = 0;
+          }
+        }
+
+        widthSel = (width >> 1); // 0 = 1 pixel, 1 = 2 pixels, 2 = 4 pixels, 3 = 8 pixels, 4 = 16 pixels
+
+        /*
+         * Interpretations:
+         * formatSel: Chooses among 4, 8, 16, and 32-bit download procedures.
+         *            We want formatSel == log2(bitsPerTexel >> 2).
+         * max_s:     The width, measured in 32-bit units.
+         */
+        switch(bitsPerTexel) {
+        case  4:
+          formatSel = 0;
+          max_s = width >> 3;
+          break;
+        case  8:
+          formatSel = 1;
+          max_s = width >> 2;
+          break;
+        case 16:
+          formatSel = 2;
+          max_s = width >> 1;
+          break;
+        case 32:
+          formatSel = 3;
+          max_s = width;
+          break;
+        default:
+          /* Undefined format, but let's try 16-bit dimensions just in case. */
+          formatSel = 2;
+          max_s = width >> 1;
+        }
+
+        if (max_s <= 0) max_s = 1;
+        if (widthSel > 3) widthSel = 4;
+
+        gc->stats.texBytes += (max_s-min_s) * (max_t - t + 1) * 4;
+
+        (*((*gc->archDispatchProcs.texDownloadProcs)[formatSel][widthSel]))
+          (gc, baseAddress, max_s, t, max_t, data);
+      }
+    }
+
+    /* If this is a small lod level in a texture replacing texels that
+     * are already loaded then it may be necessary to flush the old
+     * texels from memory before any other rendering operation using
+     * this texture is issued. Unconditionally flush these old texels
+     * just in case rather than being too clever.
+     *
+     * The reason that we need to flush here even though we're not
+     * going through the texture port is because it is perfectly
+     * legal to source once and download over and over again. (See
+     * chd for a funny SpecOps story).
+     *
+     * NB: The documented nop does not currently work on banshee which
+     * is why we do the ~texBaseAddr crap along w/ the 2d nop.
+     */
+    GR_TEX_FLUSH_POST(memInfo);
+  }
+
+ all_done:
+  gc->stats.texDownloads++;
+
+  return FXTRUE;
+#undef FN_NAME
+} /* grTexDownloadMipMapLevelPartialRowExt */

@@ -273,16 +273,9 @@ internal_trisetup(const char* FN_NAME,
 {
 #ifdef FAST_C_CLIP
   AMG_GR_BEGIN_NOFIFOCHECK();
-  
-  if (!validStateP) GR_FLUSH_STATE();
-
-  if (cullP) {
-    cullVal=_grTriCull(a,b,c);
-    
-    if(cullVal <= 0) return cullVal;
-  }
-#else /* !FAST_C_CLIP */
+#else
   GR_BEGIN_NOFIFOCHECK_RET(FN_NAME, 85);
+#endif
   GDBG_INFO_MORE(gc->myLevel, 
                  "(0x%X, 0x%X, 0x%X)\n", 
                  a, b, c);
@@ -297,7 +290,7 @@ internal_trisetup(const char* FN_NAME,
 
     if (cullVal <= 0) return cullVal;
   }
-#endif /* !FAST_C_CLIP */
+
 
   /* Validate parameter coordinates */
 #if defined(GLIDE_SANITY_ASSERT)

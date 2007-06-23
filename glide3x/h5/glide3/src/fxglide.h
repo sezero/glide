@@ -2034,7 +2034,7 @@ struct _GlideRoot_s {
   FxU32 tlsOffset;
 
   int   current_sst;
-  FxI32 windowsInit;        /* Is the fullscreen part of glide initialized? */
+  FxI32 windowsInit[MAX_NUM_SST];        /* Is the fullscreen part of glide initialized? */
 
 #if GL_X86
   _p_info CPUType;          /* CPUID */
@@ -3342,5 +3342,43 @@ static GrLOD_t g3LodXlat_base[2] = { GR_LOD_LOG2_256, GR_LOD_LOG2_2048 };
 GR_EXT_ENTRY(grTexDownloadTableExt,
          void,
          (GrChipID_t tmu, GrTexTable_t type,  void *data));
+
+#if QUERY_EXTENSION_SUPPORTED
+FxBool FX_CALL 
+grSstQueryBoards( GrHwConfiguration *hwc );
+
+FxBool FX_CALL 
+grSstQueryHardware( GrHwConfiguration *hwc );
+#endif /* QUERY_EXTENSION_SUPPORTED */
+
+#if GLIDE_POINTCAST_PALETTE
+void FX_CALL 
+grTexNCCTableExt( GrChipID_t tmu, GrNCCTable_t table );
+
+void FX_CALL 
+grTexDownloadTableExt( GrChipID_t   tmu,
+                       GrTexTable_t type,
+                       void         *data );
+
+void FX_CALL 
+grTexDownloadTablePartialExt( GrChipID_t   tmu,
+                              GrTexTable_t type,
+                              void         *data,
+                              int          start,
+                              int          end );
+#endif /* GLIDE_POINTCAST_PALETTE */
+
+FxBool FX_CALL 
+grTexDownloadMipMapLevelPartialRowExt(GrChipID_t        tmu,
+                                      FxU32             startAddress,
+                                      GrLOD_t           thisLod,
+                                      GrLOD_t           largeLod,
+                                      GrAspectRatio_t   aspectRatio,
+                                      GrTextureFormat_t format,
+                                      FxU32             evenOdd,
+                                      void              *data,
+                                      int               row,
+                                      int               min_s,
+                                      int               max_s);
 
 #endif /* __FXGLIDE_H__ */

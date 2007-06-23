@@ -1094,9 +1094,6 @@ doSplash( void )
   if(_GlideRoot.environment.sliBandHeightForce)
     return;
 
-  if (_GlideRoot.environment.noSplash != 0)
-    return;
-
 #if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
   if (gc->pluginInfo.moduleHandle == NULL)
     gc->pluginInfo.moduleHandle = LoadLibrary("3dfxspl3.dll");
@@ -1112,7 +1109,8 @@ doSplash( void )
     gc->pluginInfo.plugProc     = (GrSplashPlugProc)    GetProcAddress(gc->pluginInfo.moduleHandle, 
                                                                        "_fxSplashPlug@16");
     
-    didLoad = ((gc->pluginInfo.initProc != NULL) &&
+    didLoad = (!_GlideRoot.environment.noSplash &&
+               (gc->pluginInfo.initProc != NULL) &&
                (gc->pluginInfo.splashProc != NULL) &&
                (gc->pluginInfo.plugProc != NULL) &&
                (gc->pluginInfo.shutdownProc != NULL));
@@ -1148,7 +1146,8 @@ doSplash( void )
   gc->pluginInfo.splashProc = fxSplash;
   gc->pluginInfo.plugProc = fxSplashPlug;
   
-  didLoad = ((gc->pluginInfo.initProc != NULL) &&
+  didLoad = (!_GlideRoot.environment.noSplash &&
+             (gc->pluginInfo.initProc != NULL) &&
              (gc->pluginInfo.splashProc != NULL) &&
              (gc->pluginInfo.plugProc != NULL) &&
              (gc->pluginInfo.shutdownProc != NULL));
@@ -2383,16 +2382,10 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
     *gc->lostContext = FXFALSE;
 #endif /* GLIDE_CHECK_CONTEXT */
 
-    if (_GlideRoot.environment.gammaR != 1.3f &&
-        _GlideRoot.environment.gammaG != 1.3f &&
-        _GlideRoot.environment.gammaB != 1.3f) {
-      hwcGammaRGB(gc->bInfo, 
-                  _GlideRoot.environment.gammaR, 
-                  _GlideRoot.environment.gammaG,
-                  _GlideRoot.environment.gammaB);
-    } else {
-      hwcGammaRGB(gc->bInfo, 1.3f, 1.3f, 1.3f);
-    }
+    hwcGammaRGB(gc->bInfo,
+                _GlideRoot.environment.gammaR,
+                _GlideRoot.environment.gammaG,
+                _GlideRoot.environment.gammaB);
 
     /* Setup memory configuration */
     gc->fbOffset = bInfo->fbOffset;
@@ -3078,12 +3071,12 @@ GR_EXT_ENTRY(grSstWinOpenExt, GrContext_t, ( FxU32                   hWnd,
     doSplash();
 
     gc->windowed = FXFALSE;
-    _GlideRoot.windowsInit++; /* to avoid race with grSstControl() */
+    _GlideRoot.windowsInit[_GlideRoot.current_sst]++; /* to avoid race with grSstControl() */
 
     retVal = (GrContext_t)gc;
 
     if(_GlideRoot.environment.aaClip == FXTRUE) {
-      if((gc->grPixelSample > 1) && (_GlideRoot.windowsInit == 1)) {
+      if((gc->grPixelSample > 1) && (_GlideRoot.windowsInit[_GlideRoot.current_sst] == 1)) {
         grClipWindow(0, 0, gc->state.screen_width, gc->state.screen_height);
       }
     }
@@ -3134,7 +3127,26 @@ GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
   GDBG_INFO(80, FN_NAME"(0x%X)\n", context);
 
   if (!gc)
-    return 0;
+    return FXFALSE;
+
+  /* NB: The gc that is being closed is the passed gc not the
+   * currently selected gc. This must be setup before the
+   * 'declaration' which grabs the current gc in grFlush.  In
+   * addition, it is possible for us to have 'missed' a thread attach
+   * if the current thread came into existance before glide was
+   * explicitly loaded by an application. In this case we have to set
+   * the tls gc explicitly otherwise other whacky-ness (read 'random
+   * crashes' will ensue). 
+   */
+  setThreadValue((unsigned long)gc);
+
+#if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
+  /* free splashscreen DLL */
+  if (gc->pluginInfo.moduleHandle) {
+    FreeLibrary(gc->pluginInfo.moduleHandle);
+    memset(&gc->pluginInfo, 0, sizeof(gc->pluginInfo));
+  }
+#endif
 
 #if !(GLIDE_PLATFORM & GLIDE_OS_UNIX) && !(GLIDE_PLATFORM & GLIDE_OS_DOS32)
   /* We are in Windowed Mode */
@@ -3159,79 +3171,47 @@ GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
   }
 #endif
 
-#if GLIDE_CHECK_CONTEXT
-  if (gc->lostContext) {
-    if (*gc->lostContext) {
-#if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
-      /* KoolSmoky - splashscreen DLL needs to be freed */
-      if (gc->pluginInfo.moduleHandle) {
-        FreeLibrary(gc->pluginInfo.moduleHandle);
-        gc->pluginInfo.moduleHandle = 0L;
-      }
-#endif
-      return 0;
-    }
-  }
-#endif /* GLIDE_CHECK_CONTEXT */
-
-  /* NB: The gc that is being closed is the passed gc not the
-   * currently selected gc. This must be setup before the
-   * 'declaration' which grabs the current gc in grFlush.  In
-   * addition, it is possible for us to have 'missed' a thread attach
-   * if the current thread came into existance before glide was
-   * explicitly loaded by an application. In this case we have to set
-   * the tls gc explicitly otherwise other whacky-ness (read 'random
-   * crashes' will ensue). 
-   */
-  setThreadValue((unsigned long)gc);
-  if ((gc != NULL) && gc->open) grFlush();
-
   /* Make sure that the user specified gc is not whacked */
   if ((gc != NULL) &&
       (gc >= _GlideRoot.GCs) &&
       (gc <= _GlideRoot.GCs + MAX_NUM_SST)) {
     if (gc->open) {
-#if GLIDE_INIT_HAL
-      /* dpc - 22 may 1997 - FixMe!
-       * We need the equivilant stuff in the hal layer too.
-       */
-#else /* !GLIDE_INIT_HAL */
-#if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
-      /* KoolSmoky - splashscreen DLL needs to be freed */
-      if (gc->pluginInfo.moduleHandle) {
-        FreeLibrary(gc->pluginInfo.moduleHandle);
-        gc->pluginInfo.moduleHandle = 0L;
-      }
-#endif
-      /*--------------------------
-        3D Idle
-        --------------------------*/
-      GDBG_INFO(gc->myLevel, "  3D Idle\n");
-
-      /*--------------------------
-        Command Transport Disable
-        --------------------------*/
-      GDBG_INFO(gc->myLevel, "  Command Transport Disable\n");
-    
-#if __POWERPC__ && PCI_BUMP_N_GRIND
-      restoreCacheSettings();
-#endif
-
-      /* Video Restore 
-       *
-       * NB: The hwcRestoreVideo in addition to restoring the video also
-       * turns off the command fifo and then releases the hw context
-       * which can unmap the board at the driver level.  The next time
-       * we use grSstWinOpen we need to re-map the board etc just to be
-       * safe everywhere.
-       */
-      GDBG_INFO(gc->myLevel, "  Restore Video\n");
 #if GLIDE_CHECK_CONTEXT
-      if (!*gc->lostContext)
-#endif /* GLIDE_CHECK_CONTEXT */
-#if !DRI_BUILD
+      if (gc->lostContext && !*gc->lostContext)
+#endif
       {
-      /* disable SLI and AA */
+        grFlush();
+
+#if GLIDE_INIT_HAL
+        /* dpc - 22 may 1997 - FixMe!
+         * We need the equivilant stuff in the hal layer too.
+         */
+#else /* !GLIDE_INIT_HAL */
+        /*--------------------------
+          3D Idle
+          --------------------------*/
+        GDBG_INFO(gc->myLevel, "  3D Idle\n");
+
+        /*--------------------------
+          Command Transport Disable
+          --------------------------*/
+        GDBG_INFO(gc->myLevel, "  Command Transport Disable\n");
+
+#if __POWERPC__ && PCI_BUMP_N_GRIND
+        restoreCacheSettings();
+#endif
+
+        /* Video Restore 
+         *
+         * NB: The hwcRestoreVideo in addition to restoring the video also
+         * turns off the command fifo and then releases the hw context
+         * which can unmap the board at the driver level.  The next time
+         * we use grSstWinOpen we need to re-map the board etc just to be
+         * safe everywhere.
+         */
+        GDBG_INFO(gc->myLevel, "  Restore Video\n");
+#if !DRI_BUILD
+        /* disable SLI and AA */
 #ifdef FX_GLIDE_NAPALM
         if (IS_NAPALM(gc->bInfo->pciInfo.deviceID)) {
           _grChipMask( SST_CHIP_MASK_ALL_CHIPS );
@@ -3243,15 +3223,20 @@ GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
           }
           if (gc->sliCount > 1)
             _grDisableSliCtrl();
-          
+
           /* Idle the 3D pipe. */
           grFinish();
         }
-#endif            
+#endif
         hwcRestoreVideo(gc->bInfo);
-      }
 #endif	/* !DRI_BUILD */
 #endif /* !GLIDE_INIT_HAL */
+      }
+#if (GLIDE_OS & GLIDE_OS_WIN32)
+      else {
+        hwcResetVideo(gc->bInfo);
+      }
+#endif
 
       /*--------------------------
         GC Reset
@@ -3275,15 +3260,18 @@ GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
     gc->grSstRefresh = GR_REFRESH_NONE;
   }
 
-  _GlideRoot.windowsInit--;
-  
+  _GlideRoot.windowsInit[_GlideRoot.current_sst]--;
+
 #if (GLIDE_OS & GLIDE_OS_WIN32)
   if (_GlideRoot.environment.is_opengl != FXTRUE) {
-    if ( hwcIsOSWin9x() ) {
-      hwcUnmapMemory9x ( gc->bInfo );
-    } else {
+    /* we are using hwcUnmapMemory9x for both win9x and winNT
+    ** to unmap the selected board
+    */
+    /*if ( hwcIsOSWin9x() ) {*/
+      hwcUnmapMemory9x( gc->bInfo );
+    /*} else {
       hwcUnmapMemory();
-    }
+    }*/
   }
 #endif
 
@@ -3308,6 +3296,12 @@ GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
 GR_DIENTRY(grSetNumPendingBuffers, void, (FxI32 NumPendingBuffers))
 {
   _GlideRoot.environment.swapPendingCount = NumPendingBuffers;
+
+  /* Play safe. The hardware counter is 3 bits. */
+  if (_GlideRoot.environment.swapPendingCount > 6)
+    _GlideRoot.environment.swapPendingCount = 6;
+  else if (_GlideRoot.environment.swapPendingCount < 0)
+    _GlideRoot.environment.swapPendingCount = 0;
 }
 
 /*-------------------------------------------------------------------

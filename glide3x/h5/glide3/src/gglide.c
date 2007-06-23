@@ -3280,7 +3280,7 @@ _grClipNormalizeAndGenerateRegValues(FxU32 minx, FxU32 miny, FxU32 maxx,
   }
 
   if(_GlideRoot.environment.aaClip == FXTRUE) {
-    if((gc->grPixelSample > 1) && (_GlideRoot.windowsInit == 1)) {
+    if((gc->grPixelSample > 1) && (_GlideRoot.windowsInit[_GlideRoot.current_sst] == 1)) {
       if(minx == 0) minx = 1;
       if(miny == 0) miny = 1;
     }
@@ -3313,7 +3313,7 @@ _grClipNormalizeAndGenerateRegValues(FxU32 minx, FxU32 miny, FxU32 maxx,
     if (maxx > gc->state.screen_width) maxx = gc->state.screen_width;
     if (maxy > gc->state.screen_height) maxy = gc->state.screen_height;
   }
-  
+
   GDBG_INFO(85, 
             "%s: normalized  minx = %d, maxx = %d, miny = %d, maxy = %d\n",
             FN_NAME, minx, maxx, miny, maxy);
@@ -4098,10 +4098,10 @@ GR_ENTRY(grGlideShutdown, void, (void))
         grSstSelect(i);
         grSstWinClose((GrContext_t)gc);
       }
+
+      /* Force all fullscreen contexts to be closed */
+      _GlideRoot.windowsInit[i] = 0;
     }
-    
-    /* Force all fullscreen contexts to be closed */
-    _GlideRoot.windowsInit = 0;
     
     /* If there are any surface contexts close them up now too */
     {

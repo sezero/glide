@@ -2171,6 +2171,7 @@ GR_DIENTRY(grTexDownloadTablePartial, void,
   gc->state.tex_table = type;
 
   GR_END();
+#undef FN_NAME
 } /* grTexDownloadTablePartial */
 
 /*---------------------------------------------------------------------------
@@ -2223,3 +2224,34 @@ GR_DIENTRY(grTexDownloadMipMapLevel, void,
 
   GR_END();
 } /* grTexDownloadMipmapLevel */
+
+#if GLIDE_POINTCAST_PALETTE
+
+GR_EXT_ENTRY(grTexDownloadTablePartialExt, void,
+           ( GrChipID_t tmu, GrTexTable_t type, 
+            void *data, int start, int end ))
+{
+#define FN_NAME "grTexDownloadTablePartialExt"
+  GR_BEGIN_NOFIFOCHECK(FN_NAME, 89);
+  GDBG_INFO_MORE(gc->myLevel, "(%d, %d, 0x%X, %d, %d)\n",tmu, type,data,start,end);
+
+  GR_CHECK_F(myName, type > GR_TEXTABLE_PALETTE, "invalid table specified");
+  GR_CHECK_F(myName, !data, "invalid data pointer");
+
+  /* What type of palette is this? */
+  if ((type == GR_TEXTABLE_PALETTE) || (type == GR_TEXTABLE_PALETTE_6666_EXT)){
+    _grTexDownloadPalette( tmu, type, (GuTexPalette *)data, start, end );
+  } else {
+    _grTexDownloadNccTable( tmu, type, (GuNccTable*)data, start, end );
+  }
+
+  /* NB: Set the current palette type after we do the download because
+   * the palette download code may need to know that there is a table
+   * type change and do something hoopti.  
+   */
+  gc->state.tex_table = type;
+
+  GR_END();
+#undef FN_NAME
+} /* grTexDownloadTablePartialExt */
+#endif
