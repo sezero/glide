@@ -1051,8 +1051,8 @@ modify [eax];
 static FxU32 dummyContextDWORD;
 
 #if WINXP_ALT_TAB_FIX
-static WNDPROC wpWinProc = 0; 
-static LRESULT APIENTRY _XPAltTabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+static WNDPROC wpWinProc = 0;
+static LRESULT CALLBACK _XPAltTabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 #endif
 
 #ifdef HWC_DXDRVR
@@ -1092,7 +1092,7 @@ initSlave(hwcBoardInfo *bInfo, FxU32 chipNum);
 **  Function Prototypes
 */
 
-static hwcBoardInfo *curBI = NULL;
+//static hwcBoardInfo *curBI = NULL;
 
 #ifdef HWC_EXT_INIT
 //#ifndef HMONITOR_DECLARED // AJB- Make def compatible w/ vc6 headers
@@ -1121,6 +1121,9 @@ monitorEnum( HMONITOR handle, HDC dc, LPRECT rect, LPARAM param )
   hwcExtRequest_t ctxReq;
   hwcExtResult_t ctxRes;
 
+  GDBG_INFO(80, "monitorEnum:  Handle: 0x%x, DC: 0x%x, (%d, %d, %d, %d)\n",
+            handle, dc, rect->top, rect->bottom, rect->left, rect->right);
+
   hInfo.boardInfo[num_monitor].hwcProtocol = -1;
   ctxReq.which = HWCEXT_GETDEVICECONFIG;
   GDBG_INFO(80, "monitorEnum:  ExtEscape:HWCEXT_GETDEVICECONFIG\n");
@@ -1144,6 +1147,15 @@ monitorEnum( HMONITOR handle, HDC dc, LPRECT rect, LPARAM param )
     vendorID = ctxRes.optData.deviceConfigRes.vendorID;
 
     if ( vendorID == 0x121a ) {
+#define CCHDEVICENAME 32
+      typedef struct {
+        DWORD cbSize;
+        RECT  rcMonitor;
+        RECT  rcWork;
+        DWORD dwFlags;
+        TCHAR szDevice[CCHDEVICENAME];
+      } MONITORINFOEX, *LPMONITORINFOEX;
+      MONITORINFOEX monInfo;
       DevEnumRec* 
         data = (DevEnumRec*)param;
       LPCSTR
@@ -1155,14 +1167,6 @@ monitorEnum( HMONITOR handle, HDC dc, LPRECT rect, LPARAM param )
        * name explicitly for the CreateDC call.
        */
       if (handle != NULL) {
-#define CCHDEVICENAME 32
-        typedef struct {
-          DWORD cbSize;
-          RECT  rcMonitor;
-          RECT  rcWork;
-          DWORD dwFlags;
-          TCHAR szDevice[CCHDEVICENAME];
-        } MONITORINFOEX, *LPMONITORINFOEX;
         typedef BOOL (CALLBACK* GetMonitorInfoProc)(HMONITOR, LPMONITORINFOEX);
         static GetMonitorInfoProc monitorInfoProc = NULL;
 
@@ -1175,12 +1179,10 @@ monitorEnum( HMONITOR handle, HDC dc, LPRECT rect, LPARAM param )
         }
 
         if (monitorInfoProc != NULL) {
-          MONITORINFOEX monInfo;
-
           monInfo.cbSize = sizeof(monInfo);
           if ((*monitorInfoProc)(handle, &monInfo)) {
-            devName = monInfo.szDevice;
             drvName = NULL;
+            devName = monInfo.szDevice;
           }
         }
       }
@@ -1208,14 +1210,14 @@ monitorEnum( HMONITOR handle, HDC dc, LPRECT rect, LPARAM param )
        * FixMe: Is there a better way to do this? I did not see a
        * CopyDC or anything like that.  
        */
-      dc = CreateDC(drvName,
-                    devName,
-                    NULL,
-                    NULL);
+      data[num_monitor].dc = CreateDC(drvName, devName, NULL, NULL);
 
-      data[num_monitor].dc = dc;
       data[num_monitor].mon = handle;
       strcpy(data[num_monitor].devName, devName);
+
+      GDBG_INFO(80, "monitorEnum:  Created DC: 0x%x for %s\n",
+                data[num_monitor].dc,
+                devName);
 
       num_monitor++;
       rv = (num_monitor < HWC_MAX_BOARDS);
@@ -1235,6 +1237,9 @@ displayMonitor( HMONITOR handle, HDC dc, LPRECT rect, LPARAM param )
   BOOL rv = TRUE;
   hwcExtRequest_t ctxReq;
   hwcExtResult_t  ctxRes;
+
+  GDBG_INFO(80, "displayMonitor:  Handle: 0x%x, DC: 0x%x, (%d, %d, %d, %d)\n",
+            handle, dc, rect->top, rect->bottom, rect->left, rect->right);
 
   ctxReq.which = HWCEXT_GETDEVICECONFIG;
   GDBG_INFO(80, "displayMonitor:  ExtEscape:HWCEXT_GETDEVICECONFIG\n");
@@ -1368,7 +1373,7 @@ hwcInit(FxU32 vID, FxU32 dID)
   {
     /* Grab the DC of the Desktop. */
     HDC hdc = GetDC(NULL);
-    HMODULE user32 = GetModuleHandle( "user32.dll" );
+    HMODULE user32 = GetModuleHandle( "user32" );
     
     for (monitor = 0; monitor < HWC_MAX_BOARDS; monitor++) {
       data[monitor].dc  = NULL;
@@ -1382,8 +1387,8 @@ hwcInit(FxU32 vID, FxU32 dID)
         enumDisplayMonitors = (void*)GetProcAddress( user32, "EnumDisplayMonitors" );
       
       if ( enumDisplayMonitors ) { 
-        HWND
-          curWindow = GetActiveWindow();
+        /*HWND
+          curWindow = GetActiveWindow();*/
         
         GDBG_INFO(80, "%s:  multi-monitor capable OS ( NT5/W98 )\n", FN_NAME);
         enumDisplayMonitors( hdc, 0, monitorEnum, (LPARAM)data );
@@ -1392,6 +1397,7 @@ hwcInit(FxU32 vID, FxU32 dID)
         ** use the active window display (if there is one yet
         ** associated w/ the current thread) as sst 0 
         */
+        /* removed because this really does nothing
         if (curWindow != NULL) {
           HDC curWindowDC = GetDC(curWindow);
           
@@ -1399,7 +1405,7 @@ hwcInit(FxU32 vID, FxU32 dID)
             enumDisplayMonitors( curWindowDC, 0, displayMonitor, (LPARAM)data );
             ReleaseDC(curWindow, curWindowDC);
           }
-        }
+        }*/
       } else { /* for win95/nt4, assume we have one board */
         monitorEnum(NULL, hdc, NULL, (LPARAM)&data);
       }
@@ -1413,7 +1419,22 @@ hwcInit(FxU32 vID, FxU32 dID)
     sprintf(errorString, "%s: 3Dfx device not found!\n", FN_NAME);
     return NULL;
   }
-  
+
+  /* allow user to swap primary sst */
+  {
+    const char* envStr = GETENV("FX_GLIDE_SST_PRIMARY");
+    if (num_monitor > 1 && envStr) {
+      const FxI32 whichSst = atoi(envStr);
+      if (whichSst > 0 && whichSst < num_monitor) {
+        DevEnumRec dataSst0;
+        memcpy(&dataSst0, &data[0], sizeof(DevEnumRec));
+        memcpy(&data[0], &data[whichSst], sizeof(DevEnumRec));
+        memcpy(&data[whichSst], &dataSst0, sizeof(DevEnumRec));
+        GDBG_INFO(80, "%s: Force %s as sst 0.\n", FN_NAME, data[0].devName);
+      }
+    }
+  }
+
   hInfo.nBoards = 0;
   for (monitor = 0; monitor < num_monitor; monitor++) {
     hwcExtRequest_t ctxReq;
@@ -4154,6 +4175,24 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
         GDBG_INFO(80, "%s:  setVideoMode() failed!\n", FN_NAME);
         return FXFALSE;
       }
+
+#if WINXP_ALT_TAB_FIX
+    /* install our winproc. we only reach here if we are in FSEM. */
+    {
+      const char *envStr = GETENV("FX_GLIDE_ALT_TAB_FIX");
+      //if (cLostPointer == &dummyContextDWORD || (envStr && atoi(envStr) > 0)) {
+      if (!envStr || atoi(envStr) > 0) {
+        WNDPROC
+          curproc = (WNDPROC)GetWindowLong((HWND)bInfo->vidInfo.hWnd, GWL_WNDPROC);
+
+        if (curproc && curproc != (WNDPROC)_XPAltTabProc) {
+          GDBG_INFO(80, FN_NAME ":  Setting up alt-tab fix hack.\n");
+          wpWinProc = (WNDPROC)SetWindowLong((HWND)bInfo->vidInfo.hWnd, GWL_WNDPROC, (LONG)_XPAltTabProc);
+        }
+      }
+    }
+#endif
+
 #else /* HWC_EXT_INIT */
     if ( !setVideoMode( (void *)bInfo->vidInfo.hWnd, 
                         bInfo->vidInfo.xRes,
@@ -4406,7 +4445,7 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
   default:
   case 1: /* Optimal */
     if(bpp == 32 &&
-       !(IS_NAPALM(bInfo->pciInfo.deviceID) && (bInfo->pciInfo.numChips == 4) && (bInfo->h3pixelSample > 1))) {
+       !(IS_NAPALM(bInfo->pciInfo.deviceID) && (bInfo->pciInfo.numChips == 4) && (bInfo->h3pixelSample >= 4))) {
       vidProcCfg |= SST_OVERLAY_FILTER_POINT;
     } else
     /* make sure that if 2x video mode or SLI mode is enabled, we use the 4x1 filter. */
@@ -4420,7 +4459,7 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
     break;
   case 2: /* Normal */
     if(bpp == 32 &&
-       !(IS_NAPALM(bInfo->pciInfo.deviceID) && (bInfo->pciInfo.numChips == 4) && (bInfo->h3pixelSample > 1))) {
+       !(IS_NAPALM(bInfo->pciInfo.deviceID) && (bInfo->pciInfo.numChips == 4) && (bInfo->h3pixelSample >= 4))) {
       vidProcCfg |= SST_OVERLAY_FILTER_POINT;
     } else {
       vidProcCfg |= SST_OVERLAY_FILTER_4X4;
@@ -4428,7 +4467,7 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
     break;
   case 3: /* High */
     if(bpp == 32 &&
-       !(IS_NAPALM(bInfo->pciInfo.deviceID) && (bInfo->pciInfo.numChips == 4) && (bInfo->h3pixelSample > 1))) {
+       !(IS_NAPALM(bInfo->pciInfo.deviceID) && (bInfo->pciInfo.numChips == 4) && (bInfo->h3pixelSample >= 4))) {
       vidProcCfg |= SST_OVERLAY_FILTER_POINT;
     } else
     if((vidProcCfg & SST_VIDEO_2X_MODE_EN) ||
@@ -5610,33 +5649,43 @@ hwcRestoreVideo(hwcBoardInfo *bInfo)
   }
 #endif /* HWC_EXT_INIT */
 
+  /* reset video */
+  hwcResetVideo(bInfo);
+
+  return FXTRUE;
+#undef FN_NAME
+} /* hwcRestoreVideo */
+
+void
+hwcResetVideo(hwcBoardInfo *bInfo) {
+#define FN_NAME "hwcResetVideo"
+
   /* Restore display */
 #ifdef HWC_DXDRVR
   dxClose();
 #elif defined(HWC_EXT_INIT)
+
+#if WINXP_ALT_TAB_FIX
+  /* Need to uninstall our winproc before restoring FSEM. */
+  {
+    WNDPROC
+      curproc = (WNDPROC)GetWindowLong((HWND)bInfo->vidInfo.hWnd, GWL_WNDPROC);
+
+    if (curproc == (WNDPROC)_XPAltTabProc) {
+      GDBG_INFO(80, FN_NAME ":  Undoing alt-tab fix hack.\n");
+      SetWindowLong((HWND)bInfo->vidInfo.hWnd, GWL_WNDPROC, (LONG)wpWinProc);
+      wpWinProc = 0;
+    }
+  }
+#endif
+
   resetVideo(bInfo);
 #else
   resetVideo();
 #endif /* HWC_DXDRVR */
 
-#if WINXP_ALT_TAB_FIX
-  {
-    WNDPROC curproc;
-    curproc = (WNDPROC) GetWindowLong((HWND) bInfo->vidInfo.hWnd, GWL_WNDPROC);
-    
-    if (curproc == (WNDPROC) _XPAltTabProc) {
-      GDBG_INFO(80, FN_NAME ":  Undoing WinXP faster Alt-Tab fix hacks.\n");
-      SetWindowLong ((HWND) bInfo->vidInfo.hWnd, GWL_WNDPROC, (LONG) wpWinProc);
-      wpWinProc = 0;
-      GDBG_INFO(80, FN_NAME ":  Restored window process.\n");
-    }
-  }
-#endif
-  
-  return FXTRUE;
 #undef FN_NAME
-} /* hwcRestoreVideo */
-
+} /* hwcResetVideo */
 
 #ifdef FX_GLIDE_NAPALM
 /* These are platform dependant */
@@ -8666,7 +8715,7 @@ hwcGetenv(const char *a)
 #if WINXP_ALT_TAB_FIX
 static FxU32 *cLostPointer = 0;
 
-static LRESULT APIENTRY _XPAltTabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK _XPAltTabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 #define FN_NAME "_XPAltTabProc"
   
@@ -8715,9 +8764,8 @@ static LRESULT APIENTRY _XPAltTabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARA
         }
     }
 #endif
-  return CallWindowProc(wpWinProc, hwnd, uMsg, 
-                        wParam, lParam); 
-  
+
+  return CallWindowProc(wpWinProc, hwnd, uMsg, wParam, lParam);
 #undef FN_NAME
 }
 
@@ -8771,8 +8819,6 @@ hwcShareContextData(hwcBoardInfo *bInfo, FxU32 **data)
 
   GDBG_INFO(80, FN_NAME "\n");  
 
-  //is_patchedHwnd = FXFALSE;
-  
   if( HWCEXT_PROTOCOL( bInfo->boardNum ) )
   {
     if ( !hwcIsOSWin9x() )
@@ -8782,8 +8828,9 @@ hwcShareContextData(hwcBoardInfo *bInfo, FxU32 **data)
       hwcExtResult_t
         ctxRes;
 
-      curBI = bInfo;
-      ctxReq.optData.contextDwordNTReq.procId = GetCurrentProcessId();
+      //curBI = bInfo;
+      bInfo->contextHandle = GetCurrentProcessId ();
+      ctxReq.optData.contextDwordNTReq.procId = bInfo->contextHandle;
 
       GDBG_INFO(80, FN_NAME ":  ProcID=%d\n", ctxReq.optData.contextDwordNTReq.procId);  
       GDBG_INFO(80, FN_NAME ":  NT Branch\n");  
@@ -8847,49 +8894,14 @@ hwcShareContextData(hwcBoardInfo *bInfo, FxU32 **data)
        * check the retVal and the pointer. This also screws with ALT-TAB.
        */
       GDBG_INFO(80, FN_NAME ":  ExtEscape retVal=%d, dwordOffset=%d, contextDWORD=%d\n", retVal, ctxRes.optData.contextDwordNTRes.dwordOffset, ctxRes.optData.shareContextDWORDRes.contextDWORD);
-      {
-#ifdef WINXP_ALT_TAB_FIX
-        FxBool forceAltTabFix = FXFALSE;
-        if(GETENV("FX_GLIDE_ALT_TAB_FIX")) {
-          if(atoi(GETENV("FX_GLIDE_ALT_TAB_FIX")) > 0) {
-            forceAltTabFix = FXTRUE;
-          }
-        }
-#endif
-        if( (retVal <= 0) ||
-            (ctxRes.optData.contextDwordNTRes.dwordOffset == 0) 
-#ifdef WINXP_ALT_TAB_FIX
-            || forceAltTabFix
-#endif
-            ) { /* XXX: make exceptions for winxp if we face problems! */
-#ifdef WINXP_ALT_TAB_FIX
-          cLostPointer =
-#endif
-          *data = &dummyContextDWORD;
-          GDBG_INFO(80, FN_NAME ":  using dummyContext \n");
-
-#ifdef WINXP_ALT_TAB_FIX
-          GDBG_INFO(80, FN_NAME ":  Unable to get pointer to context! Compensating.\n");
-          {
-            WNDPROC curproc;
-            curproc = (WNDPROC) GetWindowLong((HWND) bInfo->vidInfo.hWnd, GWL_WNDPROC);
-
-            GDBG_INFO(80, FN_NAME ":  Setting up winxp alt-tab fix.\n");
-
-            if (curproc != (WNDPROC) _XPAltTabProc) {
-              wpWinProc = curproc;
-              SetWindowLong ((HWND) bInfo->vidInfo.hWnd, GWL_WNDPROC, (LONG) _XPAltTabProc);
-              GDBG_INFO(80, FN_NAME ":  Alt-tab fix set.\n");
-            } else {
-              GDBG_INFO(0, FN_NAME ":  Alt-tab fix failed!\n");
-            }
-          }
-#endif
-        } else {
-          *data = (FxU32 *) ctxRes.optData.contextDwordNTRes.dwordOffset;
-        }
+      if (retVal <= 0 ||
+          ctxRes.optData.contextDwordNTRes.dwordOffset == 0) {
+        GDBG_INFO(80, FN_NAME ":  using dummyContext \n");
+        *data = &dummyContextDWORD;
+      } else {
+        *data = (FxU32 *) ctxRes.optData.contextDwordNTRes.dwordOffset;
       }
-    
+
     } else {      
       /* context DWORD is rather poorly named now, but oh, well. */
       ctxReq.which = HWCEXT_SHARE_CONTEXT_DWORD;
@@ -8921,9 +8933,13 @@ hwcShareContextData(hwcBoardInfo *bInfo, FxU32 **data)
       } else
         *data = (FxU32 *) ctxRes.optData.shareContextDWORDRes.contextDWORD;
     }
-    
+
+#if WINXP_ALT_TAB_FIX
+    cLostPointer = *data;
+#endif
+
     GDBG_INFO(80, FN_NAME ":  pointer to context = 0x%x\n",
-              ctxRes.optData.shareContextDWORDRes.contextDWORD); 
+              ctxRes.optData.shareContextDWORDRes.contextDWORD);
   }
 #endif
 #if HWC_GDX_INIT || (GLIDE_PLATFORM & GLIDE_OS_DOS32) || (GLIDE_PLATFORM & GLIDE_OS_UNIX)
@@ -8941,6 +8957,7 @@ hwcUnmapMemory()
   hwcExtRequest_t ctxReq;
   hwcExtResult_t  ctxRes;
 
+#if 0
   if ( curBI ) {
     if ( !hwcIsOSWin9x() )
       {
@@ -8962,17 +8979,23 @@ hwcUnmapMemory()
     }
     curBI = NULL;
   }
-  else {
-    for(i=0;i<hInfo.nBoards;i++)
-      {
+  else
+#endif
+  {
+    for(i=0;i<hInfo.nBoards;i++) {
+      if (hInfo.boardInfo[i].isMapped) {
         ctxReq.which = HWCEXT_UNMAP_MEMORY;
-        ctxReq.optData.unmapMemoryReq.procHandle = (ULONG)GetCurrentProcessId();
+        //ctxReq.optData.unmapMemoryReq.procHandle = (ULONG)GetCurrentProcessId();
+        ctxReq.optData.unmapMemoryReq.procHandle = hInfo.boardInfo[i].contextHandle;
+        
         GDBG_INFO(80, "hwcUnmapMemory:  Calling ExtEscape(HWCEXT_UNMAP_MEMORY)\n");  
         ExtEscape((HDC)hInfo.boardInfo[i].hdc, HWCEXT_ESCAPE(i), /**/
                   sizeof(ctxReq), (LPSTR) &ctxReq,
                   sizeof(ctxRes), (LPSTR) &ctxRes);
+        
         hInfo.boardInfo[i].isMapped = FXFALSE;
       }
+    }
   }
 
 } /* hwcUnmapMemory */
@@ -8980,9 +9003,11 @@ hwcUnmapMemory()
 void
 hwcUnmapMemory9x(hwcBoardInfo *bInfo) 
 {
-#ifdef HWC_EXT_INIT
   hwcExtRequest_t ctxReq;
   hwcExtResult_t  ctxRes;
+
+  /* don't do anything if it's already unmapped */
+  if (!bInfo->isMapped) return;
 
   ctxReq.which = HWCEXT_UNMAP_MEMORY;
   ctxReq.optData.unmapMemoryReq.procHandle = bInfo->contextHandle;
@@ -8997,29 +9022,23 @@ hwcUnmapMemory9x(hwcBoardInfo *bInfo)
   
   bInfo->isMapped = FXFALSE;
   /* Catch dumb bugs.  Nuke all linear register pointers. */
-
   
-#endif // #ifdef HWC_EXT_INIT
 } /* hwcUnmapMemory9x */
 
 void
 hwcClearContextData() 
 {
-#define FN_NAME "hwcClearContextData"
-#ifdef HWC_EXT_INIT
   FxU32 i;
   for(i = 0; i < hInfo.nBoards; i++) {
     if(hInfo.boardInfo[i].hdc != NULL) {
       DeleteDC(hInfo.boardInfo[i].hdc);
-	  GDBG_INFO(80, FN_NAME ": deleted hdc 0x%x\n", hInfo.boardInfo[i].hdc);
-	  hInfo.boardInfo[i].hdc = NULL;
+      GDBG_INFO(80, "hwcClearContextData: deleted hdc 0x%x\n", hInfo.boardInfo[i].hdc);
+      hInfo.boardInfo[i].hdc = NULL;
     }
   }
-#endif
   return;
-#undef FN_NAME
 } /* hwcClearContextData */
-#endif
+#endif /* HWC_EXT_INIT */
 
 void
 hwcIdleWinFifo(hwcBoardInfo*     bInfo,

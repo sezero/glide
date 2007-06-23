@@ -51,6 +51,9 @@
 /* UNIX */
 #define SEPARATOR2 '/'
 
+#undef GETENV
+#define GETENV hwcGetenv
+
 /*
  * parseFilename
  *
@@ -73,6 +76,7 @@ _parseFilename(char *name)
 
 static int _set_exclusive_relaxed;
 static int _set_vidmode_relaxed;
+static FxBool _set_multirendering;
 
 typedef struct _enumInfoStruct {
   GUID guid;
@@ -86,7 +90,7 @@ ddEnumCbEx( GUID FAR *guid, LPSTR desc, LPSTR name, LPVOID ctx, HMONITOR hmon )
   BOOL      rv        = DDENUMRET_OK;
   
   if(pEnumInfo->hmon == hmon) {
-    if ( guid ) CopyMemory(&pEnumInfo->guid, guid, sizeof(GUID));
+    if ( guid ) CopyMemory(&(pEnumInfo->guid), guid, sizeof(GUID));
     rv = DDENUMRET_CANCEL;
     GDBG_INFO(80, "DeviceName: %s, DeviceString: %s\n", name, desc);
   }
@@ -185,6 +189,7 @@ setVideoMode( hwcBoardInfo *bInfo, int refresh )
   FxU32 bpp = 16;
   //HRESULT ddRVal;
   //DWORD style;
+  EnumInfo enumInfo;
 
 #ifdef FX_GLIDE_NAPALM
   if (bInfo->h3pixelSize == 4) bpp = 32;
@@ -197,11 +202,8 @@ setVideoMode( hwcBoardInfo *bInfo, int refresh )
   
   GDBG_INFO( 80, "setVideoMode sees hwnd 0x%x\n", (HWND)bInfo->vidInfo.hWnd);
 
-  if ((HWND)bInfo->vidInfo.hWnd == NULL) {
+  if ((HWND)bInfo->vidInfo.hWnd == NULL)
     (HWND)bInfo->vidInfo.hWnd = GetActiveWindow();
-  } else {
-    GDBG_INFO( 80, "Couldn't get a valid window handle\n" );
-  }
 
   ddGuid = NULL;
   ddraw = GetModuleHandle( "ddraw.dll" );      
@@ -209,13 +211,10 @@ setVideoMode( hwcBoardInfo *bInfo, int refresh )
     LPDIRECTDRAWENUMERATEEXA ddEnumEx;
     ddEnumEx = (LPDIRECTDRAWENUMERATEEXA)GetProcAddress( ddraw, "DirectDrawEnumerateExA" );
     if ( ddEnumEx ) {
-      EnumInfo enumInfo;
-
-      ZeroMemory(&enumInfo, sizeof(enumInfo));
-      ZeroMemory(&enumInfo.guid, sizeof(GUID));
+      ZeroMemory(&(enumInfo.guid), sizeof(GUID));
       enumInfo.hmon = (HMONITOR)bInfo->hMon;
       ddEnumEx( ddEnumCbEx, &enumInfo, DDENUM_ATTACHEDSECONDARYDEVICES );
-      ddGuid = &enumInfo.guid;
+      ddGuid = &(enumInfo.guid);
       GDBG_INFO(80, "GUID %d-%d-%d-%d-%d%d%d%d\n",
                 ddGuid->Data1,
                 ddGuid->Data2,
@@ -242,7 +241,8 @@ setVideoMode( hwcBoardInfo *bInfo, int refresh )
     }
   }
 
-  GDBG_INFO(80, "DeviceName: %s Display mode: %dx%dx%dbpp!\n", bInfo->devName, devMode.dmPelsWidth, devMode.dmPelsHeight, devMode.dmBitsPerPel);
+  GDBG_INFO(80, "DeviceName: %s Display mode: %dx%dx%dbpp!\n",
+            bInfo->devName, devMode.dmPelsWidth, devMode.dmPelsHeight, devMode.dmBitsPerPel);
 
   /*
   **  Oh, this is lovely.  What we have here is a failure to
@@ -262,12 +262,12 @@ setVideoMode( hwcBoardInfo *bInfo, int refresh )
   
   if (bInfo->lpDD == NULL) {
     /* only create directdraw object once */
-    if ( DirectDrawCreate( ddGuid, &bInfo->lpDD1, NULL ) != DD_OK) {
+    if ( DirectDrawCreate( ddGuid, &(bInfo->lpDD1), NULL ) != DD_OK) {
       GDBG_INFO(80, "DDraw Obj Create Failed!\n");
     }
     else GDBG_INFO(80, "DDraw Obj created!\n");
     if ( IDirectDraw_QueryInterface( bInfo->lpDD1, &IID_IDirectDraw2, 
-                                     (LPVOID*)&bInfo->lpDD ) != DD_OK ) {
+                                     (LPVOID*)&(bInfo->lpDD) ) != DD_OK ) {
       IDirectDraw_Release( bInfo->lpDD1 );
       bInfo->lpDD1 = NULL;
       bInfo->lpDD  = NULL;
@@ -276,42 +276,48 @@ setVideoMode( hwcBoardInfo *bInfo, int refresh )
     } 
     else GDBG_INFO(80, "DDraw2 Obj created!\n");
   }
-  
+
   /* Set Exclusive Mode, change resolution,  */
   GDBG_INFO(80, "Setting Full screen exclusive mode!\n");
-  GDBG_INFO(80, "Calling IDD2_SetCoop: 0x%x, 0x%x, 0x%x\n", bInfo->lpDD, bInfo->vidInfo.hWnd, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN );
-
-  hResult = IDirectDraw2_SetCooperativeLevel(bInfo->lpDD, (HWND)bInfo->vidInfo.hWnd,
-                                               /*DDSCL_ALLOWREBOOT |*/
-                                               DDSCL_EXCLUSIVE |
-                                               DDSCL_FULLSCREEN);
-  if(hResult != DD_OK)
   {
-    GDBG_INFO(80, "Couldn't set cooperative level:  " );
-    if (hResult & DDERR_EXCLUSIVEMODEALREADYSET)
-      GDBG_INFO_MORE(80, "DDERR_EXCLUSIVEMODEALREADYSET\n" ); 
+    ULONG dwFlags = /*DDSCL_ALLOWREBOOT |*/ DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN;
     
-    if (hResult & DDERR_HWNDALREADYSET) {
-      GDBG_INFO_MORE(80, "DDERR_HWNDALREADYSET\n" );
-      if (hResult == DDERR_HWNDALREADYSET)
-        _set_exclusive_relaxed = 1;
+    if (_set_multirendering) {
+      dwFlags |= DDSCL_CREATEDEVICEWINDOW | DDSCL_SETFOCUSWINDOW;
+      GDBG_INFO(80, "Setting MultiRendering mode!\n");
     }
-    if (hResult & DDERR_HWNDSUBCLASSED)
-      GDBG_INFO_MORE(80, "DDERR_HWNDSUBCLASSED\n" );
     
-    if (hResult & DDERR_INVALIDOBJECT)
-      GDBG_INFO_MORE(80, "DDERR_INVALIDOBJECT\n" );
+    GDBG_INFO(80, "Calling IDD2_SetCoop: 0x%x, 0x%x, 0x%x\n", bInfo->lpDD, bInfo->vidInfo.hWnd, dwFlags );
     
-    if (hResult & DDERR_INVALIDPARAMS)
-      GDBG_INFO_MORE(80, "DDERR_INVALIDPARAMS\n" );
+    hResult = IDirectDraw2_SetCooperativeLevel(bInfo->lpDD, (HWND)bInfo->vidInfo.hWnd, dwFlags);
     
-    if (hResult & DDERR_OUTOFMEMORY)
-      GDBG_INFO_MORE(80, "DDERR_OUTOFMEMORY\n" );
-    
-    if (!_set_exclusive_relaxed)
-      return FXFALSE;
+    if(hResult != DD_OK)
+    {
+      GDBG_INFO(80, "Couldn't set cooperative level:  " );
+      if (hResult & DDERR_EXCLUSIVEMODEALREADYSET)
+        GDBG_INFO_MORE(80, "DDERR_EXCLUSIVEMODEALREADYSET\n" ); 
+      
+      if (hResult & DDERR_HWNDALREADYSET) {
+        GDBG_INFO_MORE(80, "DDERR_HWNDALREADYSET\n" );
+        if (hResult == DDERR_HWNDALREADYSET)
+          _set_exclusive_relaxed = 1;
+      }
+      if (hResult & DDERR_HWNDSUBCLASSED)
+        GDBG_INFO_MORE(80, "DDERR_HWNDSUBCLASSED\n" );
+      
+      if (hResult & DDERR_INVALIDOBJECT)
+        GDBG_INFO_MORE(80, "DDERR_INVALIDOBJECT\n" );
+      
+      if (hResult & DDERR_INVALIDPARAMS)
+        GDBG_INFO_MORE(80, "DDERR_INVALIDPARAMS\n" );
+      
+      if (hResult & DDERR_OUTOFMEMORY)
+        GDBG_INFO_MORE(80, "DDERR_OUTOFMEMORY\n" );
+      
+      if (!_set_exclusive_relaxed)
+        return FXFALSE;
+    }
   }
-  
   GDBG_INFO(80, "FSEM Set\n" );
   GDBG_INFO(80, "Enumerating Display Modes.\n");
   
@@ -549,6 +555,7 @@ checkResolutions(FxBool *supportedByResolution,
   LPGUID          ddGuid = NULL;
   HMODULE         ddraw = NULL; 
   HRESULT hResult;
+  EnumInfo enumInfo;
   
   resStride = stride;
   
@@ -558,13 +565,10 @@ checkResolutions(FxBool *supportedByResolution,
     LPDIRECTDRAWENUMERATEEXA ddEnumEx;
     ddEnumEx = (LPDIRECTDRAWENUMERATEEXA)GetProcAddress( ddraw, "DirectDrawEnumerateExA" );
     if ( ddEnumEx ) {
-      EnumInfo enumInfo;
-
-      ZeroMemory(&enumInfo, sizeof(enumInfo));
-      ZeroMemory(&enumInfo.guid, sizeof(GUID));
+      ZeroMemory(&(enumInfo.guid), sizeof(GUID));
       enumInfo.hmon = (HMONITOR)bInfo->hMon;
       ddEnumEx( ddEnumCbEx, &enumInfo, DDENUM_ATTACHEDSECONDARYDEVICES );
-      ddGuid = &enumInfo.guid;
+      ddGuid = &(enumInfo.guid);
       GDBG_INFO(80, "GUID %d-%d-%d-%d-%d%d%d%d\n",
                 ddGuid->Data1,
                 ddGuid->Data2,
@@ -577,12 +581,12 @@ checkResolutions(FxBool *supportedByResolution,
   //checkSpecialList();
   if (bInfo->lpDD == NULL) {
     /* only create directdraw object once */
-    if ( DirectDrawCreate( ddGuid, &bInfo->lpDD1, NULL ) != DD_OK) {
+    if ( DirectDrawCreate( ddGuid, &(bInfo->lpDD1), NULL ) != DD_OK) {
       GDBG_INFO(80, "DDraw Obj Create Failed!\n");
     }
     else GDBG_INFO(80, "DDraw Obj created!\n");
     if ( IDirectDraw_QueryInterface( bInfo->lpDD1, &IID_IDirectDraw2, 
-                                     (LPVOID*)&bInfo->lpDD ) != DD_OK ) {
+                                     (LPVOID*)&(bInfo->lpDD) ) != DD_OK ) {
       IDirectDraw_Release( bInfo->lpDD1 );
       bInfo->lpDD1 = NULL;
       bInfo->lpDD  = NULL;
@@ -607,3 +611,9 @@ void EnableOpenGL(void)
   GDBG_INFO(80, "EnableOpenGL: called!\n");
   
 } /* EnableOpenGL */
+
+void EnableMultiRendering(void)
+{
+  GDBG_INFO(80, "EnableMultiRendering: called!\n");
+  _set_multirendering = FXTRUE;
+} /* EnableMultiRendering */

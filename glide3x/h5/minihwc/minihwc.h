@@ -613,6 +613,8 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo
 FxBool
 hwcRestoreVideo(hwcBoardInfo *bInfo);
 
+void
+hwcResetVideo(hwcBoardInfo *bInfo);
 
 char *
 hwcGetErrorString(void);
