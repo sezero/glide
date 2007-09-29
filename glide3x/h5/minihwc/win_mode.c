@@ -211,6 +211,7 @@ setVideoMode( hwcBoardInfo *bInfo, int refresh )
     LPDIRECTDRAWENUMERATEEXA ddEnumEx;
     ddEnumEx = (LPDIRECTDRAWENUMERATEEXA)GetProcAddress( ddraw, "DirectDrawEnumerateExA" );
     if ( ddEnumEx ) {
+      ZeroMemory(&enumInfo, sizeof(enumInfo));
       ZeroMemory(&(enumInfo.guid), sizeof(GUID));
       enumInfo.hmon = (HMONITOR)bInfo->hMon;
       ddEnumEx( ddEnumCbEx, &enumInfo, DDENUM_ATTACHEDSECONDARYDEVICES );
@@ -565,6 +566,7 @@ checkResolutions(FxBool *supportedByResolution,
     LPDIRECTDRAWENUMERATEEXA ddEnumEx;
     ddEnumEx = (LPDIRECTDRAWENUMERATEEXA)GetProcAddress( ddraw, "DirectDrawEnumerateExA" );
     if ( ddEnumEx ) {
+      ZeroMemory(&enumInfo, sizeof(enumInfo));
       ZeroMemory(&(enumInfo.guid), sizeof(GUID));
       enumInfo.hmon = (HMONITOR)bInfo->hMon;
       ddEnumEx( ddEnumCbEx, &enumInfo, DDENUM_ATTACHEDSECONDARYDEVICES );
