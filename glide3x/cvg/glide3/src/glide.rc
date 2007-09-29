@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1  1999/12/07 21:42:32  joseph
+** Initial checkin into SourceForge.
+**
 */
 
 #define OFFICIAL   1 
@@ -60,6 +63,7 @@ BEGIN
             VALUE "ProductName", PRODNAME
             VALUE "ProductVersion", VERSIONSTR
             VALUE "Graphics Subsystem", HWSTR
+            VALUE "Contact", "The Glide Open Source Project http://glide.sourceforge.net/"
         END
     END
     BLOCK "VarFileInfo"
