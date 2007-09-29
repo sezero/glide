@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.8  2005/08/13 21:06:57  jwrdegoede
+** Last needed 64 bit fixes for h5/h3, complete 64 bit support for cvg
+**
 ** Revision 1.1.1.1.8.7  2005/06/10 18:59:00  jwrdegoede
 ** Fix linking when GL_X86 is not defined
 **
@@ -739,9 +742,6 @@ _GlideInitEnvironment(void)
     _GlideRoot.environment.swFifoLWM         = GLIDE_GETENV("FX_GLIDE_LWM", -1L);
 
     _GlideRoot.environment.swapInterval      = GLIDE_GETENV("FX_GLIDE_SWAPINTERVAL", -1L);
-    if ((envStr != NULL) && (_GlideRoot.environment.swapInterval < 0)) {
-      _GlideRoot.environment.swapInterval = 0;
-    }
 
     /* wait until there's 6 or fewer buffer swaps pending */
     /* the hardware counter is only 3 bits so we don't want it to overflow */
