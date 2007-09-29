@@ -19,6 +19,9 @@
  **
  ** $Header$
  ** $Log$
+ ** Revision 1.1.1.1.8.3  2004/03/08 07:42:21  dborca
+ ** Voodoo Rush fixes
+ **
  ** Revision 1.1.1.1.8.2  2003/11/03 13:34:29  dborca
  ** Voodoo2 happiness (DJGPP & Linux)
  **
@@ -529,12 +532,9 @@ GR_DIENTRY(grStipplePattern, void , (GrStipplePattern_t stipple))
 
   GR_BEGIN_NOFIFOCHECK("grStipplePattern\n", 85);
 
-  /* [dBorca] TODO
-   *
   INVALIDATE(stipple);
 
   STOREARG(grStipplePattern, stipple);
-   */
 
  #undef FN_NAME
 } /* grStipplePattern */
@@ -555,12 +555,9 @@ GR_DIENTRY(grStippleMode, void , (GrStippleMode_t mode) )
 
   GR_BEGIN_NOFIFOCHECK("grStippleMode\n", 85);
 
-  /* [dBorca] TODO
-   *
   INVALIDATE(fbzMode);
 
   STOREARG(grStippleMode, mode);
-   */
 
  #undef FN_NAME
 } /* grStippleMode */
@@ -888,12 +885,22 @@ _grValidateState()
     _grDepthBufferFunction(LOADARG(grDepthBufferFunction, fnc));
     _grDepthBufferMode(LOADARG(grDepthBufferMode, mode));
     _grDitherMode(LOADARG(grDitherMode, mode));
+    _grStippleMode(LOADARG(grStippleMode, mode));
     _grRenderBuffer(LOADARG(grRenderBuffer, buffer));
     _grColorMask(LOADARG(grColorMask, rgb), LOADARG(grColorMask, alpha));
     _grSstOrigin(LOADARG(grSstOrigin, origin));
 
     mask |= 0x0008;
     reg_cnt++;
+  }
+
+  if (NOTVALID(stipple)) {
+    gc->state.fbi_config.stipple = LOADARG(grStipplePattern, stipple);
+    REG_GROUP_BEGIN(BROADCAST_ID, stipple, 1, 0x01);
+    {
+      REG_GROUP_SET(hw, stipple, gc->state.fbi_config.stipple);
+    }
+    REG_GROUP_END();
   }
 
   if (NOTVALID(chromaKey)) {

@@ -19,6 +19,9 @@
 **
 ** $Header$
 ** $Log$
+** Revision 1.1.1.1.8.6  2007/05/19 10:58:19  koolsmoky
+** force 4x4 dither with alpha dither subtraction
+**
 ** Revision 1.1.1.1.8.5  2005/06/09 18:32:08  jwrdegoede
 ** Fixed all warnings with gcc4 -Wall -W -Wno-unused-parameter, except for a couple I believe to be a gcc bug. This has been reported to gcc.
 **
@@ -1736,6 +1739,44 @@ GR_ENTRY(grDisableAllEffects, void, (void))
   grDepthBufferMode(GR_DEPTHBUFFER_DISABLE);
   grFogMode(GR_FOG_DISABLE);
 } /* grDisableAllEffects */
+
+/*---------------------------------------------------------------------------
+** grStippleMode
+*/
+
+GR_STATE_ENTRY(grStippleMode, void, (GrStippleMode_t mode))
+{
+#define FN_NAME "_grStippleMode"
+  FxU32 fbzMode;
+  GR_BEGIN_NOFIFOCHECK("_grStippleMode", 85);
+  GDBG_INFO_MORE(gc->myLevel, "(%d)\n", mode);
+
+  fbzMode = gc->state.fbi_config.fbzMode;
+
+  fbzMode &= ~(SST_ENSTIPPLE | SST_ENSTIPPLEPATTERN);
+
+  switch (mode) {
+  case GR_STIPPLE_DISABLE:
+    break;
+
+  case GR_STIPPLE_PATTERN:
+    fbzMode |= (SST_ENSTIPPLE | SST_ENSTIPPLEPATTERN);
+    break;
+
+  case GR_STIPPLE_ROTATE:
+    fbzMode |= SST_ENSTIPPLE;
+    break;
+  }
+
+  gc->state.fbi_config.fbzMode = fbzMode;
+
+#if !GLIDE3
+  GR_SET_EXPECTED_SIZE(sizeof(FxU32), 1);
+  GR_SET(BROADCAST_ID, hw, fbzMode,  fbzMode);
+  GR_CHECK_SIZE();
+#endif /* !GLIDE3 */
+#undef FN_NAME
+} /* grStippleMode */
 
 /*---------------------------------------------------------------------------
 ** grDitherMode
