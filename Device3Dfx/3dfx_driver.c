@@ -166,6 +166,7 @@ static struct pci_device_id id_table_3dfx[] = {
 	 PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
 	{PCI_VENDOR_ID_3DFX,		PCI_DEVICE_ID_3DFX_VOODOO4,
 	 PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
+	{ 0, }
 };
 #else /* LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0) */
 static struct pci_card {
