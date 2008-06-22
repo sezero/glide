@@ -1,5 +1,12 @@
 2008-06-22  Guillem Jover  <guillem@hadrons.org>
 
+	* 3dfx_driver.c (pci_get_device): On Linux < 2.5.73 define it as
+	pci_find_device.
+	(findCardType, setmtrr_3dfx): Use pci_get_device instead of deprecated
+	pci_find_device.
+
+2008-06-22  Guillem Jover  <guillem@hadrons.org>
+
 	* 3dfx_driver.c (cleanup_module): Ignore return value from
 	unregister_chrdev as it actually returns void now.
 

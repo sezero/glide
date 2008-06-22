@@ -144,6 +144,10 @@
 #define PCI_DEVICE_ID_3DFX_VOODOO4 9
 #endif
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,5,73)
+#define pci_get_device pci_find_device
+#endif
+
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
 static char name_3dfx[] = "3dfx";
 
@@ -252,7 +256,7 @@ static void findCardType(int vendor, int device)
 {
 	struct pci_dev *dev = NULL;
 
-	while (numCards < MAXCARDS && (dev = pci_find_device(vendor, device, dev))) {
+	while (numCards < MAXCARDS && (dev = pci_get_device(vendor, device, dev))) {
 		pci_read_config_dword(dev, PCI_BASE_ADDRESS_0, &cards[numCards].addr0);
 		pci_read_config_dword(dev, PCI_BASE_ADDRESS_1, &cards[numCards].addr1);
 		pci_read_config_dword(dev, PCI_BASE_ADDRESS_2, &cards[numCards].addr2);
@@ -656,8 +660,8 @@ static int setmtrr_3dfx(void)
 	 * First do a bios fixup if this system has a 82441FX chipset.
 	 */
 	struct pci_dev *dev = NULL;
-	dev = pci_find_device(PCI_VENDOR_ID_INTEL,
-			      PCI_DEVICE_ID_INTEL_82371SB_0, dev);
+	dev = pci_get_device(PCI_VENDOR_ID_INTEL,
+	                     PCI_DEVICE_ID_INTEL_82371SB_0, dev);
 	if (dev) {
 		pci_read_config_byte(dev, 0x82, &dlc);
 		if (!(dlc & 1 << 1)) {
