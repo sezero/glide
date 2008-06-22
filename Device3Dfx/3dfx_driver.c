@@ -870,10 +870,7 @@ void cleanup_module(void)
 #endif
 #endif
 
-	if (unregister_chrdev(MAJOR_3DFX, "3dfx")) {
-		DEBUGMSG(("3dfx: unregister_chrdev failed\n"));
-		return;
-	}
+	unregister_chrdev(MAJOR_3DFX, "3dfx");
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
 	pci_unregister_driver(&driver_3dfx);
