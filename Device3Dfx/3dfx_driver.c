@@ -34,9 +34,7 @@
 #define KERNEL_VERSION(a,b,c) (((a) << 16) + ((b) << 8) + (c))
 #endif
 
-#define KERNEL_MIN_VER(a,b,c) (LINUX_VERSION_CODE >= KERNEL_VERSION(a,b,c))
-
-#if !KERNEL_MIN_VER(2,1,115)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,1,115)
 /*
  * It might work with smaller kernels, but I never tested that.
  */
@@ -194,7 +192,7 @@ static struct pci_card {
  * This macro is for accessing vma->vm_offset or vma->vm_pgoff depending
  * on kernel version.
  */
-#if !KERNEL_MIN_VER(2,3,14)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,3,14)
 #define VM_OFFSET(vma) (vma->vm_offset)
 #define VM_OFFSET_ALIGNED(vma) ((vma->vm_offset) & ~PAGE_MASK)
 #else
@@ -202,10 +200,10 @@ static struct pci_card {
 #define VM_OFFSET_ALIGNED(vma) ((vma->vm_pgoff) & ~PAGE_MASK)
 #endif
 
-#if KERNEL_MIN_VER(2,6,10)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,10)
 #define my_remap_page_range(vma, start, ofs, len, prot) \
 	remap_pfn_range(vma, start, ofs >> PAGE_SHIFT, len, prot)
-#elif KERNEL_MIN_VER(2,6,0)
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
 #define my_remap_page_range(vma, start, ofs, len, prot) \
 	remap_page_range(vma, start, ofs, len, prot)
 #else
@@ -247,8 +245,9 @@ void cleanup_module(void);
 static cardInfo cards[MAXCARDS];
 static int numCards = 0;
 #if HAVE_DEVFS
-#if KERNEL_MIN_VER(2,3,46) && LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0) \
-    || defined(DEVFS_SUPPORT)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,3,46) && \
+    LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0) || \
+    defined(DEVFS_SUPPORT)
 static devfs_handle_t devfs_handle;
 #endif
 #endif
@@ -770,7 +769,7 @@ static int resetmtrr_3dfx(void)
 #endif /* CONFIG_MTRR */
 
 static struct file_operations fops_3dfx = {
-#if KERNEL_MIN_VER(2,4,0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,4,0)
 	.owner =	THIS_MODULE,
 #endif
 	.ioctl =	ioctl_3dfx,
@@ -829,11 +828,11 @@ int init_module(void)
 	}
 
 #if HAVE_DEVFS
-#if KERNEL_MIN_VER(2,6,0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
 	devfs_mk_cdev(MKDEV(MAJOR_3DFX, DEVICE_VOODOO),
 		      S_IFCHR | S_IROTH | S_IWOTH | S_IRGRP | S_IWGRP,
 		      "3dfx");
-#elif KERNEL_MIN_VER(2,3,46) || defined(DEVFS_SUPPORT)
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(2,3,46) || defined(DEVFS_SUPPORT)
 	devfs_handle = devfs_register(NULL, "3dfx", DEVFS_FL_NONE,
 		MAJOR_3DFX, DEVICE_VOODOO,
 		S_IFCHR | S_IROTH | S_IWOTH | S_IRGRP | S_IWGRP,
@@ -870,9 +869,9 @@ void cleanup_module(void)
 	resetmtrr_3dfx();
 #endif
 #if HAVE_DEVFS
-#if KERNEL_MIN_VER(2,6,0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
 	devfs_remove("3dfx");
-#elif KERNEL_MIN_VER(2,3,46) || defined(DEVFS_SUPPORT)
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(2,3,46) || defined(DEVFS_SUPPORT)
 	devfs_unregister(devfs_handle);
 #endif
 #endif
@@ -904,7 +903,7 @@ long init_3dfx(long mem_start, long mem_end)
 }
 #endif /* !MODULE */
 
-#if KERNEL_MIN_VER(2,1,21)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,1,21)
 MODULE_AUTHOR("Daryll Strauss et al.");
 MODULE_DESCRIPTION("3dfx glide kernel device driver");
 MODULE_LICENSE("GPL");

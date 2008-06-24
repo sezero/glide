@@ -1,5 +1,10 @@
 2008-06-24  Guillem Jover  <guillem@hadrons.org>
 
+	* 3dfx_driver.c (KERNEL_MIN_VER): Remove defenition, and replace all
+	users with its contents.
+
+2008-06-24  Guillem Jover  <guillem@hadrons.org>
+
 	* 3dfx_driver.c (pci_dev_put): Define to nothing on kernels < 2.5.73.
 	(setmtrr_3dfx): Call pci_dev_put to release the refcount on the
 	Intel 82441FX PCI device when done with it.
