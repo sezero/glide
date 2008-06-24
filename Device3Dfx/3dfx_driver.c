@@ -146,6 +146,7 @@
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,5,73)
 #define pci_get_device pci_find_device
+#define pci_dev_put(dev)
 #endif
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
@@ -670,6 +671,7 @@ static int setmtrr_3dfx(void)
 			pci_write_config_byte(dev, 0x82, dlc);
 			printk("3dfx: PIIX3: Enabling Passive Release\n");
 		}
+		pci_dev_put(dev);
 	}
 
 	/*
