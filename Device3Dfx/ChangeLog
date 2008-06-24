@@ -1,5 +1,9 @@
 2008-06-24  Guillem Jover  <guillem@hadrons.org>
 
+	* 3dfx_driver.c (MODULE_VERSION): Bump to '2008.06.24'.
+
+2008-06-24  Guillem Jover  <guillem@hadrons.org>
+
 	* 3dfx_driver.c (KERNEL_MIN_VER): Remove defenition, and replace all
 	users with its contents.
 
