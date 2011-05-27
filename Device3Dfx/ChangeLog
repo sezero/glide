@@ -1,5 +1,12 @@
 2011-05-27  Guillem Jover  <guillem@hadrons.org>
 
+	* 3dfx_driver.c: On Linux >= 2.6.33, use <generated/autoconf.h>
+	instead of <linux/autoconf.h>. Include it after <linux/version.h>.
+	* Makefile (VERSION_HEADER): Use generated/utsrelease.h if present
+	instead of linux/utsrelease.h or linux/version.h.
+
+2011-05-27  Guillem Jover  <guillem@hadrons.org>
+
 	* Makefile: Do not use negative exit codes.
 
 2008-06-24  Guillem Jover  <guillem@hadrons.org>

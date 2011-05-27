@@ -27,11 +27,16 @@
 /*
  * Include this first as it defines things that affect the kernel headers.
  */
-#include <linux/autoconf.h>
 #include <linux/version.h>
 
 #ifndef KERNEL_VERSION
 #define KERNEL_VERSION(a,b,c) (((a) << 16) + ((b) << 8) + (c))
+#endif
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,33)
+#include <generated/autoconf.h>
+#else
+#include <linux/autoconf.h>
 #endif
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,1,115)

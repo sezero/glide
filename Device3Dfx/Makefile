@@ -26,10 +26,14 @@ ALL_CFLAGS := -DMODULE -D__KERNEL__ \
               -I$(KHEADERS) -I$(KHEADERS)/asm/mach-default \
               $(CFLAGS)
 
+ifneq ($(wildcard $(KHEADERS)/generated/utsrelease.h),)
+VERSION_HEADER := $(KHEADERS)/generated/utsrelease.h
+else
 ifneq ($(wildcard $(KHEADERS)/linux/utsrelease.h),)
 VERSION_HEADER := $(KHEADERS)/linux/utsrelease.h
 else
 VERSION_HEADER := $(KHEADERS)/linux/version.h
+endif
 endif
 
 ###############################################################################
