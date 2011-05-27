@@ -50,17 +50,17 @@ sanity:
 	@( \
 	if [ ! -r $(KHEADERS)/linux ]; then \
 		echo "Expect readable headers in $(KHEADERS)/linux"; \
-		exit -1; \
+		exit 1; \
 	fi; \
 	if [ ! -r $(KHEADERS)/linux/version.h ]; then \
 		echo "Missing $(KHEADERS)/linux/version.h"; \
 		echo "Configure and install the kernel first"; \
-		exit -1; \
+		exit 1; \
 	fi; \
 	if [ ! -e /proc/cpuinfo ]; then \
 		echo "You need the /proc file system"; \
 		echo "Reconfigure kernel and say Yes to CONFIG_PROC_FS"; \
-		exit -1; \
+		exit 1; \
 	fi; \
 	)
 
