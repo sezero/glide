@@ -1,5 +1,12 @@
 2011-05-27  Guillem Jover  <guillem@hadrons.org>
 
+	* 3dfx_driver.c [HAVE_UNLOCKED_IOCTL] (ioctl_3dfx): Use new
+	prototype for unlocked_ioctl.
+	(fops_3dfx) [HAVE_UNLOCKED_IOCTL]: Assign ioctl_3dfx to
+	.unlocked_ioctl instead of .ioctl.
+
+2011-05-27  Guillem Jover  <guillem@hadrons.org>
+
 	* 3dfx_driver.c: On Linux >= 2.6.33, use <generated/autoconf.h>
 	instead of <linux/autoconf.h>. Include it after <linux/version.h>.
 	* Makefile (VERSION_HEADER): Use generated/utsrelease.h if present

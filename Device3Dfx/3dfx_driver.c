@@ -641,9 +641,18 @@ static int doPIO(unsigned int cmd, unsigned long arg)
 	return -EINVAL;
 }
 
+#ifdef HAVE_UNLOCKED_IOCTL
+static long ioctl_3dfx(struct file *file, unsigned int cmd, unsigned long arg)
+#else
 static int ioctl_3dfx(struct inode *inode, struct file *file, unsigned int cmd, unsigned long arg)
+#endif
 {
+#ifdef HAVE_UNLOCKED_IOCTL
+	DEBUGMSG(("3dfx: Entering ioctl_3dfx, file %p cmd %x arg %lx\n",
+	          file, cmd, arg));
+#else
 	DEBUGMSG(("3dfx: Entering ioctl_3dfx, inode %p file %p cmd %x arg %lx\n", inode, file, cmd, arg));
+#endif
 
 	switch (_IOC_TYPE(cmd)) {
 	case '3':
@@ -777,7 +786,11 @@ static struct file_operations fops_3dfx = {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,4,0)
 	.owner =	THIS_MODULE,
 #endif
+#ifdef HAVE_UNLOCKED_IOCTL
+	.unlocked_ioctl = ioctl_3dfx,
+#else
 	.ioctl =	ioctl_3dfx,
+#endif
 	.mmap =		mmap_3dfx,
 	.open =		open_3dfx,
 	.release =	release_3dfx,
