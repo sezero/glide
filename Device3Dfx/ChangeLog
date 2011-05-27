@@ -1,3 +1,7 @@
+2011-05-27  Guillem Jover  <guillem@hadrons.org>
+
+	* Makefile: Do not use negative exit codes.
+
 2008-06-24  Guillem Jover  <guillem@hadrons.org>
 
 	* 3dfx_driver.c (MODULE_VERSION): Bump to '2008.06.24'.
