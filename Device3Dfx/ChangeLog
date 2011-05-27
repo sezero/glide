@@ -1,5 +1,9 @@
 2011-05-27  Guillem Jover  <guillem@hadrons.org>
 
+	* 3dfx_driver.c (MODULE_VERSION): Bump to '2011.05.27'.
+
+2011-05-27  Guillem Jover  <guillem@hadrons.org>
+
 	* 3dfx_driver.c [HAVE_UNLOCKED_IOCTL] (ioctl_3dfx): Use new
 	prototype for unlocked_ioctl.
 	(fops_3dfx) [HAVE_UNLOCKED_IOCTL]: Assign ioctl_3dfx to
