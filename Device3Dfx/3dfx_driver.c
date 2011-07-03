@@ -1,5 +1,5 @@
 /*
- * /dev/3dfx device for 2.x kernels with MTRR settings enabled.
+ * /dev/3dfx device for Linux kernels with MTRR settings enabled.
  *
  * Original by Daryll Straus.
  * Port to 2.1 kernel by Jon Taylor.

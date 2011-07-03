@@ -1,4 +1,4 @@
-Summary: Device driver for 3Dfx boards for 2.x kernels
+Summary: Device driver for 3Dfx boards for Linux kernels
 Name: Device3Dfx
 Version: 2.3
 Release: 5
@@ -121,9 +121,9 @@ Group: Drivers
  
 %description
 This package installs the 3Dfx device driver to allow access to 3Dfx
-boards without the user having root privledges.  It should work on both
-2.0 and 2.1/2.2 kernels and set the MTRR settings correctly.  It should
-also work with SMP kernels (2.1/2.2).
+boards without the user having root privledges.  It should work on >= 2.x
+kernels and set the MTRR settings correctly.  It should also work with
+SMP kernels (>= 2.1).
 
 %prep
 %setup -c
