@@ -1,5 +1,9 @@
 2011-07-03  Guillem Jover  <guillem@hadrons.org>
 
+	* Makefile (KBUILD): Handle Linux 3.x versions.
+
+2011-07-03  Guillem Jover  <guillem@hadrons.org>
+
 	* Makefile (help): Do not print command only their output.
 
 2011-05-27  Guillem Jover  <guillem@hadrons.org>

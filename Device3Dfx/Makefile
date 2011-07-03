@@ -71,7 +71,8 @@ sanity:
 KVER_MAJOR = $(shell echo "$(KVERS)" | cut -d. -f1 )
 KVER_MINOR = $(shell echo "$(KVERS)" | cut -d. -f2 )
 
-KBUILD = $(shell [ "$(KVER_MAJOR)" = 2 ] && [ "$(KVER_MINOR)" -ge 6 ] && echo yes )
+KBUILD = $(shell [ "$(KVER_MAJOR)" = 2 ] && [ "$(KVER_MINOR)" -ge 6 ] || \
+                 [ "$(KVER_MAJOR)" -ge 3 ] && echo yes )
 
 help:
 	@echo KVER_MAJOR = $(KVER_MAJOR)
