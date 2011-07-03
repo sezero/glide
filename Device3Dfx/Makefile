@@ -74,9 +74,9 @@ KVER_MINOR = $(shell echo "$(KVERS)" | cut -d. -f2 )
 KBUILD = $(shell [ "$(KVER_MAJOR)" = 2 ] && [ "$(KVER_MINOR)" -ge 6 ] && echo yes )
 
 help:
-	echo KVER_MAJOR = $(KVER_MAJOR)
-	echo KVER_MINOR = $(KVER_MINOR)
-	echo KBUILD = $(KBUILD)
+	@echo KVER_MAJOR = $(KVER_MAJOR)
+	@echo KVER_MINOR = $(KVER_MINOR)
+	@echo KBUILD = $(KBUILD)
 
 ifeq ($(KBUILD),yes)
 BUILD_TYPE = kbuild
