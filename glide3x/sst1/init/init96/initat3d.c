@@ -102,7 +102,7 @@ CLOCK_TABLE ClockTableAT3D[] =
   { 90, 0x31, 0x1, 0x2, 0x1 },
   { 95, 0x34, 0x1, 0x2, 0x1 },
   { 100, 0x1b, 0x1, 0x1, 0x6},
-  { 0 } /* used for end of table mark */
+  { 0,  0,    0,   0,   0 } /* used for end of table mark */
 };
 
 typedef struct _REGVALS {
@@ -132,6 +132,8 @@ static Init96HALData at3dHALData = {
   NULL,
   initAT3DUseTiles,
   initAT3DGetInfo,
+  NULL, /* SwapTiles */
+  NULL
 };
 
 /* Random Kruft */
@@ -597,21 +599,21 @@ INITAT3DENTRY(initAT3DAperture, FxBool , (InitRegisterDesc *rd) )
 INITAT3DENTRY(initAT3DSetVideo, FxBool, (GrScreenResolution_t res, GrScreenRefresh_t refresh, FxU32 *xr, FxU32 *yr )) 
 {
 #define FN_NAME "initAT3DSetVideo"
+#if defined(__DOS32__)
+  union REGS r, rOut;
+#endif
   FxBool
     fixVsync = FXFALSE,
     rv = FXTRUE;
   
   GDBG_INFO((80, "%s: \n", FN_NAME));
 
-#if defined(INIT_ACCESS_DIRECT) && defined( __DOS32__ ) 
+#if defined(INIT_ACCESS_DIRECT) && defined( __DOS32__ )
   /* Wait half a sec */
   initAT3DWait( 100);
 #endif
 
   switch( res ) {
-#if defined(__DOS32__)
-    union REGS r, rOut;
-#endif
   case GR_RESOLUTION_320x200:
 #if defined(__DOS32__)
     /* Set up VESA Mode 0x136 - 320x200x16 */
