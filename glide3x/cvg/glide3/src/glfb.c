@@ -1063,10 +1063,8 @@ GR_ENTRY(grLfbReadRegion, FxBool, (GrBuffer_t src_buffer,
 
           /* Leading slop up to the start of a logical 0 tile */
           if (((unsigned long)srcData & kPageMask) != 0) {
-            unsigned long tileSlopMask = 0UL; // XXX was -1UL. 
+            unsigned long tileSlopMask = ~0UL; // XXX was -1UL.
             FxU32 tileSlopAdjust = kTileSize;
-
-            tileSlopMask = ~tileSlopMask; // XXX
 
             /* Do we have a partial 0 tile? */
             if (((unsigned long)srcData & kTileSize) == 0) {
