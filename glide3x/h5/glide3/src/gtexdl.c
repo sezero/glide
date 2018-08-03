@@ -1681,7 +1681,7 @@ GR_EXT_ENTRY(grTexDownloadMipMapLevelPartialRowExt,
                       int t, int min_s, int max_s))
 {
 #define FN_NAME "grTexDownloadMipMapLevelPartialRowExt"
-  FxBool didcompress = FXFALSE;
+/*FxBool didcompress = FXFALSE;*/
   int max_t = t;
 
   GR_BEGIN_NOFIFOCHECK_RET(FN_NAME, 89);
