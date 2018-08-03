@@ -22,10 +22,10 @@
 /* NOTE: This file is compiled to naught if we aren't
    running under Win32 */
 
-#if defined( __WIN32__ )
-
 #include <3dfx.h>
 #include <glidesys.h>
+
+#if defined( __WIN32__ )
 
 #define FX_DLL_DEFINITION
 #include <fxdll.h>
