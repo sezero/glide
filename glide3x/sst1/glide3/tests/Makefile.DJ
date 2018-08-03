@@ -38,8 +38,10 @@ override FX_GLIDE_HW = sst1
 TOP = ../../..
 CPU ?= pentium
 
+UNLINK = rm -f $(1)
+
 CC = gcc
-CFLAGS = -Wall -O2 -ffast-math -mcpu=$(CPU)
+CFLAGS = -Wall -O2 -ffast-math -mtune=$(CPU)
 CFLAGS += -I$(TOP)/$(FX_GLIDE_HW)/glide3/src -I$(TOP)/$(FX_GLIDE_HW)/incsrc -I$(TOP)/$(FX_GLIDE_HW)/init
 CFLAGS += -I$(TOP)/swlibs/fxmisc
 CFLAGS += -D__DOS__ $(HWDEF)
@@ -48,9 +50,9 @@ CFLAGS += -D__DOS32__
 LDFLAGS = -s -L$(TOP)/$(FX_GLIDE_HW)/lib
 
 ifdef DXE
-LDLIBS = -lgld3i
+LDLIBS = -lglide3i
 else
-LDLIBS = -lgld3x
+LDLIBS = -lglide3x
 endif
 
 .c.o:
@@ -60,3 +62,7 @@ endif
 
 all:
 	$(error Must specify <filename.exe> to build)
+
+clean:
+	-$(call UNLINK,*.o)
+	-$(call UNLINK,*.exe)

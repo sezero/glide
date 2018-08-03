@@ -27,8 +27,10 @@ FX_GLIDE_HW = h5
 TOP = ../../..
 CPU ?= pentium
 
+UNLINK = rm -f $(1)
+
 CC = gcc
-CFLAGS = -Wall -O2 -ffast-math -mcpu=$(CPU)
+CFLAGS = -Wall -O2 -ffast-math -mtune=$(CPU)
 CFLAGS += -I$(TOP)/$(FX_GLIDE_HW)/glide3/src -I$(TOP)/$(FX_GLIDE_HW)/incsrc
 CFLAGS += -I$(TOP)/swlibs/fxmisc
 CFLAGS += -D__DOS__ -DH3
@@ -38,9 +40,9 @@ CFLAGS += -DFX_GLIDE_NAPALM=1
 LDFLAGS = -s -L$(TOP)/$(FX_GLIDE_HW)/lib
 
 ifdef DXE
-LDLIBS = -lgld3i
+LDLIBS = -lglide3i
 else
-LDLIBS = -lgld3x
+LDLIBS = -lglide3x
 endif
 
 .c.o:
@@ -50,3 +52,7 @@ endif
 
 all:
 	$(error Must specify <filename.exe> to build)
+
+clean:
+	-$(call UNLINK,*.o)
+	-$(call UNLINK,*.exe)

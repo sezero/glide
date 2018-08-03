@@ -41,9 +41,9 @@
 #	general defines (user settable?)
 ###############################################################################
 
-GLIDE_LIB = libgld3x.a
+GLIDE_LIB = libglide3x.a
 GLIDE_DXE = glide3x.dxe
-GLIDE_IMP = libgld3i.a
+GLIDE_IMP = libglide3i.a
 TEXUS_EXE = texus2.exe
 
 FX_GLIDE_HW ?= h3
@@ -56,16 +56,11 @@ TEXUS_EXEDIR = $(FX_GLIDE_SW)/bin
 ###############################################################################
 
 CC = gcc
+HOST_CC = gcc
 AS = nasm
 AR = ar
 
-HAVEDXE3 = $(wildcard $(DJDIR)/bin/dxe3gen.exe)
-
-ifeq ($(wildcard $(addsuffix /rm.exe,$(subst ;, ,$(PATH)))),)
-UNLINK = del $(subst /,\,$(1))
-else
-UNLINK = $(RM) $(1)
-endif
+UNLINK = rm -f $(1)
 
 ###############################################################################
 #	defines
@@ -104,11 +99,11 @@ endif
 ARFLAGS = rus
 
 # assembler
-ASFLAGS = -O6 -fcoff -D__DJGPP__ --prefix _
+ASFLAGS = -O2 -fcoff -D__DJGPP__ --prefix _
 ASFLAGS += $(CDEFS)
 
 # compiler
-CFLAGS = -Wall -W
+CFLAGS = -Wall
 CFLAGS += -I. -I../../incsrc -I../../minihwc -I../../cinit
 CFLAGS += -I$(FX_GLIDE_SW)/fxmisc -I$(FX_GLIDE_SW)/newpci/pcilib -I$(FX_GLIDE_SW)/fxmemmap
 CFLAGS += -I$(FX_GLIDE_SW)/texus2/lib
@@ -121,14 +116,15 @@ endif
 
 ifeq ($(USE_X86),1)
 CFLAGS += -DGL_X86
-OPTFLAGS ?= -O2 -ffast-math
+OPTFLAGS ?= -O1 -ffast-math
 else
 CFLAGS += -DGLIDE_USE_C_TRISETUP
-OPTFLAGS ?= -O2 -ffast-math
+OPTFLAGS ?= -O1 -ffast-math
 endif
 
 # optflags
 CFLAGS += $(OPTFLAGS)
+HOST_CFLAGS=$(filter-out -mcpu=% -mtune=% -march=%,$(CFLAGS))
 
 ###############################################################################
 #	objects
@@ -235,15 +231,11 @@ $(GLIDE_LIBDIR)/$(GLIDE_LIB): $(GLIDE_OBJECTS)
 	$(AR) $(ARFLAGS) $@ $^
 
 $(GLIDE_LIBDIR)/$(GLIDE_DXE) $(GLIDE_LIBDIR)/$(GLIDE_IMP): $(GLIDE_OBJECTS)
-ifeq ($(HAVEDXE3),)
-	$(warning Missing DXE3 package... Skipping $(GLIDE_DXE))
-else
 	-dxe3gen -o $(GLIDE_LIBDIR)/$(GLIDE_DXE) -Y $(GLIDE_LIBDIR)/$(GLIDE_IMP) -D "Glide3(h3) DJGPP" -E _gr -E _gu -E _tx -U $^
-endif
 
 $(TEXUS_EXEDIR)/$(TEXUS_EXE): $(FX_GLIDE_SW)/texus2/cmd/cmd.c $(GLIDE_LIBDIR)/$(GLIDE_LIB)
 ifeq ($(TEXUS2),1)
-	$(CC) -o $@ -s $(CFLAGS) -L$(GLIDE_LIBDIR) $< -lgld3x
+	$(CC) -o $@ -s $(CFLAGS) -L$(GLIDE_LIBDIR) $< -lglide3x
 else
 	$(warning Texus2 not enabled... Skipping $(TEXUS_EXE))
 endif
@@ -267,14 +259,21 @@ xtexdl_3dnow.o: xtexdl.asm
 
 $(GLIDE_OBJECTS): fxinline.h fxgasm.h
 
+# cross-compile workaround:
+ifneq ($(COMSPEC),)
+RUN_FXGASM=fxgasm.exe
+else
+RUN_FXGASM=./fxgasm.exe
+endif
+
 fxinline.h: fxgasm.exe
-	$< -inline > $@
+	$(RUN_FXGASM) -inline > $@
 
 fxgasm.h: fxgasm.exe
-	$< -hex > $@
+	$(RUN_FXGASM) -hex > $@
 
 fxgasm.exe: fxgasm.c
-	$(CC) -o $@ $(CFLAGS) $<
+	$(HOST_CC) -o $@ $(HOST_CFLAGS) $<
 
 ###############################################################################
 #	clean, realclean
