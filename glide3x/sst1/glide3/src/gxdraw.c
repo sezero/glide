@@ -240,7 +240,7 @@ GR_DDFUNC(_trisetup, FxI32, ( const void *va, const void *vb, const void *vc ))
   dyBC = snap_yb - snap_yc;
   
   /* this is where we store the area */
-  _GlideRoot.pool.temp1.1 = dxAB * dyBC - dxBC * dyAB;
+  _GlideRoot.pool.temp1.f = dxAB * dyBC - dxBC * dyAB;
   
   /* Zero-area triangles are BAD!! */
   if ((_GlideRoot.pool.temp1.i & 0x7FFFFFFF) == 0)
