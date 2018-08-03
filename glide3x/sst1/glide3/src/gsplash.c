@@ -839,7 +839,7 @@ GR_DIENTRY(grSplash,void,(float x,float y,float w,float h,FxU32 _frame))
     { 30.0f, 70.0f, -1000.0f },
   };
   GrFog_t *fogTable=0;
-  int fogTableSize;
+  FxI32 fogTableSize;
   int fadeInFrames, fadeOutFrames;
   FxI32 wrange[2];
 
@@ -936,7 +936,7 @@ GR_DIENTRY(grSplash,void,(float x,float y,float w,float h,FxU32 _frame))
   fadeOutFrames = (int)(((float)total_num_frames) * 
                         (1.0f - FADEOUT_BEGIN_PERCENT));
 
-  grGet(GR_FOG_TABLE_ENTRIES, 4, (FxI32 *)&fogTableSize);
+  grGet(GR_FOG_TABLE_ENTRIES, 4, &fogTableSize);
   fogTable=(GrFog_t*)malloc(fogTableSize*sizeof(GrFog_t));
   if (_frame == 0) {          /* Render Whole Animation */
     for(frame = 1; frame < total_num_frames; frame++) {

@@ -844,7 +844,7 @@ GR_DIENTRY(grSplash,void,(float x,float y,float w,float h,FxU32 _frame))
     { 30.0f, 70.0f, -1000.0f },
   };
   GrFog_t *fogTable=0;
-  int fogTableSize;
+  FxI32 fogTableSize;
   int fadeInFrames, fadeOutFrames;
 #if defined(GLIDE3) && defined(GLIDE3_ALPHA)
   FxI32 wrange[2];
