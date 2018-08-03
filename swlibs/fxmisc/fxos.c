@@ -42,12 +42,12 @@ int fxGethostname(char *name, int n)
 
 #if !macintosh && !defined(__FreeBSD__)
 /* return current time in seconds (floating point)      */
-float fxTime(void)
-{
 #if defined ( __sparc__ ) || defined ( __DJGPP__ )
 /* times returns 0 in BSD Unix, so we use ftime instead */
-#   include <sys/types.h>
-#   include <sys/timeb.h>
+#include <sys/types.h>
+#include <sys/timeb.h>
+float fxTime(void)
+{
     struct timeb tb;
     static time_t once;                 // saves first time value
 
@@ -55,21 +55,23 @@ float fxTime(void)
     if (once == 0)                      // stash away first call
         once = tb.time;                 // as float is not big enough
     return (tb.time - once) + tb.millitm * .001;
-    
-#else
-#if defined ( WIN32 ) || ( __DOS__ )
-#   include <time.h>
-#   define times(a) clock()
-#   define HZ   CLOCKS_PER_SEC
-#else
-#   include <sys/types.h>
-#   include <sys/times.h>
-#   include <sys/param.h>
-    struct tms foo;
-#endif
-    return times(&foo)/(float)HZ;
-#endif
 }
+#elif defined ( WIN32 ) || ( __DOS__ )
+#include <time.h>
+float fxTime(void)
+{
+    return clock()/(float)CLOCKS_PER_SEC;
+}
+#else
+#include <sys/types.h>
+#include <sys/times.h>
+#include <sys/param.h>
+float fxTime(void)
+{
+    struct tms foo;
+    return times(&foo)/(float)HZ;
+}
+#endif
 
 /* returns elapsed time in seconds */
 float timer(int flag)

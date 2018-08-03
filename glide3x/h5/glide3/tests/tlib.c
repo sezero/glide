@@ -2179,7 +2179,8 @@ tlScreenDump
   return FXTRUE;
 }
 
-#if defined(__unix__) && !defined(__DJGPP__)
+#ifdef __linux__
+#include <linutil.h>
 
 /*-------------------------------------------------------------------
   Function: tlKbHit
@@ -2194,7 +2195,7 @@ tlScreenDump
   nonzero if keys in queue
   -------------------------------------------------------------------*/
 int  tlKbHit( void ) {
-  return hwcKbHit();
+  return lin_kbhit();
 }
 FxBool
 tlErrorMessage( char *err) {
@@ -2215,7 +2216,7 @@ tlErrorMessage( char *err) {
   character
   -------------------------------------------------------------------*/
 char tlGetCH( void ) {
-  return hwcGetCH();
+  return lin_getch();
 }
 
 FxU32

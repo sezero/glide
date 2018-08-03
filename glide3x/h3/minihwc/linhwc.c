@@ -62,7 +62,7 @@ hwcCheckMemSize(hwcBoardInfo *bInfo, FxU32 xres, FxU32 yres, FxU32 nColBuffers,
 #include <string.h>
 #include <math.h>
 #include <X11/Xlib.h>
-#include <X11/extensions/xf86dga.h>
+/*#include <X11/extensions/xf86dga.h>*/
 #include <X11/extensions/xf86vmode.h>
 #include "lindri.h"
 
@@ -153,16 +153,6 @@ void grDRIPosition(int x, int y, int w, int h,
   driInfo.numClip=numClip;
   driInfo.pClip=pClip;
 }
-
-#if 0 /* unused */
-static FxU32
-pow2Round(FxU32 val, FxU32 pow2Const)
-{
-  const FxU32 pow2Mask = (pow2Const - 1UL);
-
-  return ((val + pow2Mask) & ~pow2Mask);
-}
-#endif
 
 static void loadEnvFile() {
   FILE *file;
@@ -606,22 +596,6 @@ hwcCheckMemSize(hwcBoardInfo *bInfo, FxU32 xres, FxU32 yres, FxU32 nColBuffers,
     return FXFALSE;    
 #undef FN_NAME
 } /* hwcCheckMemSize */
-
-#if 0 /* unused */
-static FxU32
-calculateLfbStride(FxU32 screenWidth)
-{
-#if	1
-    unsigned int TileAperturePitch;
-    for (TileAperturePitch = 1024;
-         (TileAperturePitch < (16u << 10)) && (TileAperturePitch < screenWidth);
-         TileAperturePitch <<= 1);
-    return(TileAperturePitch);
-#else
-    return(0x1000);
-#endif
-}
-#endif
 
 /* How the hw treats lfb accesses are dependent on the 'type' of
  * memory (tiled/linear) that the color/aux buffers are in. We

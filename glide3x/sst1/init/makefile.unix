@@ -44,7 +44,7 @@ LCDEFS		    += -D$(INITHW)
 HEADERS             = init.h sst1vid.h
 PRIVATE_HEADERS     = fxinit.h
 INSTALL_DESTINATION = $(BUILD_ROOT_SST1)
-CFILES              = init.c vgdrvr.c vg96drvr.c h3drvr.c
+CFILES              = init.c vgdrvr.c vg96drvr.c
 
 LIBRARIES = libinit.a
 

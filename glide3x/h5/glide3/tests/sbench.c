@@ -21,7 +21,9 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#ifndef __linux__
 #include <conio.h>
+#endif
 #include <assert.h>
 #include <string.h>
 #include <math.h>
