@@ -480,7 +480,7 @@ _grDrawPoints(FxI32 mode, FxI32 count, void *pointers)
         vPtr = pointers;
         if (mode) vPtr = *(float **)vPtr;
         
-        (float *)pointers += stride;
+        pointers = (float *)pointers + stride;
         
         GDBG_INFO_MORE(gc->myLevel, "(%f %f)\n",  
                        FARRAY(vPtr,gc->state.vData.vertexInfo.offset), 
