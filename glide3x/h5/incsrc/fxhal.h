@@ -32,9 +32,6 @@
 
 #include <h3info.h>
 
-// Allow SourceSafe to track Revision values
-#define HAL_H_REV "$Revision$"
-
 /*
  * Just to confuse you:
  * CHIP            FBI-REV TMU-REV DEV-ID

@@ -19,7 +19,6 @@
 ** $Date$ 
 **
 */
-static char revString[] = "@#%$Workfile: initat3d.c $ $Revision$";
 #define INIT_AT3D_LIB
 
 #include <3dfx.h>
@@ -771,9 +770,6 @@ INITAT3DENTRY(initAT3DEnableRegs,FxBool,(InitRegisterDesc *rd))
 
   GDBG_INFO((80, "%s:\n", FN_NAME));
 
-  /* Watcom warning suppression */
-  revString[0] = revString[0];
-
   GDBG_INFO((80, "%s:  Enabling writes to AT3D registers\n", FN_NAME)); 
   GDBG_INFO((80, "%s:  Setting VGA sequencer to point at flat model control\n", FN_NAME)); 
   GDBG_INFO((80, "%s:  6MB Memory Aperture\n", FN_NAME));
@@ -1351,9 +1347,6 @@ INITAT3DENTRY(initAT3DGetInfo,FxBool,(VG96Info *info))
     FxU32 bytes;
 
     GDBG_INFO((80, "%s:\n", FN_NAME));
-
-    /* Watcom warning suppression */
-    revString[0] = revString[0];
 
     info->vgaChip = 0;
     info->vg96Rev = 0;

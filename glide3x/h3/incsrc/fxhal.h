@@ -1,5 +1,3 @@
-
-
 /*
 ** THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONLY
 ** PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGHT
@@ -33,9 +31,6 @@
 #include <fxpci.h>
 
 #include <h3info.h>
-
-// Allow SourceSafe to track Revision values
-#define HAL_H_REV "$Revision$"
 
 // Just to unconfuse myself:
 //

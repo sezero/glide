@@ -22,7 +22,6 @@
 ** $Date$ 
 **
 */
-static char revString[] = "@#%$Workfile: initmcrx.c $ $Revision$";
 
 #include <3dfx.h>
 
@@ -602,9 +601,6 @@ INITMCRXENTRY(initMCRXGetInfo,FxBool,(VG96Info *info))
 
   /* We care about bit 5 & 6 */
   mBytesPow = ((res >> 5) & 3);
-
-  /* Watcom warning suppression */
-  revString[0] = revString[0];
   
   info->vgaChip = 0;
   info->vg96Rev = 0;

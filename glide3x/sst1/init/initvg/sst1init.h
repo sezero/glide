@@ -17,10 +17,6 @@
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
-**
-** $Revision$ 
-** $Date$ 
-**
 */
 
 #ifndef __SST1INIT_H__
@@ -675,7 +671,6 @@ extern "C" {
 #endif
 
 #ifdef SST1INIT_ALLOCATE
-  static char headersIdent[] = "@#%InitHeaders $Revision$";
   FxBool sst1InitUseVoodooFile = FXFALSE;
   sst1InitEnvVarStruct *envVarsBase = (sst1InitEnvVarStruct *) NULL;
   sst1InitDacStruct *dacStructBase = (sst1InitDacStruct *) NULL;
