@@ -78,6 +78,7 @@ const FxPlatformIOProcs ioProcsLinux = {
   pciSetPassThroughBaseLinux
 };
 
+#if 0 /* unused */
 static const FxU32 PCI_VENDOR_ID_LINUX = 0x0;
 static const FxU32 PCI_DEVICE_ID_LINUX = 0x2;
 static const FxU32 PCI_COMMAND_LINUX = 0x4;
@@ -85,6 +86,7 @@ static const FxU32 PCI_BASE_ADDRESS_0_LINUX = 0x10;
 static const FxU32 SST1_PCI_INIT_ENABLE_LINUX = 0x40;
 static const FxU32 SST1_PCI_BUS_SNOOP0_LINUX = 0x44;
 static const FxU32 SST1_PCI_BUS_SNOOP1_LINUX = 0x48;
+#endif
 
 static int linuxDevFd=-1;
 #ifdef __FreeBSD__
