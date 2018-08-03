@@ -484,9 +484,10 @@ gdbg_set_file(const char *name)
   {
     outf = fopen(name,"w");		// open up a new one
     if (outf) gdbg_msgfile = outf;
+    return (outf != NULL);
   }
 
-  return (outf != NULL);
+  return 1;
 #else /* #ifndef KERNEL */
   return 0;
 #endif /* #ifndef KERNEL */    
