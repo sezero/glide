@@ -1,5 +1,3 @@
-/* -*-c++-*- */
-/* $Header$ */
 /*
 ** THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONLY
 ** PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGHT
@@ -23,9 +21,6 @@
 **
 ** Description: Macros & function definitions for Banshee/Avenger.
 **
-** $Revision$
-** $Date$
-**
 ** $History: h3cinit.h $
 ** 
 ** *****************  Version 1  *****************
@@ -38,7 +33,6 @@
 ** Implement the 3Dfx/STB unified header.
 **
 */
-
 
 #ifndef __H3CINIT_H__
 #define __H3CINIT_H__

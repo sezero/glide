@@ -17,8 +17,9 @@
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
-** $Header$
-** $Log$
+** Revision 1.1.1.1.8.9  2007/09/29 14:01:24  koolsmoky
+** removed false swapInterval envar checks
+**
 ** Revision 1.1.1.1.8.8  2005/08/13 21:06:57  jwrdegoede
 ** Last needed 64 bit fixes for h5/h3, complete 64 bit support for cvg
 **

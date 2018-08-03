@@ -17,8 +17,6 @@
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
-** $Header$
-** $Log$
  * 
  * 19    12/12/97 12:43p Atai
  * move i and dateElem into the set up loop

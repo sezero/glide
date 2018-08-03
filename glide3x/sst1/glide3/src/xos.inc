@@ -1,8 +1,8 @@
 ;
 ; compulsory header for glide3/xdraw* assembly specializations (NASM)
 ;
-; $Header$
-; $Log$
+; Revision 1.1.2.2  2004/10/04 08:57:52  dborca
+; supporting DOS/OpenWatcom in Assembly files
 ;
 ; Revision 1.1.2.1  2003/06/07 09:53:25  dborca
 ; initial checkin for NASM sources

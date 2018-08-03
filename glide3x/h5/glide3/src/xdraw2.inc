@@ -1,4 +1,3 @@
-;; -*-asm-*-
 ;; THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONLY
 ;; PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGHT
 ;; TO USE THE GLIDE TRADEMARK WITHOUT PRIOR WRITTEN PERMISSION OF 3DFX
@@ -17,9 +16,9 @@
 ;; 
 ;; COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 ;;
-;; $Header$
-;; $Revision$
-;; $Log$
+;; Revision 1.1.8.10  2007/05/13 09:21:06  koolsmoky
+;; removed problematic context checks
+;;
 ;; Revision 1.1.8.9  2004/05/04 17:04:31  koolsmoky
 ;; clean up
 ;;

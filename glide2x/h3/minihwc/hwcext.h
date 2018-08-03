@@ -21,8 +21,6 @@
 **
 ** Description: Structures for the hwc extensions.
 **
-** $Header$
-**
 ** $History: hwcext.h $
 ** 
 ** *****************  Version 3  *****************

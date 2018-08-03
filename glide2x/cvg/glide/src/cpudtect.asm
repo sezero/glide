@@ -16,9 +16,6 @@
 ;; THE UNITED STATES.  
 ;; 
 ;; COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
-;;
-;; $Header$
-;; $Log$
 ; 
 ; 4     5/28/97 8:23a Peter
 ; Merge w/ original glide source

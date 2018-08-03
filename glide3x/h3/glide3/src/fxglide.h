@@ -17,8 +17,9 @@
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
-** $Header$
-** $Log$
+** Revision 1.2.4.14  2006/01/16 21:22:42  jwrdegoede
+** Fix gcc 4.1 new type-punned ptr breaks antialias. warnings
+**
 ** Revision 1.2.4.13  2005/06/10 14:17:54  jwrdegoede
 ** Fix compilation when GL_X86 is not defined
 **

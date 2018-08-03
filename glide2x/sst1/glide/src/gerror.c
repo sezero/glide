@@ -17,9 +17,6 @@
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
-**
-** $Header$
-** $Log$
  * 
  * 10    6/03/97 11:57p Pgj
  * fix bug 558

@@ -16,9 +16,6 @@
  * THE UNITED STATES.  
  * 
  * COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
- *
- * $Header$
- * $Log$
  * 
  * 1     7/25/97 9:05a Pgj
  * generate fxbldno.h which defines BUILD_NUMBER

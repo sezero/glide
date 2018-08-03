@@ -17,9 +17,9 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <memory.h> 
+#include <memory.h>
 #include "texusint.h"
-#include "sst2fxt1.h" 
+#include "sst2fxt1.h"
 
 /*************************************** TXS files ****************************/
 

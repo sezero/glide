@@ -17,8 +17,10 @@
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
-** $Header$
-** $Log$
+** Revision 1.3  2003/06/28 19:31:06  guillemj
+** Fix compilation warnings.
+** Removed some trailing spaces.
+**
 ** Revision 1.2  2003/06/28 19:10:36  guillemj
 ** Fixed preprocessor invalid tokens in newer gcc 3.x versions.
 **

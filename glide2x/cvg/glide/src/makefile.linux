@@ -1,8 +1,6 @@
 # Linux makefile for Glide2/CVG
 # This makefile MUST be processed by GNU make!!!
 #
-# $Id$
-#
 #  Copyright (c) 2004 - Daniel Borca
 #  Email : dborca@users.sourceforge.net
 #  Web   : http://www.geocities.com/dborca

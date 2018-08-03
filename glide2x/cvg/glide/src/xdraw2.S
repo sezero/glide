@@ -16,9 +16,6 @@
 ## 
 ## COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 ##
-## $Header$
-## $Revision$
-## $Log$
 ## Revision 1.2  1999/12/11 00:42:21  joseph
 ## Changed \(.data) to .section .data to fix build errors with binutils 2.9.5.
 ##

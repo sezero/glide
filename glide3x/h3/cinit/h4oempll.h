@@ -1,5 +1,3 @@
-/* -*-c++-*- */
-/* $Header$ */
 /*
 ** Copyright (c) 1995-1999, 3Dfx Interactive, Inc.
 ** All Rights Reserved.
@@ -19,9 +17,6 @@
 ** File name:   h4oempll.h
 **
 ** Description: Avenger OEM PLL table and values.
-**
-** $Revision$
-** $Date$
 **
 ** $History: h4oempll.h $
 ** 

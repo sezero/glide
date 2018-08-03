@@ -13,9 +13,6 @@
 ** and Computer Software clause at DFARS 252.227-7013, and/or in similar or
 ** successor clauses in the FAR, DOD or NASA FAR Supplement. Unpublished  -
 ** rights reserved under the Copyright Laws of the United States.
-**
-** $Revision$
-** $Date$
 */
 
 #include <stdio.h>
@@ -197,7 +194,6 @@ txMipReadFromFP(TxMip *txMip, const char *debug_filename, FILE *file, int prefFo
    */
   if( txVerbose )
     {
-      
       fprintf(stderr, "Dequantizing Input from %s to argb8888.\n", Format_Name[txMip->format]);
     }
   

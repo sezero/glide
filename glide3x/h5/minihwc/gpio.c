@@ -1,9 +1,6 @@
 /*
  * GPIO code
- *
- * $Header$
  */
-
 
 #include <unistd.h> /*usleep*/
 
@@ -15,7 +12,6 @@
 #else
 #include "h3cinitdd.h"
 #endif
-
 
 
 #define USEC (1000)
@@ -41,7 +37,7 @@ typedef struct {
         unsigned long dInShift; /* Data Shift */
         unsigned long dOutShift;/* Data Shift */
 } PCI_BIT;
-   
+
 typedef struct {
         PCI_BIT Data;
         PCI_BIT Clk;

@@ -16,9 +16,6 @@
 ** THE UNITED STATES.  
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
-**
-** $Revision$
-** $Date$
 */
 
 #include <stdio.h>
@@ -30,4 +27,3 @@
 
 void    txMipView(TxMip *txMip, char *filename, int wait, int bgcolor) { }
 void    txViewClose() { }
-

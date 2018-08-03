@@ -17,8 +17,9 @@
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
-** $Header$
-** $Log$
+** Revision 1.1.1.1.8.4  2004/10/04 09:13:33  dborca
+** make sure SLI boards are correctly counted
+**
 ** Revision 1.1.1.1.8.3  2004/02/16 07:42:14  dborca
 ** grSetNumPendingBuffers visible with grGetProcAddress
 **

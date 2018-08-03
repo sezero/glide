@@ -16,9 +16,6 @@
 ** THE UNITED STATES.  
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
-**
-** $Header$
-** $Log$
  * 
  * 9     5/02/97 2:08p Pgj
  * screen_width/height now FxU32

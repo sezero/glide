@@ -13,14 +13,11 @@
 ** and Computer Software clause at DFARS 252.227-7013, and/or in similar or
 ** successor clauses in the FAR, DOD or NASA FAR Supplement. Unpublished  -
 ** rights reserved under the Copyright Laws of the United States.
-**
-** $Revision$
-** $Date$
 */
- 
+
 #ifndef __TEXUSINT_H__
 #define __TEXUSINT_H__
- 
+
 #include "texus.h"
 
 int txBitsPerPixel(GrTextureFormat_t format);
@@ -86,7 +83,6 @@ void    txExtension(const char *name, char *ext);
 void txMipFree( TxMip *mip );
 void txMipTrueToFixedPal( TxMip *outputMip, TxMip *trueColorMip, const FxU32 *pal,
                           FxU32 flags );
-
 
 
 extern  int txVerbose;

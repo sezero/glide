@@ -17,8 +17,9 @@
 **
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVE
 **
-** $Header$
-** $Log$
+** Revision 1.7.4.24  2005/08/13 21:07:03  jwrdegoede
+** Last needed 64 bit fixes for h5/h3, complete 64 bit support for cvg
+**
 ** Revision 1.7.4.23  2005/06/09 18:32:32  jwrdegoede
 ** Fixed all warnings with gcc4 -Wall -W -Wno-unused-parameter, except for a couple I believe to be a gcc bug. This has been reported to gcc.
 **

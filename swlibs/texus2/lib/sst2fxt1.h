@@ -15,9 +15,6 @@
  ** and Computer Software clause at DFARS 252.227-7013, and/or in similar or
  ** successor clauses in the FAR, DOD or NASA FAR Supplement. Unpublished  -
  ** rights reserved under the Copyright Laws of the United States.
- **
- ** $Revision$
- ** $Date$
  */
 
 /* Make C Decls Palatable to C++ Compilers  */

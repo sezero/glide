@@ -16,9 +16,6 @@
 ** THE UNITED STATES.  
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
-**
-** $Header$
-** $Log$
 ** 
 ** 3     4/06/99 3:36p Dow
 ** Alt tab stuff
@@ -29,7 +26,7 @@
 */
 
 
-char * ioRegNames[] = {     
+char * ioRegNames[] = {
   "status",
   "pciInit0",
   "sipMonitor",
@@ -777,7 +774,7 @@ char *sstRegNames[] = {
   "texBaseAddr38",
   "trexInit0",
   "trexInit1",
-   
+
   "nccTable000",
   "nccTable001",
   "nccTable002",

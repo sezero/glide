@@ -17,8 +17,9 @@
  ** 
  ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
  **
- ** $Header$
- ** $Log$
+ ** Revision 1.1.1.1.2.1  2005/04/23 18:23:46  koolsmoky
+ ** changes to support calling conventions in asm files
+ **
  ** Revision 1.1.1.1  1999/12/07 21:49:08  joseph
  ** Initial checkin into SourceForge.
  **

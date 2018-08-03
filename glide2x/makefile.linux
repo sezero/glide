@@ -1,14 +1,11 @@
 # Linux makefile for Glide2 and Texus2
 #
-# $Id$
-#
 #  Copyright (c) 2003 - Daniel Borca
 #  Email : dborca@users.sourceforge.net
 #  Web   : http://www.geocities.com/dborca
 #
 #  Copyright (c) 2006 - Guillem Jover <guillem@hadrons.org>
 #
-
 
 #
 #  Available options:
@@ -48,8 +45,6 @@
 #	clean:		remove object files
 #	realclean:	remove all generated files
 #
-
-
 
 .PHONY: all clean realclean
 

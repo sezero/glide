@@ -16,9 +16,6 @@
 ** THE UNITED STATES.  
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
-**
-** $Header$
-** $Log$
  * 
  * 10    6/18/97 5:54p Dow
  * P6 adjustments

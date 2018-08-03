@@ -1,4 +1,3 @@
-
 /*
 ** Copyright (c) 1995, 3Dfx Interactive, Inc.
 ** All Rights Reserved.
@@ -14,9 +13,6 @@
 ** and Computer Software clause at DFARS 252.227-7013, and/or in similar or
 ** successor clauses in the FAR, DOD or NASA FAR Supplement. Unpublished  -
 ** rights reserved under the Copyright Laws of the United States.
-**
-** $Revision$
-** $Date$
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -141,7 +137,7 @@ _nn_modifyNeurons(int ir, int ig, int ib)
         } else if (d < d1) {
                 d1 = d;
                 p1 = i;
-        } 
+        }
     }
 
     /* track errors */

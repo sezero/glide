@@ -17,8 +17,9 @@
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
-** $Header$
-** $Log$
+** Revision 1.1.1.1.8.15  2007/09/29 13:59:34  koolsmoky
+** completed grStippleMode and grStipplePattern
+**
 ** Revision 1.1.1.1.8.14  2006/01/16 21:22:41  jwrdegoede
 ** Fix gcc 4.1 new type-punned ptr breaks antialias. warnings
 **

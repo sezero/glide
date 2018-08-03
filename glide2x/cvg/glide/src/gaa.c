@@ -17,8 +17,9 @@
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
-** $Header$
-** $Log$
+** Revision 1.1.1.1.2.3  2007/05/19 08:29:25  koolsmoky
+** packed rgb fixes
+**
 ** Revision 1.1.1.1.2.1  2005/01/22 14:52:01  koolsmoky
 ** enabled packed argb for cmd packet type 3
 **

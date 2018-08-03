@@ -17,8 +17,9 @@
  ** 
  ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
  **
- ** $Header$
- ** $Log$
+ ** Revision 1.1.1.1.8.2  2006/01/16 21:22:41  jwrdegoede
+ ** Fix gcc 4.1 new type-punned ptr breaks antialias. warnings
+ **
  ** Revision 1.1.1.1.8.1  2005/06/17 14:18:49  jwrdegoede
  ** Fix few warnings when USE_X86=1 is not set
  **

@@ -19,9 +19,6 @@
 ** THE UNITED STATES.  
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
-**
-** $Revision$
-** $Date$
 */
 
 // STB Begin Changes
@@ -307,3 +304,4 @@
 #define SSTCP_TEXPORT_SPACE          0x3UL
 
 #endif /* !__H3GDEFS_H__ */
+

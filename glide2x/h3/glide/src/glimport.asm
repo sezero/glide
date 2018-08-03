@@ -16,9 +16,6 @@
 ;; THE UNITED STATES.  
 ;; 
 ;; COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
-;;
-;; $Revision$
-;; $Log$
 ;; 
 ;; 3     3/17/99 6:16p Dow
 ;; Phantom Menace and other fixes.
@@ -27,10 +24,6 @@
 ;; Changed headers a bit
 ;**
 ;** IMPLIB.ASM:  This is a template for an import library.
-;**
-;; $Header$    
-
-;** 
 ;**
 
 .386p

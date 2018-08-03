@@ -17,8 +17,9 @@
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
-** $Header$
-** $Log$
+** Revision 1.1.1.1.8.2  2005/08/13 21:06:57  jwrdegoede
+** Last needed 64 bit fixes for h5/h3, complete 64 bit support for cvg
+**
 ** Revision 1.1.1.1.8.1  2005/05/07 08:40:18  jwrdegoede
 ** lvalue cast fixes for gcc4
 **
@@ -124,6 +125,7 @@
  * DD code for strips
 **
 */
+
 #ifdef GLIDE3
 #include <3dfx.h>
 #include <glidesys.h>

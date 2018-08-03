@@ -17,11 +17,6 @@
  ** 
  ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
  **
- ** $Header$
- ** $Log$
- ** Revision 1.1.1.1  1999/12/07 21:49:11  joseph
- ** Initial checkin into SourceForge.
- **
 ** 
 ** 26    2/20/98 11:00a Peter
 ** removed glide3 from glid2 tree

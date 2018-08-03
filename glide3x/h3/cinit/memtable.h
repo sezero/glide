@@ -21,9 +21,6 @@
 **
 ** Description: Table to initialize dramInit0 and sgramMode.
 **
-** $Revision$
-** $Date$
-**
 ** $History: memtable.h $
 ** 
 ** *****************  Version 1  *****************

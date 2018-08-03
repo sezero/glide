@@ -17,7 +17,9 @@
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
-** $Log$
+** Revision 1.1.2.3  2004/09/24 06:58:10  dborca
+** Rush: fixed grLfbLock(AUXBUFFER)
+**
 ** Revision 1.1.2.2  2004/03/08 07:42:23  dborca
 ** Voodoo Rush fixes
 **
@@ -50,9 +52,6 @@
  * 
  * 28    8/21/97 4:24p Dow
  * Fixed @#$%! C++ Comments, Added Debugging info
-**
-** $Revision$ 
-** $Date$ 
 **
 */
 

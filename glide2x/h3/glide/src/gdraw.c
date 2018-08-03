@@ -17,8 +17,9 @@
  ** 
  ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
  **
- ** $Header$
- ** $Log$
+ ** Revision 1.2  2000/01/28 20:52:17  joseph
+ ** Changes to support building shared libraries with PIC support.
+ **
  ** Revision 1.1.1.1  1999/12/07 21:49:27  joseph
  ** Initial checkin into SourceForge.
  **

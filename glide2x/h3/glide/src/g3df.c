@@ -17,8 +17,9 @@
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
-** $Header$
-** $Log$
+** Revision 1.2.2.1  2006/12/03 04:49:19  guillemj
+** Backport "sequence point" fix for string upper code from glide3x.
+**
 ** Revision 1.2  2000/10/03 18:29:55  mercury
 ** 003-clean_up_h3-000, h3 tree cleanup.
 **

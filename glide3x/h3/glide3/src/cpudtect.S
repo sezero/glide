@@ -20,8 +20,9 @@
 */
 
 /*
- *  $Header$
- *  $Log$
+ *  Revision 1.1.1.1.6.3  2004/10/05 14:39:55  dborca
+ *  removed detritus
+ *
  *  Revision 1.1.1.1.6.2  2003/06/29 19:00:36  guillemj
  *  Fixed nested comments warnings.
  *  Removed some trailing spaces.

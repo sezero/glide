@@ -17,8 +17,10 @@
  ** 
  ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
  **
- ** $Header$
- ** $Log$
+ ** Revision 1.4.2.4  2005/04/25 23:53:59  koolsmoky
+ ** Fix grDrawTriangle calling convention for Linux.
+ ** Thanks to Ozkan Sezer <sezeroz@gmail.com>.
+ **
  ** Revision 1.4.2.3  2005/04/23 18:27:26  koolsmoky
  ** fixed grDrawTriangle triangle dispatch code
  **
@@ -93,7 +95,6 @@
  * 77    11/15/97 7:43p Peter
  * more comdex silliness
  * 
- **
  */
 #include <memory.h>
 

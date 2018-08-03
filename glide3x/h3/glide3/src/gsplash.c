@@ -17,8 +17,9 @@
  ** 
  ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
  **
- ** $Header$
- ** $Log$
+ ** Revision 1.1.1.1.8.1  2003/06/29 18:43:27  guillemj
+ ** Fix compilation warnings.
+ **
  ** Revision 1.1.1.1  1999/11/24 21:44:57  joseph
  ** Initial checkin for SourceForge
  **

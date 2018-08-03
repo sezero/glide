@@ -19,13 +19,6 @@
  * COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
  */
 
-/*  $Header$ */
-/*  $Revision$ */
-/*  $Log$
-/*  Revision 1.1.1.1  1999/12/07 21:49:31  joseph
-/*  Initial checkin into SourceForge.
-/* */
-/*   */
 /*  2     10/30/97 6:53p Peter */
 /*  first real cut at tri asm */
 /*   */

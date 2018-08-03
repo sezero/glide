@@ -16,9 +16,6 @@
 ** THE UNITED STATES.  
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
-**
-** $Revision$
-** $Date$
 */
 #ifndef __FX64_H__
 #define __FX64_H__
@@ -263,4 +260,3 @@ float __FX_64TOFLOAT( FxI64 );
 #define FX_SGNEXT64( a, n ) (FX_OR64((a), FX_NEG64(FX_AND64((a), FX_SHL64(FX_CREATE64(0,1), (n))))))
 
 #endif /* __FX64_H__ */
-

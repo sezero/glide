@@ -16,9 +16,6 @@
 ** THE UNITED STATES.  
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
-**
-** $Header$
-** $Log$
  * 
  * 14    1/08/98 4:58p Atai
  * tex table broadcast, grVertexLayout enable/disable, stq, and some

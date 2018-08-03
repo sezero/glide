@@ -16,8 +16,6 @@
  ** THE UNITED STATES.  
  ** 
  ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
- ** $Revision$ 
- ** $Date$ 
  **
  */
 
@@ -706,7 +704,6 @@ INITVG96ENTRY(init96MapBoard, FxBool , (void *rd, void *info, FxU16 vID, FxU16 d
     curHALData = initMCRXGetHALData();
     break;
   }
-
 
   GDBG_INFO((80, "init96MapBoard:  Mapping card into linear memory\n"));
   

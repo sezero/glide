@@ -2,9 +2,6 @@
 ** Insert new header here
 **
 **
-** $Revision$ 
-** $Date$ 
-**
 */
 
 

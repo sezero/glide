@@ -18,8 +18,9 @@
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
 **
-** $Header$
-** $Log$
+** Revision 1.1.1.1.2.1  2003/11/08 08:39:15  guillemj
+** Unify multi-arch implementation of _grErrorDefaultCallback() function.
+**
 ** Revision 1.1.1.1  1999/12/07 21:49:27  joseph
 ** Initial checkin into SourceForge.
 **

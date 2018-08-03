@@ -18,9 +18,9 @@
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 */
 
-/*  $Header$ */
-/*  $Revision$ */
-/*  $Log$
+/*  Revision 1.1.1.1.8.2  2004/10/05 14:39:55  dborca
+/*  removed detritus
+/*
 /*  Revision 1.1.1.1.8.1  2003/05/05 07:12:47  dborca
 /*  no message
 /*
@@ -298,6 +298,5 @@ ALIGN(32)
 
 .L_END_grTexDownload_3DNow_MMX:
 .size _grTexDownload_3DNow_MMX,.L_END_grTexDownload_3DNow_MMX-_grTexDownload_3DNow_MMX
-
 
 .end

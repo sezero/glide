@@ -17,12 +17,7 @@
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
-**
-** $Revision$ 
-** $Date$ 
-**
 */
-
 
 /* NOTE: This file is compiled to naught if we aren't
    running under Win32 */

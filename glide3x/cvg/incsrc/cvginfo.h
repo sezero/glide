@@ -1,4 +1,3 @@
-/*-*-c++-*-*/
 #ifndef __CVGINFO_H__
 #define __CVGINFO_H__
 
@@ -20,9 +19,6 @@
 ** THE UNITED STATES.  
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
-**
-** $Revision$
-** $Date$
 */
 
 #if defined(__unix__) && ! defined(__CVGREGS_H__)

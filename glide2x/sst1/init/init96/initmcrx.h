@@ -17,10 +17,6 @@
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
-**
-** $Revision$ 
-** $Date$ 
-**
 */
 #ifndef __INITMCRX_H__
 #define __INITMCRX_H__

@@ -14,14 +14,11 @@
 # successor clauses in the FAR, DOD or NASA FAR Supplement. Unpublished  -
 # rights reserved under the Copyright Laws of the United States.
 #
-# $Revision$
-# $Date$
-#
 
 # local defines, options, includes
 DBGOPTS = -DHWC_DEBUG -DGDBG_INFO_ON -g
 LCDEFS= -DGLIDE_DIAGS -DHWC_CSIM -DGLIDE3 -DGLIDE3_ALPHA -DGD_DEBUGGING -DGLIDE_SIMULATOR
-LCOPTS = $(DBGOPTS) 
+LCOPTS = $(DBGOPTS)
 LADEFS	= -DIS_32
 LCOPTS	=
 LCINCS	= -I. -I$(BUILD_ROOT_SST2)/csim -I$(BUILD_ROOT_SST2)/hwc -I$(BUILD_ROOT_SST2)/include -I$(BUILD_ROOT_SST2)/build -I$(BUILD_ROOT_SWLIBS)/include -I../uinc

@@ -1,4 +1,3 @@
-
 /*
 ** THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONLY
 ** PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGHT
@@ -17,9 +16,6 @@
 ** THE UNITED STATES.  
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
-**
-** $Revision$
-** $Date$
 */
 
 #include <stdio.h>
@@ -242,7 +238,6 @@ txMipResample(TxMip *destMip, TxMip *srcMip)
         if( txVerbose )
           printf("Resampling to %dx%d: ", destMip->width, destMip->height);
 
-        
         sw = srcMip->width;
         sh = srcMip->height;
         dw = destMip->width;

@@ -17,9 +17,6 @@
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
-** $Header$
-** $Log$
-** 
 ** 42    6/24/98 5:19p Peter
 ** cleanedup version merged w/ banshee
 ** 

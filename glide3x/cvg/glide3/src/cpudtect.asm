@@ -17,8 +17,9 @@
 ;; 
 ;; COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 ;;
-;; $Header$
-;; $Log$
+;; Revision 1.1.1.1.8.1  2003/11/03 13:34:29  dborca
+;; Voodoo2 happiness (DJGPP & Linux)
+;;
 ;; Revision 1.1.1.1  1999/12/07 21:42:30  joseph
 ;; Initial checkin into SourceForge.
 ;;

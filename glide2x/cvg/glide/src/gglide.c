@@ -17,8 +17,10 @@
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
-** $Header$
-** $Log$
+** Revision 1.2.2.6  2007/05/19 08:37:25  koolsmoky
+** packed rgb fixes
+** force 4x4 dither with alpha dither subtraction
+**
 ** Revision 1.2.2.5  2005/01/22 14:52:02  koolsmoky
 ** enabled packed argb for cmd packet type 3
 **
@@ -155,7 +157,6 @@
  * 
  * 131   1/08/98 7:09p Peter
  * real hw stuff modulo makefile change
- * 
 **
 */
 

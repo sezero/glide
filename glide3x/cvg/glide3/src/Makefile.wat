@@ -5,9 +5,6 @@
 #  Email : dborca@users.sourceforge.net
 #  Web   : http://www.geocities.com/dborca
 #
-# $Header$
-#
-
 
 #
 #  Available options:
@@ -38,7 +35,6 @@
 #	clean:		remove object files
 #	realclean:	remove all generated files
 #
-
 
 
 .PHONY: all glide3x clean realclean

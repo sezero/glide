@@ -17,9 +17,6 @@
 # 
 # COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 #
-# $Revision$
-# $Date$
-#
 
 HEADERS=cvg.h cvgdefs.h cvginfo.h cvgregs.h fxhal.h gdebug.h h3.h sst1vid.h vxd.h
 

@@ -14,10 +14,6 @@
 ** successor clauses in the FAR, DOD or NASA FAR Supplement. Unpublished  -
 ** rights reserved under the Copyright Laws of the United States.
 **
-**
-** $Revision$ 
-** $Date$ 
-**
 */
 #define INIT_AT3D_LIB
 
@@ -738,7 +734,6 @@ INITAT3DENTRY(initAT3DSetVideo, FxBool, (GrScreenResolution_t res, GrScreenRefre
     CRTC_SET(CC_VSYNC_START, vSyncStart);
   }
   
-
   GDBG_INFO((80, "%s: returning %s\n", FN_NAME, rv?"FXTRUE":"FXFALSE"));  
   return rv;
 #undef FN_NAME  

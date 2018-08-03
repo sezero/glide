@@ -21,11 +21,6 @@
 #ifndef __GDEBUG_H__
 #define __GDEBUG_H__
 
-/*
-** $Revision$
-** $Date$
-*/
-
 #include <stdarg.h>
 #include <3dfx.h>
 

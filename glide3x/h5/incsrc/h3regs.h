@@ -1,8 +1,6 @@
 #ifndef __H3REGS_H__
 #define __H3REGS_H__
 
-/* -*-c++-*- */
-/* $Header$ */
 /*
 ** THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONLY
 ** PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGHT
@@ -21,9 +19,6 @@
 ** THE UNITED STATES.  
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
-**
-** $Revision$
-** $Date$
 **
 ** $History: h3regs.h $
 ** 
@@ -137,7 +132,7 @@ typedef volatile struct sstioregs {
     FxU32 dramCommand;
     FxU32 dramData;
     FxU32 strapInfo;
-	FxU32 vidTvOutBlankVCount;
+    FxU32 vidTvOutBlankVCount;
 
   // PLL Registers
     FxU32 pllCtrl0;
@@ -157,7 +152,7 @@ typedef volatile struct sstioregs {
     FxU32 hwCurC0;
     FxU32 hwCurC1;
     FxU32 vidInFormat;
-	FxU32 vidTvOutBlankHCount;
+    FxU32 vidTvOutBlankHCount;
     FxU32 vidSerialParallelPort;
     FxU32 vidInXDecimDeltas;
     FxU32 vidInDecimInitErrs;
@@ -188,8 +183,8 @@ typedef volatile struct sstioregs {
 
   // The following registers don't exist in IO space where
   // their offset is in this structure.
-  FxU32 lfbMemoryTileCtrl;
-  FxU32 lfbMemoryTileCompare;
+    FxU32 lfbMemoryTileCtrl;
+    FxU32 lfbMemoryTileCompare;
 } SstIORegs;
 
 typedef volatile struct cmdfifo {

@@ -17,13 +17,6 @@
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
-**
-** $Header$
-** $Log$
-** Revision 1.1.1.1  1999/12/07 21:49:10  joseph
-** Initial checkin into SourceForge.
-**
-** 
 ** 28    3/14/98 1:07p Peter
 ** mac port happiness
 ** 

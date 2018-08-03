@@ -17,8 +17,9 @@
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
-** $Header$
-** $Log$
+** Revision 1.1.1.1.6.2  2004/09/27 09:02:11  dborca
+** fixed trilinearness bug. reorg brackets
+**
 ** Revision 1.1.1.1.6.1  2003/11/07 13:38:39  dborca
 ** unite the clans
 **

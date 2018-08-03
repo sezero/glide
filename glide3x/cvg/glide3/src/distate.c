@@ -17,8 +17,9 @@
  ** 
  ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
  **
- ** $Header$
- ** $Log$
+ ** Revision 1.1.1.1.8.4  2007/09/29 13:59:34  koolsmoky
+ ** completed grStippleMode and grStipplePattern
+ **
  ** Revision 1.1.1.1.8.3  2004/03/08 07:42:21  dborca
  ** Voodoo Rush fixes
  **

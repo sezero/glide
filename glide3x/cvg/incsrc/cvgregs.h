@@ -19,9 +19,6 @@
 ** THE UNITED STATES.  
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
-**
-** $Revision$
-** $Date$
 */
 
 
@@ -227,3 +224,4 @@ typedef volatile struct sstregs {       // THE 3D CHIP
 } SstRegs;
 
 #endif /* !__CVGREGS_H__ */
+

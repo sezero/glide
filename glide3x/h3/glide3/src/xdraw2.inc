@@ -17,9 +17,9 @@
 ;; 
 ;; COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 ;;
-;; $Header$
-;; $Revision$
-;; $Log$
+;; Revision 1.1.1.1.8.1  2003/11/07 13:38:39  dborca
+;; unite the clans
+;;
 ;; Revision 1.1.1.1  1999/11/24 21:44:58  joseph
 ;; Initial checkin for SourceForge
 ;;

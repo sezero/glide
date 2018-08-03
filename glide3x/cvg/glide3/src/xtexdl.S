@@ -18,10 +18,6 @@
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 */
 
-/*  $Header$ */
-/*  $Revision$ */
-/*  $Log$ */
-/*   */
 /*  1     10/08/98 11:30a Brent */
 /*   */
 /*  3     10/07/98 9:43p Peter */

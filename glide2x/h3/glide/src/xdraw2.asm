@@ -16,10 +16,6 @@
 ;; 
 ;; COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 ;;
-;; $Header$
-;; $Revision$
-;; $Log$
-;; 
 ;; 3     3/17/99 6:17p Dow
 ;; Phantom Menace and other fixes.
 ;; 

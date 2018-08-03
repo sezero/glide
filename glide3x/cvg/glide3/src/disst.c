@@ -17,8 +17,9 @@
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
-** $Header$
-** $Log$
+** Revision 1.1.1.1.8.1  2004/10/04 09:13:33  dborca
+** make sure SLI boards are correctly counted
+**
 ** Revision 1.1.1.1  1999/12/07 21:42:30  joseph
 ** Initial checkin into SourceForge.
 **

@@ -1,8 +1,10 @@
 ;
 ; compulsory header for glide3/xdraw* assembly specializations (NASM)
 ;
-; $Header$
-; $Log$
+; Revision 1.1.2.1  2004/12/23 20:45:56  koolsmoky
+; converted to nasm syntax
+; added x86 asm, 3dnow! triangle and mmx, 3dnow! texture download optimizations
+;
 ; Revision 1.1.2.3  2004/10/04 08:57:52  dborca
 ; supporting DOS/OpenWatcom in Assembly files
 ;

@@ -16,9 +16,6 @@
  ** THE UNITED STATES.  
  ** 
  ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
- **
- ** $Header$
- ** $Log$
  * 
  * 17    1/13/98 12:42p Atai
  * fixed grtexinfo, grVertexLayout, and draw triangle

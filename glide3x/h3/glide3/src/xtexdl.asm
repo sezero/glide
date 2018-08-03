@@ -16,9 +16,9 @@
 ;; 
 ;; COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 ;;
-;; $Header$
-;; $Revision$
-;; $Log$
+;; Revision 1.1.1.1.8.2  2005/06/09 18:32:29  jwrdegoede
+;; Fixed all warnings with gcc4 -Wall -W -Wno-unused-parameter, except for a couple I believe to be a gcc bug. This has been reported to gcc.
+;;
 ;; Revision 1.1.1.1.8.1  2003/11/07 13:38:39  dborca
 ;; unite the clans
 ;;

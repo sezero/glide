@@ -18,13 +18,6 @@
  * COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
  */
 
-/*  $Header$ */
-/*  $Revision$ */
-/*  $Log$
-/*  Revision 1.1.1.1  1999/12/07 21:49:30  joseph
-/*  Initial checkin into SourceForge.
-/* */
-/*   */
 /*  11    10/05/98 7:43p Peter */
 /*  3DNow!(tm) happiness everywhere */
 /*   */

@@ -17,8 +17,9 @@
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
-** $Header$
-** $Log$
+** Revision 1.1.1.1.8.6  2004/10/05 14:43:19  dborca
+** removed detritus
+**
 ** Revision 1.1.1.1.8.5  2004/10/04 09:24:02  dborca
 ** taming FX_CSTYLE havoc
 **

@@ -18,9 +18,6 @@
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
-** $Revision$ 
-** $Date$ 
-**
 */
 
 #include <stdlib.h>

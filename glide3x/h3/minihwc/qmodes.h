@@ -1,4 +1,3 @@
-/* $Header$ */
 /*
 ** THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONLY
 ** PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGHT
@@ -21,9 +20,6 @@
 ** File name:   qmodes.h
 **
 ** Description: Structures, macros, etc to support query mode.
-**
-** $Revision$ 
-** $Date$
 **
 ** $History: qmodes.h $
 ** 

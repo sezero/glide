@@ -17,10 +17,6 @@
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
-**
-** $Revision$ 
-** $Date$ 
-**
 ** Initialization code for initializing canpus cards w/ assymetric
 ** inter-chip buses.
 **

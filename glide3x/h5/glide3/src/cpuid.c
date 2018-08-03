@@ -1,8 +1,9 @@
 /*
  * CPU detection code
  *
- * $Header$
- * $Log$
+ * Revision 1.1.2.11  2005/05/07 08:26:35  jwrdegoede
+ * gcc4 cpuid fix
+ *
  * Revision 1.1.2.10  2004/10/05 14:54:29  dborca
  * DOS/OpenWatcom woes
  *

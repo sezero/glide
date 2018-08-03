@@ -17,8 +17,10 @@
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
-** $Header$
-** $Log$
+** Revision 1.1.1.1.2.4  2006/09/02 03:13:53  guillemj
+** Remove redundant definition of single_precision_asm and double_precision_asm,
+** to fix the code not building from source.
+**
 ** Revision 1.1.1.1.2.3  2005/01/22 14:52:01  koolsmoky
 ** enabled packed argb for cmd packet type 3
 **

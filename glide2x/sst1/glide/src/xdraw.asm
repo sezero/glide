@@ -15,9 +15,6 @@
 ;; THE UNITED STATES.  
 ;; 
 ;; COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
-;;
-;; $Header$
-;; $Log$
 ; 
 ; 15    3/04/97 9:10p Dow
 ; Neutered mutiplatform multiheaded monster.

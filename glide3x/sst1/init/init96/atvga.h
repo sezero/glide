@@ -22,12 +22,6 @@
 #ifndef __ATVGA_H__
 #define __ATVGA_H__
 
-/*
-** $Revision$ 
-** $Date$ 
-**
-*/
-
 #define VGA_REGISTER_INPUT_STATUS_1_MONO                    0x3BA
 #define VGA_REGISTER_INPUT_STATUS_1_COLOR                   0x3DA
 #define VR_IS1_DISPLAY_INACTIVE                             (1 << 0)

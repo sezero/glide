@@ -16,15 +16,6 @@
 ** THE UNITED STATES.  
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
-**
-** $Header$
-** $Log$
-** Revision 1.2  2000/10/03 18:29:57  mercury
-** 003-clean_up_h3-000, h3 tree cleanup.
-**
-** Revision 1.1.1.1  1999/12/07 21:49:43  joseph
-** Initial checkin into SourceForge.
-**
 ** 
 ** 3     3/17/99 6:14p Dow
 ** Fixes Phantom Menace, OGL, and others.

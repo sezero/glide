@@ -17,9 +17,6 @@
 # 
 # COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 #
-# $Revision$
-# $Date$
-#
 
 !if "$(DEBUG)" == "1"
 VCDEFS = $(VCDEFS) -DGDBG_INFO_ON
@@ -30,7 +27,6 @@ VCDEFS = $(VCDEFS) -DGDBG_INFO_ON
 PCILIB   = $(BUILD_ROOT)\swlibs\lib\fxpci.lib
 CINITLIB = $(BUILD_ROOT)\h3\lib\h3cinit.lib
 VMODE    = dos_mode.c
-
 
 !else
 #Target Windows

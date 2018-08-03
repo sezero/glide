@@ -15,10 +15,6 @@
 ;; THE UNITED STATES.  
 ;; 
 ;; COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
-;;
-;; $Header$
-;; $Revision$
-;; $Log$
 ; 
 ; 2     7/07/97 2:14p Jdt
 ; assembly now on par with C code.

@@ -17,8 +17,9 @@
  ** 
  ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
  **
- ** $Header$
- ** $Log$
+ ** Revision 1.2.4.3  2004/10/04 09:26:30  dborca
+ ** DOS/OpenWatcom support
+ **
  ** Revision 1.2.4.2  2003/11/07 13:38:38  dborca
  ** unite the clans
  **

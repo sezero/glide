@@ -16,10 +16,6 @@
 ** THE UNITED STATES.  
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
-**
-** $Revision$
-** $Date$
-**
 */
 
 #ifndef _FXIMG_H_
@@ -33,7 +29,7 @@
 #define WRITE_ATTRIBS "wb"
 #else
 #define READ_ATTRIBS "r"
-#define WRITE_ATTRIBS "w" 
+#define WRITE_ATTRIBS "w"
 #endif
 
 #define IMAGE_PATH "PATH_IMAGE"

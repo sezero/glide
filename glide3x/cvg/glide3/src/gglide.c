@@ -17,8 +17,9 @@
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
-** $Header$
-** $Log$
+** Revision 1.1.1.1.8.7  2007/09/29 13:59:34  koolsmoky
+** completed grStippleMode and grStipplePattern
+**
 ** Revision 1.1.1.1.8.6  2007/05/19 10:58:19  koolsmoky
 ** force 4x4 dither with alpha dither subtraction
 **

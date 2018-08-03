@@ -1,8 +1,5 @@
 /*
  * FPU handling code
- *
- * $Id$
- *
  */
 
 /*

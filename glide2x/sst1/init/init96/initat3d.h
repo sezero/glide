@@ -17,10 +17,6 @@
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
-**
-** $Revision$ 
-** $Date$ 
-**
 */
 #ifndef __INITAT3D_H__
 #define __INITAT3D_H__

@@ -16,9 +16,6 @@
 ** THE UNITED STATES.  
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
-**
-** $Header$
-** $Log$
 ** 
 ** 5     3/10/98 2:33p Psmith
 ** separating cvg tree from h3/h4 trees

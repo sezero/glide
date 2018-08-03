@@ -17,9 +17,6 @@
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
-** $Header$
-** $Log$
-**
 */
 #ifndef __GSSTDEF_H__
 #define __GSSTDEF_H__

@@ -16,9 +16,6 @@
  ** THE UNITED STATES.  
  ** 
  ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
- **
- ** $Header$
- ** $Log$
  * 
  * 45    11/01/97 12:11p Pgj
  * glide.dll ---> glide2x.dll

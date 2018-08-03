@@ -1,4 +1,3 @@
-/*  -*-asm-*- */
 /*
 ** THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONLY
 ** PURSUANT TO THE 3DFX GLIDE GENERAL PUBLIC LICENSE. THERE IS NO RIGHT
@@ -20,9 +19,10 @@
 */
 
 /*
- *  $Header$
- *  $Revision$
- *  $Log$
+ *  Revision 1.4.2.2  2003/06/29 19:00:36  guillemj
+ *  Fixed nested comments warnings.
+ *  Removed some trailing spaces.
+ *
  *  Revision 1.4.2.1  2003/05/05 07:12:47  dborca
  *  no message
  *

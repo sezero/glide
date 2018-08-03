@@ -16,9 +16,6 @@
  * THE UNITED STATES.  
  * 
  * COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
- *
- * $Header$
- * $Log$
 ** 
 ** 3     3/17/99 6:16p Dow
 ** Phantom Menace and other fixes.

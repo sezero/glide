@@ -13,15 +13,12 @@
 # and Computer Software clause at DFARS 252.227-7013, and/or in similar or
 # successor clauses in the FAR, DOD or NASA FAR Supplement. Unpublished  -
 # rights reserved under the Copyright Laws of the United States.
-#
-# $Revision$
-# $Date$
 
 # local defines, options, includes
 !if "$(FX_GLIDE_DSP_TARGET)" == "SIM"
-LCDEFS  = -DGLIDE_SIMULATOR
+LCDEFS = -DGLIDE_SIMULATOR
 !else
-LCDEFS  = -DGLIDE_HARDWARE
+LCDEFS = -DGLIDE_HARDWARE
 !endif
 
 LCDEFS = $(LCDEFS) -DGLIDE3 -DHWC_CSIM

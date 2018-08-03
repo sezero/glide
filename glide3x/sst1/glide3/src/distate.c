@@ -17,8 +17,11 @@
  ** 
  ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
  **
- ** $Header$
- ** $Log$
+ ** Revision 1.1.2.3  2004/10/04 09:35:59  dborca
+ ** second cut at Glide3x for Voodoo1/Rush (massive update):
+ ** delayed validation, vertex snapping, clip coordinates, strip/fan_continue, bugfixes.
+ ** and probably a bunch of other crap that I forgot
+ **
  ** Revision 1.1.2.2  2004/03/08 07:42:21  dborca
  ** Voodoo Rush fixes
  **

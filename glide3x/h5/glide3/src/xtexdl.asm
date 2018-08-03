@@ -16,9 +16,9 @@
 ;; 
 ;; COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 ;;
-;; $Header$
-;; $Revision$
-;; $Log$
+;; Revision 1.1.8.10  2007/06/23 09:09:10  koolsmoky
+;; removed unneeded emms calls
+;;
 ;; Revision 1.1.8.9  2005/06/09 18:32:33  jwrdegoede
 ;; Fixed all warnings with gcc4 -Wall -W -Wno-unused-parameter, except for a couple I believe to be a gcc bug. This has been reported to gcc.
 ;;

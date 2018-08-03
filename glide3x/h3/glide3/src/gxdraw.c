@@ -17,8 +17,9 @@
  ** 
  ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
  **
- ** $Header$
- ** $Log$
+ ** Revision 1.1.1.1.8.1  2005/06/17 14:18:50  jwrdegoede
+ ** Fix few warnings when USE_X86=1 is not set
+ **
  ** Revision 1.1.1.1  1999/11/24 21:44:57  joseph
  ** Initial checkin for SourceForge
  **

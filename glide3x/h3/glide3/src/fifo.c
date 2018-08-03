@@ -17,8 +17,9 @@
  ** 
  ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
  **
- ** $Header$
- ** $Log$
+ ** Revision 1.1.1.1.6.6  2005/06/09 18:32:28  jwrdegoede
+ ** Fixed all warnings with gcc4 -Wall -W -Wno-unused-parameter, except for a couple I believe to be a gcc bug. This has been reported to gcc.
+ **
  ** Revision 1.1.1.1.6.5  2005/05/25 08:56:23  jwrdegoede
  ** Make h5 and h3 tree 64 bit clean. This is ported over from the non-devel branch so this might be incomplete
  **
@@ -422,7 +423,7 @@ static const char* h3SstRegNames[] = {
   "tChromaKeyMax",
 };
 
-static const char * h3SstIORegNames[] = {     
+static const char * h3SstIORegNames[] = {
   "status",
   "pciInit0",
   "sipMonitor",
@@ -499,7 +500,7 @@ _grFifoWriteDebug(FxU32 addr, FxU32 val, FxU32 fifoPtr)
   FxU32 index = GEN_INDEX(addr);
   
   GDBG_INFO(gc->myLevel + 199, "Storing to FIFO:\n");
-  GDBG_INFO(gc->myLevel + 199, "  FIFO Ptr:    0x%x : 0x%X\n", fifoPtr, gc->cmdTransportInfo.fifoRoom);  
+  GDBG_INFO(gc->myLevel + 199, "  FIFO Ptr:    0x%x : 0x%X\n", fifoPtr, gc->cmdTransportInfo.fifoRoom);
   if (index <= 0xff) { 
     GDBG_INFO(gc->myLevel + 199, "  Reg Name:    %s\n", h3SstRegNames[index]);
     GDBG_INFO(gc->myLevel + 199, "  Reg Num:     0x%X\n", index);
@@ -546,7 +547,7 @@ _grFifoFWriteDebug(FxU32 addr, float val, FxU32 fifoPtr)
             h3SstRegNames[index & 0xFF]);
 } /* _grFifoFWriteDebug */
 
-extern void
+void
 _grH3FifoDump_TriHdr(const FxU32 hdrVal)
 {
   GR_DCL_GC;
@@ -627,7 +628,7 @@ _grErrorCallback(const char* const procName,
  * and other things can do register writes etc w/o having access
  * to the glide internals etc.
  */
-extern void
+void
 _grSet32(volatile FxU32* const sstAddr, const FxU32 val)
 {
 #define FN_NAME "_grSet32"
@@ -642,13 +643,13 @@ _grSet32(volatile FxU32* const sstAddr, const FxU32 val)
 #undef FN_NAME
 }
 
-extern FxU32
+FxU32
 _grGet32(volatile FxU32* const sstAddr)
 {
 #define FN_NAME "_grGet32"
   GR_BEGIN_NOFIFOCHECK_RET(FN_NAME, 88);
   GDBG_INFO_MORE(gc->myLevel, "(0x%X)\n", sstAddr);
-  GR_RETURN(GR_GET(*sstAddr)); 
+  GR_RETURN(GR_GET(*sstAddr));
 #undef FN_NAME
 } /* _grGet32 */
 
@@ -730,7 +731,7 @@ _grCommandTransportMakeRoom(const FxI32 blockSize, const char* fName, const int 
     {
       FxBool
         issueP;
-      
+
   __tryFifoExecute:
       GR_WINFIFO_BEGIN();
       {
@@ -799,7 +800,7 @@ _grCommandTransportMakeRoom(const FxI32 blockSize, const char* fName, const int 
         memcpy(gcFifo->stateBuffer, 
                &gc->state.shadow, 
                sizeof(GrStateBuffer));
-#endif               
+#endif
       } else {
         /* Didn't execute, but we can check to see if we have some
          * room to keep going. Otherwise we need to check again to see
@@ -843,7 +844,7 @@ _grCommandTransportMakeRoom(const FxI32 blockSize, const char* fName, const int 
 #if defined(GLIDE_INIT_HWC) && GLIDE_CHECK_CONTEXT
     gc->contextP = hwcQueryContext(gc->bInfo);
 #else
-    gc->contextP = 1; 
+    gc->contextP = 1;
 #endif
     if (gc->contextP) {
 #if 0
@@ -877,13 +878,12 @@ _grCommandTransportMakeRoom(const FxI32 blockSize, const char* fName, const int 
                        gc->cmdTransportInfo.roomToReadPtr, gc->cmdTransportInfo.roomToEnd, 
                        gc->cmdTransportInfo.fifoRoom, writes,
                        HW_FIFO_PTR(FXTRUE) - (FxU32)gc->rawLfb, gc->cmdTransportInfo.fifoRead);
-        
+
 #endif /* GDBG_INFO_ON */
-        
+
         ASSERT_FAULT_IMMED((gc->cmdTransportInfo.roomToReadPtr >= 0) && 
                            (gc->cmdTransportInfo.roomToEnd >= 0));
       }
-      
       
       /* Bump & Grind if called for */
       if (!gc->cmdTransportInfo.autoBump)
@@ -900,9 +900,9 @@ _grCommandTransportMakeRoom(const FxI32 blockSize, const char* fName, const int 
         while (roomToReadPtr < blockSize) {
           FxU32 curReadPtr = HW_FIFO_PTR(FXTRUE);
           FxU32 curReadDist = curReadPtr - lastHwRead;
-          
+
           checks++;
-          
+
 #ifdef GLIDE_DEBUG
           if (checks > 1000) {
             const FxU32
@@ -922,7 +922,7 @@ _grCommandTransportMakeRoom(const FxI32 blockSize, const char* fName, const int 
             GDBG_PRINTF("\tholeCount = 0x%x\n", holeCount);
             GDBG_PRINTF("\taMin      = 0x%x\n", aMin);
             GDBG_PRINTF("\taMax      = 0x%x\n", aMax);
-                
+
             if ((readPtrL < (baseAddrL << 12)) ||
                 (readPtrL > ((baseAddrL + baseSize + 1) << 12))) {
               GDBG_PRINTF("FATAL ERROR:  Read Pointer out of command buffer extents\n");
@@ -933,24 +933,24 @@ _grCommandTransportMakeRoom(const FxI32 blockSize, const char* fName, const int 
 #endif /* GLIDE_DEBUG */
           GR_ASSERT((curReadPtr >= (FxU32)gc->cmdTransportInfo.fifoStart) &&
                     (curReadPtr < (FxU32)gc->cmdTransportInfo.fifoEnd));
-              
+
           roomToReadPtr += curReadDist;
-              
+
           gc->stats.fifoStalls++;
           gc->stats.fifoStallDepth += GR_CAGP_GET(depth);
-              
+
           /* Have we wrapped yet? */
           if (lastHwRead > curReadPtr) roomToReadPtr += (FxI32)gc->cmdTransportInfo.fifoSize - FIFO_END_ADJUST;
           lastHwRead = curReadPtr;
         }
-          
+
         GR_ASSERT((lastHwRead >= (FxU32)gc->cmdTransportInfo.fifoStart) &&
                   (lastHwRead < (FxU32)gc->cmdTransportInfo.fifoEnd));
-          
+
         /* Update cached copies */
         gc->cmdTransportInfo.fifoRead = lastHwRead;
         gc->cmdTransportInfo.roomToReadPtr = roomToReadPtr;
-          
+
         GDBG_INFO(gc->myLevel + 10, 
                   "  Wait: (0x%X : 0x%X) : 0x%X\n", 
                   gc->cmdTransportInfo.roomToReadPtr, gc->cmdTransportInfo.roomToEnd,
@@ -963,19 +963,19 @@ _grCommandTransportMakeRoom(const FxI32 blockSize, const char* fName, const int 
                   "  Pre-Wrap: (0x%X : 0x%X) : 0x%X\n", 
                   gc->cmdTransportInfo.roomToReadPtr, gc->cmdTransportInfo.roomToEnd,
                   gc->cmdTransportInfo.fifoRead);
-          
-        /* Set the jsr packet. 
+
+        /* Set the jsr packet.
          * NB: This command must be fenced.
          */
         FIFO_ASSERT();
         {
           P6FENCE;
           if (!gc->cmdTransportInfo.autoBump) {
-#if __POWERPC__ && PCI_BUMP_N_GRIND           
+#if __POWERPC__ && PCI_BUMP_N_GRIND
             SET_FIFO(*gc->cmdTransportInfo.fifoPtr++, gc->cmdTransportInfo.fifoJmpHdr[0]);
             FIFO_CACHE_FLUSH(gc->cmdTransportInfo.fifoPtr);
             GR_CAGP_SET(bump, 1);
-#else /* !__POWERPC__ && !PCI_BUMP_N_GRIND */             
+#else /* !__POWERPC__ && !PCI_BUMP_N_GRIND */
             SET(*gc->cmdTransportInfo.fifoPtr++, gc->cmdTransportInfo.fifoJmpHdr[0]);
             SET(*gc->cmdTransportInfo.fifoPtr++, gc->cmdTransportInfo.fifoJmpHdr[1]);
             GR_CAGP_SET(bump, 2);
@@ -985,36 +985,36 @@ _grCommandTransportMakeRoom(const FxI32 blockSize, const char* fName, const int 
             SET(*gc->cmdTransportInfo.fifoPtr, gc->cmdTransportInfo.fifoJmpHdr[0]);
           }
         }
-          
+
         P6FENCE;
-    
+
 #if 0
         wrapAddr = (FxU32)gc->cmdTransportInfo.fifoPtr;
 #endif
-          
+
         /* Update roomXXX fields for the actual wrap */
         gc->cmdTransportInfo.roomToReadPtr -= gc->cmdTransportInfo.roomToEnd;
         gc->cmdTransportInfo.roomToEnd = gc->cmdTransportInfo.fifoSize - FIFO_END_ADJUST;
-          
+
 #if GLIDE_USE_DEBUG_FIFO
         gc->stats.fifoWraps++;
         gc->stats.fifoWrapDepth += GR_GET(hw->cmdFifoDepth);
 #endif /* GLIDE_USE_DEBUG_FIFO */
-          
-        /* Reset fifo ptr to start */ 
+
+        /* Reset fifo ptr to start */
         gc->cmdTransportInfo.fifoPtr = gc->cmdTransportInfo.fifoStart;
-          
+
         GDBG_INFO(gc->myLevel + 10, 
                   "  Post-Wrap: (0x%X : 0x%X) : 0x%X\n", 
                   gc->cmdTransportInfo.roomToReadPtr, gc->cmdTransportInfo.roomToEnd,
                   gc->cmdTransportInfo.fifoRead);
-          
+
         goto again;
       }
-      
+
       /* compute room left */
       gc->cmdTransportInfo.fifoRoom = MIN(gc->cmdTransportInfo.roomToReadPtr, gc->cmdTransportInfo.roomToEnd);
-      
+
       GDBG_INFO(gc->myLevel, FN_NAME"_Done:\n"
                 "\tfifoBlock: (0x%X : 0x%X)\n"
                 "\tfifoRoom: (0x%X : 0x%X : 0x%X)\n"
@@ -1079,11 +1079,11 @@ _grHwFifoPtr(FxBool ignored)
   } else {
     do {
       readPtrL1 = GET(gc->cRegs->cmdFifo0.readPtrL);
-#if __POWERPC__      
+#if __POWERPC__ 
       status = GET(gc->ioRegs->status);
-#else      
+#else
       status = _grSstStatus();
-#endif      
+#endif
       readPtrL2 = GET(gc->cRegs->cmdFifo0.readPtrL);
     } while (readPtrL1 != readPtrL2);
     rVal = (((unsigned long)gc->cmdTransportInfo.fifoStart) + 
@@ -1094,10 +1094,9 @@ _grHwFifoPtr(FxBool ignored)
 } /* _grHwFifoPtr */
 
 
-#if defined( FIFO_ASSERT_FULL ) 
-
+#if defined( FIFO_ASSERT_FULL )
 void 
-_fifoAssertFull( void ) 
+_fifoAssertFull( void )
 {
   GR_DCL_GC;
   
@@ -1105,23 +1104,22 @@ _fifoAssertFull( void )
     if ((gFifoCheckCount++ & kFifoCheckMask) == 0) {
       const FxU32 cmdFifoDepth = GR_GET(((SstRegs*)(gc->reg_ptr))->cmdFifoDepth);
       const FxU32 maxFifoDepth = ((gc->cmdTransportInfo.fifoSize - FIFO_END_ADJUST) >> 2);
-      if(cmdFifoDepth > maxFifoDepth) { 
+      if(cmdFifoDepth > maxFifoDepth) {
         gdbg_printf("cmdFifoDepth > size: 0x%X : 0x%Xn", 
-                    cmdFifoDepth, maxFifoDepth); 
-        ASSERT_FAULT_IMMED(cmdFifoDepth <= maxFifoDepth); 
-      } else if (cmdFifoDepth + (gc->cmdTransportInfo.fifoRoom >> 2) > maxFifoDepth) { 
+                    cmdFifoDepth, maxFifoDepth);
+        ASSERT_FAULT_IMMED(cmdFifoDepth <= maxFifoDepth);
+      } else if (cmdFifoDepth + (gc->cmdTransportInfo.fifoRoom >> 2) > maxFifoDepth) {
         gdbg_printf("cmdFifoDepth + fifoRoom > size: (0x%X : 0x%X) : 0x%Xn", 
-                    cmdFifoDepth, (gc->cmdTransportInfo.fifoRoom >> 2), maxFifoDepth); 
-        ASSERT_FAULT_IMMED(cmdFifoDepth + (gc->cmdTransportInfo.fifoRoom >> 2) <= maxFifoDepth); 
-      } 
-    } 
-    ASSERT_FAULT_IMMED(HW_FIFO_PTR(FXTRUE) >= (FxU32)gc->cmdTransportInfo.fifoStart); 
-    ASSERT_FAULT_IMMED(HW_FIFO_PTR(FXTRUE) < (FxU32)gc->cmdTransportInfo.fifoEnd); 
-    ASSERT_FAULT_IMMED((FxU32)gc->cmdTransportInfo.fifoRoom < gc->cmdTransportInfo.fifoSize); 
+                    cmdFifoDepth, (gc->cmdTransportInfo.fifoRoom >> 2), maxFifoDepth);
+        ASSERT_FAULT_IMMED(cmdFifoDepth + (gc->cmdTransportInfo.fifoRoom >> 2) <= maxFifoDepth);
+      }
+    }
+    ASSERT_FAULT_IMMED(HW_FIFO_PTR(FXTRUE) >= (FxU32)gc->cmdTransportInfo.fifoStart);
+    ASSERT_FAULT_IMMED(HW_FIFO_PTR(FXTRUE) < (FxU32)gc->cmdTransportInfo.fifoEnd);
+    ASSERT_FAULT_IMMED((FxU32)gc->cmdTransportInfo.fifoRoom < gc->cmdTransportInfo.fifoSize);
     ASSERT_FAULT_IMMED((FxU32)gc->cmdTransportInfo.fifoPtr < (FxU32)gc->cmdTransportInfo.fifoEnd);
   }
 }
-        
 #endif
 
 #if GLIDE_DEBUG
@@ -1133,8 +1131,8 @@ _reg_group_begin_internal( FxU32 __chipId, FxU32 __regBase, FxU32 __groupNum,
   GR_DCL_GC;
 
   if ( !gc->windowed ) {
-    GR_ASSERT(((__pktHdr) & 0xE0000000UL) == 0x00UL); 
-    FIFO_ASSERT(); 
+    GR_ASSERT(((__pktHdr) & 0xE0000000UL) == 0x00UL);
+    FIFO_ASSERT();
     GR_ASSERT(GET(gc->cRegs->cmdFifo0.readPtrL) >= gc->cmdTransportInfo.fifoOffset);
     GR_ASSERT(GET(gc->cRegs->cmdFifo0.readPtrL) < (gc->cmdTransportInfo.fifoOffset + gc->cmdTransportInfo.fifoSize));
 
@@ -1146,7 +1144,7 @@ _reg_group_begin_internal( FxU32 __chipId, FxU32 __regBase, FxU32 __groupNum,
     GDBG_INFO(120, "\t__groupMask:       0x%x\n", (__groupMask));
     GDBG_INFO(120, "\t__chipId:          0x%x\n", __chipId);
     GDBG_INFO(120, "\t__regBase:         0x%x\n", __regBase);
-    GDBG_INFO(120, "\tfifoPtr:           0x%x\n", (FxU32)gc->cmdTransportInfo.fifoPtr - (FxU32)gc->cmdTransportInfo.fifoStart - (FxU32)gc->rawLfb); 
+    GDBG_INFO(120, "\tfifoPtr:           0x%x\n", (FxU32)gc->cmdTransportInfo.fifoPtr - (FxU32)gc->cmdTransportInfo.fifoStart - (FxU32)gc->rawLfb);
     GDBG_INFO(120, "\tfifoRoom:          0x%x\n", gc->cmdTransportInfo.fifoRoom);
     GDBG_INFO(120, "\treadPtrL:          0x%x\n", GET(gc->cRegs->cmdFifo0.readPtrL));
   }
@@ -1154,17 +1152,17 @@ _reg_group_begin_internal( FxU32 __chipId, FxU32 __regBase, FxU32 __groupNum,
 
 void
 _reg_group_begin_internal_wax( FxU32 __regBase,
-                               FxU32 __groupNum,    
-                               FxU32 __groupMask,            
-                               FxU32 __pktHdr,               
-                               FxU32 __checkP,               
-                               volatile FxU32 *__regGroupFifoPtr ) 
+                               FxU32 __groupNum,
+                               FxU32 __groupMask,
+                               FxU32 __pktHdr,
+                               FxU32 __checkP,
+                               volatile FxU32 *__regGroupFifoPtr )
 {
   GR_DCL_GC;
-    
+
   if ( !gc->windowed ) {
-    GR_ASSERT(((__pktHdr) & 0xE0000000UL) == 0x00UL); 
-    FIFO_ASSERT(); 
+    GR_ASSERT(((__pktHdr) & 0xE0000000UL) == 0x00UL);
+    FIFO_ASSERT();
     GR_ASSERT(GET(gc->cRegs->cmdFifo0.readPtrL) >= gc->cmdTransportInfo.fifoOffset);
     GR_ASSERT(GET(gc->cRegs->cmdFifo0.readPtrL) < (gc->cmdTransportInfo.fifoOffset + gc->cmdTransportInfo.fifoSize));
 
@@ -1176,14 +1174,13 @@ _reg_group_begin_internal_wax( FxU32 __regBase,
     GDBG_INFO(220, "\t__groupNum:         0x%x\n", __groupNum);
     GDBG_INFO(220, "\t__groupMask:        0x%x\n", (__groupMask));
     GDBG_INFO(220, "\t__regBase:          0x%x\n", __regBase);
-    GDBG_INFO(220, "\tfifoPtr:            0x%x\n", (FxU32)gc->cmdTransportInfo.fifoPtr - (FxU32)gc->cmdTransportInfo.fifoStart - (FxU32)gc->rawLfb); 
+    GDBG_INFO(220, "\tfifoPtr:            0x%x\n", (FxU32)gc->cmdTransportInfo.fifoPtr - (FxU32)gc->cmdTransportInfo.fifoStart - (FxU32)gc->rawLfb);
     GDBG_INFO(220, "\tfifoRoom:           0x%x\n", gc->cmdTransportInfo.fifoRoom);
     GDBG_INFO(220, "\treadPtrL:           0x%x\n", GET(gc->cRegs->cmdFifo0.readPtrL));
     GDBG_INFO(220, "\tStart Reg:          0x%x\n", (__pktHdr & 0x7fff) >> 3);
     GDBG_INFO(220, "\tReg Mask:           0x%x\n", (__pktHdr >> 15) & 0x3fff);
     GDBG_INFO(220, "\tReg Type:           %s\n", ((__pktHdr >> 14) & 1) ? "2D" : "3D");
   }
-    
 }
 #endif /* GLIDE_DEBUG */
 #endif /* USE_PACKET_FIFO */
@@ -1236,4 +1233,3 @@ _grExportFifo(int *fifoPtr, int *fifoRead) {
 }
 
 #endif
-

@@ -17,8 +17,9 @@
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
-** $Header$
-** $Log$
+** Revision 1.2.2.3  2005/04/23 18:33:33  koolsmoky
+** added workaround for 8bit wide texture downloads for old revision TMUs
+**
 ** Revision 1.2.2.2  2005/01/22 14:52:02  koolsmoky
 ** enabled packed argb for cmd packet type 3
 **

@@ -16,8 +16,6 @@
 ** THE UNITED STATES.  
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
-**
-** $Log$
  * 
  * 34    1/12/98 10:22p Dow
  * H3D Stereo Support
@@ -39,9 +37,6 @@
  * 
  * 28    8/21/97 4:24p Dow
  * Fixed @#$%! C++ Comments, Added Debugging info
-**
-** $Revision$ 
-** $Date$ 
 **
 */
 

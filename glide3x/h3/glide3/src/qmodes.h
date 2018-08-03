@@ -21,9 +21,6 @@
 **
 ** Description: Structures, macros, etc to support query mode.
 **
-** $Revision$ 
-** $Date$
-**
 ** $History: qmodes.h $
 ** 
 ** *****************  Version 4  *****************

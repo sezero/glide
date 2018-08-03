@@ -17,9 +17,9 @@
 ;; 
 ;; COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 ;;
-;; $Header$
-;; $Revision$
-;; $Log$
+;; Revision 1.1.1.1.8.2  2005/01/13 15:46:50  koolsmoky
+;; prepare for packed rgb
+;;
 ;; Revision 1.1.1.1.8.1  2003/11/03 13:34:29  dborca
 ;; Voodoo2 happiness (DJGPP & Linux)
 ;;

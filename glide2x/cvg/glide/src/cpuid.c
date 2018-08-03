@@ -1,8 +1,9 @@
 /*
  * CPU detection code
  *
- * $Header$
- * $Log$
+ * Revision 1.1.2.2  2006/09/02 03:12:29  guillemj
+ * Backport glide3 fix for PIC compilation with gcc 4.1 from Hans de Goede.
+ *
  * Revision 1.1.2.1  2004/12/12 15:16:02  koolsmoky
  * new cpuid
  *

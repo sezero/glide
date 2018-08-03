@@ -17,12 +17,7 @@
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
-**
-** $Revision$ 
-** $Date$ 
-**
 ** Initialization code for initializing supported SST-1 DACs
-**
 */
 #ifndef __GNUC__
 #pragma optimize ("",off)

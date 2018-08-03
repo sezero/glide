@@ -1,8 +1,8 @@
 ;
 ; compulsory header for glide3/xdraw* assembly specializations (NASM)
 ;
-; $Header$
-; $Log$
+; Revision 1.1.2.6  2004/10/05 14:50:54  dborca
+; removed misplaced else
 ;
 ; Revision 1.1.2.1  2003/06/07 09:53:25  dborca
 ; initial checkin for NASM sources

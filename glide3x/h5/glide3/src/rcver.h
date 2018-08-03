@@ -17,8 +17,6 @@
 **
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
-** $Log:
-**
 */
 
 #include "fxbldno.h"

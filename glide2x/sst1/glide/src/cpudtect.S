@@ -17,11 +17,6 @@
 # 
 # COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 #
-# $Header$
-# $Log$
-# Revision 1.1.1.1  1999/12/07 21:48:51  joseph
-# Initial checkin into SourceForge.
-#
 # 
 # 2     3/04/97 9:10p Dow
 # Neutered mutiplatform multiheaded monster.

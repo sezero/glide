@@ -1,13 +1,9 @@
-/*
- * Select the syntax appropriate to the 386 assembler being used.
+/* Select the syntax appropriate to the 386 assembler being used.
  *
  *  Copyright (c) 2002 - Borca Daniel
  *  Email : dborca@users.sourceforge.net
  *  Web   : http://www.geocities.com/dborca
- *
- * $Header$
  */
-
 
 #ifndef ASSYNTAX_H_included
 #define ASSYNTAX_H_included

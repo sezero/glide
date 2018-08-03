@@ -16,12 +16,6 @@
 ** THE UNITED STATES.  
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
-**
-** $Header$
-** $Log$
-** Revision 1.1.1.1  1999/12/07 21:49:06  joseph
-** Initial checkin into SourceForge.
-**
  * 
  * 4     9/09/97 7:35p Sellers
  * Added 400x300 resolution

@@ -18,9 +18,9 @@
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
 **
-** $Revision$ 
-** $Date$ 
-** $Log$
+** Revision 1.1.1.1.6.4  2006/01/16 21:22:42  jwrdegoede
+** Fix gcc 4.1 new type-punned ptr breaks antialias. warnings
+**
 ** Revision 1.1.1.1.6.3  2005/06/09 18:32:28  jwrdegoede
 ** Fixed all warnings with gcc4 -Wall -W -Wno-unused-parameter, except for a couple I believe to be a gcc bug. This has been reported to gcc.
 **

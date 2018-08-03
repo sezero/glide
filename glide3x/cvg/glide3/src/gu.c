@@ -16,9 +16,6 @@
 ** THE UNITED STATES.  
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
-**
-** $Header$
-** $Log$
 ** 
 ** 1     10/08/98 11:30a Brent
 ** 
@@ -209,9 +206,3 @@ GR_DDFUNC(guQueryResolutionXY, void, (GrScreenResolution_t res, FxU32 *x, FxU32 
   
 #undef FN_NAME
 } /* guQueryResolutionXYExt */
-
-
-
-
-
-

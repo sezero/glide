@@ -16,12 +16,9 @@
 # THE UNITED STATES.  
 # 
 # COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
-#
-# $Revision$
-# $Date$
 
 # local defines, options, includes
-LCDEFS  = 
+LCDEFS  =
 LCOPTS  =
 
 # sources
@@ -35,5 +32,3 @@ CFILES              = fx64.c fximg.c fxos.c linutil.c
 LIBRARIES = libfxmisc.a
 
 include $(BUILD_ROOT_SWLIBS)/include/make/3dfx.mak
-
-

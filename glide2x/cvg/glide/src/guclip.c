@@ -17,8 +17,9 @@
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
-** $Header$
-** $Log$
+** Revision 1.1.1.1.2.2  2005/04/26 00:02:45  koolsmoky
+** Use grDrawTriangle where TRISETUP is not necessary.
+**
 ** Revision 1.1.1.1.2.1  2005/01/22 14:52:02  koolsmoky
 ** enabled packed argb for cmd packet type 3
 **

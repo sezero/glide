@@ -1,10 +1,6 @@
 /*
 ** Insert new header here
 **
-**
-** $Revision$ 
-** $Date$ 
-**
 */
 
 #include <stdlib.h>

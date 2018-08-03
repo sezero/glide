@@ -17,12 +17,8 @@
 # 
 # COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 #
-# $Revision$
-# $Date$
-#
 
 THISDIR = h3
-
 
 
 SUBDIRS = bin binsrc lib libsrc include incsrc minihwc

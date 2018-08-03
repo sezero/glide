@@ -17,8 +17,9 @@
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
-** $Header$
-** $Log$
+** Revision 1.1.1.1.8.8  2005/08/13 21:06:57  jwrdegoede
+** Last needed 64 bit fixes for h5/h3, complete 64 bit support for cvg
+**
 ** Revision 1.1.1.1.8.7  2005/06/09 18:32:08  jwrdegoede
 ** Fixed all warnings with gcc4 -Wall -W -Wno-unused-parameter, except for a couple I believe to be a gcc bug. This has been reported to gcc.
 **
@@ -1224,7 +1225,7 @@ __errSliExit:
         
         /* Place fifo in hw. Taking all of the remainging memory up to the
          * byte swizzling bit in the cmd fifo address.
-         */          
+         */
         gc->cmdTransportInfo.fifoOffset = memEnd - fifoSize;
 
 #if (GLIDE_PLATFORM & GLIDE_HW_H3)

@@ -1,8 +1,9 @@
 /*
  * CPU detection code
  *
- * $Header$
- * $Log$
+ * Revision 1.1.2.3  2005/08/13 21:06:56  jwrdegoede
+ * Last needed 64 bit fixes for h5/h3, complete 64 bit support for cvg
+ *
  * Revision 1.1.2.2  2005/05/11 14:42:15  jwrdegoede
  * Also fix gcc4 PIC compilation of cpuid.c for cvg
  *

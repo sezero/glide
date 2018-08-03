@@ -17,8 +17,9 @@
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
-** $Header$
-** $Log$
+** Revision 1.1.1.1.6.10  2005/05/25 08:56:24  jwrdegoede
+** Make h5 and h3 tree 64 bit clean. This is ported over from the non-devel branch so this might be incomplete
+**
 ** Revision 1.1.1.1.6.9  2005/05/25 08:53:22  jwrdegoede
 ** Add P6FENCE (ish) macro for non-x86 archs
 **

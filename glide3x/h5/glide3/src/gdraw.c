@@ -17,7 +17,6 @@
  ** 
  ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVE
  **
- ** $Header$
  ** $Log:
  **  11   3dfx      1.5.1.2.1.1 10/11/00 Brent           Forced check in to enforce
  **       branching.

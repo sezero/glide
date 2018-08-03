@@ -19,10 +19,6 @@
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 */
 
-/*  $Header$ */
-/*  $Revision$ */
-/*  $Log$ */
-/*   */
 /*  2     10/30/97 6:53p Peter */
 /*  first real cut at tri asm */
 /*   */

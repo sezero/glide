@@ -16,9 +16,6 @@
 ** THE UNITED STATES.  
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
-**
-** $Revision$
-** $Date$
 */
 
 #include <stdio.h>
@@ -141,7 +138,6 @@ txMipReadFromFP(TxMip *txMip, const char *debug_filename, FILE *file, int prefFo
         if( txVerbose )
           {
             fprintf(stderr,"Loading image file ");
-
             fprintf (stderr,"%s (%dw x %dh x %d Bpp x %d mips) .. ", debug_filename, 
                      txMip->width,txMip->height, GR_TEXFMT_SIZE(txMip->format), txMip->depth);
           }

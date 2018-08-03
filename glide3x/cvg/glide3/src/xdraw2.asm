@@ -16,9 +16,9 @@
 ;; 
 ;; COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 ;;
-;; $Header$
-;; $Revision$
-;; $Log$
+;; Revision 1.1.1.1.8.3  2004/11/25 19:11:02  koolsmoky
+;; set up 3dnow! triangle/vertex list routines
+;;
 ;; Revision 1.1.1.1.8.2  2004/10/04 09:19:25  dborca
 ;; handle STDCALL correctly
 ;;

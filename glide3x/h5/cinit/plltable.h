@@ -21,9 +21,6 @@
 **
 ** Description: The V3 PLL table.
 **
-** $Revision$
-** $Date$
-**
 ** $History: plltable.h $
 ** 
 ** *****************  Version 1  *****************
@@ -44,7 +41,6 @@
 ** User: Ken          Date: 4/15/98    Time: 6:42p
 ** Updated in $/devel/h3/win95/dx/minivdd
 ** added unified header to all files, with revision, etc. info in it
-**
 */
 
 //

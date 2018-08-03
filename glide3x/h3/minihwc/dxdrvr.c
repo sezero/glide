@@ -16,8 +16,6 @@
 ** THE UNITED STATES.  
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
-**
-** $Log$
 ** 
 ** 3     4/06/99 3:36p Dow
 ** Alt tab stuff
@@ -63,9 +61,6 @@
  * 
  * 28    8/21/97 4:24p Dow
  * Fixed @#$%! C++ Comments, Added Debugging info
-**
-** $Revision$ 
-** $Date$ 
 **
 */
 

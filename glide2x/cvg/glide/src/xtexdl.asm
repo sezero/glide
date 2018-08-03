@@ -16,9 +16,9 @@
 ;; 
 ;; COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 ;;
-;; $Header$
-;; $Revision$
-;; $Log$
+;; Revision 1.1.2.3  2007/06/23 08:48:00  koolsmoky
+;; removed unneeded emms calls
+;;
 ;; Revision 1.1.2.2  2005/04/23 18:36:36  koolsmoky
 ;; fixed 3dnow! and mmx optimizations
 ;;

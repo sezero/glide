@@ -17,8 +17,11 @@
 ;; 
 ;; COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 ;;
-;; $Header$
-;; $Log$
+;; Revision 1.1.1.1.2.1  2006/11/30 09:16:50  guillemj
+;; Switch to the new "build system", to be in sync with the rest of glide.
+;; Backport cpudtect.asm from glide3 for h3.
+;; Add fpu.c to cvg.
+;;
 ;; Revision 1.1.1.1.8.1  2003/11/07 13:38:38  dborca
 ;; unite the clans
 ;;

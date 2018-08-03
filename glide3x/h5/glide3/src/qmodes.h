@@ -1,4 +1,3 @@
-/* $Header$ */
 /*
 **
 ** THIS SOFTWARE IS SUBJECT TO COPYRIGHT PROTECTION AND IS OFFERED ONLY
@@ -22,9 +21,6 @@
 ** File name:   qmodes.h
 **
 ** Description: Structures, macros, etc to support query mode.
-**
-** $Revision$ 
-** $Date$
 **
 ** $History: qmodes.h $
 ** 

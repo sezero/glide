@@ -16,9 +16,6 @@
  * THE UNITED STATES.  
  * 
  * COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
- *
- * $Header$
- * $Log$
 ** 
 ** 4     4/06/99 3:54p Dow
 ** Alt tab again.

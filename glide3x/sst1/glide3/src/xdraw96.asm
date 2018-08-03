@@ -16,9 +16,9 @@
 ;; 
 ;; COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 ;;
-;; $Header$
-;; $Revision$
-;; $Log$
+;; Revision 1.1.2.4  2004/10/08 06:30:19  dborca
+;; save a round-trip with grDrawTriangle in SST1
+;;
 ;; Revision 1.1.2.3  2004/10/04 09:36:00  dborca
 ;; second cut at Glide3x for Voodoo1/Rush (massive update):
 ;; delayed validation, vertex snapping, clip coordinates, strip/fan_continue, bugfixes.

@@ -16,8 +16,6 @@
 ** THE UNITED STATES.  
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
-**
-** $Log$
 ** 
 ** 3     3/17/99 6:14p Dow
 ** Fixes Phantom Menace, OGL, and others.
@@ -62,9 +60,6 @@
  * 
  * 28    8/21/97 4:24p Dow
  * Fixed @#$%! C++ Comments, Added Debugging info
-**
-** $Revision$ 
-** $Date$ 
 **
 */
 

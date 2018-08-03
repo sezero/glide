@@ -17,9 +17,9 @@
 ;; 
 ;; COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 ;;
-;; $Header$
-;; $Revision$
-;; $Log$
+;; Revision 1.1.1.1.2.4  2005/04/23 18:36:36  koolsmoky
+;; fixed 3dnow! and mmx optimizations
+;;
 ;; Revision 1.1.1.1.2.3  2005/01/22 14:52:02  koolsmoky
 ;; enabled packed argb for cmd packet type 3
 ;;

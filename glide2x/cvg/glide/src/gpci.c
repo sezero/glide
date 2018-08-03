@@ -17,8 +17,9 @@
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
-** $Header$
-** $Log$
+** Revision 1.1.1.1.2.8  2007/06/23 08:42:10  koolsmoky
+** Removed duplicate disableDitherSub envars
+**
 ** Revision 1.1.1.1.2.7  2005/04/25 23:58:41  koolsmoky
 ** Fix _texDownloadProcs comma separator.
 ** Thanks to Ozkan Sezer <sezeroz@gmail.com>.

@@ -16,14 +16,11 @@
 # 
 # COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 #
-# $Header$
-# $Log$
 # Revision 1.2  1999/12/11 00:41:48  joseph
 # Changed \(.data) to .section .data to fix build errors with binutils 2.9.5.
 #
 # Revision 1.1.1.1  1999/12/07 21:48:55  joseph
 # Initial checkin into SourceForge.
-#
 # 
 # 15    3/04/97 9:10p Dow
 # Neutered mutiplatform multiheaded monster.

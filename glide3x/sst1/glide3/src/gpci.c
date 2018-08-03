@@ -17,8 +17,9 @@
  ** 
  ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
  **
- ** $Header$
- ** $Log$
+ ** Revision 1.1.2.4  2005/05/25 08:51:52  jwrdegoede
+ ** Add #ifdef GL_X86 around x86 specific code
+ **
  ** Revision 1.1.2.3  2004/10/04 09:36:00  dborca
  ** second cut at Glide3x for Voodoo1/Rush (massive update):
  ** delayed validation, vertex snapping, clip coordinates, strip/fan_continue, bugfixes.

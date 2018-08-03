@@ -17,8 +17,6 @@
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
-** $Log:
-**
 */
 
 #if !defined(GDBG_INFO_ON) || (GDBG_INFO_ON == 0)

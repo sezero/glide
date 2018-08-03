@@ -16,14 +16,9 @@
 ** THE UNITED STATES.  
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
-**
-** $Revision$
-** $Date$
 */
-
 #ifndef __FX_VID_H__
 #define __FX_VID_H__
-
 
 /* Get old resolution/refresh definitions */
 #include <sst1vid.h>

@@ -17,8 +17,9 @@
  ** 
  ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
  **
- ** $Header$
- ** $Log$
+ ** Revision 1.2  2003/06/28 19:10:36  guillemj
+ ** Fixed preprocessor invalid tokens in newer gcc 3.x versions.
+ **
  ** Revision 1.1.1.1  1999/12/07 21:49:28  joseph
  ** Initial checkin into SourceForge.
  **

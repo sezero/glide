@@ -17,8 +17,6 @@
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
-** $Header$
-** $Log$
  * 
  * 4     5/27/97 1:16p Peter
  * Basic cvg, w/o cmd fifo stuff. 

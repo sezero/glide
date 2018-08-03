@@ -17,8 +17,9 @@
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
-** $Header$
-** $Log$
+** Revision 1.1.2.8  2006/01/16 21:22:45  jwrdegoede
+** Fix gcc 4.1 new type-punned ptr breaks antialias. warnings
+**
 ** Revision 1.1.2.7  2005/06/16 18:58:32  jwrdegoede
 ** Fix 2 sst1 bugs accidently introduced by warning fixes
 **

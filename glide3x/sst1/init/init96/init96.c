@@ -16,8 +16,6 @@
  ** THE UNITED STATES.  
  ** 
  ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
- ** $Revision$ 
- ** $Date$ 
  **
  */
 
@@ -702,7 +700,6 @@ INITVG96ENTRY(init96MapBoard, FxBool , (void *rd, void *info, FxU16 vID, FxU16 d
     deviceID = dID;
   
   GDBG_INFO((80, "SST-96 Initialization code\n"));
-
 
   /* !!! FIXME hack for vxd bug */
   putenv( "SST_DUALHEAD=1" );

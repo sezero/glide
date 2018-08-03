@@ -16,9 +16,9 @@
 ;; 
 ;; COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 ;;
-;; $Header$
-;; $Revision$
-;; $Log$
+;; Revision 1.1.8.11  2007/05/13 09:21:06  koolsmoky
+;; removed problematic context checks
+;;
 ;; Revision 1.1.8.10  2004/05/04 17:04:31  koolsmoky
 ;; clean up
 ;;

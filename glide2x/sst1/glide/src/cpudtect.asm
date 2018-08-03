@@ -17,8 +17,9 @@
 ;; 
 ;; COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 ;;
-;; $Header$
-;; $Log$
+;; Revision 1.1.1.1.2.1  2004/12/23 20:56:08  koolsmoky
+;; builds without asm optimizations (USE_X86=1)
+;;
 ;; Revision 1.1.2.1  2004/03/02 07:55:29  dborca
 ;; Bastardised Glide3x for SST1
 ;;
