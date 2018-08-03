@@ -219,7 +219,6 @@ initEnumHardware( InitHWEnumCallback *cb )
     /* Initialize all drivers */
     vgDriverInit( &contexts[INIT_VOODOO] );
     vg96DriverInit( &contexts[INIT_VG96] );
-    h3DriverInit( &contexts[INIT_H3] );
 
 
     /* Mark the library as initialized */

@@ -451,7 +451,6 @@ _GlideInitEnvironment( void )
 #endif
 
   if (getenv("FX_SNAPSHOT"))  _GlideRoot.environment.snapshot = atoi(getenv("FX_SNAPSHOT"));
-  if (getenv("FX_SST2"))      _GlideRoot.environment.sst2Flags = atoi(getenv("FX_SST2"));
   if (getenv("FX_GLIDE_LWM")) _GlideRoot.environment.swFifoLWM = atoi(getenv("FX_GLIDE_LWM"));
 
   if (getenv("FX_GLIDE_SWAPINTERVAL")) {

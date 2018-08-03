@@ -191,7 +191,6 @@ GLIDE_OBJECTS += \
 	../../init/init.obj \
 	../../init/vgdrvr.obj \
 	../../init/vg96drvr.obj \
-	../../init/h3drvr.obj \
 	../../init/initvg/gamma.obj \
 	../../init/initvg/dac.obj \
 	../../init/initvg/video.obj \

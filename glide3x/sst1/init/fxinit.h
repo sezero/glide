@@ -113,7 +113,6 @@ extern InitContext *context;
 
 void vgDriverInit( InitContext *context );
 void vg96DriverInit( InitContext *context );
-void h3DriverInit( InitContext *context );
 
 #ifdef __cplusplus
 }

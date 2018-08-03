@@ -176,7 +176,6 @@ GLIDE_OBJECTS += \
 	../../init/init.o \
 	../../init/vgdrvr.o \
 	../../init/vg96drvr.o \
-	../../init/h3drvr.o \
 	../../init/initvg/gamma.o \
 	../../init/initvg/dac.o \
 	../../init/initvg/video.o \
