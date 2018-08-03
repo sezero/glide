@@ -18,12 +18,12 @@
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 */
 
-#include "fxbldno.h"
+/*#include "fxbldno.h"*/
 
 #define MANVERSION              3
 #define MANREVISION             03
 
-//#define BUILD_NUMBER            40405
+#define BUILD_NUMBER            40405
 
 #ifndef GLIDE3
 #define VERSIONSTR "2.44\0"
