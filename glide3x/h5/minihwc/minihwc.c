@@ -2136,6 +2136,13 @@ hwcInitRegisters(hwcBoardInfo *bInfo)
             break;
         case SST_DEVICE_ID_H4_OEM: /* voodoo3/avenger */
            break;
+        case SST_DEVICE_ID_L_AP: /* voodoo4/5 */
+        case SST_DEVICE_ID_AP_OEM:
+        case SST_DEVICE_ID_H_AP:
+#ifdef H4 /* FS: added for v4/5 */
+           h4InitPlls(bInfo->regInfo.ioPortBase, bInfo->pciInfo.deviceID, grxSpeedInMHz);
+#endif
+           break;
         default: /* unknown board type!!! */
            return FXFALSE;
      }
