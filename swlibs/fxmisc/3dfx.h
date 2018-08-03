@@ -27,8 +27,13 @@ typedef unsigned char   FxU8;
 typedef signed   char   FxI8;
 typedef unsigned short  FxU16;
 typedef signed   short  FxI16;
+#if defined(__DJGPP__)||defined(_WIN32)
+typedef signed   long   FxI32;
+typedef unsigned long   FxU32;
+#else
 typedef signed   int    FxI32;
 typedef unsigned int    FxU32;
+#endif
 typedef unsigned long   AnyPtr;
 typedef int             FxBool;
 typedef float           FxFloat;
