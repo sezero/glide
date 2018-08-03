@@ -66,7 +66,15 @@ hwcCheckMemSize(hwcBoardInfo *bInfo, FxU32 xres, FxU32 yres, FxU32 nColBuffers,
 #include <X11/extensions/xf86vmode.h>
 #include "lindri.h"
 
-static FxU32 fenceVar;
+#if defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 3)))
+# define __attribute_used __attribute__((__used__))
+#elif defined(__GNUC__) && (__GNUC__ >= 2)
+# define __attribute_used __attribute__((__unused__))
+#else
+# define __attribute_used
+#endif
+
+static FxU32 __attribute_used fenceVar;
 #ifdef __ia64__
 # define P6FENCE asm volatile("mf.a" ::: "memory");
 #elif defined (__alpha__)

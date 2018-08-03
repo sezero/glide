@@ -537,6 +537,7 @@
 #include <math.h>
 
 #include <3dfx.h>
+#include <glidesys.h>
 
 #ifdef HWC_EXT_INIT
 #include "hwcext.h"
@@ -582,11 +583,19 @@
 #define MAXFIFOSIZE_16MB   MAXFIFOSIZE
 #endif
 
+#if defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 3)))
+# define __attribute_used __attribute__((__used__))
+#elif defined(__GNUC__) && (__GNUC__ >= 2)
+# define __attribute_used __attribute__((__unused__))
+#else
+# define __attribute_used
+#endif
+
 static hwcInfo hInfo;
 static char errorString[1024];
-static FxU32 fenceVar;
+static FxU32 __attribute_used fenceVar;
 
-static FxU32 ProcessID;
+/*static FxU32 ProcessID;*/
 
 #if defined(__WATCOMC__)
 /*
@@ -631,11 +640,13 @@ modify [eax];
 static FxU32
 dummyContextDWORD;
 
-static void
-lostContext(void);
+/*static void
+lostContext(void);*/
 
+#ifdef _WIN32
 static FxU32
 pow2Round(FxU32 val, FxU32 roundVal);
+#endif
 
 static FxU32
 hwcBufferLfbAddr(FxU32 bufNum, 
@@ -659,9 +670,8 @@ static FxBool resolutionSupported[HWC_MAX_BOARDS][0xF];
 /*
 **  Function Prototypes
 */
-static hwcBoardInfo *curBI;
-
 #ifdef HWC_EXT_INIT
+static hwcBoardInfo *curBI;
 
 typedef void *HMONITOR;
 typedef BOOL (CALLBACK* MONITORENUMPROC)(HMONITOR, HDC, LPRECT, LPARAM);
@@ -1143,7 +1153,7 @@ hwcMapBoard(hwcBoardInfo *bInfo, FxU32 bAddrMask)
     /* memory mapped register spaces */
     for (bAddr = 0; bAddr < 2; bAddr++) {
       if ((bAddrMask & (0x01UL << bAddr)) != 0x00UL) {
-        bInfo->linearInfo.linearAddress[bAddr] = 
+        bInfo->linearInfo.linearAddress[bAddr] = (unsigned long)
           pciMapCardMulti(bInfo->pciInfo.vendorID, bInfo->pciInfo.deviceID,
                                  0x1000000, &bInfo->deviceNum, bInfo->boardNum, bAddr);
       }
@@ -1152,13 +1162,13 @@ hwcMapBoard(hwcBoardInfo *bInfo, FxU32 bAddrMask)
     /* FixMe: This gets used to set the pll's so I guess we need it here
      * unconditionally
      */
-    bInfo->linearInfo.linearAddress[2] = 
+    bInfo->linearInfo.linearAddress[2] = (unsigned long)
       pciMapCardMulti(bInfo->pciInfo.vendorID, bInfo->pciInfo.deviceID,
                              0x1000000, &bInfo->deviceNum, bInfo->boardNum, 2);
 
     /* Does the caller want the rom bios? */
     if ((bAddrMask & 0x08UL) != 0x00UL) {
-      bInfo->linearInfo.linearAddress[3] = 
+      bInfo->linearInfo.linearAddress[3] = (unsigned long)
         pciMapCardMulti(bInfo->pciInfo.vendorID, bInfo->pciInfo.deviceID,
                                0x1000000, &bInfo->deviceNum, bInfo->boardNum, 3);
     }
@@ -3751,6 +3761,7 @@ hwcBufferLfbAddr(FxU32 bufNum,
   return retVal;
 }
 
+#ifdef _WIN32
 static FxU32
 pow2Round(FxU32 val, FxU32 pow2Const)
 {
@@ -3758,6 +3769,7 @@ pow2Round(FxU32 val, FxU32 pow2Const)
 
   return ((val + pow2Mask) & ~pow2Mask);
 }
+#endif
 
 FxU32 
 hwcInitAGPFifo(hwcBoardInfo *bInfo, FxBool enableHoleCounting) 

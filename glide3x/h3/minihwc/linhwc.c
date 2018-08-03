@@ -75,7 +75,15 @@ _grImportFifo(int fifoPtr, int fifoRead);
 static FxU32
 hwcBufferLfbAddr(const hwcBoardInfo *bInfo, FxU32 physAddress);
 
-static FxU32 fenceVar;
+#if defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 3)))
+# define __attribute_used __attribute__((__used__))
+#elif defined(__GNUC__) && (__GNUC__ >= 2)
+# define __attribute_used __attribute__((__unused__))
+#else
+# define __attribute_used
+#endif
+
+static FxU32 __attribute_used fenceVar;
 #if defined(__GNUC__) && defined(__ia64__)
 # define P6FENCE asm volatile ("mf.a" ::: "memory");
 #elif defined(__GNUC__) && defined(__alpha__)

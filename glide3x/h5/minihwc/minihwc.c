@@ -986,9 +986,17 @@ static hwcInfo hInfo;
 static _p_info *CPUInfo = NULL;
 #endif
 
+#if defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 3)))
+# define __attribute_used __attribute__((__used__))
+#elif defined(__GNUC__) && (__GNUC__ >= 2)
+# define __attribute_used __attribute__((__unused__))
+#else
+# define __attribute_used
+#endif
+
 #define MAX_ERROR_SIZE 1024
 static char errorString[MAX_ERROR_SIZE];
-static FxU32 fenceVar;
+static FxU32 __attribute_used fenceVar;
 
 FxU32 hwc_errncpy(char *dst,const char *src);
 
@@ -1058,8 +1066,10 @@ static LRESULT CALLBACK _XPAltTabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARA
 static hwcSwapType swapType;
 #endif
 
+#ifdef _WIN32
 static FxU32
 pow2Round(FxU32 val, FxU32 roundVal);
+#endif
 
 static FxU32
 hwcBufferLfbAddr(const hwcBoardInfo *bInfo, FxU32 physAddress);
@@ -1916,7 +1926,7 @@ hwcMapBoard(hwcBoardInfo *bInfo, FxU32 bAddrMask)
     /* memory mapped register spaces */
     for (bAddr = 0; bAddr < 2; bAddr++) {
       if ((bAddrMask & (0x01UL << bAddr)) != 0x00UL) {
-        bInfo->linearInfo.linearAddress[bAddr] = 
+        bInfo->linearInfo.linearAddress[bAddr] = (unsigned long)
           pciMapCardMulti(bInfo->pciInfo.vendorID, bInfo->pciInfo.deviceID,
                                  length, &bInfo->deviceNum, bInfo->boardNum, bAddr);
       }
@@ -1925,13 +1935,13 @@ hwcMapBoard(hwcBoardInfo *bInfo, FxU32 bAddrMask)
     /* FixMe: This gets used to set the pll's so I guess we need it here
      * unconditionally
      */
-    bInfo->linearInfo.linearAddress[2] = 
+    bInfo->linearInfo.linearAddress[2] = (unsigned long)
       pciMapCardMulti(bInfo->pciInfo.vendorID, bInfo->pciInfo.deviceID,
                              length, &bInfo->deviceNum, bInfo->boardNum, 2);
 
     /* Does the caller want the rom bios? */
     if ((bAddrMask & 0x08UL) != 0x00UL) {
-      bInfo->linearInfo.linearAddress[3] = 
+      bInfo->linearInfo.linearAddress[3] = (unsigned long)
         pciMapCardMulti(bInfo->pciInfo.vendorID, bInfo->pciInfo.deviceID,
                                0x1000000, &bInfo->deviceNum, bInfo->boardNum, 3);
     }
@@ -4199,9 +4209,7 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo *vidTiming,
                         bInfo->h3pixelSize,
                         refresh,
                         bInfo->hMon,
-                        (char *)bInfo->devName,
-                        (void *)bInfo->lpDD1,
-                        (void *)bInfo->lpDD) )
+                        (char *)bInfo->devName) )
       {
         GDBG_INFO(80, "%s:  setVideoMode() failed!\n", FN_NAME);
         return FXFALSE;
@@ -5990,6 +5998,7 @@ hwcBufferLfbAddr(const hwcBoardInfo *bInfo, FxU32 physAddress)
   return retVal;
 }
 
+#ifdef _WIN32
 static FxU32
 pow2Round(FxU32 val, FxU32 pow2Const)
 {
@@ -5997,6 +6006,7 @@ pow2Round(FxU32 val, FxU32 pow2Const)
 
   return ((val + pow2Mask) & ~pow2Mask);
 }
+#endif
 
 FxU32 
 hwcInitAGPFifo(hwcBoardInfo *bInfo, FxBool enableHoleCounting) 
@@ -7876,7 +7886,7 @@ static void hwcCopyBuffer565Dithered(hwcBoardInfo *bInfo, FxU16 *src, int w, int
   FxI32 er = 0;
   FxI32 eg = 0;
   FxI32 eb = 0;
-  FxI32 ea = 0;
+/*FxI32 ea = 0;*/
   
   rbmask = 0xF8 << aaShift;
   gmask = 0xFC << aaShift;
@@ -8014,7 +8024,7 @@ static void hwcCopyBuffer1555Dithered(hwcBoardInfo *bInfo, FxU16 *src, int w, in
   FxI32 er = 0;
   FxI32 eg = 0;
   FxI32 eb = 0;
-  FxI32 ea = 0;
+/*FxI32 ea = 0;*/
   
   mask = 0xF8 << aaShift;
   bgshift = 3 + aaShift;
@@ -8776,8 +8786,6 @@ hwcQueryContext(hwcBoardInfo *bInfo)
 #define FN_NAME "hwcQueryContext"
   FxU32
     retVal = FXTRUE;
-  FxU32
-    retExtVal = FXTRUE;
 
   GDBG_INFO(80, FN_NAME ":  Called!\n");
 
@@ -8787,6 +8795,7 @@ hwcQueryContext(hwcBoardInfo *bInfo)
     {
       hwcExtRequest_t ctxReq;
       hwcExtResult_t ctxRes;
+      FxU32 retExtVal;
       GDBG_INFO(80, FN_NAME ":  ExtEscape:HWCEXT_QUERYCONTEXT\n");
       ctxReq.which = HWCEXT_QUERYCONTEXT;
       retExtVal = ExtEscape((HDC)bInfo->hdc, HWCEXT_ESCAPE(bInfo->boardNum), /**/
