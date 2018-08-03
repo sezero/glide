@@ -20,7 +20,6 @@
  ** $Date$ 
  **
  */
-static char revString[] = "@#%$Workfile: INIT96.C $ $Revision$";
 
 /* ANSI Headers */
 #include <stdlib.h>
@@ -691,10 +690,8 @@ INITVG96ENTRY(init96MapBoard, FxBool , (void *rd, void *info, FxU16 vID, FxU16 d
     vendorID = vID,
     deviceID = dID;
   
-  GDBG_INFO((80, "SST-96 Initialization code %s\n", revString));
-  
-  /* Watcom warning suppression */
-  revString[0] = revString[0];
+  GDBG_INFO((80, "SST-96 Initialization code\n"));
+
 
   /* !!! FIXME hack for vxd bug */
   putenv( "SST_DUALHEAD=1" );

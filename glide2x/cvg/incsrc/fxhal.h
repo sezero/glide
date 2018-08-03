@@ -1,4 +1,3 @@
-/*-*-c++-*-*/
 #ifndef __FXHAL_H__
 #define __FXHAL_H__
 
@@ -31,9 +30,6 @@
 #include <fxdll.h>
 
 #include <cvginfo.h>
-
-// Allow SourceSafe to track Revision values
-#define HAL_H_REV "$Revision$"
 
 // Just to unconfuse myself:
 //

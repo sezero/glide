@@ -139,9 +139,6 @@
 #include <windows.h>
 #endif
 
-/* Allow SourceSafe to track Revision */
-static char codeIdent[] = "@#%" VERSIONSTR ;
-
 /*
 ** sst1InitMapBoard():
 **  Find and map SST-1 board into virtual memory
@@ -160,10 +157,6 @@ FX_EXPORT FxU32 * FX_CSTYLE sst1InitMapBoard(FxU32 BoardNumber)
     FxU32 n, j;
 
     if(firstTime) {
-        /* Make Watcom happy */
-        codeIdent[0] = '@';
-        headersIdent[0] = '@';
-
         /* Find "voodoo.ini" file if it exists... */
         sst1InitUseVoodooFile = sst1InitVoodooFile();
 
@@ -173,10 +166,6 @@ FX_EXPORT FxU32 * FX_CSTYLE sst1InitMapBoard(FxU32 BoardNumber)
 
     if(BoardNumber == 0) {
         INIT_PRINTF(("sst1Init Routines"));
-#ifdef FX_DLL_ENABLE
-        INIT_PRINTF(("(DLL)"));
-#endif
-        INIT_PRINTF((": %s\n", VERSIONSTR));
         INIT_PRINTF(("sst1InitMapBoard(): BoardsInSystem = %d\n",
           boardsInSystem));
 
