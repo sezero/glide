@@ -81,6 +81,12 @@ CDEFS += -DGLIDE3 -DGLIDE3_ALPHA -DGLIDE_HW_TRI_SETUP=1 -DGLIDE_PACKED_RGB=0 -DG
 #CDEFS += -DGLIDE3_SCALER
 CDEFS += -DGLIDE_DISPATCH_SETUP -DGLIDE_DISPATCH_DOWNLOAD
 
+# workaround for CVGs with broken tsus which cannot send commands to multiple
+# tmus using chipfield. chipfield will always be set to 0xf
+CDEFS += -DGLIDE_CHIP_BROADCAST=1
+# special sli buffer clears
+CDEFS += -DGLIDE_BLIT_CLEAR=1
+
 # subsystem
 CDEFS += -DCVG
 
