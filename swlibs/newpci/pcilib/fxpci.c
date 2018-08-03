@@ -377,7 +377,7 @@ pciGetErrorString( void )
   if (pciErrorCode == PCI_ERR_WRONGVXD) {
     sprintf(vxdErrString, "Expected VXD version V%d.%d, got V%u.%u\n",
             FX_MAJOR_VER, FX_MINOR_VER,
-            BYTE1(pciVxdVer), BYTE0(pciVxdVer));
+            (unsigned) BYTE1(pciVxdVer), (unsigned) BYTE0(pciVxdVer));
     return vxdErrString;
   }
   return pciError[pciErrorCode].string;
