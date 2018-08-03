@@ -509,8 +509,8 @@ typedef struct hwcBoardInfo_s {
   FxI32 hwcProtocol;
   FxU32 devNode ;   /* AJB- DevNode from display driver for minivdd ioctls */
   FxI16/*FxI32*/ hwcEscape ; /* AJB- sucky: H5 TOT uses a diff't escape code than H3 */
-#ifdef HWC_EXT_INIT
   char devName[32];  /* KoolSmoky - Device Name */
+#ifdef HWC_EXT_INIT
   LPDIRECTDRAW  lpDD1;
   LPDIRECTDRAW2 lpDD;
 #endif /* HWC_EXT_INIT */
