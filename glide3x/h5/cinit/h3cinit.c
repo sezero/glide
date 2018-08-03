@@ -333,12 +333,7 @@
 #include <h3cinit.h>
 #include <h3.h>
 
-/* 8.3 fun */
-#ifdef __DOS32__
-#include "h3cini~1.h"
-#else
 #include "h3cinitdd.h"
-#endif
 
 // Fixing support for H4 pll tables.
 #ifdef H4
