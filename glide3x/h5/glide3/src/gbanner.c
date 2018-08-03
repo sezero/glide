@@ -104,28 +104,43 @@
 #include "fxglide.h"
 #include "fxcmd.h"
 
+#ifdef GLIDE_PLUG
+
+#if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
+static const void *
+getPlugdata (FxU32* w, FxU32* h, FxI32* strideInBytes,
+             GrLfbWriteMode_t* format)
+{
+  GR_DCL_GC;
+  if (gc->pluginInfo.plugProc != NULL)
+      return (*gc->pluginInfo.plugProc)(w,h,strideInBytes,format);
+  return NULL;
+}
+#else
+static __inline const void *
+getPlugdata (FxU32* w, FxU32* h, FxI32* strideInBytes,
+             GrLfbWriteMode_t* format)
+{
+  return NULL;
+}
+#endif
+
+
 void
 _grShamelessPlug(void)
 {
   GR_BEGIN_NOFIFOCHECK("_grShamelessPlug", 80);
   GDBG_INFO_MORE(gc->myLevel, "()\n");
 
-  if (gc->pluginInfo.plugProc != NULL) {
-    FxU32
-      plugWidth, plugHeight;
-    FxI32
-      plugStride;
-    GrLfbWriteMode_t
-      plugFormat;
-    const void*
-      plugData = (*gc->pluginInfo.plugProc)(&plugWidth, &plugHeight,
-                                            &plugStride,
-                                            &plugFormat);
+  GrState state;
+  FxU32 plugWidth, plugHeight;
+  FxI32 plugStride;
+  GrLfbWriteMode_t plugFormat;
+  const void* plugData =
+    getPlugdata(&plugWidth, &plugHeight, &plugStride, &plugFormat);
 
-    if (plugData != NULL) {
-#ifdef GLIDE_PLUG
-      GrState state;
-      
+  if (!plugData) return;
+
       grGlideGetState(&state);
       grDisableAllEffects();
       
@@ -163,259 +178,8 @@ _grShamelessPlug(void)
                         plugData);
       
       grGlideSetState(&state);
-#endif /* GLIDE_PLUG */
-    }
-  }
 
   GR_END();
 } /* _grShamelessPlug */
 
-
-
-#if !(GLIDE_PLATFORM & GLIDE_OS_WIN32)
-
-#if GLIDE_PLUG
-#if GLIDE_PLUG_EXT
-static FxU32 fxPlugWidth;
-static FxU32 fxPlugHeight;
-static FxU32 fxPlugStride;
-#else
-#include "banner.inc"
-#endif
-static GrLfbWriteMode_t fxPlugFormat = GR_LFBWRITEMODE_565;
-static FxU16 *fxPlugData;
-#endif /* GLIDE_PLUG */
-
-
-
-void FX_CALL fxSplashShutdown (void)
-{
-#if GLIDE_PLUG
- if (fxPlugData != NULL) {
-    free(fxPlugData);
-    fxPlugData = NULL;
- }
-#endif
-}
-
-
-
-FxBool FX_CALL fxSplashInit (FxU32 hWnd,
-                             FxU32 screenWidth, FxU32 screenHeight,
-                             FxU32 numColBuf, FxU32 numAuxBuf,
-                             GrColorFormat_t colorFormat)
-{
-#if GLIDE_PLUG
- if (fxPlugData == NULL) {
-#if GLIDE_PLUG_EXT
-    /* [dBorca]
-     * we should try to extract TGA resource from 3dfxspl3.dll
-     */
-    FILE *f;
-    if ((f = fopen("3dfxplug.tga", "rb")) != NULL) {
-       int bpp, skip;
-       unsigned int i, j, decoded;
-       unsigned char header[18], b1[4], b0;
-
-       /* read TGA header */
-       if (!fread(header, 18, 1, f)) {
-          fclose(f);
-          return FXFALSE;
-       }
-
-       /* fill in values */
-       fxPlugWidth = ((unsigned short *)header)[6];
-       fxPlugHeight = ((unsigned short *)header)[7];
-       fxPlugStride = fxPlugWidth * 2;
-
-       /* compute bits/pixel, then bytes/pixel; also check TGA type */
-       bpp = header[16];
-       if (((bpp != 16) && (bpp != 24) && (bpp != 32)) || ((header[2] & ~0x8) != 2)) {
-          fclose(f);
-          return FXFALSE;
-       }
-       bpp >>= 3;
-
-       /* skip colormap + junk */
-       skip = header[0];
-       if (header[1]) {
-          skip += *(unsigned short *)&header[5] * header[7] >> 3;
-       }
-       fseek(f, skip, SEEK_CUR);
-
-       /* allocate datablock */
-       if ((fxPlugData = malloc(fxPlugStride * fxPlugHeight)) == NULL) {
-          fclose(f);
-          return FXFALSE;
-       }
-
-       if (header[2] == 10) {
-          /* RLE */
-          j = 0;
-          while (j < (fxPlugWidth * fxPlugHeight)) {
-                /* packet header */
-                if (!fread(&b0, 1, 1, f)) {
-                   fxSplashShutdown();
-                   fclose(f);
-                   return FXFALSE;
-                }
-                if (b0 & 0x80) {
-                   /* replicate pixels */
-                   b0 &= 0x7f;
-                   if (!fread(b1, bpp, 1, f)) {
-                      fxSplashShutdown();
-                      fclose(f);
-                      return FXFALSE;
-                   }
-                   switch (bpp) {
-                          case 2:
-                               decoded = *(unsigned short *)&b1[0];
-                               decoded = ((decoded & 0x7fe0) << 1)
-                                       | ((decoded & 0x0200) >> 4)
-                                       |  (decoded & 0x001f);
-                               break;
-                          case 3:
-                          case 4:
-                               decoded = (b1[0]>>3) + ((b1[1]>>2)<<5) + ((b1[2]>>3)<<11);
-                               break;
-                   }
-                   for (i = 0; i <= b0; i++) {
-                       fxPlugData[j++] = decoded;
-                   }
-                } else {
-                   /* read pixels */
-                   for (i = 0; i <= b0; i++) {
-                       if (!fread(b1, bpp, 1, f)) {
-                          fxSplashShutdown();
-                          fclose(f);
-                          return FXFALSE;
-                       }
-                       switch (bpp) {
-                              case 2:
-                                   decoded = *(unsigned short *)&b1[0];
-                                   decoded = ((decoded & 0x7fe0) << 1)
-                                           | ((decoded & 0x0200) >> 4)
-                                           |  (decoded & 0x001f);
-                                   break;
-                              case 3:
-                              case 4:
-                                   decoded = (b1[0]>>3) + ((b1[1]>>2)<<5) + ((b1[2]>>3)<<11);
-                                   break;
-                       }
-                       fxPlugData[j++] = decoded;
-                   }
-                }
-          }
-          /* flip (RLE can cross scanlines, thus we can't use tricks) */
-          if (!(header[17] & 0x20)) {
-             for (i = 0; i < fxPlugHeight / 2; i++) {
-                 unsigned short *src = &fxPlugData[fxPlugWidth * i];
-                 unsigned short *dst = &fxPlugData[fxPlugWidth * (fxPlugHeight - i - 1)];
-                 for (j = 0; j < fxPlugWidth; j++) {
-                     decoded = dst[j];
-                     dst[j] = src[j];
-                     src[j] = decoded;
-                 }
-             }
-          }
-       } else if (header[2] == 2) {
-          /* normal (flip on-the-fly) */
-          for (i = 0; i < fxPlugHeight; i++) {
-              int l = (header[17] & 0x20) ? i : (fxPlugHeight-i-1);
-              unsigned short *line = &fxPlugData[fxPlugWidth * l];
-              for (j = 0; j < fxPlugWidth; j++) {
-                  if (!fread(b1, bpp, 1, f)) {
-                     fxSplashShutdown();
-                     fclose(f);
-                     return FXFALSE;
-                  }
-                  switch (bpp) {
-                         case 2:
-                              decoded = *(unsigned short *)&b1[0];
-                              decoded = ((decoded & 0x7fe0) << 1)
-                                      | ((decoded & 0x0200) >> 4)
-                                      |  (decoded & 0x001f);
-                              break;
-                         case 3:
-                         case 4:
-                              decoded = (b1[0]>>3) + ((b1[1]>>2)<<5) + ((b1[2]>>3)<<11);
-                              break;
-                  }
-                  line[j] = decoded;
-              }
-          }
-       }
-
-       fclose(f);
-    }
-
-#else  /* GLIDE_PLUG_EXT */
-
-    /* [dBorca]
-     * embedded image is always 16bit RLE and does not need to be flipped
-     */
-    int k = 0;
-    unsigned int i, j, decoded;
-    unsigned char b0;
-
-    /* allocate datablock */
-    if ((fxPlugData = malloc(fxPlugStride * fxPlugHeight)) == NULL) {
-       return FXFALSE;
-    }
-
-    /* RLE */
-    j = 0;
-    while (j < (fxPlugWidth * fxPlugHeight)) {
-          /* packet header */
-          b0 = tga_16rle[k++];
-          if (b0 & 0x80) {
-             /* replicate pixels */
-             b0 &= 0x7f;
-             decoded = *(unsigned short *)&tga_16rle[k];
-             k += 2;
-             for (i = 0; i <= b0; i++) {
-                 fxPlugData[j++] = decoded;
-             }
-          } else {
-             /* read pixels */
-             for (i = 0; i <= b0; i++) {
-                 decoded = *(unsigned short *)&tga_16rle[k];
-                 k += 2;
-                 fxPlugData[j++] = decoded;
-             }
-          }
-    }
-#endif /* GLIDE_PLUG_EXT */
- }
- return FXTRUE;
-
-#else  /* GLIDE_PLUG */
-
- return FXFALSE;
-#endif /* GLIDE_PLUG */
-}
-
-
-
-const void * FX_CALL fxSplashPlug (FxU32* w, FxU32* h,
-                                   FxI32* strideInBytes,
-                                   GrLfbWriteMode_t* format)
-{
-#if GLIDE_PLUG
- *w = fxPlugWidth;
- *h = fxPlugHeight;
- *strideInBytes = fxPlugStride;
- *format = fxPlugFormat;
- return fxPlugData;
-#else
- return NULL;
-#endif
-}
-
-
-
-void FX_CALL fxSplash (float x, float y, float w, float h, FxU32 frameNumber)
-{
-}
-
-#endif /* (GLIDE_PLATFORM & GLIDE_OS_WIN32) */
+#endif  /* GLIDE_PLUG */

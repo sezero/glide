@@ -731,8 +731,16 @@ _GlideInitEnvironment(void)
     (((envStr = GETENV(__envVar)) == NULL) ? (__defVal) : atol(envStr))
 
     _GlideRoot.environment.triBoundsCheck    = (GETENV("FX_GLIDE_BOUNDS_CHECK") != NULL);
+#ifdef GLIDE_SPLASH
     _GlideRoot.environment.noSplash          = (GETENV("FX_GLIDE_NO_SPLASH") != NULL);
+#else
+    _GlideRoot.environment.noSplash          = 1;
+#endif
+#ifdef GLIDE_PLUG
     _GlideRoot.environment.shamelessPlug     = (GETENV("FX_GLIDE_SHAMELESS_PLUG") != NULL);
+#else
+    _GlideRoot.environment.shamelessPlug     = 0;
+#endif
     _GlideRoot.environment.ignoreReopen      = (GETENV("FX_GLIDE_IGNORE_REOPEN") != NULL);
     _GlideRoot.environment.texLodDither      = ((GETENV("FX_GLIDE_LOD_DITHER") == NULL)
                                                 ? 0x00UL

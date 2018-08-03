@@ -978,8 +978,10 @@ GR_ENTRY(grBufferSwap, void, (FxU32 swapInterval))
 #endif /* (GLIDE_PLATFORM & GLIDE_HW_CVG) */
 
 #if ((GLIDE_PLATFORM & GLIDE_HW_CVG) || (GLIDE_PLATFORM & GLIDE_HW_H3))
+  #ifdef GLIDE_PLUG
   /* optionally display the 3Dfx powerfield logo overlay */
   if (_GlideRoot.environment.shamelessPlug) _grShamelessPlug();
+  #endif
 
   /* check for environmental override.
    * 

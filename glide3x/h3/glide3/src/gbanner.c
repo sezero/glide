@@ -105,29 +105,43 @@
 #include "fxglide.h"
 #include "fxcmd.h"
 
+#ifdef GLIDE_PLUG
+
+#if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
+static const void *
+getPlugdata (FxU32* w, FxU32* h, FxI32* strideInBytes,
+             GrLfbWriteMode_t* format)
+{
+  GR_DCL_GC;
+  if (gc->pluginInfo.plugProc != NULL)
+      return (*gc->pluginInfo.plugProc)(w,h,strideInBytes,format);
+  return NULL;
+}
+#else
+static __inline const void *
+getPlugdata (FxU32* w, FxU32* h, FxI32* strideInBytes,
+             GrLfbWriteMode_t* format)
+{
+  return NULL;
+}
+#endif
+
+
 void
 _grShamelessPlug(void)
 {
   GR_BEGIN_NOFIFOCHECK("_grShamelessPlug", 80);
   GDBG_INFO_MORE(gc->myLevel, "()\n");
 
-#if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
-  if (gc->pluginInfo.plugProc != NULL) {
-    FxU32
-      plugWidth, plugHeight;
-    FxI32
-      plugStride;
-    GrLfbWriteMode_t
-      plugFormat;
-    const void*
-      plugData = (*gc->pluginInfo.plugProc)(&plugWidth, &plugHeight,
-                                            &plugStride,
-                                            &plugFormat);
+  GrState state;
+  FxU32 plugWidth, plugHeight;
+  FxI32 plugStride;
+  GrLfbWriteMode_t plugFormat;
+  const void* plugData =
+    getPlugdata(&plugWidth, &plugHeight, &plugStride, &plugFormat);
 
-    if (plugData != NULL) {
-#ifdef GLIDE_PLUG
-      GrState state;
-      
+  if (!plugData) return;
+
       grGlideGetState(&state);
       grDisableAllEffects();
       
@@ -165,10 +179,8 @@ _grShamelessPlug(void)
                         plugData);
       
       grGlideSetState(&state);
-#endif /* GLIDE_PLUG */
-    }
-  }
-#endif /* (GLIDE_PLATFORM & GLIDE_OS_WIN32) */
 
   GR_END();
 } /* _grShamelessPlug */
+
+#endif  /* GLIDE_PLUG */

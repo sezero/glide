@@ -93,13 +93,11 @@
 
 #ifdef GLIDE_PLUG
 #include "banner.inc"
-#endif
 
 /* display the translucent 3Dfx powerfield logo */
 void
 _grShamelessPlug(void)
 {
-#ifdef GLIDE_PLUG
   GrState state;
 
   GR_BEGIN_NOFIFOCHECK("_grShamelessPlug", 80);
@@ -185,5 +183,5 @@ _grShamelessPlug(void)
   grGlideSetState(&state);
 
   GR_END();
-#endif /* GLIDE_PLUG */
 } /* _grShamelessPlug */
+#endif /* GLIDE_PLUG */

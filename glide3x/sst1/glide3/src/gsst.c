@@ -1002,21 +1002,25 @@ GR_ENTRY(grSstWinOpen, GrContext_t, (FxU32                   hWnd,
 
     grSstOrigin( GR_ORIGIN_LOWER_LEFT );
 
+#ifdef GLIDE_SPLASH
     if (!_GlideRoot.environment.noSplash) {
-      HMODULE newSplash;
+      HMODULE newSplash = LoadLibrary("3dfxspl3.dll");
 
-      if (newSplash = LoadLibrary("3dfxspl3.dll")) {
-        FARPROC fxSplash;
+      if (newSplash) {
+        FARPROC fxSplash = GetProcAddress(newSplash, "_fxSplash@16");
 
-        if (fxSplash = GetProcAddress(newSplash, "_fxSplash@16")) {
+        if (fxSplash) {
           fxSplash(hWnd, gc->state.screen_width,
-                   gc->state.screen_height, nAuxBuffers);  
-          _GlideRoot.environment.noSplash = 1;        
-        } 
+                   gc->state.screen_height, nAuxBuffers);
+          _GlideRoot.environment.noSplash = 1;
+        }
+        FreeLibrary(newSplash);
       }
     }
+#endif
 #endif /* (GLIDE_PLATFORM & GLIDE_OS_WIN32) */
 
+#ifdef GLIDE_SPLASH
     /* If it's still 0, then do the old one */
     if (!_GlideRoot.environment.noSplash) {
       grSplash(0.0f, 0.0f, 
@@ -1025,6 +1029,8 @@ GR_ENTRY(grSstWinOpen, GrContext_t, (FxU32                   hWnd,
                0);
       _GlideRoot.environment.noSplash = 1;
     }
+#endif
+
     grGlideSetState(&state);
   }
 

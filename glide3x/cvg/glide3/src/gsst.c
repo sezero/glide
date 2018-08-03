@@ -1523,6 +1523,7 @@ __errSliExit:
   /* --------------------------------------------------------
      Splash Screen
      --------------------------------------------------------*/
+#ifdef GLIDE_SPLASH
 #if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
   if (!_GlideRoot.environment.noSplash) {
     HMODULE newSplash;
@@ -1586,6 +1587,7 @@ __errSliExit:
              0);
     _GlideRoot.environment.noSplash = 1;
   }
+#endif
 
   _GlideRoot.windowsInit = FXTRUE; /* to avoid race with grSstControl() */
 

@@ -436,8 +436,16 @@ _GlideInitEnvironment( void )
   _GlideRoot.environment.swFifoLWM    = -1;
 
   _GlideRoot.environment.triBoundsCheck   = (getenv("FX_GLIDE_BOUNDS_CHECK") != NULL);
+#ifdef GLIDE_SPLASH
   _GlideRoot.environment.noSplash         = (getenv("FX_GLIDE_NO_SPLASH") != NULL);
+#else
+  _GlideRoot.environment.noSplash         = 1;
+#endif
+#ifdef GLIDE_PLUG
   _GlideRoot.environment.shamelessPlug    = (getenv("FX_GLIDE_SHAMELESS_PLUG") != NULL);
+#else
+  _GlideRoot.environment.shamelessPlug    = 0;
+#endif
   _GlideRoot.environment.ignoreReopen     = (getenv("FX_GLIDE_IGNORE_REOPEN") != NULL);
   _GlideRoot.environment.disableDitherSub = (getenv("FX_GLIDE_NO_DITHER_SUB") != NULL);
 

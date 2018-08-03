@@ -1426,7 +1426,11 @@ _GlideInitEnvironment(void)
 #endif
   
   GDBG_INFO(80,"          noSplash: %d\n",_GlideRoot.environment.noSplash);
+#ifdef GLIDE_PLUG
   _GlideRoot.environment.shamelessPlug     = GETENV("FX_GLIDE_SHAMELESS_PLUG") != NULL;
+#else
+  _GlideRoot.environment.shamelessPlug     = 0;
+#endif
   GDBG_INFO(80,"     shamelessPlug: %d\n",_GlideRoot.environment.shamelessPlug);
   _GlideRoot.environment.ignoreReopen      = GETENV("FX_GLIDE_IGNORE_REOPEN") != NULL;
   GDBG_INFO(80,"      ignoreReopen: %d\n",_GlideRoot.environment.ignoreReopen);
