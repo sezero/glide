@@ -780,9 +780,6 @@ INITVG96ENTRY(init96MapBoard, FxBool , (void *rd, void *info, FxU16 vID, FxU16 d
 #else
 #ifdef __DOS32__
   {
-    static void
-    init96SetupRendering(InitRegisterDesc *regDesc,
-                         GrScreenResolution_t sRes);
     /* In dos mode, we do it the way it is supposed to be.
        In windows mode, calling initEnableRegs() will change the clock
        rate and it makes the refresh looks bad. So we still use the 
