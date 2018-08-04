@@ -71,7 +71,7 @@
 
 %macro		endp	0
 	%ifnctx	proc
-		%error	Mismatched `endp'/`proc'
+		%error	Mismatched ENDP/PROC
 	%else
 		%pop
 	%endif
