@@ -110,9 +110,9 @@ static FxBool Read8Bit(FxU8 *dst, FILE *image, int small_lod, int large_lod, GrA
 static FxBool Read16Bit(FxU16 *dst, FILE *image, int small_lod, int large_lod, GrAspectRatio_t aspect);
 
 #if ((GLIDE_PLATFORM & (GLIDE_OS_DOS32 | GLIDE_OS_WIN32 | GLIDE_OS_MACOS)) != 0)
-const char *openmode = "rb";
+static const char *openmode = "rb";
 #else
-const char *openmode = "r";
+static const char *openmode = "r";
 #endif
 
 typedef struct

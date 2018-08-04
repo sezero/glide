@@ -171,9 +171,6 @@
 #include "fxglide.h"
 #include "fxinline.h"
 
-#include "rcver.h"
-static char glideIdent[] = "@#%" VERSIONSTR ;
-
 #if GLIDE_HW_TRI_SETUP
 static void
 _grUpdateTriPacketHdr(FxU32 paramMask, 
@@ -196,9 +193,6 @@ GR_STATE_ENTRY(grAlphaBlendFunction, void,
   GR_BEGIN_NOFIFOCHECK("grAlphaBlendFunction", 85);
   GDBG_INFO_MORE(gc->myLevel, "(%d,%d,%d,%d)\n",
                  rgb_sf, rgb_df, alpha_sf, alpha_df);
-
-  /* Watcom warning suppressor */
-  glideIdent[0] = glideIdent[0];
 
   alphamode = gc->state.fbi_config.alphaMode;
   if (alpha_sf != GR_BLEND_ONE && alpha_sf != GR_BLEND_ZERO) {

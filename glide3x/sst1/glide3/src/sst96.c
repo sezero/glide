@@ -104,7 +104,7 @@
 
 #define GEN_INDEX(a) ((((FxU32) a) - ((FxU32) gc->reg_ptr)) >> 2)
 
-char
+const char
 *regNames[] = {
   "status",             /* 0x00 */
   "reserved001",        /* 0x01 */

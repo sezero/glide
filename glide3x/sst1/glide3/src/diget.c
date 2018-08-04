@@ -175,7 +175,7 @@
 
 #include "fxinline.h"
 
-const FxU32 _grMemOffset[16] = 
+static const FxU32 _grMemOffset[16] = 
 {
   65536,                        /* 320x200 */
   65536,                        /* 320x240 */
@@ -195,7 +195,7 @@ const FxU32 _grMemOffset[16] =
   65536                         /* 400x300 */
 };
 
-const FxU32 _grResolutionRefresh[16][9] = 
+static const FxU32 _grResolutionRefresh[16][9] = 
 {
   {                             /* 320x200 */
     0,                          /* 60 Hz */

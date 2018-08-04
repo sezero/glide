@@ -843,7 +843,7 @@ _GR_SET16(void *addr, unsigned short data)
 
 #if defined( GLIDE_DEBUG ) && ( GLIDE_PLATFORM & GLIDE_HW_SST96 ) 
 
-extern char *regNames[];
+extern const char *regNames[];
 
 static FxU32 thisMask;
 static FxU32 thisWrite;

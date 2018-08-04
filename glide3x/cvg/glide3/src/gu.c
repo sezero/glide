@@ -72,7 +72,7 @@
 #include "fxinline.h"
 
 
-const FxU32 _grResolutionXY[16][2] = 
+static const FxU32 _grResolutionXY[16][2] = 
 {
   { 320, 200 },                 /* 320x200 */
   { 320, 240 },                 /* 320x240 */

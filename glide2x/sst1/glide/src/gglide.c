@@ -189,9 +189,6 @@
 #include <init.h>
 #endif
 
-#include "rcver.h"
-static char glideIdent[] = "@#%" VERSIONSTR ;
-
 /*---------------------------------------------------------------------------
 ** grAlphaBlendFunction
 **
@@ -205,9 +202,6 @@ GR_ENTRY(grAlphaBlendFunction, void, ( GrAlphaBlendFnc_t rgb_sf,   GrAlphaBlendF
 
   GR_BEGIN("grAlphaBlendFunction",85,4);
   GDBG_INFO_MORE((gc->myLevel,"(%d,%d,%d,%d)\n",rgb_sf,rgb_df,alpha_sf,alpha_df));
-
-  /* Watcom warning suppressor */
-  glideIdent[0] = glideIdent[0];
 
   alphamode = gc->state.fbi_config.alphaMode;
   if (alpha_sf != GR_BLEND_ONE && alpha_sf != GR_BLEND_ZERO) {
