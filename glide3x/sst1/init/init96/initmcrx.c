@@ -153,13 +153,13 @@ INITMCRXENTRY(initMCRXSetVideo, FxBool, (GrScreenResolution_t res, GrScreenRefre
 {
 #define FN_NAME "initMCRXSetVideo"
   FxBool rv = FXTRUE;
-#if /*defined(INIT_ACCESS_DIRECT) &&*/ defined(__DOS32__)
+#if defined(INIT_ACCESS_DIRECT) && defined(__DOS32__)
   union REGS r0, r1;
 #endif
   
   GDBG_INFO((80, "%s: \n", FN_NAME));
 
-#if /*defined(INIT_ACCESS_DIRECT) &&*/ defined(__DOS32__)
+#if defined(INIT_ACCESS_DIRECT) && defined(__DOS32__)
   switch( res ) {
   case GR_RESOLUTION_320x200:
     /* Set up VESA Mode 0x136 - 320x200x16 */
