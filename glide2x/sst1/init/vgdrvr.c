@@ -98,18 +98,17 @@ static void disableTransport( void ) {
 
 static InitSwapType_t swapBuffers( FxU32 code ) {
     return INIT_SWAP_FLIP;
-} 
+}
 
 static FxU32 status( void ) {
   return sst1InitReturnStatus((FxU32 *) context->info.hwDep.vgInfo.vgBaseAddr);
-} 
+}
 
 static FxBool busy(void) {
   FxU32 stat = status();
   FxBool ret = (stat & SST_BUSY) ? FXTRUE : FXFALSE;
-  
   return ret;
-} 
+}
 
 static void idle( void ) {
   sst1InitIdle((FxU32 *)context->info.hwDep.vgInfo.vgBaseAddr);
@@ -194,4 +193,3 @@ void vgDriverInit( InitContext *context ) {
     context->findVidTimingStruct = findvidtiming;
 
 }
-

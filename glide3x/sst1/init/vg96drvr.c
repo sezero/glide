@@ -31,8 +31,6 @@
 #include <string.h>
 #include <gdebug.h>
 
-/* This is currently disabled, thus breaking rush, until we can get some
- * sources from Aliance Semiconductor */
 #if SST96
 static FxBool setVideo( FxU32                   hWnd,
                         GrScreenResolution_t    sRes,
@@ -45,7 +43,8 @@ static FxBool setVideo( FxU32                   hWnd,
                         int                     *yres,
                         int                     *fbStride,
                         sst1VideoTimingStruct   *vidTimings) {
-    return init96SetVideo( hWnd, sRes, vRefresh, cFormat, yOrigin, 
+
+    return init96SetVideo( hWnd, sRes, vRefresh, cFormat, yOrigin,
                            nColBuffers, nAuxBuffers,
                            &context->info.regs,
                            xres, yres, fbStride );
@@ -66,19 +65,17 @@ static void disableTransport( void ) {
 static void swapBuffers( FxU32 code ) {
     if ( context && context->writeMethod )
         init96Swap( code, &context->info.regs, context->writeMethod );
-} 
+}
 
 static FxU32 status( void ) {
   return *(context->info.regs.hwDep.VG96RegDesc.serialStatus);
-} 
+}
 
 static FxBool busy(void) {
   FxBool rv;
-
   rv = (status() & 0x1) ? FXTRUE : FXFALSE;
-
   return rv;
-} 
+}
 
 static void idle( void ) {
     init96Idle(context->writeMethod);
@@ -154,7 +151,7 @@ void vg96DriverInit( InitContext *context ) {
     context->gammaRGB         = gammargb;
     context->initGammaTable   = gammatable;
     context->findVidTimingStruct = findvidtiming;
-} 
+}
 #else
 /* I've got to stub this one to get the Voodoo Graphics glide to link */
 void vg96DriverInit( InitContext *context ) {
@@ -182,6 +179,3 @@ void vg96DriverInit( InitContext *context ) {
 
 }
 #endif
-
-
-

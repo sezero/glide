@@ -24,7 +24,7 @@ LCOPTS   = -WX
 LCINCS	 = -I$(BUILD_ROOT_SWLIBS)\include -I$(BUILD_ROOT_SST1)\include
 
 !if "$(FX_SST96_PAGE_FIFO)" != "1"
-LCDEFS          = $(LCDEFS) -DSST96_ALT_FIFO_WRAP
+LCDEFS   = $(LCDEFS) -DSST96_ALT_FIFO_WRAP
 !endif
 
 # sources
@@ -34,10 +34,10 @@ CFILES	            = sst1init.c info.c print.c parse.c gamma.c util.c \
                       sli.c video.c dac.c gdebug.c
 
 !if "$(FX_DLL_BUILDSST1INIT)" == "1"
-SUBLIBRARIES        = $(BUILD_ROOT_SWLIBS)\lib\fxpci.lib 
+SUBLIBRARIES        = $(BUILD_ROOT_SWLIBS)\lib\fxpci.lib
 FX_DLL_LIBRARY = 1
 !else
-SUBLIBRARIES        = 
+SUBLIBRARIES        =
 !endif
 
 # targets
