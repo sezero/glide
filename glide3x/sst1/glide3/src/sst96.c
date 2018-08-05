@@ -19,10 +19,6 @@
 **
 ** Revision 1.1.2.1  2004/03/02 07:55:30  dborca
 ** Bastardised Glide3x for SST1
-**
-** Revision 1.1.1.1  1999/12/07 21:48:54  joseph
-** Initial checkin into SourceForge.
-**
  * 
  * 20    9/19/97 12:38p Peter
  * asm rush trisetup vs alt fifo
@@ -389,15 +385,15 @@ _grDebugGroupWriteHeader(FxU32 header, FxU32 address)
   GDBG_INFO((128, "Header:       0x%x\n", header));
   GDBG_INFO((128, "PCI Address:  0x%x\n", (address & 0xfffff) << 2));
   GDBG_INFO((128, "Chip Field:   0x%x\n", (address >> 14) & 0xf));
-            
+
   offset = (address & ~(0xf << 14)) & 0xfffff;
   index = offset;
 
   if (offset < 0x100 ) { /* It's state or triangle */
-    
+
     GDBG_INFO((128, "Start:     0x%s (0x%x)\n", regNames[index], index));
     GDBG_INFO((128, "Mask:      0x%x\n", header));
-    
+
     while (lheader) {
       if (lheader & 0x1) {
         nBits++;
@@ -420,7 +416,7 @@ _grDebugGroupWriteHeader(FxU32 header, FxU32 address)
   }
 
   GDBG_INFO((128, "%s:  %d bits of mask 0x%x were set\n", FN_NAME,
-             nBits, header)); 
+             nBits, header));
 
   GR_ASSERT(nBits);
 
@@ -434,11 +430,11 @@ _grFifoWriteDebug(FxU32 addr, FxU32 val, FxU32 fifoPtr)
   GR_DCL_GC;
   FxU32
     index = GEN_INDEX(addr);
-  char
-    *regName; 
+  const char
+    *regName;
 
   regName = (index <= 0xff) ? regNames[index] : "TRAM";
- 
+
   if (index <= 0xff) { 
     GDBG_INFO((120, "Storing to FIFO:\n"));
     GDBG_INFO((120, "\tReg Name:    %s\n", regName));
@@ -456,13 +452,13 @@ _grFifoFWriteDebug(FxU32 addr, float val, FxU32 fifoPtr)
   GR_DCL_GC;
   FxU32
     index = GEN_INDEX(addr);
-  char
-    *regName; 
+  const char
+    *regName;
 
   if (index <= 0xff) {
-    
+
     regName = regNames[index];
-    
+
     GDBG_INFO((120, "Storing to FIFO:\n"));
     GDBG_INFO((120, "\tReg Name:    %s\n", regName));
     GDBG_INFO((120, "\tReg Num:     0x%x\n", index));
@@ -475,7 +471,7 @@ _grFifoFWriteDebug(FxU32 addr, float val, FxU32 fifoPtr)
     GDBG_INFO((195, "\tTexel:       %4.2f\n", val));
     GDBG_INFO((195, "\tFIFO Ptr:    0x%x\n", fifoPtr));
     GDBG_INFO((120, "\tFIFO Test:    0x%x\n", gc->fifoData.hwDep.vg96FIFOData.fifoSize));
-  }  
+  }
 } /* _grFifoFWriteDebug */
 
 
@@ -495,13 +491,13 @@ _grSst96PCIFifoEmpty() {
   for (;;) {
     if (SST96_PCI_FIFO_EMPTY(hw))
       return FXTRUE;
-    
+
     if (!(++count % COUNT_PATIENCE_VALUE)) {
       GDBG_INFO((120, "Losing Patients after %d tries\n", COUNT_PATIENCE_VALUE));
       break;
     }
   }
-  return FXFALSE;  
+  return FXFALSE;
 } /* _grSst96PCIFifoEmpty */
 
 
@@ -532,7 +528,7 @@ _grSst96Load32(FxU32 *s) {
   FxU32
     index,                      /* index into reg name list */
     regVal;
-  char
+  const char
     *regName;
 
   regVal = *s;
@@ -546,7 +542,7 @@ _grSst96Load32(FxU32 *s) {
     GDBG_INFO((120, "\tReg Num:         0x%x\n", index));
     GDBG_INFO((120, "\tReg Val:         0x%x\n", regVal));
   }
-      
+
   return regVal;
 
 } /* _grSst96Load32 */
