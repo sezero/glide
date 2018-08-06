@@ -97,6 +97,7 @@
 
 #define GEN_INDEX(a) ((((FxU32) a) - ((FxU32) gc->reg_ptr)) >> 2)
 
+#if GDBG_INFO_ON || defined(GLIDE_DEBUG)
 const char
 *regNames[] = {
   "status",             /* 0x00 */
@@ -356,6 +357,7 @@ const char
   "reserved0FE",        /* 0xfe */
   "reserved0FF"         /* 0xff */
 };
+#endif /* GDBG_INFO_ON||GLIDE_DEBUG */
 
 /*---------------------------------------------------------------------------
 ** _grDebugGroupWriteHeader
@@ -419,8 +421,8 @@ _grDebugGroupWriteHeader(FxU32 header, FxU32 address)
 
 #undef FN_NAME
 } /* _grDebugGroupWriteHeader */
-#endif /* (GDBG_INFO_ON & (GLIDE_PLATFORM & GLIDE_HW_SST96)) */
 
+#ifdef SST96_FIFO
 void
 _grFifoWriteDebug(FxU32 addr, FxU32 val, FxU32 fifoPtr)
 {
@@ -470,6 +472,8 @@ _grFifoFWriteDebug(FxU32 addr, float val, FxU32 fifoPtr)
     GDBG_INFO((120, "\tFIFO Test:    0x%x\n", gc->fifoData.hwDep.vg96FIFOData.fifoSize));
   }
 } /* _grFifoFWriteDebug */
+#endif /* (SST96_FIFO) */
+#endif /* (GDBG_INFO_ON & (GLIDE_PLATFORM & GLIDE_HW_SST96)) */
 
 
 /*--------------------------------------------------------------------------
@@ -498,9 +502,6 @@ _grSst96PCIFifoEmpty() {
 } /* _grSst96PCIFifoEmpty */
 
 
-FxU32
-*sstGlobal(void);
-
 void GR_CDECL
 _grSst96FifoMakeRoom(void) 
 {
@@ -522,28 +523,21 @@ _grSst96FifoMakeRoom(void)
 FxU32
 _grSst96Load32(FxU32 *s) {
   GR_DCL_GC;
-  FxU32
-    index,                      /* index into reg name list */
-    regVal;
-  const char
-    *regName;
 
-  regVal = *s;
-
-  index = GEN_INDEX(s);
-
+  FxU32 regVal = *s;
+  #if GDBG_INFO_ON
+  FxU32 index = GEN_INDEX(s);
   if (index <= 0xff) {
-    regName = regNames[index];
+    const char *regName = regNames[index];
     GDBG_INFO((120, "Direct Register Read:\n"));
     GDBG_INFO((120, "\tReg Name:        %s\n", regName));
     GDBG_INFO((120, "\tReg Num:         0x%x\n", index));
     GDBG_INFO((120, "\tReg Val:         0x%x\n", regVal));
   }
-
+  #endif
   return regVal;
 
 } /* _grSst96Load32 */
-
 
 /*---------------------------------------------------------------------------
 ** _gr96SstStore32
@@ -569,21 +563,17 @@ _grSst96Store32(FxU32 *d, FxU32 s) {
   SST96_STORE_FIFO( d, s );
   GLIDE_FIFO_CHECK();
 #else /* !SST96_FIFO */
-  FxU32
-    index; /* Index into reg name list */
-  char
-    *regName;
 
-  index = GEN_INDEX(d);
-
+  #if GDBG_INFO_ON
+  FxU32 index = GEN_INDEX(d);
   if (index <= 0xff) {
-    regName = (index <= 0xff) ? regNames[index] : "TRAM";
+    const char *regName = (index <= 0xff) ? regNames[index] : "TRAM";
     GDBG_INFO((120, "Direct Rester Write:\n"));
     GDBG_INFO((120, "\tReg Name:        %s\n", regName));
     GDBG_INFO((120, "\tReg Num:         0x%x\n", index));
     GDBG_INFO((120, "\tValue:           0x%x\n", s));
   }
-
+  #endif
   if (_grSst96PCIFifoEmpty() == FXFALSE) {
     GDBG_INFO((120, "ERROR:  Fifo didn't empty\n"));
   }
@@ -600,20 +590,17 @@ _grSst96Store32F(float *d, float s) {
 #ifdef SST96_FIFO
   GLIDE_FIFO_CHECK();
 #else
-  FxU32
-    index;                      /* Offset into reg name array */
-  char
-    *regName;                   /* Name of register */
 
-  index = GEN_INDEX(d);
-
+  #if GDBG_INFO_ON
+  FxU32 index = GEN_INDEX(d);/* Offset into reg name array */
   if (index <= 0xff) {
-    regName = regNames[index];
+    const char *regName = regNames[index];
     GDBG_INFO((120, "Direct Register Write:\n"));
     GDBG_INFO((120, "\tReg Name:        %s\n", regName));
     GDBG_INFO((120, "\tReg Num:         0x%x\n", index));
     GDBG_INFO((120, "\tValue:           %4.4f\n", s));
   }
+  #endif
   *d = s;
 
   if (_grSst96PCIFifoEmpty() == FXFALSE) {

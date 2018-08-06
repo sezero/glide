@@ -470,7 +470,7 @@ _GlideInitEnvironment( void )
   An array of SST register info
   ----------------------------------------------------------------------*/
 typedef struct {
-  char *name;
+  const char *name;
 } regInfo;
 
 static regInfo regsInfo[] = {
