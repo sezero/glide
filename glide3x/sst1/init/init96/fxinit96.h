@@ -89,7 +89,7 @@ typedef struct {
 
 extern Init96HALData *curHALData;
 
-extern char *iRegNames[];
+extern const char *iRegNames[];
 
 extern volatile FxU32   *sstHW;
 extern volatile Sstregs *sstPtr;

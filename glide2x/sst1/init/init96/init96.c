@@ -184,7 +184,7 @@ static void init96SetupRendering(InitRegisterDesc *regDesc,
    This array is HIGHLY important to debugging.  Delete it at your
    extreme peril.
    */
-char *iRegNames[] = {
+const char *iRegNames[] = {
   "status",                     /* 0x00 */
   "reserved001",                /* 0x01 */
   "vAx",                        /* 0x02 */
