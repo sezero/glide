@@ -9,7 +9,6 @@
 #define FX_DLL_DEFINITION
 #include <fxdll.h>
 
-#define null               0
 #define SIZE_SST1_NEEDED   0x100000
 #define END_ADDRESS        0x10000000
 #define S3_SHIFT           0x400000
@@ -25,46 +24,49 @@ struct RangeSTRUCT
    struct RangeSTRUCT   *prev;
 };
 
-int silent = 1;
+static int silent = 1;
 
 typedef struct RangeSTRUCT RangeStruct;
 
-void InitRemap(void);
-void CloseRemap(void);
-void GetMemoryMap(void);
-void RemapVoodoo(RangeStruct *conflict);
-void AdjustMapForS3(void);
-RangeStruct *TestForConflicts(void);
-void RemoveEntry(RangeStruct *del);
-void InsertEntry(RangeStruct *ins);
-FxBool FindHole(RangeStruct *conflict);
-FxU32 SnapToDecentAddress(FxU32 address,RangeStruct *conflict);
-FxBool fits_in_hole(RangeStruct *begin,FxU32 end,RangeStruct *hole,RangeStruct *conflict);
-FxBool fits_under(RangeStruct *first,FxU32 minimum,RangeStruct *hole,RangeStruct *conflict);
-FxU32 pciGetType(long i);
-void pciGetRange(PciRegister reg,FxU32 device_number,FxU32 *data);
-FxBool pciGetAddress(PciRegister reg,FxU32 device_number,FxU32 *data);
+static void InitRemap(void);
+static void CloseRemap(void);
+static void GetMemoryMap(void);
+static void RemapVoodoo(RangeStruct *conflict);
+static void AdjustMapForS3(void);
+static RangeStruct *TestForConflicts(void);
+static void RemoveEntry(RangeStruct *del);
+static void InsertEntry(RangeStruct *ins);
+static FxBool FindHole(RangeStruct *conflict);
+static FxU32 SnapToDecentAddress(FxU32 address,RangeStruct *conflict);
+static FxBool fits_in_hole(RangeStruct *begin,FxU32 end,RangeStruct *hole,RangeStruct *conflict);
+static FxBool fits_under(RangeStruct *first,FxU32 minimum,RangeStruct *hole,RangeStruct *conflict);
+static FxU32 pciGetType(long i);
+static void pciGetRange(PciRegister reg,FxU32 device_number,FxU32 *data);
+static FxBool pciGetAddress(PciRegister reg,FxU32 device_number,FxU32 *data);
 
-void ForceCleanUp(void);
-FxBool FindNecessaryCards(void);
-void ProcessCommandLine(char **argv,int argc);
-FxBool IsCardVoodoo(long i);
-FxBool IsCardS3(long i);
-FxBool ReadHex(char *string,FxU32 *num);
-void AddMapEntry(FxU32 address,FxU32 range,FxU32 id,FxBool VoodooCard,FxBool S3Card);
-void HandleMemoryOverlap(void);
-FxBool overlap_map(RangeStruct *begin,FxU32 end);
+static void ForceCleanUp(void);
+static FxBool FindNecessaryCards(void);
+static void ProcessCommandLine(char **argv,int argc);
+static FxBool IsCardVoodoo(long i);
+static FxBool IsCardS3(long i);
+static FxBool ReadHex(char *string,FxU32 *num);
+static void AddMapEntry(FxU32 address,FxU32 range,FxU32 id,FxBool VoodooCard,FxBool S3Card);
+#if 0 /* not used */
+static void HandleMemoryOverlap(void);
+static FxBool overlap_map(RangeStruct *begin,FxU32 end);
+#endif
 
-FxBool switch_S3_flag_ignore=FXFALSE;
-//FxBool switch_force=FXFALSE;
-FxBool switch_C0_bias=FXTRUE;
-int switch_voodoo_loc = 0;
-FxU32 num_voodoos=0;
+static FxBool switch_S3_flag_ignore=FXFALSE;
+//static FxBool switch_force=FXFALSE;
+static FxBool switch_C0_bias=FXTRUE;
+static int switch_voodoo_loc = 0;
+static FxU32 num_voodoos=0;
 
 //#define TESTING 1
 
 #ifdef TESTING
-RangeStruct test_data[6]=  {{0xF0000000,0x100000,1,0,0,0,0},
+static RangeStruct test_data[6]=
+                           {{0xF0000000,0x100000,1,0,0,0,0},
                             {0xF3000000,0x200000,4,1,0,0,0},
                             {0xF3000000,0x200000,8,0,0,0,0},
                             {0xF5000000,0x200000,2,0,0,0,0},
@@ -72,17 +74,15 @@ RangeStruct test_data[6]=  {{0xF0000000,0x100000,1,0,0,0,0},
                             {0xD3001000,0x200000,3,0,0,0,0}};
 #endif
 
-RangeStruct map[80];
-RangeStruct hole[80];
-long        num_holes=0;
-RangeStruct *first_entry;
-RangeStruct *last_entry;
-long        entries=0;
-RangeStruct master_hole;
-long        voodoo_loc;
-FxU32       conflicts_found=0;
+static RangeStruct map[80];
+static RangeStruct hole[80];
+static RangeStruct *first_entry;
+static RangeStruct *last_entry;
+static long entries=0;
+static RangeStruct master_hole;
+static FxU32 conflicts_found=0;
 
-void fxremap_dowork(int argc,char **argv,int doit_silently)
+static void fxremap_dowork(int argc,char **argv,int doit_silently)
 {
    RangeStruct *conflict;
 
@@ -90,10 +90,8 @@ void fxremap_dowork(int argc,char **argv,int doit_silently)
 
    ProcessCommandLine(argv,argc);
 
-#if !DIRECTX
    InitRemap();
-#endif
-  
+
    if (!FindNecessaryCards())
    {
       if (!silent) {
@@ -109,7 +107,7 @@ void fxremap_dowork(int argc,char **argv,int doit_silently)
    /* expand region of mapping for S3 card */
    AdjustMapForS3();
    /* see if we find any conflicts with any voodoo card */
-   while (conflict=TestForConflicts())
+   while ((conflict=TestForConflicts()))
    {
       conflicts_found++;
       /* since it is going to move */
@@ -138,7 +136,7 @@ void fxremap_dowork(int argc,char **argv,int doit_silently)
    CloseRemap();
 }
 
-void fxremap() {
+void fxremap(void) {
   fxremap_dowork(0,NULL,1);
 }
 
@@ -147,14 +145,14 @@ void fxremap_main(int argc,char **argv) {
 }
 
 
-void InitRemap(void)
+static void InitRemap(void)
 {
 #if !DIRECTX
    pciOpen();
 #endif
 }
 
-void CloseRemap(void)
+static void CloseRemap(void)
 {
    // pciClose();
 }
@@ -172,7 +170,7 @@ FxU32 pciGetConfigData_R(PciRegister reg, FxU32 devNum) {
 #define PCI_NORMAL_TYPE 0
 #define PCI_BRIDGE_TYPE 1
 
-void GetMemoryMap(void)
+static void GetMemoryMap(void)
 {
    FxU32    temp,temp2;
    FxU32    type;
@@ -206,7 +204,6 @@ void GetMemoryMap(void)
                  maxFnNumber = 1;
              }
          }
-         
 
          for(fn=0;fn<maxFnNumber;fn++) {
 
@@ -256,7 +253,7 @@ void GetMemoryMap(void)
 #endif
 }
 
-void AdjustMapForS3(void)
+static void AdjustMapForS3(void)
 {
    RangeStruct *cur;
 
@@ -273,7 +270,7 @@ void AdjustMapForS3(void)
    }
 }
 
-RangeStruct *TestForConflicts(void)
+static RangeStruct *TestForConflicts(void)
 {
    RangeStruct *cur,*next;
 
@@ -315,10 +312,10 @@ RangeStruct *TestForConflicts(void)
       }
       cur=cur->next;
    }
-   return null;
+   return NULL;
 }
 
-void AddMapEntry(FxU32 address,FxU32 range,FxU32 id,FxBool VoodooCard,FxBool S3Card)
+static void AddMapEntry(FxU32 address,FxU32 range,FxU32 id,FxBool VoodooCard,FxBool S3Card)
 {
    RangeStruct *temp,*cur,*next;
 
@@ -327,7 +324,6 @@ void AddMapEntry(FxU32 address,FxU32 range,FxU32 id,FxBool VoodooCard,FxBool S3C
    FxU32	   tmp_address=0;
 //END
 
-
 #if 0
    static long    test_entry=0;
 
@@ -335,7 +331,6 @@ void AddMapEntry(FxU32 address,FxU32 range,FxU32 id,FxBool VoodooCard,FxBool S3C
    range=~(test_data[test_entry++].range - 0x1);
 #endif
    /* only if address != 0 */
-
 
 //jcochrane@3dfx.com
 //check for duplicate entries in the map table,ignore if there is
@@ -347,7 +342,6 @@ void AddMapEntry(FxU32 address,FxU32 range,FxU32 id,FxBool VoodooCard,FxBool S3C
 			address=0;
 	}
 //END
-
 
    if(address)
    {
@@ -363,13 +357,13 @@ void AddMapEntry(FxU32 address,FxU32 range,FxU32 id,FxBool VoodooCard,FxBool S3C
       {
          first_entry=temp;
          last_entry=temp;
-         temp->next=null;
-         temp->prev=null;
+         temp->next=NULL;
+         temp->prev=NULL;
          return;
       }
 
       cur=first_entry;
-      next=null;
+      next=NULL;
       while(cur)
       {
          if (temp->address < cur->address)
@@ -394,12 +388,12 @@ void AddMapEntry(FxU32 address,FxU32 range,FxU32 id,FxBool VoodooCard,FxBool S3C
          last_entry->next=temp;
          temp->prev=last_entry;
          last_entry=temp;
-         temp->next=null;
+         temp->next=NULL;
       }
    }
 }
 
-void RemoveEntry(RangeStruct *del)
+static void RemoveEntry(RangeStruct *del)
 {
    RangeStruct *prev;
 
@@ -416,15 +410,15 @@ void RemoveEntry(RangeStruct *del)
       prev=del->prev;
       last_entry=prev;
 
-      prev->next=null;
-      del->prev=null;
-      del->next=null;
+      prev->next=NULL;
+      del->prev=NULL;
+      del->next=NULL;
    }
    else
    {
       if (!(del->prev))
       {
-         del->next->prev=null;
+         del->next->prev=NULL;
          first_entry=del->next;
       }
       else
@@ -432,19 +426,19 @@ void RemoveEntry(RangeStruct *del)
          del->next->prev=del->prev;
          del->prev->next=del->next;
       }
-      del->next=null;
-      del->prev=null;
+      del->next=NULL;
+      del->prev=NULL;
    }
 }
 
-void InsertEntry(RangeStruct *ins)
+static void InsertEntry(RangeStruct *ins)
 {
    RangeStruct *cur;
 
    cur=first_entry;
    
-   ins->next=null;
-   ins->prev=null;
+   ins->next=NULL;
+   ins->prev=NULL;
 
    if (!first_entry)
    {
@@ -479,7 +473,7 @@ void InsertEntry(RangeStruct *ins)
    last_entry=ins;
 }
 
-FxU32 SnapToDecentAddress(FxU32 address,RangeStruct *conflict)
+static FxU32 SnapToDecentAddress(FxU32 address,RangeStruct *conflict)
 {
    FxU32 range;
    FxU32 mask;
@@ -499,7 +493,7 @@ FxU32 SnapToDecentAddress(FxU32 address,RangeStruct *conflict)
    return address;
 }
 
-FxBool fits_in_hole(RangeStruct *begin,FxU32 end,RangeStruct *hole,RangeStruct *conflict)
+static FxBool fits_in_hole(RangeStruct *begin,FxU32 end,RangeStruct *hole,RangeStruct *conflict)
 {
    FxU32 address;
 
@@ -518,7 +512,7 @@ FxBool fits_in_hole(RangeStruct *begin,FxU32 end,RangeStruct *hole,RangeStruct *
    return FXFALSE;
 }
 
-FxBool fits_under(RangeStruct *first,FxU32 minimum,RangeStruct *hole,RangeStruct *conflict)
+static FxBool fits_under(RangeStruct *first,FxU32 minimum,RangeStruct *hole,RangeStruct *conflict)
 {
    FxU32 address;
 
@@ -535,7 +529,7 @@ FxBool fits_under(RangeStruct *first,FxU32 minimum,RangeStruct *hole,RangeStruct
 }
 
 
-FxBool FindHole(RangeStruct *conflict)
+static FxBool FindHole(RangeStruct *conflict)
 {
    RangeStruct *cur;
 
@@ -570,7 +564,7 @@ FxBool FindHole(RangeStruct *conflict)
    return FXFALSE;
 }
 
-void RemapVoodoo(RangeStruct *conflict)
+static void RemapVoodoo(RangeStruct *conflict)
 {
    FxU32    address;
 
@@ -586,7 +580,7 @@ void RemapVoodoo(RangeStruct *conflict)
    }
 }
 
-void pciGetRange(PciRegister reg,FxU32 device_number,FxU32 *data)
+static void pciGetRange(PciRegister reg,FxU32 device_number,FxU32 *data)
 {
    FxU32    temp=0xFFFFFFFF;
    FxU32    size,save;
@@ -605,7 +599,7 @@ void pciGetRange(PciRegister reg,FxU32 device_number,FxU32 *data)
    *data=size;
 }
 
-FxBool pciGetAddress(PciRegister reg,FxU32 device_number,FxU32 *data)
+static FxBool pciGetAddress(PciRegister reg,FxU32 device_number,FxU32 *data)
 {
    pciGetConfigData(reg,device_number,data);
    if ((*data)==0)
@@ -615,13 +609,13 @@ FxBool pciGetAddress(PciRegister reg,FxU32 device_number,FxU32 *data)
    return FXTRUE;
 }
 
-void ForceCleanUp(void)
+static void ForceCleanUp(void)
 {
    // pciClose();
    // exit(1);
 }
 
-FxBool FindNecessaryCards(void)
+static FxBool FindNecessaryCards(void)
 {
    FxBool voodoo_found=FXFALSE;
    long   i;
@@ -647,7 +641,7 @@ FxBool FindNecessaryCards(void)
    return FXTRUE;
 }
 
-void ProcessCommandLine(char **argv,int argc)
+static void ProcessCommandLine(char **argv,int argc)
 {
    long     i;
    FxU32    temp,temp2;
@@ -756,7 +750,7 @@ void ProcessCommandLine(char **argv,int argc)
    }
 }
 
-FxU32 pciGetType(long i)
+static FxU32 pciGetType(long i)
 {
    FxU32 header_type;
 
@@ -765,7 +759,7 @@ FxU32 pciGetType(long i)
    return header_type;
 }
 
-FxBool IsCardVoodoo(long i)
+static FxBool IsCardVoodoo(long i)
 {
    FxU32    vendor,dev_id;
    FxU32    fn_num = (i >> 13) & 0x7; 
@@ -796,7 +790,7 @@ FxBool IsCardVoodoo(long i)
    return FXFALSE;
 }
 
-FxBool IsCardS3(long i)
+static FxBool IsCardS3(long i)
 {
    FxU32    vendor,dev_id;
    
@@ -808,7 +802,7 @@ FxBool IsCardS3(long i)
    return FXFALSE;
 }
 
-FxBool ReadHex(char *string,FxU32 *num)
+static FxBool ReadHex(char *string,FxU32 *num)
 {
    long  i=0;
    FxU32 temp=0,temp2;
@@ -848,7 +842,8 @@ FxBool ReadHex(char *string,FxU32 *num)
    return FXTRUE;
 }
 
-void HandleMemoryOverlap(void)
+#if 0 /* not used */
+static void HandleMemoryOverlap(void)
 {
    RangeStruct *cur;
 
@@ -864,7 +859,7 @@ void HandleMemoryOverlap(void)
             if (cur->next==last_entry)
             {
                last_entry=cur;
-               cur->next=null;
+               cur->next=NULL;
             }
             else
             {
@@ -880,9 +875,10 @@ void HandleMemoryOverlap(void)
    }
 }
 
-FxBool overlap_map(RangeStruct *begin,FxU32 end)
+static FxBool overlap_map(RangeStruct *begin,FxU32 end)
 {
    if ((begin->address+begin->range)>end)
       return FXTRUE;
    return FXFALSE;
 }
+#endif
