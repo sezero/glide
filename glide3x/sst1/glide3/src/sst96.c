@@ -525,10 +525,9 @@ _grSst96FifoMakeRoom(void)
 */
 FxU32
 _grSst96Load32(FxU32 *s) {
-  GR_DCL_GC;
-
-  FxU32 regVal = *s;
   #if GDBG_INFO_ON
+  GR_DCL_GC;
+  FxU32 regVal = *s;
   FxU32 index = GEN_INDEX(s);
   if (index <= 0xff) {
     const char *regName = regNames[index];
@@ -537,9 +536,10 @@ _grSst96Load32(FxU32 *s) {
     GDBG_INFO((120, "\tReg Num:         0x%x\n", index));
     GDBG_INFO((120, "\tReg Val:         0x%x\n", regVal));
   }
-  #endif
   return regVal;
-
+  #else
+  return *s;
+  #endif
 } /* _grSst96Load32 */
 
 /*---------------------------------------------------------------------------
