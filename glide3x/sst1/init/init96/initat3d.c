@@ -79,11 +79,11 @@ typedef struct _CLOCK_TABLE {
   unsigned char wM;
   unsigned char wL;
   unsigned char wFR;
-} CLOCK_TABLE, *LPCLOCK_TABLE;
+} CLOCK_TABLE;
 
 
 /* This table is for AT3D, other parts need different tables. */ 
-CLOCK_TABLE ClockTableAT3D[] =
+static const CLOCK_TABLE ClockTableAT3D[] =
 {
   { 25, 0x1b, 0x1, 0x3, 0x6 },
   { 40, 0x2c, 0x1, 0x3, 0x3 },
@@ -117,9 +117,9 @@ typedef struct _REGINFO {
 } REGINFO, *LPREGINFO;
 
 /* MCLK Constants */
-const unsigned char bBypass = 0;
-const unsigned char bHighSpeed = 1;
-const unsigned char bPowerOff = 0;
+static const unsigned char bBypass = 0;
+static const unsigned char bHighSpeed = 1;
+static const unsigned char bPowerOff = 0;
 
 
 /* HALData required for each partner */
@@ -283,7 +283,7 @@ initAT3DGetRegVals(int iFreq)
 {
 #define FN_NAME "initAT3DGetRegVals"
   /* Get the E8,E9, and EA values for given frequency. */
-  LPCLOCK_TABLE lpClockTable = (LPCLOCK_TABLE)ClockTableAT3D;
+  const CLOCK_TABLE *lpClockTable = (const CLOCK_TABLE *) ClockTableAT3D;
   int i;
   REGINFO RegInfo; 
   BYTE bN, bM, bL, bFreqRange;
