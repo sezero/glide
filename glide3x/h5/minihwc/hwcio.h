@@ -42,10 +42,10 @@
 #ifndef HWCIO_H
 #define HWCIO_H
 
-extern char *ioRegNames[];
-extern char *cmdAGPRegNames[];
-extern char *waxRegNames[];
-extern char *sstRegNames[];
+extern const char *ioRegNames[];
+extern const char *cmdAGPRegNames[];
+extern const char *waxRegNames[];
+extern const char *sstRegNames[];
 
 #ifndef GET
 #  define GET(s) s
@@ -122,4 +122,4 @@ val = GET(((SstRegs *) regInfo.sstBase)->reg);\
 GDBG_INFO(120, "Loaded 0x%x from WAX Register %s\n", val,\
  sstRegNames[(offsetof(SstRegs, reg)) >> 2]);
 
-#endif                          /* HWCIO_H not defined */
+#endif /* HWCIO_H */

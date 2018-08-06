@@ -20,13 +20,11 @@
 ** 3     4/06/99 3:36p Dow
 ** Alt tab stuff
 ** 
-** 
 ** 1     3/04/98 4:13p Dow
-**
 */
 
-
-char * ioRegNames[] = {
+#if GDBG_INFO_ON
+const char * ioRegNames[] = {
   "status",
   "pciInit0",
   "sipMonitor",
@@ -93,7 +91,7 @@ char * ioRegNames[] = {
   "vidCurrOverlayStartAddr"
 };
 
-char *cmdAGPRegNames[] = {
+const char *cmdAGPRegNames[] = {
   // AGP
   "agpReqSize",
   "hostAddrLow",
@@ -169,7 +167,7 @@ char *cmdAGPRegNames[] = {
   "yuvStride"
 };
 
-char *waxRegNames[] = {
+const char *waxRegNames[] = {
   "status",
   "unused0",
   "clip0min",
@@ -556,7 +554,7 @@ char *waxRegNames[] = {
   "colorTransLut0FF"
 };
 
-char *sstRegNames[] = {
+const char *sstRegNames[] = {
   "status",
   "intrCtrl",
   "vAx",
@@ -804,3 +802,4 @@ char *sstRegNames[] = {
   "tChromaKeyMin",
   "tChromaKeyMax"
 };
+#endif /* GDBG_INFO_ON */

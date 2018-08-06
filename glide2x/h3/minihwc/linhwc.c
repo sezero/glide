@@ -21,7 +21,7 @@
 /*
   We need to provide the following functions:
 
-char *
+const char *
 hwcGetErrorString(void);
 
 hwcInfo *
@@ -169,7 +169,7 @@ static void deleteEnvData() {
   envinit=0;
 }
 
-char *
+const char *
 hwcGetErrorString()
 {
 #define FN_NAME "hwcGetErrorString"

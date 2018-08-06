@@ -616,7 +616,7 @@ hwcRestoreVideo(hwcBoardInfo *bInfo);
 void
 hwcResetVideo(hwcBoardInfo *bInfo);
 
-char *
+const char *
 hwcGetErrorString(void);
 
 FxBool

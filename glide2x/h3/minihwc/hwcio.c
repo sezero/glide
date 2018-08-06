@@ -21,11 +21,10 @@
 ** Fixes Phantom Menace, OGL, and others.
 ** 
 ** 1     3/04/98 4:13p Dow
-**
 */
 
-
-char * ioRegNames[] = {     
+#if GDBG_INFO_ON
+const char * ioRegNames[] = {
   "status",
   "pciInit0",
   "sipMonitor",
@@ -92,7 +91,7 @@ char * ioRegNames[] = {
   "vidCurrOverlayStartAddr"
 };
 
-char *cmdAGPRegNames[] = {
+const char *cmdAGPRegNames[] = {
   // AGP
   "agpReqSize",
   "hostAddrLow",
@@ -168,7 +167,7 @@ char *cmdAGPRegNames[] = {
   "yuvStride"
 };
 
-char *waxRegNames[] = {
+const char *waxRegNames[] = {
   "status",
   "unused0",
   "clip0min",
@@ -555,7 +554,7 @@ char *waxRegNames[] = {
   "colorTransLut0FF"
 };
 
-char *sstRegNames[] = {
+const char *sstRegNames[] = {
   "status",
   "intrCtrl",
   "vAx",
@@ -773,7 +772,7 @@ char *sstRegNames[] = {
   "texBaseAddr38",
   "trexInit0",
   "trexInit1",
-   
+
   "nccTable000",
   "nccTable001",
   "nccTable002",
@@ -803,3 +802,4 @@ char *sstRegNames[] = {
   "tChromaKeyMin",
   "tChromaKeyMax"
 };
+#endif

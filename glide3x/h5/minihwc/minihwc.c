@@ -732,15 +732,7 @@
 ** WinGlide
 ** 
 ** 1     3/04/98 4:13p Dow
-**
 */
-
-#if !defined(GDBG_INFO_ON) || (GDBG_INFO_ON == 0)
-#if defined(GDBG_INFO_ON)
-#undef GDBG_INFO_ON
-#endif /* defined(GDBG_INFO_ON) */
-#define GDBG_INFO_ON
-#endif /* !defined(GDBG_INFO_ON) || (GDBG_INFO_ON == 0) */
 
 #include <stddef.h>
 #include <stdlib.h>
@@ -998,26 +990,20 @@ static _p_info *CPUInfo = NULL;
 static char errorString[MAX_ERROR_SIZE];
 static FxU32 __attribute_used fenceVar;
 
-FxU32 hwc_errncpy(char *dst,const char *src);
-
+#if (GLIDE_PLATFORM & GLIDE_OS_WIN32)||(GLIDE_PLATFORM & GLIDE_OS_MACOS)
 /* like strncpy, for the error string except it always null terminates */
-FxU32 hwc_errncpy(char *dst,const char *src)
+static void hwc_errncpy(char *dst,const char *src)
 {
-   FxU32 i,size=MAX_ERROR_SIZE;
-
-   if (size==0)
-      return 0;
-
-   for(i=0;i<size;i++)
+   int i=0;
+   for(;i<MAX_ERROR_SIZE;i++)
    {
       *dst++=*src++;
       if (src[-1]==0)
-         return i;
+         return;
    }
    dst[-1]=0;
-
-   return (i-1);
 }
+#endif
 
 #if defined(__WATCOMC__)
 /*
@@ -5819,7 +5805,7 @@ void hwcSLIReadDisable(hwcBoardInfo *bInfo)
 }
 #endif
 
-char *
+const char *
 hwcGetErrorString()
 {
 #define FN_NAME "hwcGetErrorString"
@@ -8580,6 +8566,7 @@ FxBool
 hwcResolutionSupported(hwcBoardInfo *bInfo, GrScreenResolution_t res, GrScreenRefresh_t ref)
 {
 #define FN_NAME "hwcResolutionSupported"
+#if GDBG_INFO_ON
   static char *resNames[] = {
     "GR_RESOLUTION_320x200",
     "GR_RESOLUTION_320x240",
@@ -8606,7 +8593,7 @@ hwcResolutionSupported(hwcBoardInfo *bInfo, GrScreenResolution_t res, GrScreenRe
     "GR_RESOLUTION_2048x1536",
     "GR_RESOLUTION_2048x2048"
   };
-
+#endif
 #if 0
   struct WidthHeight_s {
     FxU32 width; 
@@ -8637,8 +8624,8 @@ hwcResolutionSupported(hwcBoardInfo *bInfo, GrScreenResolution_t res, GrScreenRe
     {2048, 1536},               /* GR_RESOLUTION_2048x1536 */
     {2048, 2048}                /* GR_RESOLUTION_2048x2048 */
   };
-#endif  
-
+#endif
+#if GDBG_INFO_ON
   static char *refresh[] = {
     "GR_REFRESH_60Hz",
     "GR_REFRESH_70Hz",
@@ -8648,9 +8635,9 @@ hwcResolutionSupported(hwcBoardInfo *bInfo, GrScreenResolution_t res, GrScreenRe
     "GR_REFRESH_90Hz",
     "GR_REFRESH_100Hz",
     "GR_REFRESH_85Hz",
-    "GR_REFRESH_120Hz"    
+    "GR_REFRESH_120Hz"
   };
-
+#endif
 
   GDBG_INFO(80, FN_NAME ":  res == %s (0x%x) ref == %s, supported == %s\n",
             resNames[res], resolutionSupported[bInfo->boardNum][res][ref], refresh[ref],

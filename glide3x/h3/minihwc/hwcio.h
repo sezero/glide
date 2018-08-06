@@ -20,7 +20,6 @@
 ** 3     4/06/99 3:36p Dow
 ** Alt tab stuff
 ** 
-** 
 ** 2     3/11/98 8:27p Dow
 ** WinGlide
 ** 
@@ -30,10 +29,10 @@
 #ifndef HWCIO_H
 #define HWCIO_H
 
-extern char *ioRegNames[];
-extern char *cmdAGPRegNames[];
-extern char *waxRegNames[];
-extern char *sstRegNames[];
+extern const char *ioRegNames[];
+extern const char *cmdAGPRegNames[];
+extern const char *waxRegNames[];
+extern const char *sstRegNames[];
 
 /*
 **  I/O Macros
@@ -60,13 +59,13 @@ GDBG_INFO(120, "Loaded 0x%x from CAGP Register %s\n", val,\
   
 #define HWC_WAX_STORE(regInfo, reg, val)\
 GDBG_INFO(120, "Storing 0x%x to WAX Register %s\n", val,\
-  waxRegnames[(offsetof(SstGRegs, reg)) >> 2]);\
+  waxRegNames[(offsetof(SstGRegs, reg)) >> 2]);\
 ((SstGRegs *) regInfo.waxBase)->reg = val
 
 #define HWC_WAX_LOAD(regInfo, reg, val)\
 val = ((SstGRegs *) regInfo.waxBase)->reg;\
 GDBG_INFO(120, "Loaded 0x%x from WAX Register %s\n", val,\
-  waxRegnames[(offsetof(SstGRegs, reg)) >> 2]);
+  waxRegNames[(offsetof(SstGRegs, reg)) >> 2]);
 
 #define HWC_SST_STORE(regInfo, reg, val)\
 GDBG_INFO(120, "Storing 0x%x to 3D Register %s\n", val,\
@@ -78,4 +77,4 @@ val = ((SstRegs *) regInfo.sstBase)->reg;\
 GDBG_INFO(120, "Loaded 0x%x from WAX Register %s\n", val,\
  sstRegNames[(offsetof(SstRegs, reg)) >> 2]);
 
-#endif                          /* HWCIO_H not defined */
+#endif /* HWCIO_H */

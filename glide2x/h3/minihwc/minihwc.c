@@ -388,14 +388,7 @@
 ** WinGlide
 ** 
 ** 1     3/04/98 4:13p Dow
-**
 */
-#if !defined(GDBG_INFO_ON) || (GDBG_INFO_ON == 0)
-#if defined(GDBG_INFO_ON)
-#undef GDBG_INFO_ON
-#endif /* defined(GDBG_INFO_ON) */
-#define GDBG_INFO_ON
-#endif /* !defined(GDBG_INFO_ON) || (GDBG_INFO_ON == 0) */
 
 #include <stddef.h>
 #include <stdlib.h>
@@ -3638,6 +3631,7 @@ FxBool
 hwcResolutionSupported(hwcBoardInfo *bInfo, GrScreenResolution_t res)
 {
 #define FN_NAME "hwcResolutionSupported"
+#if GDBG_INFO_ON
   static char *resNames[] = {
     "GR_RESOLUTION_320x200",
     "GR_RESOLUTION_320x240",
@@ -3664,7 +3658,7 @@ hwcResolutionSupported(hwcBoardInfo *bInfo, GrScreenResolution_t res)
     "GR_RESOLUTION_2048x1536",
     "GR_RESOLUTION_2048x2048"
   };
-
+#endif
   struct WidthHeight_s {
     FxU32 width; 
     FxU32 height;
@@ -3694,7 +3688,6 @@ hwcResolutionSupported(hwcBoardInfo *bInfo, GrScreenResolution_t res)
     {2048, 1536},               /* GR_RESOLUTION_2048x1536 */
     {2048, 2048}                /* GR_RESOLUTION_2048x2048 */
   };
-  
 
   GDBG_INFO(80, FN_NAME ":  res == %s (0x%x), supported == %s\n",
             resNames[res], resolutionSupported[bInfo->boardNum][res],

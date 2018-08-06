@@ -23,7 +23,7 @@
 
   We need to provide the following functions:
 
-char *
+const char *
 hwcGetErrorString(void);
 
 hwcInfo *
@@ -204,7 +204,7 @@ static void deleteEnvData() {
 }
 #endif
 
-char *
+const char *
 hwcGetErrorString()
 {
 #define FN_NAME "hwcGetErrorString"
