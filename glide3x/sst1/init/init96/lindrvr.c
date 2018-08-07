@@ -123,15 +123,16 @@ linFlip(FxU32 buffer)
 void linExit(void);
 
 static FxBool
-ErrorMessage(Window win, char *err)
+ErrorMessage(Window win, const char *err)
 {
   fprintf(stderr, "Error %s \n", err);
   return FXFALSE;
 } /* ErrorMessage */
 
-FxBool linSetup() {
+FxBool linSetup(void) {
   int eventbase, errorbase;
-  int banksize, baseaddr;
+  int banksize;
+  unsigned int baseaddr;
 
   if (dpy!=0) return FXTRUE;
   dpy=XOpenDisplay("");
@@ -220,7 +221,7 @@ cvtXToGlideDesc(InitBufDesc_t *pDesc) {
   dFifo->bufType   = INIT_BUFFER_FIFOBUFFER;
   dFifo->bufOffset = (int)addrFifo-dScreen->bufOffset;
   dFifo->bufStride = FIFOSIZE;
-  
+
   GDBG_INFO((80, "cvtXToGlideDesc: dFront->bufOffset = 0x%x\n", dFront->bufOffset));
   GDBG_INFO((80, "cvtXToGlideDesc: dBack->bufOffset = 0x%x\n", dBack->bufOffset));
   GDBG_INFO((80, "cvtXToGlideDesc: dAux->bufOffset = 0x%x\n", dAux->bufOffset));
@@ -466,7 +467,7 @@ FxBool
 linControl(FxU32 code, InitBufDesc_t *pBufDesc, int *width, int *height)
 {
   unsigned int i, w = 0, h = 0;
-  
+
   GDBG_INFO((80, "linControl: code = %d\n", code));
 
   if (IsFullScreen) return FXTRUE;
@@ -520,7 +521,7 @@ linControl(FxU32 code, InitBufDesc_t *pBufDesc, int *width, int *height)
 } /* linControl */
 
 FxBool
-linClose()
+linClose(void)
 {
   GDBG_INFO((80, "linClose:\n"));
   if (!dpy) return FXTRUE;
@@ -581,5 +582,3 @@ linFlip(FxU32 buffer)
 } /* linFlip */
 
 #endif
-
-

@@ -772,7 +772,7 @@ dxControl(FxU32 code, hwcBufferDesc *pBufDesc, int *width, int *height)
 } /* dxControl */
 
 FxBool
-dxClose()
+dxClose(void)
 {
   GDBG_INFO(80, "dxClose:\n");
 /*

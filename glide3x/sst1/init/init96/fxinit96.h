@@ -19,7 +19,6 @@
 **
 */
 
-
 #ifndef _FXINIT96_H_
 #define _FXINIT96_H_
 
@@ -41,11 +40,11 @@ FxBool dxOpen(
         int                     nAux,
         InitBufDesc_t           *pBufDesc,
         int                     *width,
-        int                     *height, 
+        int                     *height,
         InitSwapType_t          *swapType
 );
 FxBool dxControl(FxU32 control, InitBufDesc_t *pDesc, int *w, int *h);
-FxBool dxClose();
+FxBool dxClose(void);
 void   dxSwap(FxU32 code);
 
 #else
@@ -60,11 +59,11 @@ FxBool linOpen(
         int                     nAux,
         InitBufDesc_t           *pBufDesc,
         int                     *width,
-        int                     *height, 
+        int                     *height,
         InitSwapType_t          *swapType
 );
 FxBool linControl(FxU32 control, InitBufDesc_t *pDesc, int *w, int *h);
-FxBool linClose();
+FxBool linClose(void);
 void   linSwap(FxU32 code);
 void   linFlip(FxU32 buffer);
 
@@ -124,7 +123,6 @@ GDBG_INFO((80, "SET:  Register:  %s (0x%x) = 0x%x\n",\
 #define SET(d,s) (d) = (s)
 #define GET(s) *(GETREADADDR(s))
 #endif
-
 
 #ifdef __cplusplus
 }
