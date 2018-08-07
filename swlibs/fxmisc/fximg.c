@@ -1466,8 +1466,8 @@ FxBool _imgWriteP6Header( FILE *stream, const P6Info *info )
 	imgErrorString = "Image write error.";
 	if ( 0 > fprintf( stream, "P6\n" ) ) return FXFALSE;
 	if ( 0 > fprintf( stream, "# PPM Comment\n" ) ) return FXFALSE;
-	if ( 0 > fprintf( stream, "%ld ", info->width ) ) return FXFALSE;
-	if ( 0 > fprintf( stream, "%ld\n", info->height ) ) return FXFALSE;
+	if ( 0 > fprintf( stream, "%u ", info->width ) ) return FXFALSE;
+	if ( 0 > fprintf( stream, "%u\n", info->height ) ) return FXFALSE;
 	if ( 0 > fprintf( stream, "255\n" ) ) return FXFALSE;
 	imgErrorString = "No error.";
 	return FXTRUE;
@@ -1482,11 +1482,11 @@ FxBool _imgWriteSbiHeader( FILE *stream, const SbiInfo *info )
 	imgErrorString = "Image write error.";
 	if ( 0 > fprintf( stream, "P9\n" ) ) return FXFALSE;
 	if ( 0 > !fprintf( stream, "Y%c\n", info->yOrigin? '+' : '-' ) ) return FXFALSE;
-	if ( 0 > !fprintf( stream, "%ld ", info->width ) ) return FXFALSE;
-	if ( 0 > !fprintf( stream, "%ld\n", info->height ) ) return FXFALSE;
-	if ( 0 > !fprintf( stream, "R %ld ", info->redBits ) ) return FXFALSE;
-	if ( 0 > !fprintf( stream, "G %ld ", info->greenBits ) ) return FXFALSE;
-	if ( 0 > !fprintf( stream, "B %ld\n", info->blueBits ) ) return FXFALSE;
+	if ( 0 > !fprintf( stream, "%u ", info->width ) ) return FXFALSE;
+	if ( 0 > !fprintf( stream, "%u\n", info->height ) ) return FXFALSE;
+	if ( 0 > !fprintf( stream, "R %u ", info->redBits ) ) return FXFALSE;
+	if ( 0 > !fprintf( stream, "G %u ", info->greenBits ) ) return FXFALSE;
+	if ( 0 > !fprintf( stream, "B %u\n", info->blueBits ) ) return FXFALSE;
 	imgErrorString = "No Error.";
 	return FXTRUE;
 }
@@ -1947,7 +1947,7 @@ FxBool imgReadFile(const char *filename, ImgInfo *info)
 	    fprintf(stderr,buf);
 	    fprintf(stderr,"/");
 	}
-	fprintf (stderr,"%s (%ldx%ld) ...", filename, info->any.width,info->any.height);
+	fprintf (stderr,"%s (%ux%u) ...", filename, info->any.width,info->any.height);
 	fflush(stderr);
 
 	if ( imgReadData( file, info ) == FXFALSE ) {
@@ -1976,7 +1976,7 @@ FxBool imgWriteFile(const char *filename, const ImgInfo *info, const ImgType typ
 	exit(2);
     }
     tempInfo.any.type = type;		// set the new type
-    fprintf(stderr,"Storing %s image file %s (%ldx%ld) ...",
+    fprintf(stderr,"Storing %s image file %s (%ux%u) ...",
 		imgTypeName(&tempInfo), filename, info->any.width,info->any.height);
     fflush(stderr);
 
