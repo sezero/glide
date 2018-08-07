@@ -75,7 +75,9 @@ static RangeStruct test_data[6]=
 #endif
 
 static RangeStruct map[80];
+#if 0 /* not used */
 static RangeStruct hole[80];
+#endif
 static RangeStruct *first_entry;
 static RangeStruct *last_entry;
 static long entries=0;
@@ -299,7 +301,7 @@ static RangeStruct *TestForConflicts(void)
             else {
                if (!silent) {
                  printf("FxRemap: Possible PCI conflict not with Voodoo device\n");
-                 printf("%X (%X) <-> %X:%X (%X)\n",cur->id, cur->address,  
+                 printf("%X (%X) <-> %X (%X)\n",cur->id, cur->address,  
                        cur->next->id, cur->next->address);
                }
             }
@@ -793,7 +795,7 @@ static FxBool IsCardVoodoo(long i)
 static FxBool IsCardS3(long i)
 {
    FxU32    vendor,dev_id;
-   
+
    pciGetConfigData(PCI_VENDOR_ID,i,&vendor);
    pciGetConfigData(PCI_DEVICE_ID,i,&dev_id);
    if ((vendor==0x5333)&&((dev_id==0x88f0)||(dev_id==0x8880)))

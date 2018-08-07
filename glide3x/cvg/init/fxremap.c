@@ -75,7 +75,9 @@ static RangeStruct test_data[6]=
 #endif
 
 static RangeStruct map[80];
+#if 0 /* not used */
 static RangeStruct hole[80];
+#endif
 static RangeStruct *first_entry;
 static RangeStruct *last_entry;
 static int entries=0;
@@ -795,7 +797,7 @@ static FxBool IsCardVoodoo(int i)
 static FxBool IsCardS3(int i)
 {
    FxU32    vendor,dev_id;
-   
+
    pciGetConfigData(PCI_VENDOR_ID,i,&vendor);
    pciGetConfigData(PCI_DEVICE_ID,i,&dev_id);
    if ((vendor==0x5333)&&((dev_id==0x88f0)||(dev_id==0x8880)))
