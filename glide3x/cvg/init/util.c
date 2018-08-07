@@ -474,7 +474,7 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitResetTmus(FxU32 *sstbase)
 
    // Fix problem where first Texture downloads to TMU weren't being
    //  received properly
-   ISET(*(int *) (0xf00000 + (long) sstbase), 0xdeadbeef);
+   ISET(*(FxI32 *) (0xf00000 + (long) sstbase), 0xdeadbeef);
    sst1InitIdle(sstbase);
 
    return(FXTRUE);

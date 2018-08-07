@@ -23,9 +23,8 @@
 #define _CANOPUS_H_
 
 // if we use FFLOAT as an integer, we need to handle clocks in Hz
-#define CLOCK_MULTIPLIER        1000000L        
-typedef unsigned int   FFLOAT;
-/* HDG: unused: typedef unsigned int   DDOUBLE; */
+#define CLOCK_MULTIPLIER        1000000L
+typedef FxU32 FFLOAT;
 
 /* FixMe!! Is this right? */
 #define CANOPUS_ID 0x10UL
