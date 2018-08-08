@@ -1,4 +1,4 @@
-# Win32 makefile for Glide3 and Texus2
+# Win32 makefile for Glide3 and Texus2, using Visual Studio (cl.exe)
 # This makefile MUST be processed by GNU make!!!
 #
 #  Copyright (c) 2003 - Daniel Borca
@@ -7,7 +7,6 @@
 #
 # $Header$
 #
-
 
 #
 #  Available options:
@@ -52,16 +51,15 @@
 #
 
 
-
 .PHONY: all clean realclean
 
 export BUILD_NUMBER = 40404
 export FX_GLIDE_HW ?= h5
 
 ifeq ($(FX_GLIDE_HW),sst96)
-G3_DIR = sst1/glide3/src
+G3_DIR = sst1\glide3\src
 else
-G3_DIR = $(FX_GLIDE_HW)/glide3/src
+G3_DIR = $(FX_GLIDE_HW)\glide3\src
 endif
 
 all:
