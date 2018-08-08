@@ -865,11 +865,28 @@ typedef struct sli_aa_request {
 #define _aligned_free free
 /* don't like macros, because of side-effects */
 #ifndef __WATCOMC__
-static __inline int min (int x, int y)
-{
+static __inline int min(int x, int y) {
  return (x > y) ? y : x;
 }
 #endif
+#endif
+
+#if defined(_MSC_VER) && (_MSC_VER < 1300)
+/* code here only uses 8 byte alignment */
+#define _aligned_malloc(a,b) _aligned_malloc8(a)
+#define _aligned_free _aligned_free8
+static void *_aligned_malloc8(size_t sz) {
+    const size_t align = 7;
+    void *got, **ret;
+    if (!(got = malloc(sizeof(void*) + align + sz))) return NULL;
+    ret = (void **) (((long)got + sizeof(void*) + align) & ~align);
+    ret[-1] = got;
+    return ret;
+}
+static void _aligned_free8(void *ptr) {
+    if (!ptr) return;
+    free (((void**)ptr) [-1]);
+}
 #endif
 
 #ifdef __GNUC__
