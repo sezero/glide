@@ -37,19 +37,15 @@
    may have changed, so we do not protect this with an #fndef __FXDLL_H__
    statement like we normally would. */
 
-
 #ifdef FX_ENTRY
 #undef FX_ENTRY
 #endif
-
 #ifdef FX_CALL
 #undef FX_CALL
 #endif
-
 #ifdef FX_EXPORT
 #undef FX_EXPORT
 #endif
-
 #ifdef FX_CSTYLE
 #undef FX_CSTYLE
 #endif
@@ -87,13 +83,8 @@
   #endif /* FX_DLL_ENABLE */
 
 #else /* FX_DLL_DEFINITION */
-  #if defined(__MSC__)
-    #define FX_ENTRY __declspec( dllimport )
-    #define FX_CALL __stdcall
-  #else
-    #define FX_ENTRY extern
-    #define FX_CALL __stdcall
-  #endif
+  #define FX_ENTRY extern
+  #define FX_CALL __stdcall
 #endif /* FX_DLL_DEFINITION */
 
 /*
@@ -118,9 +109,9 @@
   #endif
 
   #define FX_CALL
-  #define FX_CSTYLE 
+  #define FX_CSTYLE
   #define FX_EXPORT
-  #define FX_ENTRY 
+  #define FX_ENTRY
 #endif
 
 #if defined (MSVC16)
