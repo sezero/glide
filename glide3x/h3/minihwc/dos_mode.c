@@ -55,7 +55,6 @@
 ** 
 ** 2     6/25/98 7:40p Dow
 ** Made it compile
-** 
 */
 
 #include <string.h>
@@ -135,13 +134,12 @@ setVideoMode( unsigned long dummy, int xres, int yres, int refresh, void *hmon )
      }
   }
 
-    
   r.w.ax = 0x4f02;
   r.w.bx = mode;
-    
+
   GDBG_INFO(80, "Setting mode 0x%x, 0x%x\n", r.w.ax, r.w.bx);
-    
-    /* Do VGA Magic */
+
+  /* Do VGA Magic */
   int386(0x10, &r, &rOut);
 
   /* XXXTACO!! - We should check the return value */
@@ -154,9 +152,9 @@ void
 resetVideo( void ) 
 {
   union REGS r;
-    
+
   memset(&r, 0, sizeof(r));
-    
+
   r.w.ax = 0x4f02;
   r.w.bx = oldVidMode;
   GDBG_INFO(80, "resetVideo(): Setting mode 0x%x, 0x%x\n", r.w.ax, r.w.bx);

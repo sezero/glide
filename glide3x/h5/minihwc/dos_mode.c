@@ -46,7 +46,6 @@
 ** 
 ** 2     6/25/98 7:40p Dow
 ** Made it compile
-** 
 */
 
 #include <string.h>
@@ -147,13 +146,12 @@ setVideoMode( void *hwnd,
      }
   }
 
-    
   r.w.ax = 0x4f02;
   r.w.bx = mode;
-    
+
   GDBG_INFO(80, "Setting mode 0x%x, 0x%x\n", r.w.ax, r.w.bx);
-    
-    /* Do VGA Magic */
+
+  /* Do VGA Magic */
   int386(0x10, &r, &rOut);
 
   /* XXXTACO!! - We should check the return value */
@@ -166,9 +164,9 @@ void
 resetVideo( void ) 
 {
   union REGS r;
-    
+
   memset(&r, 0, sizeof(r));
-    
+
   r.w.ax = 0x4f02;
   r.w.bx = oldVidMode;
   GDBG_INFO(80, "resetVideo(): Setting mode 0x%x, 0x%x\n", r.w.ax, r.w.bx);
@@ -193,18 +191,14 @@ FxBool checkResolutions (FxBool *supportedByResolution, FxU32 stride, void *hmon
 }
 
 
-#ifdef __WATCOMC__
-#include "h3cini~1.h"
-#else
 #include "h3cinitdd.h"
-#endif
 
 #define CFG_READ(_chip, _offset) \
   hwcReadConfigRegister(bInfo, _chip, offsetof(SstPCIConfigRegs, _offset))
 
 #define CFG_WRITE(_chip, _offset, _value) \
   hwcWriteConfigRegister(bInfo, _chip, offsetof(SstPCIConfigRegs, _offset), (_value))
-          
+
 static FxU32 memDecode[16] =
 {
   128*1024*1024,
@@ -227,11 +221,11 @@ static FxU32 memDecode[16] =
    0,
    0
 };
-            
+
 void 
 mapSlavePhysical(hwcBoardInfo *bInfo, FxU32 chipNum)
 {
-  FxU32 cfgPciDecode, cmdStatus;  
+  FxU32 cfgPciDecode, cmdStatus;
   FxU32 masterMemBase0, masterMemBase1, masterIOBase;
   FxU32 slaveMemBase0,  slaveMemBase1,  slaveIOBase;
   FxU32 memBase0Decode, memBase1Decode;
@@ -268,11 +262,11 @@ mapSlavePhysical(hwcBoardInfo *bInfo, FxU32 chipNum)
     cfgPciDecode &= ~(SST_PCI_MEMBASE0_DECODE | SST_PCI_MEMBASE1_DECODE | SST_PCI_IOBASE0_DECODE);
     cfgPciDecode |= (SST_PCI_MEMBASE0_DECODE_32MB | SST_PCI_IOBASE0_DECODE_256);
     cfgPciDecode |= memBase1Decode;
-    CFG_WRITE(0, cfgPciDecode, cfgPciDecode);    
-  }  
+    CFG_WRITE(0, cfgPciDecode, cfgPciDecode);
+  }
 
   /* Now figure out the master's physical addresses, masking off bits we don't care about. */
-  masterMemBase0 = CFG_READ(0, memBaseAddr0) & ~0xf;   
+  masterMemBase0 = CFG_READ(0, memBaseAddr0) & ~0xf;
   masterMemBase1 = CFG_READ(0, memBaseAddr1) & ~0xf;
   masterIOBase   = CFG_READ(0, ioBaseAddr)   & ~0xf;
 
@@ -309,7 +303,7 @@ mapSlavePhysical(hwcBoardInfo *bInfo, FxU32 chipNum)
   cfgPciDecode &= ~(SST_SNOOP_MEMBASE0_DECODE | SST_SNOOP_MEMBASE1_DECODE);
   cfgPciDecode |= SST_SNOOP_MEMBASE0_DECODE_32MB;
   cfgPciDecode |= memBase1Decode << SST_SNOOP_MEMBASE1_DECODE_SHIFT;
-  CFG_WRITE(chipNum, cfgPciDecode, cfgPciDecode);        
+  CFG_WRITE(chipNum, cfgPciDecode, cfgPciDecode);
 
   /* Program slaves for their new home. */
   CFG_WRITE(chipNum, memBaseAddr0, slaveMemBase0);
@@ -325,7 +319,7 @@ mapSlavePhysical(hwcBoardInfo *bInfo, FxU32 chipNum)
   LOG((dbg,"mapSlavePhysical(%d) done\n",chipNum));
 
 }
-    
+
 /* This assumes that the slave has been mapped in already. */
 void
 initSlave(hwcBoardInfo *bInfo, FxU32 chipNum)
@@ -384,13 +378,13 @@ initSlave(hwcBoardInfo *bInfo, FxU32 chipNum)
   cmdStatus |= 1;
   CFG_WRITE(0, status_command, cmdStatus);
 
-{ 
+ {
   FxU32 status, vgaInit0, vgaInit1;
   HWC_IO_LOAD_SLAVE(chipNum, bInfo->regInfo, status, status);
   HWC_IO_LOAD_SLAVE(chipNum, bInfo->regInfo, vgaInit0, vgaInit0);
   HWC_IO_LOAD_SLAVE(chipNum, bInfo->regInfo, vgaInit1, vgaInit1);
   LOG((dbg,"initSlave(%d) done.  slave status: %08lx vgaInit0: %08lx vgaInit1: %08lx\n",chipNum, status, vgaInit0, vgaInit1));
-}
+ }
 }
 
 static FxU8 vgaattr[] = {0x00, 0x00, 0x00, 0x00, 0x00, 
@@ -398,13 +392,13 @@ static FxU8 vgaattr[] = {0x00, 0x00, 0x00, 0x00, 0x00,
                   0x00, 0x00, 0x00, 0x00, 0x00, 
                   0x00, 0x01, 0x00, 0x0F, 0x00};
 
-/* The standard mode table has 24 entries, but the first 3 are x, y and refresh. 
+/* The standard mode table has 24 entries, but the first 3 are x, y and refresh.
  * We don't care about those here.  The default values (0-21) are just to serve
  * as a reference for the comments... they will be blown away the first time we
  * fill out the table. */
 static FxU16 modeData[21] =
-{ 
-  0,      /* CRTC (0xd4) Index 0x00 - Horizontal Total */      
+{
+  0,      /* CRTC (0xd4) Index 0x00 - Horizontal Total */
   1,      /* CRTC (0xd4) Index 0x01 - Horizontal Display Enable End */
   2,      /* CRTC (0xd4) Index 0x02 - Start Horizontal Blanking */
   3,      /* CRTC (0xd4) Index 0x03 - End Horizontal Blanking */
@@ -427,12 +421,12 @@ static FxU16 modeData[21] =
  20       /* 2X Mode */
 };
 
-            
+
 #define GET_CRTC_INDEX(_srcindex, _dstindex) \
    ISET8PHYS(0x0d4, _srcindex); \
    modeData[_dstindex] = IGET8PHYS(0x0d5);
-       
-void 
+
+static void 
 buildVideoModeData(hwcBoardInfo *bInfo)
 {
   /* Snarf all VGA data we need from the master */
@@ -478,10 +472,10 @@ buildVideoModeData(hwcBoardInfo *bInfo)
     for(i = 0; i < 21; i++) {
       LOG((dbg,"modeData[%d]: %02lx\n",i,modeData[i]));
     }
-  }  
-}  
+  }
+}
 
-void
+static void
 setVideoModeSlave(
   FxU32 regBase)   // regBase of the slave
 {
@@ -570,7 +564,7 @@ setVideoModeSlave(
     // (10% difference in screen to screen blits!).   This code is not in
     // the perl, but should stay here unless specifically decided otherwise
     //
-    ISET32(vgaInit0, IGET32(vgaInit0)|BIT(12) ); 
+    ISET32(vgaInit0, IGET32(vgaInit0)|BIT(12) );
 
     //
     // Make sure attribute index register is initialized
@@ -682,23 +676,23 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
 
       HWC_IO_LOAD(bInfo->regInfo, vidMaxRGBDelta, temp);
       HWC_IO_STORE_SLAVE(chipNum, bInfo->regInfo, vidMaxRGBDelta, temp);
-    }  
+    }
 
     /* Calculate Log2 of the SLI band height */
     switch (sliBandHeight) {
-      case  2: sliBandHeightLog2 = 1; 
+      case  2: sliBandHeightLog2 = 1;
                break;
-      case  4: sliBandHeightLog2 = 2; 
+      case  4: sliBandHeightLog2 = 2;
                break;
-      case  8: sliBandHeightLog2 = 3; 
+      case  8: sliBandHeightLog2 = 3;
                break;
-      case 16: sliBandHeightLog2 = 4; 
+      case 16: sliBandHeightLog2 = 4;
                break;
-      case 32: sliBandHeightLog2 = 5; 
+      case 32: sliBandHeightLog2 = 5;
                break;
-      case 64: sliBandHeightLog2 = 6; 
+      case 64: sliBandHeightLog2 = 6;
                break;
-      case 128: sliBandHeightLog2 = 7; 
+      case 128: sliBandHeightLog2 = 7;
                 break;
     }
 
@@ -713,8 +707,8 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
       case 4: numChipsLog2 = 2;
               break;
       case 8: numChipsLog2 = 3;
-              break;    
-    }  
+              break;
+    }
 
     LOG((dbg,"numChips: %d  log2: %d\n",numChips, numChipsLog2));
 
@@ -778,7 +772,7 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
         temp &= ~SST_SWAP_MASTER;
         temp |= (SST_SWAPBUFFER_ALGORITHM | (chipNum == 0 ? SST_SWAP_MASTER : 0));
           LOG((dbg,"cfgInitEnable wr0: %08lx\n",temp << 8));
-        CFG_WRITE(chipNum, cfgInitEnable_FabID, temp << 8);        
+        CFG_WRITE(chipNum, cfgInitEnable_FabID, temp << 8);
 
         /* Enable snooping */
         if(chipNum == 0) {
@@ -803,7 +797,7 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
           temp |= ((memBase1 >> 22) & 0x3ff) << SST_MEMBASE1_SNOOP_SHIFT;
           LOG((dbg,"cfgPciDecode wr: %08lx\n",temp));
           CFG_WRITE(chipNum, cfgPciDecode, temp);
-        }    
+        }
       }
 
       /* cfgSliLfbCtrl */
@@ -840,7 +834,7 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
       } else if(!sliEnable && aaEnable) {
         /* SLI disabled, AA enabled */
         CFG_WRITE(chipNum, cfgSliLfbCtrl, 0);
-      }  else {
+      } else {
         /* SLI enabled, AA enabled, 4 sample AA enabled */
         sliRenderMask = ((numChips >> 1) - 1) << sliBandHeightLog2;
         sliCompareMask = (chipNum >> 1) << sliBandHeightLog2;
@@ -854,7 +848,7 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
                 SST_SLI_LFB_DISPATCH_WRITE_ENABLE |
                 SST_SLI_LFB_READ_ENABLE;
         CFG_WRITE(chipNum, cfgSliLfbCtrl, temp);
-      }  
+      }
 
       /* cfgSliAATiledAperture */
       if(sliEnable && !aaEnable) {
@@ -869,7 +863,7 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
                     break;
           case 32: format = SST_AA_LFB_READ_FORMAT_32BPP;
                     break;
-        }  
+        }
 
         temp = (aaColorBuffStart << SST_SECONDARY_BUFFER_BASE_SHIFT) |
                 SST_AA_LFB_CPU_WRITE_ENABLE | 
@@ -881,7 +875,7 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
         temp = ((aaDepthBuffStart >> 12) << SST_AA_DEPTH_BUFFER_APERTURE_BEGIN_SHIFT) |
                 ((aaDepthBuffEnd >> 12) << SST_AA_DEPTH_BUFFER_APERTURE_END_SHIFT);
         CFG_WRITE(chipNum, cfgAADepthBufferAperture, temp);
-      }  
+      }
        
       /* Set up vga_vsync_offset field in cfgSliAAMisc */
       if((numChips > 1) && (chipNum > 0) && (aaEnable || sliEnable)) {
@@ -901,14 +895,14 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
           vsyncOffsetPixels = 7;
           vsyncOffsetChars = 5;
           vsyncOffsetHXtra = 0;
-        }  
+        }
 
         temp = CFG_READ(chipNum, cfgSliAAMisc);
         temp &= ~SST_VGA_VSYNC_OFFSET;
         temp |= (vsyncOffsetPixels << SST_VGA_VSYNC_OFFSET_PIXELS_SHIFT) |
                 (vsyncOffsetChars << SST_VGA_VSYNC_OFFSET_CHARS_SHIFT) |
                 (vsyncOffsetHXtra << SST_VGA_VSYNC_OFFSET_HXTRA_SHIFT);
-        CFG_WRITE(chipNum, cfgSliAAMisc, temp);        
+        CFG_WRITE(chipNum, cfgSliAAMisc, temp);
       }
 
 /* Macros to save my effing fingers */
@@ -939,7 +933,7 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
                        0x00,
                        0x00,
                        0x00);
-        CFG_VIDEOCTRL2(0x00, 0xff);          
+        CFG_VIDEOCTRL2(0x00, 0xff);
       } else if(numChips == 2 && !sliEnable && aaEnable && aaSampleHigh && !analogSLI) {
         /* Two chips, 4-sample digital AA... */
         if(chipNum == 0) {
@@ -967,7 +961,7 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
                          0x00,
                          0xff);
           CFG_VIDEOCTRL2(0x00, 0x00);
-        }  
+        }
       } else if(numChips == 2 && !sliEnable && aaEnable && aaSampleHigh && analogSLI) {
         /* Two chips, 4-sample analog AA... */
         if(chipNum == 0) {
@@ -1004,7 +998,7 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
                          0x00,
                          0x00,
                          0x00);
-          CFG_VIDEOCTRL2(0x01 <<sliBandHeightLog2, 0x01 <<sliBandHeightLog2);        
+          CFG_VIDEOCTRL2(0x01 <<sliBandHeightLog2, 0x01 <<sliBandHeightLog2);
         } else {
           /* Second chip */
           CFG_VIDEOCTRL0(SST_CFG_ENHANCED_VIDEO_EN | 
@@ -1018,7 +1012,7 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
                          0x00,
                          0xff);
           CFG_VIDEOCTRL2((numChips - 1) << sliBandHeightLog2, chipNum << sliBandHeightLog2);
-        }    
+        }
       } else if((numChips == 2 || numChips == 4) && sliEnable && !aaEnable /*[dBorca]: && !aaSampleHigh*/ && analogSLI) {
         /* 2 or 4 chips, 2/4-way analog SLI */
         if(chipNum == 0) {
@@ -1031,7 +1025,7 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
                          0x00,
                          (numChips - 1) << sliBandHeightLog2,
                          0x00);
-          CFG_VIDEOCTRL2(0x00, 0xff);        
+          CFG_VIDEOCTRL2(0x00, 0xff);
         } else {
           /* Remaining chips */
           CFG_VIDEOCTRL0(SST_CFG_ENHANCED_VIDEO_EN | 
@@ -1044,7 +1038,7 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
                          (numChips - 1) << sliBandHeightLog2,
                          chipNum << sliBandHeightLog2);
           CFG_VIDEOCTRL2(0x00, 0xff);
-        }   
+        }
       } else if(numChips == 2 && sliEnable && aaEnable && !aaSampleHigh && !analogSLI) {
         /* Two chips, 2-sample AA with 2-way digital SLI... */
         if(chipNum == 0) {
@@ -1058,7 +1052,7 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
                          0x00,
                          0x00,
                          0x00);
-          CFG_VIDEOCTRL2(0x01 << sliBandHeightLog2, 0x01 << sliBandHeightLog2);        
+          CFG_VIDEOCTRL2(0x01 << sliBandHeightLog2, 0x01 << sliBandHeightLog2);
         } else {
           /* Second chip */
           CFG_VIDEOCTRL0(SST_CFG_ENHANCED_VIDEO_EN | 
@@ -1071,8 +1065,8 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
                          chipNum  << sliBandHeightLog2,
                          0x00,
                          0xff);
-          CFG_VIDEOCTRL2((numChips - 1) << sliBandHeightLog2, chipNum  << sliBandHeightLog2);        
-        }    
+          CFG_VIDEOCTRL2((numChips - 1) << sliBandHeightLog2, chipNum  << sliBandHeightLog2);
+        }
       } else if(numChips == 2 && sliEnable && aaEnable && !aaSampleHigh && analogSLI) {
         /* Two chips, 2-sample AA with 2-way analog SLI... */
         if(chipNum == 0) {
@@ -1086,7 +1080,7 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
                          0x00,
                          0x01 << sliBandHeightLog2,
                          0x00);
-          CFG_VIDEOCTRL2(0x00, 0xff);        
+          CFG_VIDEOCTRL2(0x00, 0xff);
         } else {
           /* Second chip */
           CFG_VIDEOCTRL0(SST_CFG_ENHANCED_VIDEO_EN | 
@@ -1099,8 +1093,8 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
                          chipNum  << sliBandHeightLog2,
                          (numChips - 1) << sliBandHeightLog2,
                          chipNum  << sliBandHeightLog2);
-          CFG_VIDEOCTRL2(0x00, 0xff);        
-        }    
+          CFG_VIDEOCTRL2(0x00, 0xff);
+        }
       } else if(numChips == 4 && sliEnable && aaEnable && !aaSampleHigh && analogSLI) {
         /* Four chip, 2-sample AA. two units of 2 chip analog SLI, with 1 subsample per unit. */
         if(chipNum == 0) {
@@ -1114,7 +1108,7 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
                          0x01 << sliBandHeightLog2,
                          0x00 << sliBandHeightLog2);
           CFG_VIDEOCTRL2(0x00, 0x00);
-        } else if(chipNum == 1 || chipNum == 3) { 
+        } else if(chipNum == 1 || chipNum == 3) {
           /* Second and fourth chips */
           CFG_VIDEOCTRL0(SST_CFG_ENHANCED_VIDEO_EN | 
                          SST_CFG_ENHANCED_VIDEO_SLV | 
@@ -1139,7 +1133,7 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
                          0x01 << sliBandHeightLog2,
                          0x01 << sliBandHeightLog2);
           CFG_VIDEOCTRL2(0x00, 0xff);
-        }    
+        }
       } else if(numChips == 4 && !sliEnable && aaEnable && aaSampleHigh == 1 && analogSLI) {
         /* Four chip, 4-sample AA. 1 subsample per chip analog SLI'ed */
         if(chipNum == 0) {
@@ -1154,10 +1148,10 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
                          0x00);
           if(vid2xMode) {
             CFG_VIDEOCTRL2(0x00, 0xff);
-		  } else {
+          } else {
             CFG_VIDEOCTRL2(0x00, 0x00);
-		  }
-        } else if(chipNum == 1 || chipNum == 3) { 
+          }
+        } else if(chipNum == 1 || chipNum == 3) {
           /* Second and fourth chips */
           CFG_VIDEOCTRL0(SST_CFG_ENHANCED_VIDEO_EN | 
                          SST_CFG_ENHANCED_VIDEO_SLV | 
@@ -1171,9 +1165,9 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
                          0xff);
           if(vid2xMode) {
             CFG_VIDEOCTRL2(0x00, 0xff);
-		  } else {
+          } else {
             CFG_VIDEOCTRL2(0x00, 0x00);
-		  }
+          }
         } else {
           /* Third chip */
           CFG_VIDEOCTRL0(SST_CFG_ENHANCED_VIDEO_EN | 
@@ -1187,7 +1181,7 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
                          0x00,
                          0x00);
           CFG_VIDEOCTRL2(0x00, 0xff);
-        }    
+        }
       } else if(numChips == 4 && !sliEnable && aaEnable && aaSampleHigh == 2 && analogSLI) {
         /* Four chip, 8-sample AA. 2 subsample per chip analog SLI'ed */
         if(chipNum == 0) {
@@ -1203,10 +1197,10 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
                          0x00);
           if(vid2xMode) {
             CFG_VIDEOCTRL2(0x00, 0xff);
-		  } else {
+          } else {
             CFG_VIDEOCTRL2(0x00, 0x00);
-		  }
-        } else if(chipNum == 1 || chipNum == 3) { 
+          }
+        } else if(chipNum == 1 || chipNum == 3) {
           /* Second and fourth chips */
           CFG_VIDEOCTRL0(SST_CFG_ENHANCED_VIDEO_EN | 
                          SST_CFG_ENHANCED_VIDEO_SLV | 
@@ -1221,9 +1215,9 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
                          0xff);
           if(vid2xMode) {
             CFG_VIDEOCTRL2(0x00, 0xff);
-		  } else {
+          } else {
             CFG_VIDEOCTRL2(0x00, 0x00);
-		  }
+          }
         } else {
           /* Third chip */
           CFG_VIDEOCTRL0(SST_CFG_ENHANCED_VIDEO_EN | 
@@ -1238,7 +1232,7 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
                          0x00,
                          0x00);
           CFG_VIDEOCTRL2(0x00, 0xff);
-        }    
+        }
       } else if(numChips == 2 && !sliEnable && aaEnable && !aaSampleHigh && !analogSLI) {
         /* Two chips, 2-sample AA. 1 subsample per chip digital SLI'ed */
         if(chipNum == 0) {
@@ -1264,7 +1258,7 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
                          0x00,
                          0xff);
           CFG_VIDEOCTRL2(0x00, 0x00);
-        }    
+        }
       } else if(numChips == 2 && !sliEnable && aaEnable && !aaSampleHigh && analogSLI) {
         /* Two chips, 2-sample AA. 1 subsample per chip analog SLI'ed */
         if(chipNum == 0) {
@@ -1343,7 +1337,7 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
                           0xff);
           CFG_VIDEOCTRL2((numChips - 1) << sliBandHeightLog2,
                           chipNum << sliBandHeightLog2);
-        }                                  
+        }
       } else if(numChips == 4 && sliEnable && aaEnable && aaSampleHigh == 1 && !analogSLI) {
         /* Four chip, 2-way analog SLI with digital 4-sample AA */
         if(chipNum == 0) {
@@ -1358,7 +1352,7 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
                           0x01 << sliBandHeightLog2,
                           0x00 << sliBandHeightLog2);
           CFG_VIDEOCTRL2(0x00, 0x00);
-        } else if(chipNum == 1 || chipNum == 3) { 
+        } else if(chipNum == 1 || chipNum == 3) {
           /* Second and fourth chips */
           CFG_VIDEOCTRL0(SST_CFG_ENHANCED_VIDEO_EN |
                           SST_CFG_ENHANCED_VIDEO_SLV |
@@ -1385,7 +1379,7 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
                           0x01 << sliBandHeightLog2,
                           0x01 << sliBandHeightLog2);
           CFG_VIDEOCTRL2(0x00, 0xff);
-        }    
+        }
       } else if(numChips == 4 && sliEnable && aaEnable && aaSampleHigh == 1 && analogSLI) {
         /* Four chip, 2-way analog SLI with analog 4-sample AA */
         if(chipNum == 0) {
@@ -1427,8 +1421,8 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
                           0x01 << sliBandHeightLog2,
                           0x01 << sliBandHeightLog2);
           CFG_VIDEOCTRL2(0x00, 0x00);
-        }  
-      }  
+        }
+      }
 
       /* Make sure that last chip properly waits for data to be xfered
         * over the PCI bus before driving... */
@@ -1437,12 +1431,12 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
         temp = CFG_READ(chipNum, cfgSliAAMisc);
         temp |= SST_CFG_AA_LFB_RD_SLV_WAIT;
         CFG_WRITE(chipNum, cfgSliAAMisc, temp);
-      }  
+      }
 
       /* Deal with the problem for LFB reads where the data really needs to
          come from 4 different chips. Since the hardware does not support
          this, we figure out a way to only return aliased data back back...
-         This is accomplished by having the Master return its lfb data    
+         This is accomplished by having the Master return its lfb data
          By turning off AA LFB reads, chips 2/3 no longer snoop lfb reads
          at all. Then, there is only handshaking between chips 0 & 1 so
          the Master stays happy.
@@ -1451,7 +1445,7 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
         temp = CFG_READ(chipNum, cfgAALfbCtrl);
         temp &= ~SST_AA_LFB_READ_ENABLE;
         CFG_WRITE(chipNum, cfgAALfbCtrl, temp);
-      }  
+      }
 
       if(chipNum > 0) {
           /* For the slave chips, make the video PLL lock to the Master's 
@@ -1464,14 +1458,14 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
         HWC_IO_LOAD_SLAVE(chipNum, bInfo->regInfo, miscInit1, temp);
         temp |= SST_POWERDOWN_DAC;
         HWC_IO_STORE_SLAVE(chipNum, bInfo->regInfo, miscInit1, temp);
-      }  
+      }
       else if (numChips == 4) /* chipNum==0 */
       {
         /* Special Case 4 way where master also needs to sync from slave */
         temp = CFG_READ(chipNum, cfgVideoCtrl0);
         temp |= SST_CFG_VIDPLL_SEL;
         CFG_WRITE(chipNum, cfgVideoCtrl0, temp);
-      } 
+      }
 
       LOG((dbg,"cfgInitEnable: %08lx\n",CFG_READ(chipNum, cfgInitEnable_FabID)));
       LOG((dbg,"cfgPciDecode:  %08lx\n",CFG_READ(chipNum, cfgPciDecode)));
@@ -1511,6 +1505,6 @@ void hwcSetSLIAAMode(hwcBoardInfo *bInfo,
         temp &= ~SST_VIDEO_PROCESSOR_EN;
         HWC_IO_STORE_SLAVE(chipNum, bInfo->regInfo, vidProcCfg, temp);
       }
-    }      
-  }    
+    }
+  }
 }
