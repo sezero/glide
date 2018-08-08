@@ -100,9 +100,14 @@ static char *bufTypeNames[] = {
 #endif
 
 #if defined( __WIN32__) && defined(HWC_ACCESS_DDRAW)
-#define WIN32_LEAN_AND_MEAN 
-#include <windows.h> 
-#include <ddraw.h> 
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+
+#if (WINVER < 0x0500) && !defined(HMONITOR_DECLARED) /* <--- HACK */
+DECLARE_HANDLE(HMONITOR);
+#define HMONITOR_DECLARED
+#endif
+#include <ddraw.h>
 
 #define NUM_BUFS 6
 

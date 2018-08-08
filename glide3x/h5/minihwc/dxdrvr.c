@@ -109,8 +109,13 @@ static char *bufTypeNames[] = {
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
-#include <windows.h> 
-#include <ddraw.h> 
+#include <windows.h>
+
+#if (WINVER < 0x0500) && !defined(HMONITOR_DECLARED) /* <--- HACK */
+DECLARE_HANDLE(HMONITOR);
+#define HMONITOR_DECLARED
+#endif
+#include <ddraw.h>
 
 #define NUM_BUFS 6
 
@@ -249,17 +254,16 @@ _dxDDrawToGlideDesc(hwcBufferDesc *pDesc)
 } /* _dxDDrawToGlideDesc */
 
 
-/* XXXTACOHACK -- The required header file isn't shipping yet - decls will be removed at some 
+/* XXXTACOHACK -- The required header file isn't shipping yet - decls will be removed at some
    future time */
-typedef void *HMONITOR;
-typedef BOOL (FAR PASCAL * LPDDENUMCALLBACKEXA)(GUID FAR *, LPSTR, LPSTR, LPVOID, HMONITOR); 
-extern HRESULT WINAPI DirectDrawEnumerateExA( LPDDENUMCALLBACKEXA lpCallback, 
-                                              LPVOID lpContext, DWORD dwFlags); 
-typedef HRESULT (WINAPI * LPDIRECTDRAWENUMERATEEXA)( LPDDENUMCALLBACKEXA lpCallback, 
-                                                     LPVOID lpContext, 
-                                                     DWORD dwFlags); 
-#define DDENUM_ATTACHEDSECONDARYDEVICES     0x00000001L 
-/* XXXTACOHACK -- The required header file isn't shipping yet - decls will be removed at some 
+typedef BOOL (FAR PASCAL * LPDDENUMCALLBACKEXA)(GUID FAR *, LPSTR, LPSTR, LPVOID, HMONITOR);
+extern HRESULT WINAPI DirectDrawEnumerateExA( LPDDENUMCALLBACKEXA lpCallback,
+                                              LPVOID lpContext, DWORD dwFlags);
+typedef HRESULT (WINAPI * LPDIRECTDRAWENUMERATEEXA)( LPDDENUMCALLBACKEXA lpCallback,
+                                                     LPVOID lpContext,
+                                                     DWORD dwFlags);
+#define DDENUM_ATTACHEDSECONDARYDEVICES     0x00000001L
+/* XXXTACOHACK -- The required header file isn't shipping yet - decls will be removed at some
    future time */
 
 static GUID fooGuid;

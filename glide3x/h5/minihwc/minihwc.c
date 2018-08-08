@@ -1090,10 +1090,10 @@ initSlave(hwcBoardInfo *bInfo, FxU32 chipNum);
 //static hwcBoardInfo *curBI = NULL;
 
 #ifdef HWC_EXT_INIT
-//#ifndef HMONITOR_DECLARED // AJB- Make def compatible w/ vc6 headers
-//typedef void *HMONITOR;
-//#define HMONITOR_DECLARED
-//#endif
+#if (WINVER < 0x0500) && !defined(HMONITOR_DECLARED) /* <--- HACK */
+DECLARE_HANDLE(HMONITOR);
+#define HMONITOR_DECLARED
+#endif
 typedef BOOL (CALLBACK* MONITORENUMPROC)(HMONITOR, HDC, LPRECT, LPARAM);
 typedef WINUSERAPI BOOL WINAPI
 EnumDisplayMonitors_func( HDC             hdc,

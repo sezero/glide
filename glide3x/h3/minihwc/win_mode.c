@@ -67,6 +67,10 @@ _parseFilename(char *name)
 static int _set_exclusive_relaxed;
 static int _set_vidmode_relaxed;
 
+#if (WINVER < 0x0500) && !defined(HMONITOR_DECLARED) /* <--- HACK */
+DECLARE_HANDLE(HMONITOR);
+#define HMONITOR_DECLARED
+#endif
 typedef struct _enumInfoStruct {
   GUID guid;
   HMONITOR hmon;

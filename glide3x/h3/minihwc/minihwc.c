@@ -666,7 +666,10 @@ static FxBool resolutionSupported[HWC_MAX_BOARDS][0xF];
 #ifdef HWC_EXT_INIT
 static hwcBoardInfo *curBI;
 
-typedef void *HMONITOR;
+#if (WINVER < 0x0500) && !defined(HMONITOR_DECLARED) /* <--- HACK */
+DECLARE_HANDLE(HMONITOR);
+#define HMONITOR_DECLARED
+#endif
 typedef BOOL (CALLBACK* MONITORENUMPROC)(HMONITOR, HDC, LPRECT, LPARAM);
 typedef WINUSERAPI BOOL WINAPI
 EnumDisplayMonitors_func( HDC             hdc,
