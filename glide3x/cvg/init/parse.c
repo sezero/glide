@@ -20,6 +20,7 @@
 ** Parsing code for grabbing information from "voodoo2.ini" initialization file
 **
 */
+#undef FX_DLL_ENABLE /* so that we don't dllexport the symbols */
 #ifdef __WIN32__
 #pragma optimize ("",off)
 #endif

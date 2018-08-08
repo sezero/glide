@@ -21,6 +21,7 @@
 ** configuration information.
 **
 */
+#undef FX_DLL_ENABLE /* so that we don't dllexport the symbols */
 #ifdef __WIN32__
 #pragma optimize ("",off)
 #endif

@@ -19,6 +19,8 @@
 **
 */
 
+#undef FX_DLL_ENABLE /* so that we don't dllexport the symbols */
+
 #include <3dfx.h>
 
 #include <stddef.h>
