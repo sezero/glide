@@ -9,6 +9,14 @@
 #define FX_DLL_DEFINITION
 #include <fxdll.h>
 
+/*#define FXREMAP_EXE*/ /* cmdline tool */
+#ifdef FXREMAP_EXE
+static int silent = 1;
+#define FXREMAP_PRINTF(a) if(!silent) printf a
+#else
+#define FXREMAP_PRINTF(a)
+#endif
+
 #define SIZE_SST1_NEEDED   0x100000
 #define END_ADDRESS        0x10000000
 #define S3_SHIFT           0x400000
@@ -23,8 +31,6 @@ struct RangeSTRUCT
    struct RangeSTRUCT   *next;
    struct RangeSTRUCT   *prev;
 };
-
-static int silent = 1;
 
 typedef struct RangeSTRUCT RangeStruct;
 
@@ -46,20 +52,23 @@ static FxBool pciGetAddress(PciRegister reg,FxU32 device_number,FxU32 *data);
 
 static void ForceCleanUp(void);
 static FxBool FindNecessaryCards(void);
-static void ProcessCommandLine(char **argv,int argc);
 static FxBool IsCardVoodoo(int i);
 static FxBool IsCardS3(int i);
-static FxBool ReadHex(char *string,FxU32 *num);
 static void AddMapEntry(FxU32 address,FxU32 range,FxU32 id,FxBool VoodooCard,FxBool S3Card);
 #if 0 /* not used */
 static void HandleMemoryOverlap(void);
 static FxBool overlap_map(RangeStruct *begin,FxU32 end);
 #endif
 
-static FxBool switch_S3_flag_ignore=FXFALSE;
+#ifdef FXREMAP_EXE
+static void ProcessCommandLine(char **argv,int argc);
+static FxBool ReadHex(const char *string,FxU32 *num);
 //static FxBool switch_force=FXFALSE;
 static FxBool switch_C0_bias=FXTRUE;
+static FxBool switch_S3_flag_ignore=FXFALSE;
 static int switch_voodoo_loc = 0;
+#endif
+
 static FxU32 num_voodoos=0;
 
 //#define TESTING 1
@@ -88,19 +97,16 @@ static void fxremap_dowork(int argc,char **argv,int doit_silently)
 {
    RangeStruct *conflict;
 
+#ifdef FXREMAP_EXE
    silent = doit_silently;
-
    ProcessCommandLine(argv,argc);
+#endif
 
    InitRemap();
 
    if (!FindNecessaryCards())
    {
-      if (!silent) {
-       printf("This program was only meant to be used with the 3dfx Voodoo chipset\n");
-       printf("to correct possible pci address conflicts.\n");
-       printf("No Voodoo chipset was detected\n");
-      }
+      FXREMAP_PRINTF(("No Voodoo chipset was detected\n"));
       ForceCleanUp();
    }
 
@@ -122,18 +128,14 @@ static void fxremap_dowork(int argc,char **argv,int doit_silently)
       }
       else
       {
-         if (!silent) {
-            printf("Unable to find region to map conflicting board\n");
-         }
+         FXREMAP_PRINTF(("Unable to find region to map conflicting board\n"));
          ForceCleanUp();
          return;
       }
    }
 
    if (!conflicts_found) {
-      if (!silent) {
-        printf("No conflict with the Voodoo cards was found\n");
-      }
+      FXREMAP_PRINTF(("No conflict with the Voodoo cards was found\n"));
    }
    CloseRemap();
 }
@@ -142,10 +144,11 @@ void fxremap(void) {
   fxremap_dowork(0,NULL,1);
 }
 
+#ifdef FXREMAP_EXE
 void fxremap_main(int argc,char **argv) {
   fxremap_dowork(argc,argv,0);
 }
-
+#endif
 
 static void InitRemap(void)
 {
@@ -299,11 +302,9 @@ static RangeStruct *TestForConflicts(void)
                return next;
             }
             else {
-               if (!silent) {
-                 printf("FxRemap: Possible PCI conflict not with Voodoo device\n");
-                 printf("%X (%X) <-> %X (%X)\n",cur->id, cur->address,  
-                       cur->next->id, cur->next->address);
-               }
+               FXREMAP_PRINTF(("FxRemap: Possible PCI conflict not with Voodoo device\n"
+                               "%X (%X) <-> %X (%X)\n",cur->id, cur->address,
+                               cur->next->id, cur->next->address));
             }
          }
       }
@@ -403,9 +404,7 @@ static void RemoveEntry(RangeStruct *del)
    {
       if (!(del->prev))
       {
-         if (!silent) {
-           printf("FxRemap: No entries mapped\n");
-         }
+         FXREMAP_PRINTF(("FxRemap: No entries mapped\n"));
          ForceCleanUp();
          return;
       }
@@ -579,9 +578,7 @@ static void RemapVoodoo(RangeStruct *conflict)
    address=(conflict->address)<<4;
    pciSetConfigData(PCI_BASE_ADDRESS_0,conflict->id,&address);
 #endif
-   if (!silent) {
-     printf("Remapped Voodoo Board to avoid a conflict\n");
-   }
+   FXREMAP_PRINTF(("Remapped Voodoo Board to avoid a conflict\n"));
 }
 
 static void pciGetRange(PciRegister reg,FxU32 device_number,FxU32 *data)
@@ -636,15 +633,11 @@ static FxBool FindNecessaryCards(void)
       }
    }
    if (!voodoo_found)
-   {
-      if (!silent) {
-        printf("Warning no known voodoo card was found\n");
-      }
       return FXFALSE;
-   }
    return FXTRUE;
 }
 
+#ifdef FXREMAP_EXE
 static void ProcessCommandLine(char **argv,int argc)
 {
    int     i;
@@ -691,9 +684,7 @@ static void ProcessCommandLine(char **argv,int argc)
 /* this stuff was from the interactive test version */
 #if 0
          while(!kbhit())
-         {
             ;
-         }
          getch();
 #endif
       }
@@ -754,59 +745,7 @@ static void ProcessCommandLine(char **argv,int argc)
    }
 }
 
-static FxU32 pciGetType(int i)
-{
-   FxU32 header_type;
-
-   pciGetConfigData(PCI_HEADER_TYPE,i,&header_type);
-
-   return header_type;
-}
-
-static FxBool IsCardVoodoo(int i)
-{
-   FxU32    vendor,dev_id;
-   FxU32    fn_num = (i >> 13) & 0x7; 
-   int      true_val;
-
-   if (fn_num) {
-     true_val = 2;
-   } else {
-     true_val = 1;
-   }
-   
-   pciGetConfigData(PCI_VENDOR_ID,i,&vendor);
-   pciGetConfigData(PCI_DEVICE_ID,i,&dev_id);
-   /* if sst1 */
-   if ((vendor==0x121a)&&(dev_id==0x0001))
-      return FXTRUE;
-   /* if voodoo2 */
-   if ((vendor==0x121a)&&(dev_id==0x0002)) {
-      if (true_val == 2) if (!silent) { printf("found voodoo2 hidden sli\n"); }
-      return true_val;
-   }
-   /* if banshee */
-   if ((vendor==0x121a)&&(dev_id==0x0003))
-      return FXTRUE;
-   /* if h4? or whatever is next */
-   if ((vendor==0x121a)&&(dev_id==0x0004))
-      return FXTRUE;
-   return FXFALSE;
-}
-
-static FxBool IsCardS3(int i)
-{
-   FxU32    vendor,dev_id;
-
-   pciGetConfigData(PCI_VENDOR_ID,i,&vendor);
-   pciGetConfigData(PCI_DEVICE_ID,i,&dev_id);
-   if ((vendor==0x5333)&&((dev_id==0x88f0)||(dev_id==0x8880)))
-      return FXTRUE;
-
-   return FXFALSE;
-}
-
-static FxBool ReadHex(char *string,FxU32 *num)
+static FxBool ReadHex(const char *string,FxU32 *num)
 {
    int  i=0;
    FxU32 temp=0,temp2;
@@ -846,6 +785,59 @@ static FxBool ReadHex(char *string,FxU32 *num)
    }
    *num=temp;
    return FXTRUE;
+}
+#endif /* FXREMAP_EXE */
+
+static FxU32 pciGetType(int i)
+{
+   FxU32 header_type;
+
+   pciGetConfigData(PCI_HEADER_TYPE,i,&header_type);
+
+   return header_type;
+}
+
+static FxBool IsCardVoodoo(int i)
+{
+   FxU32    vendor,dev_id;
+   FxU32    fn_num = (i >> 13) & 0x7; 
+   int      true_val;
+
+   if (fn_num) {
+     true_val = 2;
+   } else {
+     true_val = 1;
+   }
+   
+   pciGetConfigData(PCI_VENDOR_ID,i,&vendor);
+   pciGetConfigData(PCI_DEVICE_ID,i,&dev_id);
+   /* if sst1 */
+   if ((vendor==0x121a)&&(dev_id==0x0001))
+      return FXTRUE;
+   /* if voodoo2 */
+   if ((vendor==0x121a)&&(dev_id==0x0002)) {
+      if (true_val == 2) { FXREMAP_PRINTF(("found voodoo2 hidden sli\n")); }
+      return true_val;
+   }
+   /* if banshee */
+   if ((vendor==0x121a)&&(dev_id==0x0003))
+      return FXTRUE;
+   /* if h4? or whatever is next */
+   if ((vendor==0x121a)&&(dev_id==0x0004))
+      return FXTRUE;
+   return FXFALSE;
+}
+
+static FxBool IsCardS3(int i)
+{
+   FxU32    vendor,dev_id;
+
+   pciGetConfigData(PCI_VENDOR_ID,i,&vendor);
+   pciGetConfigData(PCI_DEVICE_ID,i,&dev_id);
+   if ((vendor==0x5333)&&((dev_id==0x88f0)||(dev_id==0x8880)))
+      return FXTRUE;
+
+   return FXFALSE;
 }
 
 #if 0 /* not used */
