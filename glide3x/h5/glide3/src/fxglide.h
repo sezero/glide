@@ -2216,8 +2216,7 @@ p6Fence(void);
    type FX_CSTYLE name args
 
 #define GR_ENTRY(name, type, args) \
-   type FX_CSTYLE name args
-   //FX_EXPORT type FX_CSTYLE name args
+   FX_EXPORT type FX_CSTYLE name args
 
 #define GR_FAST_ENTRY(name, type, args) \
    __declspec naked FX_EXPORT type FX_CSTYLE name args
