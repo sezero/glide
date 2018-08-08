@@ -10669,7 +10669,7 @@ static Gu3dfInfo hilite_3dfinfo = {
     GR_ASPECT_LOG2_1x1,        /* aspect_ratio */
     GR_TEXFMT_INTENSITY_8 /* format */
   },
-  { },                    /* table */
+  { { { 0x00 } } },             /* table */
   NULL,                   /* data */
   0x00000ab0              /* mem_required */
 };
@@ -12054,7 +12054,7 @@ static Gu3dfInfo shadow_3dfinfo = {
     GR_ASPECT_LOG2_2x1,        /* aspect_ratio */
     GR_TEXFMT_INTENSITY_8 /* format */
   },
-  { },         /* table */
+  { { { 0x00 } } },             /* table */
   NULL,                   /* data */
   0x00000ab0              /* mem_required */
 };

@@ -152,7 +152,7 @@ GLIDE_OBJECTS = \
 
 ifeq ($(USE_X86),1)
 GLIDE_OBJECTS += \
-	cpuid.o
+	cpuid.obj
 ifeq ($(FX_GLIDE_HW),sst1)
 GLIDE_OBJECTS += \
 	xdraw.obj

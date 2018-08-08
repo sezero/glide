@@ -74,7 +74,7 @@ main (int argc, char **argv)
 
     if (argc > 1) {
       if (strcmp("-inline", argv[1]) == 0) {
-        Sstregs dummyRegs;
+        Sstregs dummyRegs = { 0x00UL }; /* silence VC6 */
 
         printf("#ifndef __FX_INLINE_H__\n");
         printf("#define __FX_INLINE_H__\n");

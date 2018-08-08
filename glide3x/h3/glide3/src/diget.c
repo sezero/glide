@@ -989,7 +989,9 @@ GR_DIENTRY(grQueryResolutions, FxI32, (const GlideResolution *resTemplate, Glide
   }
 
   for (i = min_res; i <= max_res; i++) {
+#if GDBG_INFO_ON
     GDBG_INFO(80, FN_NAME "Resolution = %s\n", resNames[i]);
+#endif
     for (j = min_ref; j <= max_ref; j++) {
       FxBool resSuported;
       GDBG_INFO(80, FN_NAME ":  _grResolutionRefresh passed\n");

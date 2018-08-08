@@ -57,7 +57,9 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitVideo(FxU32 *sstbase,
     FxU32 vInClkDel, vOutClkDel;
     FxU32 tf0_clk_del, tf1_clk_del, tf2_clk_del;
     FxU32 ft_clk_del;
+#ifndef DIRECTX
     float vidClkFreq;
+#endif
 
     if(!sst)
         return(FXFALSE);

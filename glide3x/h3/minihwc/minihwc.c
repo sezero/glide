@@ -674,7 +674,6 @@ EnumDisplayMonitors_func( HDC             hdc,
                           MONITORENUMPROC lpfnEnum,
                           LPARAM          dwData);
 
-
 typedef struct {
   HDC dc;
   HMONITOR mon;
@@ -4103,11 +4102,12 @@ hwcResolutionSupported(hwcBoardInfo *bInfo, GrScreenResolution_t res)
   };
 #endif
 
+#if GDBG_INFO_ON
   GDBG_INFO(80, FN_NAME ":  res == %s (0x%x), supported == %s\n",
             resNames[res], resolutionSupported[bInfo->boardNum][res],
             resolutionSupported[bInfo->boardNum][res] ? "FXTRUE" : "FXFALSE");
+#endif
   
-
   /* Glide has very good checking to see if the memory required is
   available, so we'll just return whether the driver can do it. */
   return resolutionSupported[bInfo->boardNum][res];

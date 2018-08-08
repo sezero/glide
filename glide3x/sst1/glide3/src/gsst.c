@@ -733,8 +733,8 @@ GR_ENTRY(grSstWinOpen, GrContext_t, (FxU32                   hWnd,
     oemi.vid.clkFreq24bpp = tvVidtiming.clkFreq24bpp;
 
     if (gc->oemInit) {
-      if ((oemInitVideoTiming = GetProcAddress(gc->oemInit, "_fxoemInitVideoTiming@4")) && 
-          (oemInitMapBoard))
+      oemInitVideoTiming = GetProcAddress(gc->oemInit, "_fxoemInitVideoTiming@4");
+      if (oemInitVideoTiming && oemInitMapBoard)
         oemvidtiming = oemInitVideoTiming(&oemi);
       /*
       ** video timing is updated by oem dll
@@ -778,8 +778,8 @@ GR_ENTRY(grSstWinOpen, GrContext_t, (FxU32                   hWnd,
 
 #if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
   if (gc->oemInit) {
-    if ((oemInitSetVideo = GetProcAddress(gc->oemInit, "_fxoemInitSetVideo@4")) && 
-        (oemInitMapBoard))
+    oemInitSetVideo = GetProcAddress(gc->oemInit, "_fxoemInitSetVideo@4");
+    if (oemInitSetVideo && oemInitMapBoard)
       oemInitSetVideo(&oemi);
   }
 #endif
@@ -1112,7 +1112,8 @@ GR_ENTRY(grSstWinClose, FxBool, (GrContext_t context))
     initRestoreVideo();
 #if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
     if (gc->oemInit) {
-      if (oemRestoreVideo = GetProcAddress(gc->oemInit, "_fxoemRestoreVideo@0"))
+      oemRestoreVideo = GetProcAddress(gc->oemInit, "_fxoemRestoreVideo@0");
+      if (oemRestoreVideo)
         oemRestoreVideo();
       FreeLibrary(gc->oemInit);
     }
@@ -1194,9 +1195,9 @@ _grSstControl(GrControl_t code)
     xRes = initControl(code);
 #if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
     {
-      FARPROC oemControl = NULL;
       if (gc->oemInit) {
-        if ((oemControl = GetProcAddress(gc->oemInit, "_fxoemControl@4")))
+        FARPROC oemControl = GetProcAddress(gc->oemInit, "_fxoemControl@4");
+        if (oemControl)
           oemControl(code);
       }
     }
@@ -1245,9 +1246,10 @@ _grSstControl(GrControl_t code)
     ctrlflag = initControl(code);
 #if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
     {
-      FARPROC oemControl = NULL;
+      GR_DCL_GC;
       if (gc->oemInit) {
-        if ((oemControl = GetProcAddress(gc->oemInit, "_fxoemControl@4")))
+        FARPROC oemControl = GetProcAddress(gc->oemInit, "_fxoemControl@4");
+        if (oemControl)
           oemControl(code);
       }
     }

@@ -129,14 +129,16 @@ getPlugdata (FxU32* w, FxU32* h, FxI32* strideInBytes,
 void
 _grShamelessPlug(void)
 {
-  GR_BEGIN_NOFIFOCHECK("_grShamelessPlug", 80);
-  GDBG_INFO_MORE(gc->myLevel, "()\n");
-
   GrState state;
   FxU32 plugWidth, plugHeight;
   FxI32 plugStride;
   GrLfbWriteMode_t plugFormat;
-  const void* plugData =
+  const void* plugData;
+
+  GR_BEGIN_NOFIFOCHECK("_grShamelessPlug", 80);
+  GDBG_INFO_MORE(gc->myLevel, "()\n");
+
+  plugData =
     getPlugdata(&plugWidth, &plugHeight, &plugStride, &plugFormat);
 
   if (!plugData) return;
