@@ -43,6 +43,13 @@ DECLARE_HANDLE(HMONITOR);
 #undef GETENV
 #define GETENV hwcGetenv
 
+#ifndef IDirectDraw7_CreateSurface /* ddraw.h not from dx7 sdk */
+typedef BOOL (FAR PASCAL * LPDDENUMCALLBACKEXA)(GUID FAR *, LPSTR, LPSTR, LPVOID, HMONITOR);
+typedef HRESULT (WINAPI * LPDIRECTDRAWENUMERATEEXA)(LPDDENUMCALLBACKEXA, LPVOID, DWORD);
+#ifndef DDENUM_ATTACHEDSECONDARYDEVICES
+#define DDENUM_ATTACHEDSECONDARYDEVICES 0x00000001L
+#endif
+#endif
 
 static int _set_exclusive_relaxed;
 static int _set_vidmode_relaxed;

@@ -13,7 +13,19 @@
 #include "fxcmd.h"
 #include "gsfc.h"
 
+#if (WINVER < 0x0500) && !defined(HMONITOR_DECLARED) /* <--- HACK */
+DECLARE_HANDLE(HMONITOR);
+#define HMONITOR_DECLARED
+#endif
 #include <ddraw.h>
+
+#ifndef IDirectDraw7_CreateSurface /* ddraw.h not from dx7 sdk */
+typedef BOOL (FAR PASCAL * LPDDENUMCALLBACKEXA)(GUID FAR *, LPSTR, LPSTR, LPVOID, HMONITOR);
+typedef HRESULT (WINAPI * LPDIRECTDRAWENUMERATEEXA)(LPDDENUMCALLBACKEXA, LPVOID, DWORD);
+#ifndef DDENUM_ATTACHEDSECONDARYDEVICES
+#define DDENUM_ATTACHEDSECONDARYDEVICES 0x00000001L
+#endif
+#endif
 
 static LPDIRECTDRAW		lpDDraw1 = 0;
 static LPDIRECTDRAW2		lpDDraw2 = 0;
@@ -155,8 +167,8 @@ void _grReleaseWindowSurface(GrContext_t ctx)
 
 /* This will create our DirectDraw surfaces and create the context */
 GrContext_t _grCreateWindowSurface(FxU32                 hWnd,
-                                   GrColorFormat_t	format, 
-                                   GrOriginLocation_t	origin, 
+                                   GrColorFormat_t	format,
+                                   GrOriginLocation_t	origin,
                                    GrPixelFormat_t	pixelformat,
                                    int			nAuxBuffer)
 {
@@ -282,7 +294,7 @@ GrContext_t _grCreateWindowSurface(FxU32                 hWnd,
   
   /* Now create us a Primary surface */
   memset(&ddsd, 0, sizeof(ddsd));
-  ddsd.dwSize = sizeof(ddsd); 
+  ddsd.dwSize = sizeof(ddsd);
   ddsd.dwFlags = DDSD_CAPS;
   ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
   
@@ -316,7 +328,7 @@ GrContext_t _grCreateWindowSurface(FxU32                 hWnd,
   /* Setup Color Surface */
   GDBG_INFO(80, "Setting up Color Surface\n");
   memset(&ddsd, 0, sizeof(ddsd));
-  ddsd.dwSize = sizeof(ddsd); 
+  ddsd.dwSize = sizeof(ddsd);
   ddsd.dwFlags = DDSD_CAPS|DDSD_HEIGHT|DDSD_WIDTH;/*|DDSD_PIXELFORMAT;*/
   ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;/*|DDSCAPS_VIDEOMEMORY;*/
   ddsd.dwWidth = surfWidth;
@@ -337,7 +349,7 @@ GrContext_t _grCreateWindowSurface(FxU32                 hWnd,
   if (nAuxBuffer) {
     GDBG_INFO(80, "Setting up Aux Surface\n");
     memset(&ddsd, 0, sizeof(ddsd));
-    ddsd.dwSize = sizeof(ddsd); 
+    ddsd.dwSize = sizeof(ddsd);
     ddsd.dwFlags = DDSD_CAPS|DDSD_HEIGHT|DDSD_WIDTH;/*|DDSD_PIXELFORMAT;*/
     ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;/*|DDSCAPS_VIDEOMEMORY;*/
     ddsd.dwWidth = surfWidth;
@@ -358,7 +370,7 @@ GrContext_t _grCreateWindowSurface(FxU32                 hWnd,
   /* Setup Texture Surface */
   GDBG_INFO(80, "Setting up Texture Surface\n");
   memset(&ddsd, 0, sizeof(ddsd));
-  ddsd.dwSize = sizeof(ddsd); 
+  ddsd.dwSize = sizeof(ddsd);
   ddsd.dwFlags = DDSD_CAPS|DDSD_HEIGHT|DDSD_WIDTH;/*|DDSD_PIXELFORMAT;*/
   ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;/*|DDSCAPS_VIDEOMEMORY;*/
   /* XXX [koolsmoky] We're screwed if the texture is larger than 1024*1024 (Napalm). */
@@ -438,12 +450,10 @@ void _grFlipWindowSurface()
     SetRect(&src, 0, 0, surfWidth, surfHeight);
     
     hResult = IDirectDrawSurface_Blt(lpPrimSurf, &dest, lpColSurf, &src, DDBLT_WAIT, NULL);
-    
-    while(IDirectDrawSurface_GetBltStatus(lpPrimSurf, DDGBS_ISBLTDONE) != DD_OK);
-    
+    while(IDirectDrawSurface_GetBltStatus(lpPrimSurf, DDGBS_ISBLTDONE) != DD_OK)
+      ;
     if (hResult != DD_OK) {
       GDBG_INFO(80, "Couldn't Blit!\n");
     }
   }
-  
 }
