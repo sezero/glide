@@ -258,10 +258,12 @@ GR_ENTRY(grDrawPoint, void, (const void *p))
 GR_ENTRY(grDrawLine, void, (const void *a, const void *b))
 {
 #define FN_NAME "grDrawLine"
-  const void *vertices[2] = {a, b};
+  void *vertices[2]; /**** FIXME: this needs to be const! ****/
 
   GR_BEGIN_NOFIFOCHECK(FN_NAME, 91);
   GDBG_INFO_MORE(gc->myLevel, "(a = 0x%x, b = 0x%x)\n", a, b);
+
+  vertices[0] = (void *)a; vertices[1] = (void *)b; /* FIXME! */
 
   if (gc->state.grEnableArgs.primitive_smooth_mode & GR_AA_ORDERED_LINES_MASK)
     _grAADrawLineStrip(GR_VTX_PTR_ARRAY, GR_LINES, 2, vertices);
