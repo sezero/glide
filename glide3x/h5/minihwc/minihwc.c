@@ -7368,7 +7368,7 @@ static void hwcCopyBuffer8888FlippedDithered(hwcBoardInfo *bInfo, FxU16 *source,
 
         /* Clamp to max */
 	/* c = min(c,val_max) */
-	pMinSW		mm0,	mm3
+	_asm _emit 0x0f _asm _emit 0xea  _asm _emit 0xc3	/* pMinSW mm0,mm3 */
 
 	/* Find error */
 	/* er = c & dither_mask; */
