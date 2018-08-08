@@ -31,9 +31,6 @@
 /* Dork w/ the console window */
 #include <sioux.h>
 
-/* So the debug level comes from the right place */
-#include <cvg.h>
-#include <sst1init.h>
 #endif /* __MWERKS__ */
 
 #define FX_DLL_DEFINITION
@@ -84,7 +81,7 @@ void setLevel(int level, int value)
 
 
 #ifndef KERNEL_NT
-// we need to call a kernal printf. 
+// we need to call a kernal printf.
 extern int __cdecl klvfprintf(FILE        *stream,
                               const char  *format,
                               va_list      arg    ) ;
@@ -162,13 +159,13 @@ gdbg_init(void)
     char *env;
 
     if (done) return;
-    
+
 #if __MWERKS__
 	SIOUXSettings.standalone 				= false;
 	SIOUXSettings.setupmenus 				= false;
 	SIOUXSettings.autocloseonquit 	= true;
 	SIOUXSettings.asktosaveonclose 	= false;
-#endif      
+#endif
 
 #ifdef __linux__
     gdbg_msgfile = stderr;
@@ -291,7 +288,7 @@ gdbg_printf (const char *format, ...)
     __asm lea   eax, (format+4);
     __asm mov   ebx, format;
     MyPrintf();
-#endif /* #ifndef KERNEL */    
+#endif /* #ifndef KERNEL */
 
 }
 
@@ -363,7 +360,7 @@ gdbg_info_more (const int level, const char *format, ...)
 #endif /* #ifndef KERNEL */
     return (1);
 }
-
+
 static GDBGErrorProc errorProcList[3];
 
 FX_EXPORT int FX_CSTYLE gdbg_error_set_callback(GDBGErrorProc p)
@@ -490,5 +487,5 @@ gdbg_set_file(const char *name)
   return 1;
 #else /* #ifndef KERNEL */
   return 0;
-#endif /* #ifndef KERNEL */    
+#endif /* #ifndef KERNEL */
 }
