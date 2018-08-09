@@ -1,21 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifndef __linux__
-#include <conio.h>
-#endif
 #include <3dfx.h>
 #include <fxpci.h>
+/* for INIT_PRINTF: */
+#include <sst1init.h>
 #define FX_DLL_DEFINITION
 #include <fxdll.h>
-
-/*#define FXREMAP_EXE*/ /* cmdline tool */
-#ifdef FXREMAP_EXE
-static int silent = 1;
-#define FXREMAP_PRINTF(a) if(!silent) printf a
-#else
-#define FXREMAP_PRINTF(a)
-#endif
 
 #define SIZE_SST1_NEEDED   0x100000
 #define END_ADDRESS        0x10000000
@@ -60,28 +51,7 @@ static void HandleMemoryOverlap(void);
 static FxBool overlap_map(RangeStruct *begin,FxU32 end);
 #endif
 
-#ifdef FXREMAP_EXE
-static void ProcessCommandLine(char **argv,int argc);
-static FxBool ReadHex(const char *string,FxU32 *num);
-//static FxBool switch_force=FXFALSE;
-static FxBool switch_C0_bias=FXTRUE;
-static FxBool switch_S3_flag_ignore=FXFALSE;
-static int switch_voodoo_loc = 0;
-#endif
-
 static FxU32 num_voodoos=0;
-
-//#define TESTING 1
-
-#ifdef TESTING
-static RangeStruct test_data[6]=
-                           {{0xF0000000,0x100000,1,0,0,0,0},
-                            {0xF3000000,0x200000,4,1,0,0,0},
-                            {0xF3000000,0x200000,8,0,0,0,0},
-                            {0xF5000000,0x200000,2,0,0,0,0},
-                            {0xE6000000,0x200000,5,0,0,0,0},
-                            {0xD3001000,0x200000,3,0,0,0,0}};
-#endif
 
 static RangeStruct map[80];
 #if 0 /* not used */
@@ -97,16 +67,11 @@ static void fxremap_dowork(int argc,char **argv,int doit_silently)
 {
    RangeStruct *conflict;
 
-#ifdef FXREMAP_EXE
-   silent = doit_silently;
-   ProcessCommandLine(argv,argc);
-#endif
-
    InitRemap();
 
    if (!FindNecessaryCards())
    {
-      FXREMAP_PRINTF(("No Voodoo chipset was detected\n"));
+      INIT_PRINTF(("No Voodoo chipset was detected\n"));
       ForceCleanUp();
    }
 
@@ -128,14 +93,14 @@ static void fxremap_dowork(int argc,char **argv,int doit_silently)
       }
       else
       {
-         FXREMAP_PRINTF(("Unable to find region to map conflicting board\n"));
+         INIT_PRINTF(("Unable to find region to map conflicting board\n"));
          ForceCleanUp();
          return;
       }
    }
 
    if (!conflicts_found) {
-      FXREMAP_PRINTF(("No conflict with the Voodoo cards was found\n"));
+      INIT_PRINTF(("No conflict with the Voodoo cards was found\n"));
    }
    CloseRemap();
 }
@@ -143,12 +108,6 @@ static void fxremap_dowork(int argc,char **argv,int doit_silently)
 void fxremap(void) {
   fxremap_dowork(0,NULL,1);
 }
-
-#ifdef FXREMAP_EXE
-void fxremap_main(int argc,char **argv) {
-  fxremap_dowork(argc,argv,0);
-}
-#endif
 
 static void InitRemap(void)
 {
@@ -162,7 +121,7 @@ static void CloseRemap(void)
    // pciClose();
 }
 
-FxU32 pciGetConfigData_R(PciRegister reg, FxU32 devNum) {
+static FxU32 pciGetConfigData_R(PciRegister reg, FxU32 devNum) {
    FxU32 data;
 
    if (pciGetConfigData(reg,devNum,&data) == FXTRUE) {
@@ -184,14 +143,6 @@ static void GetMemoryMap(void)
    int maxFnNumber;
    int multi_fn = 0;
 
-#ifdef TESTING
-   for (i=0;i<6;i++)
-   {
-      temp=test_data[i].address;
-      temp2=~(test_data[i].range - 0x1);
-      AddMapEntry(temp,temp2,test_data[i].id,test_data[i].is_voodoo,test_data[i].is_S3);
-   }
-#else   
    for (devNum=0;devNum<MAX_PCI_DEVICES;devNum++)
    {
       if (pciDeviceExists(devNum))
@@ -255,7 +206,6 @@ static void GetMemoryMap(void)
          } /* for all function numbers */
       }
    }
-#endif
 }
 
 static void AdjustMapForS3(void)
@@ -302,7 +252,7 @@ static RangeStruct *TestForConflicts(void)
                return next;
             }
             else {
-               FXREMAP_PRINTF(("FxRemap: Possible PCI conflict not with Voodoo device\n"
+               INIT_PRINTF(("FxRemap: Possible PCI conflict not with Voodoo device\n"
                                "%X (%X) <-> %X (%X)\n",cur->id, cur->address,
                                cur->next->id, cur->next->address));
             }
@@ -404,7 +354,7 @@ static void RemoveEntry(RangeStruct *del)
    {
       if (!(del->prev))
       {
-         FXREMAP_PRINTF(("FxRemap: No entries mapped\n"));
+         INIT_PRINTF(("FxRemap: No entries mapped\n"));
          ForceCleanUp();
          return;
       }
@@ -572,11 +522,9 @@ static void RemapVoodoo(RangeStruct *conflict)
    /* put conflict back into memory map */
    InsertEntry(conflict);
 
-#ifndef TESTING
    address=(conflict->address)<<4;
    pciSetConfigData(PCI_BASE_ADDRESS_0,conflict->id,&address);
-#endif
-   FXREMAP_PRINTF(("Remapped Voodoo Board to avoid a conflict\n"));
+   INIT_PRINTF(("Remapped Voodoo Board to avoid a conflict\n"));
 }
 
 static void pciGetRange(PciRegister reg,FxU32 device_number,FxU32 *data)
@@ -589,12 +537,6 @@ static void pciGetRange(PciRegister reg,FxU32 device_number,FxU32 *data)
    pciGetConfigData(reg,device_number,&size);
    pciSetConfigData(reg,device_number,&save);
 
-#ifdef TESTING
-   printf("PciGetRange: save %08x \n",save);
-   printf("PciGetRange: temp %08x \n",temp);
-   printf("PciGetRange: size %08x \n",size);
-   printf("PciGetRange: save %08x \n",save);
-#endif
    *data=size;
 }
 
@@ -635,155 +577,6 @@ static FxBool FindNecessaryCards(void)
    return FXTRUE;
 }
 
-#ifdef FXREMAP_EXE
-static void ProcessCommandLine(char **argv,int argc)
-{
-   long     i;
-   FxU32    temp,temp2;
-   FxU32    address,range;
-   char     *hex_ptr;
-   
-   for (i=1;i<argc;i++)
-   {
-      if (strcmp(argv[i],"/dS3")==0)
-      {
-         switch_S3_flag_ignore=FXTRUE;
-      }
-      else if(strcmp(argv[i],"/f")==0)
-      {
-         if ((i+1)<argc)
-         {
-            if (ReadHex(argv[i+1],&temp))
-            {
-               i++;
-            }
-            else
-            {
-               if (!silent) {
-                printf("Command line: improper format\n");
-                printf("ex: fxremap.exe /f 0xC0000000\n");
-               }
-               ForceCleanUp();
-            }
-         }
-         else
-         {
-            if (!silent) {
-              printf("Command line: improper format\n");
-              printf("ex: fxremap.exe /f 0xC0000000\n");
-
-            }
-            ForceCleanUp();
-         }
-         if (!silent) {
-           printf("Command line option /f ignored in this version\n");
-
-         }
-/* this stuff was from the interactive test version */
-#if 0
-         while(!kbhit())
-            ;
-         getch();
-#endif
-      }
-      else if(strcmp(argv[i],"/x")==0)
-      {
-         if ((i+1)<argc)
-         {
-            hex_ptr=strchr(argv[i+1],'-');
-            if (!hex_ptr)
-            {
-               if (!silent) {
-                 printf("Command line: improper format\n");
-                 printf("ex: fxremap.exe /x 0xE0000000-0xF0000000\n");
-               }
-               ForceCleanUp();
-            }
-            if ((ReadHex(argv[i+1],&temp))&&(ReadHex(hex_ptr+1,&temp2)))
-            {
-               address=temp;
-               range=temp2-temp;
-               range=~(range - 0x1);
-               i++;
-               AddMapEntry(address,range,0x500,FXFALSE,FXFALSE);
-            }
-            else
-            {
-               if (!silent) {
-                 printf("Command line: improper format\n");
-                 printf("ex: fxremap.exe /x 0xE0000000-0xF0000000\n");
-               }
-               ForceCleanUp();
-            }
-         }
-         else
-         {
-            if (!silent) {
-              printf("Command line: improper format\n");
-              printf("ex: fxremap.exe /x 0xE0000000-0xF0000000\n");
-            }
-            ForceCleanUp();
-         }
-      }
-      else if (strcmp(argv[i],"/nb")==0)
-      {
-         switch_C0_bias=FXFALSE;
-      }
-      else if (strcmp(argv[i],"/i")==0)
-      {
-         switch_voodoo_loc = atoi(argv[++i]);
-      }
-      else
-      {
-         if (!silent) {
-           printf("Command line: improper options specified\n");
-           printf("Valid options are /dS3 /f /x /i\n");
-         }
-      }
-   }
-}
-
-static FxBool ReadHex(const char *string,FxU32 *num)
-{
-   long  i=0;
-   FxU32 temp=0,temp2;
-   long  num_count=0;
-
-   /* bypass leading spaces */
-   while((string[i])&&(string[i]==' '))
-      i++;
-   /* verify leading 0x */
-   if (string[i]=='0')
-      i++;
-   else
-      return FXFALSE;
-   if (string[i]=='x')
-      i++;
-   else
-      return FXFALSE;
-
-   /* read in number */
-   while(((string[i]>=0x30)&&(string[i]<0x3A))||((string[i]>=0x41)&&(string[i]<0x47))||((string[i]>=0x61)&&(string[i]<0x67)))
-   {
-      if ((string[i]>=0x30)&&(string[i]<0x3A))
-         temp2=string[i] - 0x30;
-      else if ((string[i]>=0x41)&&(string[i]<0x47))
-         temp2=string[i] - 0x37;
-      else if ((string[i]>=0x61)&&(string[i]<0x67))
-         temp2=string[i] - 0x57;
-      if (num_count!=0)
-         temp=(temp<<4)+temp2;
-      else if (num_count<8)
-         temp=temp2;
-      else
-         return FXFALSE;
-      num_count++;i++;
-   }
-   *num=temp;
-   return FXTRUE;
-}
-#endif /* FXREMAP_EXE */
-
 static FxU32 pciGetType(long i)
 {
    FxU32 header_type;
@@ -812,7 +605,7 @@ static FxBool IsCardVoodoo(long i)
       return FXTRUE;
    /* if voodoo2 */
    if ((vendor==0x121a)&&(dev_id==0x0002)) {
-      if (true_val == 2) { FXREMAP_PRINTF(("found voodoo2 hidden sli\n")); }
+      if (true_val == 2) { INIT_PRINTF(("found voodoo2 hidden sli\n")); }
       return true_val;
    }
    /* if banshee */
