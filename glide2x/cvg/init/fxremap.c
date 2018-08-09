@@ -3,8 +3,12 @@
 #include <string.h>
 #include <3dfx.h>
 #include <fxpci.h>
+#if defined(__DOS32__)
 /* for INIT_PRINTF: */
 #include <sst1init.h>
+#else
+#define INIT_PRINTF(a)     (void)0
+#endif
 #define FX_DLL_DEFINITION
 #include <fxdll.h>
 
