@@ -6,7 +6,6 @@
  *  Web   : http://www.geocities.com/dborca
  */
 
-
 #ifndef DDGLOBAL_H_included
 
 #define ddgetenv(A)       getenv(A)
@@ -59,10 +58,12 @@ typedef void (*FxSet32Proc)(volatile FxU32* const addr, const FxU32 val);
 ** CVG Device Information Structure
 **
 */
+struct sstregs; /* see cvgregs.h */
 // Initialization and configuration data structure
 typedef struct {
     FxU32 size;                     // size of this structure
-    SstRegs *virtAddr[2];           // virtual memory base address 
+    volatile 
+    struct sstregs *virtAddr[2];    // virtual memory base address 
     FxU32 physAddr[2];              // physical memory base address 
     FxU32 deviceNumber;             // PCI device number 
     FxU32 vendorID;                 // PCI vendor ID 
@@ -126,9 +127,8 @@ typedef struct {
     FxU32 mtrrUncacheable;          /* 3d register space (all wraps) */
     FxU32 mtrrWriteCombine;         /* command fifo/3d lfb           */
 
-
-    SstRegs *sstCSIM;
-    SstRegs *sstHW;                 // pointer to HW
+    volatile struct sstregs *sstCSIM;
+    volatile struct sstregs *sstHW; // pointer to HW
 } sst1DeviceInfoStruct;
 
 #endif /* !SST1 && !SST96_FIFO */
