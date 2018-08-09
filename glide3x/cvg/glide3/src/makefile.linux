@@ -207,8 +207,9 @@ GLIDE_OBJECTS += \
 	../../init/sli.o \
 	../../init/sst1init.o \
 	../../init/util.o \
-	../../init/video.o \
-	../../init/fxremap.o
+	../../init/video.o
+# fxremap() not called only in linux builds.
+#	../../init/fxremap.o
 
 # FIXME: needed for now to match the old library signature, should be checked
 #        if it's really needed.
