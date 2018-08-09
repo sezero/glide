@@ -2754,8 +2754,8 @@ GR_ENTRY(grBufferSwap, void, (FxU32 swapInterval))
     if (swapInterval > 1) 
       swapInterval = ((swapInterval - 1) << 1) | 1; /* Format for hw */
   }
-  
-  while(_grBufferNumPending() > _GlideRoot.environment.swapPendingCount);
+  while(_grBufferNumPending() > _GlideRoot.environment.swapPendingCount)
+   ;
   
 #ifndef HAL_CSIM
   /* Cycle the buffer indices */
@@ -2963,8 +2963,8 @@ GR_ENTRY(grDRIBufferSwap, void, (FxU32 swapInterval))
     if (swapInterval > 1) 
       swapInterval = ((swapInterval - 1) << 1) | 1; /* Format for hw */
   }
-  
-  while(_grBufferNumPending() > 3);
+  while(_grBufferNumPending() > 3)
+   ;
 
 #if USE_PACKET_FIFO
   {

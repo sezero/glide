@@ -1069,8 +1069,8 @@ GR_ENTRY(grBufferSwap, void, (FxU32 swapInterval))
     if (swapInterval > 1) 
       swapInterval = ((swapInterval - 1) << 1) | 1; /* Format for hw */
   }
-  
-  while(_grBufferNumPending() > _GlideRoot.environment.swapPendingCount);
+  while(_grBufferNumPending() > _GlideRoot.environment.swapPendingCount)
+   ;
 
   /* Cycle the buffer indices */
   {
@@ -1190,8 +1190,8 @@ GR_ENTRY(grDRIBufferSwap, void, (FxU32 swapInterval))
     if (swapInterval > 1) 
       swapInterval = ((swapInterval - 1) << 1) | 1; /* Format for hw */
   }
-  
-  while(_grBufferNumPending() > _GlideRoot.environment.swapPendingCount);
+  while(_grBufferNumPending() > _GlideRoot.environment.swapPendingCount)
+   ;
 
 #if USE_PACKET_FIFO
   {

@@ -184,7 +184,7 @@ pciIdentifyLinux(void)
 static FxBool 
 pciOutputStringLinux(const char *msg) 
 {
-  printf(msg);
+  printf("%s", msg);
   return FXTRUE;
 }
 

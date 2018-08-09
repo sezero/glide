@@ -617,7 +617,8 @@ GR_ENTRY(grBufferSwap, void, ( FxU32 swapInterval ))
   /* wait until there's 6 or fewer buffer swaps pending */
   /* the hardware counter is only 3 bits so we don't want it to overflow */
   /* also the latency gets too long */
-  while (_grBufferNumPending() > _GlideRoot.environment.swapPendingCount);
+  while (_grBufferNumPending() > _GlideRoot.environment.swapPendingCount)
+   ;
 
   /* if the interval is non-zero turn on VSYNC waiting */
   vSync = swapInterval > 0 ? 1 : 0;
