@@ -207,7 +207,7 @@ gdbg_init(void)
 	SIOUXSettings.asktosaveonclose 	= false;
 #endif
 
-#if defined(__linux__) || defined(__FreeBSD__)
+#if defined(__linux__) || defined(__FreeBSD__) || defined(__MINGW32__)
     gdbg_msgfile = INITIAL_GDBG_MSGFILE;
 #endif
 
