@@ -70,10 +70,6 @@ unsigned long getThreadValueSLOW( void )
     return getThreadValueFast();
 }
 
-#endif
-
-}
-
 void initCriticalSection( void ) {
     if ( !criticalSectionInit ) {
         criticalSectionInit = 1;
