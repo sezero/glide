@@ -94,5 +94,4 @@ typedef FxU32 (FX_CALL* FxOemSwapControlP)(OemInitInfo* oemInfo);
 typedef FxU32 (FX_CALL* FxOemSwapControlWrite)(OemInitInfo* oemInfo,
                                                FxU32* writeBuffer);
 
-#endif __OEMINIT_H__
-
+#endif /* __OEMINIT_H__ */
