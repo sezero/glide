@@ -633,8 +633,7 @@ __tryReOpen:
       ** oem map board 
       */
       if (gc->oemInit) {
-        FARPROC oemInitMapBoard = NULL;
-        oemInitMapBoard = GetProcAddress(gc->oemInit, "_fxoemInitMapBoard@4");
+        FARPROC oemInitMapBoard = GetProcAddress(gc->oemInit, "_fxoemInitMapBoard@4");
         if (oemInitMapBoard != NULL)
           oemInitMapBoard(&gc->oemi);
         else
@@ -676,8 +675,8 @@ __tryReOpen:
       gc->oemi.vid.clkFreq24bpp = tvVidtiming.clkFreq24bpp;
 
     if (gc->oemInit) {
-        FARPROC oemInitVideoTiming = NULL;
-        if (oemInitVideoTiming = GetProcAddress(gc->oemInit, "_fxoemInitVideoTiming@4")) {
+        FARPROC oemInitVideoTiming = GetProcAddress(gc->oemInit, "_fxoemInitVideoTiming@4");
+        if (oemInitVideoTiming) {
           if (oemInitVideoTiming(&gc->oemi.vid)) {
       /*
       ** video timing is updated by oem dll
@@ -792,10 +791,12 @@ __tryReOpen:
     FARPROC oemGet;
     FxI32 tv_connected = 0;
     FxI32 slimaster[2], slislave[2];
-    if (oemInitSetVideo = GetProcAddress(gc->oemInit, "_fxoemInitSetVideo@4"))
+    oemInitSetVideo = GetProcAddress(gc->oemInit, "_fxoemInitSetVideo@4");
+    if (oemInitSetVideo)
       oemInitSetVideo(&gc->oemi);
     
-    if (oemGet = GetProcAddress(gc->oemInit, "_fxoemGet@12")) {
+    oemGet = GetProcAddress(gc->oemInit, "_fxoemGet@12");
+    if (oemGet) {
       oemGet(FX_OEM_TVOUT, 4, &tv_connected);
       /* Is tv connected to the board? */
       if (tv_connected) {
@@ -1572,9 +1573,9 @@ __errSliExit:
      --------------------------------------------------------*/
 #if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
   if (!_GlideRoot.environment.noSplash) {
-    HMODULE newSplash;
+    HMODULE newSplash = LoadLibrary("3dfxspl2.dll");
 
-    if (newSplash = LoadLibrary("3dfxspl2.dll")) {
+    if (newSplash) {
       GrState glideState;
       FxBool didLoad;
       GrSplashProc fxSplash;
@@ -1619,7 +1620,7 @@ __errSliExit:
 	    grGlideSetState((const void*)&glideState);
 	}
       }
-      
+
       FreeLibrary(newSplash);
     }
   }
@@ -1883,16 +1884,16 @@ GR_ENTRY(grSstControl, FxBool, (GrControl_t code))
       if (isValidP) sst1InitVgaPassCtrl(gc->base_ptr, passFlag);
 #if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
       {
-        FARPROC oemControl = NULL;
         if (gc->oemInit) {
-          if ((oemControl = GetProcAddress(gc->oemInit, "_fxoemControl@4")))
+          FARPROC oemControl = GetProcAddress(gc->oemInit, "_fxoemControl@4");
+          if (oemControl)
             oemControl(code);
         }
       }
 #endif
 
     }
-#endif    
+#endif
   }
 
   GDBG_INFO(41, "%s:  Returning TRUE\n", FN_NAME);

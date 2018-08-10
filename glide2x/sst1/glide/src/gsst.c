@@ -607,8 +607,8 @@ GR_ENTRY(grSstWinOpen, FxBool, (
   oemi.subvendorID = OEMINIT_INVALID_BOARD_ID;
   oemi.linearAddress = gc->base_ptr;
   oemi.slaveAddress = NULL;
-  if (gc->oemInit = LoadLibrary("fxoem2x.dll")) {
-    if (oemInitMapBoard  = GetProcAddress(gc->oemInit, "_fxoemInitMapBoard@4")) {
+  if ((gc->oemInit = LoadLibrary("fxoem2x.dll")) != NULL) {
+    if ((oemInitMapBoard = GetProcAddress(gc->oemInit, "_fxoemInitMapBoard@4")) != NULL) {
       oemInitMapBoard(&oemi);
     }
   }
@@ -955,15 +955,15 @@ GR_ENTRY(grSstWinOpen, FxBool, (
     grSstOrigin( GR_ORIGIN_LOWER_LEFT );
 
     if (!_GlideRoot.environment.noSplash) {
-      HMODULE newSplash;
+      HMODULE newSplash = LoadLibrary("3dfxsplash2.dll");
 
-      if (newSplash = LoadLibrary("3dfxsplash2.dll")) {
-        FARPROC fxSplash;
+      if (newSplash) {
+        FARPROC fxSplash = GetProcAddress(newSplash, "_fxSplash@16");
 
-        if (fxSplash = GetProcAddress(newSplash, "_fxSplash@16")) {
+        if (fxSplash) {
           fxSplash(hWnd, gc->state.screen_width,
-                   gc->state.screen_height, nAuxBuffers);  
-          _GlideRoot.environment.noSplash = 1;        
+                   gc->state.screen_height, nAuxBuffers);
+          _GlideRoot.environment.noSplash = 1;
         } 
       }
     }

@@ -632,8 +632,8 @@ GR_ENTRY(grSstWinOpen, GrContext_t, (FxU32                   hWnd,
   oemi.subvendorID = OEMINIT_INVALID_BOARD_ID;
   oemi.linearAddress = gc->base_ptr;
   oemi.slaveAddress = NULL;
-  if (gc->oemInit = LoadLibrary("fxoem2x.dll")) {
-    if (oemInitMapBoard  = GetProcAddress(gc->oemInit, "_fxoemInitMapBoard@4")) {
+  if ((gc->oemInit = LoadLibrary("fxoem2x.dll")) != NULL) {
+    if ((oemInitMapBoard = GetProcAddress(gc->oemInit, "_fxoemInitMapBoard@4")) != NULL) {
       oemInitMapBoard(&oemi);
     }
   }

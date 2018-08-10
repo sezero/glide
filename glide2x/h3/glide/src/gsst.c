@@ -1422,7 +1422,8 @@ GR_ENTRY(grSstWinClose, void, (void))
 
 #if defined(GLIDE3) && defined(GLIDE3_ALPHA)
     if (gc->oemInit) {
-      if (oemRestoreVideo = GetProcAddress(gc->oemInit, "_fxoemRestoreVideo@0"))
+      oemRestoreVideo = GetProcAddress(gc->oemInit, "_fxoemRestoreVideo@0");
+      if (oemRestoreVideo)
         oemRestoreVideo();
       FreeLibrary(gc->oemInit);
     }
@@ -1430,7 +1431,7 @@ GR_ENTRY(grSstWinClose, void, (void))
 #endif /* !GLIDE_INIT_HAL */
 
     /* Unmap the board */
-  hwcUnmapBoard(gc->bInfo);
+    hwcUnmapBoard(gc->bInfo);
 
     /*--------------------------
       GC Reset
