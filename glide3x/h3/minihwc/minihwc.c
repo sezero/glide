@@ -590,10 +590,9 @@ static FxU32 __attribute_used fenceVar;
 
 /*static FxU32 ProcessID;*/
 
-#if defined(__WATCOMC__)
 /*
  *  P6 Fence
- * 
+ *
  *  Here's the stuff to do P6 Fencing.  This is required for the
  *  certain things on the P6
  *
@@ -601,20 +600,18 @@ static FxU32 __attribute_used fenceVar;
  * This was yoinked from sst1/include/sst1init.h, and should be
  * merged back into something if we decide that we need it later.
  */
-void 
-p6Fence(void);
+#if defined(__WATCOMC__)
+void p6Fence(void);
 #pragma aux p6Fence = \
-"xchg eax, fenceVar" \
-modify [eax];
-
-
+ "xchg eax, fenceVar" \
+ modify [eax];
 #define P6FENCE p6Fence()
 #elif defined(__MSC__)
-#define P6FENCE { __asm xchg eax, fenceVar }
+#define P6FENCE {_asm xchg eax, fenceVar}
 #elif defined(__POWERPC__) && defined(__MWERKS__)
 #define P6FENCE __eieio()
-#elif defined(__DJGPP__)
-#define P6FENCE __asm __volatile ("xchg %%eax, _fenceVar":::"%eax");
+#elif defined(__DJGPP__) || defined (__MINGW32__)
+#define P6FENCE __asm __volatile ("xchg %%eax, _fenceVar":::"%eax")
 #elif defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
 #define P6FENCE __asm __volatile ("xchg %%eax, fenceVar":::"%eax")
 #elif defined(__GNUC__) && defined(__ia64__)

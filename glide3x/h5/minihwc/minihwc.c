@@ -1022,10 +1022,9 @@ static void hwc_errncpy(char *dst,const char *src)
 }
 #endif
 
-#if defined(__WATCOMC__)
 /*
  *  P6 Fence
- * 
+ *
  *  Here's the stuff to do P6 Fencing.  This is required for the
  *  certain things on the P6
  *
@@ -1033,13 +1032,11 @@ static void hwc_errncpy(char *dst,const char *src)
  * This was yoinked from sst1/include/sst1init.h, and should be
  * merged back into something if we decide that we need it later.
  */
-void 
-p6Fence(void);
+#if defined(__WATCOMC__)
+void p6Fence(void);
 #pragma aux p6Fence = \
-"xchg eax, fenceVar" \
-modify [eax];
-
-
+ "xchg eax, fenceVar" \
+ modify [eax];
 #define P6FENCE p6Fence()
 #elif defined(__MSC__)
 #define P6FENCE {_asm xchg eax, fenceVar}
