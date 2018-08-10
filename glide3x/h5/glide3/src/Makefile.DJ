@@ -322,10 +322,10 @@ fxbldno.h: fxbldno.exe
 	$(RUN_FXBLDNO) > $@
 
 gendate.exe: ../../incsrc/gendate.c
-	$(HOST_CC) -o $@ $(HOST_CFLAGS) $<
+	$(HOST_CC) -o $@ $<
 
 fxbldno.exe: fxbldno.c
-	$(HOST_CC) -o $@ $(HOST_CFLAGS) $<
+	$(HOST_CC) -o $@ $<
 
 ###############################################################################
 #	clean, realclean
