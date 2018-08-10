@@ -1024,6 +1024,7 @@ static void sst1InitToLower(char *string)
 }
 
 #if __WIN32__
+static
 FxBool GetRegistryKey(HKEY hKey, const char* keyName, 
                       char* regValBuf, FxU32 bufSize)
 {
@@ -1037,7 +1038,7 @@ FxBool GetRegistryKey(HKEY hKey, const char* keyName,
     case REG_DWORD:
     {
       DWORD dValue = *(DWORD*)regValBuf;
-      sprintf(regValBuf, "%d", dValue);
+      sprintf(regValBuf, "%lu", dValue);
     }
     /* Fall through */
 
