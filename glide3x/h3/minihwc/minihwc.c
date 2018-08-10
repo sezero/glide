@@ -4282,27 +4282,33 @@ hwcShareContextData(hwcBoardInfo *bInfo, FxU32 **data)
 
 
       /* Now for the NASTY stuff: */
+#ifdef __GNUC__
+      __asm __volatile (" xor %%eax, %%eax; mov %%cs, %%ax; mov %%eax, %0":"=g"(ohWell));
+#else
       __asm  mov eax, 0;
       __asm  mov ax, cs;
       __asm  mov ohWell, eax;
+#endif
 
       ctxReq.optData.contextDwordNTReq.codeSegment = ohWell;
 
+#ifdef __GNUC__
+      __asm __volatile (" xor %%eax, %%eax; mov %%ds, %%ax; mov %%eax, %0":"=g"(ohWell));
+#else
       __asm  mov eax, 0;
       __asm  mov ax, ds;
       __asm  mov ohWell, eax;
-    
+#endif
+
       ctxReq.optData.contextDwordNTReq.dataSegment = ohWell;
 
       /* oh, yeah */
     }
     
-    
     GDBG_INFO(80, FN_NAME ":  Calling ExtEscape(HWCEXT_CONTEXT_DWORD_NT)\n");  
 
     ExtEscape((HDC) bInfo->hdc, bInfo->hwcEscape, sizeof(ctxReq), (void *) &ctxReq,
               sizeof(ctxRes), (void *) &ctxRes);
-    
     
     *data = (FxU32 *) ctxRes.optData.contextDwordNTRes.dwordOffset;
 
