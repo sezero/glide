@@ -175,9 +175,6 @@ else
 GLIDE_OBJECTS += \
 	xdraw96.obj
 endif
-else
-GLIDE_OBJECTS += \
-	gxdraw.obj
 endif
 
 ifeq ($(FX_GLIDE_HW),sst96)
