@@ -871,7 +871,7 @@ static __inline int min(int x, int y) {
 #endif
 #endif
 
-#if defined(_MSC_VER) && (_MSC_VER < 1300)
+#if defined(__MINGW32__) || (defined(_MSC_VER) && (_MSC_VER < 1300))
 /* code here only uses 8 byte alignment */
 #define _aligned_malloc(a,b) _aligned_malloc8(a)
 #define _aligned_free _aligned_free8
