@@ -23,7 +23,7 @@
 
 #undef FX_DLL_ENABLE /* so that we don't dllexport the symbols */
 
-#ifndef __GNUC__
+#ifdef _MSC_VER
 #pragma optimize ("",off)
 #endif
 #include <stdio.h>
@@ -357,6 +357,6 @@ FX_EXPORT FxU32 FX_CSTYLE sst1InitRead32(FxU32 *addr)
     return(*addr);
 }
 
-#ifndef __GNUC__
+#ifdef _MSC_VER
 #pragma optimize ("",on)
 #endif

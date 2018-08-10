@@ -20,7 +20,9 @@
 ** Initialization code for initializing scanline interleaving
 **
 */
+#ifdef _MSC_VER
 #pragma optimize ("",off)
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -537,4 +539,6 @@ FX_ENTRY FxU32 FX_CALL sst1InitSliDetect(FxU32 *sstbase)
     return(sliDetected);
 }
 
+#ifdef _MSC_VER
 #pragma optimize ("",on)
+#endif

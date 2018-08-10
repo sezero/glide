@@ -6481,7 +6481,9 @@ static void hwcReadRegion1555(hwcBoardInfo *bInfo, FxU32 src, FxU32 src_x, FxU32
     }
 }
 
+#ifdef _MSC_VER
 //#pragma optimize("g", off)
+#endif
 static void hwcReadRegion8888(hwcBoardInfo *bInfo, FxU32 src, FxU32 src_x, FxU32 src_y, FxU32 src_width, FxU32 src_height, FxU32 strideInBytes, FxU16 *dst, FxU32 renderMask, FxU32 compareMask)
 {
   FxU32 end_x, end_y;

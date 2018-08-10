@@ -23,7 +23,7 @@
 
 #undef FX_DLL_ENABLE /* so that we don't dllexport the symbols */
 
-#ifdef __WIN32__
+#ifdef _MSC_VER
 #pragma optimize ("",off)
 #endif
 #include <stdio.h>
@@ -1368,6 +1368,6 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitDacIndexedEnable(FxU32 *sstbase,
     return(FXTRUE);
 }
 
-#ifdef __WIN32__
+#ifdef _MSC_VER
 #pragma optimize ("",on)
 #endif

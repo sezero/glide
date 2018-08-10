@@ -119,7 +119,9 @@
 **
 */
 
+#ifdef _MSC_VER
 #pragma optimize ("",off)
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -898,5 +900,6 @@ sst1InitCachingOn(void)
 
 } /* sst1InitSetCacheType */
 
-
+#ifdef _MSC_VER
 #pragma optimize ("",on)
+#endif

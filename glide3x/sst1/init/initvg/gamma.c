@@ -21,7 +21,7 @@
 **
 */
 #undef FX_DLL_ENABLE /* so that we don't dllexport the symbols */
-#ifndef __GNUC__
+#ifdef _MSC_VER
 #pragma optimize ("",off)
 #endif
 #include <stdio.h>
@@ -130,7 +130,7 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitGammaRGB(FxU32 *sstbase, double gammaR,
             sstVideoIsReset = FXTRUE;
         else
             sstVideoIsReset = FXFALSE;
-   
+
         ISET(sst->fbiInit1, IGET(sst->fbiInit1) & ~SST_VIDEO_RESET);
         /* wait for video reset to be deasserted */
         sst1InitIdleFBINoNOP(sstbase);
@@ -211,7 +211,7 @@ FxU32 *r, FxU32 *g, FxU32 *b)
             sstVideoIsReset = FXTRUE;
         else
             sstVideoIsReset = FXFALSE;
-   
+
         ISET(sst->fbiInit1, IGET(sst->fbiInit1) & ~SST_VIDEO_RESET);
         /* wait for video reset to be deasserted */
         sst1InitIdleFBINoNOP(sstbase);
@@ -252,6 +252,6 @@ FxU32 *r, FxU32 *g, FxU32 *b)
     return(FXTRUE);
 }
 
-#ifndef __GNUC__
+#ifdef _MSC_VER
 #pragma optimize ("",on)
 #endif

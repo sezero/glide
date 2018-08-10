@@ -20,7 +20,9 @@
 ** Parsing code for grabbing information from "voodoo.ini" initialization file
 **
 */
+#ifdef _MSC_VER
 #pragma optimize ("",off)
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -913,4 +915,6 @@ myGetenv(const char* envKey)
           : NULL);
 }
 
+#ifdef _MSC_VER
 #pragma optimize ("",on)
+#endif

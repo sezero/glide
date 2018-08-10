@@ -21,7 +21,7 @@
 ** Utility routines for SST-1 Initialization code
 **
 */
-#ifdef __WIN32__
+#ifdef _MSC_VER
 #pragma optimize ("",off)
 #endif
 #include <stdio.h>
@@ -1176,6 +1176,6 @@ void sst1InitDrawRectUsingTris(FxU32 *sstbase, FxU32 x, FxU32 y, FxU32 tSize)
    ISET(sst->triangleCMD, 0xFFFFFFFF);
 }
 
-#ifdef __WIN32__
+#ifdef _MSC_VER
 #pragma optimize ("",on)
 #endif

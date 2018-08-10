@@ -20,7 +20,9 @@
 ** Initialization code for initializing SST-1 video unit
 **
 */
+#ifdef _MSC_VER
 #pragma optimize ("",off)
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -1099,4 +1101,6 @@ FX_ENTRY FxBool FX_CALL sst1InitSetTripleBuffering(FxU32 *sstbase,
     return(FXTRUE);
 }
 
+#ifdef _MSC_VER
 #pragma optimize ("",on)
+#endif

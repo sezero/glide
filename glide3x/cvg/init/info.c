@@ -22,7 +22,7 @@
 **
 */
 #undef FX_DLL_ENABLE /* so that we don't dllexport the symbols */
-#ifdef __WIN32__
+#ifdef _MSC_VER
 #pragma optimize ("",off)
 #endif
 #include <stdio.h>
@@ -660,6 +660,6 @@ FxBool sst1InitFillDeviceInfo(FxU32 *sstbase, sst1DeviceInfoStruct *info)
     return(FXTRUE);
 }
 
-#ifdef __WIN32__
+#ifdef _MSC_VER
 #pragma optimize ("",on)
 #endif

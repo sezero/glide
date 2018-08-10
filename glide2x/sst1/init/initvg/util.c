@@ -20,7 +20,9 @@
 ** Utility routines for SST-1 Initialization code
 **
 */
+#ifdef _MSC_VER
 #pragma optimize ("",off)
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -352,4 +354,6 @@ FX_EXPORT FxU32 FX_CSTYLE sst1InitRead32(FxU32 *addr)
     return(*addr);
 }
 
+#ifdef _MSC_VER
 #pragma optimize ("",on)
+#endif

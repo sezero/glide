@@ -21,7 +21,7 @@
 ** Parsing code for grabbing information from "voodoo2.ini" initialization file
 **
 */
-#ifdef __WIN32__
+#ifdef _MSC_VER
 #pragma optimize ("",off)
 #endif
 #include <stdio.h>
@@ -1116,6 +1116,6 @@ FX_ENTRY char* FX_CALL sst1InitGetenv(char *string)
 }
 #endif  /* INIT_DOS */
 
-#ifdef __WIN32__
+#ifdef _MSC_VER
 #pragma optimize ("",on)
 #endif

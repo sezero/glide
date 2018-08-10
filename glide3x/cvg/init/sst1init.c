@@ -139,7 +139,7 @@
 
 #undef FX_DLL_ENABLE /* so that we don't dllexport the symbols */
 
-#ifdef __WIN32__
+#ifdef _MSC_VER
 #pragma optimize ("",off)
 #endif
 #include <stdio.h>
@@ -233,11 +233,11 @@ FX_EXPORT FxU32 * FX_CSTYLE sst1InitMapBoardDirect(FxU32 BoardNumber,
         sstv2_noremap = i;
       else
         sstv2_noremap = 0;
-#if !macintosh && !__linux__     
+#if !macintosh && !__linux__
       if (!sstv2_noremap) {
         fxremap(); /* remap single board SLI */
       }
-#endif      
+#endif
       if(!(boardsInSystem = sst1InitNumBoardsInSystem())) {
         firstTime = FXTRUE;
         return(NULL);
@@ -334,8 +334,7 @@ FX_EXPORT FxU32 * FX_CSTYLE sst1InitMapBoardDirect(FxU32 BoardNumber,
 #ifdef __WIN32__
                   MessageBox(NULL, pciGetErrorString(), NULL, MB_OK);
                   INIT_PRINTF(("sst1InitMapBoard(): 0x%X\n", GetLastError()));
-#endif // __WIN32__
-
+#endif
 
                   INIT_PRINTF(("pciError(): %s", pciGetErrorString()));
 
@@ -349,7 +348,7 @@ FX_EXPORT FxU32 * FX_CSTYLE sst1InitMapBoardDirect(FxU32 BoardNumber,
        // Search through all known boards for SLI enabled...
        FxU32 k;
        SstRegs *sst;
- 
+
        for(k=0; k<boardsInSystemReally; k++) {
           // Disable SLI if detected...
           if(!(sstbase = (FxU32 *) sst1BoardInfo[k].virtAddr[0]))
@@ -357,7 +356,7 @@ FX_EXPORT FxU32 * FX_CSTYLE sst1InitMapBoardDirect(FxU32 BoardNumber,
           sst1InitDeviceNumber = sst1BoardInfo[k].deviceNumber;
           sst1CurrentBoard = &sst1BoardInfo[k];
           sst = (SstRegs *) sstbase;
-    
+
           if(IGET(sst->fbiInit1) & SST_EN_SCANLINE_INTERLEAVE) {
              INIT_PRINTF(("sst1InitMapBoard(): Disabling Scanline Interleaving (board #%d)...\n", (k+1)));
              // Disable SLI Snooping...
@@ -945,7 +944,7 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitShutdown(FxU32 *sstbase)
         if((++n > 1) || !sliEnabled)
             break;
     }
-    
+
     /* sst1InitIdle(sstbase);  */
 
 #if !DIRECTX
@@ -970,7 +969,7 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitShutdown(FxU32 *sstbase)
     // Make sure that the board info structures are
     // cleared next time sst1InitMapBoard() is called.
     clearBoardInfo = FXTRUE;
-      
+
     return(FXTRUE);
 }
 
@@ -1324,6 +1323,6 @@ sst1InitCachingAMD(FxU32* sstBase, FxBool enableP, FxBool hasP2MTRR)
   return retVal;
 } // sst1InitSetCachingAMD
 
-#ifdef __WIN32__
+#ifdef _MSC_VER
 #pragma optimize ("",on)
 #endif

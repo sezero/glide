@@ -21,7 +21,9 @@
 ** configuration information.
 **
 */
+#ifdef _MSC_VER
 #pragma optimize ("",off)
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <sst.h>
@@ -582,4 +584,7 @@ FxBool sst1InitFillDeviceInfo(FxU32 *sstbase, sst1DeviceInfoStruct *info)
 
     return(FXTRUE);
 }
+
+#ifdef _MSC_VER
 #pragma optimize ("",on)
+#endif

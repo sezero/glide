@@ -19,7 +19,7 @@
 **
 ** Print functions for SST-1 Initialization routines
 */
-#ifndef __GNUC__
+#ifdef _MSC_VER
 #pragma optimize ("",off)
 #endif
 #include <stdio.h>
@@ -76,7 +76,7 @@ FX_ENTRY void FX_CALL sst1InitVPrintf(const char *format, va_list args)
 
 #endif
 
-#ifndef __GNUC__
+#ifdef _MSC_VER
 #pragma optimize ("",on)
 #endif
 

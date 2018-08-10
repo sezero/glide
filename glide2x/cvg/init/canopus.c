@@ -23,7 +23,7 @@
 **
 */
 
-#ifdef __WIN32__
+#ifdef _MSC_VER
 #pragma optimize ("",off)
 #endif
 #include <stdio.h>
@@ -70,7 +70,7 @@ sst1InitComputeClkParamsATT_Int(FFLOAT dwFreq, sst1ClkTimingStruct *clkTiming)
   FxU32   lError, lActual;
   FxU32   lBestErr, lBestFreq;
 
-  // first check range of Frequ                                                   
+  // first check range of Frequ
   if ((dwFreq < 15000000) || (dwFreq > 240000000)) return FXFALSE;
 
   // get the best P divider for the given Frequency 
@@ -177,6 +177,6 @@ sst1SetGrxClk_Canopus(FxU32* sstbase, FFLOAT grxclk)
   return(RetVal);
 }
 
-#ifdef __WIN32__
+#ifdef _MSC_VER
 #pragma optimize ("",on)
 #endif

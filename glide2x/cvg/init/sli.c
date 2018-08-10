@@ -21,7 +21,7 @@
 ** Initialization code for initializing scanline interleaving
 **
 */
-#ifdef __WIN32__
+#ifdef _MSC_VER
 #pragma optimize ("",off)
 #endif
 #include <stdio.h>
@@ -706,7 +706,7 @@ FX_ENTRY FxU32 FX_CALL sst1InitSliDetect(FxU32 *sstbase)
       sliDetected = ATOI(GETENV(("SSTV2_SLIDETECT")));
     else
       sliDetected = sst1InitSliPaired(sstbase);
-        
+
     return sliDetected;
 }
 
@@ -733,6 +733,6 @@ sst1InitSliPaired(FxU32 *sstbase)
     return sliPaired;
 }
 
-#ifdef __WIN32__
+#ifdef _MSC_VER
 #pragma optimize ("",on)
 #endif
