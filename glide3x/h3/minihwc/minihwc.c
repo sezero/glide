@@ -1846,7 +1846,7 @@ hwcGetSurfaceInfo(const hwcBoardInfo* bInfo,
   retVal = (ddErr == DD_OK);
   if (!retVal) {
     sprintf(errorString, "%s: IDirectDrawSurface2_Lock (0x%X)\n", 
-            FN_NAME, ddErr);
+            FN_NAME,(unsigned)ddErr);
     GDBG_INFO(80, "%s", errorString);
     goto __errExit;
   }
@@ -1867,7 +1867,7 @@ hwcGetSurfaceInfo(const hwcBoardInfo* bInfo,
   retVal = (ret->depth != 0x00UL);
   if (!retVal) {
     sprintf(errorString, "%s: Invalid surface pixel format (0x%X)\n", 
-            FN_NAME, desc.ddpfPixelFormat.dwFlags);
+            FN_NAME, (unsigned)desc.ddpfPixelFormat.dwFlags);
     GDBG_INFO(80, "%s", errorString);
     goto __errExit;    
   }
@@ -4176,7 +4176,7 @@ hwcGetenv(char *a)
   static char strval[255];
 
   /* This should work for both NT and Win95/98 (getRegPath works) */
-  if (retVal = getenv(a))
+  if ((retVal = getenv(a)) != NULL)
     return retVal;
   
   szData = sizeof(strval);

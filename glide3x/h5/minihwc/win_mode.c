@@ -180,7 +180,7 @@ setVideoMode( hwcBoardInfo *bInfo, int refresh )
   GDBG_INFO( 80, "setVideoMode sees hwnd 0x%x\n", (HWND)bInfo->vidInfo.hWnd);
 
   if ((HWND)bInfo->vidInfo.hWnd == NULL)
-    (HWND)bInfo->vidInfo.hWnd = GetActiveWindow();
+    bInfo->vidInfo.hWnd = (FxU32) GetActiveWindow();
 
   ddGuid = NULL;
   ddraw = GetModuleHandle( "ddraw.dll" );
