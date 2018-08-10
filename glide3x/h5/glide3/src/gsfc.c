@@ -250,7 +250,7 @@
  * This little bit of stupidity is so that we can get the
  * various fifo types that the 2d driver knows about.  
  */
-#include "..\..\minihwc\hwcext.h"
+#include "../../minihwc/hwcext.h"
 
 #elif (GLIDE_PLATFORM & GLIDE_OS_MACOS)
 
