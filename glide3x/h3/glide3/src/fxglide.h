@@ -1891,12 +1891,20 @@ _grSstVRetraceOn(void);
 #define WNT_TEB_TLS_OFFSET              0xE10
 #define WNT_TLS_INDEX_TO_OFFSET(i)      ((i)*sizeof(DWORD)+WNT_TEB_TLS_OFFSET)
 
-#define __GR_GET_TLSC_VALUE() \
-__asm { \
-   __asm mov eax, DWORD PTR fs:[WNT_TEB_PTR] \
-   __asm add eax, DWORD PTR _GlideRoot.tlsOffset \
-   __asm mov eax, DWORD PTR [eax] \
+#ifdef __GNUC__
+
+extern __inline FxU32 getThreadValueFast (void)
+{
+ FxU32 t;
+ __asm __volatile (" \
+       mov %%fs:(%0), %%eax; \
+       add %1, %%eax; \
+       mov (%%eax), %%eax; \
+ ":"=a"(t):"i"(WNT_TEB_PTR), "g"(_GlideRoot.tlsOffset));
+ return t;
 }
+
+#else  /* __GNUC__ */
 
 #pragma warning (4:4035)        /* No return value */
 __inline FxU32
@@ -1907,7 +1915,7 @@ getThreadValueFast() {
     __asm mov eax, DWORD PTR [eax] 
   }
 }
-#pragma warning (3:4035)
+#endif /* __GNUC__ */
 #endif
 
 #if (GLIDE_PLATFORM & GLIDE_OS_MACOS)

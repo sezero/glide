@@ -63,19 +63,11 @@ void setThreadValue( unsigned long value ) {
     TlsSetValue( _GlideRoot.tlsIndex, (void*)value );
 }
 
-#pragma warning (4:4035)        /* No return value */
-unsigned long getThreadValueSLOW( void ) {
+unsigned long getThreadValueSLOW( void )
+{
     GR_CHECK_F( "getThreadValue", !threadInit, "Thread storage not initialized\n" );
 
-#if 0
-    return (FxU32)TlsGetValue( _GlideRoot.tlsIndex );
-#elif 1
-    __GR_GET_TLSC_VALUE();
-#else
-    __asm {
-      __asm mov esi, DWORD PTR fs:[WNT_TEB_PTR] 
-      __asm add esi, DWORD PTR _GlideRoot.tlsOffset \
-     __asm mov eax, DWORD PTR [esi] \
+    return getThreadValueFast();
 }
 
 #endif
