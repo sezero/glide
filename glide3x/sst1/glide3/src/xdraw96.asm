@@ -213,7 +213,12 @@ segment		TEXT
 proc grDrawTriangle, 12
 endp
 %if XOS == XOS_WIN32
+%ifdef __MINGW32__
+; GNU LD fails with '_' prefix
+export  grDrawTriangle@12
+%else
 export _grDrawTriangle@12
+%endif
 %endif
 
 ; FALL THRU to _trisetup
