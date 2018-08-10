@@ -202,6 +202,42 @@ pciUnmapLinear9x( unsigned long linear_addr, FxU32 length )
 }
 
 /* Platform port io stuff */
+#ifdef  __GNUC__				/* __MINGW32__ */
+#define _inp  _inp_asm
+static inline unsigned char _inp_asm (unsigned short _port) {
+  unsigned char rc;
+  __asm__ __volatile__ ("inb %w1,%b0" : "=a" (rc) : "Nd" (_port));
+  return rc;
+}
+#define _inpw _inpw_asm
+static inline unsigned short _inpw_asm (unsigned short _port) {
+  unsigned short rc;
+  __asm__ __volatile__ ("inw %w1,%w0" : "=a" (rc) : "Nd" (_port));
+  return rc;
+}
+#define _inpd _inpd_asm
+static inline unsigned long _inpd_asm (unsigned short _port) {
+  unsigned long rc;
+  __asm__ __volatile__ ("inl %w1,%0" : "=a" (rc) : "Nd" (_port));
+  return rc;
+}
+#define _outp  _outp_asm
+static inline unsigned char _outp_asm (unsigned short _port, unsigned char _data) {
+  __asm__ __volatile__ ("outb %b0,%w1" : : "a" (_data), "Nd" (_port));
+  return _data;
+}
+#define _outpw _outpw_asm
+static inline unsigned short _outpw_asm (unsigned short _port, unsigned short _data) {
+  __asm__ __volatile__ ("outw %w0,%w1" : : "a" (_data), "Nd" (_port));
+  return _data;
+}
+#define _outpd _outpd_asm
+static inline unsigned long _outpd_asm (unsigned short _port, unsigned long _data) {
+  __asm__ __volatile__ ("outl %0,%w1"  : : "a" (_data), "Nd" (_port));
+  return _data;
+}
+#endif
+
 static FxU8
 pciPortInByte9x(FxU16 port)
 {
