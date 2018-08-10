@@ -90,7 +90,7 @@
 #ifdef FXTRACE
   #define INIT_PRINTF DDPRINTF
 #else
-  #define INIT_PRINTF 1 ? (void) 0 : (void)
+  #define INIT_PRINTF(a) (void)0
 #endif
 #define INIT_INFO(A)
 /* #define GETENV(A)  ddgetenv(A) */
