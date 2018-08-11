@@ -551,21 +551,10 @@
 #define HWC_BASE_ADDR_MASK 0x03UL
 #endif /* defined ( GLIDE_INIT_HAL ) */
 
-#include "fxsplash.h"
-
 #if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
 #define WIN32_LEANER_AND_MEANER
 #include <windows.h>
-#else
-FxBool FX_CALL fxSplashInit (FxU32 hWnd,
-                             FxU32 screenWidth, FxU32 screenHeight,
-                             FxU32 numColBuf, FxU32 numAuxBuf,
-                             GrColorFormat_t colorFormat);
-void FX_CALL fxSplashShutdown (void);
-void FX_CALL fxSplash (float x, float y, float w, float h, FxU32 frameNumber);
-const void * FX_CALL fxSplashPlug (FxU32* w, FxU32* h,
-                                   FxI32* strideInBytes,
-                                   GrLfbWriteMode_t* format);
+#include "fxsplash.h"
 #endif /* (GLIDE_PLATFORM & GLIDE_OS_WIN32) */
 
 /* -----------------------------------------------------------------------
@@ -2002,12 +1991,11 @@ typedef struct GrGC_s
     texSurface[GLIDE_NUM_TMU];  /* Current texture surface */
 #endif /* GLIDE_INIT_HWC */
 
+#if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
   /* Splash screen/shameless plug crap */
   struct {
-#if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
     HMODULE
       moduleHandle;
-#endif /* (GLIDE_PLATFORM & GLIDE_OS_WIN32) */
     GrSplashInitProc
       initProc;
     GrSplashShutdownProc
@@ -2017,6 +2005,7 @@ typedef struct GrGC_s
     GrSplashPlugProc
       plugProc;
   } pluginInfo;
+#endif /* (GLIDE_PLATFORM & GLIDE_OS_WIN32) */
 } GrGC;
 
 
