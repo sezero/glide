@@ -133,6 +133,7 @@ main (int argc, char **argv)
 
     OFFSET (gc, cmdTransportInfo.lfbLockCount, "lfbLockCount");
 
+    OFFSET (gc, triSetupProc, "kTriProcOffset");
     OFFSET (gc, archDispatchProcs.triSetupProc, "triSetupProc");
     OFFSET (gc, archDispatchProcs.drawTrianglesProc, "drawTrianglesProc");
     OFFSET (gc, archDispatchProcs.triSetupProc, "drawVertexList");
