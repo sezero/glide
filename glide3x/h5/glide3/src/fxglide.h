@@ -2746,6 +2746,9 @@ _grSstVRetraceOn(void);
 
 #if USE_STANDARD_TLS_FUNC
 
+#ifdef __GNUC__
+extern
+#endif
 __inline FxU32
 getThreadValueFast() {
   /* According to Microsoft, TlsGetValue is implemented with speed as the
