@@ -249,7 +249,7 @@ GR_EXT_ENTRY(grSurfaceCreateContext, GrContext_t, ( GrSurfaceContextType_t type 
         rv = (GrContext_t)ctx;
 
         hwcShareContextData(ctx->bInfo,
-                        &(ctx->lostContext));
+                            &(ctx->lostContext));
         ctx->cmdTransportInfo.ptrLostContext = &(ctx->lostContext);
 
         *ctx->lostContext = FXFALSE;
@@ -294,11 +294,11 @@ GR_EXT_ENTRY(grSurfaceReleaseContext, void , (GrContext_t ctx) )
       const struct cmdTransportInfo*
         fifoInfo = &gc->cmdTransportInfo;
       
-	  /* MDM-Richardson - OpenGL does not call winclose so we will
-	   * have to deal with the context close here.  
-	   */
-	  if ( !gc->bInfo->osNT )
-	    hwcUnmapMemory9x ( gc->bInfo );
+      /* MDM-Richardson - OpenGL does not call winclose so we will
+       * have to deal with the context close here.  
+       */
+      if ( !gc->bInfo->osNT )
+        hwcUnmapMemory9x ( gc->bInfo );
 
       /* Free any windowed fifo associated w/ the context */
       if (fifoInfo->fifoPtr != NULL) {
@@ -316,11 +316,11 @@ GR_EXT_ENTRY(grSurfaceReleaseContext, void , (GrContext_t ctx) )
 
       gc->curSurface = NULL;
       gc->state.shadow.colBufferAddr =
-      gc->state.shadow.colBufferStride = 0x00UL;
+        gc->state.shadow.colBufferStride = 0x00UL;
 
       gc->auxSurface = NULL;
       gc->state.shadow.auxBufferAddr = 
-      gc->state.shadow.auxBufferAddr = 0x00UL;
+        gc->state.shadow.auxBufferStride = 0x00UL;
 
       for(i = 0; i < GLIDE_NUM_TMU; i++) {
         struct GrTmuMemInfo*
@@ -329,8 +329,8 @@ GR_EXT_ENTRY(grSurfaceReleaseContext, void , (GrContext_t ctx) )
         gc->texSurface[i] = NULL;
 
         memInfo->tramLfbAddr =
-        memInfo->tramOffset =
-        memInfo->tramSize = 0x00UL;
+          memInfo->tramOffset =
+            memInfo->tramSize = 0x00UL;
       }
 
       break;
@@ -397,17 +397,17 @@ _grSurfaceAttachFifo(GrGC* gc, GrSurface_t sfc)
     gc->state.shadow.fbzMode = ( SST_ENRECTCLIP | SST_ENZBIAS );
     
     gc->state.shadow.colBufferAddr   = 
-    gc->state.shadow.colBufferStride = 
-    gc->state.shadow.auxBufferAddr   = 
-    gc->state.shadow.auxBufferStride = 0x00UL;
-    
+      gc->state.shadow.colBufferStride = 
+        gc->state.shadow.auxBufferAddr   = 
+          gc->state.shadow.auxBufferStride = 0x00UL;
+
     memcpy(gcFifo->stateBuffer, 
            &gc->state.shadow, 
            sizeof(GrStateBuffer));
-    
+
     retVal = FXTRUE;
   }
-  
+
  __errFifoAlloc:
   ;
 
@@ -452,7 +452,7 @@ GR_EXT_ENTRY(grSurfaceSetRenderingSurface, void , (GrSurface_t sfc) )
     _colBufferStride = 0x00UL;
   hwcSurfaceInfo
     sfcInfo;
-    
+  
   GR_DCL_GC;
   GR_DCL_HW;
   GR_DEBUG_DCL(FN_NAME, 80);
@@ -462,7 +462,7 @@ GR_EXT_ENTRY(grSurfaceSetRenderingSurface, void , (GrSurface_t sfc) )
   if (gc->lostContext) {
     *gc->lostContext = FALSE;
   }
-
+  
   /*GR_BEGIN_NOFIFOCHECK(FN_NAME, 80);*/
   GDBG_INFO_MORE(gc->myLevel, "(0x%X)\n", sfc);
   
@@ -473,7 +473,7 @@ GR_EXT_ENTRY(grSurfaceSetRenderingSurface, void , (GrSurface_t sfc) )
     GDBG_INFO(80, "\t%s\n", hwcGetErrorString());
     return;
   }
-    
+  
   GDBG_INFO(80, "%s:  sfcInfo:\n", FN_NAME);
   GDBG_INFO(80, "       tileBase:       0x%x\n", sfcInfo.tileBase);
   GDBG_INFO(80, "       lpLFB:          0x%x\n", sfcInfo.lpLFB);
@@ -497,20 +497,20 @@ GR_EXT_ENTRY(grSurfaceSetRenderingSurface, void , (GrSurface_t sfc) )
 
   _colBufferAddr = sfcInfo.fbOffset;
   _colBufferStride = sfcInfo.fbStride;
-    
+  
   REG_GROUP_BEGIN(BROADCAST_ID, colBufferAddr, 2, 0x3);
   {
     REG_GROUP_SET(hw, colBufferAddr, _colBufferAddr );
     REG_GROUP_SET(hw, colBufferStride, _colBufferStride );
   }
   REG_GROUP_END();
-    
+  
   GDBG_INFO(80, "%s:  width  = %d\n", FN_NAME, sfcInfo.width); 
   GDBG_INFO(80, "%s:  height = %d\n", FN_NAME, sfcInfo.height);
-    
+
   gc->state.screen_width = sfcInfo.width;
   gc->state.screen_height = sfcInfo.height;
-    
+
   grClipWindow(0, 0, 
                gc->state.screen_width, 
                gc->state.screen_height);
@@ -554,8 +554,8 @@ GR_EXT_ENTRY(grSurfaceSetAuxSurface, void , (GrSurface_t sfc) )
     _auxBufferStride = 0x00UL;
   hwcSurfaceInfo
     sfcInfo;
-    
-  GR_BEGIN_NOFIFOCHECK( FN_NAME, 80 );
+
+  GR_BEGIN_NOFIFOCHECK(FN_NAME, 80);
   GDBG_INFO_MORE(gc->myLevel, "(0x%x)\n", sfc);
 
   if (!gc->windowed) return;
@@ -575,7 +575,7 @@ GR_EXT_ENTRY(grSurfaceSetAuxSurface, void , (GrSurface_t sfc) )
   GDBG_INFO(80, "       isTiled:        0x%x\n", sfcInfo.isTiled);  
   GDBG_INFO(80, "       width:          0x%x\n", sfcInfo.width);
   GDBG_INFO(80, "       height:         0x%x\n", sfcInfo.height);
-    
+
   if ( !sfcInfo.isTiled ) {
     /* NB: Banshee (and derivatives) have a 16-byte alignment
      * restriction on the stride and offset for color/aux buffers, but
@@ -585,18 +585,18 @@ GR_EXT_ENTRY(grSurfaceSetAuxSurface, void , (GrSurface_t sfc) )
     GR_ASSERT((sfcInfo.fbOffset & 0x0FUL) == 0x00UL);
     GR_ASSERT((sfcInfo.fbStride & 0x0FUL) == 0x00UL);
   }
-    
+  
   _auxBufferAddr = sfcInfo.fbOffset;
   _auxBufferStride = sfcInfo.fbStride;
-    
+  
   REG_GROUP_BEGIN(BROADCAST_ID, auxBufferAddr, 2, 0x3);
   REG_GROUP_SET(hw, auxBufferAddr, _auxBufferAddr );
   REG_GROUP_SET(hw, auxBufferStride, _auxBufferStride );
   REG_GROUP_END();
-    
+  
   GDBG_INFO(80, "%s:  width  = %d\n", FN_NAME, sfcInfo.width); 
   GDBG_INFO(80, "%s:  height = %d\n", FN_NAME, sfcInfo.height);
-    
+  
   gc->state.screen_width = sfcInfo.width;
   gc->state.screen_height = sfcInfo.height;
 
@@ -642,7 +642,7 @@ GR_EXT_ENTRY(grSurfaceSetTextureSurface, void , (GrChipID_t tmu, GrSurface_t sfc
   hwcSurfaceInfo
     sfcInfo;
 
-  GR_BEGIN_NOFIFOCHECK( FN_NAME, 80 );
+  GR_BEGIN_NOFIFOCHECK(FN_NAME, 80);
   GDBG_INFO_MORE(gc->myLevel, "(0x%x)\n", sfc);
 
   GR_CHECK_TMU(FN_NAME, tmu);
@@ -656,10 +656,9 @@ GR_EXT_ENTRY(grSurfaceSetTextureSurface, void , (GrChipID_t tmu, GrSurface_t sfc
       if (!_grGetSurfaceInfo(gc, sfc, &sfcInfo)) {
         GDBG_INFO(80, "%s: Could not get surface info.\n", FN_NAME);
         GDBG_INFO(80, "\t%s\n", hwcGetErrorString());
-        
         goto __errExit;
       }
-      
+
       GDBG_INFO(80, "%s:  sfcInfo:\n", FN_NAME);
       GDBG_INFO(80, "       tileBase:       0x%x\n", sfcInfo.tileBase);
       GDBG_INFO(80, "       lpLFB:          0x%x\n", sfcInfo.lpLFB);
@@ -670,7 +669,7 @@ GR_EXT_ENTRY(grSurfaceSetTextureSurface, void , (GrChipID_t tmu, GrSurface_t sfc
       GDBG_INFO(80, "       width:          0x%x\n", sfcInfo.width);
       GDBG_INFO(80, "       height:         0x%x\n", sfcInfo.height);
       GDBG_INFO(80, "       depth:          0x%x\n", sfcInfo.depth);
-      
+
       memInfo->texTiled = sfcInfo.isTiled;
       if (memInfo->texTiled) {
         memInfo->texStrideTiles = sfcInfo.hwStride;
@@ -680,7 +679,7 @@ GR_EXT_ENTRY(grSurfaceSetTextureSurface, void , (GrChipID_t tmu, GrSurface_t sfc
       memInfo->tramLfbAddr = (FxU32)sfcInfo.lpSurface - (FxU32)sfcInfo.lpLFB;
       memInfo->tramOffset = sfcInfo.fbOffset;
       memInfo->tramSize = sfcInfo.width * sfcInfo.height * sfcInfo.depth;
-      
+
       GDBG_INFO(80, FN_NAME ":  tramOffset[%d] = 0x%x\n",
                 tmu, memInfo->tramOffset);
       GDBG_INFO(80, FN_NAME ":  tramSize[%d] = 0x%x\n", 
@@ -688,10 +687,7 @@ GR_EXT_ENTRY(grSurfaceSetTextureSurface, void , (GrChipID_t tmu, GrSurface_t sfc
       GDBG_INFO(80, FN_NAME ":  tramLfbAddr[%d] = 0x%x\n",
                 tmu, memInfo->tramLfbAddr);
     } else {
-      hwcBufferDesc *bd;
-      
-      bd = (hwcBufferDesc *) sfc;
-      
+      hwcBufferDesc *bd = (hwcBufferDesc *) sfc;
       memInfo->tramOffset = bd->bufOffset;
       memInfo->tramSize = bd->bufSize;
     }
@@ -700,8 +696,8 @@ GR_EXT_ENTRY(grSurfaceSetTextureSurface, void , (GrChipID_t tmu, GrSurface_t sfc
   __errExit:
       /* Clear glide texturing */
       memInfo->tramLfbAddr =
-      memInfo->tramOffset  =
-      memInfo->tramSize    = 0x00UL;
+        memInfo->tramOffset  =
+          memInfo->tramSize    = 0x00UL;
     }
 
     gc->tmu_state[tmu].total_mem = memInfo->tramSize;
@@ -727,7 +723,8 @@ GR_EXT_ENTRY(grSurfaceSetTextureSurface, void , (GrChipID_t tmu, GrSurface_t sfc
   
   Return:
   -------------------------------------------------------------------*/
-GR_EXT_ENTRY(grSurfaceCalcTextureWHD, FxBool , (GrTexInfo *tInfo, FxU32 *w, FxU32 *h, FxU32 *d) )
+GR_EXT_ENTRY(grSurfaceCalcTextureWHD, FxBool , (GrTexInfo *tInfo, FxU32 *w,
+                                                FxU32 *h, FxU32 *d) )
 {
 #define FN_NAME "grSurfaceCalcTextureWHD"
   FxU32 
@@ -768,7 +765,7 @@ GR_EXT_ENTRY(grSurfaceCalcTextureWHD, FxBool , (GrTexInfo *tInfo, FxU32 *w, FxU3
     FxU32
       internalWidth = widthTable[tInfo->largeLodLog2][tInfo->smallLodLog2],
       internalHeight = heightTable[tInfo->largeLodLog2][tInfo->smallLodLog2];
-                           
+
     if (tInfo->aspectRatioLog2 > GR_ASPECT_LOG2_1x1) {
       internalHeight >>= tInfo->aspectRatioLog2;
     } else if (tInfo->aspectRatioLog2 < GR_ASPECT_LOG2_1x1) {
@@ -779,7 +776,7 @@ GR_EXT_ENTRY(grSurfaceCalcTextureWHD, FxBool , (GrTexInfo *tInfo, FxU32 *w, FxU3
     if (internalHeight < 0x01UL) internalHeight = 0x01UL;
 
     *w = internalWidth;
-    *h = internalHeight;    
+    *h = internalHeight;
   }
 
   return retVal;
