@@ -668,8 +668,8 @@ DECLARE_HANDLE(HMONITOR);
 #define HMONITOR_DECLARED
 #endif
 typedef BOOL (CALLBACK* MONITORENUMPROC)(HMONITOR, HDC, LPRECT, LPARAM);
-typedef WINUSERAPI BOOL WINAPI
-EnumDisplayMonitors_func( HDC             hdc,
+typedef BOOL (WINAPI *EnumDisplayMonitors_func)
+                        ( HDC             hdc,
                           LPCRECT         lprcClip,
                           MONITORENUMPROC lpfnEnum,
                           LPARAM          dwData);
@@ -850,23 +850,22 @@ hwcInit(FxU32 vID, FxU32 dID)
       num_monitor = 0;
 
       if ( user32 ) {
-        EnumDisplayMonitors_func*
-          enumDisplayMonitors = (void*)GetProcAddress( user32, "EnumDisplayMonitors" );
-        
+        EnumDisplayMonitors_func enumDisplayMonitors =
+          (EnumDisplayMonitors_func)GetProcAddress( user32, "EnumDisplayMonitors" );
+
         if ( enumDisplayMonitors ) { 
-          HWND
-            curWindow = GetActiveWindow();
-          
+          HWND curWindow = GetActiveWindow();
+
           GDBG_INFO(80, "%s:  multi-monitor capable OS ( NT5/W98 )\n", FN_NAME);
           enumDisplayMonitors( hdc, 0, monitorEnum, (LPARAM)data );
-          
+
           /*
           ** use the active window display (if there is one yet
           ** associated w/ the current thread) as sst 0 
           */
           if (curWindow != NULL) {
             HDC curWindowDC = GetDC(curWindow);
-            
+
             if (curWindowDC != NULL) {
               enumDisplayMonitors( curWindowDC, 0, displayMonitor, (LPARAM)data );
               ReleaseDC(curWindow, curWindowDC);
@@ -895,7 +894,7 @@ hwcInit(FxU32 vID, FxU32 dID)
       int 
         status;
 
-      /* Allocate a context with the Driver */      
+      /* Allocate a context with the Driver */
       ctxReq.which = HWCEXT_ALLOCCONTEXT;
       ctxReq.optData.allocContextReq.protocolRev = HWCEXT_PROTOCOLREV;
       ctxReq.optData.allocContextReq.appType = HWCEXT_ABAPPTYPE_FSEM;

@@ -1109,8 +1109,8 @@ DECLARE_HANDLE(HMONITOR);
 #define HMONITOR_DECLARED
 #endif
 typedef BOOL (CALLBACK* MONITORENUMPROC)(HMONITOR, HDC, LPRECT, LPARAM);
-typedef WINUSERAPI BOOL WINAPI
-EnumDisplayMonitors_func( HDC             hdc,
+typedef BOOL (WINAPI *EnumDisplayMonitors_func)
+                        ( HDC             hdc,
                           LPCRECT         lprcClip,
                           MONITORENUMPROC lpfnEnum,
                           LPARAM          dwData);
@@ -1372,35 +1372,34 @@ hwcInit(FxU32 vID, FxU32 dID)
   DevEnumRec
     data[HWC_MAX_BOARDS*2];
   int monitor;
-  
+
   GDBG_INFO(80, "%s\n", FN_NAME);
   errorString[0] = '\0';
-  
+
   /* find glide compatible devices */
   GDBG_INFO(80, "%s:  Finding Glide compatible devices\n", FN_NAME);
   {
     /* Grab the DC of the Desktop. */
     HDC hdc = GetDC(NULL);
     HMODULE user32 = GetModuleHandle( "user32" );
-    
+
     for (monitor = 0; monitor < HWC_MAX_BOARDS; monitor++) {
       data[monitor].dc  = NULL;
       data[monitor].mon = NULL;
       data[monitor].devName[0] = '\0';
     }
     num_monitor = 0;
-    
+
     if ( user32 ) {
-      EnumDisplayMonitors_func*
-        enumDisplayMonitors = (void*)GetProcAddress( user32, "EnumDisplayMonitors" );
-      
+      EnumDisplayMonitors_func enumDisplayMonitors =
+        (EnumDisplayMonitors_func)GetProcAddress( user32, "EnumDisplayMonitors" );
+
       if ( enumDisplayMonitors ) { 
-        /*HWND
-          curWindow = GetActiveWindow();*/
-        
+        /*HWND curWindow = GetActiveWindow();*/
+
         GDBG_INFO(80, "%s:  multi-monitor capable OS ( NT5/W98 )\n", FN_NAME);
         enumDisplayMonitors( hdc, 0, monitorEnum, (LPARAM)data );
-        
+
         /*
         ** use the active window display (if there is one yet
         ** associated w/ the current thread) as sst 0 
@@ -1408,7 +1407,7 @@ hwcInit(FxU32 vID, FxU32 dID)
         /* removed because this really does nothing
         if (curWindow != NULL) {
           HDC curWindowDC = GetDC(curWindow);
-          
+
           if (curWindowDC != NULL) {
             enumDisplayMonitors( curWindowDC, 0, displayMonitor, (LPARAM)data );
             ReleaseDC(curWindow, curWindowDC);
@@ -1418,10 +1417,10 @@ hwcInit(FxU32 vID, FxU32 dID)
         monitorEnum(NULL, hdc, NULL, (LPARAM)&data);
       }
     }
-    
+
     ReleaseDC(NULL, hdc);
   }
-  
+
   if (num_monitor == 0) {
     GDBG_INFO(80, "%s: 3Dfx device not found!\n", FN_NAME);
     sprintf(errorString, "%s: 3Dfx device not found!\n", FN_NAME);
