@@ -225,9 +225,18 @@ GR_ENTRY(grDrawPoint, void, (const void *p))
   GR_BEGIN_NOFIFOCHECK(FN_NAME, 90);
   GDBG_INFO_MORE(gc->myLevel, "(p = 0x%x)\n", p);
 
-  (gc->state.grEnableArgs.primitive_smooth_mode & GR_AA_ORDERED_POINTS_MASK
-   ? _grAADrawPoints
-   : _grDrawPoints)(GR_VTX_PTR_ARRAY, 1, (void *)&p);
+#ifdef __GNUC__
+  if (gc->state.grEnableArgs.primitive_smooth_mode & GR_AA_ORDERED_POINTS_MASK)
+	  _grAADrawPoints(GR_VTX_PTR_ARRAY, 1, (void *)&p);
+  else
+	  _grDrawPoints(GR_VTX_PTR_ARRAY, 1, (void *)&p);
+#else
+  if (gc->state.grEnableArgs.primitive_smooth_mode & GR_AA_ORDERED_POINTS_MASK)
+	  _grAADrawPoints(GR_VTX_PTR_ARRAY, 1, &(void *)p);
+  else
+	  _grDrawPoints(GR_VTX_PTR_ARRAY, 1, &(void *)p);
+#endif
+
 #undef FN_NAME
 } /* grDrawPoint */
 
