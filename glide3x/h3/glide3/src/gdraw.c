@@ -185,9 +185,8 @@
  * 77    11/15/97 7:43p Peter
  * more comdex silliness
  * 
- **
  */
- 
+
 #if SET_BSWAP
 #define SLOW_SETF 1
 #endif
@@ -284,11 +283,10 @@ GR_ENTRY(grDrawLine, void, (const void *a, const void *b))
 /*---------------------------------------------------------------------------
  ** grDrawTriangle
  */
-#if !defined(GLIDE_DEBUG) && !(GLIDE_PLATFORM & GLIDE_OS_UNIX) && !(GLIDE_PLATFORM & GLIDE_OS_DOS32)
-#if !(GLIDE_USE_C_TRISETUP)
+#ifndef HAVE_XDRAWTRI_ASM	/* grDrawTriangle() not in asm */
+#if defined(_MSC_VER) && !defined(GLIDE_DEBUG) && !(GLIDE_USE_C_TRISETUP)
 __declspec( naked )
 #endif
-#endif	/* !defined(GLIDE_DEBUG) && !(GLIDE_PLATFORM & GLIDE_OS_UNIX) && !(GLIDE_PLATFORM & GLIDE_OS_DOS32) */
 GR_ENTRY(grDrawTriangle, void, (const void *a, const void *b, const void *c))
 {
 #define FN_NAME "grDrawTriangle"
@@ -299,7 +297,7 @@ GR_ENTRY(grDrawTriangle, void, (const void *a, const void *b, const void *c))
   {
     GR_BEGIN_NOFIFOCHECK("grDrawTriangle",92);
     GDBG_INFO_MORE(gc->myLevel,"(0x%x,0x%x,0x%x)\n",a,b,c);
-    TRISETUP(a, b, c );
+    TRISETUP(a, b, c);
 #if GLIDE_DEBUG
     /* HackAlert: Nuke the fifo ptr checking stuff here if we're just
      * debugging the asm tri code.
@@ -310,7 +308,7 @@ GR_ENTRY(grDrawTriangle, void, (const void *a, const void *b, const void *c))
     GR_END();
   }
 
-#elif defined(__MSC__)
+#elif defined(_MSC_VER)
   {
     __asm {
       mov eax, DWORD PTR fs:[WNT_TEB_PTR];
@@ -342,6 +340,7 @@ GR_ENTRY(grDrawTriangle, void, (const void *a, const void *b, const void *c))
 #endif /* Triangle proc dispatch routine */
 #undef FN_NAME
 } /* grDrawTriangle */
+#endif /* HAVE_XDRAWTRI_ASM */
 
 
 #define DA_BEGIN \

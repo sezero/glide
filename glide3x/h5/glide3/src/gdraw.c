@@ -190,9 +190,8 @@
  * 77    11/15/97 7:43p Peter
  * more comdex silliness
  * 
- **
  */
- 
+
 #if SET_BSWAP
 #define SLOW_SETF 1
 #endif
@@ -292,13 +291,13 @@ GR_ENTRY(grDrawLine, void, (const void *a, const void *b))
 /*---------------------------------------------------------------------------
  ** grDrawTriangle
  */
-
-#if !defined(__POWERPC__) || GLIDE_USE_C_TRISETUP
-#if !defined(GLIDE_DEBUG) && !(GLIDE_PLATFORM & GLIDE_OS_UNIX) && !(GLIDE_PLATFORM & GLIDE_OS_DOS32)
-#if !(GLIDE_USE_C_TRISETUP)
+#if defined(__POWERPC__) && !GLIDE_USE_C_TRISETUP
+#define HAVE_XDRAWTRI_ASM
+#endif
+#ifndef HAVE_XDRAWTRI_ASM	/* grDrawTriangle() not in asm */
+#if defined(_MSC_VER) && !defined(GLIDE_DEBUG) && !(GLIDE_USE_C_TRISETUP)
 __declspec( naked )
 #endif
-#endif	/* !defined(GLIDE_DEBUG) && !(GLIDE_PLATFORM & GLIDE_OS_UNIX) && !(GLIDE_PLATFORM & GLIDE_OS_DOS32) */
 GR_ENTRY(grDrawTriangle, void, (const void *a, const void *b, const void *c))
 {
 #define FN_NAME "grDrawTriangle"
@@ -315,7 +314,7 @@ GR_ENTRY(grDrawTriangle, void, (const void *a, const void *b, const void *c))
     GR_BEGIN_NOFIFOCHECK_NORET("grDrawTriangle",92);
 #endif /* GLIDE_DEBUG */
     GDBG_INFO_MORE(gc->myLevel,"(0x%x,0x%x,0x%x)\n",a,b,c);
-    TRISETUP(a, b, c );
+    TRISETUP(a, b, c);
 #if GLIDE_DEBUG
     /* HackAlert: Nuke the fifo ptr checking stuff here if we're just
      * debugging the asm tri code.
@@ -327,7 +326,7 @@ GR_ENTRY(grDrawTriangle, void, (const void *a, const void *b, const void *c))
 #endif /* GLIDE_DEBUG */
   }
 
-#elif defined(__MSC__)
+#elif defined(_MSC_VER)
   {
 #if USE_STANDARD_TLS_FUNC
     extern FxU32 getThreadValue(void);
@@ -372,12 +371,12 @@ GR_ENTRY(grDrawTriangle, void, (const void *a, const void *b, const void *c))
     GR_END();
   }
 
-#else /* (GLIDE_PLATFORM & GLIDE_OS_UNIX) || (GLIDE_PLATFORM & GLIDE_OS_DOS32) */
+#else
 #error "Write triangle proc dispatch for this compiler"
 #endif /* Triangle proc dispatch routine */
 #undef FN_NAME
 } /* grDrawTriangle */
-#endif
+#endif /* HAVE_XDRAWTRI_ASM */
 
 
 #define DA_BEGIN \
