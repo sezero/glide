@@ -578,7 +578,7 @@ int nWaits;\
      on the memory signals 
   */
   WAITLOOP;
-  *(texAddr + (0)) = 0xffffffff;        
+  *(texAddr + (0)) = 0xffffffff;
   WAITLOOP;
   *(texAddr + (1)) = 0xffffffff;
   
@@ -617,7 +617,7 @@ Init96GetTmuMemory(FxU32 *sstbase, VG96Info *info, FxU32 tmu,
   SET(sstPtr->textureMode, SST_RGB565 | SST_TC_REPLACE | SST_TCA_REPLACE);
   /* set lod8 */
   SET(sstPtr->tLOD, ((8 << 2) | (8 << 7)));
-    
+
   /* 
      first see if we have 4 Mbytes by writing a texel at 2MB followed by
      a texel at 1MB and 0MB and then rendering using the texel at 2MB
@@ -653,7 +653,7 @@ Init96GetTmuMemory(FxU32 *sstbase, VG96Info *info, FxU32 tmu,
   }
 
 #undef WAITLOOP
-  
+
   return(FXFALSE);
 }
 
@@ -725,21 +725,15 @@ INITVG96ENTRY(init96MapBoard, FxBool , (void *rd, void *info, FxU16 vID, FxU16 d
   if (regDesc->hwDep.VG96RegDesc.baseAddress == NULL) {
 #ifdef __WIN32__
     MessageBox(NULL, pciGetErrorString(), NULL, MB_OK);
-#else
-    {
-#ifdef __linux__
-      fprintf(stderr, "Failed to map board: %s\n", pciGetErrorString());
-      exit(1);
-#else
-      /* Set Mode 3 before going */
-      union REGS
-        inR, outR;
-
-      inR.w.ax = 0x0003;
-      int386(0x10, &inR, &outR);
-      fprintf(stderr, "%s\n", pciGetErrorString());
-#endif
-    }
+#elif defined(__linux__)
+    fprintf(stderr, "Failed to map board: %s\n", pciGetErrorString());
+#else /* DOS */
+    /* Set Mode 3 before going */
+    union REGS
+      inR, outR;
+    inR.w.ax = 0x0003;
+    int386(0x10, &inR, &outR);
+    fprintf(stderr, "%s\n", pciGetErrorString());
 #endif /* __WIN32__ */
     exit(1);
     return FXFALSE;
@@ -860,7 +854,7 @@ int nWaits;\
       if (waitRes & 0x80000000) break;\
   }\
 }
-#endif  
+#endif
 
 #define SWAPPENDING(status) ((status & 0x70) >> 4)
 
@@ -890,20 +884,20 @@ init96SetupRendering(InitRegisterDesc *regDesc, GrScreenResolution_t sRes)
     ------------------------------------------------------------*/
   GDBG_INFO((80, "%s:  Software reset\n", FN_NAME));
   SET(sstHW[0x90 + 0x100000], 0xf601); /* (0xf601) init0, sw reset. */
-    
+
   WAITLOOP;
 
   GDBG_INFO((80, "%s:  Zero Out CMD FIFO registers\n", FN_NAME));
   SET(sstHW[0x100000 + 0x95], 0);
   SET(sstHW[0x100000 + 0x94], 0);
   SET(sstHW[0x100000 + 0x93], 0);
-    
+
   GDBG_INFO((80, "%s:  Setting up Mem FIFO\n", FN_NAME));
 
   GETREGVALFROMENV(regVal, "SST96_FBIJRINIT2", 0x70d20);
 
   SET(sstHW[0x92 + 0x100000], regVal);
-    
+
   /* Off for Host Blt, On for LFB command traffic 
      Low Priority Request Aging - wait 64 cycles
      before answering low priority requests from
@@ -934,33 +928,33 @@ init96SetupRendering(InitRegisterDesc *regDesc, GrScreenResolution_t sRes)
     }
     SET(sstHW[0x91 + 0x100000],regVal);
   }
-    
+
   /* Come out of Reset 
      [17]    - Serial Status Xfer Mode     - 0x0 - rising edge
      [16:12] - TREX-To-FBI High Water Mark - 0xf
      [11:8]  - TREX-To-FBI Bus Clock Delay - 0x6
-     */    
+     */
   
   GDBG_INFO((80, "%s:  Coming out of FBI reset\n", FN_NAME));
   GETREGVALFROMENV(regVal, "SST96_FBIJRINIT0", 0xf600);
   SET(sstHW[0x90 + 0x100000], regVal); /* Bit 1 disables tmu */
-    
+
   WAITLOOP;
 
   GDBG_INFO((80, "%s:  Setting TMU FT & TF delays\n", FN_NAME));
   {
     FxU32 trexinit0, trexinit1;
-        
+
     if( !myGetenv(("SST_TREX0INIT0")) ||
         (sscanf(myGetenv(("SST_TREX0INIT0")), "%i", &trexinit0) != 1) ) {
       trexinit0 = 0x05441;      /* TREXINIT0 */
     }
-        
+
     if( !myGetenv(("SST_TREX0INIT1")) ||
         (sscanf(myGetenv(("SST_TREX0INIT1")), "%i", &trexinit1) != 1) ) {
       trexinit1 = 0x3643c; /* TREXINIT1 */
     }
-        
+
     SET(sstHW[0xc7 + 0x100000], trexinit0); /* TREXINIT0 */
     SET(sstHW[0xc8 + 0x100000], trexinit1); /* TREXINIT1 */
   }
@@ -1026,7 +1020,7 @@ INITVG96ENTRY(init96SetVideo, FxBool ,
 
   if (curHALData->initAperture)
     (*curHALData->initAperture)(regDesc);
-  
+
 #ifdef __DOS32__
   {
     union REGS
@@ -1040,7 +1034,7 @@ INITVG96ENTRY(init96SetVideo, FxBool ,
                FN_NAME, oldVidMode)); 
   }
 #endif /* __DOS32__ */
-  
+
   /*-------------------------------------
     Set Video Mode
     -------------------------------------*/
@@ -1050,18 +1044,18 @@ INITVG96ENTRY(init96SetVideo, FxBool ,
 #ifdef __linux__
   if (!linOpen(hWnd, sRes, vRefresh, cFormat, yOrigin, 
               nColBuffers, nAuxBuffers, bufDesc, 
-              xres, yres, &swapType)) {
+              xres, yres, &swapType))
 #else
   if (!dxOpen(hWnd, sRes, vRefresh, cFormat, yOrigin, 
               nColBuffers, nAuxBuffers, bufDesc, 
-              xres, yres, &swapType)) {
+              xres, yres, &swapType))
 #endif
-    GDBG_INFO((80, "Failed dxOpen\n"));
+  { GDBG_INFO((80, "Failed dxOpen\n"));
     rv = FXFALSE;
     goto BAIL;
   }
-    
-#ifdef GDBG_INFO_ON  
+
+#ifdef GDBG_INFO_ON
   for (i = 0; i < nColBuffers; i++) {
     GDBG_INFO((80, "%s:  bufDesc[%d]:\n", FN_NAME, i));
     GDBG_INFO((80, "%s:  bufDesc.bufType = %s\n",
@@ -1103,7 +1097,7 @@ INITVG96ENTRY(init96SetVideo, FxBool ,
   {
     FxU32
       pending = 7;              /* # Swaps pending */
-            
+
     GDBG_INFO((80, 
                "%s:  Sending %d swapbufferCMDs\n", 
                FN_NAME, 
@@ -1111,7 +1105,7 @@ INITVG96ENTRY(init96SetVideo, FxBool ,
     while (pending) {
       FxU32
         tries = 0;
-                
+
       GDBG_INFO((80, "%s: %d swaps pending\n", FN_NAME, pending))  ;
 
       status =  sstHW[0x100000];
@@ -1123,11 +1117,11 @@ INITVG96ENTRY(init96SetVideo, FxBool ,
         ADVANCE_BUFFERS(dfb);
         WAITLOOP;
       }
-                
+
       do {
         ++tries;
         status =  sstHW[0x100000];
-                    
+
         GDBG_INFO((120, "%s:  Serial status = 0x%x\n", FN_NAME, status));
         pending = SWAPPENDING(status);
         if (tries > MAXTRIES) {
@@ -1137,7 +1131,7 @@ INITVG96ENTRY(init96SetVideo, FxBool ,
         }
       } while (pending);
     }
-            
+
     /* Clear counters with a NOP */
     SET(sstHW[0x42 + 0x100000], 1); /* NOP cmd */
 
@@ -1150,7 +1144,7 @@ INITVG96ENTRY(init96SetVideo, FxBool ,
       }
       ++nTries;
       status = sstHW[0x100000];
-                
+
       GDBG_INFO((80, 
                  "%s: Serial status after soft reset: 0x%x\n", 
                  FN_NAME, 
@@ -1158,7 +1152,6 @@ INITVG96ENTRY(init96SetVideo, FxBool ,
     } while (status & 0x1);
   } /* end of swap buffer block */
 
-  
   if (tripleBuffering) {
     GETREGVALFROMENV(regVal, "SST96_FBIJRINIT0", 0xf600);
     regVal |= (1 << 2);
@@ -1185,7 +1178,7 @@ INITVG96ENTRY(init96SetVideo, FxBool ,
     GDBG_INFO((80, "Failed init96LoadBufRegs\n"));
     goto BAIL;
   }
-  
+
   /*-------------------------------------
     Set up Page Flipping
     -------------------------------------*/
@@ -1220,10 +1213,10 @@ INITVG96ENTRY(init96SetVideo, FxBool ,
     }
   }
 #endif
-  
+
   *fbStride = (bI[1].dfbStride>>1);
   GDBG_INFO(( 200, "frame buffer stride: %d\n", *fbStride ));
-  
+
  BAIL:
   return rv;
 #undef FN_NAME
@@ -1246,13 +1239,13 @@ INITVG96ENTRY(init96SetVideo, FxBool ,
   none
   -------------------------------------------------------------------*/
 INITVG96ENTRY(init96RestoreVideo, void, ( InitRegisterDesc *regDesc )) {
-#define FN_NAME "init96RestoreVideo" 
+#define FN_NAME "init96RestoreVideo"
   if ( curHALData->initDisableRegs )
     curHALData->initDisableRegs( regDesc );
   
-#if  defined( __WIN32__ ) && !defined( INIT_HOOPTI ) 
+#if  defined( __WIN32__ ) && !defined( INIT_HOOPTI )
   dxClose();
-#elif defined( __DOS32__ ) 
+#elif defined( __DOS32__ )
   {
     static union REGS
       inR, outR;
@@ -1383,15 +1376,15 @@ INITVG96ENTRY(init96EnableTransport, FxBool, ( InitFIFOData *info, InitRegisterD
 #endif
 
   /*
-  **  NOTE TO ALL FOOLS WHO TREAD HERE     
-  ** 
+  **  NOTE TO ALL FOOLS WHO TREAD HERE
+  **
   **  It is VITALLY important to enable the FIFO AFTER the
   **  P6 Lag Of Love(tm), instead of before, otherwise the FIFO will
   **  become horribly corrupted.
   */
 
-    /* FbiJrInit3 - 0x93 - Load up offchip fifo register */
-    GDBG_INFO((80, "%s:  Loading up of offchip fifo register\n", FN_NAME));
+  /* FbiJrInit3 - 0x93 - Load up offchip fifo register */
+  GDBG_INFO((80, "%s:  Loading up of offchip fifo register\n", FN_NAME));
   SET(sstHW[0x100000 + 0x93], 1 | (lo <<  1) | (hi << 11) | (th << 21));
 
   /* Set the fifo ptr now that we really know where its going to start
@@ -1434,7 +1427,7 @@ INITVG96ENTRY(init96EnableTransport, FxBool, ( InitFIFOData *info, InitRegisterD
     Arguments:
     Return:
     -------------------------------------------------------------------*/
-INITVG96ENTRY(init96DisableTransport, void, ( void )) 
+INITVG96ENTRY(init96DisableTransport, void, ( void ))
 {
 #define FN_NAME "init96DisableTransport"
   while (*(volatile FxU32 *)sstPtr & 1);
@@ -1507,7 +1500,7 @@ INITVG96ENTRY(init96Swap, void ,
     GDBG_INFO((80, "  Direct Write of register 0x%x with value 0x%x\n", ((((FxU32) (&sstPtr->swappendCMD)) - (((FxU32) sstPtr) + 0x100000)) >> 2), 1));
 
     sstPtr->swappendCMD = 0x1;
-    
+
   {
     static FxBool gotEnv = FXFALSE;
     static FxBool overrideSwap;
@@ -1527,7 +1520,6 @@ INITVG96ENTRY(init96Swap, void ,
 
     if (overrideSwap == FXTRUE)
       code = overrideVal;
-      
   }
 
     GDBG_INFO((80, "%s:  Sending swapbufferCMD (0x%x) via FIFO callback\n",
@@ -1594,20 +1586,19 @@ INITVG96ENTRY(init96Swap, void ,
     } while (!(tmp & VIS1C_VERTICAL_RETRACE_ACTIVE));
 #endif
 #endif
-    
+
     /* dpc - 26 jan 1998
      * Some hw, macronix, requires that we diddle w/ even more bits
      * when we do the swap. 
      */
     if(curHALData->initSwapTiles != NULL) (*curHALData->initSwapTiles)(rd);
-    
+
     ADVANCE_BUFFERS(rfb);
 
     GDBG_INFO((80, "%s:  Setting colBufferSetup (0x%x, 0%x) via FIFO callback\n",
                FN_NAME, bI[rfbRenderIdx].rfb,
                bI[rfbRenderIdx].rfb));
     wcb( (FxU32*)&(sstPtr->colBufferSetup), bI[rfbRenderIdx].rfb );
-    
 
   } else {
     while ((*rd->hwDep.VG96RegDesc.serialStatus) & 0x1);
@@ -1624,7 +1615,6 @@ INITVG96ENTRY(init96Swap, void ,
   return;
 #undef FN_NAME
 } /* init96Swap */
-
 
 
 /*-------------------------------------------------------------------
@@ -1800,11 +1790,11 @@ INITVG96ENTRY(init96Control, FxBool , ( FxU32 code, InitRegisterDesc *regDesc))
   if ( !sstHW ) return FXFALSE;
 
 #ifdef __linux__
-  if (!linControl(code, bufDesc, &xRes, &yRes)) {
+  if (!linControl(code, bufDesc, &xRes, &yRes))
 #else
-  if (!dxControl(code, bufDesc, &xRes, &yRes)) {
+  if (!dxControl(code, bufDesc, &xRes, &yRes))
 #endif
-    GDBG_INFO((80, "dxControl failed!\n"));
+  { GDBG_INFO((80, "dxControl failed!\n"));
     return FXFALSE;
   }
 
@@ -1885,7 +1875,7 @@ again:
 #define JU_JU_STALL numJuJuStalls++
 #else
 #define JU_JU_STALL /* Do Nothing */
-#endif      
+#endif
       {
          volatile FxU32* fifoPtr = fifoP->hwDep.vg96FIFOData.fifoPtr;
          const FxU32 wrapAddr = ((FxU32)fifoP->hwDep.vg96FIFOData.fifoVirt +
@@ -1901,7 +1891,7 @@ again:
          {
             volatile FxU32* serialStatus =
               fifoP->hwDep.vg96FIFOData.regDesc->hwDep.VG96RegDesc.serialStatus;
-            
+
             if ((*serialStatus & 0x80) != 0x00) {
                GDBG_INFO((85, FN_NAME": fifo close to full. Waiting(0x%X)...\n", numJuJuStalls));
                while((*serialStatus & 0x80) != 0x00) JU_JU_STALL;
@@ -2011,7 +2001,6 @@ INITVG96ENTRY(init96WrapFIFO, FxBool , (InitRegisterDesc *rd, InitFIFOData *fifo
     fifoData->hwDep.vg96FIFOData.fifoSize -= 4;
   }
   
-  
   fifoData->hwDep.vg96FIFOData.fifoCur += 4096;
   
   /* Wrap back to beginning? */
@@ -2049,7 +2038,6 @@ INITVG96ENTRY(init96WrapFIFO, FxBool , (InitRegisterDesc *rd, InitFIFOData *fifo
                 (FxU32) rd->hwDep.VG96RegDesc.baseAddress
                 )
                ));
-
   }
 
   GDBG_INFO((80, "%s:  Waiting for more room.\n", FN_NAME));
@@ -2090,12 +2078,12 @@ init96LoadBufRegs(int nBuffers, InitBufDesc_t *pBufDesc, int xRes,
   InitBufDesc_t   *pAux    = NULL;
   InitBufDesc_t   *pFifo   = NULL;
   int i;
-    
+
   GDBG_INFO((80, "(%s) w = %d, h = %d, n = %d\n",
              FN_NAME, xRes, yRes, nBuffers));
-    
+
   if ( !sstHW ) return FXFALSE;
-    
+
   /* Take pBufDesc apart */
   while (nBuffers-- > 0) {
     switch (pBufDesc->bufType) {
@@ -2128,7 +2116,7 @@ init96LoadBufRegs(int nBuffers, InitBufDesc_t *pBufDesc, int xRes,
       break;
     }
     pBufDesc++;
- }
+  }
   if (pFront  == NULL) return FXFALSE;
   if (pBack   == NULL) pBack = pFront;
   if (pTriple == NULL) pTriple = pFront;
@@ -2136,10 +2124,10 @@ init96LoadBufRegs(int nBuffers, InitBufDesc_t *pBufDesc, int xRes,
 
   GDBG_INFO((80,"pFront = %.08x, pBack = %.08x, pTriple = %.08x, pAux = %.08x, pFifo = %.08x\n",
              pFront, pBack, pTriple, pAux, pFifo));
-    
+
   if (myGetenv("SST96_FORCEALIGN")) {
     FxU32 F, B, T, A;
-    
+
     if (sscanf(myGetenv("SST96_FORCEALIGN"), "%x,%x,%x,%x", &F, &B, &T, &A) == 4)
     {
       GDBG_INFO((80, "!!!!!GROSS HACK... forcing values!!!!!\n"));
@@ -2165,12 +2153,12 @@ init96LoadBufRegs(int nBuffers, InitBufDesc_t *pBufDesc, int xRes,
   if (pFifo) {
     GDBG_INFO((80,"C = %.08x, s= %6d\n", pFifo ->bufOffset, pFifo ->bufStride));
   }
-    
+
   /* Fill the arrays here */
   bI[0].dfbBase   = pFront->bufOffset; 
   bI[0].dfbStride = pFront->bufStride;
   bI[0].dfbTop    = pFront->bufOffset + (yRes-1) * pFront->bufStride;
-    
+
   bI[1].dfbBase   = pBack->bufOffset;
   bI[1].dfbStride = pBack->bufStride;
   bI[1].dfbTop    = pBack->bufOffset + (yRes-1) * pBack->bufStride;
