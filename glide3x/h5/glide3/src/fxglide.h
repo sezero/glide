@@ -2318,16 +2318,15 @@ _trisetup_noclip_valid(const void *va, const void *vb, const void *vc );
 
 #define TRISETUP_RGB(__cullMode)   TRISETUP_NORGB(__cullMode)
 #define TRISETUP_ARGB(__cullMode)  TRISETUP_NORGB(__cullMode)
-#if defined( __MSC__ ) 
-#if (_MSC_VER < 1200)
-// TRISETUP Macro for pre-msvc 6.0
+
+#if defined(_MSC_VER)
+#if (_MSC_VER < 1200) /* TRISETUP Macro for pre-msvc 6.0 */
 #define TRISETUP \
   __asm { mov edx, gc }; \
   (*gc->triSetupProc)
-#else  // _MSC_VER
-// TRISETUP Macro for msvc 6 or later 
+#else  /* TRISETUP Macro for msvc 6 or later */
 #if defined(GLIDE_DEBUG) || GLIDE_USE_C_TRISETUP
-// MSVC6 Debug does funny stuff, so push our parms inline
+/* MSVC6 Debug does funny stuff, so push our parms inline */
 #define TRISETUP(_a, _b, _c) \
   __asm { \
     __asm mov  edx, gc \
@@ -2339,20 +2338,22 @@ _trisetup_noclip_valid(const void *va, const void *vb, const void *vc );
     __asm push ecx \
   } \
   ((FxI32 (*)(void))*gc->triSetupProc)()
-#else // GLIDE_DEBUG
-// MSVC6 Retail does funny stuff too, but Larry figured it out:
+#else /* MSVC6 Retail does funny stuff too, but Larry figured it out: */
 #define TRISETUP(_a, _b, _c) \
   __asm { mov edx, gc }; \
   ((FxI32 (*)(const void *va, const void *vb, const void *vc, GrGC *gc))*gc->triSetupProc)(_a, _b, _c, gc)
-#endif // GLIDE_DEBUG
-#endif // _MSC_VER
+#endif
+#endif /* _MSC_VER */
+
 #elif defined(__POWERPC__)
 #define TRISETUP(_a, _b, _c) \
   ((FxI32 (*)(const void *va, const void *vb, const void *vc, GrGC *gc))*gc->triSetupProc)(_a, _b, _c, gc)
+
 #elif (GLIDE_PLATFORM & GLIDE_OS_UNIX) || defined(__DJGPP__)
 #define TRISETUP \
   __asm(""::"d"(gc)); \
   (*gc->triSetupProc)
+
 #elif defined(__WATCOMC__)
 extern void wat_trisetup (void *gc, const void *a, const void *b, const void *c);
 #pragma aux wat_trisetup = \
@@ -2365,10 +2366,12 @@ extern void wat_trisetup (void *gc, const void *a, const void *b, const void *c)
            wat_trisetup(gc, _a, _b, _c); \
            ((FxI32 (*)(void))*gc->triSetupProc)(); \
         } while (0)
+
 #else
 #define TRISETUP \
   (*gc->triSetupProc)
 #endif
+
 void GR_CDECL
 _grValidateState();
 
