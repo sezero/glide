@@ -1,13 +1,10 @@
-# OpenWatcom makefile for Glide3 and Texus2
+# DOS / OpenWatcom makefile for Glide3 and Texus2
 # This makefile MUST be processed by GNU make!!!
 #
 #  Copyright (c) 2003 - Daniel Borca
 #  Email : dborca@users.sourceforge.net
 #  Web   : http://www.geocities.com/dborca
 #
-# $Header$
-#
-
 
 #
 #  Available options:
@@ -52,7 +49,6 @@
 #
 
 
-
 .PHONY: all clean realclean
 
 export BUILD_NUMBER = 40404
@@ -66,6 +62,7 @@ endif
 
 all:
 	make -f Makefile.wat -C $(G3_DIR)
+# USE_X86=1 USE_3DNOW=1 USE_MMX=1 USE_SSE=1 USE_SSE2=1
 
 clean:
 	make -f Makefile.wat -C $(G3_DIR) clean
