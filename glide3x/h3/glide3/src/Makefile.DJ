@@ -9,8 +9,6 @@
 #  Available options:
 #
 #    Environment variables:
-#	FX_GLIDE_HW	build for the given ASIC (h3).
-#			default = h3
 #	H4=1		High speed Avenger.
 #			default = no
 #	OPTFLAGS	pass given optimization flags to compiler
@@ -33,7 +31,6 @@
 #	realclean:	remove all generated files
 #
 
-
 .PHONY: all glide3x clean realclean
 .INTERMEDIATE: fxgasm.exe
 
@@ -46,7 +43,6 @@ GLIDE_DXE = glide3x.dxe
 GLIDE_IMP = libglide3i.a
 TEXUS_EXE = texus2.exe
 
-FX_GLIDE_HW ?= h3
 FX_GLIDE_SW = ../../../swlibs
 GLIDE_LIBDIR = ../../lib
 TEXUS_EXEDIR = $(FX_GLIDE_SW)/bin
@@ -56,10 +52,12 @@ TEXUS_EXEDIR = $(FX_GLIDE_SW)/bin
 ###############################################################################
 
 CC = gcc
-HOST_CC = gcc
 AS = nasm
 AR = ar
 DXE3GEN = dxe3gen
+
+#for cross-builds
+HOST_CC = gcc
 
 UNLINK = rm -f $(1)
 
@@ -125,6 +123,8 @@ endif
 
 # optflags
 CFLAGS += $(OPTFLAGS)
+
+# for cross-builds
 HOST_CFLAGS=$(filter-out -mcpu=% -mtune=% -march=%,$(CFLAGS))
 
 ###############################################################################
@@ -232,7 +232,7 @@ $(GLIDE_LIBDIR)/$(GLIDE_LIB): $(GLIDE_OBJECTS)
 	$(AR) $(ARFLAGS) $@ $^
 
 $(GLIDE_LIBDIR)/$(GLIDE_DXE) $(GLIDE_LIBDIR)/$(GLIDE_IMP): $(GLIDE_OBJECTS)
-	-$(DXE3GEN) -o $(GLIDE_LIBDIR)/$(GLIDE_DXE) -Y $(GLIDE_LIBDIR)/$(GLIDE_IMP) -D "Glide3(h3) DJGPP" -E _gr -E _gu -E _tx -U $^
+	-$(DXE3GEN) -o $(GLIDE_LIBDIR)/$(GLIDE_DXE) -Y $(GLIDE_LIBDIR)/$(GLIDE_IMP) -D "Glide3 (h3) for DJGPP" -E _gr -E _gu -E _tx -U $^
 
 $(TEXUS_EXEDIR)/$(TEXUS_EXE): $(FX_GLIDE_SW)/texus2/cmd/cmd.c $(GLIDE_LIBDIR)/$(GLIDE_LIB)
 ifeq ($(TEXUS2),1)

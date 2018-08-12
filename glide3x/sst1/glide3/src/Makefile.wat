@@ -10,7 +10,7 @@
 #  Available options:
 #
 #    Environment variables:
-#	FX_GLIDE_HW	build for the given ASIC (sst1, sst96).
+#	FX_GLIDE_HW	build for the given ASIC (either sst1, or sst96).
 #			default = sst1
 #	OPTFLAGS	pass given optimization flags to compiler
 #			default = -ox -5s (Pentium, stack)
@@ -79,6 +79,8 @@ CDEFS += -DSST96_FIFO
 #CDEFS += -DINIT96VGASWAP
 CDEFS += -DINIT_ACCESS_DIRECT
 CDEFS += -DGLIDE_USE_ALT_REGMAP
+else
+$(error Invalid FX_GLIDE_HW setting)
 endif
 endif
 

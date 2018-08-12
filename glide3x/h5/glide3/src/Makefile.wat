@@ -10,8 +10,6 @@
 #  Available options:
 #
 #    Environment variables:
-#	FX_GLIDE_HW	build for the given ASIC (h5).
-#			default = h5
 #	H4=1		High speed Avenger/Napalm.
 #			default = no
 #	OPTFLAGS	pass given optimization flags to compiler
@@ -51,7 +49,6 @@
 GLIDE_LIB = glide3x.lib
 TEXUS_EXE = texus2.exe
 
-FX_GLIDE_HW ?= h5
 FX_GLIDE_SW = ../../../swlibs
 GLIDE_LIBDIR = ../../lib
 TEXUS_EXEDIR = $(FX_GLIDE_SW)/bin

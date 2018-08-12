@@ -10,8 +10,6 @@
 #  Available options:
 #
 #    Environment variables:
-#	FX_GLIDE_HW	build for the given ASIC (cvg).
-#			default = cvg
 #	OPTFLAGS	pass given optimization flags to compiler
 #			default = -ox -5s (Pentium, stack)
 #	DEBUG=1		enable debugging checks and messages
@@ -36,7 +34,6 @@
 #	realclean:	remove all generated files
 #
 
-
 .PHONY: all glide3x clean realclean
 .INTERMEDIATE: fxgasm.exe wlib.lbc
 .SUFFIXES: .c .obj
@@ -48,7 +45,6 @@
 GLIDE_LIB = glide3x.lib
 TEXUS_EXE = texus2.exe
 
-FX_GLIDE_HW ?= cvg
 FX_GLIDE_SW = ../../../swlibs
 GLIDE_LIBDIR = ../../lib
 TEXUS_EXEDIR = $(FX_GLIDE_SW)/bin
