@@ -9,8 +9,6 @@
 #  Available options:
 #
 #    Environment variables:
-#	FX_GLIDE_HW	build for the given ASIC (h3).
-#			default = h3
 #	DRI=1		Build DRI version.
 #			default = no
 #	DGA=1		Build DGA version (experimental).
@@ -39,7 +37,6 @@
 #	realclean:	remove all generated files
 #
 
-
 .PHONY: all glide3x clean realclean
 .INTERMEDIATE: fxgasm
 .SUFFIXES: .lo
@@ -60,7 +57,6 @@ TEXUS_EXE = texus2
 GLIDE_SONAME = $(GLIDE_SO).$(GLIDE_VERSION_MAJOR)
 GLIDE_SHARED = $(GLIDE_SONAME).$(GLIDE_VERSION_MINOR)
 
-FX_GLIDE_HW ?= h3
 FX_GLIDE_SW = ../../../swlibs
 GLIDE_LIBDIR = ../../lib
 TEXUS_EXEDIR = $(FX_GLIDE_SW)/bin
@@ -201,8 +197,8 @@ GLIDE_OBJECTS += \
 	../../minihwc/hwcio.o \
 	../../minihwc/gdebug.o
 
-# FIXME: needed for now to match the old library signature, should be checked
-#        if it's really needed.
+# FIXME: these are to match the old library signature.
+# Should be checked if it's really needed.
 GLIDE_OBJECTS += \
 	$(FX_GLIDE_SW)/fxmisc/fxos.o \
 	$(FX_GLIDE_SW)/fxmisc/fximg.o

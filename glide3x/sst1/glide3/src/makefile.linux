@@ -4,15 +4,12 @@
 #  Email : dborca@users.sourceforge.net
 #  Web   : http://www.geocities.com/dborca
 #
-# $Header$
-#
-
 
 #
 #  Available options:
 #
 #    Environment variables:
-#	FX_GLIDE_HW	build for the given ASIC (sst1, sst96).
+#	FX_GLIDE_HW	build for the given ASIC (either sst1, or sst96).
 #			default = sst1
 #	XPATH		specify X libraries path; needed for sst96.
 #			default = /usr/X11R6/lib (sst96 only)
@@ -31,8 +28,6 @@
 #	clean:		remove object files
 #	realclean:	remove all generated files
 #
-
-
 
 .PHONY: all glide3x clean realclean
 .INTERMEDIATE: fxgasm
@@ -78,6 +73,7 @@ CDEFS = -DINIT_LINUX
 XPATH ?= /usr/X11R6/lib
 ifeq ($(FX_GLIDE_HW),sst96)
 LDFLAGS = -L$(XPATH)
+##  FIXME:	no -lXxf86rush in new X versions
 LDLIBS = -lX11 -lXxf86dga -lXxf86rush -lXxf86vm
 endif
 
@@ -94,6 +90,9 @@ CDEFS += -DSST96
 CDEFS += -DSST96_FIFO
 #CDEFS += -DSST96_ALT_FIFO_WRAP
 CDEFS += -DGLIDE_USE_ALT_REGMAP
+GLIDE_LIBDIR = ../../lib/sst96
+else
+$(error Invalid FX_GLIDE_HW setting)
 endif
 endif
 
@@ -205,8 +204,8 @@ GLIDE_OBJECTS += \
 	$(FX_GLIDE_SW)/newpci/pcilib/fxpci.o \
 	$(FX_GLIDE_SW)/newpci/pcilib/fxlinux.o
 
-# FIXME: needed for now to match the old library signature, should be checked
-#        if it's really needed.
+# FIXME: these are to match the old library signature.
+# Should be checked if it's really needed.
 GLIDE_OBJECTS += \
 	$(FX_GLIDE_SW)/fxmisc/fxos.o \
 	$(FX_GLIDE_SW)/fxmisc/fximg.o

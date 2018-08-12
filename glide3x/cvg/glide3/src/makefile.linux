@@ -9,8 +9,6 @@
 #  Available options:
 #
 #    Environment variables:
-#	FX_GLIDE_HW	build for the given ASIC (cvg).
-#			default = cvg
 #	OPTFLAGS	pass given optimization flags to compiler
 #			default = -O2 -ffast-math
 #	DEBUG=1		enable debugging checks and messages
@@ -35,7 +33,6 @@
 #	realclean:	remove all generated files
 #
 
-
 .PHONY: all glide3x clean realclean
 .INTERMEDIATE: fxgasm
 .SUFFIXES: .lo
@@ -56,7 +53,6 @@ TEXUS_EXE = texus2
 GLIDE_SONAME = $(GLIDE_SO).$(GLIDE_VERSION_MAJOR)
 GLIDE_SHARED = $(GLIDE_SONAME).$(GLIDE_VERSION_MINOR)
 
-FX_GLIDE_HW ?= cvg
 FX_GLIDE_SW = ../../../swlibs
 GLIDE_LIBDIR = ../../lib
 TEXUS_EXEDIR = $(FX_GLIDE_SW)/bin
@@ -179,7 +175,7 @@ GLIDE_OBJECTS += \
 	xdraw3_def.o
 ifeq ($(USE_MMX),1)
 GLIDE_OBJECTS += \
-	xtexdl_mmx.obj
+	xtexdl_mmx.o
 endif
 ifeq ($(USE_3DNOW),1)
 GLIDE_OBJECTS += \
@@ -211,8 +207,8 @@ GLIDE_OBJECTS += \
 # fxremap() not called in linux builds
 #	../../init/fxremap.o
 
-# FIXME: needed for now to match the old library signature, should be checked
-#        if it's really needed.
+# FIXME: these are to match the old library signature.
+# Should be checked if it's really needed.
 GLIDE_OBJECTS += \
 	$(FX_GLIDE_SW)/fxmisc/fxos.o \
 	$(FX_GLIDE_SW)/fxmisc/fximg.o
@@ -290,7 +286,7 @@ xdraw3_def.o: xdraw3.asm
 	$(AS) -o $@ $(ASFLAGS) $<
 xtexdl_def.o: xtexdl.c
 	$(CC) -o $@ $(CFLAGS) -c $<
-xtexdl_mmx.obj: xtexdl.asm
+xtexdl_mmx.o: xtexdl.asm
 	$(AS) -o $@ $(ASFLAGS) -DGL_MMX=1 $<
 xdraw2_3dnow.o: xdraw2.asm
 	$(AS) -o $@ $(ASFLAGS) -DGL_AMD3D=1 $<
@@ -307,6 +303,8 @@ xdraw3_def.lo: xdraw3_def.o
 	$(CP) $< $@
 xtexdl_def.lo: xtexdl.c
 	$(CC) -o $@ $(CFLAGS) -DPIC -fPIC -c $<
+xtexdl_mmx.lo: xtexdl_mmx.o
+	$(CP) $< $@
 xdraw2_3dnow.lo: xdraw2_3dnow.o
 	$(CP) $< $@
 xdraw3_3dnow.lo: xdraw3_3dnow.o
@@ -330,7 +328,7 @@ fxgasm: fxgasm.c
 ###############################################################################
 
 clean:
-	-$(RM) *.o *.obj *.lo
+	-$(RM) *.o *.lo
 	-$(RM) ../../init/*.o ../../init/*.lo
 	-$(RM) $(FX_GLIDE_SW)/newpci/pcilib/*.o $(FX_GLIDE_SW)/newpci/pcilib/*.lo
 	-$(RM) $(FX_GLIDE_SW)/fxmisc/*.o $(FX_GLIDE_SW)/fxmisc/*.lo
