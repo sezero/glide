@@ -119,10 +119,10 @@ typedef struct _BufInfo {
 } BufInfo, *BufInfoPtr;
 
 
-#define RFB 0 
+#define RFB 0
 #define DFB 1
 
-  
+
 extern FxBool tripleBuffering;
 
 #define ADVANCE_BUFFERS(kind)\
@@ -135,7 +135,7 @@ extern FxBool tripleBuffering;
 #define rfbTripleIdx ((rfbBackIdx + 1) % maxBuffer)
 #define MAX_BUF 3
 
-BufInfo bI[MAX_BUF];
+static BufInfo bI[MAX_BUF];
 
 static FxI32
   maxBuffer = 2,
