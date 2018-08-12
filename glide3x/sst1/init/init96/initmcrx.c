@@ -48,6 +48,22 @@
 
 #ifdef __WIN32__
 #include <windows.h>
+#ifdef __MINGW32__
+static inline unsigned char _inp_asm (unsigned short _port) {
+  unsigned char rc;
+  __asm__ __volatile__ ("inb %w1,%b0" : "=a" (rc) : "Nd" (_port));
+  return rc;
+}
+static inline void _outp_asm (unsigned short _port, unsigned char _data) {
+  __asm__ __volatile__ ("outb %b0,%w1" : : "a" (_data), "Nd" (_port));
+}
+static inline void _outpw_asm (unsigned short _port, unsigned short _data) {
+  __asm__ __volatile__ ("outw %w0,%w1" : : "a" (_data), "Nd" (_port));
+}
+#define _outpw  _outpw_asm
+#define _inp  _inp_asm
+#define _outp  _outp_asm
+#endif
 #endif /* __WIN32__ */
 
 #define INIT_MCRX_LIB
