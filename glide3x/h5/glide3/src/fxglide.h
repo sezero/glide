@@ -279,7 +279,6 @@
 ** to complete the extension, I've added a "tbext" comment
 ** everywhere I made a modification. These should go away
 ** once the API is frozen.
-**  
 ** 
 ** 111   5/07/99 12:53p Dow
 ** My mods to Matts TexAddress fixes
@@ -486,10 +485,10 @@
 ** restoration.
 **
 */
-            
-/*                                               
+
+/*
 ** fxglide.h
-**  
+**
 ** Internal declarations for use inside Glide.
 **
 ** GLIDE_LIB:        Defined if building the Glide Library.  This macro
@@ -2344,7 +2343,7 @@ _trisetup_noclip_valid(const void *va, const void *vb, const void *vc );
 #define TRISETUP(_a, _b, _c) \
   ((FxI32 (*)(const void *va, const void *vb, const void *vc, GrGC *gc))*gc->triSetupProc)(_a, _b, _c, gc)
 
-#elif (GLIDE_PLATFORM & GLIDE_OS_UNIX) || defined(__DJGPP__)
+#elif ((GLIDE_PLATFORM & GLIDE_OS_UNIX) && (defined(__i386__)||defined(__x86_64__))) || defined(__DJGPP__)
 #define TRISETUP \
   __asm(""::"d"(gc)); \
   (*gc->triSetupProc)

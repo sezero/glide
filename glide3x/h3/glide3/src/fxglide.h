@@ -280,10 +280,10 @@
 ** restoration.
 **
 */
-            
-/*                                               
+
+/*
 ** fxglide.h
-**  
+**
 ** Internal declarations for use inside Glide.
 **
 ** GLIDE_LIB:        Defined if building the Glide Library.  This macro
@@ -1697,7 +1697,7 @@ _trisetup_noclip_valid(TRISETUPARGS);
 #endif
 #endif /* _MSC_VER */
 
-#elif defined(__linux__) || defined(__DJGPP__)
+#elif (defined(__linux__) && (defined(__i386__)||defined(__x86_64__))) || defined(__DJGPP__)
 #define TRISETUP \
   __asm(""::"d"(gc)); \
   (*gc->triSetupProc)
