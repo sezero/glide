@@ -939,13 +939,10 @@ void FX_CSTYLE _grDrawVertexList_3DNow_Window(FxU32 pktype, FxU32 type, FxI32 mo
 void FX_CSTYLE _grDrawVertexList_3DNow_Clip(FxU32 pktype, FxU32 type, FxI32 mode, FxI32 count, void *pointers);
 #endif /* GL_AMD3D */
 
-/* Define this structure otherwise it assumes the structure only exists
-   within the function */
 struct GrGC_s;
-
 /* _GlideRoot.curTexProcs is an array of (possibly specialized
  * function pointers indexed by texture format size (8/16 bits) and
- * texture line width (1/2/4/>4).  
+ * texture line width (1/2/4/>4).
  *
  * xtexdl.c
  */

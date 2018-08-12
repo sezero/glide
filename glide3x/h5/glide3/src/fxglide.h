@@ -1369,12 +1369,7 @@ void FX_CSTYLE _grDrawVertexList_SSE_Window(FxU32 pktype, FxU32 type, FxI32 mode
 void FX_CSTYLE _grDrawVertexList_SSE_Clip(FxU32 pktype, FxU32 type, FxI32 mode, FxI32 count, void *pointers);
 #endif /* GL_SSE */
 
-#ifdef __GNUC__
-/* Define this structure otherwise it assumes the structure only exists
-   within the function */
 struct GrGC_s;
-#endif	/* __GNUC__ */
-
 /* _GlideRoot.curTexProcs is an array of (possibly specialized)
  * function pointers indexed by texture format size (8/16 bits for
  * pre-Napalm, 4/8/16/32 for Napalm) and texture line width (1/2/4/>4).
