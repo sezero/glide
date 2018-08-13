@@ -291,6 +291,9 @@ GR_ENTRY(grDrawLine, void, (const void *a, const void *b))
 /*---------------------------------------------------------------------------
  ** grDrawTriangle
  */
+#if defined(__MINGW32__) && !(GLIDE_USE_C_TRISETUP || GLIDE_DEBUG)
+#define HAVE_XDRAWTRI_ASM
+#endif
 #if defined(__POWERPC__) && !GLIDE_USE_C_TRISETUP
 #define HAVE_XDRAWTRI_ASM
 #endif
