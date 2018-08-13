@@ -7,11 +7,9 @@
 #include "minihwc.h"
 #ifdef __WATCOMC__
 #include <i86.h>
-#include "h3cini~1.h"
 #define usleep(x) delay((x) / 1000)
-#else
-#include "h3cinitdd.h"
 #endif
+#include "h3cinitdd.h"
 
 
 #define USEC (1000)
