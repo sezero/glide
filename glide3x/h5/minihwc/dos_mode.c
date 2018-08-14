@@ -60,6 +60,8 @@
 #else
 #include <i86.h>
 #endif
+#define FX_DLL_DEFINITION
+#include <fxdll.h>
 #include <gdebug.h>
 #include <fxpci.h>
 #include <h3cinit.h>
