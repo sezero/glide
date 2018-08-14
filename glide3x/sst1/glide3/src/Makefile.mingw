@@ -68,6 +68,9 @@ UNLINK = $(RM) $(1)
 
 # platform
 CDEFS = -D__WIN32__ -DDIRECTX -DFX_DLL_ENABLE -DINIT_ACCESS_DDRAW
+# MSVC doesn't define WINNT, but MinGW does.  The Glide
+# source uses WINNT for its own purposes, so undefine it.
+CDEFS += -UWINNT
 
 # general
 CDEFS += -DGLIDE3 -DGLIDE3_ALPHA -DGLIDE_HARDWARE
