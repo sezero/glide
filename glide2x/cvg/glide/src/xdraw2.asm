@@ -31,7 +31,6 @@
 ;;
 ;; Revision 1.1.1.1  1999/12/07 21:49:13  joseph
 ;; Initial checkin into SourceForge.
-;;
 ;; 
 ;; 7     5/18/98 12:16p Peter
 ;; culling enabling
@@ -88,7 +87,7 @@ extrn   _FifoMakeRoom, 12
   %endif
 %ENDMACRO ; WRITE_MM1LOW_FIFO
 
-segment		DATA
+segment		SEG_DATA
     One         DD  1.0
     Area        DD  0
 %IF GLIDE_PACKED_RGB
@@ -96,7 +95,7 @@ segment		DATA
     bias1       DD  0
 %ENDIF
 
-segment		CONST
+segment		SEG_CONST
 $T2003  DD  12288.0
 $T2005  DD  1.0
 $T2006  DD  256.0
@@ -125,7 +124,7 @@ Y       equ 4
 ;; enables/disables trisProcessed and trisDrawn counters
 %define STATS 1
 
-segment		TEXT
+segment		SEG_TEXT
 
             ALIGN 32
 PROC_TYPE _trisetup_cull

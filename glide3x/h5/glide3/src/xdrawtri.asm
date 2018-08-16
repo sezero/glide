@@ -35,7 +35,7 @@
 
 extrn   _GlideRoot
 
-segment TEXT
+segment SEG_TEXT
 
             align 4
 proc grDrawTriangle, 12

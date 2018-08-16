@@ -108,11 +108,11 @@ extrn _grValidateState
     movd      [fifo], mm1           ; store current param | previous param
 %ENDMACRO ; WRITE_MM1LOW_FIFO
 
-segment		DATA
+segment		SEG_DATA
     One         DD  1.0
     Area        DD  0
 
-segment		CONST
+segment		SEG_CONST
 $T2003  DD  12288.0
 $T2005  DD  1.0
 $T2006  DD  256.0
@@ -150,7 +150,7 @@ Y       equ 4
 
 ;--------------------------------------------------------------------------
 
-segment		TEXT
+segment		SEG_TEXT
 
             ALIGN    32
 PROC_TYPE clip_nocull_invalid

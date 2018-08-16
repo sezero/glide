@@ -102,9 +102,9 @@
 ;---------------------------------------
 %if XOS == XOS_WIN32
 
-%define TEXT  .text   align=32
-%define DATA  .data   align=32
-%define CONST .rdata  align=32
+%define SEG_TEXT  .text   align=32
+%define SEG_DATA  .data   align=32
+%define SEG_CONST .rdata  align=32
 
 %macro GET_GC 0
 	mov	gc, [_GlideRoot + curGC]
@@ -117,9 +117,9 @@
 ;---------------------------------------
 %if XOS == XOS_DJGPP
 
-%define TEXT  .text
-%define DATA  .data
-%define CONST .rodata
+%define SEG_TEXT  .text
+%define SEG_DATA  .data
+%define SEG_CONST .rodata
 
 %macro GET_GC 0
 	mov	gc, [_GlideRoot + curGC]
@@ -132,9 +132,9 @@
 ;---------------------------------------
 %if XOS == XOS_LINUX
 
-%define TEXT  .text   align=32
-%define DATA  .data   align=32
-%define CONST .rodata align=32
+%define SEG_TEXT  .text   align=32
+%define SEG_DATA  .data   align=32
+%define SEG_CONST .rodata align=32
 
 %macro GET_GC 0
 	mov	gc, [_GlideRoot + curGC]
@@ -147,9 +147,9 @@
 ;---------------------------------------
 %if XOS == XOS_WATCD
 
-%define TEXT  _TEXT	align=1 public use32 class=CODE FLAT
-%define DATA  _DATA	align=4 public use32 class=DATA FLAT
-%define CONST CONST2	align=4 public use32 class=DATA FLAT
+%define SEG_TEXT   _TEXT	align=1 public use32 class=CODE FLAT
+%define SEG_DATA   _DATA	align=4 public use32 class=DATA FLAT
+%define SEG_CONST CONST2	align=4 public use32 class=DATA FLAT
 
 %macro GET_GC 0
 	mov	gc, [_GlideRoot + curGC]

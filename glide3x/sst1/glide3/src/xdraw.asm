@@ -65,7 +65,7 @@ extrn   _trisetup, 12
 %define fsubs   fsub DWORD
 %define fmuls   fmul DWORD
 
-segment		DATA
+segment		SEG_DATA
     One         DD  1.0
     Area        DD  0
     dxAB        DD  0
@@ -81,7 +81,7 @@ segment		DATA
     snap_xc     DD  0
     snap_yc     DD  0
 
-segment		CONST
+segment		SEG_CONST
     SNAP_BIAS   DD  786432.0
 
 ; Ugly, but seems to workaround the problem with locally defined
@@ -240,7 +240,7 @@ Y       equ 4
 %define i       edx       ; i = dlp->i
 %define tmpy    ebp       ; temp Y storage
 
-segment		TEXT
+segment		SEG_TEXT
 
 ;--------------------------------------------------------------------------        
 
@@ -775,7 +775,7 @@ endp
 ; we may not write to the PCI buffer without stalling.  This causes
 ; the amount of clocks the workaround adds to the loop to vary in the
 ; following way++:
-; 
+;
 ;    CPU          Bus/CPU Clock     Total Bus       Total Penalty
 ;                     Ratio*      Clocks Since   (add to later clocks)
 ;======================================================================  

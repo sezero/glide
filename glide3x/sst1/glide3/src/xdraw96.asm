@@ -50,14 +50,13 @@ extrn   _grValidateState
 extrn   _grVpDrawTriangle, 12
 extrn   _trisetup, 12
 
-        
 ; some useful floating load and store macros <ala gmt>
 %define flds    fld  DWORD
 %define fadds   fadd DWORD
 %define fsubs   fsub DWORD
 %define fmuls   fmul DWORD
 
-segment		DATA
+segment		SEG_DATA
     One         DD  1.0
     Area        DD  0
     dxAB        DD  0
@@ -73,7 +72,7 @@ segment		DATA
     snap_xc     DD  0
     snap_yc     DD  0
 
-segment		CONST
+segment		SEG_CONST
     SNAP_BIAS   DD  786432.0
 
 ; Ugly, but seems to workaround the problem with locally defined
@@ -205,7 +204,7 @@ Y       equ 4
 %define i       edx       ; i = dlp->i
 %define tmpy    ebp       ; temp Y storage
 
-segment		TEXT
+segment		SEG_TEXT
 
 ;--------------------------------------------------------------------------        
 
@@ -601,7 +600,6 @@ no_padding0:
     mov     eax, 1h                     ; return 1 (triangle drawn)
      ret
     
-
         align 4
 zero_area:
 backfaced:
@@ -748,7 +746,7 @@ endp
 ; we may not write to the PCI buffer without stalling.  This causes
 ; the amount of clocks the workaround adds to the loop to vary in the
 ; following way++:
-; 
+;
 ;    CPU          Bus/CPU Clock     Total Bus       Total Penalty
 ;                     Ratio*      Clocks Since   (add to later clocks)
 ;======================================================================  

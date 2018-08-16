@@ -54,7 +54,7 @@ CPUTypeP6       equ 6h
         
 ;;; References to external data:
     
-segment		TEXT
+segment		SEG_TEXT
 ;;
 ;;  _cpu_detect_asm - detect the type of CPU 
 ;; 

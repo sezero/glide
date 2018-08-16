@@ -30,11 +30,11 @@
 extrn   _GlideRoot
 extrn   _FifoMakeRoom
 
-segment		CONST
+segment		SEG_CONST
         ALIGN 8
 _F256_F256      DD    256.0, 256.0
 
-segment		DATA
+segment		SEG_DATA
         ALIGN   8
 btab            DD    0, 0, 0, 0, 0, 0, 0, 0
 atab            DD    0, 0, 0, 0, 0, 0, 0, 0
@@ -42,7 +42,7 @@ vSize           DD    0
 strideinbytes   DD    0
 vertices        DD    0
 
-segment		TEXT
+segment		SEG_TEXT
 
 _pktype   equ 20
 _type     equ 24
@@ -3805,14 +3805,14 @@ endp
 extrn   _GlideRoot
 extrn   _FifoMakeRoom
 
-segment		CONST
+segment		SEG_CONST
 _F1    DD      1.0
 _F256  DD      256.0
 
 _VPF1    DD      1.0
 _VPF256  DD      256.0
 
-segment		DATA
+segment		SEG_DATA
 vSize           DD    0
 ccoow           DD    0
 packetVal       DD    0
@@ -3835,7 +3835,7 @@ xc              DD    0
 yc              DD    0
 zArea           DD    0
 
-segment		TEXT
+segment		SEG_TEXT
 %define _pktype 20
 %define _type 24
 %define _mode 28

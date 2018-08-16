@@ -33,11 +33,11 @@ extrn _grCommandTransportMakeRoom, 12
 ;;; include listing.inc
 %INCLUDE "fxgasm.h"
     
-segment		CONST
+segment		SEG_CONST
         ALIGN 8
 _F256_F256      DD    256.0, 256.0
 
-segment		DATA
+segment		SEG_DATA
         ALIGN   8
 btab            DD    0, 0, 0, 0, 0, 0, 0, 0
 atab            DD    0, 0, 0, 0, 0, 0, 0, 0
@@ -46,7 +46,7 @@ strideinbytes   DD    0
 vertices        DD    0
 
 
-segment		TEXT
+segment		SEG_TEXT
 
             ALIGN 32
 proc _grDrawTriangles_3DNow, 12
@@ -2193,11 +2193,11 @@ endp
 ;;; include listing.inc
 %INCLUDE "fxgasm.h"
     
-segment		CONST
+segment		SEG_CONST
         ALIGN 8
 _F256_F256      DD    43800000h, 43800000h ; 256 | 256
 
-segment		DATA
+segment		SEG_DATA
         ALIGN   8
 btab            DD    0, 0, 0, 0, 0, 0, 0, 0
 atab            DD    0, 0, 0, 0, 0, 0, 0, 0
@@ -2206,7 +2206,7 @@ strideinbytes   DD    0
 vertices        DD    0
 
 
-segment		TEXT
+segment		SEG_TEXT
 
             ALIGN 32
 proc _grDrawTriangles_SSE, 12
@@ -4393,14 +4393,14 @@ endp
 ;;; include listing.inc
 %INCLUDE "fxgasm.h"
 
-segment		CONST
+segment		SEG_CONST
 _F1    DD      1.0
 _F256  DD      256.0
 
 _VPF1    DD      1.0
 _VPF256  DD      256.0
 
-segment		DATA
+segment		SEG_DATA
 vSize           DD    0
 ccoow           DD    0
 packetVal       DD    0
@@ -4412,7 +4412,7 @@ vPtr0           DD    0
 vPtr1           DD    0
 vPtr2           DD    0
 
-segment		TEXT
+segment		SEG_TEXT
     
 _pktype equ 20
 _type equ 24

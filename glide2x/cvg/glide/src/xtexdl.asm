@@ -120,7 +120,7 @@ _texData$   equ 24 + STACKOFFSET
 ;
 ;--------------------------------------------------------------------------
 
-segment	TEXT
+segment	SEG_TEXT
 
 	ALIGN 32
 
