@@ -30,11 +30,17 @@ DECLARE_HANDLE(HMONITOR);
 #include <ddraw.h>
 #include <sst1vid.h>
 #include "qmodes.h"
+#if 0 /* moved to asm so we don't need w9x ddk headers. */
 #define IS_32
 #define Not_VxD
 #include <minivdd.h>
 #include <vmm.h>
 #include <configmg.h>
+#else
+extern DWORD __cdecl CM_Get_DevNode_Key(DWORD,PCHAR,PVOID,ULONG,ULONG);
+#define CM_REGISTRY_HARDWARE 0
+#define CM_REGISTRY_SOFTWARE 1
+#endif
 
 #ifndef IDirectDraw7_CreateSurface /* ddraw.h not from dx7 sdk */
 typedef BOOL (FAR PASCAL * LPDDENUMCALLBACKEXA)(GUID FAR *, LPSTR, LPSTR, LPVOID, HMONITOR);

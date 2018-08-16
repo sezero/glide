@@ -220,6 +220,9 @@ GLIDE_OBJECTS += \
 	..\..\minihwc\gdebug.obj \
 	..\..\minihwc\minihwc.obj \
 	..\..\minihwc\win_mode.obj
+# so that we don't need win9x ddk:
+GLIDE_OBJECTS += \
+	..\..\minihwc\win9x.obj
 
 TEXUS_SOURCES = \
 	$(FX_GLIDE_SW)\texus2\lib\texuslib.c \
@@ -298,6 +301,9 @@ xdraw3_sse.obj: xdraw3.asm
 	$(AS) -o $@ $(ASFLAGS) -DGL_SSE=1 $<
 xtexdl_sse2.obj: xtexdl.asm
 	$(AS) -o $@ $(ASFLAGS) -DGL_SSE2=1 $<
+
+..\..\minihwc\win9x.obj: ..\..\minihwc\win9x.asm
+	$(AS) -o $@ -O2 -fwin32 $<
 
 $(GLIDE_OBJECTS): fxinline.h fxgasm.h fxbldno.h
 

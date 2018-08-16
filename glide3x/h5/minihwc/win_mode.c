@@ -34,11 +34,6 @@ DECLARE_HANDLE(HMONITOR);
 #include "qmodes.h"
 #include "minihwc.h"
 #include "setmode.h"
-#define IS_32
-#define Not_VxD
-#include <minivdd.h>
-#include <vmm.h>
-#include <configmg.h>
 
 #undef GETENV
 #define GETENV hwcGetenv

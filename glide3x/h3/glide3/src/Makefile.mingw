@@ -211,6 +211,9 @@ GLIDE_OBJECTS += \
 	../../minihwc/gdebug.o \
 	../../minihwc/minihwc.o \
 	../../minihwc/win_mode.o
+# so that we don't need win9x ddk:
+GLIDE_OBJECTS += \
+	../../minihwc/win9x.o
 
 TEXUS_SOURCES = \
 	$(FX_GLIDE_SW)/texus2/lib/texuslib.c \
@@ -290,6 +293,9 @@ xtexdl_3dnow.o: xtexdl.asm
 # -D__MINGW32__ is needed for dllexport to work
 xdrawtri.o: xdrawtri.asm
 	$(AS) -o $@ $(ASFLAGS) -D__MINGW32__ $<
+
+../../minihwc/win9x.o: ../../minihwc/win9x.asm
+	$(AS) -o $@ -O2 -fwin32 $<
 
 $(GLIDE_OBJECTS): fxinline.h fxgasm.h
 
