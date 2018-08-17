@@ -14,8 +14,6 @@
 #    Environment variables:
 #	FX_GLIDE_HW	build for the given ASIC (h3).
 #			default = h3
-#	DRI=1		Build DRI version.
-#			default = no
 #	XPATH		specify X libraries path; needed by DRI.
 #			default = /usr/X11R6/lib
 #	H4=1		High speed Avenger.
@@ -77,11 +75,8 @@ CP = cp
 # platform
 CDEFS = -D__linux__
 XPATH ?= /usr/X11R6/lib
-ifeq ($(DRI),1)
-CDEFS += -DDRI_BUILD -DX11
 LDFLAGS = -L$(XPATH)
 LDLIBS = -lX11 -lXext -lXxf86dga -lXxf86vm
-endif
 
 LDLIBS += -lm
 
@@ -134,8 +129,8 @@ ASFLAGS = -O6 -felf -D__linux__
 ASFLAGS += $(CDEFS)
 
 # compiler
-CFLAGS = -Wall -W
-CFLAGS += -I. -I../../incsrc -I../../minihwc -I../../cinit
+CFLAGS = -Wall
+CFLAGS += -I. -I../../incsrc -I../../minihwc
 CFLAGS += -I$(FX_GLIDE_SW)/fxmisc -I$(FX_GLIDE_SW)/newpci/pcilib -I$(FX_GLIDE_SW)/fxmemmap
 CFLAGS += $(CDEFS)
 
@@ -188,12 +183,10 @@ GLIDE_OBJECTS = \
 
 ifeq ($(USE_X86),1)
 GLIDE_OBJECTS += \
-	xdraw2_def.o \
-	xdraw3_def.o
+	xdraw2_def.o
 ifeq ($(USE_3DNOW),1)
 GLIDE_OBJECTS += \
 	xdraw2_3dnow.o \
-	xdraw3_3dnow.o \
 	xtexdl_3dnow.o
 endif
 else
@@ -213,16 +206,8 @@ GLIDE_OBJECTS += \
 	$(FX_GLIDE_SW)/fxmisc/fxos.o \
 	$(FX_GLIDE_SW)/fxmisc/fximg.o
 
-ifeq ($(DRI),1)
 GLIDE_OBJECTS += \
-	../../minihwc/linhwc.o \
-	$(FX_GLIDE_SW)/fxmisc/linutil.o
-else
-GLIDE_OBJECTS += \
-	../../minihwc/minihwc.o \
-	../../minihwc/lin_mode.o \
-	../../cinit/h3cinit.o
-endif
+	../../minihwc/linhwc.o
 
 ###############################################################################
 #	rules
@@ -233,9 +218,9 @@ endif
 .c.lo:
 	$(CC) -o $@ $(CFLAGS) -DPIC -fPIC -c $<
 .S.o:
-	$(CC) -o $@ $(CFLAGS) -c $<
+	$(CC) -o $@ $(CDEFS) -c $<
 .s.o:
-	$(CC) -o $@ $(CFLAGS) -x assembler-with-cpp -c $<
+	$(CC) -o $@ $(CDEFS) -x assembler-with-cpp -c $<
 
 ###############################################################################
 #	main
@@ -251,34 +236,36 @@ $(GLIDE_LIBDIR)/$(GLIDE_SO): $(GLIDE_LIBDIR)/$(GLIDE_SHARED)
 	ln -fs $(GLIDE_SHARED) $(GLIDE_LIBDIR)/$(GLIDE_SO)
 
 $(GLIDE_LIBDIR)/$(GLIDE_SHARED): $(GLIDE_OBJECTS:.o=.lo)
-	$(CC) -o $@ -shared -Wl,-soname,$(GLIDE_SONAME) $^ $(LDFLAGS) $(LDLIBS)
+	$(CC) -o $@ -shared -Wl,--no-undefined -Wl,-soname,$(GLIDE_SONAME) $^ $(LDFLAGS) $(LDLIBS)
 
 ###############################################################################
 #	rules(2)
 ###############################################################################
 
-cpuid.o: cpudtect.asm
-	$(AS) -o $@ $(ASFLAGS) $<
-xdraw2_def.o: xdraw2.asm
-	$(AS) -o $@ $(ASFLAGS) $<
-xdraw3_def.o: xdraw3.asm
-	$(AS) -o $@ $(ASFLAGS) $<
-xdraw2_3dnow.o: xdraw2.asm
-	$(AS) -o $@ $(ASFLAGS) -DGL_AMD3D=1 $<
-xdraw3_3dnow.o: xdraw3.asm
-	$(AS) -o $@ $(ASFLAGS) -DGL_AMD3D=1 $<
-xtexdl_3dnow.o: xtexdl.asm
-	$(AS) -o $@ $(ASFLAGS) -DGL_AMD3D=1 $<
+## NASM SUPPORT IS NOT HERE YET...
+##
+#cpuid.o: cpudtect.asm
+#	$(AS) -o $@ $(ASFLAGS) $<
+#xdraw2_def.o: xdraw2.asm
+#	$(AS) -o $@ $(ASFLAGS) $<
+#xdraw2_3dnow.o: xdraw2.asm
+#	$(AS) -o $@ $(ASFLAGS) -DGL_AMD3D=1 $<
+#xtexdl_3dnow.o: xtexdl.asm
+#	$(AS) -o $@ $(ASFLAGS) -DGL_AMD3D=1 $<
+cpuid.o: cpudtect.S
+	$(CC) -o $@ -xassembler-with-cpp -c $(CDEFS) $<
+xdraw2_def.o: xdraw2.S
+	$(CC) -o $@ -xassembler-with-cpp -c $(CDEFS) $<
+xdraw2_3dnow.o: xdraw2.S
+	$(CC) -o $@ -xassembler-with-cpp -c $(CDEFS) -DGL_AMD3D=1 $<
+xtexdl_3dnow.o: xtexdl.S
+	$(CC) -o $@ -xassembler-with-cpp -c $(CDEFS) -DGL_AMD3D=1 $<
 
 cpuid.lo: cpuid.o
 	$(CP) $< $@
 xdraw2_def.lo: xdraw2_def.o
 	$(CP) $< $@
-xdraw3_def.lo: xdraw3_def.o
-	$(CP) $< $@
 xdraw2_3dnow.lo: xdraw2_3dnow.o
-	$(CP) $< $@
-xdraw3_3dnow.lo: xdraw3_3dnow.o
 	$(CP) $< $@
 xtexdl_3dnow.lo: xtexdl_3dnow.o
 	$(CP) $< $@
@@ -300,10 +287,9 @@ fxgasm: fxgasm.c
 
 clean:
 	-$(RM) *.o *.lo
-	-$(RM) ../../cinit/*.o ../../cinit/*.lo
 	-$(RM) ../../minihwc/*.o ../../minihwc/*.lo
 	-$(RM) $(FX_GLIDE_SW)/newpci/pcilib/*.o $(FX_GLIDE_SW)/newpci/pcilib/*.lo
-	-$(RM) $(FX_GLIDE_SW)/fxmisc/linutil.o $(FX_GLIDE_SW)/fxmisc/linutil.lo
+	-$(RM) $(FX_GLIDE_SW)/fxmisc/*.o $(FX_GLIDE_SW)/fxmisc/*.lo
 	-$(RM) fxinline.h
 	-$(RM) fxgasm.h
 
