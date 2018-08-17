@@ -1,10 +1,9 @@
-
-#include "fxbldno.h"
+/*#include "fxbldno.h"*/
 
 #define MANVERSION              2
 #define MANREVISION             56
 
-//#define BUILD_NUMBER            40405
+#define BUILD_NUMBER            40405
 
 #ifndef GLIDE3
 #define VERSIONSTR "2.56\0"
