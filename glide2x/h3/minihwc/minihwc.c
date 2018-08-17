@@ -3221,7 +3221,7 @@ hwcRestoreVideo(hwcBoardInfo *bInfo)
 #undef FN_NAME
 } /* hwcRestoreVideo */
 
-char *
+const char *
 hwcGetErrorString()
 {
 #define FN_NAME "hwcGetErrorString"
