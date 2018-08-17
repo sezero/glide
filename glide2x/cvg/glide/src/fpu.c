@@ -63,10 +63,10 @@ void double_precision_asm()
   asm("push %eax\n"
       "fnclex\n"
       "fstcw (%esp)\n"
-      "movw (%esp), %eax\n"
+      "movl (%esp), %eax\n"
       "and $0x0000fcff, %eax\n"
       "or $0x000002ff, %eax\n"
-      "mov %eax, (%esp)\n"
+      "movl %eax, (%esp)\n"
       "fldcw (%esp)\n"
       "pop %eax");
 #else
@@ -79,4 +79,3 @@ void double_precision_asm()
 {
 }
 #endif
-
