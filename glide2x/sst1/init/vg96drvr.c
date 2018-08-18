@@ -31,7 +31,7 @@
 #include <string.h>
 #include <gdebug.h>
 
-#if 0
+#if SST96
 static FxBool setVideo( FxU32                   hWnd,
                         GrScreenResolution_t    sRes,
                         GrScreenRefresh_t       vRefresh,
@@ -112,7 +112,7 @@ static FxBool wrapFIFO(InitFIFOData *fd) {
     return init96WrapFIFO(&(context->info.regs), fd);
 }
 
-static void gamma( double gamma ) {
+static void sst96gamma( double gamma ) {
 }
 
 static void sliPciOwner( FxU32 *regbase, FxU32 owner ) {
@@ -146,7 +146,7 @@ void vg96DriverInit( InitContext *context ) {
     context->control          = control;
     context->wrapFIFO         = wrapFIFO;
 
-    context->gamma            = gamma;
+    context->gamma            = sst96gamma;
     context->sliPciOwner      = sliPciOwner;
 
     context->gammaRGB         = gammargb;
