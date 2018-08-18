@@ -336,10 +336,9 @@ all_done:  /* come here on degenerate lines */
 ** grDrawTriangle
 */
 
-#if !defined(__linux__) || defined(GLIDE_USE_C_TRISETUP) || defined(GLIDE_DEBUG)
+#if defined(GLIDE_USE_C_TRISETUP) || defined(__WATCOMC__) /* why is Watcom special-case?? */
 GR_ENTRY(grDrawTriangle, void, ( const GrVertex *a, const GrVertex *b, const GrVertex *c ))
 {
-#if defined(GLIDE_USE_C_TRISETUP) || defined( __WATCOMC__ ) || defined( GLIDE_DEBUG )
   GR_BEGIN_NOFIFOCHECK("grDrawTriangle",92);
   GDBG_INFO_MORE((gc->myLevel,"(0x%x,0x%x,0x%x)\n",a,b,c));
   GR_CHECK_F(myName, !a || !b || !c, "NULL pointer passed");
@@ -380,15 +379,6 @@ if (0) {                        /* GMT: only use this if needed */
 
 all_done:
   GR_END();
-#else
-#if defined( __linux__ )
-  asm("jmp grDrawTriangle_asm");
-#endif
-#  if defined( __MSC__ )
-  extern void grDrawTriangle_asm(void);
-  {_asm jmp grDrawTriangle_asm}
-#  endif
-#endif
 } /* grDrawTriangle */
 #endif
 

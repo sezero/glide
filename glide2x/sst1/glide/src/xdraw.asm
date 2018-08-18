@@ -171,8 +171,10 @@ segment		SEG_TEXT
 ;--------------------------------------------------------------------------        
 
             align 4
+%if XOS != XOS_WATCD ; gdraw.c special-cases __WATCOMC__ , for what reason???
 proc grDrawTriangle, 12
 endp
+%endif
 %if XOS == XOS_WIN32
 %ifdef __MINGW32__
 ; GNU LD fails with '_' prefix
