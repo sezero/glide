@@ -36,86 +36,81 @@
 ;;
 ;;
 
-TITLE   xdraw.asm
-OPTION OLDSTRUCTS       
-.586P
-
-.model FLAT,C                   ; Flat memory, mangle publics with leading '_'
+%include "xos.inc"
         
-EXTRN   _GlideRoot:DWORD
-EXTRN   _grSpinFifo:NEAR
+extrn   _GlideRoot
+extrn   _grSpinFifo
         
 ; some useful floating load and store macros <ala gmt>
-flds    TEXTEQU <fld  DWORD PTR>
-fsubs   TEXTEQU <fsub DWORD PTR>
-fmuls   TEXTEQU <fmul DWORD PTR>
+%define flds    fld  DWORD
+%define fsubs   fsub DWORD
+%define fmuls   fmul DWORD
 
-_DATA   SEGMENT
-    One         DD  03f800000r
+segment		SEG_DATA
+    One         DD  1.0
     Area        DD  0
     dxAB        DD  0
     dxBC        DD  0
     dyAB        DD  0
     dyBC        DD  0
     culltest    DD  0
-    P6FenceVar  DD  0  
-_DATA   ENDS
+    P6FenceVar  DD  0
 
 ; Ugly, but seems to workaround the problem with locally defined
 ; data segment globals not getting relocated properly when using
 ; djgpp.
 
-zArea   TEXTEQU <One+04h>
-zdxAB   TEXTEQU <One+08h>
-zdxBC   TEXTEQU <One+0ch>
-zdyAB   TEXTEQU <One+10h>
-zdyBC   TEXTEQU <One+14h>
-zculltest TEXTEQU <One+18h>
+%define zArea   One+04h
+%define zdxAB   One+08h
+%define zdxBC   One+0ch
+%define zdyAB   One+10h
+%define zdyBC   One+14h
+%define zculltest One+18h
 
 ;;; Some useful SST-1 offsets
-INCLUDE fxgasm.h
+%include "fxgasm.h"
 
 ;; enables/disables trisProcessed and trisDrawn counters
-STATS = 1
+%define STATS 1
 
 ;--------------------------------------------------------------------------        
 ;;; Macro for P6 Fencing operation
 ;;; Note that this destroys eax, but if you do 2 fences eax will be restored
-IFDEF GLIDE_DEBUG
-EXTRN   _grFence:NEAR
+%ifdef GLIDE_DEBUG
+extrn _grFence
 
-P6Fence     MACRO
-    pushd   eax
+%macro P6Fence 0
+    push    eax
     push    ecx
     push    edx
     call    _grFence
     pop     edx
     pop     ecx
     pop     eax
-    xchg    eax, P6FenceVar
-ENDM            
-ELSE
-P6Fence     MACRO
-    xchg    eax, P6FenceVar
-ENDM            
-ENDIF
+    xchg    eax, [P6FenceVar]
+%endmacro
+%else
+%macro P6Fence 0
+    xchg    eax, [P6FenceVar]
+%endmacro
+%endif
 
-IFDEF GLIDE_HARDWARE
-IFDEF GLIDE_DEBUG
+%ifdef GLIDE_HARDWARE
+%ifdef GLIDE_DEBUG
 
-EXTRN   _GR_SET:NEAR
-EXTRN   _GR_SETF:NEAR
+extrn _GR_SET
+extrn _GR_SETF
 
-ENDIF   
+%endif
 
-GR_SET      MACRO hw,offset,value
-IFDEF GLIDE_DEBUG
+%macro GR_SET 3
+%ifdef GLIDE_DEBUG
     push    eax
     push    ecx
     push    edx
 
-    push    value
-    lea     eax,[hw + offset]
+    push    %3
+    lea     eax,[%1 + %2]
     push    eax
     call    _GR_SET
     add     esp,8
@@ -123,19 +118,19 @@ IFDEF GLIDE_DEBUG
     pop     edx
     pop     ecx
     pop     eax
-ENDIF   
-    mov     DWORD PTR [hw + offset], value
-ENDM
+%endif
+    mov     DWORD [%1 + %2], %3
+%endmacro
 
-GR_SETF_P   MACRO hw,foffset
-IFDEF GLIDE_DEBUG
+%macro GR_SETF_P 2
+%ifdef GLIDE_DEBUG
     push    eax
     push    ecx
     push    edx
 
-    fst    DWORD PTR [esp-4]
+    fst    DWORD [esp-4]
     sub     esp,4
-    lea     eax,[hw + foffset]
+    lea     eax,[%1 + %2]
     push    eax
     call    _GR_SETF
     add     esp,8
@@ -143,43 +138,49 @@ IFDEF GLIDE_DEBUG
     pop     edx
     pop     ecx
     pop     eax
-ENDIF                   
-    fstp    DWORD PTR [hw  + foffset]
-ENDM
+%endif
+    fstp    DWORD [%1 + %2]
+%endmacro
 
-ENDIF
+%endif
 
 ;--------------------------------------------------------------------------        
 ; Arguments (STKOFF = 16 from 4 pushes)
-STKOFF  = 16
-_va$    =  4 + STKOFF
-_vb$    =  8 + STKOFF
-_vc$    = 12 + STKOFF
+STKOFF  equ 16
+_va$    equ  4 + STKOFF
+_vb$    equ  8 + STKOFF
+_vc$    equ 12 + STKOFF
 
-X       = 0
-Y       = 4
+X       equ 0
+Y       equ 4
 
-fa      TEXTEQU     <eax>       ; vtx a from caller
-fb      TEXTEQU     <ebx>       ; vtx b from caller
-fc      TEXTEQU     <ecx>       ; vtx c from caller
+%define fa      eax       ; vtx a from caller
+%define fb      ebx       ; vtx b from caller
+%define fc      ecx       ; vtx c from caller
                                 ; edx is used as index, loading from *src
-gc      TEXTEQU     <esi>       ; points to graphics context
-dlp     TEXTEQU     <esi>       ; points to dataList structure
-hw      TEXTEQU     <edi>       ; points to the hardware
+%define gc      esi       ; points to graphics context
+%define dlp     esi       ; points to dataList structure
+%define hw      edi       ; points to the hardware
 
-tmpx    TEXTEQU     <edx>       ; temp X storage
-i       TEXTEQU     <edx>       ; i = dlp->i
-tmpy    TEXTEQU     <ebp>       ; temp Y storage
+%define tmpx    edx       ; temp X storage
+%define i       edx       ; i = dlp->i
+%define tmpy    ebp       ; temp Y storage
 
-_TEXT       SEGMENT
+segment		SEG_TEXT
 
 ;--------------------------------------------------------------------------        
-            align 4
-            PUBLIC  grDrawTriangle_asm
-grDrawTriangle_asm  PROC    NEAR
-            .code
 
-grDrawTriangle_asm ENDP
+            align 4
+proc grDrawTriangle, 12
+endp
+%if XOS == XOS_WIN32
+%ifdef __MINGW32__
+; GNU LD fails with '_' prefix
+export  grDrawTriangle@12
+%else
+export _grDrawTriangle@12
+%endif
+%endif
 
 ; FALL THRU to _trisetup
 
@@ -189,11 +190,9 @@ grDrawTriangle_asm ENDP
 ;;
 ;;  USAGE:
 ;;
-;;  
+;;
             align 4
-            PUBLIC  _trisetup_asm@12
-_trisetup_asm@12  PROC    NEAR
-            .code
+proc _trisetup_asm, 12
 ; 28
     ; save ebx, esi, edi, ebp
     push    ebx
@@ -232,8 +231,6 @@ _trisetup_asm@12  PROC    NEAR
 ;       with lowest y value on the stack, this will be used later for 
 ;       loading parameter values into the SST regs.
 ;
-;;;;;;;;;;;;;;
-
 
 ;--------------------------------------------------------------------------        
     mov     fa, [esp + _va$]    ; 1
@@ -255,7 +252,7 @@ a_positive:
             align 4
 b_positive:
     mov     fc, [fc + Y]        ; 5
-     mov     gc, [_GlideRoot + curGC]
+     GET_GC
     cmp     fc, 0               ; 6
      jge     c_positive
     xor     fc, 7fffffffh
@@ -341,19 +338,19 @@ Area_Computation:
     fsubs   [fc + Y]            ;  |    |    dyBC
     flds    [fa + Y]            ;  |    |    |    ya
     fsubs   [fb + Y]            ;  |    |    |    dyAB
-    fld     st(3)               ;  |    |    |    |    dxAB
-    fmul    st, st(2)           ;  |    |    |    |    t0         t0=dxAB*dyBC
-    fld     st(3)               ;  |    |    |    |    |    dxBC
-    fmul    st, st(2)           ;  |    |    |    |    |    t1    t1=dxBC*dyAB
+    fld     st3                 ;  |    |    |    |    dxAB
+    fmul    st0, st2            ;  |    |    |    |    t0         t0=dxAB*dyBC
+    fld     st3                 ;  |    |    |    |    |    dxBC
+    fmul    st0, st2            ;  |    |    |    |    |    t1    t1=dxBC*dyAB
     mov     hw, [gc + fifoFree] ; load gc->state.fifoFree
-IFDEF STATS
+%ifdef STATS
      inc     tmpy               ; _GlideRoot.stats.trisProcessed++;
     mov [_GlideRoot + trisProcessed], tmpy
-ENDIF
+%endif
      mov     tmpy, [_GlideRoot + curTriSize] ; load _GlideRoot.curTriSize
 ; 69-12
                                 ;  dxAB dxBC dyBC dyAB t0   t1
-    fsubp   st(1),st            ;  |    |    |    |    area
+    fsubp   st1,st0             ;  |    |    |    |    area
     sub    hw,tmpy              ; fifoFree = gc->fifoFree - gc->curTriSize;
     jge    nostall              ; if (fifoFree < 0)
     push   eax
@@ -370,9 +367,9 @@ nostall:
 ; 52 with direct fall thru
 ; jmp ret_pop5f      ;==============<<<<<<<==================
     mov    [gc + fifoFree],hw   ;  gc->fifoFree = fifoFree;
-    fst     zArea               ;   2 clocks for fst
+    fst     dword [zArea]       ;   2 clocks for fst
     mov     hw, [gc + reg_ptr ] ; hw = gc->reg_ptr
-     mov     tmpy, zArea        ; j = *(long *)&area
+     mov     tmpy, [zArea]      ; j = *(long *)&area
     add     hw, 00200000H       ; hw = SST_WRAP(hw,128)
      and    tmpy, 7fffffffh     ; if ((j & 0x7FFFFFFF) == 0)
     jz     zero_area
@@ -380,14 +377,14 @@ nostall:
 ; 57 with directy fall thru
 
 ;--------------------------------------------------------------------------        
-    fdivr   One                 ; ooa = 1.0f / area; takes 20-38 clks
+    fdivr   dword [One]         ; ooa = 1.0f / area; takes 20-38 clks
 Cull_by_area_sign:
     sal     tmpx, 31                    ; culltest<<31
      mov     tmpy, [gc + cull_mode]     ; load gc->state.cull_mode
     test    tmpy, tmpy                  ; if (gc->state.cull_mode != GR_CULL_DISABLE)
      je      nocull1
                                         ; culling ENABLED
-    mov     tmpy, zArea                 ; reload area
+    mov     tmpy, [zArea]               ; reload area
     xor     tmpy,tmpx                   ; if (j ^ (culltest<<31))
     jge     backfaced
 
@@ -420,16 +417,16 @@ nocull1:                                ; culling DISABLED
 ;  dyBC *= ooa;
 merge1:                         ; Stack looks like          
                                 ;   dxAB  dxBC  dyBC  dyAB  ooa
-    fmul    st(4), st           ;   DXAB  |     |     |     |
-    fmul    st(3), st           ;   |     DXBC  |     |     |
-    fmul    st(2), st           ;   |     |     DYBC  |     |
-    fmulp   st(1), st           ;   |     |     |     DYAB
-     fxch    st(3)              ;   DYAB  |     |     DXAB  
+    fmul    st4, st0            ;   DXAB  |     |     |     |
+    fmul    st3, st0            ;   |     DXBC  |     |     |
+    fmul    st2, st0            ;   |     |     DYBC  |     |
+    fmulp   st1, st0            ;   |     |     |     DYAB
+     fxch    st3                ;   DYAB  |     |     DXAB
 ; 105-12
-    fstp    zdxAB               ;   |     |     DYBC
-    fstp    zdyBC               ;   |     DXBC
-    fstp    zdxBC               ;   DYAB
-    fstp    zdyAB               ;
+    fstp    dword [zdxAB]       ;   |     |     DYBC
+    fstp    dword [zdyBC]       ;   |     DXBC
+    fstp    dword [zdxBC]       ;   DYAB
+    fstp    dword [zdyAB]       ;
 ; 112-3
 ; jmp ret_pop0f
 
@@ -451,7 +448,7 @@ merge1:                         ; Stack looks like
 next_parm:
     mov     hw, [dlp + dl_addr]         ; fp = dlp->addr
      mov     tmpy, [fa + i]             ; tmpy = fa[i]
-IF 1
+%if 1
     test    i,1                         ; if (i & 1) {
      je      no_packer_fix
     test    i,2                         ; if (i & 2)
@@ -473,26 +470,26 @@ IF 1
 
         align 4
 no_packer_fix:                          ;   dpAB dpBC 
-ENDIF
+%endif
     flds    [fa + i]                    ;   pa
     fsubs   [fb + i]                    ;   dpAB
     flds    [fb + i]                    ;   |    pb
     fsubs   [fc + i]                    ;   dpAB dpBC 
 
-    fld     st(1)                       ;   |    |    dpAB   
-    fmuls   zdyBC                       ;   |    |    p0x
-    fld     st(1)                       ;   |    |    |    dpBC
-    fmuls   zdyAB                       ;   |    |    |    p1x
-     fxch    st(3)                      ;   p1x  |    |    dpAB
+    fld     st1                         ;   |    |    dpAB
+    fmuls   [zdyBC]                     ;   |    |    p0x
+    fld     st1                         ;   |    |    |    dpBC
+    fmuls   [zdyAB]                     ;   |    |    |    p1x
+     fxch    st3                        ;   p1x  |    |    dpAB
     GR_SET  hw,0,tmpy                   ;   |    |    |    |
-    fmuls   zdxBC                       ;   |    |    |    p1y
-     fxch    st(2)                      ;   |    p1y  |    dpBC
-    fmuls   zdxAB                       ;   |    |    |    p0y
-     fxch    st(3)                      ;   p0y  |    |    p1x
-    fsubp   st(1),st                    ;   |    |    dpdx
-     fxch    st(2)                      ;   dpdx |    p0y
-    fsubrp  st(1),st                    ;   |    dpdy
-     fxch    st(1)                      ;   dpdy dpdx
+    fmuls   [zdxBC]                     ;   |    |    |    p1y
+     fxch    st2                        ;   |    p1y  |    dpBC
+    fmuls   [zdxAB]                     ;   |    |    |    p0y
+     fxch    st3                        ;   p0y  |    |    p1x
+    fsubp   st1,st0                     ;   |    |    dpdx
+     fxch    st2                        ;   dpdx |    p0y
+    fsubrp  st1,st0                     ;   |    dpdy
+     fxch    st1                        ;   dpdy dpdx
     mov     i, [dlp + SIZEOF_dataList + dl_i] ; i = dlp[1]->i
      add     dlp, SIZEOF_dataList       ; dlp++;
     GR_SETF_P hw,FDPDX_OFFSET           ;   |
@@ -509,11 +506,11 @@ ENDIF
 ; write area, pop fp stack, pop stack, return
 dotri:
     mov    hw, [dlp + SIZEOF_dataList + dl_addr] ; fp = dlp[1]->addr
-IFDEF STATS
+%ifdef STATS
      inc    fa                          ;  _GlideRoot.stats.trisDrawn++
     mov    [_GlideRoot + trisDrawn], fa
-ENDIF
-     mov    tmpx, zArea
+%endif
+     mov    tmpx, [zArea]
     
     test    tmpy,2                      ; if (i & 2)
      je      no_p6_3
@@ -530,14 +527,14 @@ ENDIF
     pop     esi
      pop     ebx
     mov     eax, 1h                     ; return 1 (triangle drawn)
-     ret    12       
+     ret
 
 ;-----------------------------------------------------------------------------
 ;; We get here if there is no interpolation to be done. Just set area to 
 ;; draw the triangle. Unload fp stack, stack, return.
             align 4
 no_interpolation:
-        mov     tmpx, zArea             ; reload area
+        mov     tmpx, [zArea]           ; reload area
          mov     tmpy, [dlp + SIZEOF_dataList + dl_i]        ; load up the CPU Type
         and     tmpy, 2                 ; Check for P6
          je      nofence1
@@ -551,24 +548,24 @@ nofence1:
          nop
             align 4
 nofence2:
-        fstp    st(0)
-        fstp    st(0)
-        fstp    st(0)
-        fstp    st(0)
-        fstp    st(0)
-IFDEF STATS
+        fstp    st0
+        fstp    st0
+        fstp    st0
+        fstp    st0
+        fstp    st0
+%ifdef STATS
         mov    fa, [_GlideRoot + trisDrawn];  _GlideRoot.stats.trisDrawn++
-ENDIF
+%endif
         pop     ebp
-IFDEF STATS
+%ifdef STATS
          inc    fa                          ;  _GlideRoot.stats.trisDrawn++
         mov    [_GlideRoot + trisDrawn], fa
-ENDIF
+%endif
          pop     edi
         pop     esi
          pop     ebx
         mov     eax, 1h                 ; return 1 (triangles drawn)
-         ret    12
+         ret
  
 ; These labels should only be jumped to when we are trying to rigorously
 ; measure times.  Screwing up the floating point stack costs many clocks, 
@@ -577,20 +574,20 @@ ENDIF
 
             align 4
 backfaced:
-        fstp    st(0)
-        fstp    st(0)
-        fstp    st(0)
-        fstp    st(0)
-        fstp    st(0)
+        fstp    st0
+        fstp    st0
+        fstp    st0
+        fstp    st0
+        fstp    st0
         mov     eax, 0ffffffffh         ; return -1 (backface culled)
          pop     ebp
         pop     edi
          pop     esi
         pop     ebx
-         ret    12
+         ret
 
 ret_pop6f:
-        fstp    st(0)
+        fstp    st0
 
             align 4
 zero_area:
@@ -598,24 +595,24 @@ zero_area:
 ; but unload fp stack and then pop the stack, and return.
 
 ret_pop5f:                              ; dyBC dyAB    dxBC     dxAB   area
-        fstp    st(0)
+        fstp    st0
 ret_pop4f:
-        fstp    st(0)
+        fstp    st0
 ret_pop3f:
-        fstp    st(0)
+        fstp    st0
 ret_pop2f:  
-        fstp    st(0)
+        fstp    st0
 ret_pop1f:
-        fstp    st(0)
+        fstp    st0
 ret_pop0f:
         mov     eax, 0h                 ; return 0 (triangles drawn)
          pop     ebp
         pop     edi
          pop     esi
         pop     ebx
-         ret    12
+         ret
         
-_trisetup_asm@12 ENDP
+endp
 
 ; [++++ from above]
 ; This comment was moved here to make the code in the loop more readable 
@@ -624,7 +621,7 @@ _trisetup_asm@12 ENDP
 ; we may not write to the PCI buffer without stalling.  This causes
 ; the amount of clocks the workaround adds to the loop to vary in the
 ; following way++:
-; 
+;
 ;    CPU          Bus/CPU Clock     Total Bus       Total Penalty
 ;                     Ratio*      Clocks Since   (add to later clocks)
 ;======================================================================  
@@ -648,6 +645,3 @@ _trisetup_asm@12 ENDP
 ;      P5-120:         (2 * 4) +  9 = 17 clocks!
 ;      P5-100/P5-90    (2 * 3) +  6 = 12 clocks    
 ;
-
-_TEXT ENDS
-END

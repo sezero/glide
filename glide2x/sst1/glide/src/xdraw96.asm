@@ -23,169 +23,165 @@
 ; B4 Chip field fix.
 ;;
 
-TITLE   xdraw.asm
-OPTION OLDSTRUCTS       
-.586P
-
-.model FLAT,C                   ; Flat memory, mangle publics with leading '_'
+%include "xos.inc"
         
-EXTRN   _GlideRoot:DWORD
-EXTRN   _grSpinFifo:NEAR
-EXTRN   _grSst96FifoMakeRoom:NEAR
+extrn   _GlideRoot
+extrn   _grSpinFifo
+extrn   _grSst96FifoMakeRoom
 
-        
 ; some useful floating load and store macros <ala gmt>
-flds    TEXTEQU <fld  DWORD PTR>
-fsubs   TEXTEQU <fsub DWORD PTR>
-fmuls   TEXTEQU <fmul DWORD PTR>
+%define flds    fld  DWORD
+%define fsubs   fsub DWORD
+%define fmuls   fmul DWORD
 
-_DATA   SEGMENT
-    One         DD  03f800000r
+segment		SEG_DATA
+    One         DD  1.0
     Area        DD  0
     dxAB        DD  0
     dxBC        DD  0
     dyAB        DD  0
     dyBC        DD  0
     culltest    DD  0
-    P6FenceVar  DD  0  
-_DATA   ENDS
+    P6FenceVar  DD  0
 
 ; Ugly, but seems to workaround the problem with locally defined
 ; data segment globals not getting relocated properly when using
 ; djgpp.
 
-zArea   TEXTEQU <One+04h>
-zdxAB   TEXTEQU <One+08h>
-zdxBC   TEXTEQU <One+0ch>
-zdyAB   TEXTEQU <One+10h>
-zdyBC   TEXTEQU <One+14h>
-zculltest TEXTEQU <One+18h>
+%define zArea   One+04h
+%define zdxAB   One+08h
+%define zdxBC   One+0ch
+%define zdyAB   One+10h
+%define zdyBC   One+14h
+%define zculltest One+18h
 
 ;;; Some useful SST-1 offsets
-INCLUDE fxgasm.h
+%include "fxgasm.h"
 
 ;; enables/disables trisProcessed and trisDrawn counters
-STATS = 1
+%define STATS 1
 
 ;--------------------------------------------------------------------------        
 ;;; Macro for P6 Fencing operation
 ;;; Note that this destroys eax, but if you do 2 fences eax will be restored
-IFDEF GLIDE_DEBUG
-EXTRN   _GR_SET_GW_CMD:NEAR
-EXTRN   _GR_SET_GW_HEADER:NEAR
-EXTRN   _GR_SET_GW_ENTRY:NEAR
-ENDIF
+%ifdef GLIDE_DEBUG
+extrn   _GR_SET_GW_CMD
+extrn   _GR_SET_GW_HEADER
+extrn   _GR_SET_GW_ENTRY
+%endif
 
-GR_SET_GW_CMD   MACRO addr, offset, data
-IFDEF GLIDE_DEBUG
+%macro GR_SET_GW_CMD 3
+%ifdef GLIDE_DEBUG
     push eax
     push ecx
     push edx
 
-    push data
-    lea  eax, [addr+offset]
+    push %3
+    lea  eax, [%1 + %2]
     push eax
     call _GR_SET_GW_CMD
     add  esp, 8
     pop  edx
     pop  ecx
     pop  eax
-ELSE
-    mov [addr+offset], data
-ENDIF
-ENDM
+%else
+    mov [%1 + %2], %3
+%endif
+%endmacro
 
-GR_SET_GW_HEADER  MACRO addr, offset, data
-IFDEF GLIDE_DEBUG
+%macro GR_SET_GW_HEADER 3
+%ifdef GLIDE_DEBUG
     push eax
     push ecx
     push edx
-    push data
-    lea  eax, [addr+offset]
+    push %3
+    lea  eax, [%1 + %2]
     push eax
     call _GR_SET_GW_HEADER
     add  esp, 8
     pop  edx
     pop  ecx
     pop  eax
-ELSE
-    mov [addr+offset], data
-ENDIF
-ENDM
+%else
+    mov [%1 + %2], %3
+%endif
+%endmacro
 
-GR_SET_GW_ENTRY   MACRO addr, offset, data
-IFDEF GLIDE_DEBUG
+%macro GR_SET_GW_ENTRY 3
+%ifdef GLIDE_DEBUG
     push eax
     push ecx
     push edx
-    push data
-    lea  eax, [addr+offset]
+    push %3
+    lea  eax, [%1 + %2]
     push eax
     call _GR_SET_GW_ENTRY
     add  esp, 8
     pop  edx
     pop  ecx
     pop  eax
-ELSE
-    mov [addr+offset], data
-ENDIF
-ENDM
+%else
+    mov [%1 + %2], %3
+%endif
+%endmacro
 
-GR_FSET_GW_ENTRY  MACRO addr, offset
-IFDEF GLIDE_DEBUG
+%macro GR_FSET_GW_ENTRY 2
+%ifdef GLIDE_DEBUG
     push eax
     push ecx
     push edx
     sub  esp, 4
-    fstp DWORD PTR [esp]
-    lea  eax, [addr+offset]
+    fstp DWORD [esp]
+    lea  eax, [%1 + %2]
     push eax
     call _GR_SET_GW_ENTRY
     add  esp, 8
     pop  edx
     pop  ecx
     pop  eax
-ELSE
-    fstp DWORD PTR [addr+offset]
-ENDIF
-ENDM
+%else
+    fstp DWORD [%1 + %2]
+%endif
+%endmacro
 
 ;--------------------------------------------------------------------------        
 ; Arguments (STKOFF = 16 from 4 pushes)
-STKOFF  = 16
+STKOFF  equ 16
+_va$    equ  4 + STKOFF
+_vb$    equ  8 + STKOFF
+_vc$    equ 12 + STKOFF
 
-	
-	
+X       equ 0
+Y       equ 4
 
-_va$    =  4 + STKOFF
-_vb$    =  8 + STKOFF
-_vc$    = 12 + STKOFF
-
-X       = 0
-Y       = 4
-
-fa      TEXTEQU     <eax>       ; vtx a from caller
-fb      TEXTEQU     <ebx>       ; vtx b from caller
-fc      TEXTEQU     <ecx>       ; vtx c from caller
+%define fa      eax       ; vtx a from caller
+%define fb      ebx       ; vtx b from caller
+%define fc      ecx       ; vtx c from caller
                                 ; edx is used as index, loading from *src
-gc      TEXTEQU     <esi>       ; points to graphics context
-dlp     TEXTEQU     <esi>       ; points to dataList structure
-hw      TEXTEQU     <edi>       ; points to the hardware
-fifo    TEXTEQU     <edi>       ; points to next entry in fifo
+%define gc      esi       ; points to graphics context
+%define dlp     esi       ; points to dataList structure
+%define hw      edi       ; points to the hardware
+%define fifo    edi       ; points to next entry in fifo
 
-tmpx    TEXTEQU     <edx>       ; temp X storage
-i       TEXTEQU     <edx>       ; i = dlp->i
-tmpy    TEXTEQU     <ebp>       ; temp Y storage
+%define tmpx    edx       ; temp X storage
+%define i       edx       ; i = dlp->i
+%define tmpy    ebp       ; temp Y storage
 
-_TEXT       SEGMENT
+segment		SEG_TEXT
 
 ;--------------------------------------------------------------------------        
-            align 4
-            PUBLIC  grDrawTriangle_asm
-grDrawTriangle_asm  PROC    NEAR
-            .code
 
-grDrawTriangle_asm ENDP
+            align 4
+proc grDrawTriangle, 12
+endp
+%if XOS == XOS_WIN32
+%ifdef __MINGW32__
+; GNU LD fails with '_' prefix
+export  grDrawTriangle@12
+%else
+export _grDrawTriangle@12
+%endif
+%endif
 
 ; FALL THRU to _trisetup
 
@@ -195,11 +191,9 @@ grDrawTriangle_asm ENDP
 ;;
 ;;  USAGE:
 ;;
-;;  
+;;
             align 4
-            PUBLIC  _trisetup_asm@12
-_trisetup_asm@12  PROC    NEAR
-            .code
+proc _trisetup_asm, 12
 ; 28
     ; save ebx, esi, edi, ebp
     push    ebx
@@ -238,11 +232,8 @@ _trisetup_asm@12  PROC    NEAR
 ;       with lowest y value on the stack, this will be used later for 
 ;       loading parameter values into the SST regs.
 ;
-;;;;;;;;;;;;;;
-
 
 ;--------------------------------------------------------------------------        
-
 
     mov     fa, [esp + _va$]    ; 1
      mov     fb, [esp + _vb$]
@@ -263,7 +254,7 @@ a_positive:
             align 4
 b_positive:
     mov     fc, [fc + Y]        ; 5
-     mov     gc, [_GlideRoot + curGC]
+     GET_GC
     cmp     fc, 0               ; 6
      jge     c_positive
     xor     fc, 7fffffffh
@@ -349,16 +340,16 @@ Area_Computation:
     fsubs   [fc + Y]            ;  |    |    dyBC
     flds    [fa + Y]            ;  |    |    |    ya
     fsubs   [fb + Y]            ;  |    |    |    dyAB
-    fld     st(3)               ;  |    |    |    |    dxAB
-    fmul    st, st(2)           ;  |    |    |    |    t0         t0=dxAB*dyBC
-    fld     st(3)               ;  |    |    |    |    |    dxBC
-    fmul    st, st(2)           ;  |    |    |    |    |    t1    t1=dxBC*dyAB
-    fsubp   st(1),st            ;  |    |    |    |    area
+    fld     st3                 ;  |    |    |    |    dxAB
+    fmul    st0, st2            ;  |    |    |    |    t0         t0=dxAB*dyBC
+    fld     st3                 ;  |    |    |    |    |    dxBC
+    fmul    st0, st2            ;  |    |    |    |    |    t1    t1=dxBC*dyAB
+    fsubp   st1,st0             ;  |    |    |    |    area
 
-    fst     zArea               ;  |    |    |    |    area
+    fst     dword [zArea]       ;  |    |    |    |    area
 
     ; Zero Area Triangle Check
-    mov     tmpy, zArea        ; j = *(long *)&area
+    mov     tmpy, [zArea]      ; j = *(long *)&area
     and     tmpy, 7fffffffh    ; if ((j & 0x7FFFFFFF) == 0)
     jz      zero_area
 
@@ -368,13 +359,13 @@ Area_Computation:
     test    tmpy, tmpy                  ; if (gc->state.cull_mode != GR_CULL_DISABLE)
      je      nocull1
                                         ; culling ENABLED
-    mov     tmpy, zArea                 ; reload area
+    mov     tmpy, [zArea]               ; reload area
     xor     tmpy,tmpx                   ; if (j ^ (culltest<<31))
     jge     backfaced
 
 nocull1:                        ; culling disabled
     ; OOA Calculation
-    fdivr   One                 ;  |    |    |    |    ooa
+    fdivr   dword [One]         ;  |    |    |    |    ooa
 
     ; Fetch Fifo Ptr
     mov     fifo, [gc + fifoPtr];
@@ -439,15 +430,15 @@ wrapDone:
 
     ; Setup for Parameter Calculator
                                 ;   dxAB  dxBC  dyBC  dyAB  ooa
-    fmul    st(4), st           ;   DXAB  |     |     |     |
-    fmul    st(3), st           ;   |     DXBC  |     |     |
-    fmul    st(2), st           ;   |     |     DYBC  |     |
-    fmulp   st(1), st           ;   |     |     |     DYAB
-     fxch    st(3)              ;   DYAB  |     |     DXAB  
-    fstp    zdxAB               ;   |     |     DYBC
-    fstp    zdyBC               ;   |     DXBC
-    fstp    zdxBC               ;   DYAB
-    fstp    zdyAB               ;
+    fmul    st4, st0            ;   DXAB  |     |     |     |
+    fmul    st3, st0            ;   |     DXBC  |     |     |
+    fmul    st2, st0            ;   |     |     DYBC  |     |
+    fmulp   st1, st0            ;   |     |     |     DYAB
+     fxch    st3                ;   DYAB  |     |     DXAB
+    fstp    dword [zdxAB]       ;   |     |     DYBC
+    fstp    dword [zdyBC]       ;   |     DXBC
+    fstp    dword [zdxBC]       ;   DYAB
+    fstp    dword [zdyAB]       ;
 
     ; Parameter Calculator
         align 4
@@ -461,26 +452,23 @@ next_parm:
     flds    [fb + i]                    ;   |    pb
     fsubs   [fc + i]                    ;   dpAB dpBC 
 
-    fld     st(1)                       ;   |    |    dpAB   
-    fmuls   zdyBC                       ;   |    |    p0x
-    fld     st(1)                       ;   |    |    |    dpBC
-    fmuls   zdyAB                       ;   |    |    |    p1x
-     fxch    st(3)                      ;   p1x  |    |    dpAB
-
+    fld     st1                         ;   |    |    dpAB
+    fmuls   [zdyBC]                     ;   |    |    p0x
+    fld     st1                         ;   |    |    |    dpBC
+    fmuls   [zdyAB]                     ;   |    |    |    p1x
+     fxch    st3                        ;   p1x  |    |    dpAB
     GR_SET_GW_ENTRY fifo, 0, tmpy       ;   |    |    |    |
-    fmuls   zdxBC                       ;   |    |    |    p1y
-     fxch    st(2)                      ;   |    p1y  |    dpBC
-    fmuls   zdxAB                       ;   |    |    |    p0y
-     fxch    st(3)                      ;   p0y  |    |    p1x
-    fsubp   st(1),st                    ;   |    |    dpdx
-     fxch    st(2)                      ;   dpdx |    p0y
-    fsubrp  st(1),st                    ;   |    dpdy
-     fxch    st(1)                      ;   dpdy dpdx
+    fmuls   [zdxBC]                     ;   |    |    |    p1y
+     fxch    st2                        ;   |    p1y  |    dpBC
+    fmuls   [zdxAB]                     ;   |    |    |    p0y
+     fxch    st3                        ;   p0y  |    |    p1x
+    fsubp   st1,st0                     ;   |    |    dpdx
+     fxch    st2                        ;   dpdx |    p0y
+    fsubrp  st1,st0                     ;   |    dpdy
+     fxch    st1                        ;   dpdy dpdx
     mov     i, [dlp + SIZEOF_dataList + dl_i] ; i = dlp[1]->i
      add     dlp, SIZEOF_dataList       ; dlp++;
- 
     GR_FSET_GW_ENTRY fifo, 4            ;   |
-
     GR_FSET_GW_ENTRY fifo, 8            ;   empty
     add     fifo, 12
     test    i,i                         ; while (i)
@@ -489,7 +477,7 @@ next_parm:
         align 4
 triangle_command:
     ; Write Triangle Command
-    mov     tmpx, zArea
+    mov     tmpx, [zArea]
     GR_SET_GW_ENTRY fifo, 0, tmpx
     test    fifo, 7h
     jnz     no_padding0
@@ -501,23 +489,22 @@ no_padding0:
     pop     esi
      pop     ebx
     mov     eax, 1h                     ; return 1 (triangle drawn)
-     ret    12       
+     ret
     
-
         align 4
 zero_area:
 backfaced:
-    fstp    st(0)   ; 4
-    fstp    st(0)   ; 3
-    fstp    st(0)   ; 2
-    fstp    st(0)   ; 1
-    fstp    st(0)   ; 0
+    fstp    st0   ; 4
+    fstp    st0   ; 3
+    fstp    st0   ; 2
+    fstp    st0   ; 1
+    fstp    st0   ; 0
     pop     ebp
      pop     edi
     pop     esi
      pop     ebx
     xor     eax, eax                    ; return 0 (triangle drawn)
-     ret    12       
+     ret
 
         align 4
 wrap:
@@ -548,7 +535,7 @@ fence:
         align 4
 dofence:
     push    eax
-    xchg    eax, P6FenceVar
+    xchg    eax, [P6FenceVar]
     pop     eax
     jmp     fenceDone
 
@@ -564,7 +551,7 @@ no_padding1:
     push    gc
     
     mov     tmpx, [dlp + dl_addr]
-    mov     gc,   [_GlideRoot + curGC]
+    GET_GC
 
     GR_SET_GW_CMD  fifo, 0, tmpx
     mov     tmpy, [gc + gwHeaders + 4]  
@@ -585,26 +572,23 @@ next_parm_1:
     flds    [fb + i]                    ;   |    pb
     fsubs   [fc + i]                    ;   dpAB dpBC 
 
-    fld     st(1)                       ;   |    |    dpAB   
-    fmuls   zdyBC                       ;   |    |    p0x
-    fld     st(1)                       ;   |    |    |    dpBC
-    fmuls   zdyAB                       ;   |    |    |    p1x
-     fxch    st(3)                      ;   p1x  |    |    dpAB
-
+    fld     st1                         ;   |    |    dpAB
+    fmuls   [zdyBC]                     ;   |    |    p0x
+    fld     st1                         ;   |    |    |    dpBC
+    fmuls   [zdyAB]                     ;   |    |    |    p1x
+     fxch    st3                        ;   p1x  |    |    dpAB
     GR_SET_GW_ENTRY fifo, 0, tmpy       ;   |    |    |    |
-    fmuls   zdxBC                       ;   |    |    |    p1y
-     fxch    st(2)                      ;   |    p1y  |    dpBC
-    fmuls   zdxAB                       ;   |    |    |    p0y
-     fxch    st(3)                      ;   p0y  |    |    p1x
-    fsubp   st(1),st                    ;   |    |    dpdx
-     fxch    st(2)                      ;   dpdx |    p0y
-    fsubrp  st(1),st                    ;   |    dpdy
-     fxch    st(1)                      ;   dpdy dpdx
+    fmuls   [zdxBC]                     ;   |    |    |    p1y
+     fxch    st2                        ;   |    p1y  |    dpBC
+    fmuls   [zdxAB]                     ;   |    |    |    p0y
+     fxch    st3                        ;   p0y  |    |    p1x
+    fsubp   st1,st0                     ;   |    |    dpdx
+     fxch    st2                        ;   dpdx |    p0y
+    fsubrp  st1,st0                     ;   |    dpdy
+     fxch    st1                        ;   dpdy dpdx
     mov     i, [dlp + SIZEOF_dataList + dl_i] ; i = dlp[1]->i
      add     dlp, SIZEOF_dataList       ; dlp++;
-
     GR_FSET_GW_ENTRY fifo, 4            ;   |
-
     GR_FSET_GW_ENTRY fifo, 8            ;   empty
     add     fifo, 12
     test    i,i                         ; while (i)
@@ -616,11 +600,11 @@ next_parm_1:
     add     fifo, 4
         align 4
 triangle_command_packet:
-    mov     gc, [_GlideRoot + curGC]
+    GET_GC
     mov     tmpy, 40000000h
 
     mov     tmpx, [gc + gwCommand]
-    mov     fa, zArea
+    mov     fa, [zArea]
 
     GR_SET_GW_CMD    fifo, 0, tmpx
     GR_SET_GW_HEADER fifo, 4, tmpy
@@ -633,18 +617,18 @@ triangle_command_packet:
     pop     esi
      pop     ebx
     mov     eax, 1h                     ; return 1 (triangle drawn)
-     ret    12       
+     ret
 
         align 4
 no_interpolation:
-    fstp    st(0)     ; 4
-    fstp    st(0)     ; 3 
-    fstp    st(0)     ; 2 
-    fstp    st(0)     ; 1 
-    fstp    st(0)     ; 0
+    fstp    st0     ; 4
+    fstp    st0     ; 3
+    fstp    st0     ; 2
+    fstp    st0     ; 1
+    fstp    st0     ; 0
     jmp     triangle_command
 
-_trisetup_asm@12 ENDP
+endp
 
 ; [++++ from above]
 ; This comment was moved here to make the code in the loop more readable 
@@ -653,7 +637,7 @@ _trisetup_asm@12 ENDP
 ; we may not write to the PCI buffer without stalling.  This causes
 ; the amount of clocks the workaround adds to the loop to vary in the
 ; following way++:
-; 
+;
 ;    CPU          Bus/CPU Clock     Total Bus       Total Penalty
 ;                     Ratio*      Clocks Since   (add to later clocks)
 ;======================================================================  
@@ -677,6 +661,3 @@ _trisetup_asm@12 ENDP
 ;      P5-120:         (2 * 4) +  9 = 17 clocks!
 ;      P5-100/P5-90    (2 * 3) +  6 = 12 clocks    
 ;
-
-_TEXT ENDS
-END
