@@ -272,10 +272,10 @@ xtexdl_3dnow.obj: xtexdl.asm
 $(GLIDE_OBJECTS): fxinline.h fxgasm.h
 
 fxinline.h: fxgasm.exe
-	./$< -inline > $@
+	$< -inline > $@
 
 fxgasm.h: fxgasm.exe
-	./$< -hex > $@
+	$< -hex > $@
 
 fxgasm.exe: fxgasm.c
 	$(CC) -o $@ $(CFLAGS) $<

@@ -6,7 +6,7 @@
  * This routine sets the precision to single which effects all
  * adds, mults, and divs.
  */
-#if defined(__i386__) || defined(__x86_64__)
+#if defined(__i386__) || defined(__x86_64__) || defined(_M_IX86)
 void single_precision_asm()
 {
 #if defined(__MSC__)
@@ -44,7 +44,7 @@ void single_precision_asm()
  * This routine sets the precision to double which effects all
  * adds, mults, and divs.
  */
-#if defined(__i386__) || defined(__x86_64__)
+#if defined(__i386__) || defined(__x86_64__) || defined(_M_IX86)
 void double_precision_asm()
 {
 #if defined(__MSC__)
