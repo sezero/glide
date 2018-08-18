@@ -922,7 +922,7 @@ FxBool sst1InitSetGrxClkINI(FxU32 *sstbase, sst1ClkTimingStruct
     setMemClk = iniDac->setMemClk;
     while(setMemClk) {
 #ifdef DIRECTX
-        if(setMemClk->frequency == FTOL(sstGrxClk->freq) ) {
+        if(setMemClk->frequency == (FxU32) FTOL(sstGrxClk->freq) ) {
 #else
         if(setMemClk->frequency == (FxU32) sstGrxClk->freq) {
 #endif

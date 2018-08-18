@@ -256,6 +256,7 @@ gdbg_set_file(const char *name)
     else {
         outf = fopen(name,"w");             // open up a new one
         if (outf) gdbg_msgfile = outf;
-        return outf != NULL;
-    } 
+        return (outf != NULL);
+    }
+    return FXTRUE;
 }
