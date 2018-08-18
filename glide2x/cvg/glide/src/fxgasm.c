@@ -123,6 +123,10 @@ main (int argc, char **argv)
     OFFSET (gc, cmdTransportInfo.fifoLfbP, "fifoLfbP");
     OFFSET (gc, cmdTransportInfo.lfbLockCount, "lfbLockCount");
 
+#if GLIDE_DISPATCH_SETUP
+    OFFSET (gc,curArchProcs.triSetupProc,"kTriProcOffset\t\t");
+#endif
+
     SIZEOF (gr.GCs[0].state,"GrState\t");
     SIZEOF (gr.hwConfig,"GrHwConfiguration");
     SIZEOF (gr.GCs[0],"GC\t");

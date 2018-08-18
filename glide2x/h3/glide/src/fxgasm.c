@@ -194,8 +194,10 @@ main (int argc, char **argv)
 
     OFFSET(gc, checkCounter, "gc_checkCounter");
     OFFSET(gc, checkPtr, "gc_checkPtr");
-   
 
+#if GLIDE_DISPATCH_SETUP
+    OFFSET (gc,archDispatchProcs.triSetupProc,"kTriProcOffset\t\t");
+#endif
 
     SIZEOF (gr.GCs[0].state,"GrState\t");
     SIZEOF (gr.hwConfig,"GrHwConfiguration");
