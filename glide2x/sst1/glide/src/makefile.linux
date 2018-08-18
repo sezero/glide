@@ -89,6 +89,8 @@ CDEFS += -DSST96_FIFO
 #CDEFS += -DINIT96VGASWAP
 #CDEFS += -DINIT_ACCESS_DIRECT
 CDEFS += -DGLIDE_USE_ALT_REGMAP
+else
+$(error Invalid FX_GLIDE_HW setting)
 endif
 endif
 
@@ -121,7 +123,7 @@ ifeq ($(USE_X86),1)
 CFLAGS += -DGL_X86
 OPTFLAGS ?= -O1 -ffast-math
 else
-CFLAGS += -DGLIDE_USE_C_TRISETUP
+CFLAGS += -DGLIDE_USE_C_TRISETUP=1
 OPTFLAGS ?= -O1 -ffast-math
 endif
 
@@ -322,6 +324,7 @@ clean:
 	-$(RM) ../../init/initvg/*.o ../../init/initvg/*.lo
 	-$(RM) ../../init/init96/*.o ../../init/init96/*.lo
 	-$(RM) $(FX_GLIDE_SW)/newpci/pcilib/*.o $(FX_GLIDE_SW)/newpci/pcilib/*.lo
+	-$(RM) $(FX_GLIDE_SW)/fxmisc/*.o $(FX_GLIDE_SW)/fxmisc/*.lo
 	-$(RM) fxinline.h
 	-$(RM) fxgasm.h
 
