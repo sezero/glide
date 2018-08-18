@@ -12,7 +12,6 @@
 #  Copyright (c) 2006 - Guillem Jover <guillem@hadrons.org>
 #
 
-
 #
 #  Available options:
 #
@@ -40,8 +39,6 @@
 #	clean:		remove object files
 #	realclean:	remove all generated files
 #
-
-
 
 .PHONY: all glide2x clean realclean
 .INTERMEDIATE: fxgasm

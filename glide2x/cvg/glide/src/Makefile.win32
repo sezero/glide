@@ -1,4 +1,4 @@
-# Win32 makefile for Glide2/CVG and Texus2
+# Win32 makefile for Glide2/CVG
 # This makefile MUST be processed by GNU make!!!
 #
 #  Copyright (c) 2004
@@ -11,7 +11,6 @@
 #  Email : koolsmoky@users.sourceforge.net
 #  Web   : http://www.3dfxzone.it/koolsmoky
 #
-
 
 #
 #  Available options:
@@ -29,12 +28,10 @@
 #			capabilities are still checked at run-time to avoid
 #			crashes.
 #			default = no
-#       USE_MMX=1       allow MMX specializations.
-#                       default = no
-#	TEXUS2=1	embed Texus2 functions into Glide2.
+#	USE_MMX=1	allow MMX specializations.
 #			default = no
-#       FXOEM2X=1       build fxoem2x.dll
-#                       default = no
+#	FXOEM2X=1	build fxoem2x.dll
+#			default = no
 #
 #    Targets:
 #	all:		build everything
@@ -42,8 +39,6 @@
 #	clean:		remove object files
 #	realclean:	remove all generated files
 #
-
-
 
 .PHONY: all glide2x clean realclean
 .INTERMEDIATE: fxgasm.exe
@@ -56,12 +51,10 @@
 GLIDE_RES = glide.res
 GLIDE_DLL = glide2x.dll
 GLIDE_IMP = glide2x.lib
-TEXUS_EXE = texus2.exe
 
 FX_GLIDE_HW ?= cvg
 FX_GLIDE_SW = ../../../swlibs
 GLIDE_LIBDIR = ../../lib
-TEXUS_EXEDIR = $(FX_GLIDE_SW)/bin
 
 ###############################################################################
 #	tools
@@ -122,10 +115,6 @@ endif
 # other
 CDEFS += -DGLIDE_PLUG -DGLIDE_SPLASH
 
-ifeq ($(TEXUS2),1)
-CDEFS += -DHAVE_TEXUS2
-endif
-
 ###############################################################################
 #	flags
 ###############################################################################
@@ -153,7 +142,6 @@ endif
 
 CFLAGS += -I. -I../../incsrc -I../../init
 CFLAGS += -I$(FX_GLIDE_SW)/fxmisc -I$(FX_GLIDE_SW)/newpci/pcilib -I$(FX_GLIDE_SW)/fxmemmap
-CFLAGS += -I$(FX_GLIDE_SW)/texus2/lib
 CFLAGS += $(CDEFS)
 
 # cpu optimized triangle
@@ -209,7 +197,7 @@ endif
 ifeq ($(USE_3DNOW),1)
 GLIDE_OBJECTS += \
 	xdraw2_3dnow.obj \
-        xtexdl_3dnow.obj
+	xtexdl_3dnow.obj
 endif
 else
 GLIDE_OBJECTS += \
@@ -235,35 +223,6 @@ GLIDE_OBJECTS += \
 	../../init/video.obj \
 	../../init/fxremap.obj
 
-TEXUS_SOURCES = \
-	$(FX_GLIDE_SW)/texus2/lib/texuslib.c \
-	$(FX_GLIDE_SW)/texus2/lib/clamp.c \
-	$(FX_GLIDE_SW)/texus2/lib/read.c \
-	$(FX_GLIDE_SW)/texus2/lib/resample.c \
-	$(FX_GLIDE_SW)/texus2/lib/mipmap.c \
-	$(FX_GLIDE_SW)/texus2/lib/quantize.c \
-	$(FX_GLIDE_SW)/texus2/lib/ncc.c \
-	$(FX_GLIDE_SW)/texus2/lib/nccnnet.c \
-	$(FX_GLIDE_SW)/texus2/lib/pal256.c \
-	$(FX_GLIDE_SW)/texus2/lib/pal6666.c \
-	$(FX_GLIDE_SW)/texus2/lib/dequant.c \
-	$(FX_GLIDE_SW)/texus2/lib/view.c \
-	$(FX_GLIDE_SW)/texus2/lib/util.c \
-	$(FX_GLIDE_SW)/texus2/lib/diffuse.c \
-	$(FX_GLIDE_SW)/texus2/lib/write.c \
-	$(FX_GLIDE_SW)/texus2/lib/tga.c \
-	$(FX_GLIDE_SW)/texus2/lib/3df.c \
-	$(FX_GLIDE_SW)/texus2/lib/ppm.c \
-	$(FX_GLIDE_SW)/texus2/lib/rgt.c \
-	$(FX_GLIDE_SW)/texus2/lib/txs.c \
-	$(FX_GLIDE_SW)/texus2/lib/codec.c \
-	$(FX_GLIDE_SW)/texus2/lib/eigen.c \
-	$(FX_GLIDE_SW)/texus2/lib/bitcoder.c
-
-ifeq ($(TEXUS2),1)
-GLIDE_OBJECTS += $(TEXUS_SOURCES:.c=.obj)
-endif
-
 ###############################################################################
 #	rules
 ###############################################################################
@@ -276,19 +235,12 @@ endif
 ###############################################################################
 #	main
 ###############################################################################
-all: glide2x $(TEXUS_EXEDIR)/$(TEXUS_EXE) fxoem2x
+all: glide2x fxoem2x
 
 glide2x: $(GLIDE_LIBDIR)/$(GLIDE_DLL)
 
 $(GLIDE_LIBDIR)/$(GLIDE_DLL): $(GLIDE_OBJECTS) $(GLIDE_RES)
 	$(LD) -out:$@ $(LDFLAGS) $(GLIDE_OBJECTS) $(LDLIBS) $(GLIDE_RES)
-
-$(TEXUS_EXEDIR)/$(TEXUS_EXE): $(FX_GLIDE_SW)/texus2/cmd/cmd.c $(GLIDE_LIBDIR)/$(GLIDE_IMP)
-#ifeq ($(TEXUS2),1)
-#	$(CC) -o $@ $(CFLAGS) $^
-#else
-#	$(warning Texus2 not enabled... Skipping $(TEXUS_EXE))
-#endif
 
 fxoem2x: $(GLIDE_LIBDIR)/fxoem2x.dll
 
@@ -338,7 +290,6 @@ clean:
 	-$(call UNLINK,$(FX_GLIDE_SW)/newpci/pcilib/*.obj)
 	-$(call UNLINK,fxinline.h)
 	-$(call UNLINK,fxgasm.h)
-	-$(call UNLINK,$(FX_GLIDE_SW)/texus2/lib/*.obj)
 	-$(call UNLINK,../oem/oeminit.obj)
 	-$(call UNLINK,../oem/oeminit.res)
 
@@ -346,7 +297,6 @@ realclean: clean
 	-$(call UNLINK,$(GLIDE_LIBDIR)/glide2x.exp)
 	-$(call UNLINK,$(GLIDE_LIBDIR)/$(GLIDE_DLL))
 	-$(call UNLINK,$(GLIDE_LIBDIR)/$(GLIDE_IMP))
-	-$(call UNLINK,$(TEXUS_EXEDIR)/$(TEXUS_EXE))
 	-$(call UNLINK,$(GLIDE_LIBDIR)/fxoem2x.exp)
 	-$(call UNLINK,$(GLIDE_LIBDIR)/fxoem2x.dll)
 	-$(call UNLINK,$(GLIDE_LIBDIR)/fxoem2x.lib)

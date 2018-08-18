@@ -29,7 +29,7 @@
 #	realclean:	remove all generated files
 #
 
-.PHONY: all glide3x clean realclean
+.PHONY: all glide2x clean realclean
 .INTERMEDIATE: fxgasm
 .SUFFIXES: .lo
 
