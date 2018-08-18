@@ -241,24 +241,24 @@ $(GLIDE_LIBDIR)/$(GLIDE_SHARED): $(GLIDE_OBJECTS:.o=.lo)
 #	rules(2)
 ###############################################################################
 
-## NASM SUPPORT IS NOT HERE YET...
-##
-#cpuid.o: cpudtect.asm
-#	$(AS) -o $@ $(ASFLAGS) $<
-#xdraw2_def.o: xdraw2.asm
-#	$(AS) -o $@ $(ASFLAGS) $<
-#xdraw2_3dnow.o: xdraw2.asm
-#	$(AS) -o $@ $(ASFLAGS) -DGL_AMD3D=1 $<
-#xtexdl_3dnow.o: xtexdl.asm
-#	$(AS) -o $@ $(ASFLAGS) -DGL_AMD3D=1 $<
-cpuid.o: cpudtect.S
-	$(CC) -o $@ -xassembler-with-cpp -c $(CDEFS) $<
-xdraw2_def.o: xdraw2.S
-	$(CC) -o $@ -xassembler-with-cpp -c $(CDEFS) $<
-xdraw2_3dnow.o: xdraw2.S
-	$(CC) -o $@ -xassembler-with-cpp -c $(CDEFS) -DGL_AMD3D=1 $<
-xtexdl_3dnow.o: xtexdl.S
-	$(CC) -o $@ -xassembler-with-cpp -c $(CDEFS) -DGL_AMD3D=1 $<
+#using nasm now
+#
+#cpuid.o: cpudtect.S
+#	$(CC) -o $@ -xassembler-with-cpp -c $(CDEFS) $<
+#xdraw2_def.o: xdraw2.S
+#	$(CC) -o $@ -xassembler-with-cpp -c $(CDEFS) $<
+#xdraw2_3dnow.o: xdraw2.S
+#	$(CC) -o $@ -xassembler-with-cpp -c $(CDEFS) -DGL_AMD3D=1 $<
+#xtexdl_3dnow.o: xtexdl.S
+#	$(CC) -o $@ -xassembler-with-cpp -c $(CDEFS) -DGL_AMD3D=1 $<
+cpuid.o: cpudtect.asm
+	$(AS) -o $@ $(ASFLAGS) $<
+xdraw2_def.o: xdraw2.asm
+	$(AS) -o $@ $(ASFLAGS) $<
+xdraw2_3dnow.o: xdraw2.asm
+	$(AS) -o $@ $(ASFLAGS) -DGL_AMD3D=1 $<
+xtexdl_3dnow.o: xtexdl.asm
+	$(AS) -o $@ $(ASFLAGS) -DGL_AMD3D=1 $<
 
 cpuid.lo: cpuid.o
 	$(CP) $< $@

@@ -50,55 +50,46 @@
 ;; mmx stuff for 3DNow!(tm) capable processors
 ;; 
 
-TITLE   xtexdl.asm
-OPTION OLDSTRUCTS
-
-.586P
-.MMX
-.K3D
+%include "xos.inc"
     
-ifdef USE_PACKET_FIFO
-EXTRN   __FifoMakeRoom: NEAR
-endif
-
+%ifdef USE_PACKET_FIFO
+extrn _FifoMakeRoom
+%endif
 
 ;;; Definitions of cvg regs and glide root structures.
-INCLUDE fxgasm.h
+%INCLUDE "fxgasm.h"
 
 ; Arguments (STKOFF = 16 from 4 dword pushes)
-STACKOFFSET = 16
-_gc$        =  4 + STACKOFFSET
-_baseAddr$  =  8 + STACKOFFSET
-_maxS$      = 12 + STACKOFFSET
-_minT$      = 16 + STACKOFFSET
-_maxT$      = 20 + STACKOFFSET
-_texData$   = 24 + STACKOFFSET
+STACKOFFSET equ 16
+_gc$        equ  4 + STACKOFFSET
+_baseAddr$  equ  8 + STACKOFFSET
+_maxS$      equ 12 + STACKOFFSET
+_minT$      equ 16 + STACKOFFSET
+_maxT$      equ 20 + STACKOFFSET
+_texData$   equ 24 + STACKOFFSET
 
     ;; NB: The first set of registers (eax, ecx, and edx) are volatile across
     ;; function calls. The remaining registers are supposedly non-volatile
     ;; so they only store things that are non-volatile across the call.
 
-fifo    TEXTEQU <ebp>           ; fifo ptr in inner loop
-gc      TEXTEQU <esi>           ; graphics context
-dataPtr TEXTEQU <edi>           ; pointer to exture data to be downloaded
-curT    TEXTEQU <ebx>           ; counter for texture scan lines (t-coordinate)
-curS    TEXTEQU <ecx>           ; texture s-coordinate
-fRoom   TEXTEQU <edx>           ; room available in fifo (in bytes)
+%define fifo    ebp           ; fifo ptr in inner loop
+%define gc      esi           ; graphics context
+%define dataPtr edi           ; pointer to exture data to be downloaded
+%define curT    ebx           ; counter for texture scan lines (t-coordinate)
+%define curS    ecx           ; texture s-coordinate
+%define fRoom   edx           ; room available in fifo (in bytes)
     
-GR_FIFO_WRITE   MACRO __addr, __offset, __data
-    mov    [__addr + __offset], __data
-ENDM ; GR_FIFO_WRITE
+%MACRO GR_FIFO_WRITE 3
+    mov    [%1 + _%2], %3
+%ENDM ; GR_FIFO_WRITE
 
 ;--------------------------------------------------------------------------
 
-_TEXT         SEGMENT PAGE PUBLIC USE32 'CODE'
-              ASSUME DS: FLAT, SS: FLAT
+segment		SEG_TEXT
 
               ALIGN  32
 
-              PUBLIC __grTexDownload_3DNow_MMX@24
-
-__grTexDownload_3DNow_MMX@24 PROC NEAR
+proc _grTexDownload_3DNow_MMX, 24
 
     push      ebx                       ; save caller's register variable
     mov       curT, [esp + _maxT$ - 12] ; curT = maxT
@@ -154,15 +145,15 @@ __grTexDownload_3DNow_MMX@24 PROC NEAR
     cmp       fRoom, 4                  ; enough room for NULL packet in fifo?
     jge       __mmxAlignFifo            ; yes, write NULL packet to align fifo
 
-ifdef USE_PACKET_FIFO
-    push      @Line                     ; Line # inside this function
+%ifdef USE_PACKET_FIFO
+    push      __LINE__                  ; Line # inside this function
     push      0                         ; NULL file name
 
     push      4                         ; fifo space required (bytes)
-    call      __FifoMakeRoom            ; make fifo room
+    call      _FifoMakeRoom             ; make fifo room
 
     add       esp, 12                   ; pop 3 DWORD parameters to FifoMakeRoom
-endif
+%endif
     mov       fifo, [gc + fifoPtr]      ; fifoPtr modified by FifoMakeRoom, reload
 
     mov       fRoom, [gc + fifoRoom]    ; fifoRoom modified by FifoMakeRoom, reload
@@ -173,7 +164,7 @@ endif
 
 __mmxAlignFifo:
 
-    mov       DWORD PTR [fifo], 0       ; write NULL packet
+    mov       DWORD [fifo], 0           ; write NULL packet
     sub       fRoom, 4                  ; fifoRoom -= 4
 
     mov       [gc + fifoRoom], fRoom    ; store new fifoRoom
@@ -189,7 +180,7 @@ __mmxAlignFifo:
 
 __loopT:
 
-IFDEF GLIDE_DEBUG
+%IFDEF GLIDE_DEBUG
 
     ;; Make sure that we have a QWORD aligned fifoPtr; force GP if not aligned
 
@@ -199,7 +190,7 @@ IFDEF GLIDE_DEBUG
     xor       eax, eax                  ; create 0
     mov       [eax], eax                ; move to DS:[0] forces GP 
 __alignmentOK:      
-ENDIF ; GLIDE_DEBUG
+%ENDIF ; GLIDE_DEBUG
 
     ;; Compute packet header words
     ;;  hdr1: downloadSpace[31:30] numWords[21:3] packetType[2:0]
@@ -245,19 +236,19 @@ __loopS:
     mov       esp, esp                  ; filler
 __startDownload:
     lea       eax, [curS+8]             ; fifo space needed = scan line width + header size
- 
+
     cmp       fRoom, eax                ; fifo space available >= fifo space required ?
     jge       __loopT                   ; yup, write next scan line
 
-ifdef USE_PACKET_FIFO
-    push      @Line                     ; Line # inside this function
+%ifdef USE_PACKET_FIFO
+    push      __LINE__                  ; Line # inside this function
     push      0h                        ; NULL file name
 
     push      eax                       ; fifo space required
-    call      __FifoMakeRoom            ; make fifo room (if fifoPtr QWORD aligned before
+    call      _FifoMakeRoom             ; make fifo room (if fifoPtr QWORD aligned before
 
     add       esp, 12                   ; pop 3 DWORD parameters to FifoMakeRoom
-endif
+%endif
     mov       fifo, [gc + fifoPtr]      ; fifoPtr was modified by FifoMakeRoom, reload
 
     mov       fRoom, [gc + fifoRoom]    ; fifoRoom was modified by FifoMakeRoom, reload
@@ -274,10 +265,7 @@ __dlDone:
     pop       esi                       ; restore caller's register variable
     pop       ebx                       ; restore caller's register variable
     
-    ret       24                        ; pop 6 DWORD parameters and return
+    ret                                 ; pop 6 DWORD parameters and return
 
-__grTexDownload_3DNow_MMX@24 ENDP
+endp
 
-_TEXT ENDS
-
-END

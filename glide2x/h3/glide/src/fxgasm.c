@@ -34,7 +34,6 @@
  * macros for creating assembler offset files
  *----------------------------------------------------------------------*/
 
-#ifndef __linux__
 #define NEWLINE printf("\n")
 #define COMMENT printf(";----------------------------------------------------------------------\n")
 
@@ -43,35 +42,16 @@
                         COMMENT; NEWLINE
 
 #define OFFSET(p,o,pname) if (hex) \
-        printf("%s\t= %08xh\n",pname,((int)&p.o)-(int)&p); \
-    else printf("%s\t= %10d\n",pname,((int)&p.o)-(int)&p)
+        printf("%s\tequ %08xh\n",pname,((int)&p.o)-(int)&p); \
+    else printf("%s\tequ %10d\n",pname,((int)&p.o)-(int)&p)
 
 #define OFFSET2(p,o,pname) if (hex) \
-        printf("%s\t= %08xh\n",pname,((int)&o)-(int)&p); \
-    else printf("%s\t= %10d\n",pname,((int)&o)-(int)&p)
+        printf("%s\tequ %08xh\n",pname,((int)&o)-(int)&p); \
+    else printf("%s\tequ %10d\n",pname,((int)&o)-(int)&p)
 
 #define SIZEOF(p,pname) if (hex) \
-        printf("SIZEOF_%s\t= %08xh\n",pname,sizeof(p)); \
-    else printf("SIZEOF_%s\t= %10d\n",pname,sizeof(p))
-#else
-#define NEWLINE printf("\n");
-#define COMMENT printf("#----------------------------------------------------------------------\n")
-  
-#define HEADER(str)     NEWLINE; COMMENT; \
-                        printf("# Assembler offsets for %s struct\n",str);\
-                        COMMENT; NEWLINE
-
-#define OFFSET(p,o,pname) if (hex) \
-        printf("#define %s\t 0x%08x\n",pname,((int)&p.o)-(int)&p); \
-    else printf("#define %s\t %10d\n",pname,((int)&p.o)-(int)&p)
-#define OFFSET2(p,o,pname) if (hex) \
-        printf("#define %s\t 0x%08x\n",pname,((int)&o)-(int)&p); \
-    else printf("#define %s\t %10d\n",pname,((int)&o)-(int)&p)
-
-#define SIZEOF(p,pname) if (hex) \
-        printf("#define SIZEOF_%s\t 0x%08x\n",pname,sizeof(p)); \
-    else printf("#define SIZEOF_%s\t %10d\n",pname,sizeof(p))
-#endif
+        printf("SIZEOF_%s\tequ %08xh\n",pname,sizeof(p)); \
+    else printf("SIZEOF_%s\tequ %10d\n",pname,sizeof(p))
 
 int
 main (int argc, char **argv)
@@ -100,7 +80,7 @@ main (int argc, char **argv)
         printf("#define kTriProcOffset 0x%XUL\n",
                offsetof(struct GrGC_s, archDispatchProcs.triSetupProc));
 #endif /* GLIDE_DISPATCH_SETUP */
-        
+
         printf("/* The # of 2-byte entries in the hw fog table */\n");
         printf("#define kInternalFogTableEntryCount 0x%XUL\n",
                sizeof(dummyRegs.fogTable) >> 1);
@@ -167,7 +147,7 @@ main (int argc, char **argv)
 
 #if GLIDE_MULTIPLATFORM
     OFFSET(gc, gcFuncs, "gc_gcFuncs");
-#endif  
+#endif
   
 #if defined(GLIDE3) && defined(GLIDE3_ALPHA)
     OFFSET(gc, oemInit, "gc_oemInit");
