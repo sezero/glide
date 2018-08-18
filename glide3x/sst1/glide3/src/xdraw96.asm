@@ -228,7 +228,7 @@ export _grDrawTriangle@12
 ;;
 ;;  USAGE:
 ;;
-;;  
+;;
             align 4
 proc _trisetup_asm, 12
 ; 28
@@ -269,7 +269,6 @@ proc _trisetup_asm, 12
 ;       with lowest y value on the stack, this will be used later for 
 ;       loading parameter values into the SST regs.
 ;
-;;;;;;;;;;;;;;
 
     GET_GC
     mov     tmpy, [gc + coord_space]     ; load gc->state.invalid
@@ -285,7 +284,7 @@ proc _trisetup_asm, 12
     pop     ebx
     ret
 
-packed_color:   
+packed_color:
     mov     tmpy, [gc + color_type]     ; load gc->state.invalid
     test    tmpy, tmpy
     je      validate_state
@@ -298,8 +297,8 @@ packed_color:
     pop     esi
     pop     ebx
     ret
-        
-validate_state: 
+
+validate_state:
     GET_GC
     mov     tmpy, [gc + invalid]     ; load gc->state.invalid
     test   tmpy, tmpy
@@ -307,10 +306,9 @@ validate_state:
     call    _grValidateState
 
     align 4
-cull_test:      
+cull_test:
 
 ;--------------------------------------------------------------------------        
-
 
     mov     fa, [esp + _va$]    ; 1
      mov     fb, [esp + _vb$]
@@ -318,8 +316,7 @@ cull_test:
      mov     tmpy, [_GlideRoot + trisProcessed]    ; _GlideRoot.stats.trisProcessed++;
 ; 36-3
 vertex_y_load:
-
-;;; snap y coordinate to sort vertices
+ ;; snap y coordinate to sort vertices
     flds    [fa + Y]            ;
     fadds   [SNAP_BIAS]         ;
     fstp    dword [zsnap_ya]    ;
@@ -329,7 +326,7 @@ vertex_y_load:
     flds    [fc + Y]            ;
     fadds   [SNAP_BIAS]         ;
     fstp    dword [zsnap_yc]    ;
-        
+
     mov     fa, [zsnap_ya]      ; 2
      mov     fb, [zsnap_yb]
     cmp     fa, 0               ; 3
@@ -438,7 +435,7 @@ Area_Computation:
     flds    [fc + Y]            ;
     fadds   [SNAP_BIAS]         ;
     fstp    dword [zsnap_yc]    ;
-        
+
 ; 47-3
 ; jmp ret_pop0f
     flds    [zsnap_xa]          ;  xa

@@ -151,7 +151,6 @@ extrn   sstStore32f
 %endmacro
 
 %macro GR_SETF_P 3
-   
     push    eax
     push    ecx
     push    edx
@@ -264,7 +263,7 @@ export _grDrawTriangle@12
 ;;
 ;;  USAGE:
 ;;
-;;  
+;;
             align 4
 proc _trisetup_asm, 12
 ; 28
@@ -305,7 +304,6 @@ proc _trisetup_asm, 12
 ;       with lowest y value on the stack, this will be used later for 
 ;       loading parameter values into the SST regs.
 ;
-;;;;;;;;;;;;;;
 
     GET_GC
     mov     tmpy, [gc + coord_space]     ; load gc->state.invalid
@@ -334,8 +332,8 @@ packed_color:
     pop     esi
     pop     ebx
     ret
-        
-validate_state: 
+
+validate_state:
     GET_GC
     mov     tmpy, [gc + invalid]     ; load gc->state.invalid
     test    tmpy, tmpy
@@ -343,7 +341,7 @@ validate_state:
     call    _grValidateState
 
     align 4
-cull_test:      
+cull_test:
 
 ;--------------------------------------------------------------------------        
     mov     fa, [esp + _va$]    ; 1
@@ -352,8 +350,7 @@ cull_test:
      mov     tmpy, [_GlideRoot + trisProcessed]    ; _GlideRoot.stats.trisProcessed++;
 ; 36-3
 vertex_y_load:
-
-;;; snap y coordinate to sort vertices
+ ;; snap y coordinate to sort vertices
     flds    [fa + Y]            ;
     fadds   [SNAP_BIAS]         ;
     fstp    dword [zsnap_ya]    ;
