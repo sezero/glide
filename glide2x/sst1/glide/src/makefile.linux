@@ -167,6 +167,9 @@ GLIDE_OBJECTS = \
 	gtex.o \
 	gtexdl.o \
 	gutex.o \
+	gxdraw.o
+
+GLIDE_OBJECTS += \
 	cpuid.o
 
 ifeq ($(USE_X86),1)
@@ -177,9 +180,6 @@ else
 GLIDE_OBJECTS += \
 	xdraw96.o
 endif
-else
-GLIDE_OBJECTS += \
-	gxdraw.o
 endif
 
 ifeq ($(FX_GLIDE_HW),sst96)
