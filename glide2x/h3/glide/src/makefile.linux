@@ -12,8 +12,6 @@
 #  Available options:
 #
 #    Environment variables:
-#	FX_GLIDE_HW	build for the given ASIC (h3).
-#			default = h3
 #	XPATH		specify X libraries path; needed by DRI.
 #			default = /usr/X11R6/lib
 #	H4=1		High speed Avenger.
@@ -54,7 +52,6 @@ GLIDE_SO  = libglide.so
 GLIDE_SONAME = $(GLIDE_SO).$(GLIDE_VERSION_MAJOR)
 GLIDE_SHARED = $(GLIDE_SONAME).$(GLIDE_VERSION_MINOR)
 
-FX_GLIDE_HW ?= h3
 FX_GLIDE_SW = ../../../swlibs
 GLIDE_LIBDIR = ../../lib
 
@@ -82,8 +79,7 @@ LDLIBS += -lm
 
 # general
 CDEFS += -DGLIDE_HW_TRI_SETUP=1 -DGLIDE_INIT_HWC -DGLIDE_PACKED_RGB=0 -DGLIDE_TRI_CULLING=1
-CDEFS += -DENDB -DGLIDE_LIB -DFX_STATIC_BUILD -DHAL_HW=1
-#CDEFS += -DGLIDE_CHECK_CONTEXT
+CDEFS += -DGLIDE_LIB -DHAL_HW=1
 
 # subsystem
 CDEFS += -DH3
@@ -100,7 +96,7 @@ override USE_FIFO = 1
 #override USE_X86 = 1
 
 ifeq ($(USE_X86),1)
-CDEFS += -DGLIDE_DISPATCH_SETUP=1 -DGLIDE_DISPATCH_DOWNLOAD=1
+CDEFS += -DGLIDE_DISPATCH_SETUP=1
 override USE_FIFO = 1
 CDEFS += -DHAVE_XDRAWTRI_ASM=1
 override USE_DRAWTRI_ASM = 1
