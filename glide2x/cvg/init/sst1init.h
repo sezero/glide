@@ -140,9 +140,13 @@ p6Fence(void);
 #  define P6FENCE {_asm xchg eax, p6FenceVar}
 #elif defined(macintosh) && __POWERPC__ && defined(__MWERKS__)
 #  define P6FENCE __eieio()
-#elif defined (__GNUC__) && defined(__i386__)
+#elif defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
 #  define P6FENCE asm("xchg %%eax,%0" : /*outputs*/ : "m" (p6FenceVar) : \
 					"eax");
+#elif defined(__GNUC__) && defined(__ia64__)
+# define P6FENCE asm volatile ("mf.a" ::: "memory");
+#elif defined(__GNUC__) && defined(__alpha__)
+# define P6FENCE asm volatile("mb" ::: "memory");
 #else
 #  error "P6 Fencing in-line assembler code needs to be added for this compiler"
 #endif
