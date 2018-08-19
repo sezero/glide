@@ -727,11 +727,11 @@ dxControl(FxU32 code, InitBufDesc_t *pBufDesc, int *width, int *height)
 } /* dxControl */
 
 FxBool
-dxClose()
+dxClose(void)
 {
   GDBG_INFO((80, "dxClose:\n"));
-/*
- * fixme! nulling out this code fixes bug 541... why is unclear??? XXX
+
+/* fixme! nulling out this code fixes bug 541... why is unclear??? XXX
  *  A little more information... the problem is releasing lpDD1, and
  *  only in fullscreen mode.  Temporary refined hack is to not release
  *  lpDD1 in fullscreen mode.  Also rearrange code in dxAllocSurfaces
@@ -746,6 +746,7 @@ dxClose()
   }
   if( lpAux    ) IDirectDrawSurface2_Release( lpAux    );
   if( lpDD     ) IDirectDraw2_Release( lpDD );
+
   if (1 /* !IsFullScreen */) {
     if( lpDD1    ) IDirectDraw_Release( lpDD1 );
     lpDD1     = NULL;
@@ -757,8 +758,8 @@ dxClose()
   lpTriple   = NULL;
   lpAux     = NULL;
   lpDD      = NULL;
-  
 #endif /* 0 */
+
   GDBG_INFO((80, "dxClose:  Returning TRUE\n"));
   return FXTRUE;
 } /* dxClose */
@@ -973,7 +974,7 @@ dxControl(FxU32 code, InitBufDesc_t *pBufDesc, int *width, int *height)
   return FXTRUE;
 } /* dxControl */
 FxBool
-dxClose()
+dxClose(void)
 {
 #define FN_NAME "dxClose"
   GDBG_INFO((80, "%s:  Setting up VESA mode 640*480*\n", FN_NAME));

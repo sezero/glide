@@ -76,7 +76,7 @@ main (int argc, char **argv)
 
         printf("#define kTriProcOffset 0x%lXUL\n",
                (unsigned long)offsetof(struct GrGC_s, triSetupProc));
-        
+
         printf("/* The # of 2-byte entries in the hw fog table */\n");
         printf("#define kInternalFogTableEntryCount 0x%X\n",
                (unsigned int)sizeof(dummyRegs.fogTable) >> 1);
@@ -193,7 +193,7 @@ main (int argc, char **argv)
 #if GL_X86
     OFFSET (gr,CPUType,"CPUType\t\t");
 #endif
-    OFFSET (gr,tlsOffset,"tlsOffset\t\t");    
+    OFFSET (gr,tlsOffset,"tlsOffset\t\t");
     OFFSET (gr, pool.f255,"pool_f255");
     SIZEOF (gr.GCs[0].state,"GrState\t");
     SIZEOF (gr.GCs[0],"GC\t");

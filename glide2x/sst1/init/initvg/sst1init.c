@@ -706,7 +706,7 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitShutdown(FxU32 *sstbase)
 #endif
 
     if(GETENV(("SST_NOSHUTDOWN")))
-        INIT_PRINTF(("sst1InitShutdown(): Bypassing shutdown with SST_NOSHUTDOWN\n", n));
+        INIT_PRINTF(("sst1InitShutdown(): Bypassing shutdown with SST_NOSHUTDOWN\n"));
 
     n = 0;
     while(!GETENV(("SST_NOSHUTDOWN"))) {

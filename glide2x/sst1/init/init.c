@@ -26,16 +26,16 @@
 #include <stdlib.h>
 
 #if defined(__WATCOMC__)
+#include <conio.h>
 #define _inp inp
 #define _outp outp
 #define _outpw outpw
 #endif
-#if defined(__linux__)
 
+#if defined(__linux__)
 #define _inp(port) pioInByte(port)
 #define _outp(port, data) pioOutByte(port, data)
 #define _outpw(port, data) pioOutWord(port, data);
-
 #endif
 
 #include <init96.h>
@@ -65,7 +65,6 @@ static inline void _outp_asm (unsigned short _port, unsigned char _data) {
 /*-------------------------------------------------------------------
   Module Constants
   -------------------------------------------------------------------*/
-
 
 static InitContext
   contexts[NUM_3DFX_PRODUCTS];  /* pool of device contexts */
@@ -180,7 +179,7 @@ initEnumHardware( InitHWEnumCallback *cb )
             FxU8 regVal;
             _outp(0x3d4, 0x3f);
             regVal = _inp(0x3d5);
-            
+
             if (!(regVal & (1 << 2))) /* we're not there */
               continue;
           }
@@ -203,15 +202,14 @@ initEnumHardware( InitHWEnumCallback *cb )
             (FxU32)hwInfo[numDevicesInSystem].regs.hwDep.VG96RegDesc.partnerRegPtr;
           hwInfo[numDevicesInSystem].hwDep.vg96Info.vg96BaseAddr = 
             (FxU32)hwInfo[numDevicesInSystem].regs.hwDep.VG96RegDesc.baseAddress;
-          
+
           numDevicesInSystem++;
-        } 
+        }
 #else
 #  error "Do hardware enumeration for this chip!"
 #endif
       }
     }
-    
 
     /* Sanity Check for SLI detection */
     for( device = 0; device < numDevicesInSystem; device++ ) {
@@ -356,7 +354,7 @@ initDeviceSelect( FxU32 devNumber )
     context = &contexts[hwInfo[devNumber].hwClass];
     context->info = hwInfo[devNumber];
     rv =  FXTRUE;
-  } 
+  }
   
   return rv;
 
@@ -672,7 +670,6 @@ void initIOCtl( FxU32 token, void *argument ) {
   -------------------------------------------------------------------*/
 FxBool initControl( FxU32 code)
 {
-
     FxBool rv;
 
     GDBG_INFO((80, "initControl: code = %d, context=%.08x\n", code, context));

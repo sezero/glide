@@ -67,7 +67,7 @@ static Window               hWndApp     = 0;
 static FxU32                Width       = 0; 
 static FxU32                Height      = 0;
 static FxBool               IsFullScreen = 0;
-static InitBufDesc_t        BufDesc[NUM_BUFS]  = {0};
+static InitBufDesc_t        BufDesc[NUM_BUFS]  = { {0,0,0,0,0} };
 static XF86VidModeModeInfo  **vidModes = 0;
 
 static Pixmap  pixBack      = 0;
@@ -120,17 +120,19 @@ linFlip(FxU32 buffer)
 {}
 
 #else
+void linExit(void);
 
 static FxBool
-ErrorMessage(Window win, char *err)
+ErrorMessage(Window win, const char *err)
 {
   fprintf(stderr, "Error %s \n", err);
   return FXFALSE;
 } /* ErrorMessage */
 
-FxBool linSetup() {
+FxBool linSetup(void) {
   int eventbase, errorbase;
   int banksize;
+  unsigned int baseaddr;
 
   if (dpy!=0) return FXTRUE;
   dpy=XOpenDisplay("");
@@ -153,9 +155,10 @@ FxBool linSetup() {
     }
   }
   screenNum=XDefaultScreen(dpy);
-  XF86DGAGetVideoLL(dpy, screenNum, (int*)&screenPhys, &screenWidth, &banksize,
+  XF86DGAGetVideoLL(dpy, screenNum, &baseaddr, &screenWidth, &banksize,
 		    &screenMem);
-  screenMem*=1024;
+  screenPhys = (void *)baseaddr;
+  screenMem *= 1024;
   return FXTRUE;
 }
 
@@ -218,13 +221,14 @@ cvtXToGlideDesc(InitBufDesc_t *pDesc) {
   dFifo->bufType   = INIT_BUFFER_FIFOBUFFER;
   dFifo->bufOffset = (int)addrFifo-dScreen->bufOffset;
   dFifo->bufStride = FIFOSIZE;
-  
+
   GDBG_INFO((80, "cvtXToGlideDesc: dFront->bufOffset = 0x%x\n", dFront->bufOffset));
   GDBG_INFO((80, "cvtXToGlideDesc: dBack->bufOffset = 0x%x\n", dBack->bufOffset));
   GDBG_INFO((80, "cvtXToGlideDesc: dAux->bufOffset = 0x%x\n", dAux->bufOffset));
   GDBG_INFO((80, "cvtXToGlideDesc: dFifo->bufOffset = 0x%x\n", dFifo->bufOffset));
-  if (tripleBuffering)
+  if (tripleBuffering) {
     GDBG_INFO((80, "cvtXToGlideDesc: dTriple->bufOffset = 0x%x\n", dTriple->bufOffset));
+  }
 
   GDBG_INFO((80,
     "F:%.06x %5d B:%.06x %5d B2:%.06x %5d A:%.06x %5d, C:%.06x %5d\n",
@@ -250,7 +254,8 @@ doReleasePixmaps() {
 static void
 findWindow(Display *dpy, Window hWndApp, void **addrFront) {
   XWindowAttributes attr;
-  int x=0, y=0, num;
+  int x=0, y=0;
+  unsigned int num;
   Window root=-1, parent, *children;
 
   do {
@@ -311,7 +316,7 @@ doAllocPixmaps(int xRes, int yRes, int vRefresh,
 }
 
 static FxBool 
-getWindowSize(int *width, int *height) {
+getWindowSize(unsigned int *width, unsigned int *height) {
     XWindowAttributes attr;
 
     /* Find out how big the window is */
@@ -345,7 +350,7 @@ linOpen(
              hWindow, sRes, yOrigin, nColBuffers, nAuxBuffers));
 
   if (!linSetup()) return FXFALSE;
-  atexit(linClose);
+  atexit(linExit);
 
   if (sRes == GR_RESOLUTION_NONE ) { /* In a window */
 
@@ -461,8 +466,8 @@ linOpen(
 FxBool
 linControl(FxU32 code, InitBufDesc_t *pBufDesc, int *width, int *height)
 {
-  int     i, w, h;
-  
+  unsigned int i, w = 0, h = 0;
+
   GDBG_INFO((80, "linControl: code = %d\n", code));
 
   if (IsFullScreen) return FXTRUE;
@@ -516,7 +521,7 @@ linControl(FxU32 code, InitBufDesc_t *pBufDesc, int *width, int *height)
 } /* linControl */
 
 FxBool
-linClose()
+linClose(void)
 {
   GDBG_INFO((80, "linClose:\n"));
   if (!dpy) return FXTRUE;
@@ -537,6 +542,12 @@ linClose()
   GDBG_INFO((80, "linClose:  Returning TRUE\n"));
   return FXTRUE;
 } /* linClose */
+
+void
+linExit(void)
+{
+  linClose();
+} /* linExit */
 
 void
 linSwap(FxU32 code)
@@ -571,5 +582,3 @@ linFlip(FxU32 buffer)
 } /* linFlip */
 
 #endif
-
-

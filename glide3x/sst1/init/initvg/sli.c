@@ -83,7 +83,7 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitSli(FxU32 *sstbase0, FxU32 *sstbase1)
             return(FXFALSE);
         PCICFG_RD(SST1_PCI_INIT_ENABLE, j);
         PCICFG_WR(SST1_PCI_INIT_ENABLE,
-            (j | SST_SCANLINE_SLV_OWNPCI | SST_SCANLINE_SLI_SLV)); 
+            (j | SST_SCANLINE_SLV_OWNPCI | SST_SCANLINE_SLI_SLV));
         ISET(sstSlave->fbiInit1, IGET(sstSlave->fbiInit1) |
           (SST_VIDEO_RESET | SST_EN_SCANLINE_INTERLEAVE));
         sst1InitIdleFBINoNOP(sstbase1);
@@ -145,10 +145,10 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitSli(FxU32 *sstbase0, FxU32 *sstbase1)
            (SSCANF(GETENV(("SST_SLIS_VOUT_CLKDEL")), "%i", &i) == 1))
           slaveVOutClkDel = i;
         if(GETENV(("SST_SLIS_PVOUT_CLKDEL")) &&
-           (SSCANF(GETENV(("SST_SLIS_PVOUT_CLKDEL")), "%i", &i) == 1)) 
+           (SSCANF(GETENV(("SST_SLIS_PVOUT_CLKDEL")), "%i", &i) == 1))
           slavePVOutClkDel = i;
         if(GETENV(("SST_SLIS_VIN_CLKDEL")) &&
-           (SSCANF(GETENV(("SST_SLIS_VIN_CLKDEL")), "%i", &i) == 1)) 
+           (SSCANF(GETENV(("SST_SLIS_VIN_CLKDEL")), "%i", &i) == 1))
           slaveVInClkDel = i;
         INIT_PRINTF(("sst1InitSli(): slaveVinClkdel=0x%x, slaveVOutClkDel=0x%x, slavePVOutClkDel=0x%x\n",
             slaveVInClkDel, slaveVOutClkDel, slavePVOutClkDel));
@@ -266,13 +266,13 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitSli(FxU32 *sstbase0, FxU32 *sstbase1)
     masterVOutClkDel = 0;
     masterPVOutClkDel = 3;
     if(GETENV(("SST_SLIM_VOUT_CLKDEL")) &&
-       (SSCANF(GETENV(("SST_SLIM_VOUT_CLKDEL")), "%i", &i) == 1)) 
+       (SSCANF(GETENV(("SST_SLIM_VOUT_CLKDEL")), "%i", &i) == 1))
       masterVOutClkDel = i;
     if(GETENV(("SST_SLIM_PVOUT_CLKDEL")) &&
-       (SSCANF(GETENV(("SST_SLIM_PVOUT_CLKDEL")), "%i", &i) == 1)) 
+       (SSCANF(GETENV(("SST_SLIM_PVOUT_CLKDEL")), "%i", &i) == 1))
       masterPVOutClkDel = i;
     if(GETENV(("SST_SLIM_VIN_CLKDEL")) &&
-       (SSCANF(GETENV(("SST_SLIM_VIN_CLKDEL")), "%i", &i) == 1)) 
+       (SSCANF(GETENV(("SST_SLIM_VIN_CLKDEL")), "%i", &i) == 1))
       masterVInClkDel = i;
     INIT_PRINTF(("sst1InitSli(): masterVinClkdel=0x%x, masterVOutClkDel=0x%x, masterPVOutClkDel=0x%x\n",
         masterVInClkDel, masterVOutClkDel, masterPVOutClkDel));
@@ -326,7 +326,7 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitSli(FxU32 *sstbase0, FxU32 *sstbase1)
         return(FXFALSE);
     PCICFG_RD(SST1_PCI_INIT_ENABLE, j);
     PCICFG_WR(SST1_PCI_INIT_ENABLE,
-        (j & ~(SST_SCANLINE_SLV_OWNPCI | SST_SCANLINE_SLI_SLV))); 
+        (j & ~(SST_SCANLINE_SLV_OWNPCI | SST_SCANLINE_SLI_SLV)));
     MasterPhysAddr = sst1CurrentBoard->physAddr;
     sst1InitReturnStatus(sstbase0); /* flush pci packer with reads */
     sst1InitReturnStatus(sstbase0);
@@ -337,7 +337,7 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitSli(FxU32 *sstbase0, FxU32 *sstbase1)
         return(FXFALSE);
     PCICFG_RD(SST1_PCI_INIT_ENABLE, j);
     PCICFG_WR(SST1_PCI_INIT_ENABLE,
-        ((j & ~(SST_SCANLINE_SLV_OWNPCI)) | SST_SCANLINE_SLI_SLV)); 
+        ((j & ~(SST_SCANLINE_SLV_OWNPCI)) | SST_SCANLINE_SLI_SLV));
     /* Map both boards to same Master physical address */
     PCICFG_WR(PCI_BASE_ADDRESS_0, MasterPhysAddr);
     sst1InitReturnStatus(sstbase0); /* flush pci packer with reads */
@@ -375,7 +375,7 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitSli(FxU32 *sstbase0, FxU32 *sstbase1)
         FxU32 clearColor = 0x0;
 
         if(GETENV(("SST_VIDEO_CLEARCOLOR")) &&
-           (SSCANF(GETENV(("SST_VIDEO_CLEARCOLOR")), "%i", &i) == 1)) 
+           (SSCANF(GETENV(("SST_VIDEO_CLEARCOLOR")), "%i", &i) == 1))
           clearColor = i;
         ISET(sstMaster->c1, clearColor);
         ISET(sstMaster->c0, clearColor);
@@ -438,16 +438,15 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitShutdownSli(FxU32 *sstbase)
             PCICFG_RD(SST1_PCI_INIT_ENABLE, j);
             PCICFG_WR(SST1_PCI_INIT_ENABLE,
                 (j | SST_SCANLINE_SLV_OWNPCI | SST_SCANLINE_SLI_SLV |
-                 SST_INITWR_EN | SST_PCI_FIFOWR_EN)); 
+                 SST_INITWR_EN | SST_PCI_FIFOWR_EN));
             PCICFG_RD(SST1_PCI_INIT_ENABLE, j); /* delay */
             ISET(sstSlave->fbiInit1, IGET(sstSlave->fbiInit1) &
               ~SST_EN_SCANLINE_INTERLEAVE);
             PCICFG_RD(SST1_PCI_INIT_ENABLE, j);
             PCICFG_WR(SST1_PCI_INIT_ENABLE,
-                (j & ~(SST_SCANLINE_SLV_OWNPCI | SST_SCANLINE_SLI_SLV))); 
+                (j & ~(SST_SCANLINE_SLV_OWNPCI | SST_SCANLINE_SLI_SLV)));
             PCICFG_RD(SST1_PCI_INIT_ENABLE, j); /* delay */
             sst1InitIdle((FxU32 *) sstSlave);
-
 
             if(IGET(sstSlave->fbiInit1) & SST_EN_SCANLINE_INTERLEAVE) {
                 if(++cntr < 10)

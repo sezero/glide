@@ -79,3 +79,4 @@ FX_ENTRY void FX_CALL sst1InitVPrintf(const char *format, va_list args)
 #ifdef _MSC_VER
 #pragma optimize ("",on)
 #endif
+

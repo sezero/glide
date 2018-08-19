@@ -103,13 +103,13 @@
 #define IGET(A)    A
 #define ISET(A,D)  A = (D)
 #else
-#define IGET(A)    sst1InitRead32((FxU32 *)(void *)&(A))
-#define ISET(A,D)  sst1InitWrite32((FxU32 *)(void *)&(A), D)  
+#define IGET(A)    sst1InitRead32 ((FxU32 *)(void *)&(A))
+#define ISET(A,D)  sst1InitWrite32((FxU32 *)(void *)&(A), D)
 #endif
 
 /*
 **  P6 Fence
-** 
+**
 **  Here's the stuff to do P6 Fencing.  This is required for the
 **  certain things on the P6
 */

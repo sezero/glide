@@ -50,8 +50,9 @@
     else printf("%s\tequ %10d\n",pname,((int)&o)-(int)&p)
 
 #define SIZEOF(p,pname) if (hex) \
-        printf("SIZEOF_%s\tequ %08xh\n",pname,sizeof(p)); \
-    else printf("SIZEOF_%s\tequ %10d\n",pname,sizeof(p))
+        printf("SIZEOF_%s\tequ %08lxh\n",pname,(unsigned long)sizeof(p)); \
+    else printf("SIZEOF_%s\tequ %10lu\n",pname,(unsigned long)sizeof(p))
+
 
 int
 main (int argc, char **argv)
@@ -67,23 +68,23 @@ main (int argc, char **argv)
 
     if (argc > 1) {
       if (strcmp("-inline", argv[1]) == 0) {
-        SstRegs dummyRegs = { 0x00UL };
+        SstRegs dummyRegs = { 0x00UL }; /* silence VC6 */
 
         printf("#ifndef __FX_INLINE_H__\n");
         printf("#define __FX_INLINE_H__\n");
         printf("\n");
 
 #if GLIDE_DISPATCH_SETUP
-        printf("#define kCurGCOffset   0x%XUL\n",
-               offsetof(struct _GlideRoot_s, curGC));
+        printf("#define kCurGCOffset   0x%lXUL\n",
+               (unsigned long)offsetof(struct _GlideRoot_s, curGC));
 
-        printf("#define kTriProcOffset 0x%XUL\n",
-               offsetof(struct GrGC_s, archDispatchProcs.triSetupProc));
+        printf("#define kTriProcOffset 0x%lXUL\n",
+               (unsigned long)offsetof(struct GrGC_s, archDispatchProcs.triSetupProc));
 #endif /* GLIDE_DISPATCH_SETUP */
 
         printf("/* The # of 2-byte entries in the hw fog table */\n");
-        printf("#define kInternalFogTableEntryCount 0x%XUL\n",
-               sizeof(dummyRegs.fogTable) >> 1);
+        printf("#define kInternalFogTableEntryCount 0x%X\n",
+               (unsigned int)sizeof(dummyRegs.fogTable) >> 1);
 
         printf("\n");
         printf("#endif /* __FX_INLINE_H__ */\n");
@@ -140,7 +141,7 @@ main (int argc, char **argv)
     OFFSET(gc, reg_ptr, "gc_reg_ptr");
     OFFSET(gc, tex_ptr, "gc_tex_ptr");
     OFFSET(gc, lfb_ptr, "gc_lfb_ptr");
-  
+
 #ifdef GLIDE_INIT_HWC
     OFFSET(gc, bInfo, "gc_bInfo");
 #endif
@@ -148,25 +149,25 @@ main (int argc, char **argv)
 #if GLIDE_MULTIPLATFORM
     OFFSET(gc, gcFuncs, "gc_gcFuncs");
 #endif
-  
+
 #if defined(GLIDE3) && defined(GLIDE3_ALPHA)
     OFFSET(gc, oemInit, "gc_oemInit");
 #endif
-  
+
     OFFSET(gc, cmdTransportInfo.fifoStart, "gc_cmdTransportInfo_fifoStart");
     OFFSET(gc, cmdTransportInfo.fifoEnd, "gc_cmdTransportInfo_fifoEnd");
     OFFSET(gc, cmdTransportInfo.fifoOffset, "gc_cmdTransportInfo_fifoOffset");
     OFFSET(gc, cmdTransportInfo.fifoSize, "gc_cmdTransportInfo_fifoSize");
     OFFSET(gc, cmdTransportInfo.fifoJmpHdr, "gc_cmdTransportInfo_fifoJmpHdr");
-    
+
     OFFSET(gc, cmdTransportInfo.fifoPtr, "gc_cmdTransportInfo_fifoPtr");
     OFFSET(gc, cmdTransportInfo.fifoRead, "gc_cmdTransportInfo_fifoRead");
-    
+
 #if GLIDE_USE_DEBUG_FIFO
     OFFSET(gc, cmdTransportInfo.fifoShadowBase, "gc_cmdTransportInfo_fifoShadowBase");
     OFFSET(gc, cmdTransportInfo.fifoShadowPtr, "gc_cmdTransportInfo_fifoShadowPtr");
 #endif /* GLIDE_USE_DEBUG_FIFO */
-    
+
     /* Fifo checking information. In units of usuable bytes until
      * the appropriate condition.
      */
@@ -175,7 +176,7 @@ main (int argc, char **argv)
     OFFSET(gc, cmdTransportInfo.roomToEnd, "gc_cmdTransportInfo_roomToEnd");
 
     OFFSET(gc, cmdTransportInfo.lfbLockCount, "gc_cmdTransportInfo_lfbLockCount");
-    
+
     OFFSET(gc, ioRegs, "gc_ioRegs");
     OFFSET(gc, cRegs, "gc_cRegs");
     OFFSET(gc, gRegs, "gc_gRegs");
@@ -187,7 +188,7 @@ main (int argc, char **argv)
     OFFSET(gc, frontBuffer, "gc_frontBuffer");
     OFFSET(gc, backBuffer, "gc_backBuffer");
     OFFSET(gc, buffers, "gc_buffers");
-  
+
     OFFSET(gc, counter, "gc_counter");
 
     OFFSET(gc, expected_counter, "gc_expected_counter");
@@ -225,8 +226,7 @@ main (int argc, char **argv)
     NEWLINE;
 
     HEADER ("GrVertex");
-    {
-      GrVertex v;
+    { GrVertex v;
 
       OFFSET(v, x, "x");
       OFFSET(v, y, "y");

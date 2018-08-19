@@ -50,8 +50,9 @@
     else printf("%s\tequ %10d\n",pname,((int)&o)-(int)&p)
 
 #define SIZEOF(p,pname) if (hex) \
-        printf("SIZEOF_%s\tequ %08lxh\n",pname,sizeof(p)); \
-    else printf("SIZEOF_%s\tequ %10ld\n",pname,sizeof(p))
+        printf("SIZEOF_%s\tequ %08lxh\n",pname,(unsigned long)sizeof(p)); \
+    else printf("SIZEOF_%s\tequ %10lu\n",pname,(unsigned long)sizeof(p))
+
 
 int
 main (int argc, char **argv)
@@ -67,7 +68,7 @@ main (int argc, char **argv)
 
     if (argc > 1) {
       if (strcmp("-inline", argv[1]) == 0) {
-        SstRegs dummyRegs = { 0x00UL };
+        SstRegs dummyRegs = { 0x00UL }; /* silence VC6 */
 
         printf("#ifndef __FX_INLINE_H__\n");
         printf("#define __FX_INLINE_H__\n");
@@ -75,14 +76,14 @@ main (int argc, char **argv)
 
 #if GLIDE_DISPATCH_SETUP
         printf("#define kCurGCOffset   0x%lXUL\n",
-               offsetof(struct _GlideRoot_s, curGC));
+               (unsigned long)offsetof(struct _GlideRoot_s, curGC));
 
         printf("#define kTriProcOffset 0x%lXUL\n",
-               offsetof(struct GrGC_s, curArchProcs.triSetupProc));
+               (unsigned long)offsetof(struct GrGC_s, curArchProcs.triSetupProc));
 #endif /* GLIDE_DISPATCH_SETUP */
         printf("/* The # of 2-byte entries in the hw fog table */\n");
-        printf("#define kInternalFogTableEntryCount 0x%lXUL\n",
-               sizeof(dummyRegs.fogTable) >> 1);
+        printf("#define kInternalFogTableEntryCount 0x%X\n",
+               (unsigned int)sizeof(dummyRegs.fogTable) >> 1);
 
         printf("\n");
         printf("#endif /* __FX_INLINE_H__ */\n");
@@ -153,8 +154,7 @@ main (int argc, char **argv)
     NEWLINE;
 
     HEADER ("GrVertex");
-    {
-      GrVertex v;
+    { GrVertex v;
 
       OFFSET(v, x, "x");
       OFFSET(v, y, "y");

@@ -185,11 +185,11 @@ getTmuConfigData(FxU32 *sstbase, sst1DeviceInfoStruct *info)
 
     readAndSum4x4(sstbase, x,y, &r_sum,&g_sum,&b_sum);
     if(unDither(r_sum,g_sum,b_sum,&info->tmuConfig) == FXFALSE)
-		return(FXFALSE);
-    
+	return(FXFALSE);
+
     if(GETENV(("SST_TMUCFG")) &&
-       (SSCANF(GETENV(("SST_TMUCFG")), "%i", &i) == 1))
-      info->tmuConfig = i;
+		(SSCANF(GETENV(("SST_TMUCFG")), "%i", &i) == 1))
+	info->tmuConfig = i;
 
     /* reset trex's init registers */
     ISET(SST_TREX(sst,0)->trexInit1, info->tmuInit1[0]);
@@ -503,83 +503,87 @@ FxBool sst1InitFillDeviceInfo(FxU32 *sstbase, sst1DeviceInfoStruct *info)
 
     if(GETENV(("SST_NODEVICEINFO"))) {
         /* fill device info struct with sane values... */
-    	INIT_PRINTF(("sst1DeviceInfo: Filling info Struct with default values...\n"));
+	INIT_PRINTF(("sst1DeviceInfo: Filling info Struct with default values...\n"));
 
-    if(!GETENV(("SST_FBICFG")) ||
-       (SSCANF(GETENV(("SST_FBICFG")), "%i", &info->fbiConfig) != 1))
-      info->fbiConfig = 0x0;
+	if(!GETENV(("SST_FBICFG")) ||
+	   (SSCANF(GETENV(("SST_FBICFG")), "%i", &info->fbiConfig) != 1))
+	  info->fbiConfig = 0x0;
 
-    if(!GETENV(("SST_TMUCFG")) ||
-       (SSCANF(GETENV(("SST_TMUCFG")), "%i", &info->tmuConfig) != 1))
-      info->tmuConfig = 0x0;
+	if(!GETENV(("SST_TMUCFG")) ||
+	   (SSCANF(GETENV(("SST_TMUCFG")), "%i", &info->tmuConfig) != 1))
+	  info->tmuConfig = 0x0;
 
-        info->numberTmus = 1;
-    	if (info->tmuConfig & FXBIT(6)) /* if TMU 1 exists */
-			info->numberTmus++;
-	    if (info->tmuConfig & FXBIT(13)) /* if TMU 2 exists */
-			info->numberTmus++;
+	info->numberTmus = 1;
+	if (info->tmuConfig & FXBIT(6)) /* if TMU 1 exists */
+	  info->numberTmus++;
+	if (info->tmuConfig & FXBIT(13)) /* if TMU 2 exists */
+	  info->numberTmus++;
 
-    	info->tmuRevision = info->tmuConfig & 0x7;
+	info->tmuRevision = info->tmuConfig & 0x7;
 
-		if(GETENV(("SST_FBIMEM_SIZE")))
-			info->fbiMemSize = ATOI(GETENV(("SST_FBIMEM_SIZE")));
-		else
-	        info->fbiMemSize = 2;
+	if(GETENV(("SST_FBIMEM_SIZE")))
+	  info->fbiMemSize = ATOI(GETENV(("SST_FBIMEM_SIZE")));
+	else
+	  info->fbiMemSize = 2;
 
-		if(GETENV(("SST_TMUMEM_SIZE")))
-			info->tmuMemSize[0] = ATOI(GETENV(("SST_TMUMEM_SIZE")));
-		else
-        	info->tmuMemSize[0] = 2;
-		info->tmuMemSize[1] = info->tmuMemSize[0];
-		info->tmuMemSize[2] = info->tmuMemSize[0];
-    } else {
-		int i;
-
-		for(i=0; i<5; i++) {
-			if(i)
-				INIT_PRINTF(("sst1InitFillDeviceInfo(): Retry #%d for chip GetInfo()...\n", i));
-        	/* GetFbiInfo() must be called before GetTmuInfo() */
-	        if(sst1InitGetFbiInfo(sstbase, info) == FXFALSE)
-				continue;
-	        /* get the revision ID of each TMU and verify that they are all the
-			   same */
-	        if(sst1InitGetTmuInfo(sstbase, info) == FXFALSE)
-				continue;
-			break;
-		}
-		if(i == 5)
-			return(FXFALSE);
+	if(GETENV(("SST_TMUMEM_SIZE")))
+	  info->tmuMemSize[0] = ATOI(GETENV(("SST_TMUMEM_SIZE")));
+	else
+	  info->tmuMemSize[0] = 2;
+	info->tmuMemSize[1] = info->tmuMemSize[0];
+	info->tmuMemSize[2] = info->tmuMemSize[0];
     }
+    else {
+	int i;
+
+	for (i=0; i<5; i++) {
+	  if (i)
+	    INIT_PRINTF(("sst1InitFillDeviceInfo(): Retry #%d for chip GetInfo()...\n", i));
+	  /* GetFbiInfo() must be called before GetTmuInfo() */
+	  if(sst1InitGetFbiInfo(sstbase, info) == FXFALSE)
+	    continue;
+	  /* get the revision ID of each TMU and verify that they are all the
+	     same */
+	  if(sst1InitGetTmuInfo(sstbase, info) == FXFALSE)
+	    continue;
+	  break;
+	}
+	if (i == 5)
+	  return(FXFALSE);
+    }
+
     INIT_PRINTF(("sst1DeviceInfo: Board ID: Obsidian %s\n",
-        (info->fbiBoardID) ? "PRO" : "GE"));
+	        (info->fbiBoardID) ? "PRO" : "GE"));
     INIT_PRINTF(("sst1DeviceInfo: FbiConfig:0x%x, TmuConfig:0x%x\n",
-        info->fbiConfig, info->tmuConfig));
+	        info->fbiConfig, info->tmuConfig));
     INIT_PRINTF(("sst1DeviceInfo: FBI Revision:%d, TMU Revison:%d, Num TMUs:%d\n",
-        info->fbiRevision, info->tmuRevision, info->numberTmus));
+	        info->fbiRevision, info->tmuRevision, info->numberTmus));
     INIT_PRINTF(("sst1DeviceInfo: FBI Memory:%d, TMU[0] Memory:%d",
-        info->fbiMemSize, info->tmuMemSize[0]));
-    if(info->numberTmus > 1)
+	        info->fbiMemSize, info->tmuMemSize[0]));
+    if (info->numberTmus > 1)
         INIT_PRINTF((", TMU[1] Memory:%d", info->tmuMemSize[1]));
-    if(info->numberTmus > 2)
+    if (info->numberTmus > 2)
         INIT_PRINTF((", TMU[2] Memory:%d", info->tmuMemSize[2]));
     INIT_PRINTF(("\n"));
-    if(sst1InitUseVoodooFile == FXTRUE) {
-        if(iniDac == (sst1InitDacStruct *) NULL)
-			INIT_PRINTF(("sst1DeviceInfo: Dac Type: Unknown"));
-		else
-	    	INIT_PRINTF(("sst1DeviceInfo: Dac Type: %s %s\n", 
-			  iniDac->dacManufacturer, iniDac->dacDevice));
-	} else {
-	    INIT_PRINTF(("sst1DeviceInfo: Dac Type: "));
-	    if(info->fbiDacType == SST_FBI_DACTYPE_ATT)
-	        INIT_PRINTF(("AT&T ATT20C409\n"));
-	    else if(info->fbiDacType == SST_FBI_DACTYPE_ICS)
-	        INIT_PRINTF(("ICS ICS5342\n"));
-	    else if(info->fbiDacType == SST_FBI_DACTYPE_TI)
-	        INIT_PRINTF(("TI TVP3409\n"));
-	    else
-	        INIT_PRINTF(("Unknown\n"));
-	}
+
+    if (sst1InitUseVoodooFile == FXTRUE) {
+	if(iniDac == NULL)
+	  INIT_PRINTF(("sst1DeviceInfo: Dac Type: Unknown"));
+	else
+	  INIT_PRINTF(("sst1DeviceInfo: Dac Type: %s %s\n", 
+		      iniDac->dacManufacturer, iniDac->dacDevice));
+    }
+    else {
+	INIT_PRINTF(("sst1DeviceInfo: Dac Type: "));
+	if(info->fbiDacType == SST_FBI_DACTYPE_ATT)
+	  INIT_PRINTF(("AT&T ATT20C409\n"));
+	else if(info->fbiDacType == SST_FBI_DACTYPE_ICS)
+	  INIT_PRINTF(("ICS ICS5342\n"));
+	else if(info->fbiDacType == SST_FBI_DACTYPE_TI)
+	  INIT_PRINTF(("TI TVP3409\n"));
+	else
+	  INIT_PRINTF(("Unknown\n"));
+    }
     INIT_PRINTF(("sst1DeviceInfo: SliDetect:%d\n", info->sstSliDetect));
 
     return(FXTRUE);

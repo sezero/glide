@@ -495,8 +495,8 @@ get96(FxU32 *addr)
   const char *envVal;\
   unsigned int u; \
   val = constant;\
-  if ( (envVal = myGetenv(envStr)) && \
-       (sscanf(envVal, "%x", &u) == 1) ) { \
+  if (((envVal = myGetenv(envStr)) != NULL) && \
+      (sscanf(envVal, "%x", &u) == 1)) { \
     val = u; \
     GDBG_INFO((80,\
                "%s:  The environment variable %s == 0x%x overloaded a register value\n", \
@@ -715,7 +715,6 @@ INITVG96ENTRY(init96MapBoard, FxBool , (void *rd, void *info, FxU16 vID, FxU16 d
     break;
   }
 
-
   GDBG_INFO((80, "init96MapBoard:  Mapping card into linear memory\n"));
   
   regDesc->hwDep.VG96RegDesc.baseAddress =
@@ -815,8 +814,8 @@ INITVG96ENTRY(init96MapBoard, FxBool , (void *rd, void *info, FxU16 vID, FxU16 d
   {
     int xres=1, yres=1, fbStride;
     GrScreenResolution_t    res = GR_RESOLUTION_NONE;
-    FxBool rv = FXTRUE;
-    rv = init96SetVideo(0, res,
+    FxBool rv =
+    init96SetVideo(0, res,
                    0, 2, 1, 
                    2, 1, regDesc,
                    &xres, &yres, &fbStride );

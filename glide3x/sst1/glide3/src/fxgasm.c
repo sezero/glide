@@ -79,7 +79,7 @@ main (int argc, char **argv)
         printf("#ifndef __FX_INLINE_H__\n");
         printf("#define __FX_INLINE_H__\n");
         printf("\n");
-        
+
         printf("/* The # of 2-byte entries in the hw fog table */\n");
         printf("#define kInternalFogTableEntryCount 0x%X\n",
                (unsigned int)sizeof(dummyRegs.fogTable) >> 1);
@@ -113,7 +113,7 @@ main (int argc, char **argv)
     HWOFFSET (sst,FvC.y,"FVCY\t\t");
     HWOFFSET (sst,FtriangleCMD,"FTRIANGLECMD\t");
 #else
-#error "Update fxgasm.c for this chip"    
+#error "Update fxgasm.c for this chip"
 #endif
     NEWLINE;
 #ifdef GLIDE_USE_ALT_REGMAP
