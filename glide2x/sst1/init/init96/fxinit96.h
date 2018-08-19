@@ -40,7 +40,7 @@ FxBool dxOpen(
         int                     nAux,
         InitBufDesc_t           *pBufDesc,
         int                     *width,
-        int                     *height, 
+        int                     *height,
         InitSwapType_t          *swapType
 );
 FxBool dxControl(FxU32 control, InitBufDesc_t *pDesc, int *w, int *h);
@@ -59,7 +59,7 @@ FxBool linOpen(
         int                     nAux,
         InitBufDesc_t           *pBufDesc,
         int                     *width,
-        int                     *height, 
+        int                     *height,
         InitSwapType_t          *swapType
 );
 FxBool linControl(FxU32 control, InitBufDesc_t *pDesc, int *w, int *h);

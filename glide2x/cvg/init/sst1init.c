@@ -196,8 +196,7 @@ FX_EXPORT FxU32 * FX_CSTYLE sst1InitMapBoardDirect(FxU32 BoardNumber,
     FxU32 deviceID;                    // 0x0002 - Look for a Voodoo2 board (0xFFFF - Find any 3Dfx board)
     FxU32 sizeOfCard = 0x1000000;      // 16 MBytes of addr space for SST-1
     FxU32 *sstbase;
-    FxU32 n;
-    FxU32 j;
+    FxU32 j, n;
     FxU32 sstv2_noremap = 0;
 
     if( GETENV( ("SSTV2_DEVICEID") ) )

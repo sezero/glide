@@ -17,7 +17,6 @@
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
-**
 ** Initialization code for initializing supported SST-1 DACs
 **
 */
@@ -560,7 +559,7 @@ sst1InitComputeClkParams(float freq, sst1ClkTimingStruct* clkTiming)
     return sst1InitComputeClkParamsTI(freq, clkTiming);
   } else if (sst1CurrentBoard->fbiVideoDacType == SST_FBI_DACTYPE_PROXY) {
     FxU32 i;
-    FxBool retval;
+    FxBool retval = FXTRUE;
     sst1DeviceInfoStruct *saveBoard;
     
     /* if we are a single board SLI (proxy dac) we need to do all changes
@@ -589,7 +588,7 @@ sst1InitComputeClkParams(float freq, sst1ClkTimingStruct* clkTiming)
 FxBool sst1InitComputeClkParamsATT(float freq, sst1ClkTimingStruct
     *clkTiming)
 {
-    float vcoFreqDivide, freqMultRatio, clkError;
+    float vcoFreqDivide = 0.0f, freqMultRatio, clkError;
     float clkErrorMin;
     FxU32 p, n, m, nPlusTwo;
     int mPlusTwo;
@@ -623,7 +622,7 @@ FxBool sst1InitComputeClkParamsATT(float freq, sst1ClkTimingStruct
     freqMultRatio = (freq * vcoFreqDivide) * (float) 0.06984216;
 
     /* Calculate proper N and M parameters which yield the lowest error */
-    clkErrorMin = (float) 9999.; n = 0;
+    clkErrorMin = (float) 9999.; n = 0; m = 0;
     for(nPlusTwo = 3; nPlusTwo < 32; nPlusTwo++) {
 #ifdef DIRECTX
         mPlusTwo = FTOL( (((float) nPlusTwo * freqMultRatio) + (float) 0.5) );
@@ -694,7 +693,7 @@ FxBool sst1InitComputeClkParamsTI(float freq, sst1ClkTimingStruct
 
     /* Loop through all the possible combinations and find the frequency
        with the least error */
-    clkErrorMin = (float) 9999.; nBest = 9999;
+    clkErrorMin = (float) 9999.; pBest = 9999; nBest = 9999; mBest = 9999;
     for(p=0; p<4; p++) {
       for(m=0; m<64; m++) {
         for(n=0; n<5; n++) {

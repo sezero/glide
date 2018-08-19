@@ -513,7 +513,7 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitGrxClk(FxU32 *sstbase)
 FxBool sst1InitComputeClkParams(float freq, sst1ClkTimingStruct
     *clkTiming)
 {
-    float vcoFreqDivide, freqMultRatio, clkError;
+    float vcoFreqDivide = 0.0f, freqMultRatio, clkError;
     float clkErrorMin;
     FxU32 p, n, m, nPlusTwo;
     int mPlusTwo;
@@ -547,7 +547,7 @@ FxBool sst1InitComputeClkParams(float freq, sst1ClkTimingStruct
     freqMultRatio = (freq * vcoFreqDivide) * (float) 0.06984216;
 
     /* Calculate proper N and M parameters which yield the lowest error */
-    clkErrorMin = (float) 9999.; n = 0;
+    clkErrorMin = (float) 9999.; n = 0; m = 0;
     for(nPlusTwo = 3; nPlusTwo < 32; nPlusTwo++) {
 #ifdef DIRECTX
         mPlusTwo = FTOL( (((float) nPlusTwo * freqMultRatio) + (float) 0.5) );

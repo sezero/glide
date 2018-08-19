@@ -17,7 +17,6 @@
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 **
-**
 ** Parsing code for grabbing information from "voodoo2.ini" initialization file
 **
 */
@@ -78,7 +77,7 @@ FX_ENTRY FxBool FX_CALL sst1InitVoodooFile()
 
 #ifndef DIRECTX
   int inCfg, inDac;
-  FILE *file = (FILE *) NULL;
+  FILE *file = NULL;
   char buffer[1024], filename[256];
   int helper = (getenv(("SSTV2_DEBUGDAC"))) ? 1 : 0;
 
@@ -228,7 +227,7 @@ FX_ENTRY FxBool FX_CALL sst1InitVoodooFile()
 
   inCfg = inDac = 0;
   while(sst1InitFgets(buffer, file)) {
-    buffer[strlen(buffer)-1] = (char) NULL;
+    buffer[strlen(buffer)-1] = 0;
     if(!strcmp(buffer, "[VOODOO2]")) {
       inCfg = 1; inDac = 0;
       continue;
@@ -359,7 +358,7 @@ static void foo(int argc, char **argv)
 
     inCfg = inDac = 0;
     while(sst1InitFgets(buffer, file)) {
-        buffer[strlen(buffer)-1] = (char) NULL;
+        buffer[strlen(buffer)-1] = 0;
         if(!strcmp(buffer, "[CFG]")) {
             inCfg = 1; inDac = 0;
             continue;
@@ -435,7 +434,7 @@ static void sst1InitFixFilename(char *dst, char *src)
             *dst++ = *src;
         src++;
     }
-    *dst = (char) NULL;
+    *dst = 0;
 }
 
 
@@ -449,7 +448,7 @@ static int sst1InitFgets(char *string, FILE *stream)
         *ptr++ = (char) charRead;
         validChars++;
         if(charRead == '\n') {
-            *ptr++ = (char) NULL;
+            *ptr++ = 0;
             break;
         }
     }
@@ -508,7 +507,7 @@ static int sst1InitParseFieldCfg(char *string)
 
     if((envName = strtok(string, "=")) == NULL)
         return(0);
-    if((envVal = strtok((char *) NULL, "=")) == NULL)
+    if((envVal = strtok(NULL, "=")) == NULL)
         /* Valid environment variable, NULL value */
         return(1);
 
@@ -516,25 +515,23 @@ static int sst1InitParseFieldCfg(char *string)
     sst1InitToLower(envName);
     sst1InitToLower(envVal);
 
-    if(envVarsBase == (sst1InitEnvVarStruct *) NULL) {
-        if((envVarsPtr = malloc(sizeof(sst1InitEnvVarStruct))) ==
-          (sst1InitEnvVarStruct *) NULL)
+    if(envVarsBase == NULL) {
+        if((envVarsPtr = malloc(sizeof(sst1InitEnvVarStruct))) == NULL)
             return(0);
         envVarsBase = envVarsPtr;
     } else {
         envVarsPtr = envVarsBase;
         while(1) {
-            if(envVarsPtr->nextVar == (sst1InitEnvVarStruct *) NULL)
+            if(envVarsPtr->nextVar == NULL)
                 break;
             else
                envVarsPtr = envVarsPtr->nextVar;
         }
-        if((envVarsPtr->nextVar = malloc(sizeof(sst1InitEnvVarStruct))) ==
-           (sst1InitEnvVarStruct *) NULL)
+        if((envVarsPtr->nextVar = malloc(sizeof(sst1InitEnvVarStruct))) == NULL)
             return(0);
         envVarsPtr = envVarsPtr->nextVar;
     }
-    envVarsPtr->nextVar = (sst1InitEnvVarStruct *) NULL;
+    envVarsPtr->nextVar = NULL;
     strcpy(envVarsPtr->envVariable, envName);
     strcpy(envVarsPtr->envValue, envVal);
 
@@ -544,64 +541,62 @@ static int sst1InitParseFieldCfg(char *string)
 static int sst1InitParseFieldDac(char *string)
 {
     char *dacFieldReference, *dacFieldValue;
-    static sst1InitDacStruct *dacPtr = (sst1InitDacStruct *) NULL;
+    static sst1InitDacStruct *dacPtr = NULL;
 
     if((dacFieldReference = strtok(string, "=")) == NULL)
         return(0);
     if(!strcmp(dacFieldReference, "MANUFACTURER")) {
         /* Add new dac device */
-        if(dacStructBase == (sst1InitDacStruct *) NULL) {
-            if((dacPtr = malloc(sizeof(sst1InitDacStruct))) ==
-              (sst1InitDacStruct *) NULL)
+        if(dacStructBase == NULL) {
+            if((dacPtr = malloc(sizeof(sst1InitDacStruct))) == NULL)
                 return(0);
             dacStructBase = dacPtr;
         } else {
             dacPtr = dacStructBase;
             while(1) {
-                if(dacPtr->nextDac == (sst1InitDacStruct *) NULL)
+                if(dacPtr->nextDac == NULL)
                     break;
                 else
                    dacPtr = dacPtr->nextDac;
             }
-                if((dacPtr->nextDac = malloc(sizeof(sst1InitDacStruct))) ==
-               (sst1InitDacStruct *) NULL)
+            if((dacPtr->nextDac = malloc(sizeof(sst1InitDacStruct))) == NULL)
                 return(0);
             dacPtr = dacPtr->nextDac;
         }
-        dacPtr->nextDac = (sst1InitDacStruct *) NULL;
-        dacPtr->dacManufacturer[0] = (char) NULL;
-        dacPtr->dacDevice[0] = (char) NULL;
-        dacPtr->detect = (sst1InitDacRdWrStruct *) NULL;
-        dacPtr->setVideo = (sst1InitDacSetVideoStruct *) NULL;
-        dacPtr->setMemClk = (sst1InitDacSetMemClkStruct *) NULL;
-        dacPtr->setVideoMode = (sst1InitDacSetVideoModeStruct *) NULL;
+        dacPtr->nextDac = NULL;
+        dacPtr->dacManufacturer[0] = 0;
+        dacPtr->dacDevice[0] = 0;
+        dacPtr->detect = NULL;
+        dacPtr->setVideo = NULL;
+        dacPtr->setMemClk = NULL;
+        dacPtr->setVideoMode = NULL;
         if((dacFieldValue = strtok((char *) NULL, "=")) == NULL)
             return(0);
         strcpy(dacPtr->dacManufacturer, dacFieldValue);
     } else if(!strcmp(dacFieldReference, "DEVICE")) {
-        if((dacFieldValue = strtok((char *) NULL, "=")) == NULL)
+        if((dacFieldValue = strtok(NULL, "=")) == NULL)
             return(0);
         strcpy(dacPtr->dacDevice, dacFieldValue);
     } else if(!strcmp(dacFieldReference, "DETECT")) {
-        if((dacFieldValue = strtok((char *) NULL, "=")) == NULL)
+        if((dacFieldValue = strtok(NULL, "=")) == NULL)
             return(0);
         sst1InitToLower(dacFieldValue);
         if(!sst1InitParseDacRdWrString(dacFieldValue, dacPtr))
             return(0);
     } else if(!strcmp(dacFieldReference, "SETVIDEO")) {
-        if((dacFieldValue = strtok((char *) NULL, "=")) == NULL)
+        if((dacFieldValue = strtok(NULL, "=")) == NULL)
             return(0);
         sst1InitToLower(dacFieldValue);
         if(!sst1InitParseSetVideoString(dacFieldValue, dacPtr))
             return(0);
     } else if(!strcmp(dacFieldReference, "SETMEMCLK")) {
-        if((dacFieldValue = strtok((char *) NULL, "=")) == NULL)
+        if((dacFieldValue = strtok(NULL, "=")) == NULL)
             return(0);
         sst1InitToLower(dacFieldValue);
         if(!sst1InitParseSetMemClkString(dacFieldValue, dacPtr))
             return(0);
     } else if(!strcmp(dacFieldReference, "SETVIDEOMODE")) {
-        if((dacFieldValue = strtok((char *) NULL, "=")) == NULL)
+        if((dacFieldValue = strtok(NULL, "=")) == NULL)
             return(0);
         sst1InitToLower(dacFieldValue);
         if(!sst1InitParseSetVideoModeString(dacFieldValue, dacPtr))
@@ -641,7 +636,7 @@ static int sst1InitParseDacRdWrString(char *string, sst1InitDacStruct *dacBase)
 
             dacRdWrPtr = dacRdWrPtr->nextRdWr;
         }
-        dacRdWrPtr->nextRdWr = (sst1InitDacRdWrStruct *) NULL;
+        dacRdWrPtr->nextRdWr = NULL;
         if(!sst1InitParseDacRdWr(dacRdWrCmd, dacRdWrPtr))
             return(0);
         cntr++;
@@ -657,16 +652,16 @@ static int sst1InitParseDacRdWr(char *string, sst1InitDacRdWrStruct *dacRdWrPtr)
     strcpy(stringCpy, string);
 
     if(stringCpy[5] == '(') {
-        stringCpy[5] = (char) NULL;
+        stringCpy[5] = 0;
         addrDataCmd = &stringCpy[6];
     } else if(stringCpy[7] == '(') {
-        stringCpy[7] = (char) NULL;
+        stringCpy[7] = 0;
         addrDataCmd = &stringCpy[8];
     } else if(stringCpy[8] == '(') {
-        stringCpy[8] = (char) NULL;
+        stringCpy[8] = 0;
         addrDataCmd = &stringCpy[9];
     } else if(stringCpy[9] == '(') {
-        stringCpy[9] = (char) NULL;
+        stringCpy[9] = 0;
         addrDataCmd = &stringCpy[10];
     } else
         return(0);
@@ -678,7 +673,7 @@ static int sst1InitParseDacRdWr(char *string, sst1InitDacRdWrStruct *dacRdWrPtr)
             return(0);
         if(data[strlen(data)-1] != ')')
             return(0);
-        data[strlen(data)-1] = (char) NULL;
+        data[strlen(data)-1] = '\0';
         dacRdWrPtr->type = DACRDWR_TYPE_WR;
         SSCANF(addr, "%i", &dacRdWrPtr->addr);
         SSCANF(data, "%i", &dacRdWrPtr->data);
@@ -691,7 +686,7 @@ static int sst1InitParseDacRdWr(char *string, sst1InitDacRdWrStruct *dacRdWrPtr)
             return(0);
         if(data[strlen(data)-1] != ')')
             return(0);
-        data[strlen(data)-1] = (char) NULL;
+        data[strlen(data)-1] = 0;
         dacRdWrPtr->type = DACRDWR_TYPE_WRMOD_POP;
         SSCANF(addr, "%i", &dacRdWrPtr->addr);
         SSCANF(mask, "%i", &dacRdWrPtr->mask);
@@ -705,7 +700,7 @@ static int sst1InitParseDacRdWr(char *string, sst1InitDacRdWrStruct *dacRdWrPtr)
             return(0);
         if(data[strlen(data)-1] != ')')
             return(0);
-        data[strlen(data)-1] = (char) NULL;
+        data[strlen(data)-1] = 0;
         dacRdWrPtr->type = DACRDWR_TYPE_RDMODWR;
         SSCANF(addr, "%i", &dacRdWrPtr->addr);
         SSCANF(mask, "%i", &dacRdWrPtr->mask);
@@ -722,7 +717,7 @@ static int sst1InitParseDacRdWr(char *string, sst1InitDacRdWrStruct *dacRdWrPtr)
                 return(0);
             if(data[strlen(data)-1] != ')')
                 return(0);
-            data[strlen(data)-1] = (char) NULL;
+            data[strlen(data)-1] = 0;
             SSCANF(addr, "%i", &dacRdWrPtr->addr);
             SSCANF(data, "%i", &dacRdWrPtr->data);
         }
@@ -799,7 +794,7 @@ static int sst1InitParseSetVideoString(char *string, sst1InitDacStruct *dacBase)
                     return(0);
                 dacSetVideoPtr = dacSetVideoPtr->nextSetVideo;
             }
-            dacSetVideoPtr->nextSetVideo = (sst1InitDacSetVideoStruct *) NULL;
+            dacSetVideoPtr->nextSetVideo = NULL;
             /* Width */
             SSCANF(dacRdWrCmd, "%i", &dacSetVideoPtr->width);
             /* Height */
@@ -833,7 +828,7 @@ static int sst1InitParseSetVideoString(char *string, sst1InitDacStruct *dacBase)
                 return(0);
             dacRdWrPtr = dacRdWrPtr->nextRdWr;
         }
-        dacRdWrPtr->nextRdWr = (sst1InitDacRdWrStruct *) NULL;
+        dacRdWrPtr->nextRdWr = NULL;
         if(!sst1InitParseDacRdWr(dacRdWrCmd, dacRdWrPtr))
             return(0);
         cntr++;
@@ -873,8 +868,7 @@ static int sst1InitParseSetMemClkString(char *string,
                     return(0);
                 dacSetMemClkPtr = dacSetMemClkPtr->nextSetMemClk;
             }
-            dacSetMemClkPtr->nextSetMemClk = (sst1InitDacSetMemClkStruct *)
-              NULL;
+            dacSetMemClkPtr->nextSetMemClk = NULL;
             /* Frequency */
             SSCANF(dacRdWrCmd, "%i", &dacSetMemClkPtr->frequency);
 
@@ -897,7 +891,7 @@ static int sst1InitParseSetMemClkString(char *string,
                 return(0);
             dacRdWrPtr = dacRdWrPtr->nextRdWr;
         }
-        dacRdWrPtr->nextRdWr = (sst1InitDacRdWrStruct *) NULL;
+        dacRdWrPtr->nextRdWr = NULL;
         if(!sst1InitParseDacRdWr(dacRdWrCmd, dacRdWrPtr))
             return(0);
         cntr++;
@@ -937,8 +931,7 @@ static int sst1InitParseSetVideoModeString(char *string,
                     return(0);
                 dacSetVideoModePtr = dacSetVideoModePtr->nextSetVideoMode;
             }
-            dacSetVideoModePtr->nextSetVideoMode =
-              (sst1InitDacSetVideoModeStruct *) NULL;
+            dacSetVideoModePtr->nextSetVideoMode = NULL;
             /* video16BPP */
             SSCANF(dacRdWrCmd, "%i", &dacSetVideoModePtr->video16BPP);
 
@@ -961,7 +954,7 @@ static int sst1InitParseSetVideoModeString(char *string,
                 return(0);
             dacRdWrPtr = dacRdWrPtr->nextRdWr;
         }
-        dacRdWrPtr->nextRdWr = (sst1InitDacRdWrStruct *) NULL;
+        dacRdWrPtr->nextRdWr = NULL;
         if(!sst1InitParseDacRdWr(dacRdWrCmd, dacRdWrPtr))
             return(0);
         cntr++;

@@ -123,7 +123,6 @@ static LPDIRECTDRAW2        lpDD        = NULL;
 static LPDIRECTDRAW         lpDD1       = NULL;
 
 
-
 FxBool
 ErrorMessage(HWND hWnd, char *err)
 {
@@ -131,7 +130,6 @@ ErrorMessage(HWND hWnd, char *err)
 //  MessageBox( hWnd, err, "ERROR", MB_OK );
   return FALSE;
 } /* ErrorMessage */
-
 
 
 /*
@@ -158,7 +156,6 @@ _dxSurfaceToBufDesc(LPDIRECTDRAWSURFACE lpSurf, InitBufDesc_t *pDesc)
   IDirectDrawSurface2_Unlock(lpSurf, NULL);
   return FXTRUE;
 } /* _dxSurfaceToBufDesc */
-
 
 
 /*
@@ -241,7 +238,6 @@ _dxDDrawToGlideDesc(InitBufDesc_t *pDesc)
 } /* _dxDDrawToGlideDesc */
 
 
-
 /*
  * Allocate (or re-allocate for WM_SIZE) buffers from DDraw.
  */
@@ -305,7 +301,7 @@ _dxAllocSurfaces(int xRes, int yRes, int vRefresh, InitBufDesc_t *pDesc)
   lpClipper = NULL;
   lpFront   = NULL;
   lpBack    = NULL;
-  lpTriple    = NULL;
+  lpTriple  = NULL;
   lpAux     = NULL;
   
   if ( !IsFullScreen ) {        /* In a window */
@@ -327,7 +323,7 @@ _dxAllocSurfaces(int xRes, int yRes, int vRefresh, InitBufDesc_t *pDesc)
     ddsd.dwSize         = sizeof( ddsd );
     ddsd.dwFlags        = DDSD_CAPS;
     ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_3DDEVICE;
-        
+
     if (IDirectDraw2_CreateSurface( lpDD, &ddsd, &lpFront, 0 ) != DD_OK) 
       return ErrorMessage(hWndApp, "Couldn't allocate primary surface!");
 
@@ -351,13 +347,13 @@ _dxAllocSurfaces(int xRes, int yRes, int vRefresh, InitBufDesc_t *pDesc)
     ddsd.dwHeight       = yRes;
     ddsd.ddsCaps.dwCaps =
       DDSCAPS_OFFSCREENPLAIN | DDSCAPS_VIDEOMEMORY | DDSCAPS_3DDEVICE;
-        
+
     if (IDirectDraw2_CreateSurface( lpDD, &ddsd, &lpBack, 0 ) != DD_OK) 
       return ErrorMessage(hWndApp,  "Couldn't allocate secondary surface!" );
 
     GDBG_INFO((80, "_dxAS: Back buffer allocated!\n"));
 
-    /* 
+    /*
      * Always allocate Aux Buffer Surface 
      * XXX - (use nAuxBuffers, and deal with 8bpp for alpha)
      */
@@ -367,14 +363,13 @@ _dxAllocSurfaces(int xRes, int yRes, int vRefresh, InitBufDesc_t *pDesc)
     ddsd.dwHeight       = yRes;
     ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_VIDEOMEMORY
         | DDSCAPS_3DDEVICE;
-        
+
     if (IDirectDraw2_CreateSurface( lpDD, &ddsd, &lpAux, 0 ) != DD_OK) 
       return ErrorMessage(hWndApp,  "Couldn't allocate aux surface" );
 
     GDBG_INFO((80, "_dxAS: Aux Buffer allocated!\n"));
 
   } else {
-    
     /* Full screen - Set Exclusive Mode, change resolution,  */
     GDBG_INFO((80, "_dxAS: Setting Full screen exclusive mode!\n"));
     
@@ -445,18 +440,18 @@ _dxReallocSurfaces(int xRes, int yRes, int vRefresh, InitBufDesc_t *pDesc)
   /* for now this is a goddamn baseball bat 
      it can be trimmed down */
   if ( !IsFullScreen ) { /* this *REALLY* should be called for fullscreen */
-    if( lpClipper) IDirectDrawClipper_Release( lpClipper);
+    if( lpClipper) IDirectDrawClipper_Release ( lpClipper);
     if( lpAux    ) IDirectDrawSurface2_Release( lpAux    );
     if( lpBack   ) IDirectDrawSurface2_Release( lpBack   );
-    if( lpTriple ) IDirectDrawSurface2_Release( lpTriple    );
+    if( lpTriple ) IDirectDrawSurface2_Release( lpTriple );
     if( lpFront  ) IDirectDrawSurface2_Release( lpFront  );
-    
+
     lpClipper = NULL;
     lpFront   = NULL;
     lpBack    = NULL;
     lpTriple  = NULL;
     lpAux     = NULL;
-  
+
     /* Verify screen pixel format is 16bpp, and set cooperative level */
     ddsd.dwSize = sizeof( ddsd );
 
@@ -464,7 +459,7 @@ _dxReallocSurfaces(int xRes, int yRes, int vRefresh, InitBufDesc_t *pDesc)
     ddsd.dwSize         = sizeof( ddsd );
     ddsd.dwFlags        = DDSD_CAPS;
     ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_3DDEVICE;
-        
+
     if (IDirectDraw2_CreateSurface( lpDD, &ddsd, &lpFront, 0 ) != DD_OK) {
       errorMessage =  "Couldn't allocate primary surface!";
       goto FUBAR;
@@ -494,13 +489,13 @@ _dxReallocSurfaces(int xRes, int yRes, int vRefresh, InitBufDesc_t *pDesc)
     ddsd.dwHeight       = yRes;
     ddsd.ddsCaps.dwCaps =
       DDSCAPS_OFFSCREENPLAIN | DDSCAPS_VIDEOMEMORY | DDSCAPS_3DDEVICE;
-        
+
     if (IDirectDraw2_CreateSurface( lpDD, &ddsd, &lpBack, 0 ) != DD_OK) {
       errorMessage = "Couldn't allocate secondary surface!";
       goto FUBAR;
     }
 
-    /* 
+    /*
      * Always allocate Aux Buffer Surface 
      * XXX - (use nAuxBuffers, and deal with 8bpp for alpha)
      */
@@ -510,7 +505,7 @@ _dxReallocSurfaces(int xRes, int yRes, int vRefresh, InitBufDesc_t *pDesc)
     ddsd.dwHeight       = yRes;
     ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_VIDEOMEMORY
         | DDSCAPS_3DDEVICE;
-        
+
     if (IDirectDraw2_CreateSurface( lpDD, &ddsd, &lpAux, 0 ) != DD_OK) {
       errorMessage = "Couldn't allocate aux surface";
       goto FUBAR;
@@ -519,10 +514,10 @@ _dxReallocSurfaces(int xRes, int yRes, int vRefresh, InitBufDesc_t *pDesc)
   return _dxDDrawToGlideDesc(pDesc);
 FUBAR:
   /* if you don't free these you can't make another attempt */
-  if( lpClipper) IDirectDrawClipper_Release( lpClipper);
+  if( lpClipper) IDirectDrawClipper_Release ( lpClipper);
   if( lpAux    ) IDirectDrawSurface2_Release( lpAux    );
   if( lpBack   ) IDirectDrawSurface2_Release( lpBack   );
-  if( lpTriple ) IDirectDrawSurface2_Release( lpTriple    );
+  if( lpTriple ) IDirectDrawSurface2_Release( lpTriple );
   if( lpFront  ) IDirectDrawSurface2_Release( lpFront  );
   lpClipper = NULL;
   lpFront   = NULL;
@@ -625,10 +620,10 @@ dxOpen(
 #ifdef H3D
     if ((sRes <  GR_RESOLUTION_MIN) ||
         (sRes >  GR_RESOLUTION_MAX) &&
-        (!GR_RESOLUTION_IS_AUTOFLIPPED(sRes)) ) 
+        (!GR_RESOLUTION_IS_AUTOFLIPPED(sRes)) )
 #else
     if ((sRes <  GR_RESOLUTION_320x200) ||
-        (sRes >  GR_RESOLUTION_512x256)) 
+        (sRes >  GR_RESOLUTION_512x256))
 #endif
       return ErrorMessage(hWndApp, "Bad Fullscreen resolution");
 
@@ -660,7 +655,6 @@ dxOpen(
     return ErrorMessage(hWndApp, "failed dxOpen");
 #endif
 
-
   GDBG_INFO((80, "_dxAllocSurfaces OK!!!\n"));
 
   for (i=0; i< NUM_BUFS; i++) {
@@ -669,7 +663,7 @@ dxOpen(
     GDBG_INFO((80, "\tbufMagic = 0x%x\n", pBufDesc[i].bufMagic));
     GDBG_INFO((80, "\tbufType = 0x%x\n", pBufDesc[i].bufType));
     GDBG_INFO((80, "\tbufOffset = 0x%x\n", pBufDesc[i].bufOffset));
-    GDBG_INFO((80, "\tbufStride = 0x%x\n", pBufDesc[i].bufStride));    
+    GDBG_INFO((80, "\tbufStride = 0x%x\n", pBufDesc[i].bufStride));
     GDBG_INFO((80, "\tbufBPP = 0x%x\n", pBufDesc[i].bufBPP));
   }
 
@@ -776,16 +770,16 @@ dxClose(void)
   if( lpDD     ) IDirectDraw2_Release( lpDD );
 
   if (1 /* !IsFullScreen */) {
-    if( lpDD1    ) IDirectDraw_Release( lpDD1 );
-    lpDD1     = NULL;
+    if( lpDD1  ) IDirectDraw_Release( lpDD1 );
+    lpDD1   = NULL;
   }
   
   lpClipper = NULL;
   lpFront   = NULL;
   lpBack    = NULL;
-  lpTriple   = NULL;
+  lpTriple  = NULL;
   lpAux     = NULL;
-  lpDD      = NULL;  
+  lpDD      = NULL;
 #endif /* 0 */
 
   GDBG_INFO((80, "dxClose:  Returning TRUE\n"));
@@ -807,7 +801,7 @@ dxSwap(FxU32 code)
     src.right  = Width-1;
     src.top    = 0;
     src.bottom = Height-1;
-        
+
     dest = src;
     point.x = 0;
     point.y = 0;
@@ -823,10 +817,10 @@ dxSwap(FxU32 code)
                                 &src,
                                 DDBLT_WAIT,
                                 NULL );
-        
+
     while( IDirectDrawSurface_GetBltStatus( lpFront, DDGBS_ISBLTDONE ) !=
           DD_OK );
-        
+
     if ( hr != DD_OK ) {
       ErrorMessage(hWndApp, "Couldn't blit!\n");
     }
@@ -900,7 +894,6 @@ dxOpen(
     GDBG_INFO((80, "%s:  Unimplemented resolution\n", FN_NAME));
     break;
   }
-  
 
 #define WAITLOOP {\
   volatile int waitfoo;\
@@ -972,7 +965,7 @@ dxOpen(
 
 #ifdef GDBG_INFO_ON
   {
-    int i;  
+    int i;
 
     for (i = 0; i < 5; i++) {
       GDBG_INFO((80, "%s:  pBufDesc[%d] = 0x%x:\n",
@@ -1026,5 +1019,3 @@ dxSwap(FxU32 code)
 {
 } /* dxSwap */
 #endif  /* __DOS32__ || (defined(__WIN32__)  && !defined(INIT_ACCESS_DDRAW) */
-
-

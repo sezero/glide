@@ -96,7 +96,7 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitGammaRGB(FxU32 *sstbase, double gammaR,
     FxU32 gammaTableR[256];
     FxU32 gammaTableG[256];
     FxU32 gammaTableB[256];
-    FxBool sstVideoIsReset;
+    FxBool sstVideoIsReset = FXFALSE;
     static FxBool calledBefore = FXFALSE;
     volatile Sstregs *sst = (Sstregs *) sstbase;
 
@@ -178,7 +178,7 @@ FxU32 *r, FxU32 *g, FxU32 *b)
     FxU32 gammaTableR[256];
     FxU32 gammaTableG[256];
     FxU32 gammaTableB[256];
-    FxBool sstVideoIsReset;
+    FxBool sstVideoIsReset = FXFALSE;
     static FxBool calledBefore = FXFALSE;
     volatile Sstregs *sst = (Sstregs *) sstbase;
 

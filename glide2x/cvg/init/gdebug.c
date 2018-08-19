@@ -65,7 +65,7 @@ EngDebugPrint(
 static char *gdbg_myname = "gd";		// default library name
 static char gdbg_debuglevel[GDBG_MAX_LEVELS];	// array of debuglevel controls
 
-static long gdbg_errors = 0;
+static int gdbg_errors = 0;
 
 
 #ifdef KERNEL
@@ -86,7 +86,7 @@ void setLevel(int level, int value)
 
 #ifndef KERNEL_NT
 // when the simulator runs in kernal mode there is no C runtime library
-// so we need to call a kernal printf. 
+// so we need to call a kernal printf.
 extern int __cdecl klvfprintf(FILE        *stream,
                               const char  *format,
                               va_list      arg    ) ;
@@ -102,7 +102,7 @@ static FILE *gdbg_msgfile = NULL; /* stdout; */	// GDBG info/error file
 //----------------------------------------------------------------------
 static const char *setRange(const char *buf, int val)
 {
-    int r0,r1,pos;
+    int r0,r1,pos=0;
 
     sscanf(buf,"%i%n",&r0,&pos);		// parse the first integer
     if (buf[pos]=='-' || buf[pos]==':') {	// if there's a second
@@ -158,15 +158,14 @@ gdbg_init(void)
     /* I can't init gdbg_msgfile to stdout since it isn't constant so
      * I do it now */
     gdbg_msgfile = stdout;
-    
 
 #if __MWERKS__
 	SIOUXSettings.standalone 				= false;
 	SIOUXSettings.setupmenus 				= false;
 	SIOUXSettings.autocloseonquit 	= true;
 	SIOUXSettings.asktosaveonclose 	= false;
-#endif      
-    
+#endif
+
 #ifdef KERNEL
 	// put code in here to set the default level
     gdbg_debuglevel[0] = 1;		// always enable level 0
@@ -193,7 +192,7 @@ gdbg_shutdown(void)
 #ifndef KERNEL
   if (gdbg_msgfile != stdout) {	// close any existing output file
 #if USE_DEBUG_STRING
-    if (!UseDebugString) 
+    if (!UseDebugString)
 #endif /* USE_DEBUG_STRING */
       fclose(gdbg_msgfile);
     gdbg_msgfile = stdout;
@@ -286,7 +285,7 @@ gdbg_printf (const char *format, ...)
     __asm lea   eax, (format+4);
     __asm mov   ebx, format;
     MyPrintf();
-#endif /* #ifndef KERNEL */    
+#endif /* #ifndef KERNEL */
 
 }
 
@@ -358,7 +357,7 @@ gdbg_info_more (const int level, const char *format, ...)
 #endif /* #ifndef KERNEL */
     return (1);
 }
-
+
 static GDBGErrorProc errorProcList[3];
 
 FX_EXPORT int FX_CSTYLE gdbg_error_set_callback(GDBGErrorProc p)
@@ -474,15 +473,16 @@ gdbg_set_file(const char *name)
   if (!strcmp(name, "DEBUG")) {
     gdbg_msgfile = (FILE *) 1;
     UseDebugString = 1;
-  } else 
+  } else
 #endif /* USE_DEBUG_STRING */
   {
     outf = fopen(name,"w");		// open up a new one
     if (outf) gdbg_msgfile = outf;
+    return (outf != NULL);
   }
 
-  return (outf != NULL);
+  return 1;
 #else /* #ifndef KERNEL */
   return 0;
-#endif /* #ifndef KERNEL */    
+#endif /* #ifndef KERNEL */
 }

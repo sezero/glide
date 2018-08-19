@@ -182,7 +182,7 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitSli(FxU32 *sstbase0, FxU32 *sstbase1)
             return(FXFALSE);
         PCICFG_RD(SST1_PCI_INIT_ENABLE, j);
         PCICFG_WR(SST1_PCI_INIT_ENABLE,
-            ((j & ~SST_SCANLINE_SLV_OWNPCI) | SST_SCANLINE_SLI_SLV)); 
+            ((j & ~SST_SCANLINE_SLV_OWNPCI) | SST_SCANLINE_SLI_SLV));
         ISET(sstSlave->fbiInit1, IGET(sstSlave->fbiInit1) |
           (SST_VIDEO_RESET | SST_EN_SCANLINE_INTERLEAVE));
         sst1InitIdleFBINoNOP(sstbase1);
@@ -226,7 +226,7 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitSli(FxU32 *sstbase0, FxU32 *sstbase1)
           ~(SST_VIDEO_CLK_SLAVE_OE_EN | SST_VID_CLK_2X_OUT_OE_EN)) |
           SST_VID_CLK_DAC_DATA16_SEL);
         ISET(sstSlave->fbiInit1, IGET(sstSlave->fbiInit1) &
-          ~SST_VIDEO_VID_CLK_SLAVE); 
+          ~SST_VIDEO_VID_CLK_SLAVE);
         sst1CurrentBoard->fbiInit6 &= ~SST_SLI_SYNC_MASTER;
         sst1CurrentBoard->fbiInit6 = ((sst1CurrentBoard->fbiInit6 &
           ~(SST_SLI_SWAP_VACTIVE | SST_SLI_SWAP_VACTIVE_DRAG)) |
@@ -374,7 +374,7 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitSli(FxU32 *sstbase0, FxU32 *sstbase1)
       SST_VIDEO_CLK_SLAVE_OE_EN | SST_VID_CLK_2X_OUT_OE_EN |
       SST_VID_CLK_DAC_DATA16_SEL);
     ISET(sstMaster->fbiInit1, IGET(sstMaster->fbiInit1) &
-      ~SST_VIDEO_VID_CLK_SLAVE); 
+      ~SST_VIDEO_VID_CLK_SLAVE);
     sst1CurrentBoard->fbiInit6 |= SST_SLI_SYNC_MASTER;
     sst1CurrentBoard->fbiInit6 = ((sst1CurrentBoard->fbiInit6 &
       ~(SST_SLI_SWAP_VACTIVE | SST_SLI_SWAP_VACTIVE_DRAG)) |
@@ -382,7 +382,7 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitSli(FxU32 *sstbase0, FxU32 *sstbase1)
       (videoWindowActiveDrag<<SST_SLI_SWAP_VACTIVE_DRAG_SHIFT));
     ISET(sstMaster->fbiInit6, sst1CurrentBoard->fbiInit6);
 
-    // Following work well up to around 100 MHz... 
+    // Following work well up to around 100 MHz...
     // masterVInClkDel = 2;
     // masterVOutClkDel = 0;
     // masterPVOutClkDel = 0;
@@ -464,7 +464,7 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitSli(FxU32 *sstbase0, FxU32 *sstbase1)
         return(FXFALSE);
     PCICFG_RD(SST1_PCI_INIT_ENABLE, j);
     PCICFG_WR(SST1_PCI_INIT_ENABLE,
-        (j & ~(SST_SCANLINE_SLV_OWNPCI | SST_SCANLINE_SLI_SLV))); 
+        (j & ~(SST_SCANLINE_SLV_OWNPCI | SST_SCANLINE_SLI_SLV)));
     MasterPhysAddr = sst1CurrentBoard->physAddr[0];
     sst1InitReturnStatus(sstbase0); // flush pci packer with reads
     sst1InitReturnStatus(sstbase0);
@@ -587,13 +587,13 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitSli(FxU32 *sstbase0, FxU32 *sstbase1)
     sst1InitReturnStatus(sstbase0);
     sst1InitReturnStatus(sstbase1);
 
-    // De-assert reset to Graphics core... 
+    // De-assert reset to Graphics core...
     ISET(sstMaster->fbiInit0, IGET(sstMaster->fbiInit0) & ~SST_GRX_RESET);
     sst1InitReturnStatus(sstbase0);
     ISET(sstSlave->fbiInit0, IGET(sstSlave->fbiInit0) & ~SST_GRX_RESET);
     sst1InitReturnStatus(sstbase1);
 
-    // De-assert reset to Video core... 
+    // De-assert reset to Video core...
     ISET(sstMaster->fbiInit1, IGET(sstMaster->fbiInit1) & ~SST_VIDEO_RESET);
     sst1InitReturnStatus(sstbase0);
     ISET(sstSlave->fbiInit1, IGET(sstSlave->fbiInit1) & ~SST_VIDEO_RESET);

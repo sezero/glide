@@ -41,14 +41,14 @@ static FxBool FindHole(RangeStruct *conflict);
 static FxU32 SnapToDecentAddress(FxU32 address,RangeStruct *conflict);
 static FxBool fits_in_hole(RangeStruct *begin,FxU32 end,RangeStruct *hole,RangeStruct *conflict);
 static FxBool fits_under(RangeStruct *first,FxU32 minimum,RangeStruct *hole,RangeStruct *conflict);
-static FxU32 pciGetType(long i);
+static FxU32 pciGetType(int i);
 static void pciGetRange(PciRegister reg,FxU32 device_number,FxU32 *data);
 static FxBool pciGetAddress(PciRegister reg,FxU32 device_number,FxU32 *data);
 
 static void ForceCleanUp(void);
 static FxBool FindNecessaryCards(void);
-static FxBool IsCardVoodoo(long i);
-static FxBool IsCardS3(long i);
+static FxBool IsCardVoodoo(int i);
+static FxBool IsCardS3(int i);
 static void AddMapEntry(FxU32 address,FxU32 range,FxU32 id,FxBool VoodooCard,FxBool S3Card);
 #if 0 /* not used */
 static void HandleMemoryOverlap(void);
@@ -63,7 +63,7 @@ static RangeStruct hole[80];
 #endif
 static RangeStruct *first_entry;
 static RangeStruct *last_entry;
-static long entries=0;
+static int entries=0;
 static RangeStruct master_hole;
 static FxU32 conflicts_found=0;
 
@@ -142,7 +142,7 @@ static void GetMemoryMap(void)
 {
    FxU32    temp,temp2;
    FxU32    type;
-   long     devNum;
+   int      devNum;
    int fn;     /* function number iterator */
    int maxFnNumber;
    int multi_fn = 0;
@@ -277,12 +277,12 @@ static void AddMapEntry(FxU32 address,FxU32 range,FxU32 id,FxBool VoodooCard,FxB
    RangeStruct *temp,*cur,*next;
 
 //jcochrane@3dfx.com
-   long        entry=0;
+   int        entry=0;
    FxU32	   tmp_address=0;
 //END
 
 #if 0
-   static long    test_entry=0;
+   static int    test_entry=0;
 
    address=test_data[test_entry].address;
    range=~(test_data[test_entry++].range - 0x1);
@@ -563,7 +563,7 @@ static void ForceCleanUp(void)
 static FxBool FindNecessaryCards(void)
 {
    FxBool voodoo_found=FXFALSE;
-   long   i;
+   int   i;
 
    for (i=0;i<MAX_PCI_DEVICES;i++)
    {
@@ -581,7 +581,7 @@ static FxBool FindNecessaryCards(void)
    return FXTRUE;
 }
 
-static FxU32 pciGetType(long i)
+static FxU32 pciGetType(int i)
 {
    FxU32 header_type;
 
@@ -590,7 +590,7 @@ static FxU32 pciGetType(long i)
    return header_type;
 }
 
-static FxBool IsCardVoodoo(long i)
+static FxBool IsCardVoodoo(int i)
 {
    FxU32    vendor,dev_id;
    FxU32    fn_num = (i >> 13) & 0x7; 
@@ -621,7 +621,7 @@ static FxBool IsCardVoodoo(long i)
    return FXFALSE;
 }
 
-static FxBool IsCardS3(long i)
+static FxBool IsCardS3(int i)
 {
    FxU32    vendor,dev_id;
 
