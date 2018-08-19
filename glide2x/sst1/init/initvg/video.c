@@ -20,6 +20,7 @@
 ** Initialization code for initializing SST-1 video unit
 **
 */
+#undef FX_DLL_ENABLE /* so that we don't dllexport the symbols */
 #ifdef _MSC_VER
 #pragma optimize ("",off)
 #endif

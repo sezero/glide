@@ -21,6 +21,9 @@
 ** Utility routines for SST-1 Initialization code
 **
 */
+
+#undef FX_DLL_ENABLE /* so that we don't dllexport the symbols */
+
 #ifdef _MSC_VER
 #pragma optimize ("",off)
 #endif

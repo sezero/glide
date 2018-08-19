@@ -118,7 +118,7 @@
 ** VOODOO_PATH                 path    Path used to locate "voodoo.ini" file
 **
 */
-
+#undef FX_DLL_ENABLE /* so that we don't dllexport the symbols */
 #ifdef _MSC_VER
 #pragma optimize ("",off)
 #endif
