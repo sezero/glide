@@ -148,7 +148,7 @@ static FxBool wrapFIFO(InitFIFOData *fd) {
     return FXTRUE;
 }
 
-static void gamma( double gamma ) {
+static void sst1gamma( double gamma ) {
   sst1InitGamma((FxU32 *) context->info.hwDep.vgInfo.vgBaseAddr, gamma);
 }
 
@@ -185,7 +185,7 @@ void vgDriverInit( InitContext *context ) {
     context->wrapFIFO         = wrapFIFO;
 
 
-    context->gamma            = gamma;
+    context->gamma            = sst1gamma;
     context->sliPciOwner      = sliPciOwner;
 
     context->gammaRGB         = gammargb;
