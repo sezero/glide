@@ -19,7 +19,6 @@
 **
 */
 
-
 #include "init.h"
 #include "fxinit.h"
 
@@ -45,7 +44,19 @@
 #ifdef _WIN32
 #define _WIN32_LEAN_AND_MEAN_
 #include <windows.h>
+#ifdef __MINGW32__
+static inline unsigned char _inp_asm (unsigned short _port) {
+  unsigned char rc;
+  __asm__ __volatile__ ("inb %w1,%b0" : "=a" (rc) : "Nd" (_port));
+  return rc;
+}
+static inline void _outp_asm (unsigned short _port, unsigned char _data) {
+  __asm__ __volatile__ ("outb %b0,%w1" : : "a" (_data), "Nd" (_port));
+}
+#define _inp  _inp_asm
+#define _outp  _outp_asm
 #endif
+#endif /* _WIN32 */
 
 #include <fxpci.h>
 #include <gdebug.h>

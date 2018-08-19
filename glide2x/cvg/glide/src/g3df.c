@@ -69,9 +69,7 @@
 #include <fxdll.h>
 #include <glide.h>
 #include "fxglide.h"
-#ifdef __linux__
 #include <ctype.h>
-#endif
 
 extern const int _grMipMapHostWH[GR_ASPECT_1x8 + 1][GR_LOD_1 + 1][2];
 extern FxU32 _gr_aspect_index_table[];

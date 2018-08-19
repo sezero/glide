@@ -36,9 +36,7 @@
 #include <fxdll.h>
 #include <glide.h>
 #include "fxglide.h"
-#ifdef __linux__
 #include <ctype.h>
-#endif
 
 extern const int _grMipMapHostWH[GR_ASPECT_1x8+1][GR_LOD_1+1][2];
 extern FxU32 _gr_aspect_index_table[];
@@ -133,8 +131,8 @@ GR_DIENTRY(gu3dfGetInfo, FxBool,
   ** grab statistics out of the header
   */
   if( sscanf(buffer,"3df v%s %s lod range: %i %i aspect ratio: %i %i\n",
-         &version,
-          color_format,
+         version,
+         color_format,
          &small_lod, &large_lod,
          &aspect_width, &aspect_height ) == 0 )
     return FXFALSE;

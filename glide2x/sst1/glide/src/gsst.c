@@ -608,7 +608,8 @@ GR_ENTRY(grSstWinOpen, FxBool, (
   oemi.linearAddress = gc->base_ptr;
   oemi.slaveAddress = NULL;
   if ((gc->oemInit = LoadLibrary("fxoem2x.dll")) != NULL) {
-    if ((oemInitMapBoard = GetProcAddress(gc->oemInit, "_fxoemInitMapBoard@4")) != NULL) {
+    oemInitMapBoard = GetProcAddress(gc->oemInit, "_fxoemInitMapBoard@4");
+    if (oemInitMapBoard) {
       oemInitMapBoard(&oemi);
     }
   }
@@ -702,8 +703,8 @@ GR_ENTRY(grSstWinOpen, FxBool, (
       oemi.vid.clkFreq24bpp = tvVidtiming.clkFreq24bpp;
       
       if (gc->oemInit) {
-        if ((oemInitVideoTiming = GetProcAddress(gc->oemInit, "_fxoemInitVideoTiming@4")) && 
-            (oemInitMapBoard))
+        oemInitVideoTiming = GetProcAddress(gc->oemInit, "_fxoemInitVideoTiming@4");
+        if (oemInitVideoTiming && oemInitMapBoard)
           oemvidtiming = oemInitVideoTiming(&oemi);
         /*
         ** video timing is updated by oem dll
@@ -744,8 +745,8 @@ GR_ENTRY(grSstWinOpen, FxBool, (
 
 #if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
   if (gc->oemInit) {
-    if ((oemInitSetVideo = GetProcAddress(gc->oemInit, "_fxoemInitSetVideo@4")) && 
-        (oemInitMapBoard))
+    oemInitSetVideo = GetProcAddress(gc->oemInit, "_fxoemInitSetVideo@4");
+    if (oemInitSetVideo && oemInitMapBoard)
       oemInitSetVideo(&oemi);
   }
 #endif
@@ -956,15 +957,13 @@ GR_ENTRY(grSstWinOpen, FxBool, (
 
     if (!_GlideRoot.environment.noSplash) {
       HMODULE newSplash = LoadLibrary("3dfxsplash2.dll");
-
       if (newSplash) {
         FARPROC fxSplash = GetProcAddress(newSplash, "_fxSplash@16");
-
         if (fxSplash) {
           fxSplash(hWnd, gc->state.screen_width,
                    gc->state.screen_height, nAuxBuffers);
           _GlideRoot.environment.noSplash = 1;
-        } 
+        }
       }
     }
 #endif /* (GLIDE_PLATFORM & GLIDE_OS_WIN32) */
@@ -1056,7 +1055,8 @@ GR_ENTRY( grSstWinClose, void, ( void ) )
     initRestoreVideo();
 #if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
     if (gc->oemInit) {
-      if (oemRestoreVideo = GetProcAddress(gc->oemInit, "_fxoemRestoreVideo@0"))
+      oemRestoreVideo = GetProcAddress(gc->oemInit, "_fxoemRestoreVideo@0");
+      if (oemRestoreVideo)
         oemRestoreVideo();
       FreeLibrary(gc->oemInit);
     }
@@ -1099,9 +1099,9 @@ GR_ENTRY(grSstControl, FxBool, ( GrControl_t code ))
     xRes = initControl(code);
 #if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
     {
-      FARPROC oemControl = NULL;
       if (gc->oemInit) {
-        if ((oemControl = GetProcAddress(gc->oemInit, "_fxoemControl@4")))
+        FARPROC oemControl = GetProcAddress(gc->oemInit, "_fxoemControl@4");
+        if (oemControl)
           oemControl(code);
       }
     }
@@ -1150,9 +1150,9 @@ GR_ENTRY(grSstControl, FxBool, ( GrControl_t code ))
     ctrlflag = initControl(code);
 #if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
     {
-      FARPROC oemControl = NULL;
       if (gc->oemInit) {
-        if ((oemControl = GetProcAddress(gc->oemInit, "_fxoemControl@4")))
+        FARPROC oemControl = GetProcAddress(gc->oemInit, "_fxoemControl@4");
+        if (oemControl)
           oemControl(code);
       }
     }

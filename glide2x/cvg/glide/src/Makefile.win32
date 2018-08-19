@@ -16,8 +16,6 @@
 #  Available options:
 #
 #    Environment variables:
-#	FX_GLIDE_HW	build for the given ASIC (cvg).
-#			default = cvg
 #	CPU		optimize for the given processor.
 #			default = 6 (PentiumPro)
 #	DEBUG=1		disable optimizations and build for debug.
@@ -52,7 +50,6 @@ GLIDE_RES = glide.res
 GLIDE_DLL = glide2x.dll
 GLIDE_IMP = glide2x.lib
 
-FX_GLIDE_HW ?= cvg
 FX_GLIDE_SW = ../../../swlibs
 GLIDE_LIBDIR = ../../lib
 
@@ -85,7 +82,7 @@ CDEFS += -DGLIDE_HW_TRI_SETUP=1 -DGLIDE_PACKED_RGB=1 -DGLIDE_TRI_CULLING=1 -DGLI
 # special sli buffer clears
 CDEFS += -DGLIDE_BLIT_CLEAR=1
 
-# workaround for CVGs with broken tsus which cannot send commands to multiple 
+# workaround for CVGs with broken tsus which cannot send commands to multiple
 # tmus using chipfield. chipfield will always be set to 0xf
 CDEFS += -DGLIDE_CHIP_BROADCAST=1
 

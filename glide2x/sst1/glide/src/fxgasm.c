@@ -19,6 +19,7 @@
 */
 
 #include <stdio.h>
+#include <string.h>
 
 #include <3dfx.h>
 #include <glidesys.h>
@@ -77,7 +78,7 @@ main (int argc, char **argv)
         printf("#ifndef __FX_INLINE_H__\n");
         printf("#define __FX_INLINE_H__\n");
         printf("\n");
-        
+
         printf("/* The # of 2-byte entries in the hw fog table */\n");
         printf("#define kInternalFogTableEntryCount 0x%XUL\n",
                sizeof(dummyRegs.fogTable) >> 1);
