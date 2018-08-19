@@ -3702,11 +3702,12 @@ hwcResolutionSupported(hwcBoardInfo *bInfo, GrScreenResolution_t res)
     {2048, 2048}                /* GR_RESOLUTION_2048x2048 */
   };
 
+#if GDBG_INFO_ON
   GDBG_INFO(80, FN_NAME ":  res == %s (0x%x), supported == %s\n",
             resNames[res], resolutionSupported[bInfo->boardNum][res],
             resolutionSupported[bInfo->boardNum][res] ? "FXTRUE" : "FXFALSE");
+#endif
   
-
   /* Glide has very good checking to see if the memory required is
   available, so we'll just return whether the driver can do it. */
   return resolutionSupported[bInfo->boardNum][res];
