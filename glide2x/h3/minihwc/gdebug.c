@@ -94,7 +94,7 @@ extern int __cdecl klvfprintf(FILE        *stream,
 static FILE *gdbg_msgfile;	// GDBG info/error file
 #else /* #ifdef KERNEL */
 
-#ifndef __linux__
+#if !defined(__linux__) && !defined(__MINGW32__)
 static FILE *gdbg_msgfile = stdout;	// GDBG info/error file
 #else
 static FILE *gdbg_msgfile;	// GDBG info/error file
@@ -167,6 +167,8 @@ gdbg_init(void)
 
 #ifdef __linux__
     gdbg_msgfile = stderr;	// GDBG info/error file
+#elif defined(__MINGW32__)
+    gdbg_msgfile = stdout;
 #endif
     
 #ifdef KERNEL
