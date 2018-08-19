@@ -1430,8 +1430,10 @@ GR_ENTRY(grSstWinClose, void, (void))
 #endif
 #endif /* !GLIDE_INIT_HAL */
 
+#ifdef __linux__ /* hwcUnmapBoard() is only in linhwc.c */
     /* Unmap the board */
     hwcUnmapBoard(gc->bInfo);
+#endif
 
     /*--------------------------
       GC Reset
