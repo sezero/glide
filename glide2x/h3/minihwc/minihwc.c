@@ -413,11 +413,17 @@
 
 #include <ddraw.h>
 #include "qmodes.h"
+#if 0 /* moved to asm so we don't need w9x ddk headers. */
 #define IS_32
 #define Not_VxD
 #include <minivdd.h>
 #include <vmm.h>
 #include <configmg.h>
+#else
+extern DWORD __cdecl CM_Get_DevNode_Key(DWORD,PCHAR,PVOID,ULONG,ULONG);
+#define CM_REGISTRY_HARDWARE 0
+#define CM_REGISTRY_SOFTWARE 1
+#endif
 
 #endif
 
@@ -511,10 +517,13 @@ static FxBool resolutionSupported[HWC_MAX_BOARDS][0xF];
 */
 #ifdef HWC_EXT_INIT
 
-typedef void *HMONITOR;
+#if (WINVER < 0x0500) && !defined(HMONITOR_DECLARED) /* <--- HACK */
+DECLARE_HANDLE(HMONITOR);
+#define HMONITOR_DECLARED
+#endif
 typedef BOOL (CALLBACK* MONITORENUMPROC)(HMONITOR, HDC, LPRECT, LPARAM);
-typedef WINUSERAPI BOOL WINAPI
-EnumDisplayMonitors_func( HDC             hdc,
+typedef BOOL (WINAPI *EnumDisplayMonitors_func)
+                        ( HDC             hdc,
                           LPCRECT         lprcClip,
                           MONITORENUMPROC lpfnEnum,
                           LPARAM          dwData);
@@ -671,8 +680,8 @@ hwcInit(FxU32 vID, FxU32 dID)
       num_monitor = 0;
 
       if ( user32 ) {
-        EnumDisplayMonitors_func*
-          enumDisplayMonitors = (void*)GetProcAddress( user32, "EnumDisplayMonitors" );
+        EnumDisplayMonitors_func enumDisplayMonitors =
+          (EnumDisplayMonitors_func)GetProcAddress( user32, "EnumDisplayMonitors" );
         
         if ( enumDisplayMonitors ) { 
           HWND
