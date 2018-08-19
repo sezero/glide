@@ -696,9 +696,7 @@ INITVG96ENTRY(init96MapBoard, FxBool , (void *rd, void *info, FxU16 vID, FxU16 d
   
   switch (vID) {
   case AT3DVID:
-#if 0
     curHALData = initAT3DGetHALData();
-#endif
     break;
   case MCRXVID:
     curHALData = initMCRXGetHALData();
