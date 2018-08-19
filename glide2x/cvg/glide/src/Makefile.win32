@@ -103,6 +103,8 @@ override USE_FIFO = 1
 ifeq ($(USE_X86),1)
 CDEFS += -DGLIDE_DISPATCH_SETUP=1 -DGLIDE_DISPATCH_DOWNLOAD=1
 override USE_FIFO = 1
+CDEFS += -DHAVE_XDRAWTRI_ASM=1
+override USE_DRAWTRI_ASM = 1
 else
 CDEFS += -DGLIDE_USE_C_TRISETUP=1
 endif
@@ -187,6 +189,9 @@ GLIDE_OBJECTS = \
 	fpu.obj \
 	xtexdl_def.obj
 
+ifeq ($(USE_DRAWTRI_ASM),1)
+GLIDE_OBJECTS += xdrawtri.obj
+endif
 ifeq ($(USE_X86),1)
 GLIDE_OBJECTS += \
 	xdraw2_def.obj
@@ -268,6 +273,8 @@ xdraw2_3dnow.obj: xdraw2.asm
 	$(AS) -o $@ $(ASFLAGS) -DGL_AMD3D=1 $<
 xtexdl_3dnow.obj: xtexdl.asm
 	$(AS) -o $@ $(ASFLAGS) -DGL_AMD3D=1 $<
+xdrawtri.obj: xdrawtri.asm
+	$(AS) -o $@ $(ASFLAGS) $<
 
 $(GLIDE_OBJECTS): fxinline.h fxgasm.h
 

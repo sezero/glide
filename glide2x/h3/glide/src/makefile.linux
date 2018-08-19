@@ -102,6 +102,8 @@ override USE_FIFO = 1
 ifeq ($(USE_X86),1)
 CDEFS += -DGLIDE_DISPATCH_SETUP=1 -DGLIDE_DISPATCH_DOWNLOAD=1
 override USE_FIFO = 1
+CDEFS += -DHAVE_XDRAWTRI_ASM=1
+override USE_DRAWTRI_ASM = 1
 else
 CDEFS += -DGLIDE_USE_C_TRISETUP=1
 endif
@@ -180,6 +182,9 @@ GLIDE_OBJECTS = \
 	cpuid.o \
 	xtexdl_def.o
 
+ifeq ($(USE_DRAWTRI_ASM),1)
+GLIDE_OBJECTS += xdrawtri.o
+endif
 ifeq ($(USE_X86),1)
 GLIDE_OBJECTS += \
 	xdraw2_def.o
@@ -241,8 +246,6 @@ $(GLIDE_LIBDIR)/$(GLIDE_SHARED): $(GLIDE_OBJECTS:.o=.lo)
 #	rules(2)
 ###############################################################################
 
-#using nasm now
-#
 #cpuid.o: cpudtect.S
 #	$(CC) -o $@ -xassembler-with-cpp -c $(CDEFS) $<
 #xdraw2_def.o: xdraw2.S
@@ -251,6 +254,8 @@ $(GLIDE_LIBDIR)/$(GLIDE_SHARED): $(GLIDE_OBJECTS:.o=.lo)
 #	$(CC) -o $@ -xassembler-with-cpp -c $(CDEFS) -DGL_AMD3D=1 $<
 #xtexdl_3dnow.o: xtexdl.S
 #	$(CC) -o $@ -xassembler-with-cpp -c $(CDEFS) -DGL_AMD3D=1 $<
+#xdrawtri.o: xdrawtri.S
+#	$(CC) -o $@ -xassembler-with-cpp -c $(CDEFS) $<
 cpuid.o: cpudtect.asm
 	$(AS) -o $@ $(ASFLAGS) $<
 xdraw2_def.o: xdraw2.asm
@@ -259,6 +264,8 @@ xdraw2_3dnow.o: xdraw2.asm
 	$(AS) -o $@ $(ASFLAGS) -DGL_AMD3D=1 $<
 xtexdl_3dnow.o: xtexdl.asm
 	$(AS) -o $@ $(ASFLAGS) -DGL_AMD3D=1 $<
+xdrawtri.o: xdrawtri.asm
+	$(AS) -o $@ $(ASFLAGS) $<
 
 cpuid.lo: cpuid.o
 	$(CP) $< $@
@@ -267,6 +274,8 @@ xdraw2_def.lo: xdraw2_def.o
 xdraw2_3dnow.lo: xdraw2_3dnow.o
 	$(CP) $< $@
 xtexdl_3dnow.lo: xtexdl_3dnow.o
+	$(CP) $< $@
+xdrawtri.lo: xdrawtri.o
 	$(CP) $< $@
 
 $(GLIDE_OBJECTS): fxinline.h fxgasm.h

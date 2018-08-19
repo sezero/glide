@@ -649,7 +649,8 @@ all_done:                       /* come here on degenerate lines */
 /*---------------------------------------------------------------------------
  ** grDrawTriangle
  */
-#if (GLIDE_PLATFORM & GLIDE_OS_WIN32) && !GLIDE_USE_C_TRISETUP && !defined(GLIDE_DEBUG)
+#ifndef HAVE_XDRAWTRI_ASM	/* grDrawTriangle() not in asm */
+#if defined(_MSC_VER) && !GLIDE_USE_C_TRISETUP && !defined(GLIDE_DEBUG)
 __declspec(naked)
 #endif
 GR_ENTRY(grDrawTriangle, void, (const GrVertex *a, const GrVertex *b, const GrVertex *c))
@@ -693,8 +694,8 @@ GR_ENTRY(grDrawTriangle, void, (const GrVertex *a, const GrVertex *b, const GrVe
 
 all_done:
   GR_END();
-#else
-#if defined(__MSC__)
+
+#elif defined(_MSC_VER)
   {
     __asm {
       mov edx, [_GlideRoot + kCurGCOffset];
@@ -702,59 +703,13 @@ all_done:
       jmp eax;
     }
   }
-#endif
-#if defined( __linux__ )
 
-  /* Here's the basic strategy for this dispatch code:
-   *   We jump to _GlideRoot.curGC->archDispatchProcs.triSetupProc
-   *   which contains code that looks like a function, we leave the
-   *   paramters passed to grDrawTriangle on the stack and the dispatched
-   *   function picks them up.  However we have to compensate for 
-   *   the compiler pushing anything on the stack.  The following describes
-   *   why and when we have to pop.
-   *
-   * BIG_OPT: gcc pushes a frame pointer to maintain things, BIG_OPT
-   *          turns on -fomit-frame-pointer so we don't have to pop it.
-   *
-   * PIC:     When using position independant code gcc stores eip in ebx
-   *          so it saves ebx from the previous call automatically.  
-   *          Therefore, once we have the jump address we have to pop ebx
-   *          to restore the stack.  
-   *
-   * The syntax is further complicated by the fact that gcc can (and will)
-   * emit code between the asm statements, so they all need to be in a single
-   * asm statement, wrapped with #ifdef's.  This means we have fun with 
-   * deciding if we need to list trashed registers and when we need commas
-   * between them.
-   */
-
-  asm (
-#if defined(PIC)
-       "popl %%ebx\n\t"
-#endif 
-#if !defined(BIG_OPT)
-       "popl %%ebp\n\t"
-#endif
-       "jmp *%0" 
-       : /* no outputs */        
-       : "m" (_GlideRoot.curGC->curArchProcs.triSetupProc)
-#if defined (PIC) || !defined (BIG_OPT)
-       :
-#endif
-#if defined (PIC)
-        "ebx"
-#endif
-#if defined (PIC) && !defined (BIG_OPT)
-       ,
-#endif
-#if !defined(BIG_OPT)
-        "ebp"
-#endif
-       );
-#endif
+#else
+#error "Write triangle proc dispatch for this compiler"
 #endif
 #undef FN_NAME
 } /* grDrawTriangle */
+#endif /* HAVE_XDRAWTRI_ASM */
 
 /*---------------------------------------------------------------------------
  ** grDrawPlanarPolygon
