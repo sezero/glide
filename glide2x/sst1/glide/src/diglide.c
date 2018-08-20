@@ -332,7 +332,7 @@ GR_DIENTRY(grTriStats, void, ( FxU32 *trisProcessed, FxU32 *trisDrawn ))
 void GR_CDECL
 _grFence( void )
 {
-#if (GLIDE_PLATFORM & GLIDE_HW_SST96)
+#if (GLIDE_PLATFORM & GLIDE_HW_SST96) && GDBG_INFO_ON
   GR_DCL_GC;
   GDBG_INFO((125,"\t\t\t\t%d writes since last fence\n",
              gc->hwDep.sst96Dep.writesSinceFence));

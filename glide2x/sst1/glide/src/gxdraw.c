@@ -128,7 +128,7 @@ static char *indexNames[] = {
 GR_DDFUNC(_trisetup, FxI32, ( const GrVertex *va, const GrVertex *vb, const GrVertex *vc ))
 {
   GR_DCL_GC;
-  GR_DCL_HW;
+/*GR_DCL_HW;*/
   const float *fa = &va->x;
   const float *fb = &vb->x;
   const float *fc = &vc->x;
@@ -535,7 +535,7 @@ GDBG_INFO((285,"p0,1y: %g %g dpdy: %g\n",dpBC * dxAB,dpAB * dxBC,dpdy));
 GR_DDFUNC(_trisetup_nogradients, FxI32, ( const GrVertex *va, const GrVertex *vb, const GrVertex *vc ))
 {
   GR_DCL_GC;
-  GR_DCL_HW;
+/*GR_DCL_HW;*/
   const float *fa = &va->x;
   const float *fb = &vb->x;
   const float *fc = &vc->x;
