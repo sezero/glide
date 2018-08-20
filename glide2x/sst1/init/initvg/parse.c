@@ -193,7 +193,7 @@ FX_ENTRY FxBool FX_CALL sst1InitVoodooFile() {
       }
       strcpy(filename, tmpPtr);
       if (filename[strlen(filename)-1] == '\\')
-	sprintf(filename, "%voodoo", filename);
+	sprintf(filename, "%svoodoo", filename);
       else
 	sprintf(filename, "%s/voodoo", filename);
       i++;
