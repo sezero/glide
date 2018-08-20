@@ -1638,7 +1638,7 @@ INITVG96ENTRY(init96Idle, void , (Init96WriteMethod *wcb) )
   Return:
   void opinter to buffer
   -------------------------------------------------------------------*/
-#define LFB_OFFSET( X ) ( X & 0x3fffff )
+#define LFB_OFFSET( X ) ( X & 0x3fffff ) /* was 0x1fffff */
 
 INITVG96ENTRY(init96GetBufferPtr, void*, (InitBuffer_t buffer, int *strideBytes)) 
 {
@@ -1665,7 +1665,12 @@ INITVG96ENTRY(init96GetBufferPtr, void*, (InitBuffer_t buffer, int *strideBytes)
     break;
 
   case INIT_BUFFER_AUXBUFFER:
-    rv = (void*)(((char*)sstHW) + LFB_OFFSET(ab0));
+    rv = (void*)(((char*)sstHW) + LFB_OFFSET(ab0Base));
+    /* [dBorca]
+     * used to be ab0, but I changed it to ab0Base.
+     * VG96STRIDE(ab0Stride) doesn't really matter,
+     * because we stripped off the high bits anyway!
+     */
     *strideBytes = ab0Stride;
     GDBG_INFO((80, "  get aux buffer pointer" ));
     break;

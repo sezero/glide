@@ -16,6 +16,9 @@
 ** THE UNITED STATES.  
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
+**
+** 35    11/03/98 11:13a Peter
+** release exclusive mode in the fullscreen case of restoreVideo
  * 
  * 34    1/12/98 10:22p Dow
  * H3D Stereo Support
@@ -732,6 +735,15 @@ dxClose(void)
  *  to only create lpDD1 once per application execution. /PGJ
  */
 #if 1
+  /* If we're fullscreen then we need to release exclusive mode access
+   * to the hw otherwise re-opens won't work. DD seems to take care of
+   * this if the app just quits, but nuking the surfaces does not seem
+   * to be sufficient in the normal case.  
+   */
+  if (IsFullScreen) {
+    IDirectDraw2_SetCooperativeLevel(lpDD, hWndApp, DDSCL_NORMAL );
+  }
+
   // Release any allocated buffers
   if( lpClipper) IDirectDrawSurface2_Release( lpClipper);
   if( lpFront  ) IDirectDrawSurface2_Release( lpFront  );
