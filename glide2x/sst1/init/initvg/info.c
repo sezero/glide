@@ -37,7 +37,7 @@
 
 static FxBool 
 readAndSum4x4(FxU32 *sstbase, FxU32 x, FxU32 y, 
-    		FxU32 *r_sum, FxU32 *g_sum, FxU32 *b_sum)
+		FxU32 *r_sum, FxU32 *g_sum, FxU32 *b_sum)
 {
     FxU32 rd_x, rd_y;
     FxU32 rd_col = 0;
@@ -166,7 +166,7 @@ unDither(FxU32 r_sum, FxU32 g_sum, FxU32 b_sum, FxU32 *result)
 static FxBool
 getTmuConfigData(FxU32 *sstbase, sst1DeviceInfoStruct *info)
 {
-    int x=0, y=0;
+    int i, x=0, y=0;
     FxU32 r_sum, g_sum, b_sum;
     volatile Sstregs *sst = (Sstregs *) sstbase;
 
@@ -187,8 +187,9 @@ getTmuConfigData(FxU32 *sstbase, sst1DeviceInfoStruct *info)
     if(unDither(r_sum,g_sum,b_sum,&info->tmuConfig) == FXFALSE)
 	return(FXFALSE);
 
-    if(GETENV(("SST_TMUCFG")))
-	SSCANF(GETENV(("SST_TMUCFG")), "%i", &info->tmuConfig);
+    if(GETENV(("SST_TMUCFG")) &&
+		(SSCANF(GETENV(("SST_TMUCFG")), "%i", &i) == 1))
+	info->tmuConfig = i;
 
     /* reset trex's init registers */
     ISET(SST_TREX(sst,0)->trexInit1, info->tmuInit1[0]);
@@ -277,7 +278,7 @@ sst1InitGetTmuMemory(FxU32 *sstbase, sst1DeviceInfoStruct *info, FxU32 tmu,
     if (data == SENSE0) {*TmuMemorySize = 1; return(FXTRUE);}
 
     INIT_PRINTF(("sst1InitGetTmuMemory() ERROR: Could not detect memory size.\n"));
-	return(FXFALSE);
+    return(FXFALSE);
 }
 
 /*---------------------------------------------------------------------------
@@ -453,9 +454,8 @@ sst1InitGetFbiInfo(FxU32 *sstbase, sst1DeviceInfoStruct *info)
 	info->fbiMemSize = fbiMemSize(sstbase);
 
 	/* Detect board identification and memory speed */
-	if(GETENV(("SST_FBICFG")))
-	    SSCANF(GETENV(("SST_FBICFG")), "%i", &info->fbiConfig);
-	else
+	if(!GETENV(("SST_FBICFG")) ||
+	   (SSCANF(GETENV(("SST_FBICFG")), "%i", &info->fbiConfig) != 1))
 	  info->fbiConfig = (IGET(sst->fbiInit3) & SST_FBI_MEM_TYPE) >>
 			SST_FBI_MEM_TYPE_SHIFT;
 
@@ -476,8 +476,7 @@ sst1InitGetFbiInfo(FxU32 *sstbase, sst1DeviceInfoStruct *info)
 **        been allocated
 **
 */
-FX_EXPORT FxBool FX_CSTYLE sst1InitGetDeviceInfo(FxU32 *sstbase,
-  sst1DeviceInfoStruct *info)
+FX_EXPORT FxBool FX_CSTYLE sst1InitGetDeviceInfo(FxU32 *sstbase, sst1DeviceInfoStruct *info)
 {
     FxBool retval;
 
@@ -505,14 +504,12 @@ FxBool sst1InitFillDeviceInfo(FxU32 *sstbase, sst1DeviceInfoStruct *info)
         /* fill device info struct with sane values... */
 	INIT_PRINTF(("sst1DeviceInfo: Filling info Struct with default values...\n"));
 
-	if(GETENV(("SST_FBICFG")))
-	    SSCANF(GETENV(("SST_FBICFG")), "%i", &info->fbiConfig);
-	else
+	if(!GETENV(("SST_FBICFG")) ||
+	   (SSCANF(GETENV(("SST_FBICFG")), "%i", &info->fbiConfig) != 1))
 	  info->fbiConfig = 0x0;
 
-	if(GETENV(("SST_TMUCFG")))
-	    SSCANF(GETENV(("SST_TMUCFG")), "%i", &info->tmuConfig);
-	else
+	if(!GETENV(("SST_TMUCFG")) ||
+	   (SSCANF(GETENV(("SST_TMUCFG")), "%i", &info->tmuConfig) != 1))
 	  info->tmuConfig = 0x0;
 
 	info->numberTmus = 1;
@@ -576,15 +573,15 @@ FxBool sst1InitFillDeviceInfo(FxU32 *sstbase, sst1DeviceInfoStruct *info)
 		      iniDac->dacManufacturer, iniDac->dacDevice));
     }
     else {
-	INIT_PRINTF(("sst1DeviceInfo: Dac Type: "));
-	if(info->fbiDacType == SST_FBI_DACTYPE_ATT)
-	  INIT_PRINTF(("AT&T ATT20C409\n"));
-	else if(info->fbiDacType == SST_FBI_DACTYPE_ICS)
-	  INIT_PRINTF(("ICS ICS5342\n"));
-	else if(info->fbiDacType == SST_FBI_DACTYPE_TI)
-	  INIT_PRINTF(("TI TVP3409\n"));
-	else
-	  INIT_PRINTF(("Unknown\n"));
+      INIT_PRINTF(("sst1DeviceInfo: Dac Type: "));
+      if(info->fbiDacType == SST_FBI_DACTYPE_ATT)
+	INIT_PRINTF(("AT&T ATT20C409\n"));
+      else if(info->fbiDacType == SST_FBI_DACTYPE_ICS)
+	INIT_PRINTF(("ICS ICS5342\n"));
+      else if(info->fbiDacType == SST_FBI_DACTYPE_TI)
+	INIT_PRINTF(("TI TVP3409\n"));
+      else
+	INIT_PRINTF(("Unknown\n"));
     }
     INIT_PRINTF(("sst1DeviceInfo: SliDetect:%d\n", info->sstSliDetect));
 

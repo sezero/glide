@@ -104,20 +104,26 @@ static const char *setRange(const char *buf, int val)
 {
     int r0,r1,pos=0;
 
-    sscanf(buf,"%i%n",&r0,&pos);		// parse the first integer
-    if (buf[pos]=='-' || buf[pos]==':') {	// if there's a second
-	buf += pos+1;
-	sscanf(buf,"%i%n",&r1,&pos);		// then parse it
+    if (sscanf(buf,"%i%n",&r0,&pos) >= 1)       // parse the first integer
+    {
+      if (buf[pos]=='-' || buf[pos]==':') {     // if there's a second
+          buf += pos+1;
+          if (sscanf(buf,"%i%n",&r1,&pos) < 1)  // then parse it
+          {
+             r1 = r0;
+             pos = 0;
+          }
+      }
+      else
+          r1 = r0;
+
+      if (r0 < 0) r0 = 0;                         // sanity checks
+      if (r1 >= GDBG_MAX_LEVELS) r1 = GDBG_MAX_LEVELS-1;
+      if (r1 < r0) r1 = r0;
+
+      while (r0 <= r1)                            // now set the debuglevel levels
+          gdbg_debuglevel[r0++] = val;
     }
-    else
-	r1 = r0;
-
-    if (r0 < 0) r0 = 0;				// sanity checks
-    if (r1 >= GDBG_MAX_LEVELS) r1 = GDBG_MAX_LEVELS-1;
-    if (r1 < r0) r1 = r0;
-
-    while (r0 <= r1)				// now set the debuglevel levels
-	gdbg_debuglevel[r0++] = val;
 
     return buf + pos;				// and return rest of string
 }

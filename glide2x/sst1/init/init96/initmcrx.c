@@ -252,7 +252,7 @@ INITMCRXENTRY(initMCRXEnableRegs, FxBool, (InitRegisterDesc *rd))
 {
 #define FN_NAME "initMCRXEnableRegs"
   FxU32 
-    tmp;
+    tmp, u;
   FxU8
     crtcIndex;
   FxU16
@@ -308,10 +308,9 @@ INITMCRXENTRY(initMCRXEnableRegs, FxBool, (InitRegisterDesc *rd))
   GDBG_INFO((80, "%s:  Enabling PUMA\n", FN_NAME));
   CRTC_GET(0x28, tmp);
   tmp |= 1;
-
-  envVal = myGetenv("MCRX_28");
-  if (envVal)
-    sscanf(envVal, "%x", &tmp);
+  if ((envVal = myGetenv("MCRX_28")) &&
+      (sscanf(envVal, "%x", &u) == 1))
+    tmp = u;
   CRTC_SET(0x28, tmp);
 
   GDBG_INFO((80, "%s:  Restoring Protection\n", FN_NAME));
@@ -559,9 +558,9 @@ INITMCRXENTRY(initMCRXUseTiles, int, (InitRegisterDesc *rd,
   if (nBuffers == 3) tmp |= 0x08;
   mcrxHALData.initSwapTiles = initMCRXSwapTiles;
 
-  envVal = myGetenv("MRCX_71");
-  if (envVal)
-    sscanf(envVal, "%x", &tmp);
+  if ((envVal = myGetenv("MRCX_71")) &&
+      (sscanf(envVal, "%x", &i) == 1))
+    tmp = i;
   CRTC_SET(0x70, tmp);
 
   /* Reset the current display buffer bits (0-1) */
