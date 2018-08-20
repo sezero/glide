@@ -528,7 +528,7 @@ GR_ENTRY(grBufferClear, void, (GrColor_t color, GrAlpha_t alpha, FxU16 depth))
       {
         GR_SET_EXPECTED_SIZE(sizeof(FxU32), 1);
         GR_SET(BROADCAST_ID, hw, bltSize,  
-               ((((((tileHi - tileLow) * gc->hwDep.cvgDep.xTilePages) - 1) << 16) | (0x1000 >> 3)) - 1));
+               (((((tileHi - tileLow) * gc->hwDep.cvgDep.xTilePages) - 1) << 16) | (0x1000 >> 3) - 1));
         GR_CHECK_SIZE();
       }
 
@@ -874,7 +874,7 @@ GR_ENTRY(grBufferSwap, void, (int swapInterval))
       *bufPtrs[i] = (*bufPtrs[i] + 1) % numBufs;
     }
 
-  GDBG_INFO(gc->myLevel, 
+    GDBG_INFO(gc->myLevel, 
               "\trenderBuf: 0x%X\n",
               gc->hwDep.cvgDep.renderBuf);
   }
@@ -1446,7 +1446,6 @@ GR_STATE_ENTRY(grDepthBufferMode, void, (GrDepthBufferMode_t mode))
 */
 #ifdef GLIDE_DEBUG
 FxBool
-
 _grCanSupportDepthBuffer(void)
 {
   GR_DCL_GC;
