@@ -244,8 +244,8 @@ GR_ENTRY(guMPDrawTriangle, void, ( const GrVertex *a, const GrVertex *b, const G
 
       FxU32 alphamode, alphamode_orig;
       FxU32 fbzcolorpath, fbzcolorpath_orig;
-      FxU32 fbzmode, fbzmode_orig;
-      FxU32 fogmode, fogmode_orig;
+      FxU32 fbzmode, fbzmode_orig = 0;
+      FxU32 fogmode, fogmode_orig = 0;
 
       alphamode = alphamode_orig = gc->state.fbi_config.alphaMode;
       fbzcolorpath = fbzcolorpath_orig = gc->state.fbi_config.fbzColorPath;
@@ -362,8 +362,8 @@ GR_ENTRY(guMPDrawTriangle, void, ( const GrVertex *a, const GrVertex *b, const G
 
       FxU32 alphamode, alphamode_orig;
       FxU32 fbzcolorpath, fbzcolorpath_orig;
-      FxU32 fbzmode, fbzmode_orig;
-      FxU32 fogmode, fogmode_orig;
+      FxU32 fbzmode, fbzmode_orig = 0;
+      FxU32 fogmode, fogmode_orig = 0;
 
       alphamode = alphamode_orig = gc->state.fbi_config.alphaMode;
       fbzcolorpath = fbzcolorpath_orig = gc->state.fbi_config.fbzColorPath;
