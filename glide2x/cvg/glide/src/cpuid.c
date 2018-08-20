@@ -1,6 +1,7 @@
 /*
  * CPU detection code
  *
+ *
  * Revision 1.1.2.2  2006/09/02 03:12:29  guillemj
  * Backport glide3 fix for PIC compilation with gcc 4.1 from Hans de Goede.
  *
@@ -33,14 +34,17 @@
  *
  */
 
-
 #include <signal.h>
 #include <setjmp.h>
 #include <string.h>
 
 #include "cpuid.h"
 
-typedef unsigned long word32;
+#if defined(__GNUC__) && ((__GNUC__ >= 4) || ((__GNUC__ == 3) && (__GNUC_MINOR__ > 3)))
+typedef unsigned int __attribute__((__may_alias__)) word32;
+#else
+typedef unsigned int word32;
+#endif
 
 /* These are the bit flags that get set on calling cpuid
  * with register eax set to 1
@@ -87,7 +91,6 @@ typedef unsigned long word32;
 static jmp_buf j;
 
 
-
 /* Desc: signal handler
  *
  * In  : signal number
@@ -99,7 +102,6 @@ static void handler (int signal)
 {
  longjmp(j, signal + 1); /* so we can tell... also ensure we don't pass 0 */
 }
-
 
 
 /* Desc: check if CPU has specific feature
@@ -133,7 +135,6 @@ static int check_feature (int feature)
  }
 }
 #endif
-
 
 
 /* Desc: perform (possibly faulting) instructions in a safe manner
@@ -180,7 +181,6 @@ static int has_feature (int feature)
  return feature;
 #endif
 }
-
 
 
 /* Desc: get CPU info
@@ -234,7 +234,7 @@ int _cpuid (_p_info *pinfo)
 	movl	%%edx, %0		\n\
  0:					\n\
  ":"=g"(dwExt), "=g"(dwId), "=g"(dwFeature),
-   "=g"(((long *)Ident)[0]), "=g"(((long *)Ident)[1]), "=g"(((long *)Ident)[2])
+   "=g"(((word32 *)Ident)[0]), "=g"(((word32 *)Ident)[1]), "=g"(((word32 *)Ident)[2])
  ::"%eax", "%ecx", "%edx");
 #else
     _asm
@@ -313,7 +313,6 @@ notamd:
 
  return feature;
 }
-
 
 
 #if CPUTEST
