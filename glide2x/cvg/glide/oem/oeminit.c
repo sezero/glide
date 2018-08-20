@@ -22,7 +22,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#ifndef __linux__
+#ifdef _WIN32
 #include <windows.h>
 #endif
 
@@ -92,27 +92,30 @@ MyDebugPrintf(FILE* outputFile, const char* fmtString, ...)
 
     debugDumpP = ((envStr != NULL) &&
                   (atoi(envStr) >= 80));
-    
+
     calledP = FXTRUE;
   }
 
   if (debugDumpP) {
     va_list args;
-    
+
 #if !DIRECTX
     va_start(args, fmtString);
     if (outputFile != NULL) vfprintf(outputFile, fmtString, args);
     va_end(args);
 #endif /* !DIRECTX */
-    
+
     va_start(args, fmtString);
+#if __WIN32__
     {
-      //char msgBuf[256];
-      
-      vfprintf(stderr, fmtString, args);
-      //vsprintf(msgBuf, fmtString, args);
-      //OutputDebugString(msgBuf);
+      char msgBuf[256];
+
+      vsprintf(msgBuf, fmtString, args);
+      OutputDebugString(msgBuf);
     }
+#else
+    vfprintf(stderr, fmtString, args);
+#endif
     va_end(args);
   }
 }
@@ -159,7 +162,7 @@ GlideRes2String(GrScreenResolution_t res)
 
 static const char*
 GlideRefresh2String(GrScreenRefresh_t refresh)
-{    
+{
   static const char* refreshStrings[] = {
     "60", "70", "72", "75", "80", "90", "100", "85", "120"
   };
@@ -368,5 +371,3 @@ FX_EXPORT FxU32 FX_CSTYLE fxoemControl(FxU32 mode)
   return 1;
 #undef FN_NAME
 } /* fxoemRestoreVideo */
-
-
