@@ -334,8 +334,9 @@ GR_ENTRY(grAlphaCombine, void, (GrCombineFunction_t function, GrCombineFactor_t 
     fbzColorPath |= SST_ENTEXTUREMAP;
   
   /* transition into/out of texturing ... add nopCMD */
-  if(oldTextureEnabled != (fbzColorPath & SST_ENTEXTUREMAP))
+  if(oldTextureEnabled != (fbzColorPath & SST_ENTEXTUREMAP)) {
     P6FENCE_CMD( GR_SET(hw->nopCMD,0) );
+  }
 
    GR_SET( hw->fbzColorPath, fbzColorPath );
   gc->state.fbi_config.fbzColorPath = fbzColorPath;
@@ -914,8 +915,9 @@ GR_ENTRY(grColorCombine, void, ( GrCombineFunction_t function, GrCombineFactor_t
     fbzColorPath |= SST_ENTEXTUREMAP;
 
   /* if we transition into/out of texturing ... add nopCMD */
-  if(oldTextureEnabled != (fbzColorPath & SST_ENTEXTUREMAP))
+  if(oldTextureEnabled != (fbzColorPath & SST_ENTEXTUREMAP)) {
     P6FENCE_CMD( GR_SET(hw->nopCMD,0) );
+  }
 
   /* update register */
   GR_SET( hw->fbzColorPath, fbzColorPath );
