@@ -225,10 +225,6 @@ __errExit:
 
 #if defined(INIT_DOS) || defined(INIT_LINUX)
 
-#if __WIN32__
-#include <windows.h>
-#endif /* __WIN32__ */
-
 /* Get the definition of myGetenv for glide builds */
 #include <init.h>
 
