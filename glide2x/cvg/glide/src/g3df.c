@@ -62,14 +62,12 @@
 */
 #include <stdio.h>
 #include <string.h>
-#include <ctype.h>
 #include <3dfx.h>
 
 #define FX_DLL_DEFINITION
 #include <fxdll.h>
 #include <glide.h>
 #include "fxglide.h"
-#include <ctype.h>
 
 extern const int _grMipMapHostWH[GR_ASPECT_1x8 + 1][GR_LOD_1 + 1][2];
 extern FxU32 _gr_aspect_index_table[];
@@ -305,7 +303,8 @@ GR_DIENTRY(gu3dfGetInfo, FxBool,
   {
     char *tempStr = (char*)color_format;
     while (*tempStr != '\0') {
-          *tempStr = toupper(*tempStr);
+          if (*tempStr >= 'a' && *tempStr <= 'z')
+              *tempStr -= ('a'-'A');
           tempStr++;
     }
   }

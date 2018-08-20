@@ -27,7 +27,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 #include <malloc.h>
 #include <3dfx.h>
 #define FX_DLL_DEFINITION
@@ -336,6 +335,16 @@ static int sst1InitFgets(char *string, FILE *stream)
     return(validChars);
 }
 
+static __inline int sst1_isspace (int c)
+{
+    switch(c) {
+    case ' ':  case '\t':
+    case '\n': case '\r':
+    case '\f': case '\v': return 1;
+    }
+    return 0;
+}
+
 static int sst1InitFgetc(FILE *stream)
 {
     static int column = 0;
@@ -370,11 +379,13 @@ static int sst1InitFgetc(FILE *stream)
                 } else
                     continue;
             } else {
-                if(isspace(charRead))
+                if(sst1_isspace(charRead))
                     continue;
                 validChars++;
                 column++;
-                charReadL = (islower(charRead)) ? toupper(charRead) : charRead;
+                charReadL = charRead;
+                if (charReadL >= 'a' && charReadL <= 'z')
+                    charReadL -= ('a'-'A');
                 return(charReadL);
             }
         }
@@ -843,7 +854,8 @@ static void sst1InitToLower(char *string)
     char *ptr = string;
 
     while(*ptr) {
-        *ptr = (isupper(*ptr)) ? tolower(*ptr) : *ptr;
+        if (*ptr >= 'A' && *ptr <= 'Z')
+            *ptr += ('a'-'A');
         ptr++;
     }
 }
