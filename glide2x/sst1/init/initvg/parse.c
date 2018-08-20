@@ -606,7 +606,7 @@ static int sst1InitParseDacRdWr(char *string, sst1InitDacRdWrStruct *dacRdWrPtr)
                 return(0);
             if(data[strlen(data)-1] != ')')
                 return(0);
-            data[strlen(data)-1] = (char) NULL;
+            data[strlen(data)-1] = 0;
             SSCANF(addr, "%i", &dacRdWrPtr->addr);
             SSCANF(data, "%i", &dacRdWrPtr->data);
         }
