@@ -1,4 +1,4 @@
-# Linux makefile for Glide2 and Texus2
+# Linux makefile for Glide2
 #
 #  Copyright (c) 2003 - Daniel Borca
 #  Email : dborca@users.sourceforge.net
@@ -54,16 +54,16 @@ export BUILD_NUMBER = 40404
 export FX_GLIDE_HW ?= h3
 
 ifeq ($(FX_GLIDE_HW),sst96)
-G3_DIR = sst1/glide/src
+G2_DIR = sst1/glide/src
 else
-G3_DIR = $(FX_GLIDE_HW)/glide/src
+G2_DIR = $(FX_GLIDE_HW)/glide/src
 endif
 
 all:
-	make -f makefile.linux -C $(G3_DIR)
+	make -f Makefile.linux -C $(G2_DIR)
 
 clean:
-	make -f makefile.linux -C $(G3_DIR) clean
+	make -f Makefile.linux -C $(G2_DIR) clean
 
 realclean:
-	make -f makefile.linux -C $(G3_DIR) realclean
+	make -f Makefile.linux -C $(G2_DIR) realclean

@@ -73,10 +73,10 @@ G3_DIR = $(FX_GLIDE_HW)/glide3/src
 endif
 
 all:
-	make -f makefile.linux -C $(G3_DIR)
+	make -f Makefile.linux -C $(G3_DIR)
 
 clean:
-	make -f makefile.linux -C $(G3_DIR) clean
+	make -f Makefile.linux -C $(G3_DIR) clean
 
 realclean:
-	make -f makefile.linux -C $(G3_DIR) realclean
+	make -f Makefile.linux -C $(G3_DIR) realclean
