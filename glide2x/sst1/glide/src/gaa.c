@@ -163,7 +163,6 @@ GR_ENTRY(grAADrawPoint, void, ( const GrVertex *e ))
 static void grSetVertexParameter(const GrVertex *v1)
 {
   GR_DCL_GC;
-  GR_DCL_HW;
   struct dataList_s *dlp;
   int i;
   float *fp, dp;

@@ -1071,7 +1071,6 @@ GR_ENTRY(grSstControl, FxBool, ( GrControl_t code ))
 {
 #define FN_NAME "grSstControl"  
 
-  GR_DCL_GC;
   GDBG_INFO((41, "%s:  code = 0x%x, windowsInit = %d\n", FN_NAME,
              code, _GlideRoot.windowsInit));
   
@@ -1150,6 +1149,7 @@ GR_ENTRY(grSstControl, FxBool, ( GrControl_t code ))
     ctrlflag = initControl(code);
 #if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
     {
+      GR_DCL_GC;
       if (gc->oemInit) {
         FARPROC oemControl = GetProcAddress(gc->oemInit, "_fxoemControl@4");
         if (oemControl)
