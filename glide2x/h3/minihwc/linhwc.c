@@ -103,7 +103,7 @@ static int		    screenNum   = 0;
 static int		    screenWidth = 0;
 static int		    screenHeight= 0;
 static int		    screenDepth = 0;
-static void*		    screenPhys  = 0;
+static void*		    screenPhys  = 0;/* not really used */
 static int		    screenMem   = 0;
 static XF86VidModeModeInfo  **vidModes  = 0;
 static int		    inDGA       = 0;
@@ -124,7 +124,7 @@ typedef struct envitem_t {
 static envitem *first=0;
 static int envinit=0;
 
-static void loadEnvFile() {
+static void loadEnvFile(void) {
   FILE *file;
   char data[128];
   char *env, *val;
@@ -162,7 +162,8 @@ static void loadEnvFile() {
   }
 }
 
-static void deleteEnvData() {
+#if 0 /* not used */
+static void deleteEnvData(void) {
   envitem *ptr, *next;
 
   ptr=first;
@@ -176,9 +177,10 @@ static void deleteEnvData() {
   first=0;
   envinit=0;
 }
+#endif
 
 const char *
-hwcGetErrorString()
+hwcGetErrorString(void)
 {
 #define FN_NAME "hwcGetErrorString"
   return errorString;
@@ -188,6 +190,7 @@ hwcGetErrorString()
 static int initX(int index) {
   int eventbase, errorbase, flags;
   int banksize;
+  unsigned int baseaddr;
 
   if (dpy!=0) return FXTRUE;
   dpy=XOpenDisplay("");
@@ -205,8 +208,9 @@ static int initX(int index) {
     }
   }
   screenNum=DefaultScreen(dpy);
-  XF86DGAGetVideoLL(dpy, screenNum, (int*)&screenPhys, &screenWidth, &banksize,
+  XF86DGAGetVideoLL(dpy, screenNum, &baseaddr, &screenWidth, &banksize,
 		    &screenMem);
+  screenPhys = (void *)baseaddr;
   screenMem*=1024;
   screenHeight=DisplayHeight(dpy, screenNum);
   screenDepth=DefaultDepth(dpy, screenNum);
@@ -239,10 +243,10 @@ hwcInit(FxU32 vID, FxU32 dID) {
       hInfo.boardInfo[i].pciInfo.initialized = 1;
       hInfo.boardInfo[i].pciInfo.vendorID = vID;
       hInfo.boardInfo[i].pciInfo.deviceID = dID;
-      /* 
+      /*
        * NOTE: in the code above we learn about memsize here:
        *   hInfo.boardInfo[i].h3Mem
-       * 
+       *
        * However, in DOS, since we have not mapped the board yet, so we have
        * to wait until later. (see hwcInitRegisters())  - dwj
        */
@@ -309,7 +313,7 @@ hwcInitRegisters(hwcBoardInfo *bInfo) {
     printf(errorString, "hwcInitRegisters Called before hwcMapBoard\n");
     return FXFALSE;
   }
-      
+
   bInfo->regInfo.initialized = FXTRUE;
 
   bInfo->regInfo.ioMemBase =
@@ -340,10 +344,10 @@ hwcInitRegisters(hwcBoardInfo *bInfo) {
       pciCommandReg =
         BIT(0) |              /* enable i/o decode */
         BIT(1);               /* enable memory decode */
-  
+
     /* Enable PCI memory and I/O decode */
     pciSetConfigData(PCI_COMMAND, bInfo->deviceNum, &pciCommandReg);
-    
+
     HWC_IO_LOAD(bInfo->regInfo, pciInit0, pciInit0);
     pciInit0 |= SST_PCI_READ_WS | SST_PCI_WRITE_WS;
     HWC_IO_STORE(bInfo->regInfo, pciInit0, pciInit0);  
@@ -371,7 +375,7 @@ hwcAllocBuffers(hwcBoardInfo *bInfo, FxU32 nColBuffers, FxU32 nAuxBuffers)
     sprintf(errorString, "%s:  Called before video initialization\n", FN_NAME);
     return FXFALSE;
   }
-    
+
   GDBG_INFO(80, "%s(0x%x, 0x%x, 0x%x)\n", FN_NAME, bInfo, nColBuffers, nAuxBuffers);
 
   /* I've decided on > 2 instead of == 3 because we may support more
@@ -431,7 +435,7 @@ hwcAllocBuffers(hwcBoardInfo *bInfo, FxU32 nColBuffers, FxU32 nAuxBuffers)
         top = bInfo->buffInfo.auxBuffStart;
       else
         top = h3Mem;
-      
+
       bInfo->buffInfo.colBuffStart[i] = 
         bInfo->buffInfo.colBuffEnd[i] = top;
     } else {
@@ -439,7 +443,7 @@ hwcAllocBuffers(hwcBoardInfo *bInfo, FxU32 nColBuffers, FxU32 nAuxBuffers)
         bInfo->buffInfo.colBuffEnd[i] = 
         bInfo->buffInfo.colBuffStart[i + 1];
     }
-    
+
     bInfo->buffInfo.colBuffStart[i] -= bufSize;
 
     /* As a memory access optmization colorBuffers start on even
@@ -561,14 +565,14 @@ hwcInitFifo(hwcBoardInfo *bInfo, FxBool enableHoleCounting)
 
   /* disable the CMD fifo */
   HWC_CAGP_STORE(bInfo->regInfo, cmdFifo0.baseSize, 0);
-  
+
   HWC_CAGP_STORE(bInfo->regInfo, cmdFifo0.baseAddrL,
     bInfo->fifoInfo.fifoStart>>12);
   HWC_CAGP_STORE(bInfo->regInfo, cmdFifo0.readPtrL, bInfo->fifoInfo.fifoStart);
   HWC_CAGP_STORE(bInfo->regInfo, cmdFifo0.readPtrH, 0);
   HWC_CAGP_STORE(bInfo->regInfo, cmdFifo0.aMin, bInfo->fifoInfo.fifoStart-4);
   HWC_CAGP_STORE(bInfo->regInfo, cmdFifo0.aMax, bInfo->fifoInfo.fifoStart-4);
-  
+
   HWC_CAGP_STORE(bInfo->regInfo, cmdFifo0.depth, 0);
   HWC_CAGP_STORE(bInfo->regInfo, cmdFifo0.holeCount, 0);
   /* Fifo LWM /HWM/ THRESHOLD */
@@ -583,7 +587,7 @@ hwcInitFifo(hwcBoardInfo *bInfo, FxBool enableHoleCounting)
     ((bInfo->fifoInfo.fifoLength >> 12) - 1) | SST_EN_CMDFIFO |
     (enableHoleCounting ? 0 : SST_CMDFIFO_DISABLE_HOLES) |
     (agpEnable ?  SST_CMDFIFO_AGP : 0));
-  
+
   GDBG_INFO(80 ,"%s:  CMD FIFO placed at physical addr 0x%x\n", FN_NAME,
     bInfo->fifoInfo.fifoStart);
 
@@ -678,7 +682,6 @@ hwcInitVideoOverlaySurface(
   HWC_IO_LOAD((*rInfo), vidDesktopOverlayStride, doStride);
   doStride &= ~(SST_OVERLAY_LINEAR_STRIDE | SST_OVERLAY_TILE_STRIDE);
 
-  
   /* Overlay Hack: leave the stride alone for the hack */
   if (!GETENV ("SSTH3_DESKTOP_OVERLAY"))
   {
@@ -790,7 +793,7 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo
     (bInfo->vidInfo.yRes  << SST_OVERLAY_Y_SHIFT) |
     (bInfo->vidInfo.xRes & SST_OVERLAY_X) );
 
-  /* 
+  /*
      Setup video scaling for half-modes
    */
 
@@ -837,7 +840,7 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo
   } else if (ovlWidth != scrWidth) {
     ovlWidth = scrWidth;
   }
-  
+
   if (scrHeight > bInfo->vidInfo.yRes) {
     vidProcCfg |= SST_OVERLAY_VERT_SCALE_EN;
 
@@ -850,7 +853,7 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo
   } else if (ovlHeight != scrHeight) {
     ovlHeight = scrHeight;
   }
-  
+
   vidOverlayEndScreenCoord = (((ovlHeight - 1) << SST_OVERLAY_Y_SHIFT) |
                               ((ovlWidth - 1) << SST_OVERLAY_X_SHIFT));
   HWC_IO_STORE(bInfo->regInfo, vidOverlayEndScreenCoord, vidOverlayEndScreenCoord);
@@ -911,15 +914,15 @@ hwcInitVideo(hwcBoardInfo *bInfo, FxBool tiled, FxVideoTimingInfo
     /* Hack for 3d as desktop 2d as overlay */
     HWC_IO_STORE( bInfo->regInfo, vidDesktopOverlayStride,
 		  ( bInfo->buffInfo.bufStride << 16 ) |
-		  ( bInfo->buffInfo.bufStrideInTiles ) );      
-  }  
+		  ( bInfo->buffInfo.bufStrideInTiles ) );
+  }
 
   HWC_IO_LOAD( bInfo->regInfo, vidDesktopOverlayStride, finalVidDesktopOverlayStride); 
 
   return FXTRUE;
 }
 
-void repaintX() {
+static void repaintX(void) {
   XSetWindowAttributes xswa;
   unsigned long mask=0;
   Visual visual;
@@ -991,7 +994,7 @@ calcBufferStride(FxU32 xres, FxBool tiled)
     strideInTiles = (xres << 1) >> 7;
     if ((xres << 1) & (HWC_TILE_WIDTH - 1))
       strideInTiles++;
-    
+
     return (strideInTiles * HWC_TILE_WIDTH);
 
   } else {
@@ -1005,10 +1008,9 @@ calcBufferHeightInTiles(FxU32 yres)
   FxU32
     heightInTiles;            /* Height of buffer in tiles */
 
-
   /* Calculate tile height stuff */
   heightInTiles = yres >> 5;
-  
+
   if (yres & (HWC_TILE_HEIGHT - 1))
     heightInTiles++;
 
@@ -1045,7 +1047,7 @@ calcBufferSize(FxU32 xres, FxU32 yres, FxBool tiled)
   }
 
   bufSize = stride * height;
-  
+
   return bufSize;
 
 } /* calcBufferSize */
@@ -1065,7 +1067,7 @@ hwcCheckMemSize(hwcBoardInfo *bInfo, FxU32 xres, FxU32 yres, FxU32 nColBuffers,
   if (totSize < ((bInfo->h3Mem << 20) - 0x200000)) /* Need 2M for texture */
     return FXTRUE;
   else
-    return FXFALSE;    
+    return FXFALSE;
 #undef FN_NAME
 } /* hwcCheckMemSize */
 
@@ -1098,7 +1100,7 @@ hwcBufferLfbAddr(FxU32 bufNum,
   return retVal;
 }
 
-FxU32 
+FxU32
 hwcInitAGPFifo(hwcBoardInfo *bInfo, FxBool enableHoleCounting) 
 {
   return hwcInitFifo(bInfo, enableHoleCounting); 
@@ -1126,20 +1128,20 @@ hwcGammaTable(hwcBoardInfo *bInfo, FxU32 nEntries, FxU32 *r, FxU32 *g, FxU32 *b)
         ((g[i] & 0xff) << GREEN_SHIFT) |  
           ((b[i] & 0xff) << BLUE_SHIFT);
   }
-  
+
   /*
    **  On W9X/DOS, we can do this ourselves--which is much easier than
    **  mucking about with a bunch of 32-bit data in 16-bit driver
    **  code.
    */
   HWC_IO_LOAD( bInfo->regInfo, vidProcCfg, vidProcCfg);
-  
+
   /* Determin which set of CLUT entries are selected */
   if (vidProcCfg & SST_OVERLAY_CLUT_SELECT)
     dacBase = 256;
   else
     dacBase = 0;
- 
+
   /* Print out some useful info RE the vidProcCfg register */
   GDBG_INFO(80, "%s:  vidProcCFG(SST_OVERLAY_CLUT_SELECT) = %d\n",
             FN_NAME, (vidProcCfg & SST_OVERLAY_CLUT_SELECT) ? 1 : 0);
@@ -1176,7 +1178,7 @@ hwcGammaTable(hwcBoardInfo *bInfo, FxU32 nEntries, FxU32 *r, FxU32 *g, FxU32 *b)
   }
 
   return FXTRUE;
-  
+
 #undef FN_NAME
 } /* hwcGammaTable */
 
@@ -1202,7 +1204,6 @@ hwcGammaRGB(hwcBoardInfo *bInfo, float gammaR, float gammaG, float gammaB)
     ggRamp[i] = (FxU32)((pow(i/255.0F, 1.0F/gammaG)) * 255.0F + 0.5F);
     gbRamp[i] = (FxU32)((pow(i/255.0F, 1.0F/gammaB)) * 255.0F + 0.5F);
   }
-
 
   hwcGammaTable(bInfo, 256, grRamp, ggRamp, gbRamp); 
 
@@ -1243,7 +1244,7 @@ hwcSetGrxClock(hwcBoardInfo *bInfo, FxU32 speedInMHz)
   
   return FXTRUE;
 
-#undef FN_NAME  
+#undef FN_NAME
 } /* hwcSetGrxClock */
 
 FxBool
@@ -1251,11 +1252,11 @@ hwcSetMemClock(hwcBoardInfo *bInfo, FxU32 speedInMHz)
 {
 #define FN_NAME "hwcSetMemClock"
   return FXFALSE;
-#undef FN_NAME  
+#undef FN_NAME
 } /* hwcSetMemClock */
 
 char *
-hwcGetenv(char *a) 
+hwcGetenv(char *a)
 {
   envitem *ptr;
 
