@@ -96,8 +96,8 @@ static FxBool enableTransport( InitFIFOData *info ) {
 static void disableTransport( void ) {
 }
 
-static InitSwapType_t swapBuffers( FxU32 code ) {
-    return INIT_SWAP_FLIP;
+static /*InitSwapType_t*/ void swapBuffers( FxU32 code ) {
+/*  return INIT_SWAP_FLIP;*/
 }
 
 static FxU32 status( void ) {

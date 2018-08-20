@@ -62,9 +62,10 @@ static void disableTransport( void ) {
     init96DisableTransport();
 }
 
-static void swapBuffers( FxU32 code ) {
+static /*InitSwapType_t*/ void swapBuffers( FxU32 code ) {
     if ( context && context->writeMethod )
         init96Swap( code, &context->info.regs, context->writeMethod );
+/*  return INIT_SWAP_FLIP;*/
 }
 
 static FxU32 status( void ) {
