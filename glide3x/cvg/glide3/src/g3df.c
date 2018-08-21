@@ -656,24 +656,24 @@ static FxBool Read16Bit(FxU16 *data, FILE *image_file,
 */
 static FxBool ReadDataShort(FILE *fp, FxU16 *data)
 {
-  FxU16 b1, b2;
+  FxU16 value;
   int b;
 
-  b = getc(fp);
-  if (b == EOF)
-    return FXFALSE;
-  b1 = b;
-      
-  b = getc(fp);
-  if (b == EOF)
-    return FXFALSE;
-  b2 = b;
-      
-#define kShiftB1        8
-#define kShiftB2        0
+  /*
+  ** read in the MSB
+  */
+  b = getc (fp);
+  if (b == EOF) return FXFALSE;
+  value = (FxU16) ((b&0xFF)<<8);
 
-  *data = ((b1 & 0xFF) << kShiftB1) | ((b2 & 0xFF) << kShiftB2);
+  /*
+  ** read in the LSB
+  */
+  b = getc (fp);
+  if (b == EOF) return FXFALSE;
+  value |= (FxU16) (b & 0x00FF);
 
+  *data = value;
   return FXTRUE;
 }
 
