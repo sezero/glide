@@ -1979,25 +1979,25 @@ hwcMapBoard(hwcBoardInfo *bInfo, FxU32 bAddrMask)
       }
     }
   }
-#endif  
+#endif
   
   return FXTRUE;
 #undef FN_NAME
 } /* hwcMapBoard */
 
 FxBool
-hwcInitRegisters(hwcBoardInfo *bInfo) 
+hwcInitRegisters(hwcBoardInfo *bInfo)
 {
 #define FN_NAME "hwcInitRegisters"
   FxU32
     grxSpeedInMHz, memSpeedInMHz,
     sgramMode, sgramMask, sgramColor;
-  
+
   if (bInfo->linearInfo.initialized == FXFALSE) {
     sprintf(errorString, "%s:  Called before hwcMapBoard\n", FN_NAME);
     return FXFALSE;
   }
-      
+
   bInfo->regInfo.initialized = FXTRUE;
 
   bInfo->regInfo.ioMemBase =
@@ -2034,7 +2034,7 @@ hwcInitRegisters(hwcBoardInfo *bInfo)
       bInfo->regInfo.slaveIOBase[chip - 1]  = bInfo->linearInfo.linearAddress[(chip << 2) + 0] ;
     }
   }
-#else 
+#else
   /* DOS is a bit weirder. In this case we have both memBase0 and memBase1's linear
    * addresses stored in linearAddress[0] and linearAddress[1], which is not what
    * the Windows and Mac code expect.  However, the important thing is really just
@@ -2059,7 +2059,7 @@ hwcInitRegisters(hwcBoardInfo *bInfo)
 
   bInfo->regInfo.rawLfbBase =
     bInfo->linearInfo.linearAddress[1];
-#if __POWERPC__    
+#if __POWERPC__
   bInfo->regInfo.ioPortBase = bInfo->pciInfo.pciBaseAddr[2] & ~0x1;
 #else
   bInfo->regInfo.ioPortBase = (FxU16) bInfo->pciInfo.pciBaseAddr[2] & ~0x1;

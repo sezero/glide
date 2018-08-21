@@ -1135,12 +1135,12 @@ hwcMapBoard(hwcBoardInfo *bInfo, FxU32 bAddrMask)
     bInfo->linearInfo.linearAddress[3] = 0;
     
     /* Kludge.  Pass boardInfo to acceleration stuff. */
-#if GLIDE3      
+#if GLIDE3
     {
       extern hwcBoardInfo *acceleratorBoardInfo;
       acceleratorBoardInfo = bInfo;
     }
-#endif  
+#endif
   }
 #else
   {
@@ -1170,25 +1170,25 @@ hwcMapBoard(hwcBoardInfo *bInfo, FxU32 bAddrMask)
                                0x1000000, &bInfo->deviceNum, bInfo->boardNum, 3);
     }
   }
-#endif  
+#endif
   
   return FXTRUE;
 #undef FN_NAME
 } /* hwcMapBoard */
 
 FxBool
-hwcInitRegisters(hwcBoardInfo *bInfo) 
+hwcInitRegisters(hwcBoardInfo *bInfo)
 {
-#define FN_NAME hwcInitRegisters
+#define FN_NAME "hwcInitRegisters"
   FxU32
     grxSpeedInMHz, memSpeedInMHz,
     sgramMode, sgramMask, sgramColor;
-  
+
   if (bInfo->linearInfo.initialized == FXFALSE) {
-    printf(errorString, "%s:  Called before hwcMapBoard\n", FN_NAME);
+    sprintf(errorString, "%s:  Called before hwcMapBoard\n", FN_NAME);
     return FXFALSE;
   }
-      
+
   bInfo->regInfo.initialized = FXTRUE;
 
   bInfo->regInfo.ioMemBase =
@@ -1203,7 +1203,7 @@ hwcInitRegisters(hwcBoardInfo *bInfo)
     bInfo->linearInfo.linearAddress[0] + SST_LFB_OFFSET;
   bInfo->regInfo.rawLfbBase =
     bInfo->linearInfo.linearAddress[1];
-#if __POWERPC__    
+#if __POWERPC__
   bInfo->regInfo.ioPortBase = bInfo->pciInfo.pciBaseAddr[2] & ~0x1;
 #else
   bInfo->regInfo.ioPortBase = (FxU16) bInfo->pciInfo.pciBaseAddr[2] & ~0x1;
