@@ -515,8 +515,7 @@ Read8Bit(FxU8 *data, FILE *image_file,
     width  = _grMipMapHostWH[aspect_ratio][lod][0];
     height = _grMipMapHostWH[aspect_ratio][lod][1];
 
-    if (fread(data, sizeof(char), width*height, image_file) !=
-        (sizeof(char)*width*height))
+    if (fread(data, 1, width*height, image_file) != (width*height))
       return FXFALSE;
     data += width*height;
   }

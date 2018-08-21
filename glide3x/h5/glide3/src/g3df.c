@@ -969,8 +969,7 @@ Read4Bit(FxU8 *data, FILE *image_file, int small_lod, int large_lod,
        read 16 bytes at a time. */
     thisMipMapByteCount = (width * height) >> 5;
 
-    if (fread(data, 16, thisMipMapByteCount, image_file) !=
-        (16*thisMipMapByteCount))
+    if (fread(data, 16, thisMipMapByteCount, image_file) != thisMipMapByteCount)
       return FXFALSE;
     data += (16 * thisMipMapByteCount);
   }
@@ -1001,8 +1000,7 @@ ReadDXT4Bit(FxU8 *data, FILE *image_file, int small_lod, int large_lod,
     /* Divide the WxH by 16 to read 8 bytes at a time. */
     thisMipMapByteCount = (width * height) >> 4;
 
-    if (fread(data, 8, thisMipMapByteCount, image_file) !=
-        (8 * thisMipMapByteCount))
+    if (fread(data, 8, thisMipMapByteCount, image_file) != thisMipMapByteCount)
       return FXFALSE;
     data += (8 * thisMipMapByteCount);
   }
@@ -1033,8 +1031,7 @@ ReadDXT8Bit(FxU8 *data, FILE *image_file,
        read 16 bytes at a time. */
     thisMipMapByteCount = (width * height) >> 4;
 
-    if (fread(data, 16, thisMipMapByteCount, image_file) !=
-        (16 * thisMipMapByteCount))
+    if (fread(data, 16, thisMipMapByteCount, image_file) != thisMipMapByteCount)
       return FXFALSE;
     data += (16 * thisMipMapByteCount);
   }
@@ -1061,8 +1058,7 @@ Read8Bit(FxU8 *data, FILE *image_file,
 
     thisMipMapByteCount = width * height;
 
-    if (fread(data, sizeof(char), thisMipMapByteCount, image_file) !=
-        (sizeof(char) * thisMipMapByteCount))
+    if (fread(data, 1, thisMipMapByteCount, image_file) != thisMipMapByteCount)
       return FXFALSE;
     data += thisMipMapByteCount;
   }
