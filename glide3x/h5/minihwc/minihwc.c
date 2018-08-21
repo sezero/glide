@@ -1915,18 +1915,16 @@ hwcMapBoard(hwcBoardInfo *bInfo, FxU32 bAddrMask)
 #else
   {
     FxU32
-      bAddr, length;
+      bAddr;
+    const FxI32
+      length = (IS_NAPALM(bInfo->pciInfo.deviceID)) ?
+                0x2000000 : 0x1000000;
 
     bInfo->isMapped = FXTRUE;
     /* [dBorca] Hack alert:
     bInfo->procHandle = getpid();
     */
 
-    if (IS_NAPALM(bInfo->pciInfo.deviceID))
-      length = 32*1024*1024;
-    else
-      length = 16*1024*1024;
-    
     /* memory mapped register spaces */
     for (bAddr = 0; bAddr < 2; bAddr++) {
       if ((bAddrMask & (0x01UL << bAddr)) != 0x00UL) {
