@@ -1916,14 +1916,15 @@ hwcMapBoard(hwcBoardInfo *bInfo, FxU32 bAddrMask)
   {
     FxU32
       bAddr;
-    const FxI32
-      length = (IS_NAPALM(bInfo->pciInfo.deviceID)) ?
-                0x2000000 : 0x1000000;
+    FxI32
+     length;
 
     bInfo->isMapped = FXTRUE;
     /* [dBorca] Hack alert:
     bInfo->procHandle = getpid();
     */
+
+    length = (IS_NAPALM(bInfo->pciInfo.deviceID))?  0x2000000 : 0x1000000;
 
     /* memory mapped register spaces */
     for (bAddr = 0; bAddr < 2; bAddr++) {
@@ -1951,25 +1952,20 @@ hwcMapBoard(hwcBoardInfo *bInfo, FxU32 bAddrMask)
     /* Map in slaves too */
     if(bInfo->pciInfo.numChips > 1) {
       FxU32 chip;
-      FxBool success;
-      FxU32 length = 32*1024*1024;
-        
+      FxU32 len = 0x2000000;
+
       for(chip = 1 ; chip < bInfo->pciInfo.numChips; chip++) {
         /* The PCI library seemed a bit whacked for mapping in multi-function
          * devices, so I use the more low-level routines to map in the two 
          * physical memory chunks I need. */
-        success = pciMapPhysicalToLinear(&bInfo->linearInfo.linearAddress[(chip << 2) + 0],
-                                         bInfo->pciInfo.pciBaseAddr[(chip << 2) + 0],
-                                         &length);
-        if(!success) {
+        if (!pciMapPhysicalToLinear(&bInfo->linearInfo.linearAddress[(chip << 2) + 0],
+                                    bInfo->pciInfo.pciBaseAddr[(chip << 2) + 0], &len)) {
             /* We failed to map.  Punt. */
             bInfo->pciInfo.numChips = 1;
             break;
         }
-        success = pciMapPhysicalToLinear(&bInfo->linearInfo.linearAddress[(chip << 2) + 1],
-                                         bInfo->pciInfo.pciBaseAddr[(chip << 2) + 1],
-                                         &length);
-        if(!success) {
+        if (!pciMapPhysicalToLinear(&bInfo->linearInfo.linearAddress[(chip << 2) + 1],
+                                    bInfo->pciInfo.pciBaseAddr[(chip << 2) + 1], &len)) {
             /* We failed to map.  Punt. */
             bInfo->pciInfo.numChips = 1;
             break;
