@@ -25,14 +25,14 @@
 #include <3dfx.h>
 #include <glidesys.h>
 
-#if defined( __WIN32__ )
-
 #define FX_DLL_DEFINITION
 #include <fxdll.h>
 #include <glide.h>
 
 #include "fxglide.h"
 #include "fxcmd.h"
+
+#if defined( __WIN32__ )
 
 #if (GLIDE_PLATFORM & GLIDE_OS_WIN32)
 #include <windows.h>
@@ -44,8 +44,8 @@ static DWORD            tlsIndex;
 static FxBool threadInit;
 static FxBool criticalSectionInit;
 
-void 
-initThreadStorage( void ) 
+void
+initThreadStorage( void )
 {
   if ( !threadInit ) {
     threadInit = 1;
@@ -89,17 +89,7 @@ void endCriticalSection( void ) {
 
 #elif defined(macintosh)
 
-#include <3dfx.h>
-#include <glidesys.h>
-
-#define FX_DLL_DEFINITION
-#include <fxdll.h>
-#include <glide.h>
-
-#include "fxglide.h"
-#include "fxcmd.h"
-
-FxU32 _threadValueMacOS;
+unsigned long _threadValueMacOS;
 
 void initThreadStorage(void)
 {
@@ -110,11 +100,11 @@ void setThreadValue( unsigned long value )
 	_threadValueMacOS = value;
 }
 
-FxU32 getThreadValueSLOW( void )
+unsigned long getThreadValueSLOW( void )
 {
 	return _threadValueMacOS;
 }
- 
+
 void initCriticalSection(void)
 {
 }
@@ -128,17 +118,6 @@ void endCriticalSection(void)
 }
 
 #elif defined(__linux__) || defined(__FreeBSD__)
-
-
-#include <3dfx.h>
-#include <glidesys.h>
-
-#define FX_DLL_DEFINITION
-#include <fxdll.h>
-#include <glide.h>
-
-#include "fxglide.h"
-#include "fxcmd.h"
 
 unsigned long threadValueLinux;
 
@@ -155,7 +134,7 @@ unsigned long getThreadValueSLOW( void )
 {
 	return threadValueLinux;
 }
- 
+
 void initCriticalSection(void)
 {
 }
@@ -170,33 +149,22 @@ void endCriticalSection(void)
 
 #elif (GLIDE_PLATFORM & GLIDE_OS_DOS32)
 
-
-#include <3dfx.h>
-#include <glidesys.h>
-
-#define FX_DLL_DEFINITION
-#include <fxdll.h>
-#include <glide.h>
-
-#include "fxglide.h"
-#include "fxcmd.h"
-
-FxU32 GR_CDECL threadValueDJGPP;
+unsigned long GR_CDECL threadValueDJGPP;
 
 void initThreadStorage(void)
 {
 }
 
-void setThreadValue( FxU32 value )
+void setThreadValue( unsigned long value )
 {
 	threadValueDJGPP = value;
 }
 
-FxU32 getThreadValueSLOW( void )
+unsigned long getThreadValueSLOW( void )
 {
 	return threadValueDJGPP;
 }
- 
+
 void initCriticalSection(void)
 {
 }

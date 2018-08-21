@@ -2013,8 +2013,8 @@ struct _GlideRoot_s {
 #if defined(__WATCOMC__) || defined(__MSC__) || (defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__)))
   int   p6Fencer;           /* xchg to here to keep this in cache!!! */
 #endif
-  FxU32 tlsIndex;
-  FxU32 tlsOffset;
+  unsigned long tlsIndex;
+  unsigned long tlsOffset;
 
   int   current_sst;
   FxI32 windowsInit[MAX_NUM_SST];        /* Is the fullscreen part of glide initialized? */
@@ -2735,14 +2735,14 @@ _grSstVRetraceOn(void);
 #ifdef __GNUC__
 extern
 #endif
-__inline FxU32
+__inline unsigned long
 getThreadValueFast() {
   /* According to Microsoft, TlsGetValue is implemented with speed as the
    * primary goal. The function performs minimal parameter validation and
    * error checking. This function succeeds only when the TLS index is in
    * the range 0 through (TLS_MINIMUM_AVAILABLE - 1).
    */
-  return (FxU32)TlsGetValue(_GlideRoot.tlsIndex);
+  return (unsigned long)TlsGetValue(_GlideRoot.tlsIndex);
 }
 
 #else
@@ -2757,9 +2757,9 @@ getThreadValueFast() {
 
 #ifdef __GNUC__
 
-extern __inline FxU32 getThreadValueFast (void)
+extern __inline unsigned long getThreadValueFast (void)
 {
- FxU32 t;
+ unsigned long t;
  __asm __volatile (" \
        mov %%fs:(%0), %%eax; \
        add %1, %%eax; \
@@ -2771,7 +2771,7 @@ extern __inline FxU32 getThreadValueFast (void)
 #else  /* __GNUC__ */
 
 #pragma warning (4:4035)        /* No return value */
-__inline FxU32
+__inline unsigned long
 getThreadValueFast() {
   __asm {
     __asm mov eax, DWORD PTR fs:[WNT_TEB_PTR] 
@@ -2786,7 +2786,7 @@ getThreadValueFast() {
 #endif
 
 #if (GLIDE_PLATFORM & GLIDE_OS_MACOS)
-extern FxU32 _threadValueMacOS;
+extern unsigned long _threadValueMacOS;
 __inline FxU32
 getThreadValueFast() {
         return _threadValueMacOS;
@@ -2799,7 +2799,7 @@ extern unsigned long threadValueLinux;
 #endif /* defined(GLIDE_PLATFORM & GLIDE_OS_UNIX) */
 
 #if (GLIDE_PLATFORM & GLIDE_OS_DOS32)
-extern FxU32 GR_CDECL threadValueDJGPP;
+extern unsigned long GR_CDECL threadValueDJGPP;
 #define getThreadValueFast() threadValueDJGPP
 #endif /* DOS32 */
 
