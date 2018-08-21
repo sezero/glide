@@ -1817,6 +1817,7 @@ aaDrawArrayEdgeSense(float *a, float *b, float *c)
     break;
 
   case aaEdgeSenseRight:
+  default: /* silence warnings */
     TRI_SETF(FARRAY(a, GR_VERTEX_X_OFFSET << 2) + _GlideRoot.pool.f1);
     v2x = FARRAY(b, GR_VERTEX_X_OFFSET << 2) + _GlideRoot.pool.f1;
     TRI_SETF(FARRAY(a, GR_VERTEX_Y_OFFSET << 2));
@@ -2146,6 +2147,7 @@ aaVpDrawArrayEdgeSense(float *a, float *b, float *c, float oowa, float oowb)
     break;
 
   case aaEdgeSenseRight:
+  default: /* silence warnings */
     TRI_SETF(fax + _GlideRoot.pool.f1);
     v2x = fbx + _GlideRoot.pool.f1;
     TRI_SETF(fay);

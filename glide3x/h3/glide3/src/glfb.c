@@ -435,7 +435,7 @@ GR_ENTRY(grLfbLock, FxBool,(GrLock_t type, GrBuffer_t buffer,
     /* Get the current lfb buffer */
     {
       /* FixMe: Is this true if we're triple buffering? */
-      FxU32 colBufferIndex;
+      FxU32 colBufferIndex = 0;
       
       switch(buffer) {
       case GR_BUFFER_FRONTBUFFER:
