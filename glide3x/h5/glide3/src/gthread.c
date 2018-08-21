@@ -55,7 +55,7 @@ initThreadStorage( void )
       GrErrorCallback( "initThreadStorage:  Failed to allocate TLS index.", FXTRUE );
 
     /* pray the index is lower than 64 -- TLS_MINIMUM_AVAILABLE = 64 */
-    if (_GlideRoot.tlsIndex => TLS_MINIMUM_AVAILABLE)
+    if (_GlideRoot.tlsIndex >= TLS_MINIMUM_AVAILABLE)
       GrErrorCallback( "initThreadStorage:  TLS index higher than 64.", FXTRUE );
 #if !USE_STANDARD_TLS_FUNC
     if (hwcIsOSWin9x()) {
