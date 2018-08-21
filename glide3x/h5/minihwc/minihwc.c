@@ -7542,7 +7542,7 @@ void hwcAAScreenShot(hwcBoardInfo *bInfo, FxU32 colBufNum, FxBool dither)
 #ifdef _WIN32
   SYSTEMTIME curtime;
 #else
-  static FxU32 fileNameNum;
+  static unsigned int fileNameNum;
 #endif
   char fileName[256];
   
@@ -7582,7 +7582,7 @@ void hwcAAScreenShot(hwcBoardInfo *bInfo, FxU32 colBufNum, FxBool dither)
   GetLocalTime(&curtime);
   sprintf(fileName,"glide_%04d%02d%02d_%02d%02d%02d.tga",curtime.wYear, curtime.wMonth, curtime.wDay, curtime.wHour, curtime.wMinute, curtime.wSecond);
 #else
-  sprintf(fileName,"glide%04ld.tga",fileNameNum++);
+  sprintf(fileName,"glide%04u.tga",fileNameNum++);
 #endif
   memset (header, 0, 18);
   header[2] = 2;    /* Uncompressed targa */
