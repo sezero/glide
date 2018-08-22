@@ -446,7 +446,7 @@ int tlConOutput( const char *fmt, ... ) {
     if( fontInitialized ) {
         static char buffer[1024];
         const char *c;
-        char *temp;
+        char* temp;
 
         va_start( argptr, fmt );
         rv = vsprintf( buffer, fmt, argptr );

@@ -1431,7 +1431,7 @@ char tlGetCH( void ) {
 FxBool
 tlErrorMessage(const char *err) {
   fprintf(stderr, "%s", err);
-  return FXTRUE;
+  return FXFALSE;
 } /* tlErrorMessage */
 
 #else
@@ -1471,7 +1471,7 @@ char tlGetCH( void ) {
 FxBool
 tlErrorMessage(const char *err) {
   fprintf(stderr, "%s", err);
-  return FXTRUE;
+  return FXFALSE;
 } /* tlErrorMessage */
 
 #else   /* __WIN32__ */
@@ -1710,7 +1710,7 @@ tlErrorMessage(const char *err)
   fflush(stdout);
   
   MessageBox( hWndMain, err, "ERROR", MB_OK );
-  return FALSE;
+  return FXFALSE;
 } /* tlErrorMessage */
 
 /*
