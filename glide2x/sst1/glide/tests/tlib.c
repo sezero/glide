@@ -24,8 +24,6 @@
 #include <stdarg.h>
 #ifndef __linux__
 #include <conio.h>
-#else
-#include <ctype.h>
 #endif
 #include <stdio.h>
 #include <string.h>
@@ -337,8 +335,10 @@ static const int charsPerLine = 14;
 
 static int fontInitialized;
 
+#if 0 /* not used */
 static void grabTex( FxU32 addr, void *storage );
 static void putTex( FxU32 addr, void *storage );
+#endif
 static void consoleScroll( void );
 static void drawChar( char character, float x, float y, float w, float h );
 
@@ -426,15 +426,6 @@ void tlConSet( float minX, float minY,
     return; 
 };
 
-#ifdef __linux__
-static void strupr(char *str) {
-  while (*str) {
-    if (islower(*str)) *str=toupper(*str);
-    str++;
-  }
-}
-#endif
-
 /*-------------------------------------------------------------------
   Function: tlConOutput
   Date: 2/28
@@ -449,20 +440,25 @@ static void strupr(char *str) {
   int - number of chars printed
   -------------------------------------------------------------------*/
 int tlConOutput( const char *fmt, ... ) {
-    static short tmpTex[256*256];
     int rv = 0;
     va_list argptr;
 
     if( fontInitialized ) {
         static char buffer[1024];
         const char *c;
+        char *temp;
 
         va_start( argptr, fmt );
         rv = vsprintf( buffer, fmt, argptr );
         va_end( argptr );
 
-        strupr( buffer );
-        
+        temp = buffer;
+        while(*temp != '\0') {
+            if (*temp >= 'a' && *temp <= 'z')
+                *temp -= ('a'-'A');
+            temp++;
+        }
+
         c = buffer;
 
         /* update console grid */
@@ -530,8 +526,6 @@ void tlConClear() {
   none
   -------------------------------------------------------------------*/
 void tlConRender( void ) {
-    static short tmpTex[256*256];
-
     if( fontInitialized ) {
         int x, y;
         
@@ -955,9 +949,9 @@ static void drawChar( char character, float x, float y, float w, float h ) {
     grConstantColorValue( consoleColor );
 
     a.tmuvtx[0].sow = c.tmuvtx[0].sow = 
-        (float)fontTable[character][0];
+        (float)fontTable[(unsigned char)character][0];
     a.tmuvtx[0].tow = b.tmuvtx[0].tow = 
-        (float)fontTable[character][1];
+        (float)fontTable[(unsigned char)character][1];
     d.tmuvtx[0].sow = b.tmuvtx[0].sow = 
         a.tmuvtx[0].sow + (float)fontWidth;
     d.tmuvtx[0].tow = c.tmuvtx[0].tow = 
@@ -971,6 +965,7 @@ static void drawChar( char character, float x, float y, float w, float h ) {
 
 
 
+#if 0 /* not used */
 static void readRegion( void *data, 
                         int x, int y,
                         int w, int h );
@@ -1118,6 +1113,7 @@ static void writeRegion( void *data,
     assert( grLfbUnlock( GR_LFB_WRITE_ONLY, GR_BUFFER_BACKBUFFER ) );
     return;
 }
+#endif
 
 
 static GrTexTable_t texTableType( GrTextureFormat_t format ) {
@@ -1174,6 +1170,8 @@ SimpleRleDecode
       run = *mem & 0x7f;
       run++;
       mem++;
+      if (count < run)
+        return FXFALSE;
       count -= run;
       while (run) {
         memcpy(buff, mem, pixelsize);
@@ -1186,6 +1184,8 @@ SimpleRleDecode
       lit = *mem;
       lit++;
       mem++;
+      if (count < lit)
+        return FXFALSE;
       count -= lit;
       while (lit) {
         memcpy(buff, mem, pixelsize);
@@ -1194,8 +1194,6 @@ SimpleRleDecode
         mem+=pixelsize;
       }
     }
-    if (count < 0)
-      return FXFALSE;
   }
   return FXTRUE;
 }
@@ -1431,9 +1429,9 @@ char tlGetCH( void ) {
 }
 
 FxBool
-tlErrorMessage( char *err) {
-  fprintf(stderr, err);
-  return FXTRUE;
+tlErrorMessage(const char *err) {
+  fprintf(stderr, "%s", err);
+  return FXFALSE;
 } /* tlErrorMessage */
 
 #else
@@ -1471,8 +1469,9 @@ char tlGetCH( void ) {
 }
 
 FxBool
-tlErrorMessage( char *err) {
-  fprintf(stderr, err);
+tlErrorMessage(const char *err) {
+  fprintf(stderr, "%s", err);
+  return FXFALSE;
 } /* tlErrorMessage */
 
 #else   /* __WIN32__ */
@@ -1699,7 +1698,7 @@ int PASCAL WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 } /* WinMain */
 
 FxBool
-tlErrorMessage( char *err)
+tlErrorMessage(const char *err)
 {
   /* make the cursor visible */
   SetCursor(LoadCursor( NULL, IDC_ARROW ));
@@ -1711,7 +1710,7 @@ tlErrorMessage( char *err)
   fflush(stdout);
   
   MessageBox( hWndMain, err, "ERROR", MB_OK );
-  return FALSE;
+  return FXFALSE;
 } /* tlErrorMessage */
 
 /*

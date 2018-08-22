@@ -19,7 +19,6 @@
 **
 */
 
-#include <ctype.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -125,15 +124,6 @@ static FxBool fullScreen = FXTRUE;
 static FxBool okToRender = FXTRUE; 
 static void *state = NULL;
 static void *vlstate = NULL;
-
-#ifdef __linux__
-static void strupr(char *str) {
-  while (*str) {
-    if (islower(*str)) *str=toupper(*str);
-    str++;
-  }
-}
-#endif
 
 FxBool tlOkToRender(void)
 {
@@ -439,7 +429,7 @@ static tlPixelFormat pfTable[] = {
 int tlGetPixelFormat( const char *pf )
 {
   int i;
-  for (i = 0; i < (sizeof(pfTable) / sizeof(tlPixelFormat)); i++) {
+  for (i = 0; i < (int)(sizeof(pfTable)/sizeof(tlPixelFormat)); i++) {
     if ( !strcmp( pf, pfTable[i].name ) ) {
       return pfTable[i].type;
     }
@@ -608,8 +598,10 @@ static const int charsPerLine = 14;
 
 static int fontInitialized;
 
+#if 0 /* not used */
 static void grabTex( FxU32 addr, void *storage );
 static void putTex( FxU32 addr, void *storage );
+#endif
 static void consoleScroll( void );
 static int drawChar( char character,
                      float x, float y,
@@ -1355,7 +1347,7 @@ int _tlLoadTXS( const char   *filename,
   if(stream==NULL) return FXFALSE;
 
   /* Read the full header */
-  if ( fscanf ( stream, "%4s %f %d %d %d %d %8x", 
+  if ( fscanf ( stream, "%4s %f %hu %hu %hu %hu %8x", 
                 cookie, 
                 &info.version,
                 &info.format, 
@@ -1494,7 +1486,7 @@ int _tlLoadTXS( const char   *filename,
       (info.format == GR_TEXFMT_AYIQ_8422))
     {
       int i;
-      for (i = 0; i < sizeof(GuNccTable) >> 2; i++){
+      for (i = 0; i < (int) sizeof(GuNccTable) >> 2; i++){
         if (!_Read32 (stream, &((FxU32 *)table)[i]))
           {
 #if DEBUG
@@ -1722,9 +1714,9 @@ static int drawChar( char character,
 #define TEXTURE_EPS 0.1f
 
     a.tmuvtx[0].sow = c.tmuvtx[0].sow = 
-        (float)fontTable[(int)character][0] + TEXTURE_EPS;
+        (float)fontTable[(unsigned char)character][0] + TEXTURE_EPS;
     a.tmuvtx[0].tow = b.tmuvtx[0].tow = 
-        (float)fontTable[(int)character][1] + TEXTURE_EPS;
+        (float)fontTable[(unsigned char)character][1] + TEXTURE_EPS;
 
     /* we need to multiply times 2 since Glide wants texture coords in
      * the range of 0..255 and our font texture is only 128 wide */
@@ -1750,6 +1742,7 @@ static int drawChar( char character,
 
 
 
+#if 0 /* not used */
 static void readRegion( void *data, 
                         int x, int y,
                         int w, int h );
@@ -1901,6 +1894,7 @@ static void writeRegion( void *data,
     assert( grLfbUnlock( GR_LFB_WRITE_ONLY, GR_BUFFER_BACKBUFFER ) );
     return;
 }
+#endif
 
 
 static GrTexTable_t texTableType( GrTextureFormat_t format )
@@ -1958,6 +1952,8 @@ SimpleRleDecode
       run = *mem & 0x7f;
       run++;
       mem++;
+      if (count < run)
+        return FXFALSE;
       count -= run;
       while (run) {
         memcpy(buff, mem, pixelsize);
@@ -1970,6 +1966,8 @@ SimpleRleDecode
       lit = *mem;
       lit++;
       mem++;
+      if (count < lit)
+        return FXFALSE;
       count -= lit;
       while (lit) {
         memcpy(buff, mem, pixelsize);
@@ -1978,8 +1976,6 @@ SimpleRleDecode
         mem+=pixelsize;
       }
     }
-    if (count < 0)
-      return FXFALSE;
   }
   return FXTRUE;
 }
@@ -2198,9 +2194,9 @@ int  tlKbHit( void ) {
   return lin_kbhit();
 }
 FxBool
-tlErrorMessage( char *err) {
-  fprintf(stderr, err);
-  return FXTRUE;
+tlErrorMessage(const char *err) {
+  fprintf(stderr, "%s", err);
+  return FXFALSE;
 } /* tlErrorMessage */
 
 /*-------------------------------------------------------------------
@@ -2287,10 +2283,10 @@ char tlGetCH( void )
 }
 
 FxBool
-tlErrorMessage( char *err)
+tlErrorMessage(const char *err)
 {
-  fprintf(stderr, err);
-  return FXTRUE;
+  fprintf(stderr, "%s", err);
+  return FXFALSE;
 } /* tlErrorMessage */
 
 FxU32 tlGethWnd( void ) {
@@ -2535,7 +2531,7 @@ main( int argc, char **argv)
 } /* WinMain */
 
 FxBool
-tlErrorMessage( char *err)
+tlErrorMessage(const char *err)
 {
   /* make the cursor visible */
   SetCursor(LoadCursor( NULL, IDC_ARROW ));
@@ -2547,7 +2543,7 @@ tlErrorMessage( char *err)
   fflush(stdout);
   
   MessageBox( hWndMain, err, "ERROR", MB_OK );
-  return FALSE;
+  return FXFALSE;
 } /* tlErrorMessage */
 
 /*-------------------------------------------------------------------
@@ -2663,7 +2659,7 @@ void tlInitGlideExt ( tlGlideExtension *gExt)
   memset(gExt, 0, sizeof(tlGlideExtension));
 
   extension = grGetString(GR_EXTENSION);
-  if (extstr = strstr(extension, "PIXEXT")) {
+  if ((extstr = strstr(extension, "PIXEXT")) != NULL) {
     if (!strncmp(extstr, "PIXEXT", 6)) {
       gExt->grSstWinOpen = grGetProcAddress("grSstWinOpenExt");
       gExt->grColorMask = grGetProcAddress("grColorMaskExt");
@@ -2681,7 +2677,7 @@ void tlInitGlideExt ( tlGlideExtension *gExt)
       }
     }
   }
-  if (extstr = strstr(extension, "COMBINE")) {
+  if ((extstr = strstr(extension, "COMBINE")) != NULL) {
     if (!strncmp(extstr, "COMBINE", 7)) {
       gExt->grColorCombineExt = grGetProcAddress("grColorCombineExt");
       gExt->grAlphaCombineExt = grGetProcAddress("grAlphaCombineExt");
@@ -2693,14 +2689,14 @@ void tlInitGlideExt ( tlGlideExtension *gExt)
       }
     }
   }  
-  if (extstr = strstr(extension, "TEXFMT")) {
+  if ((extstr = strstr(extension, "TEXFMT")) != NULL) {
     if (!strncmp(extstr, "TEXFMT", 6)) {
       gExt->canDo32BitTexture = FXTRUE;
       gExt->canDoFXT1Texture = FXTRUE;
       gExt->canDo2kTexture = FXTRUE;
     }
   }
-  if (extstr = strstr(extension, "TEXUMA")) {
+  if ((extstr = strstr(extension, "TEXUMA")) != NULL) {
     if (!strncmp(extstr, "TEXUMA", 6)) {
       gExt->umaExt = FXTRUE;
     }

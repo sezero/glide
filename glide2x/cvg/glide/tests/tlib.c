@@ -24,8 +24,6 @@
 #include <stdarg.h>
 #ifndef __linux__
 #include <conio.h>
-#else
-#include <ctype.h>
 #endif
 #include <stdio.h>
 #include <string.h>
@@ -337,7 +335,10 @@ static const int charsPerLine = 14;
 
 static int fontInitialized;
 
+#if 0 /* not used */
+static void grabTex( FxU32 addr, void *storage );
 static void putTex( FxU32 addr, void *storage );
+#endif
 static void consoleScroll( void );
 static void drawChar( char character, float x, float y, float w, float h );
 
@@ -425,15 +426,6 @@ void tlConSet( float minX, float minY,
     return; 
 };
 
-#ifdef __linux__
-static void strupr(char *str) {
-  while (*str) {
-    if (islower(*str)) *str=toupper(*str);
-    str++;
-  }
-}
-#endif
-
 /*-------------------------------------------------------------------
   Function: tlConOutput
   Date: 2/28
@@ -454,13 +446,19 @@ int tlConOutput( const char *fmt, ... ) {
     if( fontInitialized ) {
         static char buffer[1024];
         const char *c;
+        char* temp;
 
         va_start( argptr, fmt );
         rv = vsprintf( buffer, fmt, argptr );
         va_end( argptr );
 
-        strupr( buffer );
-        
+        temp = buffer;
+        while(*temp != '\0') {
+            if (*temp >= 'a' && *temp <= 'z')
+                *temp -= ('a'-'A');
+            temp++;
+        }
+
         c = buffer;
 
         /* update console grid */
@@ -950,10 +948,14 @@ static void drawChar( char character, float x, float y, float w, float h ) {
 
     grConstantColorValue( consoleColor );
 
-    a.tmuvtx[0].sow = c.tmuvtx[0].sow = (float)fontTable[(int) character][0];
-    a.tmuvtx[0].tow = b.tmuvtx[0].tow = (float)fontTable[(int) character][1];
-    d.tmuvtx[0].sow = b.tmuvtx[0].sow = a.tmuvtx[0].sow + (float)fontWidth;
-    d.tmuvtx[0].tow = c.tmuvtx[0].tow = a.tmuvtx[0].tow + (float)fontHeight;
+    a.tmuvtx[0].sow = c.tmuvtx[0].sow = 
+        (float)fontTable[(unsigned char)character][0];
+    a.tmuvtx[0].tow = b.tmuvtx[0].tow = 
+        (float)fontTable[(unsigned char)character][1];
+    d.tmuvtx[0].sow = b.tmuvtx[0].sow = 
+        a.tmuvtx[0].sow + (float)fontWidth;
+    d.tmuvtx[0].tow = c.tmuvtx[0].tow = 
+        a.tmuvtx[0].tow + (float)fontHeight;
 
     grDrawTriangle( &a, &d, &c );
     grDrawTriangle( &a, &b, &d );
@@ -963,6 +965,7 @@ static void drawChar( char character, float x, float y, float w, float h ) {
 
 
 
+#if 0 /* not used */
 static void readRegion( void *data, 
                         int x, int y,
                         int w, int h );
@@ -981,6 +984,74 @@ static void putTex( FxU32 addr, void *storage ) {
     texInfo.data        = storage;
 
     grTexDownloadMipMap( 0, addr, GR_MIPMAPLEVELMASK_BOTH, &fontInfo );
+}
+
+
+static void grabTex( FxU32 addr, void *storage ) {
+    static FxU16 tmpSpace[256][256];
+    GrTexInfo   texInfo;
+    GrVertex    a, b, c, d;
+
+    grGlideGetState( &state );
+    grDitherMode( GR_DITHER_DISABLE );
+    grColorMask( FXTRUE, FXFALSE );
+    grSstOrigin( GR_ORIGIN_UPPER_LEFT );
+    grCullMode( GR_CULL_DISABLE );
+
+    /* Grab Upper Left 256*256 of frame buffer */
+    readRegion( tmpSpace, 0, 0, 256, 256 );
+
+    /* Grab First 256x256 MM in Texture Ram */
+    texInfo.smallLod    = GR_LOD_256;
+    texInfo.largeLod    = GR_LOD_256;
+    texInfo.aspectRatio = GR_ASPECT_1x1;
+    texInfo.format      = GR_TEXFMT_RGB_565;
+    texInfo.data        = 0;
+    grTexMipMapMode( 0, GR_MIPMAP_DISABLE, FXFALSE );
+    grTexFilterMode( 0, 
+                     GR_TEXTUREFILTER_POINT_SAMPLED, 
+                     GR_TEXTUREFILTER_POINT_SAMPLED );
+    grTexCombine( 0, 
+                  GR_COMBINE_FUNCTION_LOCAL, 
+                  GR_COMBINE_FACTOR_NONE,
+                  GR_COMBINE_FUNCTION_LOCAL, 
+                  GR_COMBINE_FACTOR_NONE,
+                  FXFALSE,
+                  FXFALSE );
+    grColorCombine( GR_COMBINE_FUNCTION_SCALE_OTHER,
+                    GR_COMBINE_FACTOR_ONE,
+                    GR_COMBINE_LOCAL_NONE,
+                    GR_COMBINE_OTHER_TEXTURE,
+                    FXFALSE );
+    grTexSource( 0, addr, GR_MIPMAPLEVELMASK_BOTH, &texInfo );
+    grAlphaBlendFunction( GR_BLEND_ONE, GR_BLEND_ZERO,
+                          GR_BLEND_ONE, GR_BLEND_ZERO);
+    grDepthBufferFunction( GR_DEPTHBUFFER_DISABLE );
+    grAlphaTestFunction( GR_CMP_ALWAYS );    
+    grFogMode( GR_FOG_DISABLE );
+    grCullMode( GR_CULL_DISABLE );
+    grChromakeyMode( GR_CHROMAKEY_DISABLE );
+    /*-------------------
+      A---B
+      | \ |
+      C---D
+      -------------------*/
+    a.oow = a.tmuvtx[0].oow = 1.0f;
+    b = c = d = a;
+    a.x = c.x = a.y = b.y = 0.5f;
+    b.x = d.x = c.y = d.y = 255.6f;
+    a.tmuvtx[0].sow = c.tmuvtx[0].sow = a.tmuvtx[0].tow = b.tmuvtx[0].tow =
+        0.5f;
+    b.tmuvtx[0].sow = d.tmuvtx[0].sow = c.tmuvtx[0].tow = d.tmuvtx[0].tow =
+        0.5f;
+    grDrawTriangle( &a, &d, &c );
+    grDrawTriangle( &a, &b, &d );
+    readRegion( storage, 0, 0, 256, 256 );
+    
+    /* Restore The Upper Left Hand of Frame Buffer */
+    writeRegion( tmpSpace, 0, 0, 256, 256 );
+    grGlideSetState( &state );
+    return;
 }
 
 static void readRegion( void *data, 
@@ -1042,6 +1113,7 @@ static void writeRegion( void *data,
     assert( grLfbUnlock( GR_LFB_WRITE_ONLY, GR_BUFFER_BACKBUFFER ) );
     return;
 }
+#endif
 
 
 static GrTexTable_t texTableType( GrTextureFormat_t format ) {
@@ -1098,6 +1170,8 @@ SimpleRleDecode
       run = *mem & 0x7f;
       run++;
       mem++;
+      if (count < run)
+        return FXFALSE;
       count -= run;
       while (run) {
         memcpy(buff, mem, pixelsize);
@@ -1110,6 +1184,8 @@ SimpleRleDecode
       lit = *mem;
       lit++;
       mem++;
+      if (count < lit)
+        return FXFALSE;
       count -= lit;
       while (lit) {
         memcpy(buff, mem, pixelsize);
@@ -1118,8 +1194,6 @@ SimpleRleDecode
         mem+=pixelsize;
       }
     }
-    if (count < 0)
-      return FXFALSE;
   }
   return FXTRUE;
 }
@@ -1355,8 +1429,9 @@ char tlGetCH( void ) {
 }
 
 FxBool
-tlErrorMessage( char *err) {
-  return !!fprintf(stderr, err);
+tlErrorMessage(const char *err) {
+  fprintf(stderr, "%s", err);
+  return FXFALSE;
 } /* tlErrorMessage */
 
 #else
@@ -1394,8 +1469,9 @@ char tlGetCH( void ) {
 }
 
 FxBool
-tlErrorMessage( char *err) {
-  fprintf(stderr, err);
+tlErrorMessage(const char *err) {
+  fprintf(stderr, "%s", err);
+  return FXFALSE;
 } /* tlErrorMessage */
 
 #else   /* __WIN32__ */
@@ -1622,7 +1698,7 @@ int PASCAL WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 } /* WinMain */
 
 FxBool
-tlErrorMessage( char *err)
+tlErrorMessage(const char *err)
 {
   /* make the cursor visible */
   SetCursor(LoadCursor( NULL, IDC_ARROW ));
@@ -1634,7 +1710,7 @@ tlErrorMessage( char *err)
   fflush(stdout);
   
   MessageBox( hWndMain, err, "ERROR", MB_OK );
-  return FALSE;
+  return FXFALSE;
 } /* tlErrorMessage */
 
 /*

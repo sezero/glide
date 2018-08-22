@@ -19,13 +19,11 @@
 **
 */
 
-
 #ifndef _TLIB_H_
 #define _TLIB_H_
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 
 /* If not debugging, change the meaning of the ANSI assert
  * so that it is a harmless wrapper rather than ((void)0) as in <assert.h>
@@ -34,7 +32,7 @@ extern "C" {
 #ifdef assert
 #undef assert
 #endif
-#define assert(exp) (exp)
+#define assert(exp) (void) (exp)
 #endif
 
 int tlGetOpt( int argc, char *argv[], const char *tags, char *match, char **remArgs[] );
@@ -101,7 +99,7 @@ void tlProjectVertices( TlVertex3D *dstList,
 FxBool tlOkToRender(void);
 
 FxBool
-tlErrorMessage(char *err);  
+tlErrorMessage(const char *err);
 
 typedef FxU32 TlPalette[256];
 typedef struct {
