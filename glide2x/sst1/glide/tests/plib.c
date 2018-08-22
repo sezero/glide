@@ -16,7 +16,6 @@
 ** THE UNITED STATES.  
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
-**
 */
 
 #include <stdlib.h>
@@ -51,7 +50,6 @@ static void prGetLod( GrTexInfo *lpTexInfo, GrLOD_t deLod, void *data );
 static void prPopLod( GrTexInfo *lpDeTexInfo, mipMapEnd_t deMipMapEnd );
 static void prPushLod( GrTexInfo *lpDeTexInfo, mipMapEnd_t deMipMapEnd );
 static FxU32 prGetTxMnAdd( hTexId_t deTexId, GrLOD_t deLod );
-static int prGetLodWidth( GrLOD_t lod, GrAspectRatio_t aspect );
 static int prGetLodHeight( GrLOD_t lod, GrAspectRatio_t aspect );
 static FxU32 prGetMultiMemBump( const GrTexInfo *const deTexInfo, 
                                   GrTexBaseRange_t deTexBase,
@@ -98,12 +96,14 @@ plTxMnLoadTxMngr( TlTexture* lpTexture )
   Arguments:
   Return: 
   -------------------------------------------------------------------*/
+#if 0 /* NOT USED */
 static void
 prTxMnSetBeenPopd( hTexId_t deTexId, FxBool bBeenPopd )
 {
   SET_BEENPOPD( tlTxMnMngr[deTexId], bBeenPopd );
   SET_DIRTY( tlTxMnMngr[deTexId], FXTRUE );  /* just for messing with it */
 }
+#endif
 /*-------------------------------------------------------------------*/
 
 
@@ -1329,6 +1329,7 @@ FxU32 prTexMultiMemRequired( FxU32 deMipMask, GrTexBaseRange_t deMultiSeg,
 
 
 /*-------------------------------------------------------------------*/
+#if 0 /* NOT USED */
 static int 
 prGetLodWidth( GrLOD_t lod, GrAspectRatio_t aspect )
 {
@@ -1341,6 +1342,7 @@ prGetLodWidth( GrLOD_t lod, GrAspectRatio_t aspect )
 
   return( val );
 }
+#endif
 /*-------------------------------------------------------------------*/
 
 
