@@ -41,12 +41,12 @@ extern const int _grMipMapHostWH[GR_ASPECT_1x8+1][GR_LOD_1+1][2];
 extern FxU32 _gr_aspect_index_table[];
 extern FxU32 _grMipMapHostSize[4][16];
 
-static FxU16 ReadDataShort( FILE * );
-static FxU32 ReadDataLong( FILE * );
-static void  Read8Bit( FxU8 *dst, FILE *image, int small_lod, int large_lod, GrAspectRatio_t aspect );
-static void  Read16Bit( FxU16 *dst, FILE *image, int small_lod, int large_lod, GrAspectRatio_t aspect );
+static FxBool ReadDataShort(FILE *, FxU16 *data);
+static FxBool ReadDataLong(FILE *, FxU32 *data);
+static FxBool Read8Bit(FxU8 *dst, FILE *image, int small_lod, int large_lod, GrAspectRatio_t aspect);
+static FxBool Read16Bit(FxU16 *dst, FILE *image, int small_lod, int large_lod, GrAspectRatio_t aspect);
 
-#if ( ( GLIDE_PLATFORM & ( GLIDE_OS_DOS32 | GLIDE_OS_WIN32 ) ) != 0 )
+#if ((GLIDE_PLATFORM & (GLIDE_OS_DOS32 | GLIDE_OS_WIN32)) != 0)
 static const char *openmode = "rb";
 #else
 static const char *openmode = "r";
@@ -59,6 +59,28 @@ typedef struct
   FxBool             valid;
 } CfTableEntry;
 
+
+static FxBool 
+_grGet3dfHeader(FILE* stream, char* const buffer, const FxU32 bufSize)
+{
+  int numLines = 0;
+  FxU32 bufPos = 0;
+  
+  while(numLines < 4) {
+    /* Handle stream errors */
+    if (fgets(buffer + bufPos, bufSize - bufPos, stream) == NULL) break;
+    bufPos += strlen(buffer + bufPos);
+    
+    /* fgets includes the '\n' in the buffer. If this is not there
+     * then the buffer is too small so fail.
+     */
+    if (*(buffer + bufPos - sizeof(char)) != '\n') break;
+    numLines++;
+  }
+
+  return (numLines == 4);
+}
+
 /*---------------------------------------------------------------------------
 ** gu3dfGetInfo
 */
@@ -66,8 +88,7 @@ GR_DIENTRY(gu3dfGetInfo, FxBool,
            ( const char *FileName, Gu3dfInfo *Info ))
 {
   FILE *image_file;
-  FxU32 index, i;
-  FxU32 newlines = 0;
+  FxU32 i;
   char  version[5];
   char  color_format[10];
   int   aspect_width, aspect_height;
@@ -108,23 +129,9 @@ GR_DIENTRY(gu3dfGetInfo, FxBool,
   };
 
   GDBG_INFO((81,"gu3dfGetInfo(%s,0x%x)\n",FileName,Info));
-  /*
-  ** open the filen
-  */
-  if( ( image_file = fopen( FileName, openmode ) ) == NULL )
-    return FXFALSE;
 
-  /*
-  ** check header
-  */
-  index=0;
-  while(newlines<4)  /* Read the header into a buffer. */
-    if((buffer[index++]=getc(image_file))=='\n')
-      {
-    newlines++;
-    buffer[index-1] = ' ';
-      }
-  buffer[--index] = 0;
+  if ((image_file = fopen(FileName, openmode)) == NULL) return FXFALSE;
+  if (!_grGet3dfHeader(image_file, buffer, sizeof(buffer))) goto _loc1;
 
   /*
   ** grab statistics out of the header
@@ -133,14 +140,13 @@ GR_DIENTRY(gu3dfGetInfo, FxBool,
          version,
          color_format,
          &small_lod, &large_lod,
-         &aspect_width, &aspect_height ) == 0 )
-    return FXFALSE;
+         &aspect_width, &aspect_height) != 6)
+    goto _loc1;
 
   /*
   ** determine aspect ratio, height, and width
   */
   i = 0;
-  ratio_found = FXFALSE;
   while ( ( i < 4 ) && ( !ratio_found ) )
   {
     if ( ( aspect_width << i ) == aspect_height )
@@ -160,8 +166,7 @@ GR_DIENTRY(gu3dfGetInfo, FxBool,
     }
     i++;
   }
-  if ( !ratio_found )
-    return FXFALSE;
+  if ( !ratio_found ) goto _loc1;
 
   /*
   ** determine height and width of the mip map
@@ -256,7 +261,6 @@ GR_DIENTRY(gu3dfGetInfo, FxBool,
   }
 
   i = 0;
-  format_found = FXFALSE;
   while ( ( cftable[i].name != 0 ) && ( !format_found ) )
   {
     if ( strcmp( color_format, cftable[i].name ) == 0 )
@@ -270,7 +274,8 @@ GR_DIENTRY(gu3dfGetInfo, FxBool,
   /*
   ** close the input file
   */
-  fclose( image_file );
+ _loc1:
+  fclose(image_file);
 
   if ( format_found ) {
       FxI32 lod;
@@ -292,29 +297,12 @@ GR_DIENTRY(gu3dfLoad, FxBool, ( const char *filename, Gu3dfInfo *info ))
 {
   FILE *image_file  = 0;
   FxU32 index       = 0;
-  FxU32 newlines    = 0;
   char  buffer[100] = "";
 
   GDBG_INFO((81,"gu3dfLoad(%s,0x%x)\n",filename,info));
-  /*
-  ** open the file
-  */
-  if ( ( image_file = fopen( filename, openmode ) ) == NULL )
-    return FXFALSE;
 
-  /*
-  ** examine the header
-  */
-  index = 0;
-  while ( newlines < 4 )
-  {
-    if ( ( buffer[index++] = getc( image_file ) ) == '\n')
-    {
-      newlines++;
-      buffer[index-1] = ' ';
-    }
-  }
-  buffer[--index] = 0;
+  if ((image_file = fopen(filename, openmode)) == NULL) return FXFALSE;
+  if (!_grGet3dfHeader(image_file, buffer, sizeof(buffer))) goto _loc1;
 
   /*
   ** If necessary, read in the YIQ decompression table
@@ -326,16 +314,24 @@ GR_DIENTRY(gu3dfLoad, FxBool, ( const char *filename, Gu3dfInfo *info ))
     ** read in Y
     */
     for ( index = 0; index < 16; index++ )
-      info->table.nccTable.yRGB[index] = ( ( FxI16 ) ReadDataShort( image_file ) ) & 0xFF;
+    {
+      FxU16 val;
+      if (!ReadDataShort(image_file, &val)) goto _loc1;
+      info->table.nccTable.yRGB[index] = val & 0xFF;
+    }
 
     /*
     ** read in I
     */
     for ( index = 0; index < 4; index++ )
     {
-      info->table.nccTable.iRGB[index][0] = ( ( FxI16 ) ReadDataShort( image_file ) ) & 0x1FF;
-      info->table.nccTable.iRGB[index][1] = ( ( FxI16 ) ReadDataShort( image_file ) ) & 0x1FF;
-      info->table.nccTable.iRGB[index][2] = ( ( FxI16 ) ReadDataShort( image_file ) ) & 0x1FF;
+      FxU16 val;
+      if (!ReadDataShort(image_file, &val)) goto _loc1;
+      info->table.nccTable.iRGB[index][0] = val & 0x1FF;
+      if (!ReadDataShort(image_file, &val)) goto _loc1;
+      info->table.nccTable.iRGB[index][1] = val & 0x1FF;
+      if (!ReadDataShort(image_file, &val)) goto _loc1;
+      info->table.nccTable.iRGB[index][2] = val & 0x1FF;
     }
 
     /*
@@ -343,9 +339,13 @@ GR_DIENTRY(gu3dfLoad, FxBool, ( const char *filename, Gu3dfInfo *info ))
     */
     for ( index = 0; index < 4; index++ )
     {
-      info->table.nccTable.qRGB[index][0] = ( ( FxI16 ) ReadDataShort( image_file ) ) & 0x1FF;
-      info->table.nccTable.qRGB[index][1] = ( ( FxI16 ) ReadDataShort( image_file ) ) & 0x1FF;
-      info->table.nccTable.qRGB[index][2] = ( ( FxI16 ) ReadDataShort( image_file ) ) & 0x1FF;
+      FxU16 val;
+      if (!ReadDataShort(image_file, &val)) goto _loc1;
+      info->table.nccTable.qRGB[index][0] = val & 0x1FF;
+      if (!ReadDataShort(image_file, &val)) goto _loc1;
+      info->table.nccTable.qRGB[index][1] = val & 0x1FF;
+      if (!ReadDataShort(image_file, &val)) goto _loc1;
+      info->table.nccTable.qRGB[index][2] = val & 0x1FF;
     }
 
     /*
@@ -359,7 +359,7 @@ GR_DIENTRY(gu3dfLoad, FxBool, ( const char *filename, Gu3dfInfo *info ))
        packedvalue |= ( ( FxU32 ) info->table.nccTable.yRGB[index*4+1] ) << 8;
        packedvalue |= ( ( FxU32 ) info->table.nccTable.yRGB[index*4+2] ) << 16;
        packedvalue |= ( ( FxU32 ) info->table.nccTable.yRGB[index*4+3] ) << 24;
-                                           
+
        info->table.nccTable.packed_data[index] = packedvalue;
     }
 
@@ -399,7 +399,11 @@ GR_DIENTRY(gu3dfLoad, FxBool, ( const char *filename, Gu3dfInfo *info ))
        ( info->header.format == GR_TEXFMT_AP_88 ) ) {
       FxU32 i;
       for( i = 0; i < 256; i++ )
-          info->table.palette.data[i] = ReadDataLong( image_file );
+      {
+        FxU32 val;
+        if (!ReadDataLong(image_file, &val)) goto _loc1;
+        info->table.palette.data[i] = val;
+      }
   }
 
   /*
@@ -413,7 +417,8 @@ GR_DIENTRY(gu3dfLoad, FxBool, ( const char *filename, Gu3dfInfo *info ))
   case GR_TEXFMT_YIQ_422:
   case GR_TEXFMT_RGB_332:
   case GR_TEXFMT_P_8:
-    Read8Bit( info->data, image_file, info->header.small_lod, info->header.large_lod, info->header.aspect_ratio );
+    if(!Read8Bit(info->data, image_file, info->header.small_lod, info->header.large_lod, info->header.aspect_ratio))
+       goto _loc1;
     break;
   case GR_TEXFMT_RGB_565:
   case GR_TEXFMT_ARGB_8332:
@@ -422,18 +427,17 @@ GR_DIENTRY(gu3dfLoad, FxBool, ( const char *filename, Gu3dfInfo *info ))
   case GR_TEXFMT_ARGB_4444:
   case GR_TEXFMT_ALPHA_INTENSITY_88:
   case GR_TEXFMT_AP_88:
-    Read16Bit( info->data, image_file, info->header.small_lod, info->header.large_lod, info->header.aspect_ratio );
+    if (!Read16Bit(info->data, image_file, info->header.small_lod, info->header.large_lod, info->header.aspect_ratio))
+        goto _loc1;
     break;
 
   default:
+ _loc1:
+    fclose(image_file);
     return FXFALSE;
   }
 
-  /*
-  ** close the file
-  */
-  fclose( image_file );
-
+  fclose(image_file);
   return FXTRUE;
 }
 
@@ -442,7 +446,7 @@ GR_DIENTRY(gu3dfLoad, FxBool, ( const char *filename, Gu3dfInfo *info ))
 **
 ** Read in an 8-bit texture map, unpacked.
 */
-static void Read8Bit( FxU8 *data, FILE *image_file, int small_lod, int large_lod, GrAspectRatio_t aspect_ratio )
+static FxBool Read8Bit( FxU8 *data, FILE *image_file, int small_lod, int large_lod, GrAspectRatio_t aspect_ratio )
 {
   int lod;
   int width, height;
@@ -452,9 +456,11 @@ static void Read8Bit( FxU8 *data, FILE *image_file, int small_lod, int large_lod
     width  = _grMipMapHostWH[aspect_ratio][lod][0];
     height = _grMipMapHostWH[aspect_ratio][lod][1];
 
-    fread( data, sizeof( char ), width*height, image_file );
+    if (fread(data, 1, width*height, image_file) != (width*height))
+      return FXFALSE;
     data += width*height;
   }
+  return FXTRUE;
 }
 
 /*
@@ -462,7 +468,7 @@ static void Read8Bit( FxU8 *data, FILE *image_file, int small_lod, int large_lod
 **
 ** Read in a 16-bit texture map, unpacked.
 */
-static void Read16Bit( FxU16 *data, FILE *image_file, int small_lod, int large_lod, GrAspectRatio_t aspect_ratio )
+static FxBool Read16Bit( FxU16 *data, FILE *image_file, int small_lod, int large_lod, GrAspectRatio_t aspect_ratio )
 {
   int index;
   int lod;
@@ -475,45 +481,54 @@ static void Read16Bit( FxU16 *data, FILE *image_file, int small_lod, int large_l
 
     for ( index = 0; index < ( width * height ); index++ )
     {
-      *data = ReadDataShort( image_file );
+      if (!ReadDataShort(image_file,data))
+        return FXFALSE;
       data++;
     }
   }
+  return FXTRUE;
 }
 
 /*
 ** FxU16 ReadDataShort
 */
-static FxU16 ReadDataShort( FILE *fp )
+static FxBool ReadDataShort(FILE *fp, FxU16 *data)
 {
   FxU16 value;
+  int b;
 
   /*
   ** read in the MSB
   */
-  value = ( ( FxU16 ) getc( fp ) ) << 8;
+  b = getc (fp);
+  if (b == EOF) return FXFALSE;
+  value = (FxU16) ((b&0xFF)<<8);
 
   /*
   ** read in the LSB
   */
-  value |= ( getc( fp ) & 0x00FF );
+  b = getc (fp);
+  if (b == EOF) return FXFALSE;
+  value |= (FxU16) (b & 0x00FF);
 
-  return value;
+  *data = value;
+  return FXTRUE;
 }
 
 /*
 ** ReadDataLong
 */
-static FxU32 ReadDataLong( FILE *fp )
+static FxBool ReadDataLong(FILE *fp, FxU32 *data)
 {
-    FxU32 data;
     FxU8 byte[4];
 
-    fread(byte, 4, 1, fp);
-    data = (((FxU32) byte[0]) << 24) |
+    if (fread(byte, 1, 4, fp) != 4)
+      return FXFALSE;
+
+   *data = (((FxU32) byte[0]) << 24) |
            (((FxU32) byte[1]) << 16) |
            (((FxU32) byte[2]) <<  8) |
             ((FxU32) byte[3]);
 
-    return data;
+    return FXTRUE;
 }

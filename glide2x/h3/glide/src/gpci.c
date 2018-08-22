@@ -1002,8 +1002,11 @@ _GlideInitEnvironment(void)
             _GlideRoot.environment.autoBump ? "FXTRUE" : "FXFALSE");
   
   if (GETENV("FX_GLIDE_BUMPSIZE"))
-    sscanf(GETENV("FX_GLIDE_BUMPSIZE"), "%lx",
-           &_GlideRoot.environment.bumpSize);
+  {
+    unsigned int u;
+    if (sscanf(GETENV("FX_GLIDE_BUMPSIZE"), "%x", &u) == 1)
+      _GlideRoot.environment.bumpSize = u;
+  }
   else
     _GlideRoot.environment.bumpSize = 0x10000;
   GDBG_INFO(80, "\tbumpSize:          0x%x\n", _GlideRoot.environment.bumpSize);
