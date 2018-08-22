@@ -460,7 +460,7 @@ int main( int argc, char **argv) {
 
   while ( 1 ) {
     Matrix rotm;
-    GrVertex xformedVerts[4];
+    GrVertex xformedVerts[3];
     int i;
 
     
@@ -472,7 +472,7 @@ int main( int argc, char **argv) {
                               &scrHeight );
 
 
-    for( i = 0; i < 4; i++ ) {
+    for( i = 0; i < 3; i++ ) {
       PointMatMult( &xformedVerts[i], &localVerts[i], rotm );
       xformedVerts[i].x = xformedVerts[i].x / ( xformedVerts[i].z + 2.0f );
       xformedVerts[i].y = xformedVerts[i].y / ( xformedVerts[i].z + 2.0f );
@@ -684,13 +684,11 @@ int main( int argc, char **argv) {
           localVerts[0].a = 255.0f;
           localVerts[1].a = 255.0f;
           localVerts[2].a = 255.0f;
-          localVerts[3].a = 255.0f;
         } else {
           blend = FXTRUE;
           localVerts[0].a = alpha;
           localVerts[1].a = alpha;
           localVerts[2].a = alpha;
-          localVerts[3].a = alpha;
         }
         break;
 
