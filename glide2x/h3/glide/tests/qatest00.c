@@ -63,7 +63,7 @@ static FxI32   g_nLodToDwnld;
 static FxBool  g_bDoLodPrtlDwnld = FXFALSE;
 static FxI32   g_nLodPrtlFstRow;
 static FxI32   g_nLodPrtlLstRow;
-	
+
 int main( int argc, char **argv) {
   char match; 
   char **remArgs;
@@ -175,7 +175,7 @@ int main( int argc, char **argv) {
   fgVerts[2].a = 255.f, fgVerts[2].oow = 1.f;
   fgVerts[2].tmuvtx[0].sow = 0.f;
   fgVerts[2].tmuvtx[0].tow = 0.f;
-  
+
   fgVerts[3].x = 0.f, fgVerts[3].y = 0.f;
   fgVerts[3].a = 255.f, fgVerts[3].oow = 1.f;
   fgVerts[3].tmuvtx[0].sow = 0.f;
@@ -217,7 +217,7 @@ int main( int argc, char **argv) {
     printf( "Press A Key To Begin Test.\n" );
     tlGetCH();
   }
-  
+
   /* Initialize Glide */
   grGlideInit();
   assert( grSstQueryHardware( &hwconfig ) );
@@ -257,7 +257,7 @@ int main( int argc, char **argv) {
   /* done loading plTxMn */
 
 //  grTexFilterMode( GR_TMU0, GR_TEXTUREFILTER_BILINEAR, GR_TEXTUREFILTER_BILINEAR );
-  
+
   fxColorValue = (0x00FFFFFF | ( ((int) alpha) << 24 ) );
   grConstantColorValue(fxColorValue);
 
@@ -327,7 +327,7 @@ int main( int argc, char **argv) {
       }
       tlConOutput("LOD Bias is %f\n", fBiasLevel);
     } /* done with the Con output stuff */
-    
+ 
     /* do the Bg texture */
     if (bBgImage)
     {
@@ -352,7 +352,7 @@ int main( int argc, char **argv) {
       grDrawTriangle( &bgVerts[0], &bgVerts[1], &bgVerts[3] );
       grDrawTriangle( &bgVerts[1], &bgVerts[2], &bgVerts[3] );
     } /* done with Bg txtre */
-   
+
     /* Setup the system for the Fg Texture */
     switch( mipMapMode )
     {
@@ -488,9 +488,9 @@ int main( int argc, char **argv) {
       tlGetDimsByConst(resolution,
                        &scrWidth, 
                        &scrHeight );
-        
+
       grClipWindow(0, 0, (FxU32) scrWidth, (FxU32) scrHeight);
-    } 
+    }
 
     /* handle any keyboard input */
     while( tlKbHit() )
@@ -499,7 +499,7 @@ int main( int argc, char **argv) {
       {
         static int           nCurrAlpha = -1;
         GrTexInfo            tFgTexInfo;
- 
+
         case '+': 
           doScaleScreenSurf( hCurrFgTxtre, SCALE_OUT, tCurrScle );
           getFgVerts( hCurrFgTxtre, &fgVerts[0] );
@@ -513,25 +513,25 @@ int main( int argc, char **argv) {
         case 'a':
           tlConClear();
           bVerboseMode = FXFALSE;
-	  tlConOutput("Verbose mode Off\n");
+          tlConOutput("Verbose mode Off\n");
           nCurrAlpha = (nCurrAlpha == 0) ? 0 : 
-                       (nCurrAlpha < 0) ? (int) alpha-1: --nCurrAlpha;
+                       (nCurrAlpha < 0) ? (int) alpha-1: nCurrAlpha-1;
           fxColorValue = ( 0x00FFFFFF | (nCurrAlpha << 24) );
-          grConstantColorValue(fxColorValue);													
+          grConstantColorValue(fxColorValue);
           tlConOutput("Current fxColorValue is %-#8x\n", fxColorValue);
         break;
 
         case 'A':
           tlConClear();
           bVerboseMode = FXFALSE;
-	  tlConOutput("Verbose mode Off\n");
+          tlConOutput("Verbose mode Off\n");
           nCurrAlpha = (nCurrAlpha == 255) ? 255 : 
-                       (nCurrAlpha < 0) ? (int) alpha+1: ++nCurrAlpha;
+                       (nCurrAlpha < 0) ? (int) alpha+1: nCurrAlpha+1;
           fxColorValue = ( 0x00FFFFFF | (nCurrAlpha << 24) );
-          grConstantColorValue(fxColorValue);													
+          grConstantColorValue(fxColorValue);
           tlConOutput("Current fxColorValue is %-#8x\n", fxColorValue);
         break;
-  												
+
         case 'b':
           mipMapMode++;
           mipMapMode%=5;
@@ -559,7 +559,7 @@ int main( int argc, char **argv) {
         case 'd':
           tlConClear();
           bVerboseMode = FXFALSE;
-	  tlConOutput("Verbose mode Off\n");
+          tlConOutput("Verbose mode Off\n");
           plTxMnSetMultiOffsetFix( plTxMnGetMultiOffsetFix() ? FXFALSE : FXTRUE );
           tlConOutput( plTxMnGetMultiOffsetFix() ? "Multibase offset fix in\n" :
                                                    "Multibase offset fix NOT\n");
@@ -569,7 +569,7 @@ int main( int argc, char **argv) {
         case 'D':
           tlConClear();
           bVerboseMode = FXFALSE;
-	  tlConOutput("Verbose mode Off\n");
+          tlConOutput("Verbose mode Off\n");
           plTxMnSetMultiRevOrder( plTxMnGetMultiRevOrder() ? FXFALSE : FXTRUE );
           tlConOutput( plTxMnGetMultiRevOrder() ? "Multibase in rev order\n" :
                                                   "Multibase in linear order\n");
@@ -700,7 +700,7 @@ int main( int argc, char **argv) {
             hCurrFgTxtre = hFstFgTxtre;
           else
             ++hCurrFgTxtre;
-          
+
           getFgVerts( hCurrFgTxtre, &fgVerts[0] );
         break;
 
@@ -843,7 +843,7 @@ doLoadTexture( const char *lpzFileName, GrTexInfo *tEtTexInfo,
                                                  lpTmpTexInfo->aspectRatio));
   ret = modf((double) lpSurfInfo->fEndX, &dNonFrac);
   lpSurfInfo->rEndX = (float) dNonFrac;
-                                                 
+
   lpSurfInfo->fStartY = 
       ((scrHeight - (float) getLodHeight(lpSurfInfo->currLod,
                                          lpTmpTexInfo->aspectRatio) )/2.f);
@@ -867,7 +867,6 @@ doLoadTexture( const char *lpzFileName, GrTexInfo *tEtTexInfo,
 }
 
 
-
 static void 
 getFgVerts( hTexId_t deTexId, GrVertex *deFgVerts )
 {
@@ -880,7 +879,7 @@ getFgVerts( hTexId_t deTexId, GrVertex *deFgVerts )
   /* assumptions */
   assert( deTexId < NUMTEXTURES );
   assert( deFgVerts );
-  
+
   /* parse the texture array for the right one */
   for ( i = 0; (i < NUMTEXTURES) && (theTextures[i].hTexture != deTexId) ; ++i );
   if (i == NUMTEXTURES)
@@ -920,14 +919,13 @@ getFgVerts( hTexId_t deTexId, GrVertex *deFgVerts )
 }
 
 
-
 static void 
 doScaleScreenSurf( hTexId_t deTexId, ScaleDir_t deScleDir, ScaleAmt_t deScleAmt )
 {
   /* definitions */
   myTexture_t	     *lpTmpMyTxtre; 
   surfInfo_t       *lpSurfInfo;
-  GrTexInfo        *lpTexInfo;  	
+  GrTexInfo        *lpTexInfo;
   int              i;
   int              nNumScles;
   float            fScleAmt;
@@ -935,7 +933,7 @@ doScaleScreenSurf( hTexId_t deTexId, ScaleDir_t deScleDir, ScaleAmt_t deScleAmt 
   GrAspectRatio_t  tCurrAspct;
   double           dNonFrac, ret;
   const float      fScleLCD = 32.f; //least common scale denominator
- 
+
   /* assumptions */
   assert( deTexId < NUMTEXTURES );
 
@@ -948,10 +946,10 @@ doScaleScreenSurf( hTexId_t deTexId, ScaleDir_t deScleDir, ScaleAmt_t deScleAmt 
   lpTmpMyTxtre  = &theTextures[i];
   lpSurfInfo    = &lpTmpMyTxtre->surfInfo;
   lpTexInfo     = &lpTmpMyTxtre->lpTlTexture->info;
-  
+
   if ((lpSurfInfo->currLod == GR_LOD_1) && (deScleDir == SCALE_IN))
     return;
-    
+
   if ((lpSurfInfo->currLod >= GR_LOD_32) && (deScleAmt > SCALE_8))
     deScleAmt = SCALE_8;
 
@@ -960,7 +958,7 @@ doScaleScreenSurf( hTexId_t deTexId, ScaleDir_t deScleDir, ScaleAmt_t deScleAmt 
 
   /* scale by a frac of the next LOD your are scaling to */
   tLodToScle = lpSurfInfo->currLod +1;
-  
+
   tCurrAspct = lpTexInfo->aspectRatio; /* ease of read */
   fScleAmt = 0.0f; /* init then go */
   for ( i = 0; i < nNumScles; ++i)
@@ -990,7 +988,6 @@ doScaleScreenSurf( hTexId_t deTexId, ScaleDir_t deScleDir, ScaleAmt_t deScleAmt 
       }
     }
 
-
     if ( !((deScleDir == SCALE_OUT) && /* is there somtin' to do */
         (getLodWidth(tLodToScle, tCurrAspct) == getLodWidth(tLodToScle -1, tCurrAspct))))
     {
@@ -1008,13 +1005,11 @@ doScaleScreenSurf( hTexId_t deTexId, ScaleDir_t deScleDir, ScaleAmt_t deScleAmt 
           (ret > 0.5f ? 1.0f : ret == 0.0f ? 0.0f : 0.5f);
     }
 
-
-
     if ( !((deScleDir == SCALE_OUT) && /* is there somtin' to do */
          (getLodHeight(tLodToScle, tCurrAspct) == getLodHeight(tLodToScle -1, tCurrAspct))))
     {
       fScleAmt = ((float) getLodHeight(tLodToScle, tCurrAspct)) / fScleLCD / 2.f;
-        
+
       lpSurfInfo->fStartY += deScleDir * fScleAmt;
       ret = modf((double) lpSurfInfo->fStartY, &dNonFrac);
       lpSurfInfo->rStartY = (float) dNonFrac +
@@ -1031,7 +1026,6 @@ doScaleScreenSurf( hTexId_t deTexId, ScaleDir_t deScleDir, ScaleAmt_t deScleAmt 
 } /* doScaleScreenSurf */
 
 
-
 static int 
 getLodWidth( GrLOD_t lod, GrAspectRatio_t aspect )
 {
@@ -1044,7 +1038,6 @@ getLodWidth( GrLOD_t lod, GrAspectRatio_t aspect )
 
   return( val );
 }
-
 
 
 static int 
@@ -1061,7 +1054,6 @@ getLodHeight( GrLOD_t lod, GrAspectRatio_t aspect )
 }
 
 
-
 static void 
 doUnloadTextures( )
 {
@@ -1073,7 +1065,6 @@ doUnloadTextures( )
     free(theTextures[i].lpTlTexture);
   }
 }
-
 
 
 static void
@@ -1112,20 +1103,19 @@ getLodToDwnld( )
 }
 
 
-
 static void
 getLodPrtlToDwnld( )
 {
   /* definitions */
   char ch;
   int i;
-  
+
   /* initializations */
   g_nLodToDwnld = 0x0;
   g_bDoLodPrtlDwnld = FXFALSE;
   g_nLodPrtlFstRow  = 0x0;
   g_nLodPrtlLstRow  = 0x0;
-  
+
   /* code */
   tlConClear();
   grBufferClear( 0, 0, 0 );
@@ -1173,7 +1163,7 @@ getLodPrtlToDwnld( )
     tlConOutput("  %d\n", g_nLodPrtlLstRow);
     tlConRender();
     grBufferSwap( 1 );
-    
+
     if (((g_nLodPrtlFstRow >= 0x0) && (g_nLodPrtlFstRow < 0x100)) &&
         ((g_nLodPrtlLstRow >= 0x0) && (g_nLodPrtlLstRow < 0x100)))
       g_bDoLodPrtlDwnld = FXTRUE;
@@ -1182,11 +1172,10 @@ getLodPrtlToDwnld( )
   }
   else
     tlConOutput("invalid LOD\n");
-    
+
   tlConRender();
   grBufferSwap( 1 );
 }
-
 
 
 static void 
@@ -1194,7 +1183,7 @@ doResetFgVerts( hTexId_t deTexId )
 {
   /* definitions */
   surfInfo_t  *lpSurfInfo;
-  GrTexInfo   *lpTexInfo;  	
+  GrTexInfo   *lpTexInfo;
   int         i;
   double      ret, dNonFrac;
 
@@ -1222,7 +1211,7 @@ doResetFgVerts( hTexId_t deTexId )
                                                  lpTexInfo->aspectRatio));
   ret = modf((double) lpSurfInfo->fEndX, &dNonFrac);
   lpSurfInfo->rEndX = (float) dNonFrac;
-                                                 
+
   lpSurfInfo->fStartY = 
       ((scrHeight - (float) getLodHeight(lpSurfInfo->currLod,
                                          lpTexInfo->aspectRatio) )/2.f);
