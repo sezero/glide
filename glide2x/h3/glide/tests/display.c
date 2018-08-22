@@ -222,6 +222,7 @@ int main( int argc, char **argv)
       }
     }
 
+    diff.data = NULL;
     diff.width = 0;
     diff.height = 0;
 	
