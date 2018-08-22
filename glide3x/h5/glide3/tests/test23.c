@@ -62,7 +62,7 @@ int main( int argc, char **argv) {
     static TlVertex3D srcVerts[100];
     float angle;
 
-    int                  ftsize = 0;
+    FxI32                ftsize = 0;
     GrFog_t              *fogtable = NULL;
     FxU32                zrange[2];
     GrContext_t          gc = 0;
@@ -120,8 +120,8 @@ int main( int argc, char **argv) {
               60, 15, 0xffffff );
     
     /* Set up Render State - flat shading - alpha blending */
-    grGet(GR_ZDEPTH_MIN_MAX, 8, (FxI32 *)zrange);  
-    grGet(GR_FOG_TABLE_ENTRIES, 4, (FxI32 *)&ftsize);
+    grGet(GR_ZDEPTH_MIN_MAX, 8, (FxI32 *)zrange);
+    grGet(GR_FOG_TABLE_ENTRIES, 4, &ftsize);
     fogtable = malloc(sizeof(GrFog_t)*ftsize);
     assert(fogtable);
     grVertexLayout(GR_PARAM_XY,  0, GR_PARAM_ENABLE);

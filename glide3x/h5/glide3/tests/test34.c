@@ -62,7 +62,7 @@ int main( int argc, char **argv) {
     int frames                      = -1;
     FxBool               scrgrab = FXFALSE;
     char                 filename[256];
-    int                  ftsize = 0;
+    FxI32                ftsize = 0;
     GrFog_t              *fogtable = NULL;
     GrContext_t          gc = 0;
 
@@ -144,7 +144,7 @@ int main( int argc, char **argv) {
       fogext = (strncmp(extstr, "FOGCOORD", 8) == 0);
     }
 
-    grGet(GR_FOG_TABLE_ENTRIES, 4, (FxI32 *)&ftsize);
+    grGet(GR_FOG_TABLE_ENTRIES, 4, &ftsize);
     fogtable = malloc(sizeof(GrFog_t)*ftsize);
     assert(fogtable);
 

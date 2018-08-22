@@ -1648,7 +1648,7 @@ static int qhead = 0;
 static int qtail = 0;
 static int queue[256] = {0};
 
-long FAR PASCAL 
+LRESULT WINAPI
 MainWndproc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
   PAINTSTRUCT ps;
@@ -1687,7 +1687,7 @@ MainWndproc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam )
       break;
 
     case WM_CHAR:
-      if (!isascii(wParam)) break;
+      if ((int)wParam & ~0x7f) break;/* not ascii */
 #if 0
       printf("Posting keystroke %.02x\n", wParam);
       fflush(stdout);

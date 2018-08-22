@@ -46,7 +46,7 @@ int main( int argc, char **argv) {
     static TlVertex3D srcVerts[100];
     float angle;
 
-    int                  ftsize = 0;
+    FxI32                ftsize = 0;
     GrFog_t              *fogtable = NULL;
     FxU32                zrange[2];
 

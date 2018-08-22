@@ -35,7 +35,7 @@ int main( int argc, char **argv) {
     int frames                      = -1;
     FxBool               scrgrab = FXFALSE;
     char                 filename[256];
-    int                  ftsize = 0;
+    FxI32                ftsize = 0;
     GrFog_t              *fogtable = NULL;
 
     /* Initialize Glide */

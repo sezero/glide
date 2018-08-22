@@ -39,7 +39,7 @@ int main( int argc, char **argv) {
     TlTexture  lightTexture;
     unsigned long lightTextureAddr;
 
-    int                  ftsize = 0;
+    FxI32                ftsize = 0;
     GrFog_t              *fogtable = NULL;
 
     TlVertex3D srcVerts[4];

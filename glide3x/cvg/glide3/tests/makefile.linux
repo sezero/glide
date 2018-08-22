@@ -26,7 +26,7 @@ TOP = ../../..
 CPU ?= pentium
 
 CC = gcc
-CFLAGS = -Wall -O2 -ffast-math -mcpu=$(CPU)
+CFLAGS = -Wall -O2 -ffast-math -mtune=$(CPU)
 CFLAGS += -I$(TOP)/$(FX_GLIDE_HW)/glide3/src -I$(TOP)/$(FX_GLIDE_HW)/incsrc -I$(TOP)/$(FX_GLIDE_HW)/init
 CFLAGS += -I$(TOP)/swlibs/fxmisc
 CFLAGS += -DCVG
