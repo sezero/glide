@@ -875,7 +875,7 @@ int main( int argc, char **argv) {
         {
           char str[256];
           swapDelay = (int) c - 0x30;
-          sprintf(str, "Swapdelay = %ld\n", swapDelay);
+          sprintf(str, "Swapdelay = %d\n", swapDelay);
           tlConOutput(str);
         }
         break;
