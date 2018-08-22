@@ -91,7 +91,7 @@ int main( int argc, char **argv) {
       printf( "%s %s\n", name, usage );
       printf( "Available resolutions:\n%s\n",
               tlGetResolutionList() );
-      exit(1);
+      return -1;
     }
     switch( match ) {
     case 'b':
@@ -166,7 +166,7 @@ int main( int argc, char **argv) {
             (int) scrWidth, (int) scrHeight);
 
     tlErrorMessage(errMsg);
-    exit(1);
+    return -1;
   }
 
   sourceFormat = GR_LFB_SRC_FMT_565;
@@ -286,7 +286,7 @@ int main( int argc, char **argv) {
   }
     
   grGlideShutdown();
-  exit(0);
+  return 0;
 }
 
 

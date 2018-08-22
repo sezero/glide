@@ -247,7 +247,7 @@ int main( int argc, char **argv) {
       printf( "%s %s\n", name, usage );
       printf( "Available resolutions:\n%s\n",
              tlGetResolutionList() );
-      exit(1);
+      return -1;
     }
     switch( match ) {
     case 'n':
@@ -526,7 +526,7 @@ int main( int argc, char **argv) {
             tlConOutput("      Fast Fill Pixels:               %d\n",
                         fillPixels);
             tlConOutput("      LFB Write Pixels:               %d\n",
-                        lfbWritePixels);                   
+                        lfbWritePixels);
             tlConOutput("      Total Pixels Drawn:             %d\n",
                         pStats.pixelsOut);
             tlConOutput("      Triangles Processed             %d\n",
@@ -894,5 +894,5 @@ int main( int argc, char **argv) {
       break;
   }
   grGlideShutdown();
-  exit(0);
+  return 0;
 }

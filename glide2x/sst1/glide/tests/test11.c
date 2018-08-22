@@ -63,7 +63,7 @@ int main( int argc, char **argv) {
             printf( "%s %s\n", name, usage );
             printf( "Available resolutions:\n%s\n",
                     tlGetResolutionList() );
-            exit(0);
+            return -1;
         }
         switch( match ) {
         case 'n':
@@ -151,7 +151,7 @@ int main( int argc, char **argv) {
 
         if ( tlScaleX(1.0f) < 64.0 ||
              tlScaleY(1.0f) < 64.0 )
-	    exit(1);
+            return -1;
         
         /* generate random start position */
         startX = (int)rRandom( 64, (int)tlScaleX(1.0f) - 65 );
@@ -226,7 +226,7 @@ int main( int argc, char **argv) {
     }
     
     grGlideShutdown();
-    exit(0);
+    return 0;
 }
 
 static unsigned long randx = 1;
