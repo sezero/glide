@@ -52,6 +52,7 @@ GLIDE_VERSION_MINOR = 10.0
 
 GLIDE_LIB = libglide3.a
 GLIDE_SO  = libglide3.so
+GLIDE_SO_X= libglide3x.so
 TEXUS_EXE = texus2
 
 GLIDE_SONAME = $(GLIDE_SO).$(GLIDE_VERSION_MAJOR)
@@ -261,13 +262,17 @@ endif
 ###############################################################################
 all: glide3x $(TEXUS_EXEDIR)/$(TEXUS_EXE)
 
-glide3x: $(GLIDE_LIBDIR)/$(GLIDE_LIB) $(GLIDE_LIBDIR)/$(GLIDE_SO)
+glide3x: $(GLIDE_LIBDIR)/$(GLIDE_LIB) $(GLIDE_LIBDIR)/$(GLIDE_SO) $(GLIDE_LIBDIR)/$(GLIDE_SONAME) $(GLIDE_LIBDIR)/$(GLIDE_SO_X)
 
 $(GLIDE_LIBDIR)/$(GLIDE_LIB): $(GLIDE_OBJECTS)
 	$(AR) $(ARFLAGS) $@ $^
 
 $(GLIDE_LIBDIR)/$(GLIDE_SO): $(GLIDE_LIBDIR)/$(GLIDE_SHARED)
 	ln -fs $(GLIDE_SHARED) $(GLIDE_LIBDIR)/$(GLIDE_SO)
+$(GLIDE_LIBDIR)/$(GLIDE_SONAME): $(GLIDE_LIBDIR)/$(GLIDE_SHARED)
+	ln -fs $(GLIDE_SHARED) $(GLIDE_LIBDIR)/$(GLIDE_SONAME)
+$(GLIDE_LIBDIR)/$(GLIDE_SO_X): $(GLIDE_LIBDIR)/$(GLIDE_SHARED)
+	ln -fs $(GLIDE_SHARED) $(GLIDE_LIBDIR)/$(GLIDE_SO_X)
 
 $(GLIDE_LIBDIR)/$(GLIDE_SHARED): $(GLIDE_OBJECTS:.o=.lo)
 	$(CC) -o $@ -shared -Wl,--no-undefined -Wl,-soname,$(GLIDE_SONAME) $^ $(LDFLAGS) $(LDLIBS)
@@ -338,4 +343,6 @@ realclean: clean
 	-$(RM) $(GLIDE_LIBDIR)/$(GLIDE_LIB)
 	-$(RM) $(GLIDE_LIBDIR)/$(GLIDE_SHARED)
 	-$(RM) $(GLIDE_LIBDIR)/$(GLIDE_SO)
+	-$(RM) $(GLIDE_LIBDIR)/$(GLIDE_SONAME)
+	-$(RM) $(GLIDE_LIBDIR)/$(GLIDE_SO_X)
 	-$(RM) $(TEXUS_EXEDIR)/$(TEXUS_EXE)
