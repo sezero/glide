@@ -38,11 +38,6 @@ static const char name[]    = "test26";
 static const char purpose[] = "tests grLfbWriteRegion, and grLfbReadRegion";
 static const char usage[]   = "-b <# color buffers> -d <# aux buffers> -n <frames> -r <res>";
 
-static const char *renderBufferString[] = {
-  "GR_BUFFER_FRONTBUFFER",
-  "GR_BUFFER_BACKBUFFER "
-};
-
 static const char *sourceFormatString[] = {
   "GR_LFB_SRC_FMT_565       ",
   "GR_LFB_SRC_FMT_555       ",
@@ -67,7 +62,7 @@ static void imageConvert( void *dst,
                           GrLfbSrcFmt_t format,
                           FxU32 *bpp );
 
-void main( int argc, char **argv) {
+int main( int argc, char **argv) {
   char match; 
   char **remArgs;
   int  rv;
@@ -90,13 +85,13 @@ void main( int argc, char **argv) {
   static FxU32 imageHeight;
 
   /* Process Command Line Arguments */
-  while( rv = tlGetOpt( argc, argv, "bdnr", &match, &remArgs ) ) {
+  while ((rv = tlGetOpt(argc, argv, "bdnr", &match, &remArgs)) != 0) {
     if ( rv == -1 ) {
       printf( "Unrecognized command line argument\n" );
       printf( "%s %s\n", name, usage );
       printf( "Available resolutions:\n%s\n",
               tlGetResolutionList() );
-      return;
+      exit(1);
     }
     switch( match ) {
     case 'b':
@@ -171,7 +166,7 @@ void main( int argc, char **argv) {
             (int) scrWidth, (int) scrHeight);
 
     tlErrorMessage(errMsg);
-    return;
+    exit(1);
   }
 
   sourceFormat = GR_LFB_SRC_FMT_565;
@@ -291,7 +286,7 @@ void main( int argc, char **argv) {
   }
     
   grGlideShutdown();
-  return;
+  exit(0);
 }
 
 

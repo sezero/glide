@@ -99,13 +99,13 @@ int main( int argc, char **argv)
     dstfname[0] = 0;
 
     /* Process Command Line Arguments */
-    while( (rv = tlGetOpt( argc, argv, "nrst", &match, &remArgs )) ) {
+    while ((rv = tlGetOpt(argc, argv, "nrst", &match, &remArgs)) != 0) {
         if ( rv == -1 ) {
             printf( "Unrecognized command line argument\n" );
             printf( "%s %s\n", name, usage );
             printf( "Available resolutions:\n%s\n",
                     tlGetResolutionList() );
-	    exit(1);
+            exit(1);
         }
         switch( match ) {
         case 'n':

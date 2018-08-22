@@ -39,7 +39,7 @@ static const char purpose[] = "depth bias test: vary depth bias \n"
                                "over time with two interpenetrating triangles";
 static const char usage[]   = "-n <frames> -r <res>";
 
-void main( int argc, char **argv) {
+int main( int argc, char **argv) {
     char match; 
     char **remArgs;
     int  rv;
@@ -53,13 +53,13 @@ void main( int argc, char **argv) {
     short zDelta;
 
     /* Process Command Line Arguments */
-    while( rv = tlGetOpt( argc, argv, "nr", &match, &remArgs ) ) {
+    while ((rv = tlGetOpt(argc, argv, "nr", &match, &remArgs)) != 0) {
         if ( rv == -1 ) {
             printf( "Unrecognized command line argument\n" );
             printf( "%s %s\n", name, usage );
             printf( "Available resolutions:\n%s\n",
                     tlGetResolutionList() );
-            return;
+            exit(1);
         }
         switch( match ) {
         case 'n':
@@ -180,5 +180,5 @@ void main( int argc, char **argv) {
     }
     
     grGlideShutdown();
-    return;
+    exit(0);
 }

@@ -83,7 +83,7 @@ int main( int argc, char **argv)
   
   /* Code */
     /* Process Command Line Arguments */
-  while( (rv = tlGetOpt( argc, argv, "nrd", &match, &remArgs )) ) {
+  while ((rv = tlGetOpt(argc, argv, "nrd", &match, &remArgs)) != 0) {
     if ( rv == -1 ) {
       printf( "Unrecognized command line argument\n" );
       printf( "%s %s\n", name, usage );

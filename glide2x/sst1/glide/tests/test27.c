@@ -41,7 +41,7 @@ static unsigned int iRandom (unsigned int maxr);
 
 #define SNAP_BIAS ((float)(3<<18))
 
-void main( int argc, char **argv) {
+int main( int argc, char **argv) {
     char match; 
     char **remArgs;
     int  rv;
@@ -55,13 +55,13 @@ void main( int argc, char **argv) {
     int cycles;
 
     /* Process Command Line Arguments */
-    while( rv = tlGetOpt( argc, argv, "Nnr", &match, &remArgs ) ) {
+    while ((rv = tlGetOpt(argc, argv, "Nnr", &match, &remArgs)) != 0) {
         if ( rv == -1 ) {
             printf( "Unrecognized command line argument\n" );
             printf( "%s %s\n", name, usage );
             printf( "Available resolutions:\n%s\n",
                     tlGetResolutionList() );
-            return;
+            exit(1);
         }
         switch( match ) {
         case 'n':
@@ -166,7 +166,7 @@ doNothing:
     }
     
     grGlideShutdown();
-    return;
+    exit(0);
 }
 
 static unsigned long randx = 1;

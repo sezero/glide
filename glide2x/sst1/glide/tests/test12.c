@@ -73,7 +73,7 @@ static const char *pixPipeString[] = {
   "PIXELPIPE ENABLED "
 };
 
-void
+int
 main( int argc, char **argv)
 {
   char match; 
@@ -97,13 +97,13 @@ main( int argc, char **argv)
   FxBool             pixPipe;
 
   /* Process Command Line Arguments */
-  while( rv = tlGetOpt( argc, argv, "nr", &match, &remArgs ) ) {
+  while ((rv = tlGetOpt(argc, argv, "nr", &match, &remArgs)) != 0) {
     if ( rv == -1 ) {
       printf( "Unrecognized command line argument\n" );
       printf( "%s %s\n", name, usage );
       printf( "Available resolutions:\n%s\n",
              tlGetResolutionList() );
-      return;
+      exit(1);
     }
     switch( match ) {
     case 'n':
@@ -119,7 +119,7 @@ main( int argc, char **argv)
 
   if ( resolution == GR_RESOLUTION_NONE ) {
     tlErrorMessage( "Error!: Frontbuffer rendering not supported in a window\n" );
-    return;
+    exit(1);
   }
 
   tlSetScreen( scrWidth, scrHeight );
@@ -338,7 +338,7 @@ main( int argc, char **argv)
   }
     
   grGlideShutdown();
-  return;
+  exit(0);
 } /* main */
 
 

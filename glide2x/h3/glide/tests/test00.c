@@ -52,7 +52,7 @@ main( int argc, char **argv)
   char                 filename[256];
   
   /* Process Command Line Arguments */
-  while(( rv = tlGetOpt( argc, argv, "nrd", &match, &remArgs ) )) {
+  while ((rv = tlGetOpt(argc, argv, "nrd", &match, &remArgs)) != 0) {
     if ( rv == -1 ) {
       printf( "Unrecognized command line argument\n" );
       printf( "%s %s\n", name, usage );

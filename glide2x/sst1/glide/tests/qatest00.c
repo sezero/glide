@@ -64,7 +64,7 @@ static FxBool  g_bDoLodPrtlDwnld = FXFALSE;
 static FxI32   g_nLodPrtlFstRow;
 static FxI32   g_nLodPrtlLstRow;
 	
-void main( int argc, char **argv) {
+int main( int argc, char **argv) {
   char match; 
   char **remArgs;
   int  rv;
@@ -91,10 +91,10 @@ void main( int argc, char **argv) {
 
   /* templates for all algorithmic textures */
   GrTexInfo yAlgTxtreTmplts[][9] = 
-    {{ GR_LOD_1, GR_LOD_256, GR_ASPECT_8x1, GR_TEXFMT_RGB_565, NULL },
-     { GR_LOD_1, GR_LOD_256, GR_ASPECT_4x1, GR_TEXFMT_RGB_565, NULL },
-     { GR_LOD_1, GR_LOD_256, GR_ASPECT_2x1, GR_TEXFMT_RGB_565, NULL },
-     { GR_LOD_1, GR_LOD_256, GR_ASPECT_1x1, GR_TEXFMT_RGB_565, NULL }};
+    {{ {GR_LOD_1, GR_LOD_256, GR_ASPECT_8x1, GR_TEXFMT_RGB_565, NULL} },
+     { {GR_LOD_1, GR_LOD_256, GR_ASPECT_4x1, GR_TEXFMT_RGB_565, NULL} },
+     { {GR_LOD_1, GR_LOD_256, GR_ASPECT_2x1, GR_TEXFMT_RGB_565, NULL} },
+     { {GR_LOD_1, GR_LOD_256, GR_ASPECT_1x1, GR_TEXFMT_RGB_565, NULL} }};
 
   const int nDwnLodTxtres = 8;
   FxU16  yDwnLodClrs[][9] = 
@@ -108,23 +108,23 @@ void main( int argc, char **argv) {
      { BLU_565, BLU_565, BLU_565, BLU_565, BLU_565, BLU_565, BLU_565, BLU_565, BLU_565 }};
 
   GrTexInfo yDwnTxtreTmplts[][9] = 
-    {{ GR_LOD_1, GR_LOD_256, GR_ASPECT_1x1, GR_TEXFMT_RGB_565, NULL },
-     { GR_LOD_1, GR_LOD_256, GR_ASPECT_1x1, GR_TEXFMT_RGB_332, NULL },
-     { GR_LOD_1, GR_LOD_256, GR_ASPECT_1x1, GR_TEXFMT_ARGB_1555, NULL },
-     { GR_LOD_1, GR_LOD_256, GR_ASPECT_1x1, GR_TEXFMT_ARGB_4444, NULL },
-     { GR_LOD_1, GR_LOD_256, GR_ASPECT_1x1, GR_TEXFMT_RGB_565, NULL },
-     { GR_LOD_1, GR_LOD_256, GR_ASPECT_8x1, GR_TEXFMT_RGB_565, NULL },
-     { GR_LOD_1, GR_LOD_256, GR_ASPECT_4x1, GR_TEXFMT_RGB_565, NULL },
-     { GR_LOD_1, GR_LOD_256, GR_ASPECT_2x1, GR_TEXFMT_RGB_565, NULL }};
+    {{ {GR_LOD_1, GR_LOD_256, GR_ASPECT_1x1, GR_TEXFMT_RGB_565, NULL} },
+     { {GR_LOD_1, GR_LOD_256, GR_ASPECT_1x1, GR_TEXFMT_RGB_332, NULL} },
+     { {GR_LOD_1, GR_LOD_256, GR_ASPECT_1x1, GR_TEXFMT_ARGB_1555, NULL} },
+     { {GR_LOD_1, GR_LOD_256, GR_ASPECT_1x1, GR_TEXFMT_ARGB_4444, NULL} },
+     { {GR_LOD_1, GR_LOD_256, GR_ASPECT_1x1, GR_TEXFMT_RGB_565, NULL} },
+     { {GR_LOD_1, GR_LOD_256, GR_ASPECT_8x1, GR_TEXFMT_RGB_565, NULL} },
+     { {GR_LOD_1, GR_LOD_256, GR_ASPECT_4x1, GR_TEXFMT_RGB_565, NULL} },
+     { {GR_LOD_1, GR_LOD_256, GR_ASPECT_2x1, GR_TEXFMT_RGB_565, NULL} }};
 
   /* texture handles */
   hTexId_t  hCurrFgTxtre,    /* current fg texture */
-            hFstFgTxtre,     /* first fg texture */
+            hFstFgTxtre = 0, /* first fg texture */
             hLstFgTxtre,     /* last fg texture */
             hFstAlgFgTxtre,	/* first algo texture */
-            hLstAlgFgTxtre,	/* last algo texture */
-            hFstDwnlTxtre,   /* first lod download texture */
-            hLstDwnlTxtre,   /* last lod download texture */
+            hLstAlgFgTxtre = 0,	/* last algo texture */
+            hFstDwnlTxtre = 0,  /* first lod download texture */
+            hLstDwnlTxtre = 0,  /* last lod download texture */
             hDwlnSrcTxtre,
             hTmpTxtre;
   hTexId_t  hBgTxtre;  /* bg texture */
@@ -182,14 +182,14 @@ void main( int argc, char **argv) {
   fgVerts[3].tmuvtx[0].tow = 0.f;
 
   /* Process Command Line Arguments */
-  while( rv = tlGetOpt( argc, argv, "nr", &match, &remArgs ) )
+  while ((rv = tlGetOpt(argc, argv, "nr", &match, &remArgs)) != 0)
   {
     if ( rv == -1 )
     {
       printf( "Unrecognized command line argument\n" );
       printf( "%s %s\n", name, usage );
       printf( "Available resolutions:\n%s\n", tlGetResolutionList() );
-      return;
+      exit(1);
     }
 
     switch( match )
@@ -742,8 +742,7 @@ void main( int argc, char **argv) {
   doUnloadTextures();
   grGlideShutdown();
 
-  
-  return;
+  exit(1);
 }	/* main */
 
 

@@ -71,13 +71,13 @@ int main( int argc, char **argv) {
 //    GrFog_t  fogtable[GR_FOG_TABLE_SIZE];
 
     /* Process Command Line Arguments */
-    while( (rv = tlGetOpt( argc, argv, "nr", &match, &remArgs )) ) {
+    while ((rv = tlGetOpt(argc, argv, "nr", &match, &remArgs)) != 0) {
         if ( rv == -1 ) {
             printf( "Unrecognized command line argument\n" );
             printf( "%s %s\n", name, usage );
             printf( "Available resolutions:\n%s\n",
                     tlGetResolutionList() );
-	    exit(1);
+            exit(1);
         }
         switch( match ) {
         case 'n':

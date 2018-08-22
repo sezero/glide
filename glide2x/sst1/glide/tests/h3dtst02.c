@@ -43,7 +43,7 @@ static unsigned int iRandom (unsigned int maxr);
 
 typedef enum { NORMAL, ANTIALIASED } Mode;
 
-void main( int argc, char **argv) {
+int main( int argc, char **argv) {
     char match; 
     char **remArgs;
     int  rv;
@@ -71,13 +71,13 @@ void main( int argc, char **argv) {
 //    GrFog_t  fogtable[GR_FOG_TABLE_SIZE];
 
     /* Process Command Line Arguments */
-    while( rv = tlGetOpt( argc, argv, "nr", &match, &remArgs ) ) {
+    while ((rv = tlGetOpt(argc, argv, "nr", &match, &remArgs)) != 0) {
         if ( rv == -1 ) {
             printf( "Unrecognized command line argument\n" );
             printf( "%s %s\n", name, usage );
             printf( "Available resolutions:\n%s\n",
                     tlGetResolutionList() );
-            return;
+            exit(1);
         }
         switch( match ) {
         case 'n':
@@ -257,7 +257,7 @@ void main( int argc, char **argv) {
     }
     
     grGlideShutdown();
-    return;
+    exit(0);
 }
 
 static unsigned long randx = 1;

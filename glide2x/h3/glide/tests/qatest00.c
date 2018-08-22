@@ -182,7 +182,7 @@ int main( int argc, char **argv) {
   fgVerts[3].tmuvtx[0].tow = 0.f;
 
   /* Process Command Line Arguments */
-  while( (rv = tlGetOpt( argc, argv, "nr", &match, &remArgs )) )
+  while ((rv = tlGetOpt(argc, argv, "nr", &match, &remArgs)) != 0)
   {
     if ( rv == -1 )
     {

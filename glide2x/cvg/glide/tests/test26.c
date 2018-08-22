@@ -85,7 +85,7 @@ int main( int argc, char **argv) {
   static FxU32 imageHeight;
 
   /* Process Command Line Arguments */
-  while( (rv = tlGetOpt( argc, argv, "bdnr", &match, &remArgs )) ) {
+  while ((rv = tlGetOpt(argc, argv, "bdnr", &match, &remArgs)) != 0) {
     if ( rv == -1 ) {
       printf( "Unrecognized command line argument\n" );
       printf( "%s %s\n", name, usage );
