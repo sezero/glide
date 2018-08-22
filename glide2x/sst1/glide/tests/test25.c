@@ -190,7 +190,7 @@ int main( int argc, char **argv) {
     y_angle = 0.0f;             /* rotation amount */
     
   int
-    firstTime = 0;              /* Used for performance calculations */
+    firstTime = 1;              /* Used for performance calculations */
 
   GrPassthruMode_t
     passthruMode = GR_PASSTHRU_SHOW_SST1; /* For toggling passthru */
