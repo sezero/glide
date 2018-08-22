@@ -32,11 +32,6 @@ static const char name[]    = "display";
 static const char purpose[] = "display a 16 bit frame buffer (565 format) dump out";
 static const char usage[]   = "-n <frames> -r <res> -s srcimage -t testimage";
 
-static const char *renderBufferString[] = {
-    "GR_BUFFER_FRONTBUFFER",
-    "GR_BUFFER_BACKBUFFER "
-};
-
 static const char *sourceFormatString[] = {
     "GR_LFB_SRC_FMT_565       ",
     "GR_LFB_SRC_FMT_555       ",
@@ -61,7 +56,8 @@ static void imageConvert( void *dst,
                           GrLfbSrcFmt_t format,
                           FxU32 *bpp );
 
-void main( int argc, char **argv) {
+int main( int argc, char **argv)
+{
     char match; 
     char **remArgs;
     int  rv;
@@ -77,7 +73,7 @@ void main( int argc, char **argv) {
     LFB_Img src, dst, diff;
     FxBool txtdisplay = FXTRUE;
 
-    void *image;
+    void *image = NULL;
     FxU32 bpp;
 
     GrLfbSrcFmt_t sourceFormat;
@@ -89,13 +85,13 @@ void main( int argc, char **argv) {
     dstfname[0] = 0;
 
     /* Process Command Line Arguments */
-    while( rv = tlGetOpt( argc, argv, "nrst", &match, &remArgs ) ) {
+    while ((rv = tlGetOpt(argc, argv, "nrst", &match, &remArgs)) != 0) {
         if ( rv == -1 ) {
             printf( "Unrecognized command line argument\n" );
             printf( "%s %s\n", name, usage );
             printf( "Available resolutions:\n%s\n",
                     tlGetResolutionList() );
-            return;
+            return -1;
         }
         switch( match ) {
         case 'n':
@@ -161,8 +157,8 @@ void main( int argc, char **argv) {
         /* readng the LFB file header */
         fread(&src.signature, 4, 1, fp);
         if (src.signature != IMAGE_SRLE) {
-          printf("%s file type incorrect\n");
-          return;
+          printf("%s file type incorrect\n", srcfname);
+          return -1;
         }
         fread(&src.width, 2, 1, fp);
         fread(&src.height, 2, 1, fp);
@@ -195,8 +191,8 @@ void main( int argc, char **argv) {
         /* readng the LFB file header */
         fread(&dst.signature, 4, 1, fp);
         if (dst.signature != IMAGE_SRLE) {
-          printf("%s file type incorrect\n");
-          return;
+          printf("%s file type incorrect\n", dstfname);
+          return -1;
         }
         fread(&dst.width, 2, 1, fp);
         fread(&dst.height, 2, 1, fp);
@@ -214,6 +210,7 @@ void main( int argc, char **argv) {
       }
     }
 
+    diff.data = NULL;
     diff.width = 0;
     diff.height = 0;
         
@@ -259,7 +256,7 @@ void main( int argc, char **argv) {
     }
     if ( ( imageWidth > (FxU32)scrWidth ) ||
          ( imageHeight > (FxU32)scrHeight ) )
-        return;
+        return -1;
 
     while( frames-- ) {
 
@@ -351,7 +348,7 @@ void main( int argc, char **argv) {
     if (srcfname[0] && dstfname[0])
       free(diff.data);
     free(image);
-    return;
+    return 0;
 }
 
 

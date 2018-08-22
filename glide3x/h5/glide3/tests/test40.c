@@ -61,7 +61,7 @@ rebuildTextureMap(struct texInfo* texMap,
 static FxBool
 rebuildLodMap(struct texInfo* texMap);
 
-void 
+int 
 main(int argc, char **argv) 
 {
   GrScreenResolution_t 
@@ -82,13 +82,13 @@ main(int argc, char **argv)
     char **remArgs;
     int  rv;
 
-    while(rv = tlGetOpt(argc, argv, "dfnr", &match, &remArgs)) {
+    while((rv = tlGetOpt(argc, argv, "dfnr", &match, &remArgs)) != 0) {
       if (rv == -1) {
         printf("Unrecognized command line argument\n");
         printf("%s %s\n", name, usage);
         printf("Available resolutions:\n%s\n",
                tlGetResolutionList());
-        return;
+        return -1;
       }
 
       switch(match) {
@@ -385,6 +385,7 @@ main(int argc, char **argv)
 
  __errExit:    
   grGlideShutdown();
+  return 0;
 }
 
 static FxBool

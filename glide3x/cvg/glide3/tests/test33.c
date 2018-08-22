@@ -27,7 +27,7 @@ static const char name[]    = "test33";
 static const char purpose[] = "draws gouraud shaded triangle strip and fan with grDrawVertexArray(GR_TRIANGLE_STRIP(FAN)_CONTINUE";
 static const char usage[]   = "-n <frames> -r <res> -d <filename>";
 
-void main( int argc, char **argv) {
+int main( int argc, char **argv) {
     char match; 
     char **remArgs;
     int  rv;
@@ -51,13 +51,13 @@ void main( int argc, char **argv) {
     assert( hwconfig = tlVoodooType() );
 
     /* Process Command Line Arguments */
-    while( rv = tlGetOpt( argc, argv, "nrd", &match, &remArgs ) ) {
+    while((rv = tlGetOpt(argc, argv, "nrd", &match, &remArgs)) != 0) {
         if ( rv == -1 ) {
             printf( "Unrecognized command line argument\n" );
             printf( "%s %s\n", name, usage );
             printf( "Available resolutions:\n%s\n",
                     tlGetResolutionList() );
-            return;
+            goto _quit;
         }
         switch( match ) {
         case 'n':
@@ -181,15 +181,15 @@ void main( int argc, char **argv) {
               printf( "Cannot open %s\n", filename);
             scrgrab = FXFALSE;
           }
-          if ( tlKbHit() ) goto exit;
+          if ( tlKbHit() ) goto _quit;
         }
       }
     }
     
     tlSleep( 1 );
-exit:
+_quit:
     grGlideShutdown();
-    return;
+    return 0;
 }
 
 

@@ -747,14 +747,15 @@ int tlConOutput( const char *fmt, ... )
 #ifndef TLIB_SMALL_FONTS
         {
           char* temp = buffer;
-          
+
           while(*temp != '\0') {
-            *temp = toupper(*temp);
+            if (*temp >= 'a' && *temp <= 'z')
+                *temp -= ('a'-'A');
             temp++;
           }
         }
 #endif
-        
+
         c = buffer;
 
         /* update console grid */

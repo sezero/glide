@@ -76,7 +76,7 @@ main(int argc, char **argv)
   assert(hwconfig = tlVoodooType());
 
   /* Process Command Line Arguments */
-  while(rv = tlGetOpt(argc, argv, "dlmnprs", &match, &remArgs)) {
+  while ((rv = tlGetOpt(argc, argv, "dlmnprs", &match, &remArgs)) != 0) {
     if (rv == -1) {
       printf("Unrecognized command line argument\n");
       printf("%s %s\n", name, usage);

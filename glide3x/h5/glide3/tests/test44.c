@@ -40,11 +40,11 @@ static const char name[]    = "test44";
 static const char purpose[] = "mipmap modes with TXS file";
 static const char usage[]   = "-n <frames> -r <res> -t <texturename> -p <pixel format>";
 
-char *txname  = "glide.txs";
+const char *txname  = "glide.txs";
 
 typedef enum { DISABLE, NEAREST, TRILINEAR } MipMapMode;
 
-char *texfmt[]={
+const char *texfmt[]={
          "rgb332",                              // TEXFMT_RGB_332 
          "yiq",                                 // TEXFMT_YIQ_422
          "a8",                                  // TEXFMT_A_8
@@ -75,7 +75,7 @@ char *texfmt[]={
          NULL
 };
 
-char* palfmt[]={
+const char* palfmt[]={
   "ncc0",
   "ncc1",
   "palette",
@@ -83,7 +83,7 @@ char* palfmt[]={
   NULL
 };
 
-void main( int argc, char **argv) {
+int main( int argc, char **argv) {
     char match; 
     char **remArgs;
     int  rv;
@@ -112,13 +112,13 @@ void main( int argc, char **argv) {
       }
 
     /* Process Command Line Arguments */
-    while( rv = tlGetOpt( argc, argv, "nrtp", &match, &remArgs ) ) {
+    while((rv = tlGetOpt(argc, argv, "nrtp", &match, &remArgs)) != 0) {
       if ( rv == -1 ) {
         printf( "Unrecognized command line argument\n" );
         printf( "%s %s\n", name, usage );
         printf( "Available resolutions:\n%s\n",
                 tlGetResolutionList() );
-        return;
+        return -1;
       }
       switch( match ) 
         {
@@ -426,7 +426,7 @@ void main( int argc, char **argv) {
     
  __errExit:    
     grGlideShutdown();
-    return;
+    return 0;
 }
 
 

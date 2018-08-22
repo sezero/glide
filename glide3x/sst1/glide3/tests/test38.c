@@ -39,9 +39,7 @@ static const char name[]    = "test38";
 static const char purpose[] = "Test the guGammaCorrectionRGB(..) function.";
 static const char usage[]   = "-n <frames> -r <res> -d <filename>";
 
-extern unsigned long hWndMain;
-
-void main( int argc, char **argv) 
+int main( int argc, char **argv) 
 {
   char match; 
   char **remArgs;
@@ -65,13 +63,13 @@ void main( int argc, char **argv)
   assert( hwconfig = tlVoodooType() );
 
   /* Process Command Line Arguments */
-  while( rv = tlGetOpt( argc, argv, "nrd", &match, &remArgs ) ) {
+  while((rv = tlGetOpt(argc, argv, "nrd", &match, &remArgs)) != 0) {
     if ( rv == -1 ) {
       printf( "Unrecognized command line argument\n" );
       printf( "%s %s\n", name, usage );
       printf( "Available resolutions:\n%s\n",
              tlGetResolutionList() );
-      return;
+      return 0;
     }
     switch( match ) {
     case 'n':
@@ -195,6 +193,6 @@ void main( int argc, char **argv)
   
  __errExit:    
   grGlideShutdown();
-  return;
+  return 0;
 }
 

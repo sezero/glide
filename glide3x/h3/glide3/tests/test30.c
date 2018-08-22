@@ -128,7 +128,7 @@ main(int argc, char **argv) {
     char **remArgs;
     int  rv;
 
-    while(rv = tlGetOpt(argc, argv, "ndv", &match, &remArgs)) {
+    while((rv = tlGetOpt(argc, argv, "ndv", &match, &remArgs)) != 0) {
       if(rv == -1) {
         printf("Unrecognized command line argument\n");
         printf("%s %s\n", name, usage);

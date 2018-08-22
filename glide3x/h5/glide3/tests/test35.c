@@ -40,7 +40,7 @@ static const char name[]    = "test35";
 static const char purpose[] = "texture chromarange";
 static const char usage[]   = "-n <frames> -r <res> -d <filename>";
 
-void main( int argc, char **argv) {
+int main( int argc, char **argv) {
     char match; 
     char **remArgs;
     int  rv;
@@ -51,7 +51,6 @@ void main( int argc, char **argv) {
     int frames                      = -1;
     FxBool               scrgrab = FXFALSE;
     char                 filename[256];
-    int                  ftsize = 0;
     GrContext_t          gc = 0;
 
     TlTexture  baseTexture;
@@ -72,13 +71,13 @@ void main( int argc, char **argv) {
     assert( hwconfig = tlVoodooType() );
 
     /* Process Command Line Arguments */
-    while( rv = tlGetOpt( argc, argv, "nrd", &match, &remArgs ) ) {
+    while((rv = tlGetOpt(argc, argv, "nrd", &match, &remArgs)) != 0) {
         if ( rv == -1 ) {
             printf( "Unrecognized command line argument\n" );
             printf( "%s %s\n", name, usage );
             printf( "Available resolutions:\n%s\n",
                     tlGetResolutionList() );
-            return;
+            return -1;
         }
         switch( match ) {
         case 'n':
@@ -145,7 +144,7 @@ void main( int argc, char **argv) {
     */
     extension = grGetString(GR_EXTENSION);
 
-    if (extstr = strstr(extension, "TEXCHROMA")) {
+    if ((extstr = strstr(extension, "TEXCHROMA")) != NULL) {
       if (!strncmp(extstr, "TEXCHROMA", 9)) {
         grTexChromaModeExt = grGetProcAddress("grTexChromaModeExt");
         grTexChromaRangeExt = grGetProcAddress("grTexChromaRangeExt");
@@ -155,7 +154,7 @@ void main( int argc, char **argv) {
     if (!grTexChromaModeExt) {
       printf( "TEXCHROMA is not supported in %s\n", grGetString(GR_HARDWARE) );
       grGlideShutdown();
-      return;
+      return -1;
     }
 
     grTexChromaModeExt(GR_TMU0, texchroma);
@@ -331,5 +330,5 @@ void main( int argc, char **argv) {
     
  __errExit:    
     grGlideShutdown();
-    return;
+    return 0;
 }

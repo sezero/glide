@@ -50,24 +50,20 @@
 #define CORRECT_GR_VIEWPORT_WIDTH 640
 #define CORRECT_GR_VIEWPORT_HEIGHT 480
 
-void TestGet(char * getvalstr, int getval, int memcount , long * memval, int * failures);
+void TestGet(char * getvalstr, int getval, int memcount , FxI32 * memval, int * failures);
 void TestGetString(char * getvalstr, int getval, int * failures);
 
 int hwconfig;
-static const char *version;
-static const char *extension;
 
-extern unsigned long hWndMain;
-
-void 
+int 
 main( int argc, char **argv) 
 {
   GrScreenResolution_t resolution = GR_RESOLUTION_640x480;
   float                scrWidth   = 640.0f;
   float                scrHeight  = 480.0f;
-  long val4[4];
-  long * histbuffer;
-  long histsize;
+  FxI32 val4[4];
+  FxI32 * histbuffer;
+  FxI32 histsize;
   const char * str;
   int ret;
   int i;
@@ -83,7 +79,7 @@ main( int argc, char **argv)
   /* Process Command Line Arguments */
   tlSetScreen( scrWidth, scrHeight );
   
-  version = grGetString( GR_VERSION );
+  str = grGetString( GR_VERSION );
   
   printf("Test 37 - grGet() Stress Test. All output goes to the Console.\n\n");
   tlGetCH ();
@@ -245,10 +241,10 @@ main( int argc, char **argv)
   ret = grGet(GR_NUM_SWAP_HISTORY_BUFFER, sizeof(histsize), &histsize );
   
   if(ret==sizeof(histsize)) {
-    histbuffer = malloc(histsize*sizeof(long));
+    histbuffer = malloc(histsize*sizeof(FxI32));
     
-    ret = grGet(GR_SWAP_HISTORY, histsize*sizeof(long), histbuffer );
-    if(ret==(int)(histsize*sizeof(long)))
+    ret = grGet(GR_SWAP_HISTORY, histsize*sizeof(FxI32), histbuffer );
+    if(ret==(int)(histsize*sizeof(FxI32)))
       printf("Success(%d) - ",ret);
     else {
       printf("Failed (%d) - ", ret);
@@ -260,7 +256,7 @@ main( int argc, char **argv)
     for(i=0;i<histsize;i++) {
       printf("%d ", histbuffer[i]);
     }
-    printf("\n", histbuffer[i]);
+    printf("\n");
     free(histbuffer);
   } else {
     printf("GR_NUM_SWAP_HISTORY_BUFFER failed, so unable to call GR_SWAP_HISTORY\n");   
@@ -316,12 +312,12 @@ main( int argc, char **argv)
  __errExit:    
   grGlideShutdown();
   
-  return;
+  return 0;
 } /* main */
 
 
 void
-TestGet(char * getvalstr, int getval, int memcount , long * memval, int * failures)
+TestGet(char * getvalstr, int getval, int memcount , FxI32 * memval, int * failures)
 {
   int ret;
   int i;
@@ -332,7 +328,7 @@ TestGet(char * getvalstr, int getval, int memcount , long * memval, int * failur
   for(i=0;i<4;i++)              /*Clear Memory to some unique Pattern*/
     memval[i] =0xdeadbeef;
   
-  ret = grGet(getval, memcount*sizeof(long), memval );  /*Do the Get*/
+  ret = grGet(getval, memcount*sizeof(FxI32), memval );  /*Do the Get*/
   
   for(i=0;i<memcount;i++)
     /*if pattern still exists, then we have a problem*/
@@ -340,7 +336,7 @@ TestGet(char * getvalstr, int getval, int memcount , long * memval, int * failur
       correct=FXFALSE;
   
   /* if Number of bytes returned is wrong, then we have a problem*/
-  if(ret!=(int)(memcount*sizeof(long))) 
+  if(ret!=(int)(memcount*sizeof(FxI32))) 
     correct=FXFALSE;
   
   if(correct)                   /*print the results*/

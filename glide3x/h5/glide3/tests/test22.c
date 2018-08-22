@@ -40,7 +40,7 @@ static const char name[]    = "test22";
 static const char purpose[] = "fog with multi-pass texturing";
 static const char usage[]   = "-n <frames> -r <res>";
 
-void main( int argc, char **argv) {
+int main( int argc, char **argv) {
     char match; 
     char **remArgs;
     int  rv;
@@ -68,13 +68,13 @@ void main( int argc, char **argv) {
     assert( hwconfig = tlVoodooType() );
 
     /* Process Command Line Arguments */
-    while( rv = tlGetOpt( argc, argv, "nr", &match, &remArgs ) ) {
+    while ((rv = tlGetOpt(argc, argv, "nr", &match, &remArgs)) != 0) {
         if ( rv == -1 ) {
             printf( "Unrecognized command line argument\n" );
             printf( "%s %s\n", name, usage );
             printf( "Available resolutions:\n%s\n",
                     tlGetResolutionList() );
-            return;
+            return -1;
         }
         switch( match ) {
         case 'n':
@@ -317,7 +317,7 @@ void main( int argc, char **argv) {
     free(fogtable);
  __errExit:    
     grGlideShutdown();
-    return;
+    return 0;
 }
 
 

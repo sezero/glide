@@ -30,7 +30,7 @@ static const char usage[]   = "\t-d <screen dump filename>\n"
                               "\t-s [force single texturing]\n";
                               
 
-void main(int argc, char **argv) {
+int main(int argc, char **argv) {
   char match; 
   char **remArgs;
   int  rv;
@@ -58,13 +58,13 @@ void main(int argc, char **argv) {
   assert(hwconfig = tlVoodooType());
 
   /* Process Command Line Arguments */
-  while(rv = tlGetOpt(argc, argv, "dlmnprs", &match, &remArgs)) {
+  while ((rv = tlGetOpt(argc, argv, "dlmnprs", &match, &remArgs)) != 0) {
     if (rv == -1) {
       printf("Unrecognized command line argument\n");
       printf("%s %s\n", name, usage);
       printf("Available resolutions:\n%s\n",
               tlGetResolutionList());
-      return;
+      return -1;
     }
     switch(match) {
     case 'd':
@@ -358,4 +358,5 @@ void main(int argc, char **argv) {
 
 __errExit:    
   grGlideShutdown();
+  return 0;
 }

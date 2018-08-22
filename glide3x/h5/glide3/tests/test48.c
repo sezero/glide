@@ -59,7 +59,7 @@ static void doHelp( void ) {
   tlConClear();
 }
 
-void 
+int 
 main(int argc, char **argv) 
 {
   char match; 
@@ -95,13 +95,13 @@ main(int argc, char **argv)
     yBottom;
 
   /* Process Command Line Arguments */
-  while(rv = tlGetOpt(argc, argv, "nrdxp", &match, &remArgs)) {
+  while((rv = tlGetOpt(argc, argv, "nrdxp", &match, &remArgs)) != 0) {
     if (rv == -1) {
       printf("Unrecognized command line argument\n");
       printf("%s %s\n", name, usage);
       printf("Available resolutions:\n%s\n",
              tlGetResolutionList());
-      return;
+      return -1;
     }
     switch(match) {
     case 'n':
@@ -356,7 +356,7 @@ main(int argc, char **argv)
       cnt = strcspn(filename, ".");
       strncpy(fname, filename, cnt);
       fname[cnt] = 0;
-      sprintf(tmp,"_%d\0", subframe);
+      sprintf(tmp,"_%d", subframe);
       strcat(fname, tmp);
       strcat(fname, filename+cnt);
       if (!tlScreenDump(fname, (FxU16)scrWidth, (FxU16)scrHeight))
@@ -401,4 +401,5 @@ main(int argc, char **argv)
     
  __errExit:    
   grGlideShutdown();
+  return 0;
 }
