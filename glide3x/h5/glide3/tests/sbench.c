@@ -302,7 +302,7 @@ main( int argc, char **argv)
           }
         }
       } else { /* listType == GR_TRIANGLE_FAN */
-#define PI 3.1415f
+#define FX_PI 3.1415f
 
 #if 0
 
@@ -320,7 +320,7 @@ main( int argc, char **argv)
             float
               theta;
 
-            theta = PI - ((((float) v / (float) nVerts)) * PI);
+            theta = FX_PI - ((((float) v / (float) nVerts)) * FX_PI);
 
             x = ((float) cos(theta) + 1.f) / 2.f;
             y = (float) sin(theta);
@@ -339,7 +339,7 @@ main( int argc, char **argv)
 
           float x, y;
           float area = tSize * tSize / 2;
-          float r = (float)sqrt((vsize - 2) * area / PI);
+          float r = (float)sqrt((vsize - 2) * area / FX_PI);
 
           if (v == 0) {
             x = 0.5f;
@@ -355,7 +355,7 @@ main( int argc, char **argv)
             float
               theta;
 
-            theta = PI - ((((float) (v-1) / (float) (vsize - 2))) * 2.f * PI);
+            theta = FX_PI - ((((float) (v-1) / (float) (vsize - 2))) * 2.f * FX_PI);
 
             x = (float) cos(theta) * r;
             y = (float) sin(theta) * r;
