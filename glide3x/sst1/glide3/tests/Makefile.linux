@@ -13,6 +13,8 @@
 #			default = sst1
 #	CPU		optimize for the given processor.
 #			default = pentium
+#	XPATH		specify X11 path; needed for sst96.
+#			default = /usr/X11R6 (sst96 only)
 #
 #    Targets:
 #	<file.exe>	build a specific file
@@ -21,38 +23,43 @@
 
 .PHONY: all
 .SUFFIXES: .c .o .exe
-.SECONDARY: tlib.o
+.SECONDARY: tlib.o linutil.o
 
 FX_GLIDE_HW ?= sst1
+XPATH ?= /usr/X11R6
 ifeq ($(FX_GLIDE_HW),sst1)
 HWDEF = -DSST1
-else
+endif
 ifeq ($(FX_GLIDE_HW),sst96)
 HWDEF = -DSST96
-XPATH = -L/usr/X11R6/lib
-XLIBS = -lXxf86dga -lXxf86rush -lXxf86vm
-endif
 endif
 
-override FX_GLIDE_HW = sst1
+override FX_HW_BASE = sst1
 TOP = ../../..
 CPU ?= pentium
 
 CC = gcc
 CFLAGS = -Wall -O2 -ffast-math -mtune=$(CPU)
-CFLAGS += -I$(TOP)/$(FX_GLIDE_HW)/glide3/src -I$(TOP)/$(FX_GLIDE_HW)/incsrc -I$(TOP)/$(FX_GLIDE_HW)/init
+CFLAGS += -I$(TOP)/$(FX_HW_BASE)/glide3/src -I$(TOP)/$(FX_HW_BASE)/incsrc -I$(TOP)/$(FX_HW_BASE)/init
 CFLAGS += -I$(TOP)/swlibs/fxmisc
 CFLAGS += $(HWDEF)
 
-LDFLAGS = -s -L$(TOP)/$(FX_GLIDE_HW)/lib $(XPATH)
+LDFLAGS = -s -L$(TOP)/$(FX_HW_BASE)/lib/$(FX_GLIDE_HW)
 
 LDLIBS = -lglide3x
-LDLIBS += $(XLIBS) -lm
+ifeq ($(FX_GLIDE_HW),sst96)
+LDLIBS += -L$(XPATH)/lib -lXxf86dga -lXxf86rush -lXxf86vm
+endif
+LDLIBS += -lm
 
 .c.o:
 	$(CC) -o $@ $(CFLAGS) -c $<
-%.exe: $(TOP)/swlibs/fxmisc/linutil.o tlib.o %.o
+%.exe: linutil.o tlib.o %.o
 	$(CC) -o $@ $(LDFLAGS) $^ $(LDLIBS)
 
 all:
 	$(error Must specify <filename.exe> to build)
+
+linutil.o: $(TOP)/swlibs/fxmisc/linutil.c
+	$(CC) -o $@ $(CFLAGS) -c $<
+

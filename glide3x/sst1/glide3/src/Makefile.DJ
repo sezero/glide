@@ -41,7 +41,7 @@ TEXUS_EXE = texus2.exe
 
 FX_GLIDE_HW ?= sst1
 FX_GLIDE_SW = ../../../swlibs
-GLIDE_LIBDIR = ../../lib
+GLIDE_LIBDIR = ../../lib/$(FX_GLIDE_HW)
 TEXUS_EXEDIR = $(FX_GLIDE_SW)/bin
 
 ###############################################################################
@@ -79,7 +79,6 @@ CDEFS += -DSST96_FIFO
 #CDEFS += -DINIT96VGASWAP
 CDEFS += -DINIT_ACCESS_DIRECT
 CDEFS += -DGLIDE_USE_ALT_REGMAP
-GLIDE_LIBDIR = ../../lib/sst96
 else
 $(error Invalid FX_GLIDE_HW setting)
 endif

@@ -9,6 +9,10 @@
 #  Available options:
 #
 #    Environment variables:
+#	DGA=1		Build DGA version (experimental).
+#			default = no
+#	XPATH		specify X1 path; needed by DGA.
+#			default = /usr/X11R6
 #	CPU		optimize for the given processor.
 #			default = pentium
 #
@@ -16,30 +20,37 @@
 #	<file.exe>	build a specific file
 #
 
-
 .PHONY: all
 .SUFFIXES: .c .o .exe
-.SECONDARY: tlib.o
+.SECONDARY: tlib.o linutil.o
 
-FX_GLIDE_HW = cvg
+FX_GLIDE_HW = h3
 TOP = ../../..
 CPU ?= pentium
+XPATH ?= /usr/X11R6
 
 CC = gcc
 CFLAGS = -Wall -O2 -ffast-math -mtune=$(CPU)
-CFLAGS += -I$(TOP)/$(FX_GLIDE_HW)/glide3/src -I$(TOP)/$(FX_GLIDE_HW)/incsrc -I$(TOP)/$(FX_GLIDE_HW)/init
+CFLAGS += -I$(TOP)/$(FX_GLIDE_HW)/glide3/src -I$(TOP)/$(FX_GLIDE_HW)/incsrc
 CFLAGS += -I$(TOP)/swlibs/fxmisc
-CFLAGS += -DCVG
+CFLAGS += -DH3
 
 LDFLAGS = -s -L$(TOP)/$(FX_GLIDE_HW)/lib
 
-LDLIBS = -lglide3x
+LDLIBS = -lglide3
+ifeq ($(DGA),1)
+LDLIBS += -L$(XPATH)/lib -lX11 -lXext -lXxf86dga
+endif
 LDLIBS += -lm
 
 .c.o:
 	$(CC) -o $@ $(CFLAGS) -c $<
-%.exe: $(TOP)/swlibs/fxmisc/linutil.o tlib.o %.o
+%.exe: linutil.o tlib.o %.o
 	$(CC) -o $@ $(LDFLAGS) $^ $(LDLIBS)
 
 all:
 	$(error Must specify <filename.exe> to build)
+
+linutil.o: $(TOP)/swlibs/fxmisc/linutil.c
+	$(CC) -o $@ $(CFLAGS) -c $<
+

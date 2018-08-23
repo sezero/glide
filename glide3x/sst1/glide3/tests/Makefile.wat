@@ -35,12 +35,12 @@ HWDEF = -DSST96
 endif
 endif
 
-override FX_GLIDE_HW = sst1
+override FX_HW_BASE = sst1
 TOP = ../../..
 
 CC = wcl386
 CFLAGS = -wx
-CFLAGS += -I$(TOP)/$(FX_GLIDE_HW)/glide3/src -I$(TOP)/$(FX_GLIDE_HW)/incsrc -I$(TOP)/$(FX_GLIDE_HW)/init
+CFLAGS += -I$(TOP)/$(FX_HW_BASE)/glide3/src -I$(TOP)/$(FX_HW_BASE)/incsrc -I$(TOP)/$(FX_HW_BASE)/init
 CFLAGS += -I$(TOP)/swlibs/fxmisc
 CFLAGS += -D__DOS__ $(HWDEF)
 CFLAGS += -D__DOS32__
@@ -54,7 +54,7 @@ endif
 
 LDFLAGS = -k16384
 
-LDLIBS = $(TOP)/$(FX_GLIDE_HW)/lib/glide3x.lib
+LDLIBS = $(TOP)/$(FX_HW_BASE)/lib/$(FX_GLIDE_HW)/glide3x.lib
 
 # Watcom woes: pass parameters through environment vars
 export WCC386 = $(subst /,\,$(CFLAGS))
