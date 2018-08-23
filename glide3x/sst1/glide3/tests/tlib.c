@@ -18,6 +18,8 @@
 #endif
 
 #ifdef __DJGPP__
+#include <conio.h>
+#include <pc.h>
 #include <crt0.h>
 int crt0_startup_flags = _CRT0_FLAG_NONMOVE_SBRK;
 #endif
