@@ -16,8 +16,7 @@
 #	<file.exe>	build a specific file
 #
 
-
-.PHONY: all
+.PHONY: all clean
 .SUFFIXES: .c .o .exe
 .SECONDARY: tlib.o linutil.o
 
@@ -47,3 +46,6 @@ all:
 linutil.o: $(TOP)/swlibs/fxmisc/linutil.c
 	$(CC) -o $@ $(CFLAGS) -c $<
 
+clean:
+	rm -f *.o
+	rm -f *.exe

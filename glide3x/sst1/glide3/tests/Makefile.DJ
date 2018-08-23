@@ -20,10 +20,9 @@
 #	<file.exe>	build a specific file
 #
 
-
-.PHONY: all
+.PHONY: all clean
 .SUFFIXES: .c .o .exe
-.SECONDARY: tlib.o
+.SECONDARY: tlib.o fxos.o
 
 FX_GLIDE_HW ?= sst1
 ifeq ($(FX_GLIDE_HW),sst1)
@@ -62,6 +61,12 @@ endif
 
 all:
 	$(error Must specify <filename.exe> to build)
+
+sbench.exe: sbench.o fxos.o tlib.o
+	$(CC) -o $@ $(LDFLAGS) $^ $(LDLIBS)
+
+fxos.o: $(TOP)/swlibs/fxmisc/fxos.c
+	$(CC) -o $@ $(CFLAGS) -c $<
 
 clean:
 	-$(call UNLINK,*.o)

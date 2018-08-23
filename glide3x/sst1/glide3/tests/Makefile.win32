@@ -19,10 +19,9 @@
 #	<file.exe>	build a specific file
 #
 
-
 .PHONY: all
 .SUFFIXES: .c .obj .exe
-.SECONDARY: tlib.obj
+.SECONDARY: tlib.obj fxos.obj
 
 FX_GLIDE_HW ?= sst1
 ifeq ($(FX_GLIDE_HW),sst1)
@@ -54,3 +53,9 @@ LDLIBS = user32.lib gdi32.lib $(TOP)/$(FX_HW_BASE)/lib/$(FX_GLIDE_HW)/glide3x.li
 
 all:
 	$(error Must specify <filename.exe> to build)
+
+sbench.exe: sbench.obj fxos.obj tlib.obj
+	$(LD) -out:$@ $(LDFLAGS) $^ $(LDLIBS)
+
+fxos.obj: $(TOP)/swlibs/fxmisc/fxos.c
+	$(CC) -Fo$@ $(CFLAGS) -c $<

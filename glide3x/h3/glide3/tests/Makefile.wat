@@ -21,7 +21,7 @@
 
 .PHONY: all
 .SUFFIXES: .c .obj .exe
-.SECONDARY: tlib.obj
+.SECONDARY: tlib.obj fxos.obj
 
 FX_GLIDE_HW = h3
 TOP = ../../..
@@ -55,3 +55,9 @@ export WCL386 = -zq
 
 all:
 	$(error Must specify <filename.exe> to build)
+
+sbench.exe: sbench.obj fxos.obj tlib.obj
+	$(CC) -fe=$@ $(LDFLAGS) $^ $(subst /,\,$(LDLIBS))
+
+fxos.obj: $(TOP)/swlibs/fxmisc/fxos.c
+	$(CC) -fo=$@ -c $<
