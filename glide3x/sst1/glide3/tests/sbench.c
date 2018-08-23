@@ -280,11 +280,11 @@ main( int argc, char **argv)
                               0.5f, 0.5f);
 
           if (packedrgb) {
-            (FxU32) vPtrArray[v][GR_VERTEX_R_OFFSET] =
+            *(FxU32*) &vPtrArray[v][GR_VERTEX_R_OFFSET] =
               ((unsigned char) (vPtrArray[v][GR_VERTEX_R_OFFSET]) << 16) |
               ((unsigned char) (vPtrArray[v][GR_VERTEX_G_OFFSET]) << 8) |
               ((unsigned char) (vPtrArray[v][GR_VERTEX_B_OFFSET]));
-            (FxU32) vPtrArray[v][GR_VERTEX_R_OFFSET] |= 0xff000000;
+            *(FxU32*) &vPtrArray[v][GR_VERTEX_R_OFFSET] |= 0xff000000;
           }
         }
       } else { /* listType == GR_TRIANGLE_FAN */
@@ -355,11 +355,11 @@ main( int argc, char **argv)
             vPtrArray[v][GR_VERTEX_A_OFFSET] = 255.f;
           }
           if (packedrgb) {
-            (FxU32) vPtrArray[v][GR_VERTEX_R_OFFSET] =
+            *(FxU32*) &vPtrArray[v][GR_VERTEX_R_OFFSET] =
               ((unsigned char) (vPtrArray[v][GR_VERTEX_R_OFFSET]) << 16) |
               ((unsigned char) (vPtrArray[v][GR_VERTEX_G_OFFSET]) << 8) |
               ((unsigned char) (vPtrArray[v][GR_VERTEX_B_OFFSET]));
-            (FxU32) vPtrArray[v][GR_VERTEX_R_OFFSET] |= 0xff000000;
+            *(FxU32*) &vPtrArray[v][GR_VERTEX_R_OFFSET] |= 0xff000000;
           }
         }
 #endif
