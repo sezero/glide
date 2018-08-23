@@ -19,16 +19,13 @@
 **
 */
 
-#ifndef __linux__
+#ifdef _WIN32
 #include <windows.h>
 #endif
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#ifndef __linux__
-#include <conio.h>
-#endif
 #include <assert.h>
 
 #include <time.h>

@@ -16,17 +16,11 @@
 ** THE UNITED STATES.  
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
-**
 */
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#ifndef __linux__
-#include <conio.h>
-#else
-#include <linutil.h>
-#endif
 
 #include <glide.h>
 #include "tlib.h"
@@ -428,6 +422,4 @@ int main( int argc, char **argv) {
     grGlideShutdown();
     return 0;
 }
-
-
 

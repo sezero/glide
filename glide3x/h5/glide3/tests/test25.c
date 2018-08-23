@@ -22,11 +22,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#ifndef	__linux__
-#include <conio.h>
-#else   /* defined(__linux__) */
-#include <linutil.h>
-#endif   /* defined(__linux__) */
 #include <assert.h>
 #include <math.h>
 

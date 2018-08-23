@@ -16,22 +16,17 @@
 ** THE UNITED STATES.  
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
-**
 */
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#ifndef __linux__
-#include <conio.h>
-#else
-#include <linutil.h>
-#endif
 #include <assert.h>
 #include <string.h>
 
 #include <glide.h>
 #include "tlib.h"
+
 
 static const char name[]    = "test40";
 static const char purpose[] = "mipmap download/source test";
