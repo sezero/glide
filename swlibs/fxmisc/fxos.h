@@ -31,7 +31,7 @@ extern "C" {
 void sleep(int secs);
 #define gethostname fxGethostname
 
-int gethostname(char *name, int namelen);
+int gethostname(char *name, unsigned long namelen);
 
 #   endif
 

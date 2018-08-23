@@ -32,9 +32,9 @@ void sleep(int secs)
     Sleep(secs * 1000);
 }
 
-int fxGethostname(char *name, int n)
+int fxGethostname(char *name, unsigned long n)
 {
-    return (int)GetComputerName((LPTSTR)name,(LPDWORD)&n);
+    return (int) GetComputerNameA((LPTSTR)name, &n);
 }
 #else
 #include <fxos.h>
