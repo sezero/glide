@@ -245,7 +245,6 @@ FX_EXPORT FxU32 * FX_CSTYLE sst1InitMapBoardDirect(FxU32 BoardNumber,
     }
 
     if( clearBoardInfo ) {
-        INIT_PRINTF(("sst1Init Routines"));
         INIT_PRINTF(("sst1InitMapBoard(): BoardsInSystem = %d\n",
           boardsInSystem));
 

@@ -247,23 +247,23 @@ FX_ENTRY FxBool FX_CALL sst1InitVoodooFile()
 
     if(inCfg) {
       if(!sst1InitParseFieldCfg(buffer)) {
-        if(helper) INIT_PRINTF(("sst1InitVoodooFile(): ERROR in [CFG] section of .ini file...\n"));
+        if(helper) INIT_PRINTF(("ERROR in %s section of .ini file...\n", "[CFG]"));
         retVal = FXFALSE;
         break;
       }
     } else if(inDac) {
       if(!sst1InitParseFieldDac(buffer)) {
-        if(helper) INIT_PRINTF(("sst1InitVoodooFile(): ERROR in [DAC] section of .ini file...\n"));
+        if(helper) INIT_PRINTF(("ERROR in %s section of .ini file...\n", "[DAC]"));
         retVal = FXFALSE;
         break;
       }
     }
   }
-  if (file != NULL) fclose(file);
-  INIT_PRINTF(("sst1Init Routines(): Using Initialization file '%s'\n", filename));
+  fclose(file);
+  INIT_PRINTF(("INIT: Using .ini file '%s'\n", filename));
 
 __errExit:
-	checkedFileP = FXTRUE;
+  checkedFileP = FXTRUE;
 #endif /* !DIRECTX */
 
   return retVal;
@@ -336,7 +336,7 @@ FX_ENTRY FxBool FX_CALL sst1InitVoodooFile() {
       break;
     }
   }
-  INIT_PRINTF(("sst1Init Routines(): Using Initialization file '%s'\n", filename));
+  INIT_PRINTF(("INIT: Using .ini file '%s'\n", filename));
 
 __errExit:
   if (file) fclose(file);

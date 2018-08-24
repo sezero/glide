@@ -164,7 +164,6 @@ FX_EXPORT FxU32 * FX_CSTYLE sst1InitMapBoard(FxU32 BoardNumber)
     }
 
     if(BoardNumber == 0) {
-        INIT_PRINTF(("sst1Init Routines"));
         INIT_PRINTF(("sst1InitMapBoard(): BoardsInSystem = %d\n",
           boardsInSystem));
 
