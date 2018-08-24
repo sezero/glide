@@ -207,6 +207,7 @@ static void loadEnvFile (void)
        item->next = first;
        first = item;
  }
+ fclose(file);
 }
 
 
