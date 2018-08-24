@@ -247,13 +247,13 @@ FX_ENTRY FxBool FX_CALL sst1InitVoodooFile()
 
     if(inCfg) {
       if(!sst1InitParseFieldCfg(buffer)) {
-        if(helper) INIT_PRINTF(("ERROR in %s section of .ini file...\n", "[CFG]"));
+        if(helper) INIT_PRINTF(("ERROR in %s section of .ini file.\n", "[CFG]"));
         retVal = FXFALSE;
         break;
       }
     } else if(inDac) {
       if(!sst1InitParseFieldDac(buffer)) {
-        if(helper) INIT_PRINTF(("ERROR in %s section of .ini file...\n", "[DAC]"));
+        if(helper) INIT_PRINTF(("ERROR in %s section of .ini file.\n", "[DAC]"));
         retVal = FXFALSE;
         break;
       }

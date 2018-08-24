@@ -134,22 +134,24 @@ FX_ENTRY FxBool FX_CALL sst1InitVoodooFile()
         }
         if(inCfg) {
             if(!sst1InitParseFieldCfg(buffer)) {
-                if(helper)
-                    INIT_PRINTF(("ERROR in %s section of .ini file...\n", "[CFG]"));
-                return(FXFALSE);
+                tmpPtr = "[CFG]";
+                goto _fail;
             }
         } else if(inDac) {
             if(!sst1InitParseFieldDac(buffer)) {
-                if(helper)
-                    INIT_PRINTF(("ERROR in %s section of .ini file...\n", "[DAC]"));
-                return(FXFALSE);
+                tmpPtr = "[DAC]";
+                goto _fail;
             }
         }
     }
     fclose(file);
     INIT_PRINTF(("INIT: Using .ini file '%s'\n", filename));
-
     return(FXTRUE);
+ _fail:
+    if(helper)
+        INIT_PRINTF(("ERROR in %s section of .ini file.\n", tmpPtr));
+    fclose(file);
+    return(FXFALSE);
 #endif
 }
 
