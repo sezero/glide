@@ -51,9 +51,9 @@ GLIDE_DLL = glide3x.dll
 GLIDE_IMP = glide3x.lib
 TEXUS_EXE = texus2.exe
 
-FX_GLIDE_SW = ..\..\..\swlibs
-GLIDE_LIBDIR = ..\..\lib
-TEXUS_EXEDIR = $(FX_GLIDE_SW)\bin
+FX_GLIDE_SW = ../../../swlibs
+GLIDE_LIBDIR = ../../lib
+TEXUS_EXEDIR = $(FX_GLIDE_SW)/bin
 
 ###############################################################################
 #	tools
@@ -64,8 +64,8 @@ AS = nasm
 LD = link
 RC = rc
 
-ifeq ($(wildcard $(addsuffix \rm.exe,$(subst ;, ,$(PATH)))),)
-UNLINK = del $(subst \,\,$(1))
+ifeq ($(wildcard $(addsuffix /rm.exe,$(subst ;, ,$(PATH)))),)
+UNLINK = del $(subst /,\,$(1))
 else
 UNLINK = $(RM) $(1)
 endif
@@ -127,9 +127,9 @@ LDLIBS += LIBCMT.lib
 OPTFLAGS ?= -G6 -O2
 endif
 
-CFLAGS += -I. -I..\..\incsrc -I..\..\minihwc
-CFLAGS += -I$(FX_GLIDE_SW)\fxmisc -I$(FX_GLIDE_SW)\newpci\pcilib -I$(FX_GLIDE_SW)\fxmemmap
-CFLAGS += -I$(FX_GLIDE_SW)\texus2\lib
+CFLAGS += -I. -I../../incsrc -I../../minihwc
+CFLAGS += -I$(FX_GLIDE_SW)/fxmisc -I$(FX_GLIDE_SW)/newpci/pcilib -I$(FX_GLIDE_SW)/fxmemmap
+CFLAGS += -I$(FX_GLIDE_SW)/texus2/lib
 CFLAGS += $(CDEFS) $(OPTFLAGS)
 
 ifeq ($(USE_3DNOW),1)
@@ -216,38 +216,38 @@ endif
 GLIDE_OBJECTS += \
 	gthread.obj \
 	winsurf.obj \
-	..\..\minihwc\hwcio.obj \
-	..\..\minihwc\gdebug.obj \
-	..\..\minihwc\minihwc.obj \
-	..\..\minihwc\win_mode.obj
+	../../minihwc/hwcio.obj \
+	../../minihwc/gdebug.obj \
+	../../minihwc/minihwc.obj \
+	../../minihwc/win_mode.obj
 # so that we don't need win9x ddk:
 GLIDE_OBJECTS += \
-	..\..\minihwc\win9x.obj
+	../../minihwc/win9x.obj
 
 TEXUS_SOURCES = \
-	$(FX_GLIDE_SW)\texus2\lib\texuslib.c \
-	$(FX_GLIDE_SW)\texus2\lib\clamp.c \
-	$(FX_GLIDE_SW)\texus2\lib\read.c \
-	$(FX_GLIDE_SW)\texus2\lib\resample.c \
-	$(FX_GLIDE_SW)\texus2\lib\mipmap.c \
-	$(FX_GLIDE_SW)\texus2\lib\quantize.c \
-	$(FX_GLIDE_SW)\texus2\lib\ncc.c \
-	$(FX_GLIDE_SW)\texus2\lib\nccnnet.c \
-	$(FX_GLIDE_SW)\texus2\lib\pal256.c \
-	$(FX_GLIDE_SW)\texus2\lib\pal6666.c \
-	$(FX_GLIDE_SW)\texus2\lib\dequant.c \
-	$(FX_GLIDE_SW)\texus2\lib\view.c \
-	$(FX_GLIDE_SW)\texus2\lib\util.c \
-	$(FX_GLIDE_SW)\texus2\lib\diffuse.c \
-	$(FX_GLIDE_SW)\texus2\lib\write.c \
-	$(FX_GLIDE_SW)\texus2\lib\tga.c \
-	$(FX_GLIDE_SW)\texus2\lib\3df.c \
-	$(FX_GLIDE_SW)\texus2\lib\ppm.c \
-	$(FX_GLIDE_SW)\texus2\lib\rgt.c \
-	$(FX_GLIDE_SW)\texus2\lib\txs.c \
-	$(FX_GLIDE_SW)\texus2\lib\codec.c \
-	$(FX_GLIDE_SW)\texus2\lib\eigen.c \
-	$(FX_GLIDE_SW)\texus2\lib\bitcoder.c
+	$(FX_GLIDE_SW)/texus2/lib/texuslib.c \
+	$(FX_GLIDE_SW)/texus2/lib/clamp.c \
+	$(FX_GLIDE_SW)/texus2/lib/read.c \
+	$(FX_GLIDE_SW)/texus2/lib/resample.c \
+	$(FX_GLIDE_SW)/texus2/lib/mipmap.c \
+	$(FX_GLIDE_SW)/texus2/lib/quantize.c \
+	$(FX_GLIDE_SW)/texus2/lib/ncc.c \
+	$(FX_GLIDE_SW)/texus2/lib/nccnnet.c \
+	$(FX_GLIDE_SW)/texus2/lib/pal256.c \
+	$(FX_GLIDE_SW)/texus2/lib/pal6666.c \
+	$(FX_GLIDE_SW)/texus2/lib/dequant.c \
+	$(FX_GLIDE_SW)/texus2/lib/view.c \
+	$(FX_GLIDE_SW)/texus2/lib/util.c \
+	$(FX_GLIDE_SW)/texus2/lib/diffuse.c \
+	$(FX_GLIDE_SW)/texus2/lib/write.c \
+	$(FX_GLIDE_SW)/texus2/lib/tga.c \
+	$(FX_GLIDE_SW)/texus2/lib/3df.c \
+	$(FX_GLIDE_SW)/texus2/lib/ppm.c \
+	$(FX_GLIDE_SW)/texus2/lib/rgt.c \
+	$(FX_GLIDE_SW)/texus2/lib/txs.c \
+	$(FX_GLIDE_SW)/texus2/lib/codec.c \
+	$(FX_GLIDE_SW)/texus2/lib/eigen.c \
+	$(FX_GLIDE_SW)/texus2/lib/bitcoder.c
 
 ifeq ($(TEXUS2),1)
 GLIDE_OBJECTS += $(TEXUS_SOURCES:.c=.obj)
@@ -260,19 +260,19 @@ endif
 .c.obj:
 	$(CC) -Fo$@ $(CFLAGS) -c $<
 .rc.res:
-	$(RC) -Fo$@ $(CDEFS) -I$(FX_GLIDE_SW)\fxmisc $<
+	$(RC) -Fo$@ $(CDEFS) -I$(FX_GLIDE_SW)/fxmisc $<
 
 ###############################################################################
 #	main
 ###############################################################################
-all: glide3x $(TEXUS_EXEDIR)\$(TEXUS_EXE)
+all: glide3x $(TEXUS_EXEDIR)/$(TEXUS_EXE)
 
-glide3x: $(GLIDE_LIBDIR)\$(GLIDE_DLL)
+glide3x: $(GLIDE_LIBDIR)/$(GLIDE_DLL)
 
-$(GLIDE_LIBDIR)\$(GLIDE_DLL): $(GLIDE_OBJECTS) $(GLIDE_RES)
+$(GLIDE_LIBDIR)/$(GLIDE_DLL): $(GLIDE_OBJECTS) $(GLIDE_RES)
 	$(LD) -out:$@ $(LDFLAGS) $(GLIDE_OBJECTS) $(LDLIBS) $(GLIDE_RES)
 
-$(TEXUS_EXEDIR)\$(TEXUS_EXE): $(FX_GLIDE_SW)\texus2\cmd\cmd.c $(GLIDE_LIBDIR)\$(GLIDE_IMP)
+$(TEXUS_EXEDIR)/$(TEXUS_EXE): $(FX_GLIDE_SW)/texus2/cmd/cmd.c $(GLIDE_LIBDIR)/$(GLIDE_IMP)
 #ifeq ($(TEXUS2),1)
 #	$(CC) -o $@ $(CFLAGS) $^
 #else
@@ -302,7 +302,7 @@ xdraw3_sse.obj: xdraw3.asm
 xtexdl_sse2.obj: xtexdl.asm
 	$(AS) -o $@ $(ASFLAGS) -DGL_SSE2=1 $<
 
-..\..\minihwc\win9x.obj: ..\..\minihwc\win9x.asm
+../../minihwc/win9x.obj: ../../minihwc/win9x.asm
 	$(AS) -o $@ -O2 -fwin32 $<
 
 $(GLIDE_OBJECTS): fxinline.h fxgasm.h fxbldno.h
@@ -313,16 +313,16 @@ fxinline.h: fxgasm.exe
 fxgasm.h: fxgasm.exe
 	.\$< -hex > $@
 
-fxgasm.exe: fxgasm.c ..\..\incsrc\gendate.h
+fxgasm.exe: fxgasm.c ../../incsrc/gendate.h
 	$(CC) -o $@ $(CFLAGS) $<
 
-..\..\incsrc\gendate.h: gendate.exe
+../../incsrc/gendate.h: gendate.exe
 	.\$< > $@
 
 fxbldno.h: fxbldno.exe
 	.\$< > $@
 
-gendate.exe: ..\..\incsrc\gendate.c
+gendate.exe: ../../incsrc/gendate.c
 	$(CC) -o $@ $(CFLAGS) $<
 
 fxbldno.exe: fxbldno.c
@@ -334,16 +334,16 @@ fxbldno.exe: fxbldno.c
 
 clean:
 	-$(call UNLINK,*.obj)
-	-$(call UNLINK,..\..\minihwc\*.obj)
+	-$(call UNLINK,../../minihwc/*.obj)
 	-$(call UNLINK,fxinline.h)
 	-$(call UNLINK,fxgasm.h)
-	-$(call UNLINK,..\..\incsrc\gendate.h)
+	-$(call UNLINK,../../incsrc/gendate.h)
 	-$(call UNLINK,fxbldno.h)
-	-$(call UNLINK,$(FX_GLIDE_SW)\texus2\lib\*.obj)
+	-$(call UNLINK,$(FX_GLIDE_SW)/texus2/lib/*.obj)
 	-$(call UNLINK,$(GLIDE_RES))
 
 realclean: clean
-	-$(call UNLINK,$(GLIDE_LIBDIR)\glide3x.exp)
-	-$(call UNLINK,$(GLIDE_LIBDIR)\$(GLIDE_DLL))
-	-$(call UNLINK,$(GLIDE_LIBDIR)\$(GLIDE_IMP))
-	-$(call UNLINK,$(TEXUS_EXEDIR)\$(TEXUS_EXE))
+	-$(call UNLINK,$(GLIDE_LIBDIR)/glide3x.exp)
+	-$(call UNLINK,$(GLIDE_LIBDIR)/$(GLIDE_DLL))
+	-$(call UNLINK,$(GLIDE_LIBDIR)/$(GLIDE_IMP))
+	-$(call UNLINK,$(TEXUS_EXEDIR)/$(TEXUS_EXE))
