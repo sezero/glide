@@ -499,15 +499,15 @@ Read8Bit(FxU8 *data, FILE *image_file,
          GrAspectRatio_t aspect_ratio)
 {
   int lod;
-  int width, height;
+  FxU32 cnt;
 
   for (lod = large_lod; lod <= small_lod; lod++) {
-    width  = _grMipMapHostWH[aspect_ratio][lod][0];
-    height = _grMipMapHostWH[aspect_ratio][lod][1];
+    cnt = (FxU32)_grMipMapHostWH[aspect_ratio][lod][0] *
+          (FxU32)_grMipMapHostWH[aspect_ratio][lod][1];
 
-    if (fread(data, 1, width*height, image_file) != (width*height))
+    if (fread(data, 1, cnt, image_file) != cnt)
       return FXFALSE;
-    data += width*height;
+    data += cnt;
   }
   return FXTRUE;
 }
@@ -521,15 +521,14 @@ static FxBool Read16Bit(FxU16 *data, FILE *image_file,
                       int small_lod, int large_lod, 
                       GrAspectRatio_t aspect_ratio)
 {
-  int index;
+  FxU32 idx, cnt;
   int lod;
-  int width, height;
 
   for (lod = large_lod; lod <= small_lod; lod++) {
-    width  = _grMipMapHostWH[aspect_ratio][lod][0];
-    height = _grMipMapHostWH[aspect_ratio][lod][1];
+    cnt = (FxU32)_grMipMapHostWH[aspect_ratio][lod][0] *
+          (FxU32)_grMipMapHostWH[aspect_ratio][lod][1];
 
-    for (index = 0; index < (width * height); index++) {
+    for (idx = 0; idx < cnt; idx++) {
       if (!ReadDataShort(image_file,data))
         return FXFALSE;
       data++;
