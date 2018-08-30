@@ -13,6 +13,7 @@
 #			default = sst1
 #	XPATH		specify X11 path; needed for sst96.
 #			default = /usr/X11R6 (sst96 only)
+#	X11LIBS		X libraries path; default = $(XPATH)/lib
 #	OPTFLAGS	pass given optimization flags to compiler
 #			default = -O1 -ffast-math
 #	DEBUG=1		enable debugging checks and messages
@@ -71,10 +72,12 @@ CP = cp
 
 # platform
 CDEFS = -DINIT_LINUX
+
 XPATH ?= /usr/X11R6
+X11LIBS ?= $(XPATH)/lib
 ifeq ($(FX_GLIDE_HW),sst96)
 ## NOTE: no -lXxf86rush in new X versions
-LDLIBS = -L$(XPATH)/lib -lX11 -lXxf86dga -lXxf86rush -lXxf86vm
+LDLIBS = -L$(X11LIBS) -lX11 -lXxf86dga -lXxf86rush -lXxf86vm
 endif
 LDLIBS += -lm
 

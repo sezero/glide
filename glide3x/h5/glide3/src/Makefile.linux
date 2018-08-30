@@ -13,8 +13,9 @@
 #			default = no
 #	DGA=1		Build DGA version (experimental).
 #			default = no
-#	XPATH		specify X libraries path; needed by DRI and DGA.
-#			default = /usr/X11R6/lib
+#	XPATH		specify X11 path; needed by DRI and DGA.
+#			default = /usr/X11R6
+#	X11LIBS		X libraries path; default = $(XPATH)/lib
 #	H4=1		High speed Avenger/Napalm.
 #			default = no
 #	OPTFLAGS	pass given optimization flags to compiler
@@ -84,22 +85,22 @@ CP = cp
 
 # platform
 CDEFS = -D__linux__
-XPATH ?= /usr/X11R6/lib
+
+XPATH ?= /usr/X11R6
+X11LIBS ?= $(XPATH)/lib
 ifeq ($(DRI),1)
 CDEFS += -DDRI_BUILD
-LDFLAGS = -L$(XPATH)
-LDLIBS = -lX11
+LDLIBS = -L$(X11LIBS) -lX11
 endif
 ifeq ($(DGA),1)
 CDEFS += -DUSE_XDGA_SWITCH=1
-LDFLAGS = -L$(XPATH)
-LDLIBS = -lX11 -lXext -lXxf86dga
+LDLIBS = -L$(X11LIBS) -lX11 -lXext -lXxf86dga
 endif
+LDLIBS += -lm
 
 # general
 CDEFS += -DGLIDE3 -DGLIDE3_ALPHA -DGLIDE_HW_TRI_SETUP=1 -DGLIDE_INIT_HWC -DGLIDE_PACKED_RGB=0 -DGLIDE_PACKET3_TRI_SETUP=1 -DGLIDE_TRI_CULLING=1 -DUSE_PACKET_FIFO=1
 #CDEFS += -DGLIDE_CHECK_CONTEXT
-LDLIBS += -lm
 
 # subsystem
 CDEFS += -DH3

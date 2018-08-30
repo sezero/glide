@@ -15,6 +15,7 @@
 #			default = pentium
 #	XPATH		specify X11 path; needed for sst96.
 #			default = /usr/X11R6 (sst96 only)
+#	X11LIBS		X libraries path; default = $(XPATH)/lib
 #
 #    Targets:
 #	<file.exe>	build a specific file
@@ -27,6 +28,7 @@
 
 FX_GLIDE_HW ?= sst1
 XPATH ?= /usr/X11R6
+X11LIBS ?= $(XPATH)/lib
 ifeq ($(FX_GLIDE_HW),sst1)
 HWDEF = -DSST1
 endif
@@ -48,7 +50,7 @@ LDFLAGS = -s -L$(TOP)/$(FX_HW_BASE)/lib/$(FX_GLIDE_HW)
 
 LDLIBS = -lglide3x
 ifeq ($(FX_GLIDE_HW),sst96)
-LDLIBS += -L$(XPATH)/lib -lXxf86dga -lXxf86rush -lXxf86vm
+LDLIBS += -L$(X11LIBS) -lXxf86dga -lXxf86rush -lXxf86vm
 endif
 LDLIBS += -lm
 

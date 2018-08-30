@@ -20,9 +20,9 @@
 #	DGA=1		Build DGA version (experimental).
 #			target  = h3, h5
 #			default = no
-#	XPATH		specify X libraries path; needed by DRI and DGA.
-#			target  = h3, h5
-#			default = /usr/X11R6/lib
+#	XPATH		specify X11 path; needed by SST96, and H3/H5 DRI and DGA.
+#			default = /usr/X11R6
+#	X11LIBS		X libraries path; default = $(XPATH)/lib
 #	H4=1		High speed Avenger/Napalm.
 #			target  = h3, h5
 #			default = no

@@ -16,9 +16,9 @@
 #	DRI=1		Build DRI version.
 #			target  = h3
 #			default = no
-#	XPATH		specify X libraries path; needed by DRI.
-#			target  = h3
-#			default = /usr/X11R6/lib
+#	XPATH		specify X11 path; needed by SST96 and H3.
+#			default = /usr/X11R6
+#	X11LIBS		X libraries path; default = $(XPATH)/lib
 #	H4=1		High speed Avenger/Napalm.
 #			target  = h3
 #			default = no

@@ -13,6 +13,7 @@
 #			default = no
 #	XPATH		specify X11 path; needed by DGA.
 #			default = /usr/X11R6
+#	X11LIBS		X libraries path; default = $(XPATH)/lib
 #	CPU		optimize for the given processor.
 #			default = pentium
 #
@@ -28,6 +29,7 @@ FX_GLIDE_HW = h5
 TOP = ../../..
 CPU ?= pentium
 XPATH ?= /usr/X11R6
+X11LIBS ?= $(XPATH)/lib
 
 CC = gcc
 CFLAGS = -Wall -O2 -ffast-math -mtune=$(CPU)
@@ -40,7 +42,7 @@ LDFLAGS = -s -L$(TOP)/$(FX_GLIDE_HW)/lib
 
 LDLIBS = -lglide3
 ifeq ($(DGA),1)
-LDLIBS += -L$(XPATH)/lib -lX11 -lXext -lXxf86dga
+LDLIBS += -L$(X11LIBS) -lX11 -lXext -lXxf86dga
 endif
 LDLIBS += -lm
 

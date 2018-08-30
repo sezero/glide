@@ -12,8 +12,9 @@
 #  Available options:
 #
 #    Environment variables:
-#	XPATH		specify X libraries path; needed by DRI.
-#			default = /usr/X11R6/lib
+#	XPATH		specify X11 path.
+#			default = /usr/X11R6
+#	X11LIBS		X libraries path; default = $(XPATH)/lib
 #	H4=1		High speed Avenger.
 #			default = no
 #	OPTFLAGS	pass given optimization flags to compiler
@@ -72,9 +73,10 @@ CP = cp
 
 # platform
 CDEFS = -D__linux__
-XPATH ?= /usr/X11R6/lib
-LDFLAGS = -L$(XPATH)
-LDLIBS = -lX11 -lXext -lXxf86dga -lXxf86vm
+
+XPATH ?= /usr/X11R6
+X11LIBS ?= $(XPATH)/lib
+LDLIBS = -L$(X11LIBS) -lX11 -lXext -lXxf86dga -lXxf86vm
 
 LDLIBS += -lm
 
