@@ -104,6 +104,9 @@ main (int argc, char **argv)
     OFFSET (gc,tex_ptr,"tex_ptr\t\t");
     OFFSET (gc,state.cull_mode,"cull_mode\t");
     OFFSET (gc, regDataList,"regDataList\t");
+#ifdef GLIDE_DEBUG
+    OFFSET (gc,checkPtr,"checkPtr\t\t");
+#endif
     OFFSET (gc, tsuDataList,"tsuDataList\t");
     OFFSET (gc, cmdTransportInfo.triPacketHdr, "triPacketHdr");
     OFFSET (gc, cmdTransportInfo.cullStripHdr, "cullStripHdr");
