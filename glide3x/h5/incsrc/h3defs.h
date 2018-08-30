@@ -21,10 +21,6 @@
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
 */
 
-#ifndef WINSIM
-#include "gendate.h"
-#endif // WINSIM
-
 #ifdef SST2
 #define MAX_NUM_TMUS 4
 #elif defined(H4)

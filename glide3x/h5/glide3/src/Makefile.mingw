@@ -39,7 +39,7 @@
 #
 
 .PHONY: all glide3x clean realclean
-.INTERMEDIATE: fxgasm.exe gendate.exe fxbldno.exe
+.INTERMEDIATE: fxgasm.exe fxbldno.exe
 .SUFFIXES: .c .obj .rc .res
 
 ###############################################################################
@@ -345,17 +345,11 @@ fxinline.h: fxgasm.exe
 fxgasm.h: fxgasm.exe
 	./$< -hex > $@
 
-fxgasm.exe: fxgasm.c ../../incsrc/gendate.h
+fxgasm.exe: fxgasm.c
 	$(HOST_CC) -o $@ $(HOST_CFLAGS) $<
-
-../../incsrc/gendate.h: gendate.exe
-	./$< > $@
 
 fxbldno.h: fxbldno.exe
 	./$< > $@
-
-gendate.exe: ../../incsrc/gendate.c
-	$(HOST_CC) -o $@ $<
 
 fxbldno.exe: fxbldno.c
 	$(HOST_CC) -o $@ $<
@@ -369,7 +363,6 @@ clean:
 	-$(call UNLINK,../../minihwc/*.o)
 	-$(call UNLINK,fxinline.h)
 	-$(call UNLINK,fxgasm.h)
-	-$(call UNLINK,../../incsrc/gendate.h)
 	-$(call UNLINK,fxbldno.h)
 	-$(call UNLINK,$(FX_GLIDE_SW)/texus2/lib/*.o)
 	-$(call UNLINK,$(GLIDE_RES))

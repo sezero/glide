@@ -44,7 +44,7 @@
 #
 
 .PHONY: all glide3x clean realclean
-.INTERMEDIATE: fxgasm gendate fxbldno
+.INTERMEDIATE: fxgasm fxbldno
 .SUFFIXES: .lo
 
 export PATH := $(PATH):.
@@ -363,17 +363,11 @@ fxinline.h: fxgasm
 fxgasm.h: fxgasm
 	$< -hex > $@
 
-fxgasm: fxgasm.c ../../incsrc/gendate.h
+fxgasm: fxgasm.c
 	$(CC) -o $@ $(CFLAGS) $<
-
-../../incsrc/gendate.h: gendate
-	$< > $@
 
 fxbldno.h: fxbldno
 	$< > $@
-
-gendate: ../../incsrc/gendate.c
-	$(CC) -o $@ $(CFLAGS) $<
 
 fxbldno: fxbldno.c
 	$(CC) -o $@ $(CFLAGS) $<
@@ -390,7 +384,6 @@ clean:
 	-$(RM) $(FX_GLIDE_SW)/fxmisc/*.o $(FX_GLIDE_SW)/fxmisc/*.lo
 	-$(RM) fxinline.h
 	-$(RM) fxgasm.h
-	-$(RM) ../../incsrc/gendate.h
 	-$(RM) fxbldno.h
 	-$(RM) $(FX_GLIDE_SW)/texus2/lib/*.o $(FX_GLIDE_SW)/texus2/lib/*.lo
 

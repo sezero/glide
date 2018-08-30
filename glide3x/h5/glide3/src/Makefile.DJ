@@ -39,7 +39,7 @@
 #
 
 .PHONY: all glide3x clean realclean
-.INTERMEDIATE: fxgasm.exe gendate.exe fxbldno.exe
+.INTERMEDIATE: fxgasm.exe fxbldno.exe
 
 ###############################################################################
 #	general defines (user settable?)
@@ -300,11 +300,9 @@ $(GLIDE_OBJECTS): fxinline.h fxgasm.h fxbldno.h
 ifneq ($(COMSPEC),)
 RUN_FXGASM=fxgasm.exe
 RUN_FXBLDNO=fxbldno.exe
-RUN_GENDATE=gendate.exe
 else
 RUN_FXGASM=./fxgasm.exe
 RUN_FXBLDNO=./fxbldno.exe
-RUN_GENDATE=./gendate.exe
 endif
 
 fxinline.h: fxgasm.exe
@@ -313,17 +311,11 @@ fxinline.h: fxgasm.exe
 fxgasm.h: fxgasm.exe
 	$(RUN_FXGASM) -hex > $@
 
-fxgasm.exe: fxgasm.c ../../incsrc/gendate.h
+fxgasm.exe: fxgasm.c
 	$(HOST_CC) -o $@ $(HOST_CFLAGS) $<
-
-../../incsrc/gendate.h: gendate.exe
-	$(RUN_GENDATE) > $@
 
 fxbldno.h: fxbldno.exe
 	$(RUN_FXBLDNO) > $@
-
-gendate.exe: ../../incsrc/gendate.c
-	$(HOST_CC) -o $@ $<
 
 fxbldno.exe: fxbldno.c
 	$(HOST_CC) -o $@ $<
@@ -339,7 +331,6 @@ clean:
 	-$(call UNLINK,$(FX_GLIDE_SW)/newpci/pcilib/*.o)
 	-$(call UNLINK,fxinline.h)
 	-$(call UNLINK,fxgasm.h)
-	-$(call UNLINK,../../incsrc/gendate.h)
 	-$(call UNLINK,fxbldno.h)
 	-$(call UNLINK,$(FX_GLIDE_SW)/texus2/lib/*.o)
 
