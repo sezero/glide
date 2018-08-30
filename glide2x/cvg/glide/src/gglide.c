@@ -528,7 +528,7 @@ GR_ENTRY(grBufferClear, void, (GrColor_t color, GrAlpha_t alpha, FxU16 depth))
       {
         GR_SET_EXPECTED_SIZE(sizeof(FxU32), 1);
         GR_SET(BROADCAST_ID, hw, bltSize,  
-               (((((tileHi - tileLow) * gc->hwDep.cvgDep.xTilePages) - 1) << 16) | (0x1000 >> 3) - 1));
+               (((((tileHi - tileLow) * gc->hwDep.cvgDep.xTilePages) - 1) << 16) | 511));/* 511 == (0x1000 >> 3) - 1 */
         GR_CHECK_SIZE();
       }
 
@@ -831,27 +831,25 @@ GR_ENTRY(grBufferSwap, void, (int swapInterval))
   }
   
 #ifdef GLIDE_DEBUG
-  {
-    if ((FxI32)_GlideRoot.environment.snapshot > 0) {
-      static char saveDBG[GDBG_MAX_LEVELS];
-      int i;
-      
-      /* turn off tracing after frame 0 and the snapshot frame */
-      if ((_GlideRoot.stats.bufferSwaps == 0) || 
-          (_GlideRoot.stats.bufferSwaps == _GlideRoot.environment.snapshot + 3)) {
-        GDBG_PRINTF(FN_NAME": FX_SNAPSHOT (%ld)\n", _GlideRoot.stats.bufferSwaps);
-        for (i = 1; i < GDBG_MAX_LEVELS; i++) {
-          if (_GlideRoot.stats.bufferSwaps == 0) saveDBG[i] = (char)GDBG_GET_DEBUGLEVEL(i);
-          GDBG_SET_DEBUGLEVEL(i, 0);
-        }
+  if ((FxI32)_GlideRoot.environment.snapshot > 0) {
+    static char saveDBG[GDBG_MAX_LEVELS];
+    int i;
+    
+    /* turn off tracing after frame 0 and the snapshot frame */
+    if ((_GlideRoot.stats.bufferSwaps == 0) || 
+        (_GlideRoot.stats.bufferSwaps == _GlideRoot.environment.snapshot + 3)) {
+      GDBG_PRINTF(FN_NAME": FX_SNAPSHOT (%ld)\n", _GlideRoot.stats.bufferSwaps);
+      for (i = 1; i < GDBG_MAX_LEVELS; i++) {
+        if (_GlideRoot.stats.bufferSwaps == 0) saveDBG[i] = (char)GDBG_GET_DEBUGLEVEL(i);
+        GDBG_SET_DEBUGLEVEL(i, 0);
       }
+    }
 
-      /* turn on tracing after the snapshot frame */
-      if (_GlideRoot.stats.bufferSwaps == _GlideRoot.environment.snapshot) {
-        GDBG_PRINTF(FN_NAME": FX_SNAPSHOT (%ld)\n", _GlideRoot.stats.bufferSwaps);
-        for (i = 1; i < GDBG_MAX_LEVELS; i++) {
-          GDBG_SET_DEBUGLEVEL(i, saveDBG[i]);
-        }
+    /* turn on tracing after the snapshot frame */
+    if (_GlideRoot.stats.bufferSwaps == _GlideRoot.environment.snapshot) {
+      GDBG_PRINTF(FN_NAME": FX_SNAPSHOT (%ld)\n", _GlideRoot.stats.bufferSwaps);
+      for (i = 1; i < GDBG_MAX_LEVELS; i++) {
+        GDBG_SET_DEBUGLEVEL(i, saveDBG[i]);
       }
     }
   }
@@ -1728,8 +1726,8 @@ GR_ENTRY(grGlideShutdown, void, (void))
     for(i = 0; i < _GlideRoot.hwConfig.num_sst; i++) {
       if (_GlideRoot.GCs[i].hwInitP) {
         /*if (_GlideRoot.CPUType.family >= 6) {*/
-		sst1InitCaching(_GlideRoot.GCs[i].base_ptr, FXFALSE);
-	/*}*/
+        sst1InitCaching(_GlideRoot.GCs[i].base_ptr, FXFALSE);
+        /*}*/
         sst1InitShutdown(_GlideRoot.GCs[i].base_ptr);
 
         _GlideRoot.GCs[i].hwInitP = FXFALSE;
@@ -1891,7 +1889,7 @@ GR_STATE_ENTRY(grRenderBuffer, void, (GrBuffer_t buffer))
     fbzMode |= ((buffer == GR_BUFFER_FRONTBUFFER)
                 ? SST_DRAWBUFFER_FRONT 
                 : SST_DRAWBUFFER_BACK);
-
+    
     GR_SET_EXPECTED_SIZE(sizeof(FxU32), 1);
     GR_SET(BROADCAST_ID, hw, fbzMode, fbzMode);
     GR_CHECK_SIZE();
@@ -1906,7 +1904,7 @@ GR_STATE_ENTRY(grRenderBuffer, void, (GrBuffer_t buffer))
      */
     {
       const FxU32 oldRenderBuf = gc->hwDep.cvgDep.renderBuf;
-      
+
       gc->hwDep.cvgDep.renderBuf = ((buffer == GR_BUFFER_FRONTBUFFER)
                                     ? gc->hwDep.cvgDep.frontBuf
                                     : gc->hwDep.cvgDep.backBuf);
@@ -1914,7 +1912,7 @@ GR_STATE_ENTRY(grRenderBuffer, void, (GrBuffer_t buffer))
           (gc->hwDep.cvgDep.sliOriginBufCount != 0)) _grSliOriginClear();
     }
 #endif /* (GLIDE_PLATFORM & GLIDE_HW_CVG) && GLIDE_BLIT_CLEAR */
-    
+
   GR_END();
 #undef FN_NAME
 } /* grRenderBuffer */

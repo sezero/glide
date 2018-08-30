@@ -731,7 +731,7 @@ GR_ENTRY(grBufferClear, void, (GrColor_t color, GrAlpha_t alpha, FxU32 depth))
       {
         GR_SET_EXPECTED_SIZE(sizeof(FxU32), 1);
         GR_SET(BROADCAST_ID, hw, bltSize,  
-               (((((tileHi - tileLow) * gc->hwDep.cvgDep.xTilePages) - 1) << 16) | (0x1000 >> 3) - 1));
+               (((((tileHi - tileLow) * gc->hwDep.cvgDep.xTilePages) - 1) << 16) | 511));/* 511 == (0x1000 >> 3) - 1 */
         GR_CHECK_SIZE();
       }
 
@@ -1838,7 +1838,7 @@ GR_STATE_ENTRY(grFogMode, void, (GrFogMode_t mode))
 
   switch (mode & 0xFF) {    /* switch based on lower 8 bits */
   case GR_FOG_DISABLE:
-    break; 
+    break;
 
     /*
     ** disable in Glide 3. 
@@ -1946,7 +1946,7 @@ GR_ENTRY(grFogTable, void, (const GrFog_t fogtable[]))
       d0 = ((e1 - e0) << 2); 
 
       /* del1 in .2 format - don't access beyond end of table */
-      d1 = ((j == iend) ? e1 : locTable[2]);  
+      d1 = ((j == iend) ? e1 : locTable[2]);
       d1 = (d1 - e1) << 2;
       
       REG_GROUP_SET(hw, fogTable[j], 
@@ -2350,7 +2350,7 @@ GR_DDFUNC(_grUpdateParamIndex, void, (void))
       paramIndex |= STATE_REQUIRES_OOW_FBI;
     }
   }
- 
+
   /*
   **  Now we know everything that needs to be iterated.  Prune back
   **  the stuff that isn't explicitly different
@@ -2390,7 +2390,7 @@ GR_DDFUNC(_grUpdateParamIndex, void, (void))
             (gc->state.vData.wInfo.mode == GR_PARAM_DISABLE))
           paramIndex &= ~STATE_REQUIRES_W_TMU0;
       }
-    }     
+    }
   }
   
   /* Turn off ST for TMU1 if TMU0 is active and TMU1 is not different */
@@ -2429,7 +2429,7 @@ GR_DDFUNC(_grUpdateParamIndex, void, (void))
             (gc->state.vData.wInfo.mode == GR_PARAM_DISABLE))
           paramIndex &= ~STATE_REQUIRES_W_TMU1;
       }
-    }     
+    }
   }
 #else
   /* Turn off W for TMU0 if we don't have a hint */
