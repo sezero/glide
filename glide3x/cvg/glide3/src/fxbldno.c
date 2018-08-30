@@ -16,14 +16,14 @@
  * THE UNITED STATES.  
  * 
  * COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
-** 
+**
 ** 1     10/08/98 11:30a Brent
-** 
+**
 ** 2     7/24/98 1:41p Hohn
- * 
+ *
  * 1     1/16/98 4:29p Atai
  * create glide 3 src
- * 
+ *
  * 1     7/25/97 9:05a Pgj
  * generate fxbldno.h which defines BUILD_NUMBER
  *
@@ -33,7 +33,7 @@
 #include <stdio.h>
 #include <time.h>
 
-main(int argc, char **argv)
+int main(void)
 {
     struct tm	locTime;
     time_t	sysTime;
@@ -42,7 +42,7 @@ main(int argc, char **argv)
     time(&sysTime);
     locTime = *localtime(&sysTime);
 
-    if (build = getenv("BUILD_NUMBER")) {
+    if ((build = getenv("BUILD_NUMBER")) != NULL) {
 	printf("#define BUILD_NUMBER	%s\n", build);
     } else {
 	unsigned short magic;

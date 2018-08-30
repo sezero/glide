@@ -16,10 +16,10 @@
  * THE UNITED STATES.  
  * 
  * COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
-** 
+**
 ** 3     3/17/99 6:16p Dow
 ** Phantom Menace and other fixes.
- * 
+ *
  * 1     7/25/97 9:05a Pgj
  * generate fxbldno.h which defines BUILD_NUMBER
  *
@@ -29,7 +29,7 @@
 #include <stdio.h>
 #include <time.h>
 
-main(int argc, char **argv)
+int main(void)
 {
     struct tm	locTime;
     time_t	sysTime;
@@ -38,7 +38,7 @@ main(int argc, char **argv)
     time(&sysTime);
     locTime = *localtime(&sysTime);
 
-    if (build = getenv("BUILD_NUMBER")) {
+    if ((build = getenv("BUILD_NUMBER")) != NULL) {
 	printf("#define BUILD_NUMBER	%s\n", build);
     } else {
 	unsigned short magic;

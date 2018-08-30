@@ -25,10 +25,10 @@
  *       comments and new legal headers.
  *  1    3dfx      1.0         09/11/99 StarTeam VTS Administrator 
  * $
- * 
+ *
  * 1     1/16/98 4:29p Atai
  * create glide 3 src
- * 
+ *
  * 1     7/25/97 9:05a Pgj
  * generate fxbldno.h which defines BUILD_NUMBER
  *
@@ -38,7 +38,7 @@
 #include <stdio.h>
 #include <time.h>
 
-int main (void)
+int main(void)
 {
     struct tm	locTime;
     time_t	sysTime;
