@@ -451,10 +451,8 @@ const char *iRegNames[] = {
 FxU32
 get96(FxU32 *addr) 
 {
-  FxU32
-    index,
-    ret;
-  char *regName;
+  FxU32 index, ret;
+  const char *regName;
 
   ret = *GETREADADDR2(addr);
 
