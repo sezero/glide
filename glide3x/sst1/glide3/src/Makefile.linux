@@ -73,14 +73,13 @@ CP = cp
 CDEFS = -DINIT_LINUX
 XPATH ?= /usr/X11R6
 ifeq ($(FX_GLIDE_HW),sst96)
-LDFLAGS = -L$(XPATH)/lib
-##  FIXME:	no -lXxf86rush in new X versions
-LDLIBS = -lX11 -lXxf86dga -lXxf86rush -lXxf86vm
+## NOTE: no -lXxf86rush in new X versions
+LDLIBS = -L$(XPATH)/lib -lX11 -lXxf86dga -lXxf86rush -lXxf86vm
 endif
+LDLIBS += -lm
 
 # general
 CDEFS += -DGLIDE3 -DGLIDE3_ALPHA -DGLIDE_HARDWARE
-LDLIBS += -lm
 
 # subsystem
 ifeq ($(FX_GLIDE_HW),sst1)

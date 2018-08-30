@@ -11,10 +11,10 @@
 #  Available options:
 #
 #    Environment variables:
-#	FX_GLIDE_HW	build for the given ASIC (sst1, sst96).
+#	FX_GLIDE_HW	build for the given ASIC (either sst1, or sst96).
 #			default = sst1
-#	XPATH		specify X libraries path; needed for sst96.
-#			default = /usr/X11R6/lib (sst96 only)
+#	XPATH		specify X11 path; needed for sst96.
+#			default = /usr/X11R6 (sst96 only)
 #	OPTFLAGS	pass given optimization flags to compiler
 #			default = -O1 -ffast-math
 #	DEBUG=1		enable debugging checks and messages
@@ -68,12 +68,11 @@ CP = cp
 
 # platform
 CDEFS = -DINIT_LINUX
-XPATH ?= /usr/X11R6/lib
+XPATH ?= /usr/X11R6
 ifeq ($(FX_GLIDE_HW),sst96)
-LDFLAGS = -L$(XPATH)
-LDLIBS = -lX11 -lXxf86dga -lXxf86rush -lXxf86vm
+## NOTE: no -lXxf86rush in new X versions
+LDLIBS = -L$(XPATH)/lib -lX11 -lXxf86dga -lXxf86rush -lXxf86vm
 endif
-
 LDLIBS += -lm
 
 # general
@@ -118,6 +117,9 @@ ASFLAGS += $(CDEFS)
 CFLAGS = -Wall
 CFLAGS += -I. -I../../incsrc -I../../init -I../../init/initvg -I../../init/init96
 CFLAGS += -I$(FX_GLIDE_SW)/fxmisc -I$(FX_GLIDE_SW)/newpci/pcilib -I$(FX_GLIDE_SW)/fxmemmap
+ifeq ($(FX_GLIDE_HW),sst96)
+CFLAGS += -I$(XPATH)/include
+endif
 CFLAGS += $(CDEFS)
 
 ifeq ($(USE_X86),1)
