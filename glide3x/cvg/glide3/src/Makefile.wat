@@ -108,7 +108,7 @@ ASFLAGS = -O6 -fobj -D__WATCOMD__ --prefix _
 ASFLAGS += $(CDEFS)
 
 # compiler
-CFLAGS = -wx
+CFLAGS = -bt=dos -wx
 CFLAGS += -I. -I../../incsrc -I../../init
 CFLAGS += -I$(FX_GLIDE_SW)/fxmisc -I$(FX_GLIDE_SW)/newpci/pcilib -I$(FX_GLIDE_SW)/fxmemmap
 CFLAGS += -I$(FX_GLIDE_SW)/texus2/lib

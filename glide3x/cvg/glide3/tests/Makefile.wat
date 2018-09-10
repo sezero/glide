@@ -27,7 +27,7 @@ FX_GLIDE_HW = cvg
 TOP = ../../..
 
 CC = wcl386
-CFLAGS = -wx
+CFLAGS = -bt=dos -wx
 CFLAGS += -I$(TOP)/$(FX_GLIDE_HW)/glide3/src -I$(TOP)/$(FX_GLIDE_HW)/incsrc
 CFLAGS += -I$(TOP)/swlibs/fxmisc
 CFLAGS += -D__DOS__ -DCVG

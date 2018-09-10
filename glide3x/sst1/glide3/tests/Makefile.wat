@@ -38,7 +38,7 @@ override FX_HW_BASE = sst1
 TOP = ../../..
 
 CC = wcl386
-CFLAGS = -wx
+CFLAGS = -bt=dos -wx
 CFLAGS += -I$(TOP)/$(FX_HW_BASE)/glide3/src -I$(TOP)/$(FX_HW_BASE)/incsrc -I$(TOP)/$(FX_HW_BASE)/init
 CFLAGS += -I$(TOP)/swlibs/fxmisc
 CFLAGS += -D__DOS__ $(HWDEF)
