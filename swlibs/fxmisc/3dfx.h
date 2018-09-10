@@ -27,7 +27,7 @@ typedef unsigned char   FxU8;
 typedef signed   char   FxI8;
 typedef unsigned short  FxU16;
 typedef signed   short  FxI16;
-#if defined(__DOS__)||defined(_WIN32)||defined(macintosh)
+#if defined(__DOS__) || defined(__MSDOS__) || defined(_WIN32) || defined(macintosh)
 typedef signed   long   FxI32;
 typedef unsigned long   FxU32;
 #else
