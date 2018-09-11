@@ -17,6 +17,9 @@
 #include <sioux.h>
 #endif
 
+#ifdef __WATCOMC__
+#include <conio.h>
+#endif
 #ifdef __DJGPP__
 #include <conio.h>
 #include <pc.h>

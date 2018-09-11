@@ -42,6 +42,9 @@ unsigned long hWndMain;
 #include <Windows.h>
 #endif
 
+#ifdef __WATCOMC__
+#include <conio.h>
+#endif
 #ifdef __DJGPP__
 #include <conio.h>
 #include <pc.h>
@@ -93,7 +96,7 @@ typedef struct
   FxU16 width;
   FxU16 height;
   FxU16 mipmap_levels;
-  FxU32 data_offset;  // in bytes
+  FxU32 data_offset;    /* in bytes */
 } TXSHeader;
 
 typedef struct
@@ -121,7 +124,7 @@ static struct fsContextEntry {
   int nColBuf, nAuxBuf;
 } fsContextList[kMaxGlideContext];
 static FxBool fullScreen = FXTRUE;
-static FxBool okToRender = FXTRUE; 
+static FxBool okToRender = FXTRUE;
 static void *state = NULL;
 static void *vlstate = NULL;
 
@@ -1698,9 +1701,9 @@ static int drawChar( char character,
        |  \|
        c---d */
 
-    if (character == 32) // space
+    if (character == 32) /* space */
       return 1;
-    if (character == 8)  // backspace
+    if (character == 8)  /* backspace */
       return -1;
     if (character < 32)
       return 0;
