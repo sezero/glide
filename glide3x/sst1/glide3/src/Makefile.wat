@@ -110,6 +110,10 @@ endif
 # librarian
 ARFLAGS = -c -fo -n -t -q
 
+# linker
+# pick either of causeway, dos4g, dos32a or stub32a as link target
+LDFLAGS = -zq -k16384 -l=dos32a
+
 # assembler
 ASFLAGS = -O6 -fobj -D__WATCOMD__ --prefix _
 ASFLAGS += $(CDEFS)
@@ -128,10 +132,6 @@ CFLAGS += -DGL_X86
 else
 CFLAGS += -DGLIDE_USE_C_TRISETUP
 endif
-
-# Watcom woes: pass parameters through environment vars
-#export WCC386 = $(call FIXPATH,$(CFLAGS))
-#export WCL386 = -zq
 
 ###############################################################################
 #	objects
@@ -248,7 +248,7 @@ $(GLIDE_LIBDIR)/$(GLIDE_LIB): wlib.lbc
 
 $(TEXUS_EXEDIR)/$(TEXUS_EXE): $(FX_GLIDE_SW)/texus2/cmd/cmd.c $(GLIDE_LIBDIR)/$(GLIDE_LIB)
 ifeq ($(TEXUS2),1)
-	$(CC) $(CFLAGS) -fe=$(call FIXPATH,$@) $(call FIXPATH,$^)
+	$(CC) $(CFLAGS) -fe=$(call FIXPATH,$@) $(LDFLAGS) $(call FIXPATH,$^)
 else
 	$(warning Texus2 not enabled... Skipping $(TEXUS_EXE))
 endif
@@ -265,6 +265,7 @@ xdraw96.obj: xdraw96.asm
 	$(AS) -o $@ $(ASFLAGS) $<
 
 ifeq ($(FX_GLIDE_HW),sst96)
+# lazy solution instead of using FIXPATH:
 ifeq ($(DOSMODE),1)
 ..\..\init\initvg\gamma.obj: ..\..\init\initvg\gamma.c
 	$(CC) -fo=$@ $(CFLAGS) -USST96 -c $<
@@ -318,7 +319,7 @@ fxinline.h: fxgasm.exe
 fxgasm.h: fxgasm.exe
 	$(call FIXPATH,./$<) -hex > $@
 
-# -bt without args resets build target to native OS
+# -bt without args resets build target to host OS.
 fxgasm.exe: fxgasm.c
 	$(CC) $(CFLAGS) -bt -fe=$@ $<
 
