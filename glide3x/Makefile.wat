@@ -1,5 +1,7 @@
 # DOS / OpenWatcom makefile for Glide3 and Texus2
 # This makefile MUST be processed by GNU make!!!
+# Building under native DOS is not supported:
+#		only tested under Win32 or Linux
 #
 #  Copyright (c) 2003 - Daniel Borca
 #  Email : dborca@users.sourceforge.net
@@ -47,7 +49,6 @@
 #	clean:		remove object files
 #	realclean:	remove all generated files
 #
-
 
 .PHONY: all clean realclean
 

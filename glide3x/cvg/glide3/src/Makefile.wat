@@ -1,5 +1,7 @@
 # OpenWatcom makefile for Glide3/CVG and Texus2
 # This makefile MUST be processed by GNU make!!!
+# Building under native DOS is not supported:
+#		only tested under Win32 or Linux
 #
 #  Copyright (c) 2004 - Daniel Borca
 #  Email : dborca@users.sourceforge.net
@@ -57,10 +59,15 @@ CC = wcl386
 AS = nasm
 AR = wlib
 
-ifeq ($(wildcard $(addsuffix /rm.exe,$(subst ;, ,$(PATH)))),)
+# detect if running under unix by finding 'rm' in $PATH :
+ifeq ($(wildcard $(addsuffix /rm,$(subst :, ,$(PATH)))),)
+DOSMODE= 1
 UNLINK = del $(subst /,\,$(1))
+FIXPATH= $(subst /,\,$1)
 else
+DOSMODE= 0
 UNLINK = $(RM) $(1)
+FIXPATH= $1
 endif
 
 ###############################################################################
@@ -108,12 +115,13 @@ ASFLAGS = -O6 -fobj -D__WATCOMD__ --prefix _
 ASFLAGS += $(CDEFS)
 
 # compiler
-CFLAGS = -bt=dos -wx
-CFLAGS += -I. -I../../incsrc -I../../init
-CFLAGS += -I$(FX_GLIDE_SW)/fxmisc -I$(FX_GLIDE_SW)/newpci/pcilib -I$(FX_GLIDE_SW)/fxmemmap
-CFLAGS += -I$(FX_GLIDE_SW)/texus2/lib
+CFLAGS = -bt=dos -wx -zq
+INCPATH = -I. -I../../incsrc -I../../init
+INCPATH += -I$(FX_GLIDE_SW)/fxmisc -I$(FX_GLIDE_SW)/newpci/pcilib -I$(FX_GLIDE_SW)/fxmemmap
+INCPATH += -I$(FX_GLIDE_SW)/texus2/lib
 OPTFLAGS ?= -ox -5s
 CFLAGS += $(CDEFS) $(OPTFLAGS)
+CFLAGS += $(call FIXPATH,$(INCPATH))
 
 ifeq ($(USE_MMX),1)
 CFLAGS += -DGL_MMX
@@ -132,8 +140,8 @@ CFLAGS += -DGLIDE_USE_C_TRISETUP
 endif
 
 # Watcom woes: pass parameters through environment vars
-export WCC386 = $(subst /,\,$(CFLAGS))
-export WCL386 = -zq
+#export WCC386 = $(call FIXPATH,$(CFLAGS))
+#export WCL386 = -zq
 
 ###############################################################################
 #	objects
@@ -235,7 +243,7 @@ endif
 ###############################################################################
 
 .c.obj:
-	$(CC) -fo=$@ -c $<
+	$(CC) $(CFLAGS) -fo=$@ -c $<
 
 ###############################################################################
 #	main
@@ -245,11 +253,11 @@ all: glide3x $(TEXUS_EXEDIR)/$(TEXUS_EXE)
 glide3x: $(GLIDE_LIBDIR)/$(GLIDE_LIB)
 
 $(GLIDE_LIBDIR)/$(GLIDE_LIB): wlib.lbc
-	$(AR) $(ARFLAGS) -o $(subst /,\,$@) @wlib
+	$(AR) $(ARFLAGS) -o $(call FIXPATH,$@) @wlib.lbc
 
 $(TEXUS_EXEDIR)/$(TEXUS_EXE): $(FX_GLIDE_SW)/texus2/cmd/cmd.c $(GLIDE_LIBDIR)/$(GLIDE_LIB)
 ifeq ($(TEXUS2),1)
-	$(CC) -fe=$(subst /,\,$@) $(subst /,\,$^)
+	$(CC) $(CFLAGS) -fe=$(call FIXPATH,$@) $(call FIXPATH,$^)
 else
 	$(warning Texus2 not enabled... Skipping $(TEXUS_EXE))
 endif
@@ -265,7 +273,7 @@ xdraw2_d.obj: xdraw2.asm
 xdraw3_d.obj: xdraw3.asm
 	$(AS) -o $@ $(ASFLAGS) $<
 xtexdl_d.obj: xtexdl.c
-	$(CC) -fo=$@ -c $<
+	$(CC) $(CFLAGS) -fo=$@ -c $<
 xtexdl_mmx.obj: xtexdl.asm
 	$(AS) -o $@ $(ASFLAGS) -DGL_MMX=1 $<
 xdraw2_3.obj: xdraw2.asm
@@ -278,15 +286,16 @@ xtexdl_3.obj: xtexdl.asm
 $(GLIDE_OBJECTS): fxinline.h fxgasm.h
 
 fxinline.h: fxgasm.exe
-	$< -inline > $@
+	$(call FIXPATH,./$<) -inline > $@
 
 fxgasm.h: fxgasm.exe
-	$< -hex > $@
+	$(call FIXPATH,./$<) -hex > $@
 
+# -bt without args resets build target to native OS
 fxgasm.exe: fxgasm.c
-	$(CC) -fe=$@ $<
+	$(CC) $(CFLAGS) -bt -fe=$@ $<
 
-wlib.lbc: $(subst /,\,$(GLIDE_OBJECTS))
+wlib.lbc: $(call FIXPATH,$(GLIDE_OBJECTS))
 	@echo $(addprefix +,$^) > wlib.lbc
 
 ###############################################################################
@@ -295,6 +304,7 @@ wlib.lbc: $(subst /,\,$(GLIDE_OBJECTS))
 
 clean:
 	-$(call UNLINK,*.obj)
+	-$(call UNLINK,*.o)
 	-$(call UNLINK,../../init/*.obj)
 	-$(call UNLINK,$(FX_GLIDE_SW)/newpci/pcilib/*.obj)
 	-$(call UNLINK,fxinline.h)
