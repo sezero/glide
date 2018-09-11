@@ -30,7 +30,15 @@
 ** WATCOMC
 */
 #if defined(__WATCOMC__)
+#if (__WATCOMC__ < 1100)
    #define FX_BIT64(n) ( FX_SHL64( i64_one, n ) )
+#else
+   typedef signed long long FxI64;
+   typedef unsigned long long FxU64;
+   #define NATIVE_64_SUPPORT 1
+   #define FX_MASK64(n) (0xFFFFFFFFFFFFFFFFLL >> (64-(n)))
+   #define FX_BIT64(n) (((FxI64)1) << (n))
+#endif
 /*
 ** GCC
 */
