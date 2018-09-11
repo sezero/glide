@@ -15,6 +15,12 @@
 #
 #  Available options:
 #
+#	CROSS		cross-compiler toolchain prefix
+#			Needed when cross-compiling e.g. on Linux,
+#			as opposed to compiling on native Windows.
+#			default = i686-pc-mingw32-
+#			(Note that a trailing '-' is necessary.)
+#
 #    Environment variables:
 #	CPU		optimize for the given processor.
 #			default = -mtune=pentium
@@ -58,16 +64,36 @@ GLIDE_LIBDIR = ../../lib
 #	tools
 ###############################################################################
 
-CC = gcc
+# default cross-toolchain prefix
+DEF_CROSS=i686-pc-mingw32-
+#DEF_CROSS=i686-w64-mingw32-
+
+# detect if running under unix by finding 'rm' in $PATH :
+ifeq ($(wildcard $(addsuffix /rm,$(subst :, ,$(PATH)))),)
+WINMODE= 1
+UNLINK = del $(subst /,\,$(1))
+HOST_CC = $(CC)
+else
+WINMODE= 0
+UNLINK = $(RM) $(1)
+ifeq ($(CROSS),)
+CROSS=$(DEF_CROSS)
+endif
+endif
+
+CC = $(CROSS)gcc
 AS = nasm
 LD = $(CC)
-RC = windres
-DLLTOOL = dlltool
+RC = $(CROSS)windres
+DLLTOOL = $(CROSS)dlltool
+STRIP = $(CROSS)strip
 
+ifeq ($(WINMODE),1)
+HOST_CC = $(CC)
+else
 #for cross-builds
 HOST_CC = gcc
-
-UNLINK = $(RM) $(1)
+endif
 
 ###############################################################################
 #	defines
@@ -162,8 +188,12 @@ CFLAGS += -DGL_AMD3D
 override USE_X86 = 1
 endif
 
+ifeq ($(WINMODE),1)
+HOST_CFLAGS=$(CFLAGS)
+else
 # for cross-builds
 HOST_CFLAGS=$(filter-out -mcpu=% -mtune=% -DFX_DLL_ENABLE -march=%,$(CFLAGS))
+endif
 
 ###############################################################################
 #	objects
@@ -268,6 +298,12 @@ else
 $(GLIDE_LIBDIR)/fxoem2x.dll:
 #	$(warning FxOem2x not enabled... Skipping fxoem2x.dll)
 endif
+
+strip:
+	$(STRIP) $(GLIDE_LIBDIR)/$(GLIDE_DLL)
+#ifeq ($(FXOEM2X),1)
+#	$(STRIP) $(GLIDE_LIBDIR)/fxoem2x.dll
+#endif
 
 ###############################################################################
 #	rules(2)

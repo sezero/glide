@@ -15,6 +15,12 @@
 #
 #  Available options:
 #
+#	CROSS		cross-compiler toolchain prefix
+#			Needed when cross-compiling e.g. on Linux,
+#			as opposed to compiling on native Windows.
+#			default = i686-pc-mingw32-
+#			(Note that a trailing '-' is necessary.)
+#
 #    Environment variables:
 #	FX_GLIDE_HW	build for the given ASIC (either sst1, or sst96).
 #			default = sst1
@@ -53,16 +59,36 @@ GLIDE_LIBDIR = ../../lib
 #	tools
 ###############################################################################
 
-CC = gcc
+# default cross-toolchain prefix
+DEF_CROSS=i686-pc-mingw32-
+#DEF_CROSS=i686-w64-mingw32-
+
+# detect if running under unix by finding 'rm' in $PATH :
+ifeq ($(wildcard $(addsuffix /rm,$(subst :, ,$(PATH)))),)
+WINMODE= 1
+UNLINK = del $(subst /,\,$(1))
+HOST_CC = $(CC)
+else
+WINMODE= 0
+UNLINK = $(RM) $(1)
+ifeq ($(CROSS),)
+CROSS=$(DEF_CROSS)
+endif
+endif
+
+CC = $(CROSS)gcc
 AS = nasm
 LD = $(CC)
-RC = windres
-DLLTOOL = dlltool
+RC = $(CROSS)windres
+DLLTOOL = $(CROSS)dlltool
+STRIP = $(CROSS)strip
 
+ifeq ($(WINMODE),1)
+HOST_CC = $(CC)
+else
 #for cross-builds
 HOST_CC = gcc
-
-UNLINK = $(RM) $(1)
+endif
 
 ###############################################################################
 #	defines
@@ -141,8 +167,12 @@ ifneq ($(USE_X86),1)
 CFLAGS += -DGLIDE_USE_C_TRISETUP
 endif
 
+ifeq ($(WINMODE),1)
+HOST_CFLAGS=$(CFLAGS)
+else
 # for cross-builds
 HOST_CFLAGS=$(filter-out -mcpu=% -mtune=% -DFX_DLL_ENABLE -march=%,$(CFLAGS))
+endif
 
 ###############################################################################
 #	objects
@@ -238,6 +268,9 @@ $(GLIDE_LIBDIR)/$(GLIDE_DLL): $(GLIDE_OBJECTS) $(GLIDE_RES)
 		$(GLIDE_OBJECTS) $(LDLIBS) $(GLIDE_RES)
 $(GLIDE_LIBDIR)/$(GLIDE_IMP): $(GLIDE_LIBDIR)/$(GLIDE_DLL)
 	$(DLLTOOL) $(DLLTOOL_FLAGS) --dllname $(GLIDE_DLL) --input-def $(GLIDE_LIBDIR)/$(GLIDE_DEF) --output-lib $@
+
+strip:
+	$(STRIP) $(GLIDE_LIBDIR)/$(GLIDE_DLL)
 
 ###############################################################################
 #	rules(2)

@@ -9,6 +9,12 @@
 #
 #  Available options:
 #
+#	CROSS		cross-compiler toolchain prefix
+#			Needed when cross-compiling e.g. on Linux,
+#			as opposed to compiling on native Windows.
+#			default = i686-pc-mingw32-
+#			(Note that a trailing '-' is necessary.)
+#
 #    Environment variables:
 #	FX_GLIDE_HW	build for the given ASIC (either sst1, or sst96).
 #			default = sst1
@@ -51,16 +57,36 @@ TEXUS_EXEDIR = $(FX_GLIDE_SW)/bin
 #	tools
 ###############################################################################
 
-CC = gcc
+# default cross-toolchain prefix
+DEF_CROSS=i686-pc-mingw32-
+#DEF_CROSS=i686-w64-mingw32-
+
+# detect if running under unix by finding 'rm' in $PATH :
+ifeq ($(wildcard $(addsuffix /rm,$(subst :, ,$(PATH)))),)
+WINMODE= 1
+UNLINK = del $(subst /,\,$(1))
+HOST_CC = $(CC)
+else
+WINMODE= 0
+UNLINK = $(RM) $(1)
+ifeq ($(CROSS),)
+CROSS=$(DEF_CROSS)
+endif
+endif
+
+CC = $(CROSS)gcc
 AS = nasm
 LD = $(CC)
-RC = windres
-DLLTOOL = dlltool
+RC = $(CROSS)windres
+DLLTOOL = $(CROSS)dlltool
+STRIP = $(CROSS)strip
 
+ifeq ($(WINMODE),1)
+HOST_CC = $(CC)
+else
 #for cross-builds
 HOST_CC = gcc
-
-UNLINK = $(RM) $(1)
+endif
 
 ###############################################################################
 #	defines
@@ -146,8 +172,12 @@ else
 CFLAGS += -DGLIDE_USE_C_TRISETUP
 endif
 
+ifeq ($(WINMODE),1)
+HOST_CFLAGS=$(CFLAGS)
+else
 # for cross-builds
 HOST_CFLAGS=$(filter-out -mcpu=% -mtune=% -DFX_DLL_ENABLE -march=%,$(CFLAGS))
+endif
 
 ###############################################################################
 #	objects
@@ -275,6 +305,12 @@ $(TEXUS_EXEDIR)/$(TEXUS_EXE): $(FX_GLIDE_SW)/texus2/cmd/cmd.c $(GLIDE_LIBDIR)/$(
 #	$(CC) -o $@ $(CFLAGS) $^
 #else
 #	$(warning Texus2 not enabled... Skipping $(TEXUS_EXE))
+#endif
+
+strip:
+	$(STRIP) $(GLIDE_LIBDIR)/$(GLIDE_DLL)
+#ifeq ($(TEXUS2),1)
+#	$(STRIP) $(TEXUS_EXEDIR)/$(TEXUS_EXE)
 #endif
 
 ###############################################################################
