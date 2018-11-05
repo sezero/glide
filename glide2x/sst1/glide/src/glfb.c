@@ -428,13 +428,7 @@ GR_ENTRY(grLfbLock, FxBool,( GrLock_t type, GrBuffer_t buffer,  GrLfbWriteMode_t
 #endif
   GR_CHECK_SIZE();
   /* We HAVE to idle on Jr., as out-of-order LFBs are unacceptable */
-  if (
-      lockIdle ||
-      (
-       _GlideRoot.hwConfig.SSTs[_GlideRoot.current_sst].type ==
-       GR_SSTTYPE_SST96
-       )
-      )
+  if (lockIdle || (_GlideRoot.hwConfig.SSTs[_GlideRoot.current_sst].type == GR_SSTTYPE_SST96))
     grSstIdle();
   GR_RETURN( rv );
 } /* grLfbLock */

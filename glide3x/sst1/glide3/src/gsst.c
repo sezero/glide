@@ -880,13 +880,10 @@ GR_ENTRY(grSstWinOpen, GrContext_t, (FxU32                   hWnd,
   for (tmu = 0; tmu < gc->num_tmu; tmu += 1)
     {
       FxU32 textureMode = (FxU32)SST_SEQ_8_DOWNLD;
-      if ( (_GlideRoot.hwConfig.SSTs[_GlideRoot.current_sst].type == 
-            GR_SSTTYPE_VOODOO ) && 
-           (_GlideRoot.hwConfig.SSTs[_GlideRoot.current_sst].sstBoard.VoodooConfig.tmuConfig[tmu].tmuRev ==
-            0 ) )
-        {
+      if ((_GlideRoot.hwConfig.SSTs[_GlideRoot.current_sst].type == GR_SSTTYPE_VOODOO) && 
+          (_GlideRoot.hwConfig.SSTs[_GlideRoot.current_sst].sstBoard.VoodooConfig.tmuConfig[tmu].tmuRev == 0)) {
           textureMode = 0;
-        }
+      }
       gc->state.tmu_config[tmu].textureMode     = textureMode;
       gc->state.tmu_config[tmu].tLOD            = 0x00000000;
       gc->state.tmu_config[tmu].tDetail         = 0x00000000;
