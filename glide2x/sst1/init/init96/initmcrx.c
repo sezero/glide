@@ -27,7 +27,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #ifndef __linux__
+#ifdef __DJGPP__
+#include <fxdpmi.h>
+#else
 #include <conio.h>
+#endif
 #else
 #include <fxpci.h>
 #define _inp(port) pioInByte(port);
@@ -35,7 +39,11 @@
 #define _outpw(port,data) pioOutWord(port, data);
 #endif
 #ifdef __DOS32__
+#ifdef __DJGPP__
+#include <dos.h>
+#else
 #include <i86.h>
+#endif
 #endif
 
 #ifdef __WIN32__

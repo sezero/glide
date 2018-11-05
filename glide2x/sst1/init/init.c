@@ -37,6 +37,10 @@
 #define _outpw(port, data) pioOutWord(port, data);
 #endif
 
+#ifdef __DJGPP__
+#include <fxdpmi.h>
+#endif
+
 #include <init96.h>
 #include <sst1init.h>
 

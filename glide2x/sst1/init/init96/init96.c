@@ -31,7 +31,11 @@
 #endif
 
 #ifdef __DOS32__
+#ifdef __DJGPP__
+#include <dos.h>
+#else
 #include <i86.h>
+#endif
 #endif
 
 #ifdef __WIN32__
@@ -45,6 +49,10 @@
 #if defined(__WATCOMC__)
 #define _inp inp
 #define _outp outp
+#endif
+
+#ifdef __DJGPP__
+#include <fxdpmi.h>
 #endif
 
 /* 3Dfx Headers */

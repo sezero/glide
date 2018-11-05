@@ -53,7 +53,11 @@
 #include <string.h>
 
 #ifdef __DOS32__
+#ifdef __DJGPP__
+#include <dos.h>
+#else
 #include <i86.h>
+#endif
 #endif
 
 #include <init.h>
