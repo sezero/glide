@@ -16,7 +16,6 @@
 ** THE UNITED STATES.  
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
-**
 */
 
 #include "init.h"
@@ -228,15 +227,14 @@ initEnumHardware( InitHWEnumCallback *cb )
     vgDriverInit( &contexts[INIT_VOODOO] );
     vg96DriverInit( &contexts[INIT_VG96] );
 
-
     /* Mark the library as initialized */
     libInitialized = FXTRUE;
   }
-  
+
   if ( cb ) {
     for( device = 0; device < numDevicesInSystem; device++ ) {
       cb( &hwInfo[device] );
-    } 
+    }
   }
   return;
 } /* initEnumHardware */
@@ -350,17 +348,15 @@ initGetDeviceInfo( FxU32 devNumber, InitDeviceInfo *info )
   -------------------------------------------------------------------*/
 
 FxBool
-initDeviceSelect( FxU32 devNumber ) 
+initDeviceSelect( FxU32 devNumber )
 {
-  FxBool rv = FXFALSE;
-  
   if ( devNumber < numDevicesInSystem ) {
     context = &contexts[hwInfo[devNumber].hwClass];
     context->info = hwInfo[devNumber];
-    rv =  FXTRUE;
+    return FXTRUE;
   }
   
-  return rv;
+  return FXFALSE;
 
 }/* initDeviceSelect */
 

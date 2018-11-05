@@ -411,12 +411,6 @@ GR_DIENTRY(_grChromaRangeExt, void , (GrColor_t color, GrColor_t range, GrChroma
 #define FN_NAME "_grChromaRangeExt"
   GR_BEGIN_NOFIFOCHECK("_grChromaRangeExt",85);
 
-#if 0
-  GR_CHECK_F(myName,
-             (_GlideRoot.hwConfig.SSTs[_GlideRoot.current_sst].type != GR_SSTTYPE_Voodoo2),
-             "grChromaRange not supported.");
-#endif
-
   INVALIDATE(chromaKey);
 
   STOREARG(grChromakeyValue, color);

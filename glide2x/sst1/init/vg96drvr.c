@@ -16,7 +16,6 @@
 ** THE UNITED STATES.  
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
-**
 */
 
 #include <3dfx.h>
@@ -88,16 +87,13 @@ static void *getBufferPtr( InitBuffer_t buffer, int *strideBytes ) {
 
 static void renderBuffer( InitBuffer_t buffer ) {
     init96RenderBuffer( buffer, context->writeMethod );
-    return;
 }
 
 static void origin( InitOriginLocation_t origin ) {
     init96Origin( origin, context->writeMethod );
-    return;
 }
 
 static void ioCtl( FxU32 token, void *argument ) {
-    return;
 }
 
 static FxBool control( FxU32 code ) {

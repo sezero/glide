@@ -16,7 +16,6 @@
 ** THE UNITED STATES.  
 ** 
 ** COPYRIGHT 3DFX INTERACTIVE, INC. 1999, ALL RIGHTS RESERVED
-**
 */
 
 #include <3dfx.h>
@@ -25,6 +24,8 @@
 #include "fxinit.h"
 #include <sst1init.h>
 #include <sst.h>
+
+#include <stddef.h> /* NULL */
 
 static FxBool setVideo( FxU32                   hWnd,
                         GrScreenResolution_t    sRes,
@@ -37,10 +38,11 @@ static FxBool setVideo( FxU32                   hWnd,
                         int                     *yres,
                         int                     *fbStride,
                         sst1VideoTimingStruct   *vidTimings) {
-    FxBool rv;
+
     static int _w[] = {320,320,400,512,640,640,640,640,800,960,856,512};
     static int _h[] = {200,240,256,384,200,350,400,480,600,720,480,256};
-    
+
+    FxBool rv;
     rv = sst1InitVideo( (FxU32*)context->info.hwDep.vgInfo.vgBaseAddr,
                         sRes,
                         vRefresh, 
@@ -115,19 +117,16 @@ static void idle( void ) {
 }
 
 static void *getBufferPtr( InitBuffer_t buffer, int *strideBytes ) {
-    return 0;
+    return NULL;
 }
 
 static void renderBuffer( InitBuffer_t buffer ) {
-    return;
 }
 
 static void origin( InitOriginLocation_t origin ) {
-    return;
 }
 
 static void ioCtl( FxU32 token, void *argument ) {
-    return;
 }
 
 static FxBool control( FxU32 code ) {
