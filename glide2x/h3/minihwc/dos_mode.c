@@ -90,27 +90,27 @@ setVideoMode( unsigned long dummy, int xres, int yres, int refresh, void *hmon )
     return FXFALSE;
   }
 
-    
   r.w.ax = 0x4f02;
   r.w.bx = mode;
-    
+
   GDBG_INFO(80, "Setting mode 0x%x, 0x%x\n", r.w.ax, r.w.bx);
-    
-    /* Do VGA Magic */
+
+  /* Do VGA Magic */
   int386(0x10, &r, &rOut);
 
   /* XXXTACO!! - We should check the return value */
-    
-  return FXTRUE;
+
+  /* [dBorca] ... and so we do! */
+  return (rOut.w.ax==0x004f);
 } /* setVideoMode */
 
 void 
 resetVideo( void ) 
 {
   union REGS r;
-    
+
   memset(&r, 0, sizeof(r));
-    
+
   r.w.ax = 0x4f02;
   r.w.bx = oldVidMode;
   GDBG_INFO(80, "resetVideo(): Setting mode 0x%x, 0x%x\n", r.w.ax, r.w.bx);
