@@ -389,10 +389,18 @@ _GlideInitEnvironment( void )
     getenv("FX_GLIDE_BOUNDS_CHECK") != NULL;
   _GlideRoot.environment.swapInterval = -1;
   _GlideRoot.environment.swFifoLWM = -1;
+#ifdef GLIDE_SPLASH
   _GlideRoot.environment.noSplash = 
     getenv("FX_GLIDE_NO_SPLASH") != NULL;
+#else
+  _GlideRoot.environment.noSplash = 1;
+#endif
+#ifdef GLIDE_PLUG
   _GlideRoot.environment.shamelessPlug = 
     getenv("FX_GLIDE_SHAMELESS_PLUG") != NULL;
+#else
+  _GlideRoot.environment.shamelessPlug = 0;
+#endif
   if (getenv("FX_GLIDE_LWM"))
     _GlideRoot.environment.swFifoLWM = atoi(getenv("FX_GLIDE_LWM"));
   if (getenv("FX_GLIDE_SWAPINTERVAL")) {

@@ -768,8 +768,10 @@ GR_ENTRY(grBufferSwap, void, (int swapInterval))
   GR_BEGIN_NOFIFOCHECK(FN_NAME,86);
   GDBG_INFO_MORE(gc->myLevel,"(%d)\n",swapInterval);
 
+#ifdef GLIDE_PLUG
   /* optionally display the 3Dfx powerfield logo overlay */
   if (_GlideRoot.environment.shamelessPlug) _grShamelessPlug();
+#endif
 
   /* check for environmental override */
   if (_GlideRoot.environment.swapInterval >= 0) {

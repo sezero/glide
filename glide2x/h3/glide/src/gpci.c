@@ -908,12 +908,20 @@ _GlideInitEnvironment(void)
   GDBG_INFO(80,"\ttriBoundsCheck: %d\n",
             _GlideRoot.environment.triBoundsCheck); 
   
+#ifdef GLIDE_SPLASH
   _GlideRoot.environment.noSplash =
     (GETENV("FX_GLIDE_NO_SPLASH") != NULL);
+#else
+  _GlideRoot.environment.noSplash = 1;
+#endif
   GDBG_INFO(80,"\tnoSplash: %d\n",_GlideRoot.environment.noSplash);
   
+#ifdef GLIDE_PLUG
   _GlideRoot.environment.shamelessPlug =
     (GETENV("FX_GLIDE_SHAMELESS_PLUG") != NULL);
+#else
+  _GlideRoot.environment.shamelessPlug = 0;
+#endif
   GDBG_INFO(80,"\tshamelessPlug: %d\n",
             _GlideRoot.environment.shamelessPlug); 
   

@@ -90,6 +90,13 @@
 #include "fxglide.h"
 #include "fxinline.h"
 
+#ifndef GLIDE_SPLASH
+GR_DIENTRY(grSplash,void,(float x,float y,float w,float h,FxU32 _frame)) {
+/* nothing */
+}
+
+#else /* GLIDE_SPLASH */
+
 /*-----------------------------
   Constants
   -----------------------------*/
@@ -951,3 +958,4 @@ GR_DIENTRY(grSplash,void,(float x,float y,float w,float h,FxU32 _frame))
 
 }
 
+#endif /* GLIDE_SPLASH */

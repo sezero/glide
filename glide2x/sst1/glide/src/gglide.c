@@ -559,9 +559,11 @@ GR_ENTRY(grBufferSwap, void, ( int swapInterval ))
     pending = grBufferNumPending();
   } while (pending > 3);
   
+#ifdef GLIDE_PLUG
   /* optionally display the 3Dfx powerfield logo overlay */
   if (_GlideRoot.environment.shamelessPlug)
     _grShamelessPlug();
+#endif
 
   initSwapBuffers( swapInterval );
 
@@ -578,9 +580,11 @@ GR_ENTRY(grBufferSwap, void, ( int swapInterval ))
   P6_NUDGE_OF_LOVE;
 
 #elif ( GLIDE_PLATFORM & GLIDE_HW_SST1 ) 
+  #ifdef GLIDE_PLUG
   /* optionally display the 3Dfx powerfield logo overlay */
   if (_GlideRoot.environment.shamelessPlug)
     _grShamelessPlug();
+  #endif
 
   /* check for environmental override */
   if (_GlideRoot.environment.swapInterval >= 0) {

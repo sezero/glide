@@ -951,6 +951,7 @@ GR_ENTRY(grSstWinOpen, FxBool, (
 
     grSstOrigin( GR_ORIGIN_LOWER_LEFT );
 
+#ifdef GLIDE_SPLASH
     if (!_GlideRoot.environment.noSplash) {
       HMODULE newSplash = LoadLibrary("3dfxsplash2.dll");
       if (newSplash) {
@@ -962,8 +963,10 @@ GR_ENTRY(grSstWinOpen, FxBool, (
         }
       }
     }
+#endif
 #endif /* (GLIDE_PLATFORM & GLIDE_OS_WIN32) */
 
+#ifdef GLIDE_SPLASH
     /* If it's still 0, then do the old one */
     if (!_GlideRoot.environment.noSplash) {
       grSplash(0.0f, 0.0f, 
@@ -972,6 +975,8 @@ GR_ENTRY(grSstWinOpen, FxBool, (
                0);
       _GlideRoot.environment.noSplash = 1;
     }
+#endif
+
     grGlideSetState(&state);
   }
 
