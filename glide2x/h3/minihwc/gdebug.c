@@ -85,7 +85,7 @@ void setLevel(int level, int value)
 
 
 #ifndef KERNEL_NT
-// we need to call a kernal printf. 
+// we need to call a kernal printf.
 extern int __cdecl klvfprintf(FILE        *stream,
                               const char  *format,
                               va_list      arg    ) ;
@@ -157,20 +157,20 @@ gdbg_init(void)
     char *env;
 
     if (done) return;
-    
+
 #if __MWERKS__
 	SIOUXSettings.standalone 				= false;
 	SIOUXSettings.setupmenus 				= false;
 	SIOUXSettings.autocloseonquit 	= true;
 	SIOUXSettings.asktosaveonclose 	= false;
-#endif      
+#endif
 
 #ifdef __linux__
     gdbg_msgfile = stderr;	// GDBG info/error file
 #elif defined(__MINGW32__)
     gdbg_msgfile = stdout;
 #endif
-    
+
 #ifdef KERNEL
 	// put code in here to set the default level
     gdbg_debuglevel[0] = 1;		// always enable level 0
@@ -360,7 +360,7 @@ gdbg_info_more (const int level, const char *format, ...)
 #endif /* #ifndef KERNEL */
     return (1);
 }
-
+
 static GDBGErrorProc errorProcList[3];
 
 FX_EXPORT int FX_CSTYLE gdbg_error_set_callback(GDBGErrorProc p)
@@ -481,10 +481,11 @@ gdbg_set_file(const char *name)
   {
     outf = fopen(name,"w");		// open up a new one
     if (outf) gdbg_msgfile = outf;
+    return (outf != NULL);
   }
 
-  return (outf != NULL);
+  return 1;
 #else /* #ifndef KERNEL */
   return 0;
-#endif /* #ifndef KERNEL */    
+#endif /* #ifndef KERNEL */
 }

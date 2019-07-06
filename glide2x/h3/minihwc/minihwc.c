@@ -450,7 +450,6 @@ extern DWORD __cdecl CM_Get_DevNode_Key(DWORD,PCHAR,PVOID,ULONG,ULONG);
 
 static hwcInfo hInfo;
 static char errorString[1024];
-static int num_monitor = 0;
 static FxU32 __attribute_used fenceVar;
 
 /*
@@ -532,6 +531,7 @@ typedef struct {
   HDC dc;
   HMONITOR mon;
 } DevEnumRec;
+static int num_monitor = 0;
 
 static BOOL CALLBACK 
 monitorEnum( HMONITOR handle, HDC dc, LPRECT rect, LPARAM param ) 
@@ -3672,6 +3672,7 @@ hwcResolutionSupported(hwcBoardInfo *bInfo, GrScreenResolution_t res)
     "GR_RESOLUTION_2048x2048"
   };
 #endif
+#if 0
   struct WidthHeight_s {
     FxU32 width; 
     FxU32 height;
@@ -3701,6 +3702,7 @@ hwcResolutionSupported(hwcBoardInfo *bInfo, GrScreenResolution_t res)
     {2048, 1536},               /* GR_RESOLUTION_2048x1536 */
     {2048, 2048}                /* GR_RESOLUTION_2048x2048 */
   };
+#endif
 
 #if GDBG_INFO_ON
   GDBG_INFO(80, FN_NAME ":  res == %s (0x%x), supported == %s\n",
