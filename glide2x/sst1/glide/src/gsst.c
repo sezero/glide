@@ -238,7 +238,7 @@
 #include <windows.h>
 #endif
 
-#if (GLIDE_PLATFORM & GLIDE_OS_DOS32) && (GLIDE_PLATFORM & GLIDE_HW_SST96) && defined(GLIDE_DEBUG)
+#if (GLIDE_PLATFORM & GLIDE_OS_DOS32) && (GLIDE_PLATFORM & GLIDE_HW_SST96) && defined(GLIDE_DEBUG10)
 #include <dos.h>
   /* int 10h interrupt handler */
 void __interrupt __far 
@@ -771,7 +771,7 @@ GR_ENTRY(grSstWinOpen, FxBool, (
   _grReCacheFifo( 0 );
 #  elif ( GLIDE_PLATFORM & GLIDE_HW_SST96 )
   gc->hwDep.sst96Dep.writesSinceFence = 0;
-#if (GLIDE_PLATFORM & GLIDE_OS_DOS32) && defined(GLIDE_DEBUG)
+#if (GLIDE_PLATFORM & GLIDE_OS_DOS32) && defined(GLIDE_DEBUG10)
   /* Set int 10h interrupt handler */
   gc->hwDep.sst96Dep.int10Called = FXFALSE;
   gc->hwDep.sst96Dep.prevInt10 = NULL;
@@ -1039,7 +1039,7 @@ GR_ENTRY( grSstWinClose, void, ( void ) )
     GDBG_INFO(( gc->myLevel, "  Command Transport Disable\n" ));
     initDisableTransport();
 
-#if (GLIDE_PLATFORM & GLIDE_OS_DOS32) && (GLIDE_PLATFORM & GLIDE_HW_SST96) && defined(GLIDE_DEBUG)
+#if (GLIDE_PLATFORM & GLIDE_OS_DOS32) && (GLIDE_PLATFORM & GLIDE_HW_SST96) && defined(GLIDE_DEBUG10)
     GDBG_INFO((80, "Restoring int 10h interrupt handler (0x%x)\n", gc->hwDep.sst96Dep.prevInt10));
     _dos_setvect(0x10, NULL);
 #endif

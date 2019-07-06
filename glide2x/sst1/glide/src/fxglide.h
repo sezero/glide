@@ -371,7 +371,7 @@ typedef struct GrGC_s
 
   union hwDep_u {
     struct sst96Dep_s {
-#if (GLIDE_PLATFORM & GLIDE_OS_DOS32)
+#if (GLIDE_PLATFORM & GLIDE_OS_DOS32) && defined(GLIDE_DEBUG10)
       FxBool
         int10Called;            /* Did the app call int10h? */
       void (__interrupt __far *prevInt10)();
@@ -1022,7 +1022,7 @@ _grSst96CheckFifoData(void);
    the fifoSize element of the sst96Dep data structure must be
    accurate, we subtract after we write, instead of at the beginning
    as above. */
-#if (GLIDE_PLATFORM & GLIDE_OS_DOS32) && defined(GLIDE_DEBUG)
+#if (GLIDE_PLATFORM & GLIDE_OS_DOS32) && defined(GLIDE_DEBUG10)
 #define GR_CHECKINT10 if (gc->hwDep.sst96Dep.int10Called)_doGrErrorCallback("Glide Error:", "Application called Int 10 between grSstWinOpen and Close.\n", FXTRUE)
 #else
 #define GR_CHECKINT10
