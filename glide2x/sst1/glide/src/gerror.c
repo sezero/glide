@@ -134,7 +134,7 @@ _grErrorDefaultCallback( const char *s, FxBool fatal )
   }
 }
 
-#ifdef __DOS__
+#if defined(__DOS__) && defined(__WATCOMC__)
 int _guHeapCheck( void )
 {
   int i = _heapchk();
