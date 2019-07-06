@@ -51,7 +51,7 @@ GLIDE_SHARED = $(GLIDE_SONAME).$(GLIDE_VERSION_MINOR)
 
 FX_GLIDE_HW ?= sst1
 FX_GLIDE_SW = ../../../swlibs
-GLIDE_LIBDIR = ../../lib
+GLIDE_LIBDIR = ../../lib/$(FX_GLIDE_HW)
 
 ###############################################################################
 #	tools
