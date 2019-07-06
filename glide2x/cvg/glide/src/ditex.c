@@ -663,9 +663,9 @@ GR_DIENTRY(grTexDownloadMipMapLevel, void,
 FxU16 rle_line[256];
 FxU16 *rle_line_end;
 
-#if (GLIDE_PLATFORM & (GLIDE_OS_WIN32 | GLIDE_OS_MACOS | GLIDE_OS_UNIX))
+#if (GLIDE_PLATFORM & (GLIDE_OS_WIN32 | GLIDE_OS_MACOS | GLIDE_OS_UNIX)) || defined(__DJGPP__)
 void rle_decode_line_asm(FxU16 *tlut,FxU8 *src,FxU16 *dest)
 {
    /* don't do anything just shut up the compiler */
 }
-#endif /* (GLIDE_PLATFORM & (GLIDE_OS_WIN32 | GLIDE_OS_MACOS)) */
+#endif
