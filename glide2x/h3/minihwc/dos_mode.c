@@ -34,8 +34,16 @@
 #include <string.h>
 
 #include <3dfx.h>
+#define FX_DLL_DEFINITION
+#include <fxdll.h>
+#ifdef __DJGPP__
+#include <dos.h>
+#else
 #include <i86.h>
+#endif
 #include <gdebug.h>
+
+#include <h3cinit.h>
 
 static FxU16 oldVidMode;
 
