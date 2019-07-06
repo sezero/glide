@@ -55,8 +55,12 @@
 #if(GLIDE_PLATFORM & GLIDE_OS_DOS32)
 #  include <malloc.h>
 #if (GLIDE_PLATFORM & GLIDE_HW_SST96)
+#ifdef __DJGPP__
+#  include <dos.h>
+#else
 #  include <conio.h>
 #  include <i86.h>
+#endif
 #endif
 #endif
 
