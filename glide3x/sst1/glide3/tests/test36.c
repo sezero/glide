@@ -28,7 +28,7 @@ int main( int argc, char **argv) {
                 iFailures = 0, iStatusAt = 0,
                 viewport[4];
         GrContext_t context;
-	unsigned long hWndMain = tlGethWnd();
+	FxU32 hWndMain = tlGethWnd();
 
         printf ( "Test36 - Glide resolution checker.  All output goes to the console.\n\n" );
         tlGetCH ();

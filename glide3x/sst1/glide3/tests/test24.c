@@ -12,7 +12,7 @@
 #include "tlib.h"
 
 
-#define SNAP_COORD(v)   ( ( v ) = (( float )( ( long )( ( v ) * 16 ) )) / 16.0f )
+#define SNAP_COORD(v)   ( ( v ) = (( float )( ( FxI32 )( ( v ) * 16 ) )) / 16.0f )
 
 int hwconfig;
 static const char *version;
@@ -236,7 +236,7 @@ int main( int argc, char **argv) {
     return 0;
 }
 
-static unsigned long randx = 1;
+static unsigned int randx = 1;
 
 static unsigned int iRandom (unsigned int maxr)
 {

@@ -13,7 +13,7 @@
 #include "tlib.h"
 
 
-#define SNAP_COORD(v)   ( ( v ) = (( float )( ( long )( ( v ) * 16 ) )) / 16.0f )
+#define SNAP_COORD(v)   ( ( v ) = (( float )( ( FxI32 )( ( v ) * 16 ) )) / 16.0f )
 
 #define WREFWIDTH 640.f
 #define WREFHEIGHT 480.f

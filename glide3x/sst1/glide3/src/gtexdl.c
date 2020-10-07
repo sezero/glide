@@ -109,7 +109,7 @@ extern const int _grMipMapHostWH[G3_ASPECT_TRANSLATE(GR_ASPECT_LOG2_1x8)+1][G3_L
 GR_DDFUNC(_grTexDownloadNccTable, void, ( GrChipID_t tmu, FxU32 which, const GuNccTable *table, int start, int end ))
 {
   int i;
-  unsigned long *hwNCC;
+  FxU32 *hwNCC;
   
   GR_BEGIN_NOFIFOCHECK("_grTexDownloadNccTable",89);
   GDBG_INFO_MORE((gc->myLevel,"(%d,%d, 0x%x, %d,%d)\n",tmu,which,table,start,end));

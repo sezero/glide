@@ -34,7 +34,7 @@ extern "C" {
 // end up looking like twos complement numbers (they carry out from the '1')
 #define FLOAT_FIX(f,fracbits) ((f)+(float)(3<<(22-(fracbits))))
 
-#define SST_FLOAT(f,scale,shift) (unsigned long)((f)*((scale)*(float)(1<<shift)))
+#define SST_FLOAT(f,scale,shift) (FxU32)((f)*((scale)*(float)(1<<shift)))
 #define SST_TLOD_MINMAX(lodmin,lodmax) \
                 (((lodmin) << (SST_LODMIN_SHIFT)) | \
                 ((lodmax) << (SST_LODMAX_SHIFT)))
@@ -48,16 +48,16 @@ extern "C" {
 
 // these crazy macros returns the sign of a number (1 if >= 0; -1 if < 0)
 #define ISIGN(x) (((x) | 0x40000000) >> 30)
-#define FSIGN(f) ISIGN(*(long *)&f)
+#define FSIGN(f) ISIGN(*(FxI32 *)&f)
 
 typedef struct vertex_Rec {
-    unsigned long x;            // 12.4 format
-    unsigned long y;            // 12.4
+    FxU32 x;            // 12.4 format
+    FxU32 y;            // 12.4
 } vtxRec;
 
 // 256 color palette tables
 typedef struct {
-    unsigned long argb[256];
+    FxU32 argb[256];
 } Pal256;
 
 #define BIT(n)  (1<<(n))
@@ -605,93 +605,93 @@ typedef struct {
 typedef struct sstregs {        // THE CHIP
 #ifndef SST96
                                 // EXTERNAL registers
-    unsigned long status;       // chip status, Read Only
-    unsigned long reserved0;
+    FxU32 status;       // chip status, Read Only
+    FxU32 reserved0;
     vtxRec vA;          // Vertex A,B,C
     vtxRec vB;
     vtxRec vC;
 
-    long r;             // 12.12        Parameters
-    long g;             // 12.12
-    long b;             // 12.12
-    long z;             // 20.12
-    long a;             // 12.12
-    long s;             // 14.18
-    long t;             // 14.18
-    long w;             //  2.30
+    FxI32 r;             // 12.12        Parameters
+    FxI32 g;             // 12.12
+    FxI32 b;             // 12.12
+    FxI32 z;             // 20.12
+    FxI32 a;             // 12.12
+    FxI32 s;             // 14.18
+    FxI32 t;             // 14.18
+    FxI32 w;             //  2.30
 
-    long drdx;                  // X Gradients
-    long dgdx;
-    long dbdx;
-    long dzdx;
-    long dadx;
-    long dsdx;
-    long dtdx;
-    long dwdx;
+    FxI32 drdx;                  // X Gradients
+    FxI32 dgdx;
+    FxI32 dbdx;
+    FxI32 dzdx;
+    FxI32 dadx;
+    FxI32 dsdx;
+    FxI32 dtdx;
+    FxI32 dwdx;
 
-    long drdy;                  // Y Gradients
-    long dgdy;
-    long dbdy;
-    long dzdy;
-    long dady;
-    long dsdy;
-    long dtdy;
-    long dwdy;
+    FxI32 drdy;                  // Y Gradients
+    FxI32 dgdy;
+    FxI32 dbdy;
+    FxI32 dzdy;
+    FxI32 dady;
+    FxI32 dsdy;
+    FxI32 dtdy;
+    FxI32 dwdy;
 
-    unsigned long triangleCMD;  // execute a triangle command (float)
-    unsigned long reserved1;
+    FxU32 triangleCMD;  // execute a triangle command (float)
+    FxU32 reserved1;
     vtxRec FvA;                 // floating point version
     vtxRec FvB;
     vtxRec FvC;
 
-    long Fr;                    // floating point version
-    long Fg;
-    long Fb;
-    long Fz;
-    long Fa;
-    long Fs;
-    long Ft;
-    long Fw;
+    FxI32 Fr;                    // floating point version
+    FxI32 Fg;
+    FxI32 Fb;
+    FxI32 Fz;
+    FxI32 Fa;
+    FxI32 Fs;
+    FxI32 Ft;
+    FxI32 Fw;
 
-    long Fdrdx;
-    long Fdgdx;
-    long Fdbdx;
-    long Fdzdx;
-    long Fdadx;
-    long Fdsdx;
-    long Fdtdx;
-    long Fdwdx;
+    FxI32 Fdrdx;
+    FxI32 Fdgdx;
+    FxI32 Fdbdx;
+    FxI32 Fdzdx;
+    FxI32 Fdadx;
+    FxI32 Fdsdx;
+    FxI32 Fdtdx;
+    FxI32 Fdwdx;
 
-    long Fdrdy;
-    long Fdgdy;
-    long Fdbdy;
-    long Fdzdy;
-    long Fdady;
-    long Fdsdy;
-    long Fdtdy;
-    long Fdwdy;
+    FxI32 Fdrdy;
+    FxI32 Fdgdy;
+    FxI32 Fdbdy;
+    FxI32 Fdzdy;
+    FxI32 Fdady;
+    FxI32 Fdsdy;
+    FxI32 Fdtdy;
+    FxI32 Fdwdy;
 
-    unsigned long FtriangleCMD;         // execute a triangle command
-    unsigned long fbzColorPath;         // color select and combine
-    unsigned long fogMode;              // fog Mode
-    unsigned long alphaMode;            // alpha Mode
-    unsigned long fbzMode;              // framebuffer and Z mode
-    unsigned long lfbMode;              // linear framebuffer Mode
-    unsigned long clipLeftRight;        // (6)10(6)10
-    unsigned long clipBottomTop;        // (6)10(6)10
+    FxU32 FtriangleCMD;         // execute a triangle command
+    FxU32 fbzColorPath;         // color select and combine
+    FxU32 fogMode;              // fog Mode
+    FxU32 alphaMode;            // alpha Mode
+    FxU32 fbzMode;              // framebuffer and Z mode
+    FxU32 lfbMode;              // linear framebuffer Mode
+    FxU32 clipLeftRight;        // (6)10(6)10
+    FxU32 clipBottomTop;        // (6)10(6)10
 
-    unsigned long nopCMD;       // execute a nop command
-    unsigned long fastfillCMD;  // execute a fast fill command
-    unsigned long swapbufferCMD;// execute a swapbuffer command
-    unsigned long fogColor;             // (8)888
-    unsigned long zaColor;              // 8(8)16
-    unsigned long chromaKey;            // (8)888
-    unsigned long reserved2;
-    unsigned long reserved3;
+    FxU32 nopCMD;       // execute a nop command
+    FxU32 fastfillCMD;  // execute a fast fill command
+    FxU32 swapbufferCMD;// execute a swapbuffer command
+    FxU32 fogColor;             // (8)888
+    FxU32 zaColor;              // 8(8)16
+    FxU32 chromaKey;            // (8)888
+    FxU32 reserved2;
+    FxU32 reserved3;
 
-    unsigned long stipple;              // 32 bits, MSB masks pixels
-    unsigned long c0;                   // 8.8.8.8 (ARGB)
-    unsigned long c1;                   // 8.8.8.8 (ARGB)
+    FxU32 stipple;              // 32 bits, MSB masks pixels
+    FxU32 c0;                   // 8.8.8.8 (ARGB)
+    FxU32 c1;                   // 8.8.8.8 (ARGB)
     struct {                            // statistic gathering variables
         unsigned int fbiPixelsIn;
         unsigned int fbiChromaFail;
@@ -700,38 +700,38 @@ typedef struct sstregs {        // THE CHIP
         unsigned int fbiPixelsOut;
     } stats;
 
-    unsigned long fogTable[32];         // 64 entries, 2 per word, 2 bytes each
+    FxU32 fogTable[32];         // 64 entries, 2 per word, 2 bytes each
 
-    unsigned long reserved8[8];
+    FxU32 reserved8[8];
 
-    unsigned long fbiInit4;
-    unsigned long vRetrace;
-    unsigned long backPorch;
-    unsigned long videoDimensions;
-    unsigned long fbiInit0;
-    unsigned long fbiInit1;
-    unsigned long fbiInit2;
-    unsigned long fbiInit3;
+    FxU32 fbiInit4;
+    FxU32 vRetrace;
+    FxU32 backPorch;
+    FxU32 videoDimensions;
+    FxU32 fbiInit0;
+    FxU32 fbiInit1;
+    FxU32 fbiInit2;
+    FxU32 fbiInit3;
 
-    unsigned long hSync;
-    unsigned long vSync;
-    unsigned long clutData;
-    unsigned long dacData;
-    unsigned long videoFilterRgbThreshold;
-    unsigned long reserved35[35];       // reserved51 became reserved35,
+    FxU32 hSync;
+    FxU32 vSync;
+    FxU32 clutData;
+    FxU32 dacData;
+    FxU32 videoFilterRgbThreshold;
+    FxU32 reserved35[35];       // reserved51 became reserved35,
                                         // Grabbed remaining 16 for sst-96
     
    
 //========================================================================
 // Please treat as the SST-96 area.
-// These belong in the SST_CHROMARANGE register
+// These beFxI32 in the SST_CHROMARANGE register
 #define SST_CHROMARANGE_BLUE_EX         BIT(24) // Blue value in exclusive mode
 #define SST_CHROMARANGE_GREEN_EX        BIT(25) // Green value in exclusive mode
 #define SST_CHROMARANGE_RED_EX          BIT(26) // Red  value in exclusive mode
 #define SST_CHROMARANGE_BLOCK_OR        BIT(27) // Union of all colors.
 #define SST_ENCHROMARANGE               BIT(28)
 
-// These belong in the clipLeftRight and clipTopBottom Registers.
+// These beFxI32 in the clipLeftRight and clipTopBottom Registers.
 #define SST_ENRECTCLIP01                BIT(31) // 
 #define SST_RECTCLIP_EX                 BIT(31) //
 
@@ -750,35 +750,35 @@ typedef struct sstregs {        // THE CHIP
 #define SST_DEVICE_ID_SST97     4
 
 
-    unsigned long chromaRange;          // SST-96 specific
-    unsigned long clipLeftRight1;       // SST-96 specific
-    unsigned long clipBottomTop1;       // SST-96 specific
-    unsigned long colBufferSetup;       // SST-96 specific
-    unsigned long auxBufferSetup;       // SST-96 specific
-    unsigned long texChipSel;           // SST-96 specific
-    unsigned long swapPendCmd;          // SST-96 specific
-    unsigned long reservedSST96[9];     // SST-96 specific
+    FxU32 chromaRange;          // SST-96 specific
+    FxU32 clipLeftRight1;       // SST-96 specific
+    FxU32 clipBottomTop1;       // SST-96 specific
+    FxU32 colBufferSetup;       // SST-96 specific
+    FxU32 auxBufferSetup;       // SST-96 specific
+    FxU32 texChipSel;           // SST-96 specific
+    FxU32 swapPendCmd;          // SST-96 specific
+    FxU32 reservedSST96[9];     // SST-96 specific
     
 // End SST-96 area
 //========================================================================
 
-    unsigned long textureMode;          // texture Mode
-    unsigned long tLOD;                 // texture LOD settings
-    unsigned long tDetail;              // texture detail settings
-    unsigned long texBaseAddr;          // current texture base address
-    unsigned long texBaseAddr1;
-    unsigned long texBaseAddr2;
-    unsigned long texBaseAddr38;
-    unsigned long trexInit0;            // hardware init bits
-    unsigned long trexInit1;            // hardware init bits
+    FxU32 textureMode;          // texture Mode
+    FxU32 tLOD;                 // texture LOD settings
+    FxU32 tDetail;              // texture detail settings
+    FxU32 texBaseAddr;          // current texture base address
+    FxU32 texBaseAddr1;
+    FxU32 texBaseAddr2;
+    FxU32 texBaseAddr38;
+    FxU32 trexInit0;            // hardware init bits
+    FxU32 trexInit1;            // hardware init bits
    
-    unsigned long nccTable0[12];        // NCC decode tables, bits are packed
-    unsigned long nccTable1[12];        // 4 words Y, 4 words I, 4 words Q
+    FxU32 nccTable0[12];        // NCC decode tables, bits are packed
+    FxU32 nccTable1[12];        // 4 words Y, 4 words I, 4 words Q
 
 #else
                                 /* EXTERNAL registers */
-    unsigned long status;       /* chip status, Read Only */
-    unsigned long reserved001;  /* reserved001 */
+    FxU32 status;       /* chip status, Read Only */
+    FxU32 reserved001;  /* reserved001 */
 
     /* Fixed point version */
     vtxRec vA;                 /* Vertex A,B,C */
@@ -786,35 +786,35 @@ typedef struct sstregs {        // THE CHIP
     vtxRec vC;
 
     /* Parameters, X gradients, Y gradients */
-    long r;                     /* 12.12 */
-    long drdx;                  /* 12.12 */
-    long drdy;
-    long g;
-    long dgdx;
-    long dgdy;
-    long b;
-    long dbdx;
+    FxI32 r;                     /* 12.12 */
+    FxI32 drdx;                  /* 12.12 */
+    FxI32 drdy;
+    FxI32 g;
+    FxI32 dgdx;
+    FxI32 dgdy;
+    FxI32 b;
+    FxI32 dbdx;
 
-    long dbdy;
-    long z;                     /* 20.12 */
-    long dzdx;                  /* 20.12 */
-    long dzdy;                  /* ??? 12.12 */              
-    long a;                     /* 12.12 */
-    long dadx;                  /* 12.12 */
-    long dady;
-    long s;                     /* 14.18 */
+    FxI32 dbdy;
+    FxI32 z;                     /* 20.12 */
+    FxI32 dzdx;                  /* 20.12 */
+    FxI32 dzdy;                  /* ??? 12.12 */              
+    FxI32 a;                     /* 12.12 */
+    FxI32 dadx;                  /* 12.12 */
+    FxI32 dady;
+    FxI32 s;                     /* 14.18 */
 
-    long dsdx;                  /* 14.18 */
-    long dsdy;
-    long t;
-    long dtdx;
-    long dtdy;
-    long w;                     /* 2.30 */
-    long dwdx;                  /* 2.30 */
-    long dwdy;
+    FxI32 dsdx;                  /* 14.18 */
+    FxI32 dsdy;
+    FxI32 t;
+    FxI32 dtdx;
+    FxI32 dtdy;
+    FxI32 w;                     /* 2.30 */
+    FxI32 dwdx;                  /* 2.30 */
+    FxI32 dwdy;
 
-    unsigned long triangleCMD;  /* execute a triangle command (fixed) */
-    unsigned long reserved021;
+    FxU32 triangleCMD;  /* execute a triangle command (fixed) */
+    FxU32 reserved021;
 
     /* Floating point version */
     vtxRec FvA;
@@ -850,54 +850,54 @@ typedef struct sstregs {        // THE CHIP
     float Fdwdy;
 
     /* commands except for triangleCMD */
-    unsigned long FtriangleCMD; /* execute a triangle command (float) */
-    unsigned long reserved041;  /* required cmd spacer for SST-96 */
-    unsigned long nopCMD;       /* execute a nop command */
-    unsigned long reserved043;  /* required cmd spacer for SST-96 */
-    unsigned long fastfillCMD;  /* execute a fast fill command */
-    unsigned long reserved045;  /* required cmd spacer for SST-96 */
-    unsigned long swapbufferCMD; /* execute a swapbuffer command */
-    unsigned long reserved047;  /* required cmd spacer for SST-96 */
+    FxU32 FtriangleCMD; /* execute a triangle command (float) */
+    FxU32 reserved041;  /* required cmd spacer for SST-96 */
+    FxU32 nopCMD;       /* execute a nop command */
+    FxU32 reserved043;  /* required cmd spacer for SST-96 */
+    FxU32 fastfillCMD;  /* execute a fast fill command */
+    FxU32 reserved045;  /* required cmd spacer for SST-96 */
+    FxU32 swapbufferCMD; /* execute a swapbuffer command */
+    FxU32 reserved047;  /* required cmd spacer for SST-96 */
                                 
-    unsigned long swappendCMD;  /* increment swap pending count */
-    unsigned long reserved049;  /* required cmd spacer for SST-96 */
-    unsigned long reserved04A[6]; /* 0x04A to 0x04F */
+    FxU32 swappendCMD;  /* increment swap pending count */
+    FxU32 reserved049;  /* required cmd spacer for SST-96 */
+    FxU32 reserved04A[6]; /* 0x04A to 0x04F */
                                 
                                 /* state registers */
-    unsigned long fbzColorPath; /* color select and combine */
-    unsigned long fogMode;      /* fog Mode */
-    unsigned long alphaMode;    /* alpha Mode */
-                                unsigned long reserved053;
-    unsigned long fbzMode;      /* color and auxiliary buffer control */
-    unsigned long stipple;      /* 32 bits, MSB masks pixels */
-    unsigned long c0;           /* 8.8.8.8 (ARGB) */
-    unsigned long c1;           /* 8.8.8.8 (ARGB) */
+    FxU32 fbzColorPath; /* color select and combine */
+    FxU32 fogMode;      /* fog Mode */
+    FxU32 alphaMode;    /* alpha Mode */
+                                FxU32 reserved053;
+    FxU32 fbzMode;      /* color and auxiliary buffer control */
+    FxU32 stipple;      /* 32 bits, MSB masks pixels */
+    FxU32 c0;           /* 8.8.8.8 (ARGB) */
+    FxU32 c1;           /* 8.8.8.8 (ARGB) */
                                 
-    unsigned long fogColor;     /* (8)888 */
-    unsigned long zaColor;      /* 8(8)16 */
-    unsigned long chromaKey;    /* (8)888 */
-    unsigned long chromaRange;  /* Chroma Range compare Values, Modes & Enable */
-    unsigned long reserved05C[4]; /* 0x05C to 0x05F */
+    FxU32 fogColor;     /* (8)888 */
+    FxU32 zaColor;      /* 8(8)16 */
+    FxU32 chromaKey;    /* (8)888 */
+    FxU32 chromaRange;  /* Chroma Range compare Values, Modes & Enable */
+    FxU32 reserved05C[4]; /* 0x05C to 0x05F */
                                 
-    unsigned long colBufferSetup; /* color buffer base address, stride, and mode */
-    unsigned long auxBufferSetup; /* auxiliary buffer base address, stride */
-    unsigned long clipLeftRight; /* (6)10(6)10 */
-    unsigned long clipBottomTop; /* (6)10(6)10 */
-    unsigned long clipLeftRight1; /* (6)10(6)10 */
-    unsigned long clipBottomTop1; /* (6)10(6)10 */
-    unsigned long reserved066[10]; /* 0x066 to 0x06F */
+    FxU32 colBufferSetup; /* color buffer base address, stride, and mode */
+    FxU32 auxBufferSetup; /* auxiliary buffer base address, stride */
+    FxU32 clipLeftRight; /* (6)10(6)10 */
+    FxU32 clipBottomTop; /* (6)10(6)10 */
+    FxU32 clipLeftRight1; /* (6)10(6)10 */
+    FxU32 clipBottomTop1; /* (6)10(6)10 */
+    FxU32 reserved066[10]; /* 0x066 to 0x06F */
                                 
-    unsigned long fogTable[32]; /* 64 entries, 2 per word, 2 bytes each */
+    FxU32 fogTable[32]; /* 64 entries, 2 per word, 2 bytes each */
                                 
-    unsigned long fbijrInit0;   /* FBIjr Hardware Init 0 - General */
-    unsigned long fbijrInit1;   /* FBIjr Hardware Init 1 - PUMA */
-    unsigned long fbijrInit2;   /* FBIjr Hardware Init 2 - MEM FIFO Setup */
-    unsigned long fbijrInit3;   /* FBIjr Hardware Init 3 - CMD FIFO Setup */
-    unsigned long fbijrInit4;   /* FBIjr Hardware Init 4 - CMD FIFO Entry Count */
-    unsigned long fbijrInit5;   /* FBIjr Hardware Init 5 - CMD FIFO Read Pointer */
-    unsigned long reserved096[10]; /* 0x096 to 0x09F */
+    FxU32 fbijrInit0;   /* FBIjr Hardware Init 0 - General */
+    FxU32 fbijrInit1;   /* FBIjr Hardware Init 1 - PUMA */
+    FxU32 fbijrInit2;   /* FBIjr Hardware Init 2 - MEM FIFO Setup */
+    FxU32 fbijrInit3;   /* FBIjr Hardware Init 3 - CMD FIFO Setup */
+    FxU32 fbijrInit4;   /* FBIjr Hardware Init 4 - CMD FIFO Entry Count */
+    FxU32 fbijrInit5;   /* FBIjr Hardware Init 5 - CMD FIFO Read Pointer */
+    FxU32 reserved096[10]; /* 0x096 to 0x09F */
                                 
-    unsigned long fbijrVersion; /* FBIjr Version (company, device, & board */
+    FxU32 fbijrVersion; /* FBIjr Version (company, device, & board */
     struct {                    /* statistic gathering variables */
       unsigned int fbiPixelsIn; /* Pixel counter (number pixels processed) */
       unsigned int fbiChromaFail; /* Pixel counter (number pixels failed Chroma test) */
@@ -905,25 +905,25 @@ typedef struct sstregs {        // THE CHIP
       unsigned int fbiAfuncFail; /* Pixel counter (number pixels failed Alpha test) */
       unsigned int fbiPixelsOut; /* Pixel counter (number pixels drawn) */
     } stats;
-    unsigned long reserved0A6[10]; /* 0x0A6 to 0x0AF */
+    FxU32 reserved0A6[10]; /* 0x0A6 to 0x0AF */
 
-    unsigned long reserved0B0[15];  /* 0x0B0 to 0x0BE */
-    unsigned long texChipSel;       /* Texture Write Chip select */
+    FxU32 reserved0B0[15];  /* 0x0B0 to 0x0BE */
+    FxU32 texChipSel;       /* Texture Write Chip select */
 
     /* TMU registers */
-    unsigned long textureMode;      /* texture Mode */
-    unsigned long tLOD;             /* texture LOD settings */
-    unsigned long tDetail;          /* texture detail settings */
-    unsigned long texBaseAddr;      /* current texture base address */
-    unsigned long texBaseAddr1;
-    unsigned long texBaseAddr2;
-    unsigned long texBaseAddr38;
-    unsigned long trexInit0;        /* hardware init bits */
-    unsigned long trexInit1;        /* hardware init bits */
-    unsigned long nccTable0[12];    /* NCC decode tables, bits are packed */
-    unsigned long nccTable1[12];    /* 4 words Y, 4 words I, 4 words Q */
+    FxU32 textureMode;      /* texture Mode */
+    FxU32 tLOD;             /* texture LOD settings */
+    FxU32 tDetail;          /* texture detail settings */
+    FxU32 texBaseAddr;      /* current texture base address */
+    FxU32 texBaseAddr1;
+    FxU32 texBaseAddr2;
+    FxU32 texBaseAddr38;
+    FxU32 trexInit0;        /* hardware init bits */
+    FxU32 trexInit1;        /* hardware init bits */
+    FxU32 nccTable0[12];    /* NCC decode tables, bits are packed */
+    FxU32 nccTable1[12];    /* 4 words Y, 4 words I, 4 words Q */
 
-    unsigned long reserved0E1[31];  /* 0x0E1 to 0x0FF */
+    FxU32 reserved0E1[31];  /* 0x0E1 to 0x0FF */
 #endif
 } Sstregs;
 
@@ -1093,9 +1093,9 @@ do { \
 #define SST_TEX_ADDRESS(sst)    (0x600000+(FxU32)(sst))
 #endif
 
-extern unsigned long sstMipMapSize[4][16];
-extern unsigned long sstMipMapOffset[4][16];
-extern unsigned long sstMipMapOffset_Tsplit[4][16];
+extern FxU32 sstMipMapSize[4][16];
+extern FxU32 sstMipMapOffset[4][16];
+extern FxU32 sstMipMapOffset_Tsplit[4][16];
 
 
 extern void sstMemoryConfig(int fbiMem, int trex0Mem,int trex1Mem,int trex2Mem);

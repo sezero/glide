@@ -32,7 +32,7 @@ int main( int argc, char **argv) {
     char                 filename[256];
 
     TlTexture  baseTexture;
-    unsigned long baseTextureAddr;
+    FxU32 baseTextureAddr;
     GrVertex vtxA, vtxB, vtxC, vtxD;
     GrTexChromakeyMode_t texchroma = GR_TEXCHROMA_DISABLE_EXT;
     char *extstr;

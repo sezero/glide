@@ -231,7 +231,7 @@ int main( int argc, char **argv) {
     return 0;
 }
 
-static unsigned long randx = 1;
+static unsigned int randx = 1;
 
 static unsigned int iRandom (unsigned int maxr)
 {

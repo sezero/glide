@@ -36,7 +36,7 @@ int main( int argc, char **argv) {
     char                 filename[256];
     FxU8                 subframe = 0;
 
-    unsigned long chromaColor;
+    FxU32 chromaColor;
 
     /* Initialize Glide */
     grGlideInit();

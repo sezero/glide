@@ -139,7 +139,7 @@ static ResToRes resTable[] = {
     { "400x300",   GR_RESOLUTION_400x300,   400.0f,  300.0f }   /* 0xF */
 };
 
-static long resTableSize = sizeof( resTable ) / sizeof( ResToRes );
+static int resTableSize = sizeof( resTable ) / sizeof( ResToRes );
 
 void
 tlGetDimsByConst(const int resConst, float *w, float *h)
@@ -369,7 +369,7 @@ float tlScaleY( float coord ) {
   -------------------------------------------------------------------*/
 static unsigned char fontTable[128][2];
 static GrTexInfo fontInfo;
-static unsigned long fontAddress;
+static FxU32 fontAddress;
 static const char fontString[] = "ABCDEFGHIJKLMN"
                                  "OPQRSTUVWXYZ01"
                                  "23456789.,;:*-"

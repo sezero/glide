@@ -190,7 +190,7 @@ void
 _grSwizzleColor( GrColor_t *color )
 {
   GR_DCL_GC;
-  unsigned long red, green, blue, alpha;
+  FxU32 red, green, blue, alpha;
   
   switch( gc->state.color_format ) {
   case GR_COLORFORMAT_ARGB:
