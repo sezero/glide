@@ -29,3 +29,7 @@ swlibs branch.  In order to build any glide library the swlibs branch
 must be moved inside the glide3x directory.  The swlibs branch is not
 stored here within the glide2x cvs tree because it is also shared with
 the glide3x branch.
+
+NOTE:  glide2x tree is NOT 64-bit-safe.  If you are cross-compiling for
+dos or windows on a 64-host remember to use the -m32 switch of host-gcc,
+e.g. run: make HOST_CC="gcc -m32" <other-stuff>
