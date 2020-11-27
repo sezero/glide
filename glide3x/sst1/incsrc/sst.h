@@ -724,14 +724,14 @@ typedef struct sstregs {        // THE CHIP
    
 //========================================================================
 // Please treat as the SST-96 area.
-// These beFxI32 in the SST_CHROMARANGE register
+// These belong in the SST_CHROMARANGE register
 #define SST_CHROMARANGE_BLUE_EX         BIT(24) // Blue value in exclusive mode
 #define SST_CHROMARANGE_GREEN_EX        BIT(25) // Green value in exclusive mode
 #define SST_CHROMARANGE_RED_EX          BIT(26) // Red  value in exclusive mode
 #define SST_CHROMARANGE_BLOCK_OR        BIT(27) // Union of all colors.
 #define SST_ENCHROMARANGE               BIT(28)
 
-// These beFxI32 in the clipLeftRight and clipTopBottom Registers.
+// These belong in the clipLeftRight and clipTopBottom Registers.
 #define SST_ENRECTCLIP01                BIT(31) // 
 #define SST_RECTCLIP_EX                 BIT(31) //
 
