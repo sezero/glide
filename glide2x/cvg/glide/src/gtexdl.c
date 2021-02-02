@@ -505,7 +505,7 @@ GR_ENTRY(grTexDownloadMipMapLevelPartial,
                         ? 1   /* 16-bit texture */
                         : 2); /* 8-bit texture */
 
-    if (max_s <= 0) max_s = 1;
+    if (max_s < 1) max_s = 1;
     if (widthSel > 2) widthSel = 3;
     
     _GlideRoot.stats.texBytes += max_s * (max_t - t + 1) * 4;
@@ -554,7 +554,7 @@ GR_ENTRY(grTexDownloadMipMapLevelPartial,
   max_s = width >> ((format < GR_TEXFMT_16BIT)
                     ? 2   /* 8-bit texture */
                     : 1); /* 16-bit texture */
-  if (max_s <= 0) max_s = 1;
+  if (max_s < 1) max_s = 1;
 
   _GlideRoot.stats.texBytes += max_s * (max_t - t + 1) * 4;
 

@@ -120,6 +120,8 @@ ASFLAGS += $(CDEFS)
 
 # compiler
 CFLAGS = -bt=dos -wx -zq
+# newer OpenWatcom versions enable W303 by default
+CFLAGS += -wcd=303
 INCPATH = -I. -I../../incsrc -I../../init
 INCPATH += -I$(FX_GLIDE_SW)/fxmisc -I$(FX_GLIDE_SW)/newpci/pcilib -I$(FX_GLIDE_SW)/fxmemmap
 INCPATH += -I$(FX_GLIDE_SW)/texus2/lib

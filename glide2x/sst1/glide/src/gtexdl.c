@@ -237,12 +237,12 @@ GR_ENTRY(grTexDownloadMipMapLevelPartial, void, ( GrChipID_t tmu, FxU32 startAdd
   if ( format < GR_TEXFMT_16BIT ) { /* 8-bit texture */
     bytesPerTexel = 1;
     max_s = width >> 2;
-    if ( max_s <= 0 )
+    if (max_s < 1)
       max_s = 1;
   } else { /* 16-bit texture */
     bytesPerTexel = 2;
     max_s = width >> 1;
-    if ( max_s <= 0 )
+    if (max_s < 1)
       max_s = 1;
   }
   /* assume max_s is a power of two */
