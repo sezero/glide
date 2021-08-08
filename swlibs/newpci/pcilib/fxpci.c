@@ -497,7 +497,8 @@ pciOpen( void )
     }
 
   }
-  
+
+#if 0
   if ( !busDetected )  { 
     /* Try Configuration Mechanism 2 (only 16 devices) */
     /* Since Configuration Mech#2 is obsolete this does not
@@ -509,7 +510,8 @@ pciOpen( void )
       sampleVendorID(deviceNumber,2);
     }
   }
-  
+#endif
+
   if ( busDetected ) {
     pciLibraryInitialized = FXTRUE;
   } else {
