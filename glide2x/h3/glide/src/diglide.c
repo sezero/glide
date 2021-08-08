@@ -318,6 +318,13 @@ GR_DIENTRY(grGlideInit, void, (void))
   gdbg_error_set_callback(_grErrorCallback);
 #endif
 
+  /* In case of error, _GlideInitEnvironment() calls GrErrorCallback() which is
+   * supposed to be a noreturn function, but it really is not for non-windows..
+   * Eww... */
+  if (!_GlideRoot.hwConfig.num_sst) {
+    return;
+  }
+
 #if USE_PACKET_FIFO && (WTF_P_COMDEX || WTF_P_COMDEX_RESET)
   /* Work around for apps that call some grXXX state call
    * before calling grSstWinOpen which inits the command fifo.  

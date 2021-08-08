@@ -353,6 +353,13 @@ GR_DIENTRY(grGlideInit, void, (void))
   GDBG_ERROR_SET_CALLBACK(_grErrorCallback);
 #endif
 
+  /* In case of error, _GlideInitEnvironment() calls GrErrorCallback() which is
+   * supposed to be a noreturn function, but it really is not for non-windows..
+   * Eww... */
+  if (!_GlideRoot.hwConfig.num_sst) {
+    return;
+  }
+
   if (_GlideRoot.initialized) {
     /* allocate the TLS index */
     /* [koolsmoky] According to Microsoft, the TLS index must be allocated

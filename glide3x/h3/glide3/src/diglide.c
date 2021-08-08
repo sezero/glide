@@ -351,6 +351,13 @@ GR_DIENTRY(grGlideInit, void, (void))
   gdbg_error_set_callback(_grErrorCallback);
 #endif
 
+  /* In case of error, _GlideInitEnvironment() calls GrErrorCallback() which is
+   * supposed to be a noreturn function, but it really is not for non-windows..
+   * Eww... */
+  if (!_GlideRoot.hwConfig.num_sst) {
+    return;
+  }
+
   if (_GlideRoot.initialized) {
     initThreadStorage();
     initCriticalSection();
