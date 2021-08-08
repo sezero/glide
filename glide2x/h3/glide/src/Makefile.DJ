@@ -211,7 +211,7 @@ $(GLIDE_LIBDIR)/$(GLIDE_LIB): $(GLIDE_OBJECTS)
 	$(AR) $(ARFLAGS) $@ $^
 
 $(GLIDE_LIBDIR)/$(GLIDE_DXE) $(GLIDE_LIBDIR)/$(GLIDE_IMP): $(GLIDE_OBJECTS)
-	-$(DXE3GEN) -o $(GLIDE_LIBDIR)/$(GLIDE_DXE) -Y $(GLIDE_LIBDIR)/$(GLIDE_IMP) -D "GLIDE2X.DXE^H3^" -E _gr -E _gu -E _ConvertAndDownloadRle -U $^
+	-$(DXE3GEN) -o $(GLIDE_LIBDIR)/$(GLIDE_DXE) -Y $(GLIDE_LIBDIR)/$(GLIDE_IMP) -E _gr -E _gu -E _ConvertAndDownloadRle -U $^
 
 ###############################################################################
 #	rules(2)
