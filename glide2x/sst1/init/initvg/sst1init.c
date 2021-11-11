@@ -703,11 +703,13 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitShutdown(FxU32 *sstbase)
     pciClose();
 #endif
 
-    if(GETENV(("SST_NOSHUTDOWN")))
+    if(GETENV(("SST_NOSHUTDOWN"))) {
         INIT_PRINTF(("sst1InitShutdown(): Bypassing shutdown with SST_NOSHUTDOWN\n"));
+        goto noshutdown;
+    }
 
     n = 0;
-    while(!GETENV(("SST_NOSHUTDOWN"))) {
+    for ( ;; ) {
         if(!n)
             sstPtr = sstMaster;
         else
@@ -749,6 +751,9 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitShutdown(FxU32 *sstbase)
         if((++n > 1) || !SliEnable)
             break;
     }
+
+    noshutdown: ;
+
     sst1InitIdle(sstbase);
     INIT_PRINTF(("sst1InitShutdown(): Returning with status %d...\n", FXTRUE));
 #ifdef INIT_OUTPUT

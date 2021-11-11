@@ -898,11 +898,13 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitShutdown(FxU32 *sstbase)
             return(FXFALSE);
     }
 
-    if(GETENV(("SSTV2_NOSHUTDOWN")))
+    if(GETENV(("SSTV2_NOSHUTDOWN"))) {
         INIT_PRINTF(("sst1InitShutdown(): Bypassing shutdown with SSTV2_NOSHUTDOWN\n"));
+        goto noshutdown;
+    }
 
     n = 0;
-    while(!GETENV(("SSTV2_NOSHUTDOWN"))) {
+    for ( ;; ) {
         if(!n)
             sstPtr = sstMaster;
         else
@@ -947,6 +949,8 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitShutdown(FxU32 *sstbase)
         if((++n > 1) || !sliEnabled)
             break;
     }
+
+    noshutdown: ;
 
     /* sst1InitIdle(sstbase);  */
 
