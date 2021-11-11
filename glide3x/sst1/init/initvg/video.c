@@ -61,6 +61,8 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitVideo(FxU32 *sstbase,
 #ifndef DIRECTX
     float vidClkFreq;
 #endif
+    const char *envp;
+    int envval;
 
     if(!sst)
         return(FXFALSE);
@@ -163,32 +165,34 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitVideo(FxU32 *sstbase,
     }
 
     /* Override settings with environment variables */
-    if(GETENV(("SST_SCREENREZ"))) {
-        if(ATOI(GETENV(("SST_SCREENREZ"))) == 640) {
+    envp = GETENV(("SST_SCREENREZ"));
+    if(envp) {
+        envval = ATOI(envp);
+        if(envval == 640) {
             sst1MonitorRez = 640;
             sst1CurrentBoard->fbiVideoWidth = 640;
             sst1CurrentBoard->fbiVideoHeight = 480;
-        } else if(ATOI(GETENV(("SST_SCREENREZ"))) == 640400) {
+        } else if(envval == 640400) {
             sst1MonitorRez = 640400;
             sst1CurrentBoard->fbiVideoWidth = 640;
             sst1CurrentBoard->fbiVideoHeight = 400;
-        } else if(ATOI(GETENV(("SST_SCREENREZ"))) == 800) {
+        } else if(envval == 800) {
             sst1MonitorRez = 800;
             sst1CurrentBoard->fbiVideoWidth = 800;
             sst1CurrentBoard->fbiVideoHeight = 600;
-        } else if(ATOI(GETENV(("SST_SCREENREZ"))) == 512256) {
+        } else if(envval == 512256) {
             sst1MonitorRez = 512256;
             sst1CurrentBoard->fbiVideoWidth = 512;
             sst1CurrentBoard->fbiVideoHeight = 256;
-        } else if(ATOI(GETENV(("SST_SCREENREZ"))) == 512) {
+        } else if(envval == 512) {
             sst1MonitorRez = 512;
             sst1CurrentBoard->fbiVideoWidth = 512;
             sst1CurrentBoard->fbiVideoHeight = 384;
-        } else if(ATOI(GETENV(("SST_SCREENREZ"))) == 856) {
+        } else if(envval == 856) {
             sst1MonitorRez = 856;
             sst1CurrentBoard->fbiVideoWidth = 856;
             sst1CurrentBoard->fbiVideoHeight = 480;
-        } else if(ATOI(GETENV(("SST_SCREENREZ"))) == 960) {
+        } else if(envval == 960) {
             sst1MonitorRez = 960;
             sst1CurrentBoard->fbiVideoWidth = 960;
             sst1CurrentBoard->fbiVideoHeight = 720;
@@ -198,16 +202,18 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitVideo(FxU32 *sstbase,
             sst1CurrentBoard->fbiVideoHeight = 480;
         }
     }
-    if(GETENV(("SST_SCREENREFRESH"))) {
-        if(ATOI(GETENV(("SST_SCREENREFRESH"))) == 60)
+    envp = GETENV(("SST_SCREENREFRESH"));
+    if(envp) {
+        envval = ATOI(envp);
+        if(envval == 60)
             sst1MonitorRefresh = 60;
-        else if(ATOI(GETENV(("SST_SCREENREFRESH"))) == 72)
+        else if(envval == 72)
             sst1MonitorRefresh = 72;
-        else if(ATOI(GETENV(("SST_SCREENREFRESH"))) == 75)
+        else if(envval == 75)
             sst1MonitorRefresh = 75;
-        else if(ATOI(GETENV(("SST_SCREENREFRESH"))) == 85)
+        else if(envval == 85)
             sst1MonitorRefresh = 85;
-        else if(ATOI(GETENV(("SST_SCREENREFRESH"))) == 120)
+        else if(envval == 120)
             sst1MonitorRefresh = 120;
         else
             sst1MonitorRefresh = 60;
@@ -303,9 +309,9 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitVideo(FxU32 *sstbase,
         sst1CurrentBoard->fbiVideoRefresh = sst1MonitorRefresh;
     }
 
-    if(GETENV(("SST_VIDEO_24BPP")))
-        sst1CurrentBoard->fbiVideo16BPP =
-            (ATOI(GETENV(("SST_VIDEO_24BPP")))) ^ 0x1;
+    envp = GETENV(("SST_VIDEO_24BPP"));
+    if(envp)
+        sst1CurrentBoard->fbiVideo16BPP = (ATOI(envp)) ^ 0x1;
     else {
         sst1CurrentBoard->fbiVideo16BPP = 0;
 
@@ -357,30 +363,30 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitVideo(FxU32 *sstbase,
     }
 
     /* Setup SST video timing registers */
-    if(GETENV(("SST_HSYNC")) &&
-       (SSCANF(GETENV(("SST_HSYNC")), "%i", &vtmp) == 1) ) {
+    envp = GETENV(("SST_HSYNC"));
+    if(envp && (SSCANF(envp, "%i", &vtmp) == 1) ) {
         INIT_PRINTF(("sst1InitVideo(): Using SST_HSYNC=0x%x\n", vtmp));
         ISET(sst->hSync, vtmp);
     } else
         ISET(sst->hSync, ((sstVideoRez->hSyncOff << SST_VIDEO_HSYNC_OFF_SHIFT) |
                       (sstVideoRez->hSyncOn << SST_VIDEO_HSYNC_ON_SHIFT)));
-    if(GETENV(("SST_VSYNC")) &&
-       (SSCANF(GETENV(("SST_VSYNC")), "%i", &vtmp) == 1) ) {
+    envp = GETENV(("SST_VSYNC"));
+    if(envp && (SSCANF(envp, "%i", &vtmp) == 1) ) {
         INIT_PRINTF(("sst1InitVideo(): Using SST_VSYNC=0x%x\n", vtmp));
         ISET(sst->vSync, vtmp);
     } else
         ISET(sst->vSync, ((sstVideoRez->vSyncOff << SST_VIDEO_VSYNC_OFF_SHIFT) |
                       (sstVideoRez->vSyncOn << SST_VIDEO_VSYNC_ON_SHIFT)));
-    if(GETENV(("SST_BACKPORCH")) &&
-       (SSCANF(GETENV(("SST_BACKPORCH")), "%i", &vtmp) == 1) ) {
+    envp = GETENV(("SST_BACKPORCH"));
+    if(envp && (SSCANF(envp, "%i", &vtmp) == 1) ) {
         INIT_PRINTF(("sst1InitVideo(): Using SST_BACKPORCH=0x%x\n", vtmp));
         ISET(sst->backPorch, vtmp);
     } else
         ISET(sst->backPorch,
                      ((sstVideoRez->vBackPorch << SST_VIDEO_VBACKPORCH_SHIFT) |
                       (sstVideoRez->hBackPorch << SST_VIDEO_HBACKPORCH_SHIFT)));
-    if(GETENV(("SST_DIMENSIONS")) &&
-       (SSCANF(GETENV(("SST_DIMENSIONS")), "%i", &vtmp) == 1) ) {
+    envp = GETENV(("SST_DIMENSIONS"));
+    if(envp && (SSCANF(envp, "%i", &vtmp) == 1) ) {
         INIT_PRINTF(("sst1InitVideo(): Using SST_DIMENSIONS=0x%x\n", vtmp));
         sstVideoRez->yDimension = (vtmp >>  SST_VIDEO_YDIM_SHIFT) & 0x3ff;
         sstVideoRez->xDimension = vtmp & 0x3ff;
@@ -388,13 +394,13 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitVideo(FxU32 *sstbase,
     ISET(sst->videoDimensions,
                      ((sstVideoRez->yDimension << SST_VIDEO_YDIM_SHIFT) |
                       ((sstVideoRez->xDimension-1) << SST_VIDEO_XDIM_SHIFT)));
-    if(GETENV(("SST_MEMOFFSET")) &&
-       (SSCANF(GETENV(("SST_MEMOFFSET")), "%i", &vtmp) == 1) ) {
+    envp = GETENV(("SST_MEMOFFSET"));
+    if(envp && (SSCANF(envp, "%i", &vtmp) == 1) ) {
         INIT_PRINTF(("sst1InitVideo(): Using video memOffset=0x%x\n", vtmp));
         sstVideoRez->memOffset = vtmp;
     }
-    if(GETENV(("SST_TILESINX")) &&
-       (SSCANF(GETENV(("SST_TILESINX")), "%i", &vtmp) == 1) ) {
+    envp = GETENV(("SST_TILESINX"));
+    if(envp && (SSCANF(envp, "%i", &vtmp) == 1) ) {
         INIT_PRINTF(("sst1InitVideo(): Using video tilesInX=0x%x\n", vtmp));
         sstVideoRez->tilesInX_Over2 = vtmp;
     }
@@ -418,12 +424,13 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitVideo(FxU32 *sstbase,
     /* Setup video fifo */
     /* NOTE: Lower values for the video fifo threshold improve video fifo */
     /* underflow problems */
-    if(GETENV(("SST_VFIFO_THRESH"))) {
+    envp = GETENV(("SST_VFIFO_THRESH"));
+    if(envp) {
+        envval = ATOI(envp);
         INIT_PRINTF(("sst1InitVideo(): Overriding Default Video Fifo Threshold %d and Storing %d\n",
-            sstVideoRez->vFifoThreshold, ATOI(GETENV(("SST_VFIFO_THRESH")))));
+            sstVideoRez->vFifoThreshold, envval));
         ISET(sst->fbiInit3, (IGET(sst->fbiInit3) & ~SST_VIDEO_FIFO_THRESH) |
-            ((ATOI(GETENV(("SST_VFIFO_THRESH"))))
-             << SST_VIDEO_FIFO_THRESH_SHIFT));
+            (envval << SST_VIDEO_FIFO_THRESH_SHIFT));
     } else {
         FxU32 vFifoThresholdVal = sstVideoRez->vFifoThreshold;
 
@@ -448,16 +455,16 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitVideo(FxU32 *sstbase,
     sst1InitIdleFBINoNOP(sstbase);
 
     memFifoLwm = 23;
-    if(GETENV(("SST_MEMFIFO_LWM")) &&
-       (SSCANF(GETENV(("SST_MEMFIFO_LWM")), "%i", &vtmp) == 1))
+    envp = GETENV(("SST_MEMFIFO_LWM"));
+    if(envp && (SSCANF(envp, "%i", &vtmp) == 1))
       memFifoLwm = vtmp;
     memFifoHwm = 54;
-    if(GETENV(("SST_MEMFIFO_HWM")) &&
-       (SSCANF(GETENV(("SST_MEMFIFO_HWM")), "%i", &vtmp) == 1))
+    envp = GETENV(("SST_MEMFIFO_HWM"));
+    if(envp && (SSCANF(envp, "%i", &vtmp) == 1))
       memFifoHwm = vtmp;
     pciFifoLwm = 13;
-    if(GETENV(("SST_PCIFIFO_LWM")) &&
-       (SSCANF(GETENV(("SST_PCIFIFO_LWM")), "%i", &vtmp) == 1))
+    envp = GETENV(("SST_PCIFIFO_LWM"));
+    if(envp && (SSCANF(envp, "%i", &vtmp) == 1))
       pciFifoLwm = vtmp;
     INIT_PRINTF(("sst1InitVideo(): pciFifoLwm:%d  memFifoLwm:%d  memFifoHwm:%d\n",
         pciFifoLwm, memFifoLwm, memFifoHwm));
@@ -502,8 +509,9 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitVideo(FxU32 *sstbase,
     sst1InitIdleFBINoNOP(sstbase);
 
     /* Enable Memory Fifo... */
-    if(GETENV(("SST_MEMFIFO")))
-        n = ATOI(GETENV(("SST_MEMFIFO")));
+    envp = GETENV(("SST_MEMFIFO"));
+    if(envp)
+        n = ATOI(envp);
     else
         n = 1;
 
@@ -519,8 +527,8 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitVideo(FxU32 *sstbase,
             memFifoEntries = sstVideoRez->memFifoEntries_2MB;
         else
             memFifoEntries = sstVideoRez->memFifoEntries_4MB;
-        if(GETENV(("SST_MEMFIFO_ENTRIES")) &&
-           (SSCANF(GETENV(("SST_MEMFIFO_ENTRIES")), "%i", &vtmp) == 1))
+        envp = GETENV(("SST_MEMFIFO_ENTRIES"));
+        if(envp && (SSCANF(envp, "%i", &vtmp) == 1))
           memFifoEntries = vtmp;
         INIT_PRINTF(("sst1InitVideo(): Enabling Memory FIFO (Entries=%d)...\n",
             0xffff - (memFifoEntries << 5)));
@@ -545,16 +553,16 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitVideo(FxU32 *sstbase,
         vInClkDel = 2;
     if(sst1CurrentBoard->fbiRevision == 2)
         vInClkDel = 0;
-    if(GETENV(("SST_VIN_CLKDEL")) &&
-       (SSCANF(GETENV(("SST_VIN_CLKDEL")), "%i", &vtmp) == 1))
+    envp = GETENV(("SST_VIN_CLKDEL"));
+    if(envp && (SSCANF(envp, "%i", &vtmp) == 1))
       vInClkDel = vtmp;
 
     if(sst1CurrentBoard->fbiRevision == 2)
         vOutClkDel = 2;
     else
         vOutClkDel = 0;
-    if(GETENV(("SST_VOUT_CLKDEL")) &&
-       (SSCANF(GETENV(("SST_VOUT_CLKDEL")), "%i", &vtmp) == 1))
+    envp = GETENV(("SST_VOUT_CLKDEL"));
+    if(envp && (SSCANF(envp, "%i", &vtmp) == 1))
       vOutClkDel = vtmp;
 
     INIT_PRINTF(("sst1InitVideo(): vInClkDel=0x%x  vOutClkDel=0x%x\n",
@@ -588,8 +596,8 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitVideo(FxU32 *sstbase,
         sst1InitIdleFBINoNOP(sstbase);
         if(!GETENV(("SST_VIDEO_FILTER_DISABLE"))) {
             ISET(sst->fbiInit1, IGET(sst->fbiInit1) | SST_VIDEO_FILTER_EN);
-            if(GETENV(("SST_VIDEO_FILTER_THRESHOLD")) &&
-               (SSCANF(GETENV(("SST_VIDEO_FILTER_THRESHOLD")), "%i", &n) == 1)) {
+            envp = GETENV(("SST_VIDEO_FILTER_THRESHOLD"));
+            if(envp && (SSCANF(envp, "%i", &n) == 1)) {
                 INIT_PRINTF(("sst1InitVideo(): Setting Video Filtering Treshold to 0x%x...\n", n));
                 ISET(sst->videoFilterRgbThreshold, n);
             } else
@@ -656,17 +664,17 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitVideo(FxU32 *sstbase,
     }
 
     /* Override with environment variables */
-    if(GETENV(("SST_FT_CLK_DEL")) &&
-       (SSCANF(GETENV(("SST_FT_CLK_DEL")), "%i", &vtmp) == 1) )
+    envp = GETENV(("SST_FT_CLK_DEL"));
+    if(envp && (SSCANF(envp, "%i", &vtmp) == 1) )
       ft_clk_del = vtmp;
-    if(GETENV(("SST_TF0_CLK_DEL")) &&
-       (SSCANF(GETENV(("SST_TF0_CLK_DEL")), "%i", &vtmp) == 1) )
+    envp = GETENV(("SST_TF0_CLK_DEL"));
+    if(envp && (SSCANF(envp, "%i", &vtmp) == 1) )
       tf0_clk_del = vtmp;
-    if(GETENV(("SST_TF1_CLK_DEL")) &&
-       (SSCANF(GETENV(("SST_TF1_CLK_DEL")), "%i", &vtmp) == 1) )
+    envp = GETENV(("SST_TF1_CLK_DEL"));
+    if(envp && (SSCANF(envp, "%i", &vtmp) == 1) )
       tf1_clk_del = vtmp;
-    if(GETENV(("SST_TF2_CLK_DEL")) &&
-       (SSCANF(GETENV(("SST_TF2_CLK_DEL")), "%i", &vtmp) == 1) )
+    envp = GETENV(("SST_TF2_CLK_DEL"));
+    if(envp && (SSCANF(envp, "%i", &vtmp) == 1) )
       tf2_clk_del = vtmp;
 
     INIT_PRINTF(("sst1InitVideo(): Setting FBI-to-TREX clock delay to 0x%x...\n", ft_clk_del));
@@ -708,8 +716,8 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitVideo(FxU32 *sstbase,
 
     /* Adjust Video Clock */
 #ifndef DIRECTX
-    if(GETENV(("SST_VIDCLK2X")) &&
-       (SSCANF(GETENV(("SST_VIDCLK2X")), "%f", &vidClkFreq) == 1) ) {
+    envp = GETENV(("SST_VIDCLK2X"));
+    if(envp && (SSCANF(envp, "%f", &vidClkFreq) == 1) ) {
         if(sst1InitSetVidClk(sstbase, vidClkFreq) == FXFALSE)
             return(FXFALSE);
     } else {
@@ -750,8 +758,8 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitVideo(FxU32 *sstbase,
         /* Clear Screen */
         FxU32 clearColor = 0x0;
 
-        if(GETENV(("SST_VIDEO_CLEARCOLOR")) &&
-           (SSCANF(GETENV(("SST_VIDEO_CLEARCOLOR")), "%i", &vtmp) == 1) )
+        envp = GETENV(("SST_VIDEO_CLEARCOLOR"));
+        if(envp && (SSCANF(envp, "%i", &vtmp) == 1) )
           clearColor = vtmp;
         ISET(sst->c1, clearColor);
         ISET(sst->c0, clearColor);
@@ -796,6 +804,8 @@ FX_EXPORT sst1VideoTimingStruct * FX_CSTYLE sst1InitFindVideoTimingStruct(GrScre
     sst1VideoTimingStruct *sstVideoRez = NULL;
     FxU32 sst1MonitorRefresh;
     FxU32 sst1MonitorRez;
+    const char *envp;
+    int envval;
 
     switch(screenResolution) {
         case(GR_RESOLUTION_512x256):
@@ -866,35 +876,39 @@ FX_EXPORT sst1VideoTimingStruct * FX_CSTYLE sst1InitFindVideoTimingStruct(GrScre
     }
 
     /* Override settings with environment variables */
-    if(GETENV(("SST_SCREENREZ"))) {
-        if(ATOI(GETENV(("SST_SCREENREZ"))) == 640) {
+    envp = GETENV(("SST_SCREENREZ"));
+    if(envp) {
+        envval = ATOI(GETENV(("SST_SCREENREZ")));
+        if(envval == 640) {
             sst1MonitorRez = 640;
-        } else if(ATOI(GETENV(("SST_SCREENREZ"))) == 640400) {
+        } else if(envval == 640400) {
             sst1MonitorRez = 640400;
-        } else if(ATOI(GETENV(("SST_SCREENREZ"))) == 800) {
+        } else if(envval == 800) {
             sst1MonitorRez = 800;
-        } else if(ATOI(GETENV(("SST_SCREENREZ"))) == 512256) {
+        } else if(envval == 512256) {
             sst1MonitorRez = 512256;
-        } else if(ATOI(GETENV(("SST_SCREENREZ"))) == 512) {
+        } else if(envval == 512) {
             sst1MonitorRez = 512;
-        } else if(ATOI(GETENV(("SST_SCREENREZ"))) == 856) {
+        } else if(envval == 856) {
             sst1MonitorRez = 856;
-        } else if(ATOI(GETENV(("SST_SCREENREZ"))) == 960) {
+        } else if(envval == 960) {
             sst1MonitorRez = 960;
         } else {
             sst1MonitorRez = 640;
         }
     }
-    if(GETENV(("SST_SCREENREFRESH"))) {
-        if(ATOI(GETENV(("SST_SCREENREFRESH"))) == 60)
+    envp = GETENV(("SST_SCREENREFRESH"));
+    if(envp) {
+        envval = ATOI(GETENV(("SST_SCREENREFRESH")));
+        if(envval == 60)
             sst1MonitorRefresh = 60;
-        else if(ATOI(GETENV(("SST_SCREENREFRESH"))) == 72)
+        else if(envval == 72)
             sst1MonitorRefresh = 72;
-        else if(ATOI(GETENV(("SST_SCREENREFRESH"))) == 75)
+        else if(envval == 75)
             sst1MonitorRefresh = 75;
-        else if(ATOI(GETENV(("SST_SCREENREFRESH"))) == 85)
+        else if(envval == 85)
             sst1MonitorRefresh = 85;
-        else if(ATOI(GETENV(("SST_SCREENREFRESH"))) == 120)
+        else if(envval == 120)
             sst1MonitorRefresh = 120;
         else
             sst1MonitorRefresh = 60;

@@ -615,6 +615,7 @@ INITAT3DENTRY(initAT3DSetVideo, FxBool, (GrScreenResolution_t res, GrScreenRefre
 #if defined(__DOS32__)
   union REGS r, rOut;
 #endif
+  const char *envp;
   FxBool
     fixVsync = FXFALSE,
     rv = FXTRUE;
@@ -734,18 +735,19 @@ INITAT3DENTRY(initAT3DSetVideo, FxBool, (GrScreenResolution_t res, GrScreenRefre
     }
   }
 
-  
-  if (myGetenv("INIT96_AT3D_VSYNC_END")) {
+  envp = myGetenv("INIT96_AT3D_VSYNC_END");
+  if (envp) {
     FxU16 vSyncEnd = 3;
     GDBG_INFO((80, "%s: Setting VSync End\n", FN_NAME));
-    vSyncEnd = atoi(myGetenv("INIT96_AT3D_VSYNC_END"));
+    vSyncEnd = atoi(envp);
     CRTC_SET(CC_VSYNC_END, vSyncEnd);
   }
   
-  if (myGetenv("INIT96_AT3D_VSYNC_START")) {
+  envp = myGetenv("INIT96_AT3D_VSYNC_START");
+  if (envp) {
     FxU16 vSyncStart = 0;
     GDBG_INFO((80, "%s: Setting VSync Start\n", FN_NAME));
-    vSyncStart = atoi(myGetenv("INIT96_AT3D_VSYNC_START"));
+    vSyncStart = atoi(envp);
     CRTC_SET(CC_VSYNC_START, vSyncStart);
   }
   

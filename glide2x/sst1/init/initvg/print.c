@@ -42,6 +42,7 @@ FX_ENTRY void FX_CALL sst1InitPrintf(const char *format, ...)
     static FxBool printIt = FXFALSE;
 
     if(firstPass == FXTRUE) {
+        const char *envf;
         firstPass = FXFALSE;
 	if (sst1InitMsgFile == NULL)
 	{
@@ -50,11 +51,12 @@ FX_ENTRY void FX_CALL sst1InitPrintf(const char *format, ...)
 	}
         if(GETENV(("SST_INITDEBUG")))
             printIt = FXTRUE;
-        if(GETENV(("SST_INITDEBUG_FILE"))) {
-            if((sst1InitMsgFile = fopen(GETENV(("SST_INITDEBUG_FILE")), "w")))
+        envf = GETENV(("SST_INITDEBUG_FILE"));
+        if(envf) {
+            if((sst1InitMsgFile = fopen(envf, "w")) != NULL)
                 printIt = FXTRUE;
             else {
-                fprintf(stderr, "sst1InitPrintf(): Could not open file '%s' for logging...\n", GETENV(("SST_INITDEBUG_FILE")));
+                fprintf(stderr, "sst1InitPrintf(): Could not open file '%s' for logging...\n", envf);
                 printIt = FXFALSE;
             }
         }

@@ -753,9 +753,11 @@ void initSliPciOwner( FxU32 *regbase, FxU32 owner ) {
 FxU32 initNumBoardsInSystem(void)
 {
     FxU32 numBoards, j, n;
+    const char *envp;
 
-    if(getenv(("SST_BOARDS"))) {
-        numBoards = atoi(getenv(("SST_BOARDS")));
+    envp = getenv(("SST_BOARDS"));
+    if(envp != NULL) {
+        numBoards = atoi(envp);
     } else {
         numBoards = 0;
 #if defined(SST1)

@@ -64,24 +64,29 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitGamma(FxU32 *sstbase, double gamma)
         gammaB = gamma;
 
     if(calledBefore == FXFALSE) {
+        const char *envp;
         calledBefore = FXTRUE;
-        if(GETENV(("SST_RGAMMA"))) {
+        envp = GETENV(("SST_RGAMMA"));
+        if(envp) {
             overRideR = FXTRUE;
-            gammaR = (double) ATOF(GETENV(("SST_RGAMMA")));
+            gammaR = (double) ATOF(envp);
         }
-        if(GETENV(("SST_GGAMMA"))) {
+        envp = GETENV(("SST_GGAMMA"));
+        if(envp) {
             overRideG = FXTRUE;
-            gammaG = (double) ATOF(GETENV(("SST_GGAMMA")));
+            gammaG = (double) ATOF(envp);
         }
-        if(GETENV(("SST_BGAMMA"))) {
+        envp = GETENV(("SST_BGAMMA"));
+        if(envp) {
             overRideB = FXTRUE;
-            gammaB = (double) ATOF(GETENV(("SST_BGAMMA")));
+            gammaB = (double) ATOF(envp);
         }
-        if(GETENV(("SST_GAMMA"))) {
+        envp = GETENV(("SST_GAMMA"));
+        if(envp) {
             overRideR = FXTRUE;
             overRideG = FXTRUE;
             overRideB = FXTRUE;
-            gammaR = (double) ATOF(GETENV(("SST_GAMMA")));
+            gammaR = (double) ATOF(envp);
             gammaG = gammaR;
             gammaB = gammaR;
         }

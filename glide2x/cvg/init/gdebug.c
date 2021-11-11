@@ -157,7 +157,7 @@ FX_EXPORT void FX_CSTYLE
 gdbg_init(void)
 {
     static int done=0;			// only execute once
-    char *env;
+    const char *env;
 
     if (done) return;
 

@@ -474,13 +474,15 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitCalcGrxClk(FxU32 *sstbase)
 {
     FxU32 clkFreq;
     SstRegs *sst = (SstRegs *) sstbase;
+    const char *e;
 
     if(sst1InitCheckBoard(sstbase) == FXFALSE)
         return(FXFALSE);
 
-    if(GETENV(("SSTV2_GRXCLK"))) {
+    e = GETENV(("SSTV2_GRXCLK"));
+    if(e) {
         INIT_PRINTF(("sst1InitCalcGrxClk(): Overriding default clk frequency with SST_GRXCLK\n"));
-        clkFreq = ATOI(GETENV(("SSTV2_GRXCLK")));
+        clkFreq = ATOI(e);
         if(clkFreq < 16)
             clkFreq = 16;
     } else {

@@ -77,7 +77,7 @@ static char *setRange(char *buf, int val)
     return buf + pos;				// and return rest of string
 }
 
-static void parse(char *env)
+static void parse(const char *env)
 {
     int level, pos;
 
@@ -103,7 +103,7 @@ FX_EXPORT void FX_CSTYLE
 gdbg_init(void)
 {
     static int done=0;			// only execute once
-    char *env;
+    const char *env;
 
     if (done) return;
 

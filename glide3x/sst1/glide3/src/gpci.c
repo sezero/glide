@@ -398,6 +398,7 @@ void
 _GlideInitEnvironment( void )
 {
   int i;
+  const char *envp;
 
   if ( _GlideRoot.initialized ) /* only execute once */
     return;
@@ -429,7 +430,10 @@ _GlideInitEnvironment( void )
 
 #if GL_X86
   _GlideRoot.CPUType = _cpu_detect_asm();
-  if (getenv("FX_CPU")) _GlideRoot.CPUType = atoi(getenv("FX_CPU"));
+  envp = getenv("FX_CPU");
+  if (envp) {
+    _GlideRoot.CPUType = atoi(envp);
+  }
 #endif
 
   _GlideRoot.environment.swapInterval = -1;
@@ -458,14 +462,22 @@ _GlideInitEnvironment( void )
   _GlideRoot.environment.swapPendingCount = 6;
 #endif
 
-  if (getenv("FX_SNAPSHOT"))  _GlideRoot.environment.snapshot = atoi(getenv("FX_SNAPSHOT"));
-  if (getenv("FX_GLIDE_LWM")) _GlideRoot.environment.swFifoLWM = atoi(getenv("FX_GLIDE_LWM"));
-
-  if (getenv("FX_GLIDE_SWAPINTERVAL")) {
-    _GlideRoot.environment.swapInterval = atoi(getenv("FX_GLIDE_SWAPINTERVAL"));
-    if (_GlideRoot.environment.swapInterval < 0) _GlideRoot.environment.swapInterval = 0;
+  envp = getenv("FX_SNAPSHOT");
+  if (envp) {
+    _GlideRoot.environment.snapshot  = atoi(envp);
   }
-  
+  envp = getenv("FX_GLIDE_LWM");
+  if (envp) {
+    _GlideRoot.environment.swFifoLWM = atoi(envp);
+  }
+
+  envp = getenv("FX_GLIDE_SWAPINTERVAL");
+  if (envp) {
+    _GlideRoot.environment.swapInterval = atoi(envp);
+    if (_GlideRoot.environment.swapInterval < 0)
+        _GlideRoot.environment.swapInterval = 0;
+  }
+
   GDBG_INFO((80,"    triBoundsCheck: %d\n",_GlideRoot.environment.triBoundsCheck));
   GDBG_INFO((80,"      swapInterval: %d\n",_GlideRoot.environment.swapInterval));
   GDBG_INFO((80,"          noSplash: %d\n",_GlideRoot.environment.noSplash));
@@ -511,8 +523,6 @@ _GlideInitEnvironment( void )
   _GlideRoot.initialized = FXTRUE; /* save this for the end */
 
 } /* _GlideInitEnvironment */
-
-
 
 
 #if defined(GLIDE_DEBUG) && !(GLIDE_PLATFORM & GLIDE_SST_SIM)

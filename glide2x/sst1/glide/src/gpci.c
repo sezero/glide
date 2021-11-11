@@ -353,6 +353,7 @@ void
 _GlideInitEnvironment( void )
 {
   int i;
+  const char *envp;
 
   if ( _GlideRoot.initialized ) /* only execute once */
     return;
@@ -383,43 +384,44 @@ _GlideInitEnvironment( void )
 #endif
 
   _GlideRoot.CPUType = _cpu_detect_asm();
+  envp = getenv("FX_CPU");
+  if (envp) {
+    _GlideRoot.CPUType = atoi(envp);
+  }
 
-  if (getenv("FX_CPU")) _GlideRoot.CPUType = atoi(getenv("FX_CPU"));
-  _GlideRoot.environment.triBoundsCheck = 
-    getenv("FX_GLIDE_BOUNDS_CHECK") != NULL;
+  _GlideRoot.environment.triBoundsCheck = (getenv("FX_GLIDE_BOUNDS_CHECK") != NULL);
   _GlideRoot.environment.swapInterval = -1;
   _GlideRoot.environment.swFifoLWM = -1;
 #ifdef GLIDE_SPLASH
-  _GlideRoot.environment.noSplash = 
-    getenv("FX_GLIDE_NO_SPLASH") != NULL;
+  _GlideRoot.environment.noSplash = (getenv("FX_GLIDE_NO_SPLASH") != NULL);
 #else
   _GlideRoot.environment.noSplash = 1;
 #endif
 #ifdef GLIDE_PLUG
-  _GlideRoot.environment.shamelessPlug = 
-    getenv("FX_GLIDE_SHAMELESS_PLUG") != NULL;
+  _GlideRoot.environment.shamelessPlug = (getenv("FX_GLIDE_SHAMELESS_PLUG") != NULL);
 #else
   _GlideRoot.environment.shamelessPlug = 0;
 #endif
-  if (getenv("FX_GLIDE_LWM"))
-    _GlideRoot.environment.swFifoLWM = atoi(getenv("FX_GLIDE_LWM"));
-  if (getenv("FX_GLIDE_SWAPINTERVAL")) {
-    _GlideRoot.environment.swapInterval = 
-      atoi(getenv("FX_GLIDE_SWAPINTERVAL"));
+  envp = getenv("FX_GLIDE_LWM");
+  if (envp) {
+    _GlideRoot.environment.swFifoLWM = atoi(envp);
+  }
+
+  envp = getenv("FX_GLIDE_SWAPINTERVAL");
+  if (envp) {
+    _GlideRoot.environment.swapInterval = atoi(envp);
     if (_GlideRoot.environment.swapInterval < 0)
-      _GlideRoot.environment.swapInterval = 0;
+        _GlideRoot.environment.swapInterval = 0;
   }
 
-  if (getenv("FX_GLIDE_IGNORE_REOPEN"))
-    _GlideRoot.environment.ignoreReopen = FXTRUE;
+  _GlideRoot.environment.ignoreReopen = (getenv("FX_GLIDE_IGNORE_REOPEN") != NULL);
+  _GlideRoot.environment.disableDitherSub = (getenv("FX_GLIDE_NO_DITHER_SUB") != NULL);
 
-  if (getenv("FX_GLIDE_NO_DITHER_SUB")) {
-    _GlideRoot.environment.disableDitherSub = FXTRUE;
+  envp = getenv("FX_SNAPSHOT");
+  if (envp) {
+    _GlideRoot.environment.snapshot = atoi(envp);
   }
 
-  if (getenv("FX_SNAPSHOT"))
-    _GlideRoot.environment.snapshot = atoi(getenv("FX_SNAPSHOT"));
-  
   GDBG_INFO((80,"    triBoundsCheck: %d\n",_GlideRoot.environment.triBoundsCheck));
   GDBG_INFO((80,"      swapInterval: %d\n",_GlideRoot.environment.swapInterval));
   GDBG_INFO((80,"          noSplash: %d\n",_GlideRoot.environment.noSplash));
@@ -459,8 +461,6 @@ _GlideInitEnvironment( void )
   _GlideRoot.initialized = FXTRUE; /* save this for the end */
 
 } /* _GlideInitEnvironment */
-
-
 
 
 #if defined(GLIDE_DEBUG)

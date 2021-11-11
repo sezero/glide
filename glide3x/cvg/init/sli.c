@@ -64,6 +64,7 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitSli(FxU32 *sstbase0, FxU32 *sstbase1)
     FxU32 videoWindowActive = 0x1;
     FxU32 videoWindowActiveDrag = 0xf;
     sst1DeviceInfoStruct *sst1M, *sst1S;
+    const char *envp;
     int i;
 
     if(sst1InitCheckBoard(sstbase1) == FXFALSE)
@@ -107,8 +108,9 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitSli(FxU32 *sstbase0, FxU32 *sstbase1)
     initIdleEnabled = 1;
 
     // User override of swap algorithm...
-    if(GETENV(("SSTV2_SLISWAP"))) {
-       FxU32 swapAlg = ATOI(GETENV(("SSTV2_SLISWAP")));
+    envp = GETENV(("SSTV2_SLISWAP"));
+    if(envp) {
+       FxU32 swapAlg = ATOI(envp);
 
        if(swapAlg == 1) {
           INIT_PRINTF(("sst1InitSli(): Using dac_data[0] for swapping(%d, %d)...\n", videoWindowActive, videoWindowActiveDrag));
@@ -238,14 +240,14 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitSli(FxU32 *sstbase0, FxU32 *sstbase1)
         slaveVOutClkDel = 0;
         slavePVOutClkDel = 0;
 
-        if(GETENV(("SSTV2_SLIS_VOUT_CLKDEL")) &&
-           (SSCANF(GETENV(("SSTV2_SLIS_VOUT_CLKDEL")), "%i", &i) == 1))
+        envp = GETENV(("SSTV2_SLIS_VOUT_CLKDEL"));
+        if(envp && (SSCANF(envp, "%i", &i) == 1))
             slaveVOutClkDel = i;
-        if(GETENV(("SSTV2_SLIS_PVOUT_CLKDEL")) &&
-           (SSCANF(GETENV(("SSTV2_SLIS_PVOUT_CLKDEL")), "%i", &i) == 1))
+        envp = GETENV(("SSTV2_SLIS_PVOUT_CLKDEL"));
+        if(envp && (SSCANF(envp, "%i", &i) == 1))
             slavePVOutClkDel = i;
-        if(GETENV(("SSTV2_SLIS_VIN_CLKDEL")) &&
-           (SSCANF(GETENV(("SSTV2_SLIS_VIN_CLKDEL")), "%i", &i) == 1))
+        envp = GETENV(("SSTV2_SLIS_VIN_CLKDEL"));
+        if(envp && (SSCANF(envp, "%i", &i) == 1))
             slaveVInClkDel = i;
         INIT_PRINTF(("sst1InitSli(): slaveVinClkdel=0x%x, slaveVOutClkDel=0x%x, slavePVOutClkDel=0x%x\n",
             slaveVInClkDel, slaveVOutClkDel, slavePVOutClkDel));
@@ -390,14 +392,14 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitSli(FxU32 *sstbase0, FxU32 *sstbase1)
     masterVInClkDel = 3;
     masterVOutClkDel = 2;
     masterPVOutClkDel = 0;
-    if(GETENV(("SSTV2_SLIM_VOUT_CLKDEL")) &&
-       (SSCANF(GETENV(("SSTV2_SLIM_VOUT_CLKDEL")), "%i", &i) == 1))
+    envp = GETENV(("SSTV2_SLIM_VOUT_CLKDEL"));
+    if(envp && (SSCANF(envp, "%i", &i) == 1))
         masterVOutClkDel = i;
-    if(GETENV(("SSTV2_SLIM_PVOUT_CLKDEL")) &&
-       (SSCANF(GETENV(("SSTV2_SLIM_PVOUT_CLKDEL")), "%i", &i) == 1))
+    envp = GETENV(("SSTV2_SLIM_PVOUT_CLKDEL"));
+    if(envp && (SSCANF(envp, "%i", &i) == 1))
         masterPVOutClkDel = i;
-    if(GETENV(("SSTV2_SLIM_VIN_CLKDEL")) &&
-       (SSCANF(GETENV(("SSTV2_SLIM_VIN_CLKDEL")), "%i", &i) == 1))
+    envp = GETENV(("SSTV2_SLIM_VIN_CLKDEL"));
+    if(envp && (SSCANF(envp, "%i", &i) == 1))
         masterVInClkDel = i;
     INIT_PRINTF(("sst1InitSli(): masterVinClkdel=0x%x, masterVOutClkDel=0x%x, masterPVOutClkDel=0x%x\n",
         masterVInClkDel, masterVOutClkDel, masterPVOutClkDel));
@@ -708,9 +710,11 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitShutdownSli(FxU32 *sstbase)
 FX_ENTRY FxU32 FX_CALL sst1InitSliDetect(FxU32 *sstbase)
 {
     FxU32 sliDetected;
+    const char * envp;
     
-    if(GETENV(("SSTV2_SLIDETECT")))
-      sliDetected = ATOI(GETENV(("SSTV2_SLIDETECT")));
+    envp = GETENV(("SSTV2_SLIDETECT"));
+    if(envp)
+      sliDetected = ATOI(envp);
     else
       sliDetected = sst1InitSliPaired(sstbase);
 

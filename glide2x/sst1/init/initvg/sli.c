@@ -52,6 +52,7 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitSli(FxU32 *sstbase0, FxU32 *sstbase1)
     FxU32 masterPVOutClkDel, slavePVOutClkDel;
     FxU32 pciFifoLwm, memFifoLwm;
     FxU32 clkFreqMaster;
+    const char *envp;
     int i;
 
     /* Check to make sure master and slave are installed properly */
@@ -141,14 +142,14 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitSli(FxU32 *sstbase0, FxU32 *sstbase1)
         slaveVInClkDel = 2;
         slaveVOutClkDel = 0;
         slavePVOutClkDel = 3;
-        if(GETENV(("SST_SLIS_VOUT_CLKDEL")) &&
-           (SSCANF(GETENV(("SST_SLIS_VOUT_CLKDEL")), "%i", &i) == 1))
+        envp = GETENV(("SST_SLIS_VOUT_CLKDEL"));
+        if(envp && (SSCANF(envp, "%i", &i) == 1))
           slaveVOutClkDel = i;
-        if(GETENV(("SST_SLIS_PVOUT_CLKDEL")) &&
-           (SSCANF(GETENV(("SST_SLIS_PVOUT_CLKDEL")), "%i", &i) == 1))
+        envp = GETENV(("SST_SLIS_PVOUT_CLKDEL"));
+        if(envp && (SSCANF(envp, "%i", &i) == 1))
           slavePVOutClkDel = i;
-        if(GETENV(("SST_SLIS_VIN_CLKDEL")) &&
-           (SSCANF(GETENV(("SST_SLIS_VIN_CLKDEL")), "%i", &i) == 1))
+        envp = GETENV(("SST_SLIS_VIN_CLKDEL"));
+        if(envp && (SSCANF(envp, "%i", &i) == 1))
           slaveVInClkDel = i;
         INIT_PRINTF(("sst1InitSli(): slaveVinClkdel=0x%x, slaveVOutClkDel=0x%x, slavePVOutClkDel=0x%x\n",
             slaveVInClkDel, slaveVOutClkDel, slavePVOutClkDel));
@@ -265,14 +266,14 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitSli(FxU32 *sstbase0, FxU32 *sstbase1)
     masterVInClkDel = 2;
     masterVOutClkDel = 0;
     masterPVOutClkDel = 3;
-    if(GETENV(("SST_SLIM_VOUT_CLKDEL")) &&
-       (SSCANF(GETENV(("SST_SLIM_VOUT_CLKDEL")), "%i", &i) == 1))
+    envp = GETENV(("SST_SLIM_VOUT_CLKDEL"));
+    if(envp && (SSCANF(envp, "%i", &i) == 1))
       masterVOutClkDel = i;
-    if(GETENV(("SST_SLIM_PVOUT_CLKDEL")) &&
-       (SSCANF(GETENV(("SST_SLIM_PVOUT_CLKDEL")), "%i", &i) == 1))
+    envp = GETENV(("SST_SLIM_PVOUT_CLKDEL"));
+    if(envp && (SSCANF(envp, "%i", &i) == 1))
       masterPVOutClkDel = i;
-    if(GETENV(("SST_SLIM_VIN_CLKDEL")) &&
-       (SSCANF(GETENV(("SST_SLIM_VIN_CLKDEL")), "%i", &i) == 1))
+    envp = GETENV(("SST_SLIM_VIN_CLKDEL"));
+    if(envp && (SSCANF(envp, "%i", &i) == 1))
       masterVInClkDel = i;
     INIT_PRINTF(("sst1InitSli(): masterVinClkdel=0x%x, masterVOutClkDel=0x%x, masterPVOutClkDel=0x%x\n",
         masterVInClkDel, masterVOutClkDel, masterPVOutClkDel));
@@ -374,8 +375,8 @@ FX_EXPORT FxBool FX_CSTYLE sst1InitSli(FxU32 *sstbase0, FxU32 *sstbase1)
         /* Clear Screen */
         FxU32 clearColor = 0x0;
 
-        if(GETENV(("SST_VIDEO_CLEARCOLOR")) &&
-           (SSCANF(GETENV(("SST_VIDEO_CLEARCOLOR")), "%i", &i) == 1))
+        envp = GETENV(("SST_VIDEO_CLEARCOLOR"));
+        if(envp && (SSCANF(envp, "%i", &i) == 1))
           clearColor = i;
         ISET(sstMaster->c1, clearColor);
         ISET(sstMaster->c0, clearColor);
@@ -531,9 +532,11 @@ FX_ENTRY FxU32 FX_CALL sst1InitSliDetect(FxU32 *sstbase)
     volatile Sstregs *sst;
 
     if(firstTime) {
+        const char *envp;
         firstTime = 0;
-        if(GETENV(("SST_SLIDETECT")))
-            sliDetected = ATOI(GETENV(("SST_SLIDETECT")));
+        envp = GETENV(("SST_SLIDETECT"));
+        if(envp)
+            sliDetected = ATOI(envp);
         else {
             PCICFG_RD(PCI_REVISION_ID, fbiRev);
             sst = (Sstregs *) sstbase;

@@ -49,15 +49,17 @@ FX_ENTRY void FX_CALL sst1InitPrintf(const char *format, ...)
     static FxBool printIt = FXFALSE;
 
     if(firstPass == FXTRUE) {
+        const char *envf;
         sst1InitMsgFile = stdout;
         firstPass = FXFALSE;
         if(GETENV(("SSTV2_INITDEBUG")) || GDBG_GET_DEBUGLEVEL(5))
             printIt = FXTRUE;
-        if(GETENV(("SSTV2_INITDEBUG_FILE"))) {
-          printIt = ((sst1InitMsgFile = fopen(GETENV(("SSTV2_INITDEBUG_FILE")), "w")) != NULL);
+        envf = GETENV(("SSTV2_INITDEBUG_FILE"));
+        if(envf) {
+          printIt = ((sst1InitMsgFile = fopen(envf, "w")) != NULL);
           if (!printIt) {
             fprintf(stderr, "sst1InitPrintf(): Could not open file '%s' for logging...\n", 
-                    GETENV(("SSTV2_INITDEBUG_FILE")));
+                    envf);
           }
         }
     }

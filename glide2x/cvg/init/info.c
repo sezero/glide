@@ -176,6 +176,7 @@ getTmuConfigData(FxU32 *sstbase, sst1DeviceInfoStruct *info)
     FxU32 r_sum, g_sum, b_sum;
     SstRegs *sst = (SstRegs *) sstbase;
     FxU32 tmuRevision;
+    const char *envp;
 
     /* set trex's (all 3) to output configuration bits */
     ISET(SST_TREX(sst,0)->trexInit1, info->tmuInit1[0] | (1 << 18));
@@ -233,10 +234,11 @@ getTmuConfigData(FxU32 *sstbase, sst1DeviceInfoStruct *info)
     ISET(SST_TREX(sst,1)->trexInit1, info->tmuInit1[1]);
     ISET(SST_TREX(sst,2)->trexInit1, info->tmuInit1[2]);
 
-    if(GETENV(("SSTV2_TMUCFG")))
+    envp = GETENV(("SSTV2_TMUCFG"));
+    if(envp)
     {
 	FxU32 u;
-	if (SSCANF(GETENV(("SSTV2_TMUCFG")), "%u", &u) == 1)
+	if (SSCANF(envp, "%u", &u) == 1)
 	    info->tmuConfig = u;
     }
 
@@ -287,11 +289,13 @@ sst1InitGetTmuMemory(FxU32 *sstbase, sst1DeviceInfoStruct *info, FxU32 tmu,
 {
     FxU32 i,data;
     SstRegs *sst = (SstRegs *) sstbase;
+    const char *envp;
 
     INIT_INFO((1,"sst1InitGetTmuMemory(0x%x, , %d)\n", sstbase,tmu));
 
-    if(GETENV(("SSTV2_TMU_MEMSIZE"))) {
-	*TmuMemorySize = ATOI(GETENV(("SSTV2_TMU_MEMSIZE")));
+    envp = GETENV(("SSTV2_TMU_MEMSIZE"));
+    if(envp) {
+	*TmuMemorySize = ATOI(envp);
 	/* If user specifies 2 MBytes on a 4 MBytes board, disable the
 	 * second RAS so that apps which may incorrectly store data in the
 	 * upper 2 Mbytes will not function properly... */
@@ -344,6 +348,7 @@ sst1InitGetTmuMemory(FxU32 *sstbase, sst1DeviceInfoStruct *info, FxU32 tmu,
 FX_EXPORT FxBool FX_CSTYLE
 sst1InitGetTmuInfo(FxU32 *sstbase, sst1DeviceInfoStruct *info)
 {
+    const char *envp;
     FxU32 trev;
 
     if(initSumTables(sstbase) == FXFALSE)
@@ -388,8 +393,9 @@ sst1InitGetTmuInfo(FxU32 *sstbase, sst1DeviceInfoStruct *info)
 	if(sst1InitGetTmuMemory(sstbase, info, 2, &info->tmuMemSize[2]) == FXFALSE)
 	    return(FXFALSE);
     }
-    if (GETENV(("SSTV2_NUM_TMUS")))
-	info->numberTmus = ATOI(GETENV(("SSTV2_NUM_TMUS")));
+    envp = GETENV(("SSTV2_NUM_TMUS"));
+    if (envp)
+	info->numberTmus = ATOI(envp);
 
     INIT_INFO((1,"numberTMus = %d\n", info->numberTmus));
     return(FXTRUE);
@@ -415,9 +421,10 @@ static int fbiMemSize(FxU32 *sstbase)
 	FxU32 init1Save = IGET(sst->fbiInit1);
 	FxU32 init2Save = IGET(sst->fbiInit2);
 	int retval = 0;
+	const char *envp = GETENV(("SSTV2_FBI_MEMSIZE"));
 
-	if(GETENV(("SSTV2_FBI_MEMSIZE")))
-		return(ATOI(GETENV(("SSTV2_FBI_MEMSIZE"))));
+	if(envp)
+		return ATOI(envp);
 
 	/* Enable dram refresh, disable memory fifo, and setup memory */
 	/* for rendering */
@@ -510,12 +517,13 @@ sst1InitGetFbiInfo(FxU32 *sstbase, sst1DeviceInfoStruct *info)
 {
 	FxU32 u;
 	SstRegs *sst = (SstRegs *) sstbase;
+	const char *envp;
 
 	info->fbiMemSize = fbiMemSize(sstbase);
 
 	/* Detect board identification and memory speed */
-	if(GETENV(("SSTV2_FBICFG")) &&
-	   (SSCANF(GETENV(("SSTV2_FBICFG")), "%u", &u) == 1))
+	envp = GETENV(("SSTV2_FBICFG"));
+	if(envp && (SSCANF(envp, "%u", &u) == 1))
 		info->fbiConfig = u;
 	else
 	  info->fbiConfig = (IGET(sst->fbiInit3) & SST_FBI_MEM_TYPE) >>
@@ -567,16 +575,17 @@ FxBool sst1InitFillDeviceInfo(FxU32 *sstbase, sst1DeviceInfoStruct *info)
 
     if(GETENV(("SSTV2_NODEVICEINFO"))) {
         /* fill device info struct with sane values... */
+	const char *envp;
 	INIT_PRINTF(("sst1DeviceInfo: Filling info Struct with default values...\n"));
 
-	if(GETENV(("SSTV2_FBICFG")) &&
-	   (SSCANF(GETENV(("SSTV2_FBICFG")), "%u", &u) == 1))
+	envp = GETENV(("SSTV2_FBICFG"));
+	if(envp && (SSCANF(envp, "%u", &u) == 1))
 	  info->fbiConfig = u;
 	else
 	  info->fbiConfig = 0x0;
 
-	if(GETENV(("SSTV2_TMUCFG")) &&
-	   (SSCANF(GETENV(("SSTV2_TMUCFG")), "%u", &u) == 1))
+	envp = GETENV(("SSTV2_TMUCFG"));
+	if(envp && (SSCANF(envp, "%u", &u) == 1))
 	  info->tmuConfig = u;
 	else
 	  info->tmuConfig = 0x0;
@@ -589,13 +598,15 @@ FxBool sst1InitFillDeviceInfo(FxU32 *sstbase, sst1DeviceInfoStruct *info)
 
 	info->tmuRevision = info->tmuConfig & 0x7;
 
-	if(GETENV(("SSTV2_FBI_MEMSIZE")))
-	  info->fbiMemSize = ATOI(GETENV(("SSTV2_FBI_MEMSIZE")));
+	envp = GETENV(("SSTV2_FBI_MEMSIZE"));
+	if(envp)
+	  info->fbiMemSize = ATOI(envp);
 	else
 	  info->fbiMemSize = 2;
 
-	if(GETENV(("SSTV2_TMU_MEMSIZE")))
-	  info->tmuMemSize[0] = ATOI(GETENV(("SSTV2_TMU_MEMSIZE")));
+	envp = GETENV(("SSTV2_TMU_MEMSIZE"));
+	if(envp)
+	  info->tmuMemSize[0] = ATOI(envp);
 	else
 	  info->tmuMemSize[0] = 2;
 	info->tmuMemSize[1] = info->tmuMemSize[0];

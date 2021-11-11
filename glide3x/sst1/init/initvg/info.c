@@ -169,6 +169,7 @@ getTmuConfigData(FxU32 *sstbase, sst1DeviceInfoStruct *info)
     int i, x=0, y=0;
     FxU32 r_sum, g_sum, b_sum;
     volatile Sstregs *sst = (Sstregs *) sstbase;
+    const char *envp;
 
     /* set trex's (all 3) to output configuration bits */
     ISET(SST_TREX(sst,0)->trexInit1, info->tmuInit1[0] | (1 << 18));
@@ -187,8 +188,8 @@ getTmuConfigData(FxU32 *sstbase, sst1DeviceInfoStruct *info)
     if(unDither(r_sum,g_sum,b_sum,&info->tmuConfig) == FXFALSE)
 	return(FXFALSE);
 
-    if(GETENV(("SST_TMUCFG")) &&
-		(SSCANF(GETENV(("SST_TMUCFG")), "%i", &i) == 1))
+    envp = GETENV(("SST_TMUCFG"));
+    if(envp && (SSCANF(envp, "%i", &i) == 1))
 	info->tmuConfig = i;
 
     /* reset trex's init registers */
@@ -241,11 +242,13 @@ sst1InitGetTmuMemory(FxU32 *sstbase, sst1DeviceInfoStruct *info, FxU32 tmu,
 {
     FxU32 i,data;
     volatile Sstregs *sst = (Sstregs *) sstbase;
+    const char *envp;
 
     INIT_INFO((1,"sst1InitGetTmuMemory(0x%x, , %d)\n", sstbase,tmu));
 
-    if(GETENV(("SST_TMUMEM_SIZE"))) {
-	*TmuMemorySize = ATOI(GETENV(("SST_TMUMEM_SIZE")));
+    envp = GETENV(("SST_TMUMEM_SIZE"));
+    if(envp) {
+	*TmuMemorySize = ATOI(envp);
 	return(FXTRUE);
     }
 
@@ -352,9 +355,10 @@ static int fbiMemSize(FxU32 *sstbase)
 	FxU32 init1Save = IGET(sst->fbiInit1);
 	FxU32 init2Save = IGET(sst->fbiInit2);
 	int retval = 0;
+	const char *envp = GETENV(("SST_FBIMEM_SIZE"));
 
-	if(GETENV(("SST_FBIMEM_SIZE")))
-		return(ATOI(GETENV(("SST_FBIMEM_SIZE"))));
+	if(envp)
+		return ATOI(envp);
 
 	/* Enable dram refresh, disable memory fifo, and setup memory */
 	/* for rendering */
@@ -450,12 +454,13 @@ FX_EXPORT FxBool FX_CSTYLE
 sst1InitGetFbiInfo(FxU32 *sstbase, sst1DeviceInfoStruct *info)
 {
 	volatile Sstregs *sst = (Sstregs *) sstbase;
+	const char *envp;
 
 	info->fbiMemSize = fbiMemSize(sstbase);
 
 	/* Detect board identification and memory speed */
-	if(!GETENV(("SST_FBICFG")) ||
-	   (SSCANF(GETENV(("SST_FBICFG")), "%i", &info->fbiConfig) != 1))
+	envp = GETENV(("SST_FBICFG"));
+	if(!envp || (SSCANF(envp, "%i", &info->fbiConfig) != 1))
 	  info->fbiConfig = (IGET(sst->fbiInit3) & SST_FBI_MEM_TYPE) >>
 			SST_FBI_MEM_TYPE_SHIFT;
 
@@ -502,14 +507,15 @@ FxBool sst1InitFillDeviceInfo(FxU32 *sstbase, sst1DeviceInfoStruct *info)
 
     if(GETENV(("SST_NODEVICEINFO"))) {
         /* fill device info struct with sane values... */
+	const char *envp;
 	INIT_PRINTF(("sst1DeviceInfo: Filling info Struct with default values...\n"));
 
-	if(!GETENV(("SST_FBICFG")) ||
-	   (SSCANF(GETENV(("SST_FBICFG")), "%i", &info->fbiConfig) != 1))
+	envp = GETENV(("SST_FBICFG"));
+	if(!envp || (SSCANF(envp, "%i", &info->fbiConfig) != 1))
 	  info->fbiConfig = 0x0;
 
-	if(!GETENV(("SST_TMUCFG")) ||
-	   (SSCANF(GETENV(("SST_TMUCFG")), "%i", &info->tmuConfig) != 1))
+	envp = GETENV(("SST_TMUCFG"));
+	if(!envp || (SSCANF(envp, "%i", &info->tmuConfig) != 1))
 	  info->tmuConfig = 0x0;
 
 	info->numberTmus = 1;
@@ -520,13 +526,15 @@ FxBool sst1InitFillDeviceInfo(FxU32 *sstbase, sst1DeviceInfoStruct *info)
 
 	info->tmuRevision = info->tmuConfig & 0x7;
 
-	if(GETENV(("SST_FBIMEM_SIZE")))
-	  info->fbiMemSize = ATOI(GETENV(("SST_FBIMEM_SIZE")));
+	envp = GETENV(("SST_FBIMEM_SIZE"));
+	if(envp)
+	  info->fbiMemSize = ATOI(envp);
 	else
 	  info->fbiMemSize = 2;
 
-	if(GETENV(("SST_TMUMEM_SIZE")))
-	  info->tmuMemSize[0] = ATOI(GETENV(("SST_TMUMEM_SIZE")));
+	envp = GETENV(("SST_TMUMEM_SIZE"));
+	if(envp)
+	  info->tmuMemSize[0] = ATOI(envp);
 	else
 	  info->tmuMemSize[0] = 2;
 	info->tmuMemSize[1] = info->tmuMemSize[0];
