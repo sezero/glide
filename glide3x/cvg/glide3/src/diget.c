@@ -465,10 +465,7 @@ GR_DIENTRY(grGet, FxU32, (FxU32 pname, FxU32 plength, FxI32 *params))
     break;
   case GR_LFB_PIXEL_PIPE:
     if (plength == 4) {
-      if (_GlideRoot.hwConfig.SSTs[_GlideRoot.current_sst].type == GR_SSTTYPE_Voodoo2)
-        *params = FXTRUE;
-      else
-        *params = FXFALSE;
+      *params = FXTRUE;
       retVal = plength;
     }
     break;
@@ -486,50 +483,19 @@ GR_DIENTRY(grGet, FxU32, (FxU32 pname, FxU32 plength, FxI32 *params))
     break;
   case GR_MEMORY_FB:
     if ((hwc) && (plength == 4)) {
-      switch(hwc->SSTs[_GlideRoot.current_sst].type) {
-      case GR_SSTTYPE_VOODOO:
-      case GR_SSTTYPE_Voodoo2:
-        *params = hwc->SSTs[_GlideRoot.current_sst].sstBoard.VoodooConfig.fbRam << 20;
-        break;
-      case GR_SSTTYPE_SST96:
-        *params = hwc->SSTs[_GlideRoot.current_sst].sstBoard.SST96Config.fbRam << 20;
-        break;
-      default:
-        *params = 0;    /* XXX UMA architecture */
-        break;
-      }
+      *params = hwc->SSTs[_GlideRoot.current_sst].sstBoard.VoodooConfig.fbRam << 20;
       retVal = plength;
     }
     break;
   case GR_MEMORY_TMU:
     if ((hwc) && (plength == 4)) {
-      switch(hwc->SSTs[_GlideRoot.current_sst].type) {
-      case GR_SSTTYPE_VOODOO:
-      case GR_SSTTYPE_Voodoo2:
-        *params = hwc->SSTs[_GlideRoot.current_sst].sstBoard.VoodooConfig.tmuConfig[0].tmuRam << 20;
-        break;
-      case GR_SSTTYPE_SST96:
-        *params = hwc->SSTs[_GlideRoot.current_sst].sstBoard.SST96Config.tmuConfig.tmuRam << 20;
-        break;
-      default:
-        *params = 0;    /* XXX UMA architecture */
-        break;
-      }
+      *params = hwc->SSTs[_GlideRoot.current_sst].sstBoard.VoodooConfig.tmuConfig[0].tmuRam << 20;
       retVal = plength;
     }
     break;
   case GR_MEMORY_UMA:
     if ((hwc) && (plength == 4)) {
-      switch(hwc->SSTs[_GlideRoot.current_sst].type) {
-      case GR_SSTTYPE_VOODOO:
-      case GR_SSTTYPE_Voodoo2:
-      case GR_SSTTYPE_SST96:
-        *params = 0;    /* XXX non-UMA architecture */
-        break;
-      default:
-        retVal = FXFALSE; /* XXX TBD */
-        break;
-      }
+      *params = 0;    /* XXX non-UMA architecture */
       retVal = plength;
     }
     break;
@@ -573,35 +539,13 @@ GR_DIENTRY(grGet, FxU32, (FxU32 pname, FxU32 plength, FxI32 *params))
     break;
   case GR_REVISION_FB:
     if ((hwc) && (plength == 4)) {
-      switch(hwc->SSTs[_GlideRoot.current_sst].type) {
-      case GR_SSTTYPE_VOODOO:
-      case GR_SSTTYPE_Voodoo2:
-        *params = hwc->SSTs[_GlideRoot.current_sst].sstBoard.VoodooConfig.fbiRev;
-        break;
-      case GR_SSTTYPE_SST96:
-        retVal = FXFALSE;
-        break;
-      default:
-        retVal = FXFALSE;
-        break;
-      }
+      *params = hwc->SSTs[_GlideRoot.current_sst].sstBoard.VoodooConfig.fbiRev;
       retVal = plength;
     }
     break;
   case GR_REVISION_TMU:
     if ((hwc) && (plength == 4))  {
-      switch(hwc->SSTs[_GlideRoot.current_sst].type) {
-      case GR_SSTTYPE_VOODOO:
-      case GR_SSTTYPE_Voodoo2:
-        *params = hwc->SSTs[_GlideRoot.current_sst].sstBoard.VoodooConfig.tmuConfig[_GlideRoot.current_sst].tmuRev;
-        break;
-      case GR_SSTTYPE_SST96:
-        *params = hwc->SSTs[_GlideRoot.current_sst].sstBoard.SST96Config.tmuConfig.tmuRev;
-        break;
-      default:
-        retVal = FXFALSE;
-        break;
-      }
+      *params = hwc->SSTs[_GlideRoot.current_sst].sstBoard.VoodooConfig.tmuConfig[_GlideRoot.current_sst].tmuRev;
       retVal = plength;
     }
     break;
@@ -752,34 +696,17 @@ GR_DIENTRY(grGetString, const char *, (FxU32 pname))
 
   switch(pname) {
   case GR_EXTENSION:
-    switch(_GlideRoot.hwConfig.SSTs[_GlideRoot.current_sst].type) {
-    case GR_SSTTYPE_Banshee:
-    case GR_SSTTYPE_Voodoo2:
-      return "CHROMARANGE TEXCHROMA TEXMIRROR PALETTE6666 FOGCOORD RESOLUTION";
-      break;
-
-    default:
-      return "";
-      break;
-    }
-    break;
+    return "CHROMARANGE TEXCHROMA TEXMIRROR PALETTE6666 FOGCOORD RESOLUTION";
   case GR_HARDWARE:
     return "Voodoo2";
-    break;
   case GR_RENDERER:
     return "Glide";
-    break;
   case GR_VENDOR:
     return "3Dfx Interactive";
-    break;
   case GR_VERSION:
-    {
-      return VERSIONSTR;
-      break;
-    }
+    return VERSIONSTR;
   default:
     return "ERROR";
-    break;
   } /* end switch */
   
 #undef FN_NAME
@@ -936,7 +863,6 @@ GR_DIENTRY(grGetProcAddress, GrProc, (char *procName))
 #define FN_NAME "grGetProcAddress"
   GrExtensionTuple *tuple;
 
-  if (_GlideRoot.hwConfig.SSTs[_GlideRoot.current_sst].type == GR_SSTTYPE_Voodoo2) {
     if (!strcmp(procName, "grDrawTextureLineExt"))
       return (GrProc)_GlideRoot.deviceArchProcs.curLineProc;
 
@@ -948,7 +874,6 @@ GR_DIENTRY(grGetProcAddress, GrProc, (char *procName))
         }
         tuple++;
     }
-  }
 
   return NULL;
 #undef FN_NAME

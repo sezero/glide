@@ -1408,11 +1408,12 @@ __errSliExit:
     const GrHwConfiguration* hwConfig = &_GlideRoot.hwConfig;
     FxU32 textureMode = (FxU32)SST_SEQ_8_DOWNLD;
 
+    /*
     if ((hwConfig->SSTs[_GlideRoot.current_sst].type == GR_SSTTYPE_VOODOO) && 
         (hwConfig->SSTs[_GlideRoot.current_sst].sstBoard.VoodooConfig.tmuConfig[tmu].tmuRev == 0)) {
       textureMode = 0;
     }
-
+    */
     gc->state.tmu_config[tmu].textureMode     = textureMode;
     gc->state.tmu_config[tmu].tLOD            = 0x00000000;
     gc->state.tmu_config[tmu].tDetail         = 0x00000000;
@@ -2004,11 +2005,6 @@ GR_ENTRY(guGammaCorrectionRGB, void, (float r, float g, float b))
 {
   GR_BEGIN_NOFIFOCHECK("guGammaCorrectionValue",80);
   GDBG_INFO_MORE(gc->myLevel,"(%g %g %g)\n",r, g, b);
-
-  GR_CHECK_F(myName,
-             (_GlideRoot.hwConfig.SSTs[_GlideRoot.current_sst].type != GR_SSTTYPE_Voodoo2)
-             ||  (_GlideRoot.hwConfig.SSTs[_GlideRoot.current_sst].type != GR_SSTTYPE_Voodoo2), 
-             "grGammaCorrectionRGB not supported.");
 
 #if GLIDE_INIT_HAL
   fxHalInitGamma(hw, gamma);

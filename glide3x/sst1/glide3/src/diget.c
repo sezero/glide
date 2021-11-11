@@ -498,7 +498,6 @@ GR_DIENTRY(grGet, FxU32, (FxU32 pname, FxU32 plength, FxI32 *params))
     if ((hwc) && (plength == 4)) {
       switch(hwc->SSTs[_GlideRoot.current_sst].type) {
       case GR_SSTTYPE_VOODOO:
-      case GR_SSTTYPE_Voodoo2:
         *params = hwc->SSTs[_GlideRoot.current_sst].sstBoard.VoodooConfig.fbRam << 20;
         break;
       case GR_SSTTYPE_SST96:
@@ -515,7 +514,6 @@ GR_DIENTRY(grGet, FxU32, (FxU32 pname, FxU32 plength, FxI32 *params))
     if ((hwc) && (plength == 4)) {
       switch(hwc->SSTs[_GlideRoot.current_sst].type) {
       case GR_SSTTYPE_VOODOO:
-      case GR_SSTTYPE_Voodoo2:
         *params = hwc->SSTs[_GlideRoot.current_sst].sstBoard.VoodooConfig.tmuConfig[0].tmuRam << 20;
         break;
       case GR_SSTTYPE_SST96:
@@ -530,16 +528,7 @@ GR_DIENTRY(grGet, FxU32, (FxU32 pname, FxU32 plength, FxI32 *params))
     break;
   case GR_MEMORY_UMA:
     if ((hwc) && (plength == 4)) {
-      switch(hwc->SSTs[_GlideRoot.current_sst].type) {
-      case GR_SSTTYPE_VOODOO:
-      case GR_SSTTYPE_Voodoo2:
-      case GR_SSTTYPE_SST96:
-        *params = 0;    /* XXX non-UMA architecture */
-        break;
-      default:
-        retVal = FXFALSE; /* XXX TBD */
-        break;
-      }
+      *params = 0;    /* XXX non-UMA architecture */
       retVal = plength;
     }
     break;

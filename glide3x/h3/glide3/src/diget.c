@@ -373,7 +373,7 @@ GR_DIENTRY(grGet, FxU32, (FxU32 pname, FxU32 plength, FxI32 *params))
     break;
   case GR_LFB_PIXEL_PIPE:
     if (plength == 4) {
-      *params = (_GlideRoot.hwConfig.SSTs[_GlideRoot.current_sst].type != GR_SSTTYPE_SST96);
+      *params = FXTRUE;
       retVal = plength;
     }
     break;
