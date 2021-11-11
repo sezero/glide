@@ -188,19 +188,22 @@ GLIDE_OBJECTS += \
 endif
 endif
 
+INIT_OBJECTS = \
+	../../init/init.o
+
 ifeq ($(FX_GLIDE_HW),sst96)
 GLIDE_OBJECTS += \
-	sst96.o \
+	sst96.o
+INIT_OBJECTS += \
+	../../init/vg96drvr.o \
 	../../init/init96/init96.o \
 	../../init/init96/lindrvr.o \
 	../../init/init96/initat3d.o \
-	../../init/init96/initmcrx.o
-endif
-
-GLIDE_OBJECTS += \
-	../../init/init.o \
+	../../init/init96/initmcrx.o \
+	../../init/initvg/gdebug.o
+else
+INIT_OBJECTS += \
 	../../init/vgdrvr.o \
-	../../init/vg96drvr.o \
 	../../init/initvg/gamma.o \
 	../../init/initvg/dac.o \
 	../../init/initvg/video.o \
@@ -210,7 +213,11 @@ GLIDE_OBJECTS += \
 	../../init/initvg/info.o \
 	../../init/initvg/print.o \
 	../../init/initvg/gdebug.o \
-	../../init/initvg/sst1init.o \
+	../../init/initvg/sst1init.o
+endif
+
+GLIDE_OBJECTS += \
+	$(INIT_OBJECTS) \
 	$(FX_GLIDE_SW)/newpci/pcilib/sst1_pci.o \
 	$(FX_GLIDE_SW)/newpci/pcilib/fxmsr.o \
 	$(FX_GLIDE_SW)/newpci/pcilib/fxpci.o \
@@ -268,50 +275,6 @@ xdraw.lo: xdraw.o
 	$(CP) $< $@
 xdraw96.lo: xdraw96.o
 	$(CP) $< $@
-
-ifeq ($(FX_GLIDE_HW),sst96)
-../../init/initvg/gamma.o: ../../init/initvg/gamma.c
-	$(CC) -o $@ $(CFLAGS) -USST96 -c $<
-../../init/initvg/dac.o: ../../init/initvg/dac.c
-	$(CC) -o $@ $(CFLAGS) -USST96 -c $<
-../../init/initvg/video.o: ../../init/initvg/video.c
-	$(CC) -o $@ $(CFLAGS) -USST96 -c $<
-../../init/initvg/parse.o: ../../init/initvg/parse.c
-	$(CC) -o $@ $(CFLAGS) -USST96 -c $<
-../../init/initvg/sli.o: ../../init/initvg/sli.c
-	$(CC) -o $@ $(CFLAGS) -USST96 -c $<
-../../init/initvg/util.o: ../../init/initvg/util.c
-	$(CC) -o $@ $(CFLAGS) -USST96 -c $<
-../../init/initvg/info.o: ../../init/initvg/info.c
-	$(CC) -o $@ $(CFLAGS) -USST96 -c $<
-../../init/initvg/print.o: ../../init/initvg/print.c
-	$(CC) -o $@ $(CFLAGS) -USST96 -c $<
-../../init/initvg/gdebug.o: ../../init/initvg/gdebug.c
-	$(CC) -o $@ $(CFLAGS) -USST96 -c $<
-../../init/initvg/sst1init.o: ../../init/initvg/sst1init.c
-	$(CC) -o $@ $(CFLAGS) -USST96 -c $<
-
-../../init/initvg/gamma.lo: ../../init/initvg/gamma.c
-	$(CC) -o $@ $(CFLAGS) -DPIC -fPIC -USST96 -c $<
-../../init/initvg/dac.lo: ../../init/initvg/dac.c
-	$(CC) -o $@ $(CFLAGS) -DPIC -fPIC -USST96 -c $<
-../../init/initvg/video.lo: ../../init/initvg/video.c
-	$(CC) -o $@ $(CFLAGS) -DPIC -fPIC -USST96 -c $<
-../../init/initvg/parse.lo: ../../init/initvg/parse.c
-	$(CC) -o $@ $(CFLAGS) -DPIC -fPIC -USST96 -c $<
-../../init/initvg/sli.lo: ../../init/initvg/sli.c
-	$(CC) -o $@ $(CFLAGS) -DPIC -fPIC -USST96 -c $<
-../../init/initvg/util.lo: ../../init/initvg/util.c
-	$(CC) -o $@ $(CFLAGS) -DPIC -fPIC -USST96 -c $<
-../../init/initvg/info.lo: ../../init/initvg/info.c
-	$(CC) -o $@ $(CFLAGS) -DPIC -fPIC -USST96 -c $<
-../../init/initvg/print.lo: ../../init/initvg/print.c
-	$(CC) -o $@ $(CFLAGS) -DPIC -fPIC -USST96 -c $<
-../../init/initvg/gdebug.lo: ../../init/initvg/gdebug.c
-	$(CC) -o $@ $(CFLAGS) -DPIC -fPIC -USST96 -c $<
-../../init/initvg/sst1init.lo: ../../init/initvg/sst1init.c
-	$(CC) -o $@ $(CFLAGS) -DPIC -fPIC -USST96 -c $<
-endif
 
 $(GLIDE_OBJECTS): fxinline.h fxgasm.h
 

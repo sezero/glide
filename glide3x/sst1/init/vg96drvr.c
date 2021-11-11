@@ -30,7 +30,6 @@
 #include <string.h>
 #include <gdebug.h>
 
-#if SST96
 static FxBool setVideo( FxU32                   hWnd,
                         GrScreenResolution_t    sRes,
                         GrScreenRefresh_t       vRefresh,
@@ -149,30 +148,3 @@ void vg96DriverInit( InitContext *context ) {
     context->initGammaTable   = gammatable;
     context->findVidTimingStruct = findvidtiming;
 }
-#else
-/* I've got to stub this one to get the Voodoo Graphics glide to link */
-void vg96DriverInit( InitContext *context ) {
-    context->setVideo         = NULL;
-    context->restoreVideo     = NULL;
-    context->enableTransport  = NULL;
-    context->disableTransport = NULL;
-    context->swapBuffers      = NULL;
-    context->status           = NULL;
-    context->busy             = NULL;
-    context->idle             = NULL;
-    context->getBufferPtr     = NULL;
-    context->renderBuffer     = NULL;
-    context->origin           = NULL;
-    context->ioCtl            = NULL;
-    context->control          = NULL;
-    context->wrapFIFO         = NULL;
-
-    context->gamma            = NULL;
-    context->sliPciOwner      = NULL;
-
-    context->gammaRGB         = NULL;
-    context->initGammaTable   = NULL;
-    context->findVidTimingStruct = NULL; 
-
-}
-#endif

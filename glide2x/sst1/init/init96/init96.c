@@ -186,6 +186,35 @@ devNum,
 physAddr,
 fifoMTRRNum = 0xffffffff;
 
+/*---- copied from initvg/parse.c here for SST96 ------------*/
+const char*
+myGetenv(const char* envKey)
+{
+  FxBool callRealGetenvP = FXTRUE;
+
+#if __WIN32__
+  /* NB: If were being called from cya code in
+   * DllMain(DLL_PROCESS_DETACH) because the current app has called
+   * exit() or dropped off of the end of main the per dll environ
+   * string table has been freed by the c runtime but has not been set
+   * to NULL. Bad things happen if this memory has been unmapped by
+   * the system or if the string cannot be found.  
+   */
+  {
+    HANDLE curProcessHandle = GetCurrentProcess();
+    DWORD exitCode = STILL_ACTIVE;
+
+    callRealGetenvP = ((curProcessHandle != NULL) &&
+                       GetExitCodeProcess(curProcessHandle, &exitCode) &&
+                       (exitCode == STILL_ACTIVE));
+  }
+#endif /* __WIN32__ */
+
+  return (callRealGetenvP
+          ? getenv(envKey)
+          : NULL);
+}
+
 /*-----------Debuging Info Data------------------------------*/
 #ifdef GDBG_INFO_ON
 /* NOTE:

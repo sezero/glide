@@ -625,8 +625,16 @@ GR_ENTRY(grSstWinOpen, GrContext_t, (FxU32                   hWnd,
   ** load fxoem2x.dll and map board
   */
   oemi.version = OEMINIT_VERSION;
+#if (GLIDE_PLATFORM & GLIDE_HW_SST1)
   oemi.vendorID = sst1BoardInfo[_GlideRoot.current_sst].vendorID;
   oemi.deviceID = sst1BoardInfo[_GlideRoot.current_sst].deviceID;
+#else /* SST96 */
+  { InitDeviceInfo info;
+    initGetDeviceInfo(_GlideRoot.current_sst, &info);
+    oemi.vendorID = info.vendorID;
+    oemi.deviceID = info.deviceID;
+  }
+#endif
   oemi.boardID = OEMINIT_INVALID_BOARD_ID;
   oemi.subvendorID = OEMINIT_INVALID_BOARD_ID;
   oemi.linearAddress = gc->base_ptr;
@@ -657,7 +665,8 @@ GR_ENTRY(grSstWinOpen, GrContext_t, (FxU32                   hWnd,
      ram and vald/invalid configurations
    */
 #define SLI_DETECT _GlideRoot.hwConfig.SSTs[_GlideRoot.current_sst].sstBoard.VoodooConfig.sliDetect
-
+/* this is for SST1 only: for an SST96 board, the above overlays with SST96Config.tmuRev == 1 ... */
+#if (GLIDE_PLATFORM & GLIDE_HW_SST1)
   if ((!SLI_DETECT) &&
       ((gc->fbuf_size <= 2 &&
         resolution == GR_RESOLUTION_800x600 &&
@@ -673,6 +682,7 @@ GR_ENTRY(grSstWinOpen, GrContext_t, (FxU32                   hWnd,
                   "insufficient memory\n" ));
       goto BAILOUT;
     }
+#endif /* (GLIDE_PLATFORM & GLIDE_HW_SST1) */
 
 #if (GLIDE_PLATFORM & GLIDE_HW_SST96)
   if (resolution == GR_RESOLUTION_NONE) {

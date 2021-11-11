@@ -174,19 +174,22 @@ GLIDE_OBJECTS += \
 endif
 endif
 
+INIT_OBJECTS = \
+	../../init/init.obj
+
 ifeq ($(FX_GLIDE_HW),sst96)
 GLIDE_OBJECTS += \
-	sst96.obj \
+	sst96.obj
+INIT_OBJECTS += \
+	../../init/vg96drvr.obj \
 	../../init/init96/init96.obj \
 	../../init/init96/dxdrvr.obj \
 	../../init/init96/initat3d.obj \
-	../../init/init96/initmcrx.obj
-endif
-
-GLIDE_OBJECTS += \
-	../../init/init.obj \
+	../../init/init96/initmcrx.obj \
+	../../init/initvg/gdebug.obj
+else
+INIT_OBJECTS += \
 	../../init/vgdrvr.obj \
-	../../init/vg96drvr.obj \
 	../../init/initvg/gamma.obj \
 	../../init/initvg/dac.obj \
 	../../init/initvg/video.obj \
@@ -196,7 +199,11 @@ GLIDE_OBJECTS += \
 	../../init/initvg/info.obj \
 	../../init/initvg/print.obj \
 	../../init/initvg/gdebug.obj \
-	../../init/initvg/sst1init.obj \
+	../../init/initvg/sst1init.obj
+endif
+
+GLIDE_OBJECTS += \
+	$(INIT_OBJECTS) \
 	$(FX_GLIDE_SW)/newpci/pcilib/sst1_pci.obj \
 	$(FX_GLIDE_SW)/newpci/pcilib/fxmsr.obj \
 	$(FX_GLIDE_SW)/newpci/pcilib/fxpci.obj \
@@ -265,53 +272,6 @@ xdraw.obj: xdraw.asm
 	$(AS) -o $@ $(ASFLAGS) $<
 xdraw96.obj: xdraw96.asm
 	$(AS) -o $@ $(ASFLAGS) $<
-
-ifeq ($(FX_GLIDE_HW),sst96)
-# lazy solution instead of using FIXPATH:
-ifeq ($(DOSMODE),1)
-..\..\init\initvg\gamma.obj: ..\..\init\initvg\gamma.c
-	$(CC) -fo=$@ $(CFLAGS) -USST96 -c $<
-..\..\init\initvg\dac.obj: ..\..\init\initvg\dac.c
-	$(CC) -fo=$@ $(CFLAGS) -USST96 -c $<
-..\..\init\initvg\video.obj: ..\..\init\initvg\video.c
-	$(CC) -fo=$@ $(CFLAGS) -USST96 -c $<
-..\..\init\initvg\parse.obj: ..\..\init\initvg\parse.c
-	$(CC) -fo=$@ $(CFLAGS) -USST96 -c $<
-..\..\init\initvg\sli.obj: ..\..\init\initvg\sli.c
-	$(CC) -fo=$@ $(CFLAGS) -USST96 -c $<
-..\..\init\initvg\util.obj: ..\..\init\initvg\util.c
-	$(CC) -fo=$@ $(CFLAGS) -USST96 -c $<
-..\..\init\initvg\info.obj: ..\..\init\initvg\info.c
-	$(CC) -fo=$@ $(CFLAGS) -USST96 -c $<
-..\..\init\initvg\print.obj: ..\..\init\initvg\print.c
-	$(CC) -fo=$@ $(CFLAGS) -USST96 -c $<
-..\..\init\initvg\gdebug.obj: ..\..\init\initvg\gdebug.c
-	$(CC) -fo=$@ $(CFLAGS) -USST96 -c $<
-..\..\init\initvg\sst1init.obj: ..\..\init\initvg\sst1init.c
-	$(CC) -fo=$@ $(CFLAGS) -USST96 -c $<
-else
-../../init/initvg/gamma.obj: ../../init/initvg/gamma.c
-	$(CC) -fo=$@ $(CFLAGS) -USST96 -c $<
-../../init/initvg/dac.obj: ../../init/initvg/dac.c
-	$(CC) -fo=$@ $(CFLAGS) -USST96 -c $<
-../../init/initvg/video.obj: ../../init/initvg/video.c
-	$(CC) -fo=$@ $(CFLAGS) -USST96 -c $<
-../../init/initvg/parse.obj: ../../init/initvg/parse.c
-	$(CC) -fo=$@ $(CFLAGS) -USST96 -c $<
-../../init/initvg/sli.obj: ../../init/initvg/sli.c
-	$(CC) -fo=$@ $(CFLAGS) -USST96 -c $<
-../../init/initvg/util.obj: ../../init/initvg/util.c
-	$(CC) -fo=$@ $(CFLAGS) -USST96 -c $<
-../../init/initvg/info.obj: ../../init/initvg/info.c
-	$(CC) -fo=$@ $(CFLAGS) -USST96 -c $<
-../../init/initvg/print.obj: ../../init/initvg/print.c
-	$(CC) -fo=$@ $(CFLAGS) -USST96 -c $<
-../../init/initvg/gdebug.obj: ../../init/initvg/gdebug.c
-	$(CC) -fo=$@ $(CFLAGS) -USST96 -c $<
-../../init/initvg/sst1init.obj: ../../init/initvg/sst1init.c
-	$(CC) -fo=$@ $(CFLAGS) -USST96 -c $<
-endif
-endif
 
 $(GLIDE_OBJECTS): fxinline.h fxgasm.h
 

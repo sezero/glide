@@ -41,8 +41,11 @@
 #include <fxdpmi.h>
 #endif
 
+#if defined(SST96)
 #include <init96.h>
+#else
 #include <sst1init.h>
+#endif
 
 #ifdef _WIN32
 #define _WIN32_LEAN_AND_MEAN_
@@ -69,8 +72,11 @@ static inline void _outp_asm (unsigned short _port, unsigned char _data) {
   Module Constants
   -------------------------------------------------------------------*/
 
+#if 0
 static InitContext
   contexts[NUM_3DFX_PRODUCTS];  /* pool of device contexts */
+#endif
+static InitContext initctx;     /* device context - no pool anymore */
 InitContext
   *context;                     /* Current device context */
 static InitDeviceInfo
@@ -214,18 +220,26 @@ initEnumHardware( InitHWEnumCallback *cb )
       }
     }
 
+#if defined(SST1)
     /* Sanity Check for SLI detection */
     for( device = 0; device < numDevicesInSystem; device++ ) {
-      if ( hwInfo[device].hwClass == INIT_VOODOO &&
-          hwInfo[device].hwDep.vgInfo.sliDetect              &&
+      if( hwInfo[device].hwDep.vgInfo.sliDetect           &&
           hwInfo[device].hwDep.vgInfo.slaveBaseAddr == 0 ) {
         hwInfo[device].hwDep.vgInfo.sliDetect = FXFALSE;
       }
     }
+#endif
 
+#if 0
     /* Initialize all drivers */
     vgDriverInit( &contexts[INIT_VOODOO] );
     vg96DriverInit( &contexts[INIT_VG96] );
+#endif
+#if !defined(SST96)
+    vgDriverInit( &initctx );
+#else
+    vg96DriverInit( &initctx );
+#endif
 
     /* Mark the library as initialized */
     libInitialized = FXTRUE;
@@ -351,7 +365,17 @@ FxBool
 initDeviceSelect( FxU32 devNumber )
 {
   if ( devNumber < numDevicesInSystem ) {
+#if 0 /**/
     context = &contexts[hwInfo[devNumber].hwClass];
+#endif
+#ifdef SST96
+    if (hwInfo[devNumber].hwClass != INIT_VG96)
+      return FXFALSE;
+#else
+    if (hwInfo[devNumber].hwClass != INIT_VOODOO)
+      return FXFALSE;
+#endif
+    context = &initctx;
     context->info = hwInfo[devNumber];
     return FXTRUE;
   }
