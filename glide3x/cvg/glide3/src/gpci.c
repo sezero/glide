@@ -806,8 +806,7 @@ _GlideInitEnvironment(void)
       const char* errStr = s;
       
       if (pciGetErrorCode() == PCI_ERR_NOERR) {
-        sprintf(s, "%s: glide3x.dll expected %s, none detected\n",
-                FN_NAME, GLIDE_DRIVER_NAME);
+        sprintf(s, "%s: expected %s, none detected\n", FN_NAME, GLIDE_DRIVER_NAME);
       } else {
         errStr = pciGetErrorString();
       }
@@ -828,4 +827,3 @@ _GlideInitEnvironment(void)
     _GlideRoot.initialized = hwDetectP;               /* save this for the end */
   }
 } /* _GlideInitEnvironment */
-

@@ -1780,7 +1780,7 @@ hwcInit(FxU32 vID, FxU32 dID)
     }
     if (!hInfo.nBoards) {
       const char *error = pciGetErrorCode() ? pciGetErrorString() :
-                          "Voodoo Banshee or Voodoo3/4/5 not detected\n";
+                            "Voodoo3/4/5 or Banshee not detected\n";
       strcpy(errorString, error);
     }
   }

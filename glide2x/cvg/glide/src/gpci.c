@@ -815,13 +815,7 @@ _GlideInitEnvironment(void)
       const char* errStr = s;
       
       if (pciGetErrorCode() == PCI_ERR_NOERR) {
-#ifndef __linux__
-        sprintf(s, "%s: glide2x.dll expected %s, none detected\n",
-                FN_NAME, GLIDE_DRIVER_NAME);
-#else
-        sprintf(s, "%s: libglide2x.so expected %s, none detected\n",
-                FN_NAME, GLIDE_DRIVER_NAME);
-#endif
+        sprintf(s, "%s: expected %s, none detected\n", FN_NAME, GLIDE_DRIVER_NAME);
       } else {
         errStr = pciGetErrorString();
       }

@@ -443,15 +443,9 @@ _GlideInitEnvironment( void )
   _GlideRoot.curGC = &_GlideRoot.GCs[0]; /* just for 'booting' the library */
   if (!_grSstDetectResources()) {
     char s[128];
-#ifndef __linux__
     sprintf(s,
-            "_GlideInitEnvironment: glide2x.dll expected %s, none detected\n",
+            "_GlideInitEnvironment: expected %s, none detected\n",
             GLIDE_DRIVER_NAME);
-#else
-    sprintf(s,
-            "_GlideInitEnvironment: libglide2x.so expected %s, none detected\n",
-            GLIDE_DRIVER_NAME);
-#endif
     GrErrorCallback(s, FXTRUE);
   }
 

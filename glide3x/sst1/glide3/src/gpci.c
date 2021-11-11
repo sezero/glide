@@ -493,7 +493,7 @@ _GlideInitEnvironment( void )
   if (!_grSstDetectResources()) {
     char s[128];
     sprintf(s,
-            "_GlideInitEnvironment: glide3x.dll expected %s, none detected\n",
+            "_GlideInitEnvironment: expected %s, none detected\n",
             GLIDE_DRIVER_NAME);
     GrErrorCallback(s, FXTRUE);
   }
