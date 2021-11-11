@@ -122,7 +122,12 @@ ASFLAGS += $(CDEFS)
 CFLAGS = -bt=dos -wx -zq
 # newer OpenWatcom versions enable W303 by default
 CFLAGS += -wcd=303
-INCPATH = -I. -I../../incsrc -I../../init -I../../init/initvg -I../../init/init96
+INCPATH = -I. -I../../incsrc -I../../init
+ifeq ($(FX_GLIDE_HW),sst1)
+INCPATH += -I../../init/initvg
+else
+INCPATH += -I../../init/init96
+endif
 INCPATH += -I$(FX_GLIDE_SW)/fxmisc -I$(FX_GLIDE_SW)/newpci/pcilib -I$(FX_GLIDE_SW)/fxmemmap
 INCPATH += -I$(FX_GLIDE_SW)/texus2/lib
 OPTFLAGS ?= -ox -5s
@@ -175,7 +180,8 @@ endif
 endif
 
 INIT_OBJECTS = \
-	../../init/init.obj
+	../../init/init.obj \
+	../../init/gdebug.obj
 
 ifeq ($(FX_GLIDE_HW),sst96)
 GLIDE_OBJECTS += \
@@ -185,8 +191,7 @@ INIT_OBJECTS += \
 	../../init/init96/init96.obj \
 	../../init/init96/dxdrvr.obj \
 	../../init/init96/initat3d.obj \
-	../../init/init96/initmcrx.obj \
-	../../init/initvg/gdebug.obj
+	../../init/init96/initmcrx.obj
 else
 INIT_OBJECTS += \
 	../../init/vgdrvr.obj \
@@ -198,7 +203,6 @@ INIT_OBJECTS += \
 	../../init/initvg/util.obj \
 	../../init/initvg/info.obj \
 	../../init/initvg/print.obj \
-	../../init/initvg/gdebug.obj \
 	../../init/initvg/sst1init.obj
 endif
 

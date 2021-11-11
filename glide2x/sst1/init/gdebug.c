@@ -49,7 +49,7 @@ static FILE *gdbg_msgfile = NULL; /* stdout; */	// GDBG info/error file
 //----------------------------------------------------------------------
 // initialize gdbg_level from an environment variable
 //----------------------------------------------------------------------
-static char *setRange(char *buf, int val)
+static const char *setRange(const char *buf, int val)
 {
     int r0,r1,pos=0;
 
