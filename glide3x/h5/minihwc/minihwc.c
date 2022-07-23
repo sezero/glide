@@ -767,19 +767,68 @@
 
 #include <ddraw.h>
 #include "qmodes.h"
-#if 0 /* moved to asm so we don't need w9x ddk headers. */
+#ifdef HAVE_WIN9X_DDK
 #define IS_32
 #define Not_VxD
 #include <minivdd.h>
 #include <vmm.h>
 #include <configmg.h>
 #else
-extern DWORD __cdecl CM_Get_DevNode_Key(DWORD,PCHAR,PVOID,ULONG,ULONG);
 #define CM_REGISTRY_HARDWARE 0
 #define CM_REGISTRY_SOFTWARE 1
+#define CR_FAILURE 0x00000013
+#define ___CONFIGMG_Get_DevNode_Key 0x0033003d
+struct _CMIOCTLPACKET {
+ DWORD dwStack;
+ DWORD dwServiceNumber;
+};
+static DWORD WINAPI CMIOCTLHandler(struct _CMIOCTLPACKET *pkt)
+{
+  HANDLE hCONFIGMG;
+  DWORD crReturnValue = CR_FAILURE;
+  DWORD dwReturnSize = 0;
+
+  hCONFIGMG = CreateFileA(
+    "\\\\.\\CONFIGMG",
+    GENERIC_READ|GENERIC_WRITE,
+    FILE_SHARE_READ|FILE_SHARE_WRITE,
+    NULL, OPEN_EXISTING, 0, NULL);
+
+  if (hCONFIGMG == INVALID_HANDLE_VALUE) {
+      return CR_FAILURE;
+  }
+  if (!DeviceIoControl(
+        hCONFIGMG, pkt->dwServiceNumber,
+        &(pkt->dwStack), sizeof(pkt->dwStack),
+        &crReturnValue, sizeof(crReturnValue),
+        &dwReturnSize, NULL)) {
+    crReturnValue = CR_FAILURE;
+  }
+  CloseHandle(hCONFIGMG);
+  if (dwReturnSize != sizeof(crReturnValue)) {
+      crReturnValue = CR_FAILURE;
+  }
+  return crReturnValue;
+}
+static DWORD __cdecl CM_Get_DevNode_Key (DWORD devnode, char *subkey, void *buffer, ULONG bufferlen, ULONG flags)
+{
+    struct _CMIOCTLPACKET packet;
+    DWORD dwStack;
+    #if defined(_MSC_VER)
+    _asm {mov dwStack, ebp};
+    #elif defined(__GNUC__)
+    dwStack = (DWORD) __builtin_frame_address(0);
+    #else
+    #error Add support for your compiler here.
+    #endif
+    dwStack += 8;
+    packet.dwStack = dwStack;
+    packet.dwServiceNumber = 0x80000000 + (___CONFIGMG_Get_DevNode_Key & 0xFFFF);
+    return CMIOCTLHandler(&packet);
+}
 #endif
 
-#endif
+#endif /* __WIN32__ */
 
 #ifdef macintosh
 #include <GraphicsPrivHwc.h>

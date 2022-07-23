@@ -77,6 +77,7 @@ endif
 # platform
 CDEFS = -D__WIN32__ -DFX_DLL_ENABLE -DHWC_ACCESS_DDRAW=1 -DHWC_EXT_INIT=1 -DGLIDE_ALT_TAB=1
 CDEFS += -DBETA=1 -DHWC_MINIVDD_HACK=1 -DWIN40COMPAT=1 -DWINXP_ALT_TAB_FIX=1 -DWINXP_SAFER_ALT_TAB_FIX=1 -DNEED_MSGFILE_ASSIGN
+#CDEFS += -DHAVE_WIN9X_DDK=1
 
 # general
 CDEFS += -DGLIDE3 -DGLIDE3_ALPHA -DGLIDE_HW_TRI_SETUP=1 -DGLIDE_INIT_HWC -DGLIDE_PACKED_RGB=0 -DGLIDE_PACKET3_TRI_SETUP=1 -DGLIDE_TRI_CULLING=1 -DUSE_PACKET_FIFO=1
@@ -220,9 +221,6 @@ GLIDE_OBJECTS += \
 	../../minihwc/gdebug.obj \
 	../../minihwc/minihwc.obj \
 	../../minihwc/win_mode.obj
-# so that we don't need win9x ddk:
-GLIDE_OBJECTS += \
-	../../minihwc/win9x.obj
 
 TEXUS_SOURCES = \
 	$(FX_GLIDE_SW)/texus2/lib/texuslib.c \
@@ -301,9 +299,6 @@ xdraw3_sse.obj: xdraw3.asm
 	$(AS) -o $@ $(ASFLAGS) -DGL_SSE=1 $<
 xtexdl_sse2.obj: xtexdl.asm
 	$(AS) -o $@ $(ASFLAGS) -DGL_SSE2=1 $<
-
-../../minihwc/win9x.obj: ../../minihwc/win9x.asm
-	$(AS) -o $@ -O2 -fwin32 $<
 
 $(GLIDE_OBJECTS): fxinline.h fxgasm.h fxbldno.h
 
