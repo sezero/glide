@@ -117,6 +117,7 @@ Notes:
 	2) grDrawPoint has type-punning problems (optimizations enabled) in
 	   sst1, sst96, cvg and h3 branches.
 	3) V1 library cannot be used with VR (and vice-versa). Hence the XOR...
+	4) In order to build, swlibs directory must be copied under glide3x.
 
 
 Have fun,
