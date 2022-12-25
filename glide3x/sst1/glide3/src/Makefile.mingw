@@ -49,7 +49,7 @@ GLIDE_IMP = libglide3x.dll.a
 TEXUS_EXE = texus2.exe
 
 FX_GLIDE_HW ?= sst1
-FX_GLIDE_SW = ../../../swlibs
+FX_GLIDE_SW = ../../../../swlibs
 GLIDE_LIBDIR = ../../lib/$(FX_GLIDE_HW)
 TEXUS_EXEDIR = $(FX_GLIDE_SW)/bin
 

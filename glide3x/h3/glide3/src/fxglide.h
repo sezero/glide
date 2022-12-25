@@ -1884,7 +1884,7 @@ _grSstVRetraceOn(void);
 
 #ifdef __GNUC__
 
-extern __inline unsigned long getThreadValueFast (void)
+static __inline unsigned long getThreadValueFast (void)
 {
  unsigned long t;
  __asm __volatile (" \

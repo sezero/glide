@@ -50,7 +50,7 @@ GLIDE_DEF = glide2x.def
 GLIDE_IMP = libglide2x.dll.a
 
 FX_GLIDE_HW ?= sst1
-FX_GLIDE_SW = ../../../swlibs
+FX_GLIDE_SW = ../../../../swlibs
 GLIDE_LIBDIR = ../../lib/$(FX_GLIDE_HW)
 
 ###############################################################################

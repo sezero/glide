@@ -2733,7 +2733,7 @@ _grSstVRetraceOn(void);
 #if USE_STANDARD_TLS_FUNC
 
 #ifdef __GNUC__
-extern
+static
 #endif
 __inline unsigned long
 getThreadValueFast() {
@@ -2757,7 +2757,7 @@ getThreadValueFast() {
 
 #ifdef __GNUC__
 
-extern __inline unsigned long getThreadValueFast (void)
+static __inline unsigned long getThreadValueFast (void)
 {
  unsigned long t;
  __asm __volatile (" \
