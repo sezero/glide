@@ -28,7 +28,7 @@ TOP = ../../..
 CPU ?= 6
 
 CC = cl
-CFLAGS = -nologo -W3 -WX -D__MSC__=1 -DNDEBUG -G$(CPU) -O2 -MT
+CFLAGS = -nologo -W3 -D__MSC__=1 -DNDEBUG -G$(CPU) -O2 -MT
 CFLAGS += -I$(TOP)/$(FX_GLIDE_HW)/glide/src -I$(TOP)/$(FX_GLIDE_HW)/incsrc
 CFLAGS += -I$(TOP)/swlibs/fxmisc
 CFLAGS += -D__WIN32__ -DCVG

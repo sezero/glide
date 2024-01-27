@@ -37,7 +37,7 @@ FLAGS  = $(FLAGS) -DGLIDE3=1 -DGLIDE3_ALPHA=1
 CC   = cl
 LINK = link
 
-CFLAGS  = -Ox -G6 -W3 -WX -c -D__MSC__=1 -D_X86_=1 -DNULL=0 -D_WIN32=1 -DWIN32=1 -D__WIN32__=1 -DSTRICT
+CFLAGS  = -Ox -G6 -W3 -c -D__MSC__=1 -D_X86_=1 -DNULL=0 -D_WIN32=1 -DWIN32=1 -D__WIN32__=1 -DSTRICT
 LFLAGS  = -nologo /SUBSYSTEM:CONSOLE /OPT:WIN98 /MACHINE:IX86
 
 #################################
